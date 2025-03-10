@@ -24,13 +24,13 @@ export const navLinks = [
       route: "/profile",
       icon: "/assets/icons/profile.svg",
     },
+    // {
+    //   label: "Super Admin",
+    //   route: "/admin",
+    //   icon: "/assets/icons/profile.svg",
+    // },
     {
-      label: "Super Admin",
-      route: "/admin",
-      icon: "/assets/icons/profile.svg",
-    },
-    {
-      label: "Buy Credits",
+      label: "Planes",
       route: "/credits",
       icon: "/assets/icons/bag.svg",
     },

@@ -23,7 +23,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({ userId }) => {
         setInstanceData({ instanceName, instanceId });
         await fetchWebhookStatus(instanceName, instanceId);
       } else {
-        setError('No se encontraron instancias para este usuario.');
+        // setError('No se encontraron instancias para este usuario.');
       }
     } catch (err) {
       setError(`Error al cargar las instancias: ${err instanceof Error ? err.message : String(err)}`);
@@ -102,7 +102,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({ userId }) => {
         className={`px-4 py-2 rounded-md text-white ${isEnabled ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-500 hover:bg-gray-600'}`}
         disabled={loading || !instanceData}
       >
-        {loading ? 'Cargando...' : isEnabled !== null ? (isEnabled ? 'Encendido' : 'Apagado') : 'Cargando...'} {/* Manejo de estado null */}
+        {loading ? 'Apagado' : isEnabled !== null ? (isEnabled ? 'Encendido' : 'Apagado') : 'Apagado'} {/* Manejo de estado null */}
       </button>
     </div>
   );

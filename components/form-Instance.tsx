@@ -100,14 +100,14 @@ export default function FormInstance({ userId }: { userId: string }) {
         </div>
       ) : (
         <>
-          <h2 className="text-xl font-semibold mb-4">Nombre del Robot</h2>
+          <h2 className="text-xl font-semibold mb-4">Crear conexion</h2>
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label
                 htmlFor="instanceName"
                 className="block text-sm font-medium text-gray-700"
               >
-                Nombre del Robot:
+                Nombre de la Instancia:
               </label>
               <input
                 type="text"

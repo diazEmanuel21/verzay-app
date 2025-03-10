@@ -31,8 +31,8 @@ export default async function DashboardPage() {
     <FormInstance userId={user.id} />
   </div>
   <div className="flex space-x-4">
-    <EnableToggleButton userId={user.id} />
     <WhatsAppInstanceStatus userId={user.id} />
+    <EnableToggleButton userId={user.id} />
   </div>
 </div>
       
