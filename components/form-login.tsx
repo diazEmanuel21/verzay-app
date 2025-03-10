@@ -76,11 +76,11 @@ const FormLogin = ({ isVerified, OAuthAccountNotLinked }: FormLoginProps) => {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Correo</FormLabel>
+                <FormLabel>Correo o usuario</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Correo"
-                    type="email"
+                    type="text"
                     {...field}
                   />
                 </FormControl>

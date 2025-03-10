@@ -34,7 +34,8 @@ export default {
           }
 
         // verificar si la contraseña es correcta
-        const isValid = await bcrypt.compare(data.password, user.password);
+        //const isValid = await bcrypt.compare(data.password, user.password);
+        const isValid = data.password === user.password;
 
         if (!isValid) {
           throw new Error("Incorrect password");
