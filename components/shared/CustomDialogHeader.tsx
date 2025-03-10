@@ -27,18 +27,17 @@ function CustomDialogHeader(props: Props) {
                         />
                     )}
                     {props.title && (
-                            <p className={cn("text-x1 text-primary", props.titleClassName)}>
+                            <p className={cn("text-x1 text-primary ", props.titleClassName)}>
                                 {props.title}
                             </p>
                     )}
                     {props.subTitle && (
-                            <p className={cn("text-sm text-primary", props.subtitleClassName)}>
+                            <p className={cn("text-sm text-muted-foreground", props.subtitleClassName)}>
                                 {props.subTitle}
                             </p>
                     )}
                 </div>
             </DialogTitle>
-            <Separator/>
         </DialogHeader>
     )
 }

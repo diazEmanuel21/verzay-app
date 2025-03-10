@@ -29,9 +29,9 @@ export default {
           },
         });
 
-        if (!user || !user.password) {
-          throw new Error("Usuario no existe");
-        }
+          if (!user || !user.password) {
+            throw new Error("Usuario no existe");
+          }
 
         // verificar si la contraseña es correcta
         const isValid = await bcrypt.compare(data.password, user.password);

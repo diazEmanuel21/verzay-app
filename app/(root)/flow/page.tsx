@@ -9,8 +9,21 @@ import { db } from '@/lib/db';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, InboxIcon } from 'lucide-react';
 import CreateWorflowDialog from './_components/CreateWorflowDialog';
+import WorkflowCard from './_components/WorkflowCard';
 
 const flowPage = async () => {
+
+      const session = await currentUser();
+    
+      const user = await db.user.findUnique({
+        where: {email: session?.email ?? ""}
+      });
+    
+      if (!user) {
+        return <div>Not authenticated</div>;
+      }
+    
+
   return (
     <>
         <div>
@@ -19,7 +32,7 @@ const flowPage = async () => {
                     title={'Flujos'}
                     subtitle={'Crea tus Flujos de manera mas organizada'}
                 />
-                <CreateWorflowDialog/>
+                <CreateWorflowDialog />
             </div>
         </div>
 
@@ -76,6 +89,10 @@ async function UserWorkflows() {
         </div>
     }
 
-    return <div></div>
+    return <div className="grid grid-cols-1 gap-4">
+        {workflows.map((workflows)=>(
+            <WorkflowCard key={workflows.id} workflow={workflows} />
+        ))}
+    </div>
 }
 export default flowPage

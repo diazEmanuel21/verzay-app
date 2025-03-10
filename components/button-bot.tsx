@@ -12,7 +12,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({ userId }) => {
   const [error, setError] = useState<string | null>(null);
   const [instanceData, setInstanceData] = useState<{ instanceName: string; instanceId: string } | null>(null);
 
-  const baseUrl = 'https://conexion.aizenbots.com';
+  const baseUrl = 'https://conexion-1.verzay.co';
 
   // Función para cargar instancias y obtener el estado del webhook
   const loadInstanceData = async () => {
