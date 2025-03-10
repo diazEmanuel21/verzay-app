@@ -22,22 +22,21 @@ const formSchema = z.object({
   username: z.string().min(2).max(50),
 })
 
-const iaForm = () => {
+const IaForm = () => { // <- Cambiado a "IaForm" con mayúscula ✅
 
-    // 1. Define your form.
-    const form = useForm<z.infer<typeof formSchema>>({
-      resolver: zodResolver(formSchema),
-      defaultValues: {
-        username: "",
-      },
-    })
-   
-    // 2. Define a submit handler.
-    function onSubmit(values: z.infer<typeof formSchema>) {
-      // Do something with the form values.
-      // ✅ This will be type-safe and validated.
-      console.log(values)
-    }
+  // 1. Define your form.
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      username: "",
+    },
+  })
+ 
+  // 2. Define a submit handler.
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    // Do something with the form values.
+    console.log(values)
+  }
 
   return (
     <Form {...form}>
@@ -52,7 +51,7 @@ const iaForm = () => {
                 <Input placeholder="shadcn" {...field} />
               </FormControl>
               <FormDescription>
-                Tienes que ingresar los pasos seguimientos para la contrucionn del robot
+                Tienes que ingresar los pasos y seguimientos para la construcción del robot
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -64,4 +63,4 @@ const iaForm = () => {
   )
 }
 
-export default iaForm
+export default IaForm

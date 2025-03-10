@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { getInstances, generarCodigoQR } from '@/actions/api-action';
+import Image from 'next/image';
 
 interface QRCodeGeneratorProps {
     instanceName: string;
@@ -102,7 +103,15 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
                                 ) : (
                                     <div className="flex items-center justify-center">
                                         <div className="bg-white p-4 rounded-lg text-center">
-                                            {qrCode && <img src={qrCode} className="w-56 h-auto mx-auto" alt="Código QR" />}
+                                        {qrCode && (
+                                            <Image
+                                                src={qrCode}
+                                                alt="Código QR"
+                                                width={224} // equivalente a w-56 (56 * 4px = 224px)
+                                                height={224} // o el alto que desees
+                                                className="mx-auto"
+                                            />
+                                        )}
                                             <div className="mx-12">
                                                 <h3 className="text-lg font-semibold text-black my-4">🤚 Lee antes de escanear</h3>
                                                 <ul className="text-left text-sm text-gray-700">

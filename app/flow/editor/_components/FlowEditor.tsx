@@ -9,10 +9,9 @@ import Node from './Node';
 import { GetNodeforUser } from '@/actions/getNodeforUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-async function FlowEditor({workflow}:{workflow: Workflow}) {
+function FlowEditor({workflow}:{workflow: Workflow}) {
 
-  const nodes = await GetNodeforUser(workflow.id);
-
+  const nodes = GetNodeforUser(workflow.id);
 
 
   return (
