@@ -27,7 +27,7 @@ export default async function ClientesPage() {
         <div>
           <label className="block">Email</label>
           <input
-            type="email"
+            type="text"
             name="email"
             className="border px-2 py-1 w-full"
             required
@@ -87,7 +87,7 @@ export default async function ClientesPage() {
                       required
                     />
                     <input
-                      type="email"
+                      type="text"
                       name="email"
                       defaultValue={user.email}
                       className="border px-2 py-1"

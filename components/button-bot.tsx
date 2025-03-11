@@ -4,13 +4,15 @@ import { getInstances } from '@/actions/api-action';
 
 interface EnableToggleButtonProps {
   userId: string;
+  userName?: string | null;
 }
 
-const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({ userId }) => {
+const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({ userId, userName}) => {
   const [isEnabled, setIsEnabled] = useState<boolean | null>(null); // Cambiar el estado inicial a null
   const [loading, setLoading] = useState<boolean>(true); // Estado de carga inicial
   const [error, setError] = useState<string | null>(null);
   const [instanceData, setInstanceData] = useState<{ instanceName: string; instanceId: string } | null>(null);
+  
 
   const baseUrl = 'https://conexion-1.verzay.co';
 
@@ -72,8 +74,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({ userId }) => {
         body: JSON.stringify({
           webhook: {
             enabled: !isEnabled,
-            url: 'https://auto.aizenbots.com/webhook',
-            byEvents: true,
+            url: 'https://n8npro.verzay.co/webhook/'+userName,
             base64: true,
             events: ['MESSAGES_UPSERT'],
           },

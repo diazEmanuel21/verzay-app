@@ -18,6 +18,7 @@ export async function createUser(formData: FormData) {
       name,
       email,
       password, // 🚨 Aquí se guarda en texto plano, mejor agregar hashing luego
+      emailVerified: new Date(),
     },
   });
 

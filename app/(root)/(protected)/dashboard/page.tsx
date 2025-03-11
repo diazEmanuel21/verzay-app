@@ -32,7 +32,7 @@ export default async function DashboardPage() {
   </div>
   <div className="flex space-x-4">
     <WhatsAppInstanceStatus userId={user.id} />
-    <EnableToggleButton userId={user.id} />
+    <EnableToggleButton userId={user.id} userName={user.name}/>
   </div>
 </div>
       
