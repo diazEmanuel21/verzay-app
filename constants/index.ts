@@ -1,8 +1,13 @@
 export const navLinks = [
     {
       label: "Inicio",
-      route: "/dashboard",
+      route: "/",
       icon: "/assets/icons/home.svg",
+    },
+    {
+      label: "Conexion",
+      route: "/dashboard",
+      icon: "/assets/icons/scan.svg",
     },
     {
       label: "Crear IA",
@@ -117,8 +122,8 @@ export const navLinks = [
   export const transformationTypes = {
     create: {
       type: "create",
-      title: "BOT IA",
-      subTitle: "Crea tu chatbot con IA que te lleven a tus objetivos",
+      title: "VERZAY IA",
+      subTitle: "Tu socio estrategico para alcanzar resultados predecibles.",
       config: { create: true },
       icon: "image.svg",
     },

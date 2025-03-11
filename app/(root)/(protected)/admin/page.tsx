@@ -27,7 +27,19 @@ const AdminPage = async () => {
       />
     <div className="p-2">
       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <ConexionButton />
+          <ConexionButton
+            title="Administrador Conexiones"
+            description="Configura la api de sus cliente, puedes crear eliminar editar y cambiar la api de sus cliente"
+            link="/admin/conexion"
+            buttonLabel="Ir a Conexión"
+          />
+          <ConexionButton
+            title="Administrador Clientes"
+            description="Configura cada cliente, puedes agregar, editar, eliminar y cambiar su informacion."
+            link="admin/clientes"
+            buttonLabel="Ir a Clientes"
+          />
+          
         {/* Agrega más botones o *cards* si es necesario */}
       </div>
     </div>

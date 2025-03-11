@@ -19,7 +19,7 @@ const Sidebar = () => {
 
         <nav className="sidebar-nav">
           <ul className="sidebar-nav_elements">
-            {navLinks.slice(0, 4).map((link) => {
+            {navLinks.slice(0, 5).map((link) => {
               // Actualización de lógica para rutas activas
               const isActive = pathname === link.route || (link.route !== '/' && pathname.startsWith(link.route));
 
@@ -48,7 +48,7 @@ const Sidebar = () => {
 
 
           <ul className="sidebar-nav_elements">
-            {navLinks.slice(4).map((link) => {
+            {navLinks.slice(5).map((link) => {
               const isActive = link.route === pathname
 
               return (

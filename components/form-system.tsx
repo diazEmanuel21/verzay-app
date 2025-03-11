@@ -78,8 +78,8 @@ export default function FormSystemMessage({ userId }: { userId: string }) {
   };
 
   return (
-    <div className=" p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold mb-4">Crea tu Chatbot como mas te guste</h2>
+    <div className="p-6 bg-white rounded-lg shadow-md">
+      <h2 className="text-xl font-semibold mb-4">Entrena tu IA para que sea tu mejor aliado</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label htmlFor="message" className="block text-sm font-medium text-gray-700">

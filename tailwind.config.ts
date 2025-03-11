@@ -70,7 +70,7 @@ module.exports = {
       },
       backgroundImage: {
         "purple-gradient": "linear-gradient(135deg, #868CFF, #4318FF)",
-        banner: "url('/assets/images/banner-bg.png')",
+        banner: "url('/assets/image/banner-bg.png')",
       },
       borderRadius: {
         lg: "var(--radius)",
