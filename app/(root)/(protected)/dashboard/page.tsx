@@ -17,7 +17,7 @@ export default async function DashboardPage() {
   const session = await currentUser();
 
   const user = await db.user.findUnique({
-    where: {email: session?.email ?? ""}
+    where: { email: session?.email ?? "" }
   });
 
   if (!user) {
@@ -26,16 +26,16 @@ export default async function DashboardPage() {
 
   return (
     <>
-<div className="flex flex-col items-center justify-between  border rounded-lg shadow-lg">
-  <div className="">
-    <FormInstance userId={user.id} />
-  </div>
-  <div className="flex space-x-4">
-    <WhatsAppInstanceStatus userId={user.id} />
-    <EnableToggleButton userId={user.id} userName={user.name}/>
-  </div>
-</div>
-      
+      <div className="flex flex-col items-center justify-between  border rounded-lg shadow-lg">
+        <div className="">
+          <FormInstance userId={user.id} />
+        </div>
+        <div className="flex space-x-4">
+          <WhatsAppInstanceStatus userId={user.id} />
+          <EnableToggleButton userId={user.id} userName={user.name} />
+        </div>
+      </div>
+
     </>
 
   );
