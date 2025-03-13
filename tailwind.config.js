@@ -27,7 +27,7 @@ module.exports = {
           100: "#F4F7FE",
           200: "#BCB6FF",
           400: "#868CFF",
-          500: "#7857FF",
+          500: "#1f62e6",
           600: "#4318FF",
         },
         dark: {
@@ -69,7 +69,7 @@ module.exports = {
         IBMPlex: ["var(--font-ibm-plex)"],
       },
       backgroundImage: {
-        "purple-gradient": "linear-gradient(135deg, #868CFF, #4318FF)",
+        "purple-gradient": "linear-gradient(135deg, #1f62e6, #4D8EF7	)",
         banner: "url('/assets/image/banner-bg.png')",
       },
       borderRadius: {
