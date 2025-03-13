@@ -208,7 +208,7 @@ const ProfilePage = () => {
         </div>
 
         {/* Botones */}
-        {/* <div className="mt-6 flex items-center justify-end gap-x-4">
+        <div className="mt-6 flex items-center justify-end gap-x-4">
           <button
             type="button"
             onClick={handleCancel}
@@ -222,7 +222,7 @@ const ProfilePage = () => {
           >
             Guardar
           </button>
-        </div> */}
+        </div>
       </form>
     </>
   );
