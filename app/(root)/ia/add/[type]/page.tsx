@@ -35,8 +35,8 @@ const AddIapage = async ({ params: { type } }: SearchParamProps) => {
   return (
     <>
       <Header 
-        title={ia.title}
-        subtitle={ia.subTitle}
+        title={'Entrena tu IA'}
+        subtitle={'Agrega y personaliza las instrucciones para tu IA.'}
       />
 
       <FormSystemMessage userId={user.id} />
