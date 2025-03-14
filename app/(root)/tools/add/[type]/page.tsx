@@ -33,8 +33,8 @@
       return (
         <>
           <Header 
-            title={tools.title}
-            subtitle={tools.subTitle}
+            title={'Herramientas'}
+            subtitle={'Crea tus herramientas de automatización'}
           />
         </>
       )
