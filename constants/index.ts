@@ -122,8 +122,8 @@ export const navLinks = [
   export const transformationTypes = {
     create: {
       type: "create",
-      title: "VERZAY IA",
-      subTitle: "Tu socio estrategico para alcanzar resultados predecibles.",
+      // title: "Entrena tu IA",
+      // subTitle: "Agrega y personaliza las instrucciones para tu IA.",
       config: { create: true },
       icon: "image.svg",
     },

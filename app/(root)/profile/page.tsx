@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Header from '@/components/shared/header';
-import { PencilIcon, MapPinIcon, ArrowTopRightOnSquareIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
+import { PencilIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
 import { toast } from "sonner";
 
+const mapURLTemp = "https://www.google.com/maps/place/Centro+Comercial+La+Pasarela/@3.4661997,-76.5323626,17z/data=!3m1!4b1!4m6!3m5!1s0x8e30a615a38233e5:0x902921f7f517b0ec!8m2!3d3.4661997!4d-76.5274917!16s%2Fg%2F1q5bmfwzz?entry=ttu&g_ep=EgoyMDI1MDMxMS4wIKXMDSoASAFQAw%3D%3D";
 interface Client {
   apiUrl: string;
   company: string;
@@ -12,15 +13,17 @@ interface Client {
   lat: string;
   lng: string;
   openingPhrase: string;
+  mapsUrl?: string;
 }
 
 const initialClient: Client = {
   apiUrl: "https://chatgpt.com",
   company: "Metrowireless",
   notificationNumber: "+50686969986",
-  lat: "-34.9072876",
-  lng: "-56.1985678",
+  lat: "3.4661997",
+  lng: "-76.5323626",
   openingPhrase: "Fue un placer ayudarle.",
+  mapsUrl: mapURLTemp,
 };
 
 const ProfilePage = () => {
@@ -51,6 +54,33 @@ const ProfilePage = () => {
     setClient({ ...client, [name]: value });
   };
 
+  const handleMapsUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    setClient((prev) => ({ ...prev, mapsUrl: url }));
+
+    // Extraer latitud y longitud desde la URL
+    const regex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+    const match = url.match(regex);
+
+    if (match) {
+      const lat = match[1];
+      const lng = match[2];
+
+      setClient((prev) => ({
+        ...prev,
+        lat,
+        lng,
+      }));
+
+      toast.success("Coordenadas actualizadas", {
+        description: `Lat: ${lat}, Lng: ${lng}`,
+        duration: 3000,
+      });
+    } else {
+      toast.error("No se pudieron extraer las coordenadas de la URL");
+    }
+  };
+
   const validate = () => {
     const newErrors: { [key: string]: string } = {};
 
@@ -72,16 +102,6 @@ const ProfilePage = () => {
 
     if (!client.lat || !client.lng) {
       newErrors.latlng = "Debe ingresar coordenadas válidas.";
-    } else {
-      const lat = parseFloat(client.lat);
-      const lng = parseFloat(client.lng);
-
-      if (isNaN(lat) || lat < -90 || lat > 90) {
-        newErrors.lat = "Latitud inválida (-90 a 90).";
-      }
-      if (isNaN(lng) || lng < -180 || lng > 180) {
-        newErrors.lng = "Longitud inválida (-180 a 180).";
-      }
     }
 
     if (!client.openingPhrase || client.openingPhrase.length < 5) {
@@ -117,17 +137,13 @@ const ProfilePage = () => {
 
   return (
     <>
-      {/* <form onSubmit={handleSubmit} className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md"> */}
-      <form onSubmit={handleSubmit} className="max-w-4xl mx-auto rounded-lg ">
-       
-            <div className="space-y-12">
-            <div className="border-b border-gray-300 pb-6">
+      <form onSubmit={handleSubmit} className="max-w-4xl mx-auto rounded-lg">
+        <div className="space-y-12">
+          <div className="border-b border-gray-300 pb-6">
             <Header
               title={'Perfil de la Empresa'}
               subtitle={'Esta información se utilizará para la configuración de su agente.'}
             />
-            {/* <h2 className="text-lg font-semibold text-gray-900">Perfil de la Empresa</h2>
-            <p className="mt-1 text-sm text-gray-600">Esta información se utilizará para la configuración de su agente.</p> */}
 
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Campos Generales */}
@@ -168,7 +184,35 @@ const ProfilePage = () => {
                 </div>
               ))}
 
-              {/* Latitud y Longitud */}
+              {/* Input URL de Google Maps con toggleEdit */}
+              <div className="relative md:col-span-2">
+                <label htmlFor="mapsUrl" className="block text-sm font-medium text-gray-700">
+                  URL de Google Maps
+                </label>
+                <div className="mt-2 flex items-center">
+                  <input
+                    id="mapsUrl"
+                    name="mapsUrl"
+                    type="text"
+                    placeholder="Pega aquí la URL de Google Maps"
+                    value={client.mapsUrl}
+                    onChange={handleMapsUrlChange}
+                    readOnly={editableField !== "mapsUrl"}
+                    className={`block w-full rounded-md bg-white px-3 py-2 text-gray-900 outline-1 outline-gray-300 focus:ring-2 focus:ring-indigo-500 sm:text-sm ${editableField === "mapsUrl" ? "border-2 border-indigo-500 bg-gray-100" : ""
+                      }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => toggleEdit("mapsUrl")}
+                    className="ml-2 text-gray-500 hover:text-gray-700"
+                  >
+                    <PencilIcon className="w-5 h-5" />
+                  </button>
+                </div>
+                {errors["mapsUrl"] && <p className="mt-1 text-sm text-red-600">{errors["mapsUrl"]}</p>}
+              </div>
+
+              {/* Latitud y Longitud SOLO LECTURA */}
               {["lat", "lng"].map((coord) => (
                 <div key={coord}>
                   <label htmlFor={coord} className="block text-sm font-medium text-gray-700">
@@ -179,9 +223,9 @@ const ProfilePage = () => {
                     name={coord}
                     type="text"
                     value={client[coord as keyof Client]}
-                    onChange={handleChange}
+                    readOnly
                     placeholder={coord === "lat" ? "Ej: 9.9355165" : "Ej: -84.091532"}
-                    className="mt-2 block w-full rounded-md bg-white px-3 py-2 text-gray-900 outline-1 outline-gray-300 focus:ring-2 focus:ring-indigo-500 sm:text-sm"
+                    className="mt-2 block w-full rounded-md bg-gray-100 px-3 py-2 text-gray-900 outline-1 outline-gray-300 focus:ring-2 focus:ring-indigo-500 sm:text-sm cursor-not-allowed"
                   />
                   {errors[coord] && <p className="mt-1 text-sm text-red-600">{errors[coord]}</p>}
                 </div>
@@ -235,7 +279,7 @@ const getLabel = (key: string): string => {
     apiUrl: "URL de la API",
     company: "Empresa",
     notificationNumber: "Número de Notificaciones",
-    openingPhrase: "Frase de Cierre",
+    openingPhrase: "Frase de reactivación chat",
   };
   return labels[key] || key;
 };

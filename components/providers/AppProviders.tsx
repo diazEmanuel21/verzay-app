@@ -12,7 +12,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     return (
         <QueryClientProvider client={queryClient}>
             <ThemeProvider attribute="class"
-                defaultTheme="ligth" enableSystem >
+               enableSystem >
                 {children}
             </ThemeProvider>
             <ReactQueryDevtools />

@@ -1,137 +1,335 @@
-"use client"; // Esto habilita el componente para usar hooks como useState y manejar eventos en el lado del cliente
+"use client";
 
-import { agregarMensaje, obtenerMensajes, editarMensaje, eliminarMensaje } from "@/actions/api-action"; // Asegúrate de que las funciones estén disponibles
+import Header from '@/components/shared/header';
 import { useEffect, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
-export default function FormSystemMessage({ userId }: { userId: string }) {
-  const [message, setMessage] = useState<string>(""); // Mensaje del sistema
-  const [responseMessage, setResponseMessage] = useState<string | null>(null); // Mensaje de respuesta del servidor
+import {
+  agregarMensaje,
+  obtenerMensajes,
+  editarMensaje,
+  eliminarMensaje,
+} from "@/actions/api-action";
+
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { Skeleton } from './ui/skeleton';
+
+interface FormSystemMessageProps {
+  userId: string;
+}
+
+interface Message {
+  id: string;
+  title?: string;
+  message: string;
+}
+
+function MessagesSkeleton() {
+  return (
+    <div className="flex flex-col gap-3 max-h-[600px] overflow-y-auto">
+      {[1, 2, 3, 4].map((i) => (
+        <Skeleton key={i} className="h-24 w-full rounded-md" />
+      ))}
+    </div>
+  );
+}
+
+const PAGE_SIZE = 5;
+
+export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [messages, setMessages] = useState<any[]>([]); // Lista de mensajes
-  const [editingId, setEditingId] = useState<string | null>(null); // ID del mensaje que se está editando
 
-  // Efecto para cargar los mensajes al iniciar
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [title, setTitle] = useState<string>("");
+  const [message, setMessage] = useState<string>("");
+
+  const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const [page, setPage] = useState<number>(1);
+
   useEffect(() => {
-    const loadMessages = async () => {
-      const userMessages = await obtenerMensajes(userId);
-      setMessages(userMessages);
-    };
-
     loadMessages();
   }, [userId]);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const loadMessages = async () => {
     setLoading(true);
-    setResponseMessage(null); // Resetear el mensaje de respuesta
+    try {
+      const userMessages = await obtenerMensajes(userId);
+      setMessages(userMessages);
+    } catch (error) {
+      toast.error("Error al cargar los mensajes.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const handleSubmit = async () => {
+    if (!title.trim() || !message.trim()) {
+      toast.error("Todos los campos son obligatorios");
+      return;
+    }
+
+    setLoading(true);
     const formData = new FormData();
+    formData.append("title", title);
     formData.append("message", message);
     formData.append("userId", userId);
 
     try {
       let result;
 
-      // Si estamos editando un mensaje
       if (editingId) {
-        formData.append("id", editingId); // Agrega el ID para la edición
-        result = await editarMensaje(formData); // Llama a la función de edición
+        formData.append("id", editingId);
+        result = await editarMensaje(formData);
       } else {
-        result = await agregarMensaje(formData); // Llama a la función para agregar mensaje
+        result = await agregarMensaje(formData);
       }
 
-      setResponseMessage(result.message); // Mostrar el mensaje de respuesta del servidor
-
-      // Limpiar el campo del mensaje si la operación fue exitosa
       if (result.success) {
+        toast.success(result.message);
+        setTitle("");
         setMessage("");
-        setEditingId(null); // Reiniciar el ID de edición
-        // Recargar los mensajes después de agregar o editar
-        const userMessages = await obtenerMensajes(userId);
-        setMessages(userMessages);
+        setEditingId(null);
+        setDialogOpen(false);
+        loadMessages();
+      } else {
+        toast.error(result.message);
       }
     } catch (error) {
-      setResponseMessage("Hubo un error al procesar la solicitud.");
+      toast.error("Hubo un error al procesar la solicitud.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEdit = (msg: any) => {
-    setMessage(msg.message); // Establece el mensaje en el campo de texto
-    setEditingId(msg.id); // Guarda el ID del mensaje que se está editando
+  const openEditDialog = (msg: Message) => {
+    setTitle(msg.title ?? '');
+    setMessage(msg.message ?? '');
+    setEditingId(msg.id);
+    setDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm("¿Estás seguro de que deseas eliminar este mensaje?")) {
-      try {
-        const result = await eliminarMensaje(id); // Llama a la función de eliminación
-        setResponseMessage(result.message); // Mostrar el mensaje de respuesta
+  const confirmDelete = (id: string) => {
+    setDeleteId(id);
+    setDeleteDialogOpen(true);
+  };
 
-        // Recargar los mensajes después de eliminar
-        const userMessages = await obtenerMensajes(userId);
-        setMessages(userMessages);
-      } catch (error) {
-        setResponseMessage("Hubo un error al procesar la solicitud.");
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setLoading(true);
+
+    try {
+      const result = await eliminarMensaje(deleteId);
+      if (result.success) {
+        toast.success(result.message);
+        loadMessages();
+      } else {
+        toast.error(result.message);
       }
+    } catch (error) {
+      toast.error("Error al eliminar el mensaje");
+    } finally {
+      setLoading(false);
+      setDeleteDialogOpen(false);
     }
   };
 
+  const totalPages = Math.ceil(messages.length / PAGE_SIZE);
+  const paginatedMessages = messages.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const truncateMessage = (text: string, maxLength: number) => {
+    if (text.length <= maxLength) return text;
+    return text.slice(0, maxLength) + "… Ver más";
+  };
+
   return (
-    <div className="p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold mb-4">Entrena tu IA para que sea tu mejor aliado</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label htmlFor="message" className="block text-sm font-medium text-gray-700">
-            Mensaje:
-          </label>
-          <textarea
-            id="message"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-blue-500"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full py-2 px-4 rounded-md text-white font-semibold ${
-            loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
-          } transition duration-200`}
-        >
-          {loading ? "Guardando..." : editingId ? "Actualizar Mensaje" : "Agregar Mensaje"}
-        </button>
-      </form>
-      {responseMessage && (
-        <p className={`mt-4 text-sm ${responseMessage.startsWith("Error") ? "text-red-500" : "text-green-600"}`}>
-          {responseMessage}
-        </p>
-      )}
-      
-      {/* Listado de mensajes del sistema */}
-      <h3 className="text-lg font-semibold mt-6">Funciones del Robot:</h3>
-      <ul className="mt-4">
-        {messages.map((msg) => (
-          <li key={msg.id} className="flex justify-between items-center p-2 border-b">
-            <span>{msg.message}</span>
-            <div>
-              <button
-                onClick={() => handleEdit(msg)}
-                className="text-blue-600 hover:underline mx-2"
-              >
-                Editar
-              </button>
-              <button
-                onClick={() => handleDelete(msg.id)}
-                className="text-red-600 hover:underline"
-              >
-                Eliminar
-              </button>
+    <>
+      {/* Forzar toast por encima de Dialog */}
+      {/* <div className="z-[9999] fixed top-0 right-0 w-full flex justify-end pointer-events-none" /> */}
+      <div className="flex justify-between pb-6">
+        <Header
+          title={'Entrena tu IA'}
+          subtitle={'Agrega y personaliza las instrucciones para tu IA.'}
+        />
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button
+              className="font-bold uppercase"
+              onClick={() => {
+                setEditingId(null);
+                setTitle("");
+                setMessage("");
+              }}
+            >
+              Agregar
+            </Button>
+          </DialogTrigger>
+
+          <DialogContent className="max-w-4xl h-[600px] flex flex-col">
+            <DialogHeader>
+              <DialogTitle>{editingId ? "Editar Mensaje" : "Nuevo Mensaje"}</DialogTitle>
+              <DialogDescription>
+                Completa los campos para personalizar tu IA
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* Contenedor que crece */}
+            <div className="flex flex-col gap-4 flex-1">
+              {/* Campo Título */}
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="title">Título</Label>
+                <Input
+                  id="title"
+                  maxLength={100} // Limita el input a 50 caracteres
+                  placeholder="Ejemplo: Bienvenida"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+
+              {/* Campo Mensaje que ocupa el espacio restante */}
+              <div className="flex flex-col gap-2 flex-1">
+                <Label htmlFor="message">Descripción</Label>
+                <Textarea
+                  id="message"
+                  placeholder="Ejemplo: Saluda cordialmente al usuario y ofrece ayuda."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="flex-1 resize-none overflow-y-auto"
+                />
+              </div>
             </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+
+            <DialogFooter className="mt-4">
+              <Button onClick={handleSubmit} disabled={loading}>
+                {loading ? "Guardando..." : editingId ? "Actualizar" : "Guardar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+
+        </Dialog>
+      </div>
+
+      <div>
+
+        {loading ? (
+          <MessagesSkeleton />) : messages.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Aún no hay mensajes configurados.</p>
+          ) : (
+          <div
+            className="flex flex-col gap-3 max-h-[600px] overflow-y-auto"
+          >
+            {paginatedMessages.map((msg) => (
+              <Card key={msg.id} className="p-4 flex justify-between items-start">
+                <div>
+                  <h4 className="text-base font-medium">{msg.title}</h4>
+                  <p
+                    className="text-sm text-muted-foreground cursor-pointer hover:underline"
+                    onClick={() => openEditDialog(msg)}
+                  >
+                    {truncateMessage(msg.message, 100)}
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button className="bg-orange-500 text-white hover:bg-orange-600"
+                    size="icon" onClick={() => openEditDialog(msg)}>
+                    <PencilSquareIcon className="h-5 w-5" />
+                  </Button>
+
+                  <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => confirmDelete(msg.id)}
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </Button>
+
+                    </AlertDialogTrigger>
+
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>¿Eliminar mensaje?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta acción no se puede deshacer. ¿Estás seguro de eliminar este mensaje?
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+
+                      <AlertDialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                          Cancelar
+                        </Button>
+                        <Button variant="destructive" onClick={handleDelete} disabled={loading}>
+                          {loading ? "Eliminando..." : "Eliminar"}
+                        </Button>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-4 mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+              disabled={page === 1}
+            >
+              Anterior
+            </Button>
+            <Badge variant="secondary">
+              Página {page} de {totalPages}
+            </Badge>
+            <Button
+              size="sm"
+              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={page === totalPages}
+            >
+              Siguiente
+            </Button>
+          </div>
+        )}
+      </div>
+
+    </>
   );
 }
