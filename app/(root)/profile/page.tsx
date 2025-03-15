@@ -1,285 +1,33 @@
-"use client";
+import { transformationTypes } from '@/constants';
+import { db } from "@/lib/db";
+import { currentUser } from "@/lib/auth";
+import { UserInformation } from '@/components/UserInformation';
 
-import { useState, useEffect } from "react";
-import Header from '@/components/shared/header';
-import { PencilIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
-import { toast } from "sonner";
+// Define un tipo literal que coincida con las claves de transformationTypes
+type TransformationTypeKeys = keyof typeof transformationTypes;
 
-const mapURLTemp = "https://www.google.com/maps/place/Centro+Comercial+La+Pasarela/@3.4661997,-76.5323626,17z/data=!3m1!4b1!4m6!3m5!1s0x8e30a615a38233e5:0x902921f7f517b0ec!8m2!3d3.4661997!4d-76.5274917!16s%2Fg%2F1q5bmfwzz?entry=ttu&g_ep=EgoyMDI1MDMxMS4wIKXMDSoASAFQAw%3D%3D";
-interface Client {
-  apiUrl: string;
-  company: string;
-  notificationNumber: string;
-  lat: string;
-  lng: string;
-  openingPhrase: string;
-  mapsUrl: string;
+interface SearchParamProps {
+  params: {
+    type: TransformationTypeKeys; // Usa el tipo literal aquí
+  };
 }
 
-const initialClient: Client = {
-  apiUrl: "https://chatgpt.com",
-  company: "Metrowireless",
-  notificationNumber: "+50686969986",
-  lat: "3.4661997",
-  lng: "-76.5323626",
-  openingPhrase: "Fue un placer ayudarle.",
-  mapsUrl: mapURLTemp,
-};
+const ProfilePage = async ({ params: { type } }: SearchParamProps) => {  
+  const session = await currentUser();
 
-const ProfilePage = () => {
-  const [client, setClient] = useState<Client>(initialClient);
-  const [editableField, setEditableField] = useState<string | null>(null);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [showApiUrl, setShowApiUrl] = useState(false);
-
-  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number }>({
-    lat: parseFloat(initialClient.lat),
-    lng: parseFloat(initialClient.lng),
+  const user = await db.user.findUnique({
+    where: {email: session?.email ?? ""}
   });
 
-  useEffect(() => {
-    const lat = parseFloat(client.lat);
-    const lng = parseFloat(client.lng);
-    if (!isNaN(lat) && !isNaN(lng)) {
-      setCoordinates({ lat, lng });
-    }
-  }, [client.lat, client.lng]);
-
-  const toggleEdit = (field: string) => {
-    setEditableField(editableField === field ? null : field);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setClient({ ...client, [name]: value });
-  };
-
-  const handleMapsUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = e.target.value;
-    setClient((prev) => ({ ...prev, mapsUrl: url }));
-
-    // Extraer latitud y longitud desde la URL
-    const regex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
-    const match = url.match(regex);
-
-    if (match) {
-      const lat = match[1];
-      const lng = match[2];
-
-      setClient((prev) => ({
-        ...prev,
-        lat,
-        lng,
-      }));
-
-      toast.success("Coordenadas actualizadas", {
-        description: `Lat: ${lat}, Lng: ${lng}`,
-        duration: 3000,
-      });
-    } else {
-      toast.error("No se pudieron extraer las coordenadas de la URL");
-    }
-  };
-
-  const validate = () => {
-    const newErrors: { [key: string]: string } = {};
-
-    if (!client.apiUrl) {
-      newErrors.apiUrl = "La URL de la API es obligatoria.";
-    } else if (!/^https?:\/\/\S+$/i.test(client.apiUrl)) {
-      newErrors.apiUrl = "Debe ser una URL válida.";
-    }
-
-    if (!client.company || client.company.length < 3) {
-      newErrors.company = "Debe ingresar un nombre de empresa válido (mínimo 3 caracteres).";
-    }
-
-    if (!client.notificationNumber) {
-      newErrors.notificationNumber = "Debe ingresar un número de notificación.";
-    } else if (!/^\+\d{8,15}$/.test(client.notificationNumber)) {
-      newErrors.notificationNumber = "Debe ser un número en formato internacional. Ejemplo: +50686969986.";
-    }
-
-    if (!client.lat || !client.lng) {
-      newErrors.latlng = "Debe ingresar coordenadas válidas.";
-    }
-
-    if (!client.openingPhrase || client.openingPhrase.length < 5) {
-      newErrors.openingPhrase = "Debe ingresar una frase válida (mínimo 5 caracteres).";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    toast.success("¡Guardado correctamente!", {
-      description: "La configuración del cliente fue actualizada exitosamente.",
-      duration: 3000,
-    });
-    console.log("Datos del cliente:", client);
-  };
-
-  const handleCancel = () => {
-    setClient(initialClient);
-    setErrors({});
-    setEditableField(null);
-    setShowApiUrl(false);
-
-    toast("Cambios descartados", {
-      description: "Se han restablecido los valores originales.",
-      duration: 3000,
-    });
-  };
+  if (!user) {
+    return <div>Not authenticated</div>;
+  }
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="max-w-4xl mx-auto rounded-lg">
-        <div className="space-y-12">
-          <div className="border-b border-gray-300 pb-6">
-            <Header
-              title={'Perfil de la Empresa'}
-              subtitle={'Esta información se utilizará para la configuración de su agente.'}
-            />
-
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Campos Generales */}
-              {["apiUrl", "company", "notificationNumber", "openingPhrase"].map((key) => (
-                <div key={key} className="relative">
-                  <label htmlFor={key} className="block text-sm font-medium text-gray-700">
-                    {getLabel(key)}
-                  </label>
-                  <div className="mt-2 flex items-center">
-                    <input
-                      id={key}
-                      name={key}
-                      type={key === "apiUrl" && !showApiUrl ? "password" : "text"}
-                      value={client[key as keyof Client]}
-                      onChange={handleChange}
-                      readOnly={editableField !== key}
-                      className={`block w-full rounded-md bg-white px-3 py-2 text-gray-900 outline-1 outline-gray-300 focus:ring-2 focus:ring-indigo-500 sm:text-sm ${editableField === key ? "border-2 border-indigo-500 bg-gray-100" : ""
-                        }`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => toggleEdit(key)}
-                      className="ml-2 text-gray-500 hover:text-gray-700"
-                    >
-                      <PencilIcon className="w-5 h-5" />
-                    </button>
-                    {key === "apiUrl" && (
-                      <button
-                        type="button"
-                        onClick={() => setShowApiUrl(!showApiUrl)}
-                        className="ml-2 text-gray-500 hover:text-gray-700"
-                      >
-                        {showApiUrl ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-                      </button>
-                    )}
-                  </div>
-                  {errors[key] && <p className="mt-1 text-sm text-red-600">{errors[key]}</p>}
-                </div>
-              ))}
-
-              {/* Input URL de Google Maps con toggleEdit */}
-              <div className="relative md:col-span-2">
-                <label htmlFor="mapsUrl" className="block text-sm font-medium text-gray-700">
-                  URL de Google Maps
-                </label>
-                <div className="mt-2 flex items-center">
-                  <input
-                    id="mapsUrl"
-                    name="mapsUrl"
-                    type="text"
-                    placeholder="Pega aquí la URL de Google Maps"
-                    value={client.mapsUrl}
-                    onChange={handleMapsUrlChange}
-                    readOnly={editableField !== "mapsUrl"}
-                    className={`block w-full rounded-md bg-white px-3 py-2 text-gray-900 outline-1 outline-gray-300 focus:ring-2 focus:ring-indigo-500 sm:text-sm ${editableField === "mapsUrl" ? "border-2 border-indigo-500 bg-gray-100" : ""
-                      }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => toggleEdit("mapsUrl")}
-                    className="ml-2 text-gray-500 hover:text-gray-700"
-                  >
-                    <PencilIcon className="w-5 h-5" />
-                  </button>
-                </div>
-                {errors["mapsUrl"] && <p className="mt-1 text-sm text-red-600">{errors["mapsUrl"]}</p>}
-              </div>
-
-              {/* Latitud y Longitud SOLO LECTURA */}
-              {["lat", "lng"].map((coord) => (
-                <div key={coord}>
-                  <label htmlFor={coord} className="block text-sm font-medium text-gray-700">
-                    {coord === "lat" ? "Latitud" : "Longitud"}
-                  </label>
-                  <input
-                    id={coord}
-                    name={coord}
-                    type="text"
-                    value={client[coord as keyof Client]}
-                    readOnly
-                    placeholder={coord === "lat" ? "Ej: 9.9355165" : "Ej: -84.091532"}
-                    className="mt-2 block w-full rounded-md bg-gray-100 px-3 py-2 text-gray-900 outline-1 outline-gray-300 focus:ring-2 focus:ring-indigo-500 sm:text-sm cursor-not-allowed"
-                  />
-                  {errors[coord] && <p className="mt-1 text-sm text-red-600">{errors[coord]}</p>}
-                </div>
-              ))}
-            </div>
-
-            {/* Vista previa del mapa */}
-            <div className="mt-10">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Vista previa de ubicación</h3>
-              {coordinates.lat && coordinates.lng ? (
-                <div className="border rounded-md overflow-hidden shadow-sm">
-                  <iframe
-                    src={`https://www.google.com/maps?q=${coordinates.lat},${coordinates.lng}&output=embed`}
-                    width="100%"
-                    height="300"
-                    loading="lazy"
-                  />
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">Ingresa latitud y longitud válidas para ver la ubicación.</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Botones */}
-        <div className="mt-6 flex items-center justify-end gap-x-4">
-          <button
-            type="button"
-            onClick={handleCancel}
-            className="text-sm font-semibold text-gray-900 hover:text-gray-700"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-indigo-500 focus:ring-2 focus:ring-indigo-500"
-          >
-            Guardar
-          </button>
-        </div>
-      </form>
+      <UserInformation userId={user.id} />
     </>
   );
-};
+}
 
 export default ProfilePage;
-
-const getLabel = (key: string): string => {
-  const labels: { [key: string]: string } = {
-    apiUrl: "URL de la API",
-    company: "Empresa",
-    notificationNumber: "Número de Notificaciones",
-    openingPhrase: "Frase de reactivación chat",
-  };
-  return labels[key] || key;
-};
