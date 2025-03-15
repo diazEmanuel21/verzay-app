@@ -13,7 +13,7 @@ interface Client {
   lat: string;
   lng: string;
   openingPhrase: string;
-  mapsUrl?: string;
+  mapsUrl: string;
 }
 
 const initialClient: Client = {

@@ -20,15 +20,22 @@ model User {
   emailVerified DateTime?
   image         String?
   role          Role      @default(user)
+  
+  // Nuevos campos obligatorios con valor por defecto
+  apiUrl             String   @default("")
+  company            String   @default("")
+  notificationNumber String   @default("")
+  lat                String   @default("")
+  lng                String   @default("")
+  openingPhrase      String   @default("")
+  mapsUrl            String   @default("") // Aunque es opcional en el interface, aquí lo dejamos obligatorio con valor por defecto
+
+  // Relaciones existentes
   apikeys       ApiKey[]
-
-  accounts Account[]
-
-  instancias Instancias[]
-
-  systemMessages  SystemMessage[] 
-
-  tools  Tools[] 
+  accounts      Account[]
+  instancias    Instancias[]
+  systemMessages  SystemMessage[]
+  tools         Tools[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
