@@ -1,8 +1,14 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getInstances, generarCodigoQR } from '@/actions/api-action';
-import Image from 'next/image';
+
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Loader2, QrCode, CheckCircle, Link, X } from "lucide-react";
+import Image from "next/image";
+import { toast } from "sonner";
 
 interface QRCodeGeneratorProps {
     instanceName: string;
@@ -69,65 +75,90 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
     };
 
     return (
-        <div className='flex flex-col items-center justify-center'>
-            <button 
+        <div className="flex flex-col items-center justify-center gap-4">
+            <Button
                 onClick={handleOpenModal}
-                className={`px-4 py-2 rounded-md text-white ${connectionStatus ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-500 hover:bg-gray-600'}`} // Cambiamos las clases aquí
+                variant={connectionStatus ? "default" : "secondary"}
+                className="flex items-center gap-2"
             >
-                {connectionStatus ? 'Conectado' : 'Conectar'}
-            </button>
+                {connectionStatus ? (
+                    <>
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        Conectado
+                    </>
+                ) : (
+                    <>
+                        <Link className="w-4 h-4" />
+                        Conectar
+                    </>
+                )}
+            </Button>
 
-            {isModalOpen && (
-                <div 
-                    className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center"
-                    onClick={handleBackdropClick} // Manejar clics en el fondo
-                >
-                    <div className="bg-white relative text-center rounded-lg p-2">
-                        <button 
-                            onClick={handleCloseModal} 
-                            className="absolute top-2 right-2 text-gray-500 hover:text-gray-800" 
-                        >
-                            Cerrar
-                        </button>
+            <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
+                <DialogContent onClick={handleBackdropClick}>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <QrCode className="w-5 h-5" />
+                            {connectionStatus ? "¡Conexión exitosa!" : "Escanea el código QR"}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {connectionStatus
+                                ? "Ya puedes usar la integración con WhatsApp."
+                                : "Sigue las instrucciones antes de escanear el código QR."}
+                        </DialogDescription>
+                    </DialogHeader>
 
-                        {loading && <p>Cargando...</p>}
-                        {error ? (
-                            <p>{error}</p>
-                        ) : (
-                            <>
-                                {connectionStatus ? (
-                                    <div className="text-center">
-                                        <h3 className="text-lg font-semibold text-black my-4">¡Super! Se completaron los Pasos</h3>
-                                        <p className="text-green-500">WhatsApp Conectado</p>
+                    {loading && (
+                        <div className="flex items-center justify-center">
+                            <Loader2 className="animate-spin w-6 h-6" />
+                        </div>
+                    )}
+
+                    {error && (
+                        <Alert variant="destructive">
+                            <AlertTitle>Error</AlertTitle>
+                            <AlertDescription>{error}</AlertDescription>
+                        </Alert>
+                    )}
+
+                    {!error && !loading && (
+                        <>
+                            {connectionStatus ? (
+                                <div className="flex flex-col items-center gap-2">
+                                    <CheckCircle className="w-10 h-10 text-green-500" />
+                                    <p className="text-green-600 font-medium">WhatsApp conectado correctamente</p>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center">
+                                    {qrCode && (
+                                        <Image
+                                            src={qrCode}
+                                            alt="Código QR"
+                                            width={224}
+                                            height={224}
+                                            className="mx-auto rounded-lg border"
+                                        />
+                                    )}
+                                    <div className="mt-4 text-left space-y-2 text-sm text-gray-700 max-w-sm">
+                                        <h3 className="font-semibold text-base">🤚 Lee antes de escanear:</h3>
+                                        <ul className="list-decimal list-inside space-y-1">
+                                            <li>
+                                                Abre <span className="font-bold text-black">WhatsApp Business</span> en tu teléfono.
+                                            </li>
+                                            <li>
+                                                Toca el icono <span className="font-bold text-black">Dispositivos vinculados</span> &gt; vincular un <span className="font-bold text-black">dispositivo</span>.
+                                            </li>
+                                            <li>
+                                                Apunta la <span className="font-bold text-black">cámara</span> de tu teléfono a la pantalla para escanear el código <span className="font-bold text-black">QR</span>.
+                                            </li>
+                                        </ul>
                                     </div>
-                                ) : (
-                                    <div className="flex items-center justify-center">
-                                        <div className="bg-white p-4 rounded-lg text-center">
-                                        {qrCode && (
-                                            <Image
-                                                src={qrCode}
-                                                alt="Código QR"
-                                                width={224} // equivalente a w-56 (56 * 4px = 224px)
-                                                height={224} // o el alto que desees
-                                                className="mx-auto"
-                                            />
-                                        )}
-                                            <div className="mx-12">
-                                                <h3 className="text-lg font-semibold text-black my-4">🤚 Lee antes de escanear</h3>
-                                                <ul className="text-left text-sm text-gray-700">
-                                                    <li className='py-1'>1. Abre <span className="font-bold text-black">WhatsApp Business</span> en tu teléfono.</li>
-                                                    <li className='py-1'>2. Toca el icono <span className="font-bold text-black">Dispositivos vinculados</span> &gt; vincular un <span className="font-bold text-black">dispositivo</span>.</li>
-                                                    <li className='py-1'>3. Apunta la <span className="font-bold text-black">cámara</span> de tu teléfono a la pantalla del dispositivo que quieras vincular para escanear el código <span className="font-bold text-black">QR</span>.</li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </div>
-                </div>
-            )}
+                                </div>
+                            )}
+                        </>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

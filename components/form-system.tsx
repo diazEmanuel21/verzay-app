@@ -78,6 +78,7 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const [page, setPage] = useState<number>(1);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   useEffect(() => {
     loadMessages();
@@ -167,7 +168,14 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
   };
 
   const totalPages = Math.ceil(messages.length / PAGE_SIZE);
-  const paginatedMessages = messages.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const filteredMessages = messages.filter(
+    (msg) =>
+      (msg.title?.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const paginatedMessages = filteredMessages.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
 
   const truncateMessage = (text: string, maxLength: number) => {
     if (text.length <= maxLength) return text;
@@ -240,6 +248,19 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
           </DialogContent>
 
         </Dialog>
+      </div>
+
+      {/* Buscador */}
+      <div className="flex items-center justify-between mb-4">
+        <Input
+          placeholder="Buscar mensaje..."
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setPage(1); // Reiniciar a la primera página cuando busque algo nuevo
+          }}
+          className="max-w-sm"
+        />
       </div>
 
       <div>
