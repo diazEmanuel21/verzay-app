@@ -1,7 +1,6 @@
 import { db } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 
-import LogoutButton from "@/components/logout-button";
 import FormInstance from "@/components/form-Instance";
 import QRCodeGenerator from "@/components/form-qr";
 import EnableToggleButton from "@/components/button-bot";
@@ -22,21 +21,14 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col justify-center items-center">
       <Card className="max-w-[600px]">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold">
-            Administración de Instancia
-          </CardTitle>
-        </CardHeader>
-
-        <CardContent className="flex flex-col gap-6">
-
+        <CardContent className="flex flex-col">
           {/* Contenedor para el formulario */}
           <div className="flex flex-col w-full">
             <FormInstance userId={user.id} />
           </div>
 
           {/* Contenedor horizontal para QR y botón de toggle */}
-          <div className="flex flex-row  justify-between items-center">
+          <div className="flex flex-row  justify-between items-center gap-2">
 
             {/* QR Generator */}
             <div className="flex-1">

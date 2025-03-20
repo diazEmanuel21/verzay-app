@@ -27,7 +27,7 @@ export default function FormInstance({ userId }: { userId: string }) {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
-  
+
     if (instanceExists) {
       const msg = "El usuario ya tiene una instancia activa.";
       setMessage(msg);
@@ -35,28 +35,28 @@ export default function FormInstance({ userId }: { userId: string }) {
       setLoading(false);
       return;
     }
-  
+
     const formData = new FormData();
     formData.append("instanceName", instanceName);
     formData.append("userId", userId);
-  
+
     try {
       const result = await createInstance(formData);
-  
+
       if (result.success) {
         toast.success(result.message);
         setMessage(result.message);
-  
+
         // Aquí actualizamos el estado sin recargar
         setInstanceExists(true);
         setInstanceName(""); // Reset del input si quieres
-  
+
         // Opcional: Si quieres que otros componentes se actualicen, puedes manejarlo en el padre o con un hook global
       } else {
         toast.error(result.message);
         setMessage(result.message);
       }
-  
+
     } catch (error) {
       const errorMsg = "Hubo un error al procesar la solicitud.";
       setMessage(errorMsg);
@@ -70,30 +70,20 @@ export default function FormInstance({ userId }: { userId: string }) {
     <>
       <CardHeader>
         <CardTitle className="flex items-center">
-          {instanceExists ? (
+          <p className="mr-2">Instancia:</p>
+
+          {instanceExists &&
             <>
-              Instancia creada:
+              <p className="font-medium text-lg">{instanceName}</p>
             </>
-          ) : (
-            <>
-              <PlusCircle className="mr-2 text-blue-500" />
-              Crear Nueva Instancia
-            </>
-          )}
+          }
         </CardTitle>
       </CardHeader>
 
       <CardContent>
-        {instanceExists ? (
-          <div className="space-y-4">
-              <p className="font-medium text-lg">{instanceName}</p>
-          </div>
-        ) : (
+        {!instanceExists && (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="instanceName" className="block text-sm font-medium mb-1">
-                Nombre de la Instancia
-              </label>
               <Input
                 id="instanceName"
                 value={instanceName}

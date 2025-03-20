@@ -79,7 +79,9 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
             <Button
                 onClick={handleOpenModal}
                 variant={connectionStatus ? "default" : "secondary"}
-                className="flex items-center gap-2"
+                // className="flex items-center gap-2"
+                className="flex items-center gap-2 w-full max-w-xs justify-center py-6 rounded-xl text-base font-semibold transition-all"
+
             >
                 {connectionStatus ? (
                     <>

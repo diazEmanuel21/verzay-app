@@ -50,8 +50,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
       }
     } catch (err) {
       setError(
-        `Error al cargar las instancias: ${
-          err instanceof Error ? err.message : String(err)
+        `Error al cargar las instancias: ${err instanceof Error ? err.message : String(err)
         }`
       );
     } finally {
@@ -84,8 +83,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
       }
     } catch (err) {
       setError(
-        `Error al obtener el estado del webhook: ${
-          err instanceof Error ? err.message : String(err)
+        `Error al obtener el estado del webhook: ${err instanceof Error ? err.message : String(err)
         }`
       );
     }
@@ -131,9 +129,8 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
         toast.warning("Robot apagado correctamente.");
       }
     } catch (err) {
-      const errorMessage = `Error al cambiar el estado: ${
-        err instanceof Error ? err.message : String(err)
-      }`;
+      const errorMessage = `Error al cambiar el estado: ${err instanceof Error ? err.message : String(err)
+        }`;
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -146,97 +143,99 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
   }, [userId]);
 
   return (
-    <div className="flex flex-col items-center justify-center p-4 gap-4 w-full">
-      {/* Alerta de error */}
-      {error && (
-        <Alert variant="destructive" className="w-full max-w-sm">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+    <div className="flex flex-col items-center justify-center w-full">
+      <div className="flex flex-col items-center justify-center w-full">
+        {/* Alerta de error */}
+        {error && (
+          <Alert variant="destructive" className="w-full max-w-sm">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-      {/* BOTÓN DE ENCENDIDO */}
-      {!isEnabled ? (
-        <Button
-          onClick={toggleEnable}
-          disabled={loading || !instanceData}
-          className="flex items-center gap-2 w-full max-w-xs justify-center py-6 rounded-xl text-base font-semibold transition-all"
-          variant="default"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="animate-spin w-5 h-5" />
-              Encendiendo...
-            </>
-          ) : (
-            <>
-              <Power className="w-6 h-6" />
-              Encender Robot
-            </>
-          )}
-        </Button>
-      ) : (
-        // BOTÓN DE APAGADO CON ALERT DIALOG
-        <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <AlertDialogTrigger asChild>
-            <Button
-              disabled={loading || !instanceData}
-              className="flex items-center gap-2 w-full max-w-xs justify-center py-6 rounded-xl text-base font-semibold transition-all"
-              variant="destructive"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="animate-spin w-5 h-5" />
-                  Apagando...
-                </>
-              ) : (
-                <>
-                  <Power className="w-6 h-6" />
-                  Apagar Robot
-                </>
-              )}
-            </Button>
-          </AlertDialogTrigger>
-
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Esto apagará el Robot de la instancia. Las respuestas
-                automáticas se detendrán hasta que vuelvas a encenderlo.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setIsDialogOpen(false)}>
-                Cancelar
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={async () => {
-                  setIsDialogOpen(false);
-                  await toggleEnable();
-                }}
-                className="bg-red-600 hover:bg-red-700"
+        {/* BOTÓN DE ENCENDIDO */}
+        {!isEnabled ? (
+          <Button
+            onClick={toggleEnable}
+            disabled={loading || !instanceData}
+            className="flex items-center gap-2 w-full max-w-xs justify-center py-6 rounded-xl text-base font-semibold transition-all"
+            variant="default"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="animate-spin w-5 h-5" />
+                Encendiendo...
+              </>
+            ) : (
+              <>
+                <Power className="w-6 h-6" />
+                Encender Robot
+              </>
+            )}
+          </Button>
+        ) : (
+          // BOTÓN DE APAGADO CON ALERT DIALOG
+          <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button
+                disabled={loading || !instanceData}
+                className="flex items-center gap-2 w-full max-w-xs justify-center py-6 rounded-xl text-base font-semibold transition-all"
+                variant="destructive"
               >
-                Confirmar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
+                {loading ? (
+                  <>
+                    <Loader2 className="animate-spin w-5 h-5" />
+                    Apagando...
+                  </>
+                ) : (
+                  <>
+                    <Power className="w-6 h-6" />
+                    Apagar Robot
+                  </>
+                )}
+              </Button>
+            </AlertDialogTrigger>
 
-      {/* Estado actual en texto */}
-      <p
-        className={`text-sm ${
-          isEnabled
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esto apagará el Robot de la instancia. Las respuestas
+                  automáticas se detendrán hasta que vuelvas a encenderlo.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setIsDialogOpen(false)}>
+                  Cancelar
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={async () => {
+                    setIsDialogOpen(false);
+                    await toggleEnable();
+                  }}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Confirmar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+
+        {/* Estado actual en texto */}
+
+      </div>
+      {/* <p
+        className={`text-sm ${isEnabled
             ? "text-green-600 font-medium"
             : "text-red-600 font-medium"
-        }`}
+          }`}
       >
         {isEnabled === null
           ? "Estado desconocido"
           : isEnabled
-          ? "Robot ACTIVO"
-          : "Robot APAGADO"}
-      </p>
+            ? "Robot ACTIVO"
+            : "Robot APAGADO"}
+      </p> */}
     </div>
   );
 };

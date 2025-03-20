@@ -17,8 +17,14 @@ import {
 } from "@/components/ui/sidebar";
 import LogoutButton from "./logout-button";
 import { ModeToggle } from "./theme-toggle-button";
+import { User } from "@prisma/client";
 
-export function AppSidebar() {
+
+type userInterfaceProps = {
+  userInformation: User;
+};
+
+export const AppSidebar = ({ userInformation }: userInterfaceProps) => {
   const pathname = usePathname();
 
   return (
@@ -54,11 +60,10 @@ export function AppSidebar() {
               <SidebarMenuItem key={link.route}>
                 <SidebarMenuButton
                   asChild
-                  className={`sidebar-nav_element group ${
-                    isActive
-                      ? "bg-purple-50 shadow-inner text-gray-900"
-                      : "text-gray-700"
-                  }`}
+                  className={`sidebar-nav_element group ${isActive
+                    ? "bg-purple-50 shadow-inner text-gray-900"
+                    : "text-gray-700"
+                    }`}
                 >
                   <Link className="sidebar-link flex items-center gap-2" href={link.route}>
                     <Image
@@ -81,7 +86,7 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <LogoutButton />
+            <LogoutButton userInformation={userInformation} />
           </SidebarMenuItem>
           <SidebarMenuItem>
             <ModeToggle />

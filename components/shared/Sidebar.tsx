@@ -3,18 +3,23 @@
 import { navLinks } from '@/constants';
 import Image from 'next/image';
 import Link from 'next/link';
+import { User } from '@prisma/client';
 import { usePathname } from 'next/navigation';
-import React from 'react';
 import LogoutButton from '../logout-button';
 
-const Sidebar = () => {
+type userInterfaceProps = {
+  userInformation: User;
+};
+
+
+const Sidebar = ({ userInformation }: userInterfaceProps) => {
   const pathname = usePathname();
 
   return (
     <aside className="sidebar">
       <div className="flex size-full flex-col gap-4">
         <Link href="/" className="sidebar-logo">
-          <Image src="/assets/image/logo2.png" alt="logo" width={140} height={28} />
+          <Image src="/assets/image/logo2.svg" alt="logo" width={140} height={28} />
         </Link>
 
         <nav className="sidebar-nav">
@@ -26,9 +31,8 @@ const Sidebar = () => {
               return (
                 <li
                   key={link.route}
-                  className={`sidebar-nav_element group ${
-                    isActive ? 'bg-purple-gradient text-white' : 'text-gray-700'
-                  }`}
+                  className={`sidebar-nav_element group ${isActive ? 'bg-purple-gradient text-white' : 'text-gray-700'
+                    }`}
                 >
                   <Link className="sidebar-link" href={link.route}>
                     <Image
@@ -52,11 +56,10 @@ const Sidebar = () => {
               const isActive = link.route === pathname
 
               return (
-                <li key={link.route} className={`sidebar-nav_element group ${
-                  isActive ? 'bg-purple-gradient text-white' : 'text-gray-700'
-                }`}>
+                <li key={link.route} className={`sidebar-nav_element group ${isActive ? 'bg-purple-gradient text-white' : 'text-gray-700'
+                  }`}>
                   <Link className="sidebar-link" href={link.route}>
-                    <Image 
+                    <Image
                       src={link.icon}
                       alt="logo"
                       width={24}
@@ -68,7 +71,7 @@ const Sidebar = () => {
                 </li>
               )
             })}
-            <LogoutButton />
+            <LogoutButton userInformation={userInformation} />
           </ul>
         </nav>
       </div>
