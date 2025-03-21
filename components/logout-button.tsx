@@ -18,7 +18,6 @@ type userInterfaceProps = {
 };
 
 const LogoutButton = ({ userInformation }: userInterfaceProps) => {
-  console.log(userInformation);
   const handleClick = async () => {
     await signOut({
       callbackUrl: '/login',

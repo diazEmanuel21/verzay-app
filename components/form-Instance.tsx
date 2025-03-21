@@ -70,20 +70,22 @@ export default function FormInstance({ userId }: { userId: string }) {
     <>
       <CardHeader>
         <CardTitle className="flex items-center">
-          <p className="mr-2">Instancia:</p>
-
           {instanceExists &&
             <>
-              <p className="font-medium text-lg">{instanceName}</p>
+              <p className="mr-2">Instancia</p>
+              <p className="font-medium text-lg">| {instanceName}</p>
             </>
           }
         </CardTitle>
       </CardHeader>
 
-      <CardContent>
-        {!instanceExists && (
+      {!instanceExists &&
+        <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
+              <label htmlFor="instanceName" className="block text-sm font-medium mb-1">
+                Nombre de la Instancia
+              </label>
               <Input
                 id="instanceName"
                 value={instanceName}
@@ -102,8 +104,8 @@ export default function FormInstance({ userId }: { userId: string }) {
               Crear Instancia
             </Button>
           </form>
-        )}
-      </CardContent>
+        </CardContent>
+      }
 
       {message && (
         <CardFooter>

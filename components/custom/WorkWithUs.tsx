@@ -1,4 +1,11 @@
-import { Briefcase, Bot, DatabaseZap, Image, Mic, ShieldCheck } from "lucide-react";
+import {
+  Briefcase,
+  Bot,
+  DatabaseZap,
+  Image,
+  Mic,
+  ShieldCheck,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const features = [
@@ -42,35 +49,44 @@ const features = [
 
 export const WorkWithUs = () => {
   return (
-    <section className="bg-white">
-      <div className="mx-auto max-w-7xl lg:px-8">
-        <div className="text-center max-w-2xl mx-auto">
-          <h2 className="text-sm font-semibold text-indigo-600 uppercase tracking-wider">
-            Impulsa tu negocio con Verzay
-          </h2>
-          <p className="mt-4 text-4xl font-bold text-gray-900">
-            Automatización de ventas y atención al cliente con IA
-          </p>
-          <p className="mt-4 text-lg text-muted-foreground">
-            Optimiza tus procesos, mejora la atención al cliente y aumenta tus ventas con nuestras soluciones inteligentes.
-          </p>
-        </div>
+    <div className="mx-auto max-w-7xl pt-0 lg:px-8 py-12">
+      <div className="text-center max-w-2xl mx-auto">
+        <h2 className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+          Impulsa tu negocio con Verzay
+        </h2>
 
-        <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature) => (
-            <Card key={feature.name} className="flex flex-col justify-start p-6 hover:shadow-xl transition">
-              <CardContent className="flex flex-col items-start p-0">
-                <div className="flex items-center justify-center rounded-full bg-indigo-600 p-3 mb-4">
-                  <feature.icon className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900">{feature.name}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{feature.description}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <p className="mt-4 text-4xl font-bold text-gray-900 dark:text-white">
+          Automatización de ventas y atención al cliente con IA
+        </p>
+
+        <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
+          Optimiza tus procesos, mejora la atención al cliente y aumenta tus ventas con nuestras soluciones inteligentes.
+        </p>
       </div>
-    </section>
+
+      <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        {features.map((feature) => (
+          <Card
+            key={feature.name}
+            className="flex flex-col justify-start border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:shadow-lg dark:hover:shadow-md transition"
+          >
+            <CardContent className="flex flex-col items-start p-6">
+              <div className="flex items-center justify-center rounded-full bg-indigo-600 dark:bg-indigo-500 p-3 mb-4">
+                <feature.icon className="h-6 w-6 text-white" />
+              </div>
+
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {feature.name}
+              </h3>
+
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                {feature.description}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 };
 

@@ -168,7 +168,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
             ) : (
               <>
                 <Power className="w-6 h-6" />
-                Encender Robot
+                Activar
               </>
             )}
           </Button>
@@ -189,7 +189,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
                 ) : (
                   <>
                     <Power className="w-6 h-6" />
-                    Apagar Robot
+                    Apagar
                   </>
                 )}
               </Button>

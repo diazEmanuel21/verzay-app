@@ -4,12 +4,8 @@ import Header from '@/components/shared/header';
 import { useEffect, useState } from "react";
 import {
   Card,
-  CardContent,
-  CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogTrigger,
@@ -42,6 +38,7 @@ import {
 
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { Skeleton } from './ui/skeleton';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface FormSystemMessageProps {
   userId: string;
@@ -63,8 +60,6 @@ function MessagesSkeleton() {
   );
 }
 
-const PAGE_SIZE = 5;
-
 export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -77,8 +72,8 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const [page, setPage] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   useEffect(() => {
     loadMessages();
@@ -167,15 +162,9 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
     }
   };
 
-  const totalPages = Math.ceil(messages.length / PAGE_SIZE);
-
-  const filteredMessages = messages.filter(
-    (msg) =>
-      (msg.title?.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredMessages = messages.filter((msg) =>
+    (msg.title?.toLowerCase() ?? "").includes(debouncedSearchTerm.toLowerCase())
   );
-
-  const paginatedMessages = filteredMessages.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
 
   const truncateMessage = (text: string, maxLength: number) => {
     if (text.length <= maxLength) return text;
@@ -253,12 +242,9 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
       {/* Buscador */}
       <div className="flex items-center justify-between mb-4">
         <Input
-          placeholder="Buscar mensaje..."
+          placeholder="Buscar mensaje por título..."
           value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setPage(1); // Reiniciar a la primera página cuando busque algo nuevo
-          }}
+          onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />
       </div>
@@ -272,7 +258,7 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
           <div
             className="flex flex-col gap-3 max-h-[600px] overflow-y-auto"
           >
-            {paginatedMessages.map((msg) => (
+            {filteredMessages.map((msg) => (
               <Card key={msg.id} className="p-4 flex justify-between items-start">
                 <div>
                   <h4 className="text-base font-medium">{msg.title}</h4>
@@ -326,29 +312,6 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
           </div>
         )}
 
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-4 mt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-              disabled={page === 1}
-            >
-              Anterior
-            </Button>
-            <Badge variant="secondary">
-              Página {page} de {totalPages}
-            </Badge>
-            <Button
-              size="sm"
-              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={page === totalPages}
-            >
-              Siguiente
-            </Button>
-          </div>
-        )}
       </div>
 
     </>

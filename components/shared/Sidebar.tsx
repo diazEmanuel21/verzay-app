@@ -1,81 +1,125 @@
-"use client";
+'use client';
 
+import { useState } from 'react';
 import { navLinks } from '@/constants';
 import Image from 'next/image';
 import Link from 'next/link';
-import { User } from '@prisma/client';
 import { usePathname } from 'next/navigation';
+import { User } from '@prisma/client';
+
 import LogoutButton from '../logout-button';
+import ThemeSwitcher from '../custom/ThemeSwitcher';
+
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 type userInterfaceProps = {
   userInformation: User;
 };
 
-
 const Sidebar = ({ userInformation }: userInterfaceProps) => {
   const pathname = usePathname();
 
+  // Estado para el menú en móvil (Sheet)
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  // Ancho dinámico del sidebar
+  const sidebarWidth = '240px';
+
+  const SidebarContent = () => (
+    <div className="flex flex-col justify-between h-full">
+      {/* Logo */}
+      <div className="flex items-center justify-center mb-6">
+        <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileOpen(false)}>
+          <Image
+            src="/assets/image/logo2.svg"
+            alt="logo"
+            width={140}
+            height={28}
+          />
+        </Link>
+      </div>
+
+      {/* Nav Links */}
+      <nav className="flex-1 flex flex-col gap-6">
+        <Card className="bg-transparent border-none shadow-none">
+          <CardContent className="p-0">
+            <ul className="flex flex-col gap-1">
+              {navLinks.map((link) => {
+                const isActive = pathname === link.route || (link.route !== '/' && pathname.startsWith(link.route));
+                return (
+                  <li key={link.route}>
+                    <Link
+                      href={link.route}
+                      onClick={() => setIsMobileOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${isActive
+                        ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white'
+                        : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                        }`}
+                    >
+                      <Image
+                        src={link.icon}
+                        alt={link.label}
+                        width={20}
+                        height={20}
+                        className={`${isActive ? 'invert brightness-200' : ''}`}
+                      />
+                      {link.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </CardContent>
+        </Card>
+      </nav>
+
+      {/* Footer */}
+      <div className={`flex flex-col gap-4 px-4`}>
+
+        <LogoutButton userInformation={userInformation} />
+        <div className={`flex items-center justify-between w-full}`}>
+          <span className="text-sm text-zinc-500 dark:text-zinc-400">Tema</span>
+          <ThemeSwitcher />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <aside className="sidebar">
-      <div className="flex size-full flex-col gap-4">
-        <Link href="/" className="sidebar-logo">
-          <Image src="/assets/image/logo2.svg" alt="logo" width={140} height={28} />
+    <>
+      {/* Mobile Header */}
+      <header className="flex justify-between items-center px-4 py-2 bg-white dark:bg-zinc-900 border-b md:hidden">
+        <Link href="/" className="flex items-center" onClick={() => setIsMobileOpen(false)}>
+          <Image src="/assets/image/logo2.svg" alt="logo" width={120} height={23} />
         </Link>
 
-        <nav className="sidebar-nav">
-          <ul className="sidebar-nav_elements">
-            {navLinks.slice(0, 5).map((link) => {
-              // Actualización de lógica para rutas activas
-              const isActive = pathname === link.route || (link.route !== '/' && pathname.startsWith(link.route));
+        <div className="flex items-center gap-2">
+          <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(true)}>
+                <Image src="/assets/icons/menu.svg" alt="menu" width={24} height={24} />
+              </Button>
+            </SheetTrigger>
 
-              return (
-                <li
-                  key={link.route}
-                  className={`sidebar-nav_element group ${isActive ? 'bg-purple-gradient text-white' : 'text-gray-700'
-                    }`}
-                >
-                  <Link className="sidebar-link" href={link.route}>
-                    <Image
-                      src={link.icon}
-                      alt="logo"
-                      width={24}
-                      height={24}
-                      className={`${isActive && 'brightness-200'}`}
-                    />
-                    {link.label}
-                  </Link>
-                </li>
-              );
-            })}
+            <SheetContent side="left" className="sm:w-64 z-50 p-4 bg-white dark:bg-zinc-900">
+              {SidebarContent()}
+            </SheetContent>
+          </Sheet>
+        </div>
+      </header>
 
-          </ul>
-
-
-          <ul className="sidebar-nav_elements">
-            {navLinks.slice(5).map((link) => {
-              const isActive = link.route === pathname
-
-              return (
-                <li key={link.route} className={`sidebar-nav_element group ${isActive ? 'bg-purple-gradient text-white' : 'text-gray-700'
-                  }`}>
-                  <Link className="sidebar-link" href={link.route}>
-                    <Image
-                      src={link.icon}
-                      alt="logo"
-                      width={24}
-                      height={24}
-                      className={`${isActive && 'brightness-200'}`}
-                    />
-                    {link.label}
-                  </Link>
-                </li>
-              )
-            })}
-            <LogoutButton userInformation={userInformation} />
-          </ul>
-        </nav>
+      {/* Sidebar Desktop */}
+      <div
+        className="hidden md:flex h-screen bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 shadow-sm p-4 transition-all duration-300"
+        style={{ width: sidebarWidth }}
+      >
+        {SidebarContent()}
       </div>
-    </aside>
+    </>
   );
 };
 

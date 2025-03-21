@@ -20,9 +20,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={poppins.className}> {/* Cambiado a poppins.className */}
+      <body className={`${poppins.className}bg-white text-black dark:bg-gray-900 dark:text-white`}> {/* Cambiado a poppins.className */}
         <AppProviders>
-          {children}
+          <ThemeProvider>{children}</ThemeProvider>
           <Toaster position="bottom-right" richColors /> {/* Mover dentro de <body> */}
         </AppProviders>
       </body>
