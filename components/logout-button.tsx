@@ -13,11 +13,18 @@ import { LogOut, User as UserIcon, Mail } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { User } from '@prisma/client';
 
-type userInterfaceProps = {
-  userInformation: User;
+type UserInfo = {
+  company: string | null;
+  email: string | null;
+  role: string | null;
+  name: string | null;
 };
 
-const LogoutButton = ({ userInformation }: userInterfaceProps) => {
+type LogoutButtonProps = {
+  userInformation: UserInfo;
+};
+
+const LogoutButton = ({ userInformation }: LogoutButtonProps) => {
   const handleClick = async () => {
     await signOut({
       callbackUrl: '/login',

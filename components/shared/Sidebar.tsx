@@ -5,22 +5,26 @@ import { navLinks } from '@/constants';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { User } from '@prisma/client';
-
 import LogoutButton from '../logout-button';
 import ThemeSwitcher from '../custom/ThemeSwitcher';
 
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-type userInterfaceProps = {
-  userInformation: User;
+type UserInfo = {
+  company: string | null;
+  email: string | null;
+  role: string | null;
+  name: string | null;
 };
 
-const Sidebar = ({ userInformation }: userInterfaceProps) => {
+type SidebarProps = {
+  userInformation: UserInfo;
+};
+
+const Sidebar = ({ userInformation }: SidebarProps) => {
+
   const pathname = usePathname();
 
   // Estado para el menú en móvil (Sheet)

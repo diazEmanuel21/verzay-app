@@ -35,7 +35,7 @@ export async function CreateNode(form: createNodeflowSchemaType) {
     throw new Error("Falló la creación del nodo.");
   }
 
-  redirect(`/flow/editor/${data.workflowId}`);
+  redirect(`/flow/${data.workflowId}`);
 }
 
 // Método para editar un nodo
@@ -62,5 +62,5 @@ export async function deleteNode(nodeId: string, workflowId: string) {
     where: { id: nodeId },
   });
 
-  redirect(`/flow/editor/${workflowId}`);
+  redirect(`/flow/${workflowId}`);
 }

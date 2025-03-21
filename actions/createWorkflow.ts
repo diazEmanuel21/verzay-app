@@ -39,5 +39,5 @@ export async function CreateWorkflow(form: createWorkflowSchemaType) {
       throw new Error("Fallo la creación del flujo.");
     }
   
-    redirect(`/flow/editor/${result.id}`);
+    redirect(`flow/${result.id}`);
   }

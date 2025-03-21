@@ -374,3 +374,8 @@
   font-weight: 600;
   color: #384262;
 }
+
+/* =====  CARD ACTIONS WORKFLOW */
+.top-negative-8 {
+  top: -8px;
+}
