@@ -32,8 +32,7 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
 
   return (
     <>
-      <div className='flex flex-row justify-start items-center'>
-        <h1 className="text-4xl font-bold m-4">Bienvenido</h1>
+      <div className='absolute top-3 right-2'>
         <Node workflow={workflow} />
       </div>
 
