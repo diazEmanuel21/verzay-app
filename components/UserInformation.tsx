@@ -73,29 +73,29 @@ export const UserInformation = ({ userId }: { userId: string }) => {
     const handleMapsUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const url = e.target.value;
         setClient((prev) => ({ ...prev, mapsUrl: url }));
-    
+
         // Extraer latitud y longitud desde la URL
         const regex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
         const match = url.match(regex);
-    
+
         if (match) {
-          const lat = match[1];
-          const lng = match[2];
-    
-          setClient((prev) => ({
-            ...prev,
-            lat,
-            lng,
-          }));
-    
-          toast.success("Coordenadas actualizadas", {
-            description: `Lat: ${lat}, Lng: ${lng}`,
-            duration: 3000,
-          });
+            const lat = match[1];
+            const lng = match[2];
+
+            setClient((prev) => ({
+                ...prev,
+                lat,
+                lng,
+            }));
+
+            toast.success("Coordenadas actualizadas", {
+                description: `Lat: ${lat}, Lng: ${lng}`,
+                duration: 3000,
+            });
         } else {
-          toast.error("No se pudieron extraer las coordenadas de la URL");
+            toast.error("No se pudieron extraer las coordenadas de la URL");
         }
-      };
+    };
 
     const toggleEdit = (field: string) => {
         setEditableField(field === editableField ? null : field);
@@ -149,9 +149,9 @@ export const UserInformation = ({ userId }: { userId: string }) => {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto rounded-lg">
+        <form onSubmit={handleSubmit} className="px-12">
             <div className="space-y-12">
-                <div className="border-b border-gray-300 pb-6">
+                <div className="border-b border-gray-300 dark:border-gray-700 pb-6">
                     <Header
                         title={"Perfil de la Empresa"}
                         subtitle={"Esta información se utilizará para la configuración de su agente."}
@@ -161,7 +161,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                         {/* Campos Generales */}
                         {["apiUrl", "company", "notificationNumber", "openingPhrase"].map((key) => (
                             <div key={key} className="relative">
-                                <label htmlFor={key} className="block text-sm font-medium text-gray-700">
+                                <label htmlFor={key} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     {getLabel(key)}
                                 </label>
                                 <div className="mt-2 flex items-center">
@@ -172,13 +172,16 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                         value={client[key as keyof Client]}
                                         onChange={handleChange}
                                         readOnly={editableField !== key}
-                                        className={`block w-full rounded-md bg-white px-3 py-2 text-gray-900 outline-1 outline-gray-300 focus:ring-2 focus:ring-indigo-500 sm:text-sm ${editableField === key ? "border-2 border-indigo-500 bg-gray-100" : ""
+                                        className={`block w-full rounded-md px-3 py-2 text-gray-900 dark:text-white outline-1 outline-gray-300 dark:outline-gray-600 focus:ring-2 focus:ring-indigo-500 sm:text-sm 
+                  ${editableField === key
+                                                ? "border-2 border-indigo-500 bg-gray-100 dark:bg-gray-800"
+                                                : "bg-white dark:bg-gray-900"
                                             }`}
                                     />
                                     <button
                                         type="button"
                                         onClick={() => toggleEdit(key)}
-                                        className="ml-2 text-gray-500 hover:text-gray-700"
+                                        className="ml-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                                     >
                                         <PencilIcon className="w-5 h-5" />
                                     </button>
@@ -186,7 +189,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                         <button
                                             type="button"
                                             onClick={() => setShowApiUrl(!showApiUrl)}
-                                            className="ml-2 text-gray-500 hover:text-gray-700"
+                                            className="ml-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                                         >
                                             {showApiUrl ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
                                         </button>
@@ -198,7 +201,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
 
                         {/* Input URL de Google Maps */}
                         <div className="relative md:col-span-2">
-                            <label htmlFor="mapsUrl" className="block text-sm font-medium text-gray-700">
+                            <label htmlFor="mapsUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 URL de Google Maps
                             </label>
                             <div className="mt-2 flex items-center">
@@ -210,13 +213,16 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                     value={client.mapsUrl}
                                     onChange={handleMapsUrlChange}
                                     readOnly={editableField !== "mapsUrl"}
-                                    className={`block w-full rounded-md bg-white px-3 py-2 text-gray-900 outline-1 outline-gray-300 focus:ring-2 focus:ring-indigo-500 sm:text-sm ${editableField === "mapsUrl" ? "border-2 border-indigo-500 bg-gray-100" : ""
+                                    className={`block w-full rounded-md px-3 py-2 text-gray-900 dark:text-white outline-1 outline-gray-300 dark:outline-gray-600 focus:ring-2 focus:ring-indigo-500 sm:text-sm 
+                ${editableField === "mapsUrl"
+                                            ? "border-2 border-indigo-500 bg-gray-100 dark:bg-gray-800"
+                                            : "bg-white dark:bg-gray-900"
                                         }`}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => toggleEdit("mapsUrl")}
-                                    className="ml-2 text-gray-500 hover:text-gray-700"
+                                    className="ml-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                                 >
                                     <PencilIcon className="w-5 h-5" />
                                 </button>
@@ -227,7 +233,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                         {/* Latitud y Longitud SOLO LECTURA */}
                         {["lat", "lng"].map((coord) => (
                             <div key={coord}>
-                                <label htmlFor={coord} className="block text-sm font-medium text-gray-700">
+                                <label htmlFor={coord} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     {coord === "lat" ? "Latitud" : "Longitud"}
                                 </label>
                                 <input
@@ -237,7 +243,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                     value={client[coord as keyof Client]}
                                     readOnly
                                     placeholder={coord === "lat" ? "Ej: 9.9355165" : "Ej: -84.091532"}
-                                    className="mt-2 block w-full rounded-md bg-gray-100 px-3 py-2 text-gray-900 outline-1 outline-gray-300 focus:ring-2 focus:ring-indigo-500 sm:text-sm cursor-not-allowed"
+                                    className="mt-2 block w-full rounded-md bg-gray-100 dark:bg-gray-800 px-3 py-2 text-gray-900 dark:text-white outline-1 outline-gray-300 dark:outline-gray-600 focus:ring-2 focus:ring-indigo-500 sm:text-sm cursor-not-allowed"
                                 />
                                 {errors[coord] && <p className="mt-1 text-sm text-red-600">{errors[coord]}</p>}
                             </div>
@@ -246,18 +252,21 @@ export const UserInformation = ({ userId }: { userId: string }) => {
 
                     {/* Vista previa del mapa */}
                     <div className="mt-10">
-                        <h3 className="text-sm font-medium text-gray-700 mb-2">Vista previa de ubicación</h3>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Vista previa de ubicación</h3>
                         {client.lat && client.lng ? (
-                            <div className="border rounded-md overflow-hidden shadow-sm">
+                            <div className="border border-gray-300 dark:border-gray-700 rounded-md overflow-hidden shadow-sm">
                                 <iframe
                                     src={`https://www.google.com/maps?q=${client.lat},${client.lng}&output=embed`}
                                     width="100%"
                                     height="300"
                                     loading="lazy"
+                                    className="w-full h-72"
                                 />
                             </div>
                         ) : (
-                            <p className="text-sm text-gray-500">Ingresa latitud y longitud válidas para ver la ubicación.</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Ingresa latitud y longitud válidas para ver la ubicación.
+                            </p>
                         )}
                     </div>
                 </div>
@@ -267,11 +276,12 @@ export const UserInformation = ({ userId }: { userId: string }) => {
             <div className="mt-6 flex items-center justify-end gap-x-4">
                 <button
                     type="submit"
-                    className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-indigo-500 focus:ring-2 focus:ring-indigo-500"
+                    className="rounded-md bg-indigo-600 hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-md focus:ring-2 focus:ring-indigo-500"
                 >
                     Guardar
                 </button>
             </div>
         </form>
+
     );
 }

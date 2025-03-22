@@ -29,58 +29,58 @@ import { getTools } from "@/actions/tools-action";
 
 const tools = async ({ params: { type } }: SearchParamProps) => {
 
-    const me = transformationTypes[type];
+  const me = transformationTypes[type];
 
-    const session = await currentUser();
+  const session = await currentUser();
 
-    const user = await db.user.findUnique({
-    where: {email: session?.email ?? ""}
-    });
+  const user = await db.user.findUnique({
+    where: { email: session?.email ?? "" }
+  });
 
-    if (!user) {
-        return <div>Not authenticated</div>;
-    }
+  if (!user) {
+    return <div>Not authenticated</div>;
+  }
 
   const tools = await getTools(user.id);
 
   return (
     <>
-      <Header 
+      <Header
         title={'Herramientas'}
         subtitle={'Crea tus herramientas de automatización'}
       />
 
       <div className='max-w-screen-lg mx-auto'>
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2'>
-        {tools ? (
-          tools.map((tool) => (
-            <Card key={tool.id}>
-              <CardHeader>
-                <CardTitle>
-                  {tool.name}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p>{tool.description}</p>
-                {/* <span className='text-slate-600'>
+          {tools ? (
+            tools.map((tool) => (
+              <Card key={tool.id}>
+                <CardHeader>
+                  <CardTitle>
+                    {tool.name}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>{tool.description}</p>
+                  {/* <span className='text-slate-600'>
                   {new Date(tool.createdAt).toLocaleDateString()}
                 </span> */}
-              </CardContent>
-              <CardFooter className='flex gap-x-2 justify-end'>
-                <Button variant={"destructive"}>
-                  Eliminar
-                </Button>
-                <Button>
-                  Editar
-                </Button>
-              </CardFooter>
-            </Card>
-          ))
-        ) : (
-          <div>No tools found</div>
-        )}
+                </CardContent>
+                <CardFooter className='flex gap-x-2 justify-end'>
+                  <Button variant={"destructive"}>
+                    Eliminar
+                  </Button>
+                  <Button>
+                    Editar
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))
+          ) : (
+            <div>No tools found</div>
+          )}
 
-        {/* <Card>
+          {/* <Card>
           <Link href="/tools/add/new">
           <div className='flex justify-center items-center h-full'>
             <CardContent>
@@ -94,7 +94,7 @@ const tools = async ({ params: { type } }: SearchParamProps) => {
           </div>
           </Link>
         </Card> */}
-          <Card className="w-full max-w-md bg-white shadow-lg rounded-2xl border border-gray-200 p-6 hover:shadow-xl transition">
+          <Card className="w-full max-w-md bg-white dark:bg-gray-900 shadow-lg rounded-2xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition">
             <CardHeader className="flex flex-col items-center text-center">
               {/* Icono de Google Sheets */}
               <div className="w-16 h-16 mb-4">
@@ -116,7 +116,7 @@ const tools = async ({ params: { type } }: SearchParamProps) => {
             </CardContent>
           </Card>
 
-          <Card className="w-full max-w-md bg-white shadow-lg rounded-2xl border border-gray-200 p-6 hover:shadow-xl transition">
+          <Card className="w-full max-w-md bg-white dark:bg-gray-900 shadow-lg rounded-2xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition">
             <CardHeader className="flex flex-col items-center text-center">
               <div className="w-16 h-16 mb-4">
                 <img
@@ -137,7 +137,7 @@ const tools = async ({ params: { type } }: SearchParamProps) => {
             </CardContent>
           </Card>
 
-          <Card className="w-full max-w-md bg-white shadow-lg rounded-2xl border border-gray-200 p-6 hover:shadow-xl transition">
+          <Card className="w-full max-w-md bg-white dark:bg-gray-900 shadow-lg rounded-2xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition">
             <CardHeader className="flex flex-col items-center text-center">
               {/* Imagen de Google Docs */}
               <div className="w-16 h-16 mb-4">

@@ -4,16 +4,15 @@ import { useState } from "react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch"
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
-// Base data for plans
 const plans = [
   {
     name: "PYMES",
     id: "plan-pymes",
     priceMonthly: 49.5,
-    priceYearly: 39.6, // 20% discount
+    priceYearly: 39.6,
     description: "Ideal para pequeñas empresas que buscan automatizar sus procesos de atención al cliente.",
     features: [
       "Interpretación de audios",
@@ -30,7 +29,7 @@ const plans = [
     name: "BUSINESS",
     id: "plan-business",
     priceMonthly: 99.5,
-    priceYearly: 74.6, // 25% discount
+    priceYearly: 74.6,
     description: "Para negocios en crecimiento que requieren mayor interacción y control de datos.",
     features: [
       "Interpretación de audios",
@@ -48,7 +47,7 @@ const plans = [
     name: "EMPRESARIAL",
     id: "plan-empresarial",
     priceMonthly: 149.5,
-    priceYearly: 104.6, // 30% discount
+    priceYearly: 104.6,
     description: "Solución integral para empresas que necesitan alto nivel de automatización y conexión con APIs.",
     features: [
       "Interpretación de audios",
@@ -72,21 +71,21 @@ const CreditPage = () => {
   };
 
   return (
-    <section className="bg-white lg:px-8">
+    <>
       <div className="max-w-4xl mx-auto text-center">
         <h2 className="text-sm font-semibold text-indigo-600 uppercase tracking-wider">
           Planes de suscripción
         </h2>
-        <p className="mt-4 text-4xl font-bold text-gray-900">
+        <p className="mt-4 text-4xl font-bold text-gray-900 dark:text-white">
           Elige el plan ideal para tu negocio
         </p>
-        <p className="mt-4 text-lg text-muted-foreground">
+        <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
           Automatiza tus ventas y atención al cliente con nuestras soluciones de inteligencia artificial. Planes flexibles para cada etapa de tu negocio.
         </p>
 
         {/* Toggle Switch */}
         <div className="flex items-center justify-center mt-8 space-x-4">
-          <Label htmlFor="billing-toggle" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="billing-toggle" className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Mensual
           </Label>
           <Switch
@@ -94,7 +93,7 @@ const CreditPage = () => {
             checked={isYearly}
             onCheckedChange={handleToggle}
           />
-          <Label htmlFor="billing-toggle" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="billing-toggle" className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Anual <span className="text-indigo-600">(Hasta 30% OFF)</span>
           </Label>
         </div>
@@ -108,28 +107,29 @@ const CreditPage = () => {
           return (
             <Card
               key={plan.id}
-              className={`flex flex-col justify-between shadow-md ${
-                plan.featured ? "border-2 border-indigo-600" : ""
-              }`}
+              className={`flex flex-col justify-between shadow-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-colors ${plan.featured ? "border-2 border-indigo-600 dark:border-indigo-500" : ""
+                }`}
             >
               <CardHeader>
-                <CardTitle className={`text-lg font-semibold ${plan.featured ? "text-indigo-600" : "text-gray-900"}`}>
+                <CardTitle className={`text-lg font-semibold ${plan.featured ? "text-indigo-600 dark:text-indigo-400" : "text-gray-900 dark:text-white"
+                  }`}>
                   {plan.name}
                 </CardTitle>
                 <div className="mt-4 flex items-baseline gap-x-2">
-                  <span className={`text-5xl font-bold ${plan.featured ? "text-indigo-600" : "text-gray-900"}`}>
+                  <span className={`text-5xl font-bold ${plan.featured ? "text-indigo-600 dark:text-indigo-400" : "text-gray-900 dark:text-white"
+                    }`}>
                     ${price.toFixed(2)}
                   </span>
-                  <span className="text-sm text-gray-500">{period}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">{period}</span>
                 </div>
               </CardHeader>
 
               <CardContent>
-                <p className="mt-4 text-sm text-muted-foreground">{plan.description}</p>
-                <ul className="mt-6 space-y-4 text-sm text-gray-600">
+                <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">{plan.description}</p>
+                <ul className="mt-6 space-y-4 text-sm text-gray-600 dark:text-gray-300">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-indigo-600 mt-1" />
+                      <Check className="h-4 w-4 text-indigo-600 dark:text-indigo-400 mt-1" />
                       {feature}
                     </li>
                   ))}
@@ -137,7 +137,10 @@ const CreditPage = () => {
 
                 <Button
                   variant={plan.featured ? "default" : "outline"}
-                  className={`w-full mt-8 ${plan.featured ? "bg-indigo-600 hover:bg-indigo-700 text-white" : ""}`}
+                  className={`w-full mt-8 transition-colors ${plan.featured
+                      ? "bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white"
+                      : "border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                    }`}
                 >
                   Empezar ahora
                 </Button>
@@ -146,7 +149,7 @@ const CreditPage = () => {
           );
         })}
       </div>
-    </section>
+    </>
   );
 };
 

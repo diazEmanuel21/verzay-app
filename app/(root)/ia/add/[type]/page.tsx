@@ -34,18 +34,7 @@ const AddIapage = async ({ params: { type } }: SearchParamProps) => {
 
   return (
     <>
-      {/* <Header 
-        title={'Entrena tu IA'}
-        subtitle={'Agrega y personaliza las instrucciones para tu IA.'}
-      /> */}
-
       <FormSystemMessage userId={user.id} />
-      
-
-
-      {/* <OpenAICredentialManager userId={user.id} />
-      <CreateBotComponent userId={user.id} /> */}
-      
     </>
   );
 }

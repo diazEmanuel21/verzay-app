@@ -21,6 +21,7 @@ import { useState, useTransition } from "react";
 
 import { FaGithub, FaGoogle } from "react-icons/fa6";
 import ButtonSocial from "./button-social";
+import Link from "next/link";
 
 interface FormLoginProps {
   isVerified: boolean;
@@ -48,84 +49,117 @@ const FormLogin = ({ isVerified, OAuthAccountNotLinked }: FormLoginProps) => {
         setError(response.error);
       } else {
         router.push("/dashboard");
-        window.location.reload(); //mejorar
+        window.location.reload();
       }
     });
   }
 
   return (
-    <div className="max-w-52">
-      <h1 className="mb-5 text-center text-2xl">Login</h1>
-      {isVerified && (
-        <p className="text-center text-green-500 mb-5 text-sm">
-          Email verified, you can now login
+    <div className="flex justify-center items-center w-screen h-screen bg-white dark:bg-gray-950">
+      <div className="w-full max-w-md p-8 bg-gray-50 dark:bg-gray-900 rounded-xl shadow-md">
+        <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-2">Inicia sesión</h1>
+        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-6">
+          Ingresa tus credenciales para continuar
         </p>
-      )}
-      {OAuthAccountNotLinked && (
-        <p className="text-center text-red-500 mb-5 text-sm">
-          To confirm your identity, sign in with the same account you used
-          originally.
-        </p>
-      )}
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-8"
-        >
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Correo o usuario</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Correo"
-                    type="text"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+
+        {/* Mensajes informativos */}
+        {isVerified && (
+          <p className="text-center text-green-500 bg-green-100 dark:bg-green-900 text-sm py-2 px-4 rounded mb-4">
+            Email verificado. Ya puedes iniciar sesión.
+          </p>
+        )}
+        {OAuthAccountNotLinked && (
+          <p className="text-center text-red-500 bg-red-100 dark:bg-red-900 text-sm py-2 px-4 rounded mb-4">
+            Para confirmar tu identidad, inicia sesión con la misma cuenta que usaste originalmente.
+          </p>
+        )}
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            {/* Campo Email */}
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700 dark:text-gray-300">Correo electrónico o usuario</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Tu correo"
+                      type="text"
+                      {...field}
+                      className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Campo Contraseña */}
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700 dark:text-gray-300">Contraseña</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Tu contraseña"
+                      type="password"
+                      {...field}
+                      className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Error general */}
+            {error && (
+              <p className="text-center text-red-600 text-sm">{error}</p>
             )}
-          />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Contraseña</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Contraseña"
-                    type="password"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {error && <FormMessage>{error}</FormMessage>}
-          <Button
-            type="submit"
-            disabled={isPending}
-          >
-            Ingresar
-          </Button>
-        </form>
-      </Form>
-      {/* <div className="mt-5 space-y-4">
-        <ButtonSocial provider="github">
-          <FaGithub className="mr-2 h-4 w-4" />
-          <span>Sign in with Github</span>
-        </ButtonSocial>
-        <ButtonSocial provider="google">
-          <FaGoogle className="mr-2 h-4 w-4" />
-          <span>Sign in with Google</span>
-        </ButtonSocial>
-      </div> */}
+
+            {/* Botón de Ingreso */}
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+            >
+              {isPending ? "Ingresando..." : "Ingresar"}
+            </Button>
+          </form>
+        </Form>
+
+        {/* Divider */}
+        {/* <div className="flex items-center my-6">
+          <hr className="flex-grow border-gray-300 dark:border-gray-600" />
+          <span className="mx-4 text-gray-500 dark:text-gray-400 text-sm">o</span>
+          <hr className="flex-grow border-gray-300 dark:border-gray-600" />
+        </div> */}
+
+        {/* Social Buttons */}
+        {/* <div className="space-y-3">
+          <ButtonSocial provider="github" className="w-full">
+            <FaGithub className="mr-2 h-4 w-4" />
+            Ingresar con Github
+          </ButtonSocial>
+          <ButtonSocial provider="google" className="w-full">
+            <FaGoogle className="mr-2 h-4 w-4" />
+            Ingresar con Google
+          </ButtonSocial>
+        </div> */}
+
+        {/* Enlace de recuperación */}
+        {/* <div className="text-center mt-6">
+          <Link href="/forgot-password" className="text-sm text-indigo-600 hover:underline dark:text-indigo-400">
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </div> */}
+      </div>
     </div>
   );
 };
+
 export default FormLogin;
