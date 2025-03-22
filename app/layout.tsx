@@ -53,7 +53,6 @@ export default async function RootLayout({
                     <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 md:py-8">
                       {children}
                     </main>
-
                     <footer className="hidden md:flex h-12 items-center justify-center border-t text-xs text-muted-foreground">
                       © 2024 Verzay. Todos los derechos reservados.
                     </footer>

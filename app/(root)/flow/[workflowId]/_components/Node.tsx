@@ -58,7 +58,7 @@ function CreateNodeDialog({ workflow }: { workflow: Workflow }) {
   // Manejo del submit SOLO para el campo "tipo"
   const handleActionSelect = useCallback(
     (actionLabel: string) => {
-      const defaultMessage = "Este es el mensaje por defecto";
+      const defaultMessage = "Msg";
       const defaultUrl = "https://tudominio.com/api";
   
       form.setValue("tipo", actionLabel);
