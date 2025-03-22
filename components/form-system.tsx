@@ -256,7 +256,7 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
             <p className="text-sm text-muted-foreground">Aún no hay mensajes configurados.</p>
           ) : (
           <div
-            className="flex flex-col gap-3 max-h-[600px] overflow-y-auto"
+            className="flex flex-col gap-3 overflow-y-auto"
           >
             {filteredMessages.map((msg) => (
               <Card key={msg.id} className="p-4 flex justify-between items-start">

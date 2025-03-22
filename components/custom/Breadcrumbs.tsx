@@ -11,6 +11,7 @@ import {
   BreadcrumbSeparator,
   BreadcrumbEllipsis,
 } from '@/components/ui/breadcrumb';
+import { SidebarTrigger } from '../ui/sidebar';
 
 const breadcrumbLabels: Record<string, string> = {
   flow: 'flujos',
@@ -44,6 +45,8 @@ export const Breadcrumbs = () => {
   return (
     <Breadcrumb>
       <BreadcrumbList>
+        <SidebarTrigger /> |
+
         {/* Home link */}
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
@@ -68,9 +71,8 @@ export const Breadcrumbs = () => {
                   <BreadcrumbLink asChild>
                     <Link
                       href={breadcrumb.href}
-                      className={`capitalize ${
-                        index === breadcrumbs.length - 1 ? 'text-primary' : 'text-muted-foreground'
-                      } hover:text-primary transition`}
+                      className={`capitalize ${index === breadcrumbs.length - 1 ? 'text-primary' : 'text-muted-foreground'
+                        } hover:text-primary transition`}
                     >
                       {breadcrumb.label}
                     </Link>
@@ -90,9 +92,8 @@ export const Breadcrumbs = () => {
                 <BreadcrumbLink asChild>
                   <Link
                     href={breadcrumb.href}
-                    className={`capitalize ${
-                      index === breadcrumbs.length - 1 ? 'text-primary' : 'text-muted-foreground'
-                    } hover:text-primary transition`}
+                    className={`capitalize ${index === breadcrumbs.length - 1 ? 'text-primary' : 'text-muted-foreground'
+                      } hover:text-primary transition`}
                   >
                     {breadcrumb.label}
                   </Link>
