@@ -11,25 +11,16 @@ import ThemeSwitcher from '../custom/ThemeSwitcher';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-
-type UserInfo = {
-  company: string | null;
-  email: string | null;
-  role: string | null;
-  name: string | null;
-};
+import { User } from '@prisma/client';
 
 type SidebarProps = {
-  userInformation: UserInfo;
+  user: User | null;
 };
 
-const Sidebar = ({ userInformation }: SidebarProps) => {
-
+const Sidebar = ({ user }: SidebarProps) => {
   const pathname = usePathname();
-
   // Estado para el menú en móvil (Sheet)
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-
   // Ancho dinámico del sidebar
   const sidebarWidth = '240px';
 
@@ -84,7 +75,7 @@ const Sidebar = ({ userInformation }: SidebarProps) => {
       {/* Footer */}
       <div className={`flex flex-col gap-4 px-4`}>
 
-        <LogoutButton userInformation={userInformation} />
+        <LogoutButton user={user} />
         <div className={`flex items-center justify-between w-full}`}>
           <span className="text-sm text-zinc-500 dark:text-zinc-400">Tema</span>
           <ThemeSwitcher />

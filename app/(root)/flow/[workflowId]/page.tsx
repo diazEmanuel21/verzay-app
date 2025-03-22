@@ -30,7 +30,6 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
     return <div>Workflow not found</div>
   }
 
-
   return (
     <>
       <div className='flex flex-row justify-start items-center'>
@@ -44,6 +43,7 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
             <NodeCard key={nodes.id} nodes={nodes} workflowId={workflow.id} />
           ))}
         </div>
+        
       ) : (
         <div className="flex flex-col items-center w-full">
           <div className="flex max-w-[300px]">

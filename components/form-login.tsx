@@ -48,6 +48,7 @@ const FormLogin = ({ isVerified, OAuthAccountNotLinked }: FormLoginProps) => {
         setError(response.error);
       } else {
         router.push("/dashboard");
+        window.location.reload(); //mejorar
       }
     });
   }
