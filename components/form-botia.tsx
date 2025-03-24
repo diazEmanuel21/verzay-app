@@ -67,7 +67,7 @@ const CreateBotComponent = ({ userId }: UserIdProps) => {
 
   return (
     <div className="p-2">
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+      {/* {error && <p className="text-red-500 mb-4">{error}</p>} */}
 
       <div className="mb-4">
         <label htmlFor="systemMessage" className="block text-gray-700 font-bold mb-2">

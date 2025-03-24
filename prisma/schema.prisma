@@ -20,36 +20,52 @@ model User {
   emailVerified DateTime?
   image         String?
   role          Role      @default(user)
-  
+
   // Nuevos campos obligatorios con valor por defecto
-  apiUrl             String   @default("")
-  company            String   @default("")
-  notificationNumber String   @default("")
-  lat                String   @default("")
-  lng                String   @default("")
-  openingPhrase      String   @default("")
-  mapsUrl            String   @default("") // Aunque es opcional en el interface, aquí lo dejamos obligatorio con valor por defecto
+  apiUrl             String @default("")
+  company            String @default("")
+  notificationNumber String @default("")
+  lat                String @default("")
+  lng                String @default("")
+  openingPhrase      String @default("")
+  mapsUrl            String @default("") // Aunque es opcional en el interface, aquí lo dejamos obligatorio con valor por defecto
 
   // Relaciones existentes
-  apikeys       ApiKey[]
-  accounts      Account[]
-  instancias    Instancias[]
-  systemMessages  SystemMessage[]
-  tools         Tools[]
+  pausar         Pausar[]
+  apikeys        ApiKey[]
+  accounts       Account[]
+  instancias     Instancias[]
+  systemMessages SystemMessage[]
+  tools          Tools[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Pausar {
+  id        String @id @default(cuid())
+  userId    String
+  instancia String
+  apikey    String
+  mensaje   String
+  tipo      String
+  baseurl   String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model ApiKey {
-  id      String    @id @default(cuid())
-  url     String   // Campo para almacenar la URL
-  key     String   // Campo para almacenar la API Key
-  userId  String   // Referencia al usuario
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  url    String // Campo para almacenar la URL
+  key    String // Campo para almacenar la API Key
+  userId String // Referencia al usuario
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now()) // Opcional: fecha de creación
-  updatedAt DateTime @updatedAt       // Opcional: fecha de actualización
+  updatedAt DateTime @updatedAt // Opcional: fecha de actualización
 }
 
 model Account {
@@ -82,13 +98,12 @@ model VerificationToken {
 }
 
 model Instancias {
-  id       Int    @id @default(autoincrement())
-  instanceName   String @unique
-  userId   String
-  instanceId String 
-  user     User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           Int    @id @default(autoincrement())
+  instanceName String @unique
+  userId       String
+  instanceId   String
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-
 
 model SystemMessage {
   id        String   @id @default(cuid())
@@ -100,41 +115,39 @@ model SystemMessage {
   updatedAt DateTime @updatedAt
 }
 
-
 model Tools {
-  id        String   @id @default(cuid())
-  name      String
+  id          String   @id @default(cuid())
+  name        String
   description String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
+model Workflow {
+  id     String @id @default(cuid())
+  userId String
 
-model Workflow{
-  id        String  @id @default(cuid())
-  userId    String
-
-  name      String
+  name        String
   description String?
 
   definition String
-  status    String
+  status     String
 
   createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  updateAt  DateTime @updatedAt
 
   //Flujos por usuario
   @@unique([name, userId])
 }
 
 model WorkflowNode {
-  id             String  @id @default(cuid())
-  workflowId     String
-  message        String
-  tipo           String
-  url            String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id         String   @id @default(cuid())
+  workflowId String
+  message    String
+  tipo       String
+  url        String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

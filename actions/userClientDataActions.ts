@@ -1,12 +1,49 @@
-"use server";
+'use server';
 
-import { db } from "@/lib/db";
-import { revalidatePath } from "next/cache";
+import { db } from '@/lib/db';
+import { User } from '@prisma/client';
 
-/**
- * Edita los datos de cliente en el modelo User.
- */
-export async function editarDatosCliente(userId: string, data: {
+interface ApiResponse<T = undefined> {
+  success: boolean;
+  message: string;
+  data?: T;
+}
+
+// ==================================
+// GET CLIENT DATA
+// ==================================
+export const getClientData = async (userId: string): Promise<ApiResponse<User>> => {
+  try {
+    const user = await db.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return {
+        success: false,
+        message: 'User not found.',
+      };
+    }
+
+    return {
+      success: true,
+      message: 'Client data fetched successfully.',
+      data: user,
+    };
+  } catch (error: any) {
+    console.error('Error fetching client data:', error);
+
+    return {
+      success: false,
+      message: 'Error fetching client data.',
+    };
+  }
+};
+
+// ==================================
+// UPDATE CLIENT DATA
+// ==================================
+export const updateClientData = async (userId: string, updatedFields: Partial<{
   apiUrl: string;
   company: string;
   notificationNumber: string;
@@ -14,75 +51,24 @@ export async function editarDatosCliente(userId: string, data: {
   lng: string;
   openingPhrase: string;
   mapsUrl: string;
-}) {
+}>): Promise<ApiResponse<User>> => {
   try {
-    const {
-      apiUrl,
-      company,
-      notificationNumber,
-      lat,
-      lng,
-      openingPhrase,
-      mapsUrl,
-    } = data;
-
-    if (
-      !userId ||
-      !apiUrl ||
-      !company ||
-      !notificationNumber ||
-      !lat ||
-      !lng ||
-      !openingPhrase ||
-      !mapsUrl
-    ) {
-      throw new Error("Todos los campos son obligatorios.");
-    }
-
-    await db.user.update({
+    const updatedUser = await db.user.update({
       where: { id: userId },
-      data: {
-        apiUrl,
-        company,
-        notificationNumber,
-        lat,
-        lng,
-        openingPhrase,
-        mapsUrl,
-      },
+      data: updatedFields,
     });
 
-    revalidatePath("/ia/(root)/add"); // Ruta relacionada con el contexto
-
-    return { success: true, message: "Datos del cliente actualizados exitosamente." };
+    return {
+      success: true,
+      message: 'Client data updated successfully.',
+      data: updatedUser,
+    };
   } catch (error: any) {
-    console.error(error);
-    return { success: false, message: error.message || "Error al actualizar los datos del cliente." };
+    console.error('Error updating client data:', error);
+
+    return {
+      success: false,
+      message: 'Error updating client data.',
+    };
   }
-}
-
-export async function obtenerDatosCliente(userId: string) {
-  try {
-    if (!userId) throw new Error("El ID de usuario es obligatorio.");
-
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: {
-        apiUrl: true,
-        company: true,
-        notificationNumber: true,
-        lat: true,
-        lng: true,
-        openingPhrase: true,
-        mapsUrl: true,
-      },
-    });
-
-    if (!user) throw new Error("Usuario no encontrado.");
-
-    return { success: true, data: user };
-  } catch (error: any) {
-    console.error(error);
-    return { success: false, message: error.message || "Error al obtener los datos del cliente." };
-  }
-}
+};

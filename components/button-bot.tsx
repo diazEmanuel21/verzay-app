@@ -146,11 +146,11 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
     <div className="flex flex-col items-center justify-center w-full">
       <div className="flex flex-col items-center justify-center w-full">
         {/* Alerta de error */}
-        {error && (
+        {/* {error && (
           <Alert variant="destructive" className="w-full max-w-sm">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
-        )}
+        )} */}
 
         {/* BOTÓN DE ENCENDIDO */}
         {!isEnabled ? (

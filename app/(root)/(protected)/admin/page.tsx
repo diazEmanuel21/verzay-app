@@ -10,10 +10,9 @@ import Header from "@/components/shared/header";
 const AdminPage = async () => {
   const session = await auth();
 
-  const user = await db.user.findUnique({
-    where: {email: session?.user.email ?? ""}
-  });
-
+  // const user = await db.user.findUnique({
+  //   where: {email: session?.user.email ?? ""}
+  // });
 
   if (session?.user?.role !== "admin") {
     return <div>Lo sentimos este portal solo esta hecho para distruibudores.</div>;

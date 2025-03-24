@@ -41,7 +41,6 @@ function NodeCard({ nodes, workflowId }: Props) {
   // Upload states
   const [file, setFile] = useState<File | null>(null);
   const [previewURL, setPreviewURL] = useState<string | null>(null);
-  console.log(previewURL);
   const handleSave = () => {
     if (message !== nodes.message) {
       startTransition(async () => {
@@ -98,6 +97,7 @@ function NodeCard({ nodes, workflowId }: Props) {
       });
 
       const data = await res.json();
+      console.log(data);
 
       if (res.ok) {
         toast.success('Archivo subido con éxito', { id: toastLoading });

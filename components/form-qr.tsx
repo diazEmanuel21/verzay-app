@@ -116,12 +116,12 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
                         </div>
                     )}
 
-                    {error && (
+                    {/* {error && (
                         <Alert variant="destructive">
                             <AlertTitle>Error</AlertTitle>
                             <AlertDescription>{error}</AlertDescription>
                         </Alert>
-                    )}
+                    )} */}
 
                     {!error && !loading && (
                         <>
@@ -141,17 +141,17 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
                                             className="mx-auto rounded-lg border"
                                         />
                                     )}
-                                    <div className="mt-4 text-left space-y-2 text-sm text-gray-700 max-w-sm">
+                                    <div className="mt-4 text-left space-y-2 text-sm max-w-sm">
                                         <h3 className="font-semibold text-base">🤚 Lee antes de escanear:</h3>
                                         <ul className="list-decimal list-inside space-y-1">
                                             <li>
-                                                Abre <span className="font-bold text-black">WhatsApp Business</span> en tu teléfono.
+                                                Abre <span className="font-bold">WhatsApp Business</span> en tu teléfono.
                                             </li>
                                             <li>
-                                                Toca el icono <span className="font-bold text-black">Dispositivos vinculados</span> &gt; vincular un <span className="font-bold text-black">dispositivo</span>.
+                                                Toca el icono <span className="font-bold">Dispositivos vinculados</span> &gt; vincular un <span className="font-bold">dispositivo</span>.
                                             </li>
                                             <li>
-                                                Apunta la <span className="font-bold text-black">cámara</span> de tu teléfono a la pantalla para escanear el código <span className="font-bold text-black">QR</span>.
+                                                Apunta la <span className="font-bold">cámara</span> de tu teléfono a la pantalla para escanear el código<span className="font-bold ">QR</span>.
                                             </li>
                                         </ul>
                                     </div>
