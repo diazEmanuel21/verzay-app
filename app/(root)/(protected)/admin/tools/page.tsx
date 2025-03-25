@@ -3,7 +3,7 @@ import React from 'react'
 const pageTools = () => {
   return (
     <div>
-      pageTools
+      pageTool
     </div>
   )
 }
