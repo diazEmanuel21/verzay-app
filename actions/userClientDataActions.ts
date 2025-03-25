@@ -35,7 +35,7 @@ export async function getAllUsers(): Promise<UserWithPausarMensaje[]> {
 // ==============================
 // GET CLIENT DATA BY USER ID
 // ==============================
-export const getClientData = async (userId: string): Promise<ClientResponse<User & { abrirPhrase?: string }>> => {
+export const getClientDataByUserId = async (userId: string): Promise<ClientResponse<User & { abrirPhrase?: string }>> => {
   try {
     const user = await db.user.findUnique({
       where: { id: userId },
@@ -51,7 +51,6 @@ export const getClientData = async (userId: string): Promise<ClientResponse<User
       };
     }
 
-    const mensaje = user.pausar[0]?.mensaje;
     const abrirPhrase = user.pausar.find(p => p.tipo === 'abrir')?.mensaje;
 
     return {
@@ -76,27 +75,66 @@ export const getClientData = async (userId: string): Promise<ClientResponse<User
 // ==============================
 export const updateClientData = async (
   userId: string,
-  updatedFields: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>>,
-): Promise<ClientResponse<User>> => {
+  updates: Partial<Record<string, string>>
+): Promise<ClientResponse<{ updatedField: string; newValue: string }>> => {
   try {
-    const user = await db.user.update({
+    const field = Object.keys(updates)[0];
+    console.log(`*******************field${JSON.stringify(field)}`);
+    console.log(`*******************updates${JSON.stringify(updates)}`);
+    const value = updates[field];
+    console.log(`*******************value${value}`);
+
+    if (!field || value === undefined) {
+      return { success: false, message: 'Campo o valor inválido' };
+    }
+
+    if (field === 'abrirPhrase') {
+      const existing = await db.pausar.findFirst({
+        where: { userId, tipo: 'abrir' },
+      });
+
+      if (existing) {
+        await db.pausar.update({
+          where: { id: existing.id },
+          data: { mensaje: value },
+        });
+      } else {
+        await db.pausar.create({
+          data: {
+            userId,
+            tipo: 'abrir',
+            mensaje: value,
+            baseurl: 'https://conexion.verzay.co',
+            instanciaId: 'default-instancia-id',
+            apikeyId: 'default-apikey-id',
+          },
+        });
+      }
+
+      return {
+        success: true,
+        message: 'Frase de apertura actualizada',
+        data: { updatedField: field, newValue: value },
+      };
+    }
+
+    // Cualquier otro campo de User
+    await db.user.update({
       where: { id: userId },
-      data: updatedFields,
+      data: { [field]: value },
     });
 
     return {
       success: true,
-      message: 'Client data updated successfully.',
-      data: user,
+      message: `Campo ${field} actualizado correctamente`,
+      data: { updatedField: field, newValue: value },
     };
   } catch (error) {
-    console.error('Error updating client data:', error);
-    return {
-      success: false,
-      message: 'Error updating client data.',
-    };
+    console.error('Error actualizando datos del cliente:', error);
+    return { success: false, message: 'Error interno al guardar' };
   }
 };
+
 
 // ==============================
 // CREATE USER + INSERT TO PAUSAR

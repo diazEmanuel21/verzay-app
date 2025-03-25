@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Header from '@/components/shared/header';
 import { toast } from "sonner";
-import { getClientData , updateClientData  } from "@/actions/userClientDataActions";
+import { getClientDataByUserId, updateClientData } from "@/actions/userClientDataActions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { z } from 'zod';
@@ -17,23 +17,26 @@ const clientSchema = z.object({
     notificationNumber: z.string().min(7).max(15).regex(/^\d+$/, { message: 'El número debe ser numérico' }),
     lat: z.string().optional(),
     lng: z.string().optional(),
-    openingPhrase: z.string().min(3, { message: 'La frase de apertura es muy corta' }),
+    abrirPhrase: z.string().min(3, { message: 'La frase de apertura es muy corta' }),
     mapsUrl: z.string().url({ message: 'La URL de Google Maps no es válida' }),
 });
 
 // ============================
 // Tipado
 // ============================
-interface Client {
+
+interface User {
     apiUrl: string;
     company: string;
     notificationNumber: string;
     lat: string;
     lng: string;
-    openingPhrase: string;
     mapsUrl: string;
 }
 
+type Client = User & {
+    abrirPhrase: string;
+}
 // ============================
 // Componente Principal
 // ============================
@@ -49,16 +52,22 @@ export const UserInformation = ({ userId }: { userId: string }) => {
         if (!userId) return;
 
         const fetchClientData = async () => {
-            const result = await getClientData(userId);
-
+            const result = await getClientDataByUserId(userId);
+            console.log(result)
             if (!result.success || !result.data) {
                 toast.error(result.message || 'Error al cargar los datos');
                 return;
             }
 
             const data = result.data;
-            setClient(data);
-            setOriginalClient(data);
+            setClient({
+                ...data,
+                abrirPhrase: data.abrirPhrase || '',
+              });
+            setOriginalClient({
+                ...data,
+                abrirPhrase: data.abrirPhrase || '',
+              });
         };
 
         fetchClientData();
@@ -136,7 +145,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                         { key: 'apiUrl', label: 'API URL', type: 'password' },
                         { key: 'company', label: 'Empresa' },
                         { key: 'notificationNumber', label: 'Número de Notificación' },
-                        { key: 'openingPhrase', label: 'Frase de Apertura' },
+                        { key: 'abrirPhrase', label: 'Frase de Apertura' },
                     ].map(({ key, label, type }) => (
                         <div key={key} className="space-y-2">
                             <Label htmlFor={key} className="text-muted-foreground">{label}</Label>
@@ -225,6 +234,6 @@ const initialClientState = (): Client => ({
     notificationNumber: "",
     lat: "",
     lng: "",
-    openingPhrase: "",
+    abrirPhrase: "",
     mapsUrl: "",
 });
