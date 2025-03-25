@@ -109,8 +109,10 @@ export const updateClientData = async (
 // ==============================
 export const updateAbrirPhrase = async (userId: string, mensaje: string) => {
   try {
-    const res = await db.pausar.update({
-      where: { id: userId },
+    const idPausa = 'cm8ovjqyj000w49pj5a751576';
+
+    await db.pausar.update({
+      where: { id: idPausa },
       data: { mensaje },
     });
 
@@ -129,7 +131,6 @@ export const createUserWithPausar = async (
 ): Promise<ClientResponse<User>> => {
   try {
     const { openingPhrase, ...userFields } = userData;
-
 
     console.log(userData);
     const user = await db.user.create({

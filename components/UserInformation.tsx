@@ -94,11 +94,11 @@ export const UserInformation = ({ userId }: { userId: string }) => {
             toast.loading(`Guardando ${field}...`, { id: field });
 
             /* Ejecuta una función para actualizar dependiendo del campo.*/
-            debugger;
             if (field === 'abrirPhrase') {
-                result = await updateAbrirPhrase(userId, currentValue);
+                const idPausa = client.pausar[0]?.id;
+                result = await updateAbrirPhrase(idPausa, newValue);
             } else {
-                result = await updateClientData(userId, field, currentValue);
+                result = await updateClientData(userId, field, newValue);
             }
 
             if (!result.success) {
