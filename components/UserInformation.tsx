@@ -37,6 +37,7 @@ interface User {
 type Client = User & {
     abrirPhrase: string;
 }
+
 // ============================
 // Componente Principal
 // ============================
