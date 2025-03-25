@@ -21,14 +21,14 @@ model User {
   image         String?
   role          Role      @default(user)
 
-  // Nuevos campos obligatorios con valor por defecto
-  apiUrl             String @default("")
-  company            String @default("")
-  notificationNumber String @default("")
-  lat                String @default("")
-  lng                String @default("")
-  openingPhrase      String @default("")
-  mapsUrl            String @default("") // Aunque es opcional en el interface, aquí lo dejamos obligatorio con valor por defecto
+  // Valores por defecto mejorados
+  apiUrl             String @default("https://api.openAI.co")
+  company            String @default("Empresa Demo")
+  notificationNumber String @default("0000000000")
+  lat                String @default("0.0000")
+  lng                String @default("0.0000")
+  openingPhrase      String? @default("DEPRECATED") // Aún presente por compatibilidad DEPRECATED - migrado a ChatPhrase
+  mapsUrl            String @default("https://maps.google.com/?q=0,0")
 
   // Relaciones existentes
   sessions       Session[]
@@ -44,27 +44,27 @@ model User {
 }
 
 model Session {
-  id         String   @id @default(cuid())
+  id         String @id @default(cuid())
   userId     String
   remoteJid  String
   pushName   String
-  status     String
+  status     Boolean
   instanceId String
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Pausar {
-  id        String @id @default(cuid())
-  userId    String
-  instancia String
-  apikey    String
-  mensaje   String
-  tipo      String
-  baseurl   String
+  id      String @id @default(cuid())
+  userId  String
+  instanciaId String 
+  apikeyId    String
+  mensaje String @default("Fue un gusto ayudarte.") 
+  tipo    String
+  baseurl String
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

@@ -7,17 +7,19 @@ import EnableToggleButton from "@/components/button-bot";
 
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { FaWhatsapp } from 'react-icons/fa';
+import { redirect } from "next/navigation";
+
 
 
 export default async function DashboardPage() {
   const session = await currentUser();
-
+  
   const user = await db.user.findUnique({
     where: { email: session?.email ?? "" },
   });
 
   if (!user) {
-    return <div>No estás autenticado</div>;
+    redirect('/login'); // Redirección en el servidor
   }
 
   return (

@@ -22,7 +22,7 @@ export async function createUser(formData: FormData) {
     },
   });
 
-  revalidatePath("/clientes");
+  revalidatePath("/admin/clientes");
 }
 
 // Editar usuario
@@ -51,7 +51,7 @@ export async function updateUser(id: string, formData: FormData) {
     data: updateData,
   });
 
-  revalidatePath("/clientes");
+  revalidatePath("/admin/clientes");
 }
 
 // Eliminar usuario
@@ -64,5 +64,5 @@ export async function deleteUser(id: string) {
     where: { id },
   });
 
-  revalidatePath("/clientes");
+  revalidatePath("/admin/clientes");
 }
