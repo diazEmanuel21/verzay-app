@@ -75,50 +75,17 @@ export const getClientDataByUserId = async (userId: string): Promise<ClientRespo
 // ==============================
 export const updateClientData = async (
   userId: string,
-  updates: Partial<Record<string, string>>
-): Promise<ClientResponse<{ updatedField: string; newValue: string }>> => {
+  field: string,
+  value: string
+): Promise<{ success: boolean; message: string }> => {
   try {
-    const field = Object.keys(updates)[0];
-    console.log(`*******************field${JSON.stringify(field)}`);
-    console.log(`*******************updates${JSON.stringify(updates)}`);
-    const value = updates[field];
-    console.log(`*******************value${value}`);
-
-    if (!field || value === undefined) {
-      return { success: false, message: 'Campo o valor inválido' };
-    }
-
     if (field === 'abrirPhrase') {
-      const existing = await db.pausar.findFirst({
-        where: { userId, tipo: 'abrir' },
-      });
-
-      if (existing) {
-        await db.pausar.update({
-          where: { id: existing.id },
-          data: { mensaje: value },
-        });
-      } else {
-        await db.pausar.create({
-          data: {
-            userId,
-            tipo: 'abrir',
-            mensaje: value,
-            baseurl: 'https://conexion.verzay.co',
-            instanciaId: 'default-instancia-id',
-            apikeyId: 'default-apikey-id',
-          },
-        });
-      }
-
       return {
-        success: true,
-        message: 'Frase de apertura actualizada',
-        data: { updatedField: field, newValue: value },
+        success: false,
+        message: 'El campo abrirPhrase está restringido y no puede ser actualizado aquí.',
       };
     }
 
-    // Cualquier otro campo de User
     await db.user.update({
       where: { id: userId },
       data: { [field]: value },
@@ -126,15 +93,33 @@ export const updateClientData = async (
 
     return {
       success: true,
-      message: `Campo ${field} actualizado correctamente`,
-      data: { updatedField: field, newValue: value },
+      message: `Campo "${field}" actualizado correctamente.`,
     };
   } catch (error) {
     console.error('Error actualizando datos del cliente:', error);
-    return { success: false, message: 'Error interno al guardar' };
+    return {
+      success: false,
+      message: 'Error interno al actualizar los datos.',
+    };
   }
 };
 
+// ==============================
+// UPDATE PAUSA DATA
+// ==============================
+export const updateAbrirPhrase = async (userId: string, mensaje: string) => {
+  try {
+    const res = await db.pausar.update({
+      where: { id: userId },
+      data: { mensaje },
+    });
+
+    return { success: true, message: 'Frase actualizada correctamente' };
+  } catch (error) {
+    console.error('Error actualizando abrirPhrase:', error);
+    return { success: false, message: 'Error actualizando la frase' };
+  }
+};
 
 // ==============================
 // CREATE USER + INSERT TO PAUSAR

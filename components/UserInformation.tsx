@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Header from '@/components/shared/header';
 import { toast } from "sonner";
-import { getClientDataByUserId, updateClientData } from "@/actions/userClientDataActions";
+import { getClientDataByUserId, updateClientData, updateAbrirPhrase } from "@/actions/userClientDataActions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { z } from 'zod';
@@ -63,11 +63,11 @@ export const UserInformation = ({ userId }: { userId: string }) => {
             setClient({
                 ...data,
                 abrirPhrase: data.abrirPhrase || '',
-              });
+            });
             setOriginalClient({
                 ...data,
                 abrirPhrase: data.abrirPhrase || '',
-              });
+            });
         };
 
         fetchClientData();
@@ -85,13 +85,20 @@ export const UserInformation = ({ userId }: { userId: string }) => {
         }
 
         try {
+            let result;
             const fieldSchema = clientSchema.shape[field];
             fieldSchema.parse(newValue);
 
             setLoadingField(field);
             toast.loading(`Guardando ${field}...`, { id: field });
 
-            const result = await updateClientData(userId, { ...client });
+            /* Ejecuta una función para actualizar dependiendo del campo.*/
+            debugger;
+            if (field === 'abrirPhrase') {
+                result = await updateAbrirPhrase(userId, currentValue);
+            } else {
+                result = await updateClientData(userId, field, currentValue);
+            }
 
             if (!result.success) {
                 toast.error(result.message || `Error al guardar ${field}`, { id: field });
