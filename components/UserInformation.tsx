@@ -95,8 +95,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
 
             /* Ejecuta una función para actualizar dependiendo del campo.*/
             if (field === 'abrirPhrase') {
-                const idPausa = client.pausar[0]?.id;
-                result = await updateAbrirPhrase(idPausa, newValue);
+                result = await updateAbrirPhrase(userId, newValue);
             } else {
                 result = await updateClientData(userId, field, newValue);
             }

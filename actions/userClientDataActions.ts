@@ -109,10 +109,18 @@ export const updateClientData = async (
 // ==============================
 export const updateAbrirPhrase = async (userId: string, mensaje: string) => {
   try {
-    const idPausa = 'cm8ovjqyj000w49pj5a751576';
+    const userWithPausar = await db.user.findUnique({
+      where: { id: userId },
+      include: {
+        pausar: true, // o filtra con where si solo te interesa tipo = 'abrir'
+      },
+    });
+
+    const pausa = userWithPausar?.pausar.find(p => p.tipo === 'abrir');
+    const pausarId = pausa?.id;
 
     await db.pausar.update({
-      where: { id: idPausa },
+      where: { id: pausarId },
       data: { mensaje },
     });
 
@@ -122,6 +130,7 @@ export const updateAbrirPhrase = async (userId: string, mensaje: string) => {
     return { success: false, message: 'Error actualizando la frase' };
   }
 };
+
 
 // ==============================
 // CREATE USER + INSERT TO PAUSAR
