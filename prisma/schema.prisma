@@ -31,6 +31,7 @@ model User {
   mapsUrl            String @default("") // Aunque es opcional en el interface, aquí lo dejamos obligatorio con valor por defecto
 
   // Relaciones existentes
+  sessions       Session[]
   pausar         Pausar[]
   apikeys        ApiKey[]
   accounts       Account[]
@@ -40,6 +41,20 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  remoteJid  String
+  pushName   String
+  status     String
+  instanceId String
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Pausar {
