@@ -17,7 +17,7 @@ export const EditDialog = () => {
       <CardHeader>
         <CardTitle>Edit Profile</CardTitle>
         <CardDescription>
-          Make changes to your profile here. Click save when you're done.
+          {"Make changes to your profile here. Click save when you're done."}
         </CardDescription>
       </CardHeader>
       <CardContent>
