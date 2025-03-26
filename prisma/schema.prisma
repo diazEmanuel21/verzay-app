@@ -58,7 +58,7 @@ model Session {
 }
 
 model Pausar {
-  id      Int      @id @default(autoincrement())
+  id      Int     @id @default(autoincrement())
   userId  String
   instanciaId String 
   apikeyId    String
