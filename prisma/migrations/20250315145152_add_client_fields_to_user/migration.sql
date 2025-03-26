@@ -1,8 +1,0 @@
--- AlterTable
-ALTER TABLE "User" ADD COLUMN     "apiUrl" TEXT NOT NULL DEFAULT '',
-ADD COLUMN     "company" TEXT NOT NULL DEFAULT '',
-ADD COLUMN     "lat" TEXT NOT NULL DEFAULT '',
-ADD COLUMN     "lng" TEXT NOT NULL DEFAULT '',
-ADD COLUMN     "mapsUrl" TEXT NOT NULL DEFAULT '',
-ADD COLUMN     "notificationNumber" TEXT NOT NULL DEFAULT '',
-ADD COLUMN     "openingPhrase" TEXT NOT NULL DEFAULT '';
