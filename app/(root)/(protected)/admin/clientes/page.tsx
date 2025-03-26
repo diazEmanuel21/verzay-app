@@ -7,4 +7,5 @@ export default async function ClientesPage() {
   const users = await getAllUsers();
 
   return <ClientsManager users={users} />;
+  
 }
