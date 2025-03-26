@@ -15,13 +15,17 @@ import { User } from '@prisma/client';
 import { PlusCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { CreateDialog, DeleteDialog, ToolsDialog, EditDialog } from './';
+import { createTool } from '@/actions/tools-action';
 
 type UserWithPausar = User & { pausarMensaje?: string };
+export type DialogType = 'editar' | 'tools' | 'delete'
 
 export const ClientsManager = ({ users }: { users: UserWithPausar[] }) => {
     const router = useRouter();
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [openCreateDialog, setOpenCreateDialog] = useState(false);
+    const [openToolsDialog, setOpenToolsDialog] = useState(false);
+    const [openEditDialog, setOpenEditDialog] = useState(false);
     const [user, setCurrentUser] = useState<UserWithPausar>();
 
     const handleCreate = async (formData: FormData) => {
@@ -79,10 +83,30 @@ export const ClientsManager = ({ users }: { users: UserWithPausar[] }) => {
         }
     };
 
-    const openDialogGetUserId = (userId: string, state: boolean) => {
-        setOpenDeleteDialog(state);
+    const handleSaveTools = async (formData: FormData) => {
+        if (!user) return toast.error('Falta el usuario para completar la operación.');
+
+        const toastId = 'create-tool';
+        toast.loading('Creando herramienta...', { id: toastId });
+
+        const result = await createTool(user?.id, 'drive', formData.get('drive') as string);
+        if (result.success) {
+            toast.success('Herramienta creada', { id: toastId });
+            router.refresh();
+        } else {
+            toast.error(result.message || 'Error al crear herramienta', { id: toastId });
+        }
+        
+        setOpenToolsDialog(false);
+    };
+
+    const openDialogGetUserId = (userId: string, dialog: DialogType, state: boolean) => {
         const currentUser = users.filter(user => user.id === userId)[0];
         setCurrentUser(currentUser);
+
+        if (dialog === 'tools') return setOpenToolsDialog(state);
+        if (dialog === 'delete') return setOpenDeleteDialog(state);
+        if (dialog === 'editar') return setOpenEditDialog(state);
     };
 
     const openCreateDialogUser = () => {
@@ -120,6 +144,14 @@ export const ClientsManager = ({ users }: { users: UserWithPausar[] }) => {
                     handleDelete={handleDelete}
                     openDeleteDialog={openDeleteDialog}
                     setOpenDeleteDialog={setOpenDeleteDialog}
+                    user={user}
+                />
+            )}
+            {user && (
+                <ToolsDialog
+                    handleSaveTools={handleSaveTools}
+                    openToolsDialog={openToolsDialog}
+                    setOpenToolsDialog={setOpenToolsDialog}
                     user={user}
                 />
             )}

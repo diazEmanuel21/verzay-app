@@ -54,7 +54,7 @@ export default async function RootLayout({
                       {children}
                     </main>
                     <footer className="hidden md:flex h-12 items-center justify-center border-t text-xs text-muted-foreground">
-                      © 2024 Verzay. Todos los derechos reservados.
+                      © 2025 Verzay. Todos los derechos reservados.
                     </footer>
                   </div>
                 </SidebarProvider>
