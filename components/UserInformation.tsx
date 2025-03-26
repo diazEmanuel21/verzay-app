@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Header from '@/components/shared/header';
 import { toast } from "sonner";
-import { getClientDataByUserId, updateClientData, updateAbrirPhrase } from "@/actions/userClientDataActions";
+import { getClientDataByUserId, updateClientDataByField, updateAbrirPhrase } from "@/actions/userClientDataActions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { z } from 'zod';
@@ -97,7 +97,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
             if (field === 'abrirPhrase') {
                 result = await updateAbrirPhrase(userId, newValue);
             } else {
-                result = await updateClientData(userId, field, newValue);
+                result = await updateClientDataByField(userId, field, newValue);
             }
 
             if (!result.success) {

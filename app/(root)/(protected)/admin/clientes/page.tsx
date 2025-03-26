@@ -1,7 +1,7 @@
 // app/(protected)/admin/clientes/page.tsx
 
 import { getAllUsers } from '@/actions/userClientDataActions';
-import { ClientesPageClient } from './_components/clientes-client';
+import { ClientesPageClient } from './_components/clientes';
 
 export default async function ClientesPage() {
   const users = await getAllUsers();

@@ -23,13 +23,7 @@ export const ClientesPageClient = ({ users }: { users: UserWithPausar[] }) => {
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   const handleEdit = async (userId: string, formData: FormData) => {
-    const data = {
-      name: formData.get('name') as string,
-      email: formData.get('email') as string,
-      password: formData.get('password') as string,
-    };
-
-    const result = await updateClientData(userId, data);
+    const result = await updateClientData(userId, formData);
     if (result.success) {
       toast.success('Cliente actualizado');
       router.refresh();
@@ -51,7 +45,7 @@ export const ClientesPageClient = ({ users }: { users: UserWithPausar[] }) => {
     }
   };
 
-  const columns = getColumns(handleEdit, handleDelete, deletingUserId);
+  const columns = getColumns(handleDelete, deletingUserId);
 
   return (
     <div className="p-8 space-y-8">

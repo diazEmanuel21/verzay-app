@@ -71,9 +71,9 @@ export const getClientDataByUserId = async (userId: string): Promise<ClientRespo
 };
 
 // ==============================
-// UPDATE CLIENT DATA
+// UPDATE CLIENT DATA BY FIELD
 // ==============================
-export const updateClientData = async (
+export const updateClientDataByField = async (
   userId: string,
   field: string,
   value: string
@@ -103,7 +103,48 @@ export const updateClientData = async (
     };
   }
 };
+// ==============================
+// UPDATE CLIENT DATA
+// ==============================
+export const updateClientData = async (
+  userId: string,
+  formData: FormData
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    const restrictedFields = ['abrirPhrase']
 
+    const dataToUpdate: Record<string, any> = {}
+
+    formData.forEach((value, key) => {
+      if (restrictedFields.includes(key)) return
+
+      dataToUpdate[key] = value
+    })
+
+    if (Object.keys(dataToUpdate).length === 0) {
+      return {
+        success: false,
+        message: 'No se encontraron campos válidos para actualizar.',
+      }
+    }
+
+    await db.user.update({
+      where: { id: userId },
+      data: dataToUpdate,
+    })
+
+    return {
+      success: true,
+      message: 'Datos del cliente actualizados correctamente.',
+    }
+  } catch (error) {
+    console.error('Error actualizando datos del cliente desde formData:', error)
+    return {
+      success: false,
+      message: 'Error interno al actualizar los datos.',
+    }
+  }
+}
 // ==============================
 // UPDATE PAUSA DATA
 // ==============================

@@ -36,8 +36,8 @@ export const Breadcrumbs = () => {
     const labelFromDict = breadcrumbLabels[segment];
 
     // Detectamos si es un ID por longitud (puedes ajustar la lógica)
-    const isId = segment.length > 20;
-    const label = labelFromDict || (isId ? 'workflow' : decodeURIComponent(segment.replace(/-/g, ' ')));
+    const isId = segment.length > 100;
+    const label = labelFromDict || (isId ? 'URL' : decodeURIComponent(segment.replace(/-/g, ' ')));
 
     return { href, label };
   });
