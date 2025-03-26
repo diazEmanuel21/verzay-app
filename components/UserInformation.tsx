@@ -149,10 +149,10 @@ export const UserInformation = ({ userId }: { userId: string }) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {[
-                        { key: 'apiUrl', label: 'API URL', type: 'password' },
+                        { key: 'apiUrl', label: 'API key OpenAI', type: 'password' },
                         { key: 'company', label: 'Empresa' },
-                        { key: 'notificationNumber', label: 'Número de Notificación' },
-                        { key: 'abrirPhrase', label: 'Frase de Apertura' },
+                        { key: 'notificationNumber', label: 'Número de notificación' },
+                        { key: 'abrirPhrase', label: 'Frase de reactivación' },
                     ].map(({ key, label, type }) => (
                         <div key={key} className="space-y-2">
                             <Label htmlFor={key} className="text-muted-foreground">{label}</Label>

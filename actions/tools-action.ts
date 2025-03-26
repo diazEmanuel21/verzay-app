@@ -1,8 +1,7 @@
 'use server'
 
+import { Tools } from '@/app/(root)/(protected)/admin/clientes/tool-types'
 import { db } from '@/lib/db'
-
-export type Tools = 'drive' | 'docs' | 'sheets'
 
 export async function createTool(userId: string, name: Tools, description: string) {
   try {

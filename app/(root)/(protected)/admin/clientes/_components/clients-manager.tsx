@@ -15,7 +15,6 @@ import { User } from '@prisma/client';
 import { PlusCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { CreateDialog, DeleteDialog, ToolsDialog, EditDialog } from './';
-import { createTool } from '@/actions/tools-action';
 
 type UserWithPausar = User & { pausarMensaje?: string };
 export type DialogType = 'editar' | 'tools' | 'delete'
@@ -39,7 +38,7 @@ export const ClientsManager = ({ users }: { users: UserWithPausar[] }) => {
             openingPhrase: 'Fue un gusto ayudarte.',
             role: 'user',
             apiUrl: 'https://api.openAI.co',
-            company: 'Empresa Demo',
+            company: 'Nombre empresa',
             notificationNumber: '0000000000',
             lat: '0.0000',
             lng: '0.0000',
@@ -81,23 +80,6 @@ export const ClientsManager = ({ users }: { users: UserWithPausar[] }) => {
         } else {
             toast.error('Error al eliminar cliente', { id: toastId });
         }
-    };
-
-    const handleSaveTools = async (formData: FormData) => {
-        if (!user) return toast.error('Falta el usuario para completar la operación.');
-
-        const toastId = 'create-tool';
-        toast.loading('Creando herramienta...', { id: toastId });
-
-        const result = await createTool(user?.id, 'drive', formData.get('drive') as string);
-        if (result.success) {
-            toast.success('Herramienta creada', { id: toastId });
-            router.refresh();
-        } else {
-            toast.error(result.message || 'Error al crear herramienta', { id: toastId });
-        }
-        
-        setOpenToolsDialog(false);
     };
 
     const openDialogGetUserId = (userId: string, dialog: DialogType, state: boolean) => {
@@ -149,7 +131,6 @@ export const ClientsManager = ({ users }: { users: UserWithPausar[] }) => {
             )}
             {user && (
                 <ToolsDialog
-                    handleSaveTools={handleSaveTools}
                     openToolsDialog={openToolsDialog}
                     setOpenToolsDialog={setOpenToolsDialog}
                     user={user}
