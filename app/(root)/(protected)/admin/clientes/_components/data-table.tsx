@@ -69,7 +69,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
   })
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
         <Input
           placeholder="Buscar por correo..."

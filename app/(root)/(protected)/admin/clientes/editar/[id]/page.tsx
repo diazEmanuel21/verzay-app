@@ -2,11 +2,20 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { updateClientData } from '@/actions/userClientDataActions'
+
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 type User = {
   id: string
@@ -15,72 +24,37 @@ type User = {
 }
 
 export default function EditarClientePage() {
-  const router = useRouter()
-  const params = useParams()
-  const userId = params.id as string
-
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    // Simulación de fetch, reemplaza por una llamada real si tienes API
-    const fetchUser = async () => {
-      const res = await fetch(`/api/clientes/${userId}`)
-      const data = await res.json()
-      setUser(data)
-      setLoading(false)
-    }
-
-    fetchUser()
-  }, [userId])
-
-  const handleSubmit = async (formData: FormData) => {
-    const result = await updateClientData(userId, formData)
-
-    if (result.success) {
-      toast.success('Cliente actualizado correctamente')
-      router.push('/admin/clientes')
-    } else {
-      toast.error(result.message || 'Error al actualizar cliente')
-    }
-  }
-
-  if (loading) {
-    return <p className="p-6 text-muted-foreground">Cargando datos del cliente...</p>
-  }
-
-  if (!user) {
-    return <p className="p-6 text-red-500">Cliente no encontrado.</p>
-  }
-
   return (
-    <div className="max-w-xl mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Editar Cliente</h1>
-
-      <form
-        action={handleSubmit}
-        className="space-y-4"
-      >
-        <div>
-          <Label>Nombre</Label>
-          <Input name="name" defaultValue={user.name} />
-        </div>
-        <div>
-          <Label>Email</Label>
-          <Input name="email" type="email" defaultValue={user.email} />
-        </div>
-        <div>
-          <Label>Contraseña</Label>
-          <Input name="password" type="password" placeholder="••••••••" />
-        </div>
-
-        <div className="flex justify-between">
-          <Button type="button" variant="outline" onClick={() => router.back()}>
-            Cancelar
-          </Button>
-          <Button type="submit">Guardar Cambios</Button>
-        </div>
-      </form>
+    <div className='flex justify-center items-center h-full w-full'>
+      <Card className="w-[350px]">
+        <CardHeader>
+          <CardTitle>Edit Profile</CardTitle>
+          <CardDescription>
+            Make changes to your profile here. Click save when you're done.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                  Name
+                </Label>
+                <Input id="name" value="Pedro Duarte" className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="username" className="text-right">
+                  Username
+                </Label>
+                <Input id="username" value="@peduarte" className="col-span-3" />
+              </div>
+            </div>
+          </form>
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <Button type="submit">Save changes</Button>
+        </CardFooter>
+      </Card>
     </div>
   )
 }

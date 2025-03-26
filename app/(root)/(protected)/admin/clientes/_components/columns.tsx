@@ -9,8 +9,7 @@ export type UserWithPausar = User & {
 }
 
 export const getColumns = (
-  handleDelete: (userId: string) => void,
-  deletingUserId: string | null
+  openDialogGetUserId: (userId: string, state: boolean) => void
 ): ColumnDef<UserWithPausar>[] => [
   {
     accessorKey: 'name',
@@ -35,8 +34,7 @@ export const getColumns = (
     cell: ({ row }) => (
       <UserActionsMenu
         user={row.original}
-        onDelete={handleDelete}
-        deletingUserId={deletingUserId}
+        openDialogGetUserId={openDialogGetUserId}
       />
     )
   }
