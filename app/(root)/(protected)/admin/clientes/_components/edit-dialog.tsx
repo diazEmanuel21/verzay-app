@@ -1,27 +1,39 @@
 
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { User } from "@prisma/client";
 
-export const EditDialog = () => {
+type UserWithPausar = User & { pausarMensaje?: string };
+interface Props {
+  openEditDialog: boolean
+  setOpenEditDialog: (open: boolean) => void
+  handleEdit: (userId: string, formData: FormData) => void
+  user: UserWithPausar,
+}
+
+export const EditDialog = ({
+  openEditDialog,
+  setOpenEditDialog,
+  handleEdit,
+  user
+}: Props) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Edit Profile</CardTitle>
-        <CardDescription>
-          {"Make changes to your profile here. Click save when you're done."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form>
+
+    <Dialog open={openEditDialog} onOpenChange={setOpenEditDialog}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Editar cliente</DialogTitle>
+          <DialogDescription>
+            {"Realiza cambios del cliente aquí. Guarda los cambios cuando termines..."}
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          action={(formData) => {
+            handleEdit(user?.id, formData)
+          }}
+        >
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
@@ -36,11 +48,11 @@ export const EditDialog = () => {
               <Input id="username" value="@peduarte" className="col-span-3" />
             </div>
           </div>
+          <DialogFooter>
+            <Button type="submit">Guardar</Button>
+          </DialogFooter>
         </form>
-      </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button type="submit">Save changes</Button>
-      </CardFooter>
-    </Card>
+      </DialogContent>
+    </Dialog >
   )
 }

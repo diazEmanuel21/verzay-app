@@ -122,6 +122,15 @@ export const ClientsManager = ({ users }: { users: UserWithPausar[] }) => {
             />
             {/* Dialog delete */}
             {user && (
+                <EditDialog
+                    openEditDialog={openEditDialog}
+                    setOpenEditDialog={setOpenEditDialog}
+                    handleEdit={handleEdit}
+                    user={user}
+                />
+            )}
+            {/* Dialog delete */}
+            {user && (
                 <DeleteDialog
                     handleDelete={handleDelete}
                     openDeleteDialog={openDeleteDialog}
@@ -129,6 +138,7 @@ export const ClientsManager = ({ users }: { users: UserWithPausar[] }) => {
                     user={user}
                 />
             )}
+            {/* Tools */}
             {user && (
                 <ToolsDialog
                     openToolsDialog={openToolsDialog}

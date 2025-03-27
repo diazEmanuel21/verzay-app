@@ -26,7 +26,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <Sidebar className="!bg-white dark:!bg-black lg:!bg-white/80 lg:dark:!bg-zinc-900/80 text-zinc-800 dark:text-zinc-100 border-r border-zinc-200 dark:border-zinc-800">
+    <Sidebar className="border-r border-zinc-200 dark:border-zinc-800">
       {/* HEADER */}
       <SidebarHeader className="flex items-center justify-center py-4">
         <Link href="/">
@@ -49,10 +49,11 @@ export function AppSidebar({ user }: AppSidebarProps) {
               <Link
                 key={link.route}
                 href={link.route}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${isActive
-                  ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white'
-                  : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                  }`}
+                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${
+                  isActive
+                    ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white'
+                    : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                }`}
               >
                 <Image
                   src={link.icon}
