@@ -26,7 +26,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <Sidebar className="border-r border-zinc-200 dark:border-zinc-800">
+    <Sidebar className="bg-white dark:bg-gray-900 text-gray-800 dark:text-zinc-100 border-r border-zinc-200 dark:border-gray-800">
       {/* HEADER */}
       <SidebarHeader className="flex items-center justify-center py-4">
         <Link href="/">

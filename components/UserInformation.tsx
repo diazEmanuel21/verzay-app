@@ -18,7 +18,7 @@ const clientSchema = z.object({
     notificationNumber: z.string().min(7).max(15).regex(/^\d+$/, { message: 'El número debe ser numérico' }),
     lat: z.string().optional(),
     lng: z.string().optional(),
-    abrirPhrase: z.string().min(3, { message: 'La frase de apertura es muy corta' }),
+    abrirPhrase: z.string().min(2, { message: 'La frase de apertura es muy corta' }),
     mapsUrl: z.string().url({ message: 'La URL de Google Maps no es válida' }),
 });
 
