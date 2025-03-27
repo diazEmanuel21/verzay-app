@@ -22,37 +22,54 @@ export const EditDialog = ({
   return (
 
     <Dialog open={openEditDialog} onOpenChange={setOpenEditDialog}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent >
         <DialogHeader>
           <DialogTitle>Editar cliente</DialogTitle>
           <DialogDescription>
-            {"Realiza cambios del cliente aquí. Guarda los cambios cuando termines..."}
+            {"Realiza cambios del cliente aquí. Guarda los cambios cuando termines."}
           </DialogDescription>
         </DialogHeader>
+
         <form
           action={(formData) => {
             handleEdit(user?.id, formData)
           }}
         >
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
-              </Label>
-              <Input id="name" value="Pedro Duarte" className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="username" className="text-right">
-                Username
-              </Label>
-              <Input id="username" value="@peduarte" className="col-span-3" />
+          <div className="overflow-auto max-h-96 pr-2">
+            <div className="grid gap-4 py-4">
+              {[
+                { id: "name", label: "Nombre", defaultValue: user.name },
+                { id: "email", label: "Email", defaultValue: user.email },
+                { id: "password", label: "Contraseña", defaultValue: user.password },
+                { id: "role", label: "Rol", defaultValue: user.role },
+                { id: "apiUrl", label: "API URL", defaultValue: user.apiUrl },
+                { id: "company", label: "Empresa", defaultValue: user.company },
+                { id: "notificationNumber", label: "Teléfono Notificación", defaultValue: user.notificationNumber },
+                { id: "lat", label: "Latitud", defaultValue: user.lat },
+                { id: "lng", label: "Longitud", defaultValue: user.lng },
+                { id: "mapsUrl", label: "Maps URL", defaultValue: user.mapsUrl },
+              ].map(({ id, label, defaultValue }) => (
+                <div className="grid grid-cols-4 items-center gap-4" key={id}>
+                  <Label htmlFor={id} className="text-right">
+                    {label}
+                  </Label>
+                  <Input
+                    id={id}
+                    name={id}
+                    defaultValue={defaultValue ?? ""}
+                    className="col-span-3"
+                  />
+                </div>
+              ))}
             </div>
           </div>
-          <DialogFooter>
+
+          <DialogFooter className="pt-6">
             <Button type="submit">Guardar</Button>
           </DialogFooter>
         </form>
       </DialogContent>
-    </Dialog >
+    </Dialog>
+
   )
 }

@@ -58,13 +58,18 @@ export const ClientsManager = ({ users }: { users: UserWithPausar[] }) => {
     };
 
     const handleEdit = async (userId: string, formData: FormData) => {
+        const toastId = 'edit-client';
+        toast.loading('Actualizando...', { id: toastId });
         const result = await updateClientData(userId, formData);
+
         if (result.success) {
-            toast.success('Cliente actualizado');
+            toast.success('Cliente actualizado', { id: toastId });
             router.refresh();
         } else {
             toast.error(result.message || 'Error al editar cliente');
         }
+
+        setOpenEditDialog(false);
     };
 
     const handleDelete = async (userId: string) => {
