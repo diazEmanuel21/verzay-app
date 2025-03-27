@@ -35,7 +35,7 @@ export const ClientsManager = ({ users }: { users: UserWithPausar[] }) => {
             name: formData.get('name') as string,
             email: formData.get('email') as string,
             password: formData.get('password') as string,
-            openingPhrase: 'Fue un gusto ayudarte.',
+            openingPhrase: 'Fue un gusto ayudarle.',
             role: 'user',
             apiUrl: 'https://api.openAI.co',
             company: 'Nombre empresa',

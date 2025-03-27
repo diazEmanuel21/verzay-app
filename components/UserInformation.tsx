@@ -7,6 +7,7 @@ import { getClientDataByUserId, updateClientDataByField, updateAbrirPhrase } fro
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { z } from 'zod';
+import { ExternalLinkIcon } from "lucide-react";
 
 // ============================
 // Esquema de validación con Zod
@@ -44,6 +45,7 @@ type Client = User & {
 export const UserInformation = ({ userId }: { userId: string }) => {
     const [client, setClient] = useState<Client>(initialClientState());
     const [originalClient, setOriginalClient] = useState<Client>(initialClientState());
+    const [saveMapsUrl, setSaveMapsUrl] = useState(false);
     const [loadingField, setLoadingField] = useState<string | null>(null);
 
     // ============================
@@ -54,7 +56,6 @@ export const UserInformation = ({ userId }: { userId: string }) => {
 
         const fetchClientData = async () => {
             const result = await getClientDataByUserId(userId);
-            console.log(result)
             if (!result.success || !result.data) {
                 toast.error(result.message || 'Error al cargar los datos');
                 return;
@@ -77,13 +78,13 @@ export const UserInformation = ({ userId }: { userId: string }) => {
     // ============================
     // Guardar campo en onBlur
     // ============================
-    const handleBlur = async (field: keyof Client) => {
+    const handleBlur = async (field: keyof Client, valueFied?: string) => {
         const newValue = client[field];
         const currentValue = originalClient[field];
 
-        if (newValue === currentValue) {
-            return;
-        }
+        if (newValue === currentValue) return;
+        /* Valida que la URL tenga el formato deseado */
+        if (field === 'mapsUrl' && !saveMapsUrl) return;
 
         try {
             let result;
@@ -97,14 +98,15 @@ export const UserInformation = ({ userId }: { userId: string }) => {
             if (field === 'abrirPhrase') {
                 result = await updateAbrirPhrase(userId, newValue);
             } else {
-                result = await updateClientDataByField(userId, field, newValue);
+                const fieldValue = field === 'lat' || field === 'lng' ? valueFied : newValue;
+                result = await updateClientDataByField(userId, field, fieldValue || '');
             }
 
             if (!result.success) {
-                toast.error(result.message || `Error al guardar ${field}`, { id: field });
+                toast.error(result.message || `Error al guardar.`, { id: field });
             } else {
                 setOriginalClient(prev => ({ ...prev, [field]: newValue }));
-                toast.success(`${field} actualizado`, { id: field });
+                toast.success(`Actualizado con éxito!`, { id: field });
             }
 
             setLoadingField(null);
@@ -125,19 +127,70 @@ export const UserInformation = ({ userId }: { userId: string }) => {
     // Extraer lat/lng de Google Maps
     // ============================
     const handleMapsUrlChange = (value: string) => {
+        setSaveMapsUrl(false);
         setClient(prev => ({ ...prev, mapsUrl: value }));
 
         const regex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
         const match = value.match(regex);
 
-        if (match) {
-            const lat = match[1];
-            const lng = match[2];
+        if (!match) {
+            return toast.error(
+                <div className="flex flex-col gap-1">
+                    <p className="font-medium">URL de Google Maps no válida</p>
+                    <p className="text-sm">Para obtener la URL correcta:</p>
+                    <ol className="list-decimal pl-5 text-sm space-y-1">
+                        <li>Busca tu negocio en Google Maps</li>
+                        <li>Copia la URL de tu barra de navegación</li>
+                        <li>Pega esa URL completa aquí</li>
+                    </ol>
+                    <a
+                        href="https://www.google.com/maps"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex items-center text-blue-600 hover:underline font-medium"
+                    >
+                        <ExternalLinkIcon className="w-4 h-4 mr-1" />
+                        Abrir Google Maps
+                    </a>
+                </div>,
+                {
+                    duration: 10000, // 10 segundos
+                }
+            );
+        };
+        setSaveMapsUrl(true);
 
-            setClient(prev => ({ ...prev, lat, lng }));
-            toast.success("Coordenadas actualizadas automáticamente");
+        const lat = match[1];
+        const lng = match[2];
+
+        setClient(prev => ({ ...prev, lat, lng }));
+        saveCoordenates('lat', lat);
+        saveCoordenates('lng', lng);
+    };
+
+    // ============================
+    // Guardar campo en onBlur
+    // ============================
+    const saveCoordenates = async (field: keyof Client, valueFied?: string) => {
+        try {
+            setLoadingField(field);
+            toast.loading(`Guardando ${field}...`, { id: field });
+
+            const result = await updateClientDataByField(userId, field, valueFied || '');
+
+            if (!result.success) {
+                toast.error(result.message || `Error al guardar.`, { id: field });
+            } else {
+                toast.success(`Coordenadas actualizadas con éxito!`, { id: field });
+            }
+
+            setLoadingField(null);
+        } catch (error: any) {
+            const message = error?.errors?.[0]?.message || 'Error de validación';
+            toast.error(message, { id: field });
         }
     };
+
 
     return (
         <div className="px-6 md:px-12 py-8">

@@ -85,6 +85,12 @@ export const updateClientDataByField = async (
         message: 'El campo abrirPhrase está restringido y no puede ser actualizado aquí.',
       };
     }
+    if (field === '') {
+      return {
+        success: false,
+        message: 'El campo no existe en este formulario.',
+      };
+    }
 
     await db.user.update({
       where: { id: userId },
@@ -156,9 +162,13 @@ export const updateAbrirPhrase = async (userId: string, mensaje: string) => {
         pausar: true, // o filtra con where si solo te interesa tipo = 'abrir'
       },
     });
+   
+    if(!userWithPausar) return { success: false, message: 'No se encontró el usuario.' };
 
     const pausa = userWithPausar?.pausar.find(p => p.tipo === 'abrir');
     const pausarId = pausa?.id;
+
+    if(!pausa) return { success: false, message: 'Debe existir una frase creada por defecto.' };
 
     await db.pausar.update({
       where: { id: pausarId },
