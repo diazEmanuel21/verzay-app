@@ -2,6 +2,7 @@ import { currentUser } from "@/lib/auth"; // ajusta esta ruta según tu proyecto
 import { getSessionsByUserId } from "@/actions/session-action";
 import { Session } from "@prisma/client";
 import { MainSession } from "./_components";
+import { db } from "@/lib/db";
 
 function hasSessions(result: { data?: Session[] }): result is { data: Session[] } {
   return !!result.data;
@@ -14,9 +15,15 @@ export default async function SessionsPage() {
     return <h1>No autorizado</h1>;
   }
 
-  const result = await getSessionsByUserId(session.id);
+  const user = await db.user.findUnique({
+    where: { email: session?.email ?? '' },
+  });
 
-  return hasSessions(result) 
-    ? <MainSession sessions={result.data} /> 
+  const userId = user?.id as string ;
+
+  const result = await getSessionsByUserId(userId);
+
+  return hasSessions(result)
+    ? <MainSession sessions={result.data} />
     : <h1>Error cargando sesiones</h1>;
 }

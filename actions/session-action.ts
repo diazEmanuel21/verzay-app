@@ -10,7 +10,14 @@ interface SessionResponse<T = Session[]> {
 };
 
 export async function getSessionsByUserId(userId: string): Promise<SessionResponse> {
+
     try {
+        if (!userId) return {
+            success: false,
+            message: 'No existe el userId',
+            data: []
+        };
+
         const sessions = await db.session.findMany({ where: { userId } });
 
         return {
@@ -36,7 +43,7 @@ export async function getSessionsByUserId(userId: string): Promise<SessionRespon
 
 export async function updateSessionStatus(sessionId: number, status: boolean): Promise<SessionResponse> {
     try {
-        await db.session.update({ 
+        await db.session.update({
             where: { id: sessionId },  // campo único para identificar la sesión
             data: { status }          // campo que se actualizará
         });
