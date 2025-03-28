@@ -43,7 +43,7 @@ export const EditDialog = ({
                 { id: "apiUrl", label: "API URL", defaultValue: user.apiUrl },
                 { id: "company", label: "Empresa", defaultValue: user.company },
                 { id: "notificationNumber", label: "Teléfono Notificación", defaultValue: user.notificationNumber },
-                { id: "abrirPhrase", label: "Teléfono Notificación", defaultValue: user.pausar.filter(pausas => pausas.tipo === 'abrir')[0]?.mensaje},
+                { id: "openMsg", label: "Teléfono Notificación", defaultValue: user.pausar.filter(pausas => pausas.tipo === 'abrir')[0]?.mensaje},
                 { id: "lat", label: "Latitud", defaultValue: user.lat },
                 { id: "lng", label: "Longitud", defaultValue: user.lng },
                 { id: "mapsUrl", label: "Maps URL", defaultValue: user.mapsUrl },

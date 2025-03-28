@@ -164,7 +164,6 @@ export const ToolsDialog = ({
         <form className="space-y-6 mt-4 px-2 pb-4">
           {toolConfig.map(({ id, label, description, placeholder, icon }) => {
             const isNewValue = !userTools[id]
-            debugger;
             return (
               <div key={id}>
                 <Label className="flex items-center gap-2 mb-1">

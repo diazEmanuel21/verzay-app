@@ -94,10 +94,10 @@ export const updateClientDataByField = async (
   value: string
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    if (field === 'abrirPhrase') {
+    if (field === 'openMsg') {
       return {
         success: false,
-        message: 'El campo abrirPhrase está restringido y no puede ser actualizado aquí.',
+        message: 'El campo openMsg está restringido y no puede ser actualizado aquí.',
       };
     }
     if (field === '') {
@@ -132,7 +132,7 @@ export const updateClientData = async (
   formData: FormData
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    const restrictedFields = ['abrirPhrase']
+    const restrictedFields = ['openMsg']
 
     const dataToUpdate: Record<string, any> = {}
 
@@ -192,7 +192,7 @@ export const updateAbrirPhrase = async (userId: string, mensaje: string) => {
 
     return { success: true, message: 'Frase actualizada correctamente' };
   } catch (error) {
-    console.error('Error actualizando abrirPhrase:', error);
+    console.error('Error actualizando openMsg:', error);
     return { success: false, message: 'Error actualizando la frase' };
   }
 };

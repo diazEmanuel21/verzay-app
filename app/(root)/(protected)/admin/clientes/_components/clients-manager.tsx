@@ -9,6 +9,7 @@ import { UserWithPausar } from '@/lib/types';
 import {
     createUserWithPausar,
     deleteUser,
+    updateAbrirPhrase,
     updateClientData
 } from '@/actions/userClientDataActions';
 import { Button } from '@/components/ui/button';
@@ -64,22 +65,36 @@ export const ClientsManager = ({ users }: Props) => {
         const toastId = 'edit-client';
         toast.loading('Actualizando...', { id: toastId });
 
-        if (formData.get('abrirPhrase')) {
-            debugger;
-            /* Se debe guardar la frase en pausar */
+        // === Validación y actualización de openMsg ===
+        if (formData.has('openMsg')) {
+            const currentValue = String(formData.get('openMsg') ?? '');
+
+            const currentUser = users.find(user => user.id === userId);
+            const savedMsg = currentUser?.pausar.find(p => p.tipo === 'abrir')?.mensaje ?? '';
+            if (savedMsg !== currentValue) {
+                const result = await updateAbrirPhrase(userId, currentValue);
+                if (!result.success) {
+                    toast.error(result.message || 'Error al actualizar abrirPhrase', { id: toastId });
+                    return;
+                }
+            }
         }
 
+        // === Eliminar campo derivado ===
+        formData.delete('openMsg');
+
+        // === Actualización del cliente ===
         const result = await updateClientData(userId, formData);
 
         if (result.success) {
             toast.success('Cliente actualizado', { id: toastId });
             router.refresh();
+            setOpenEditDialog(false);
         } else {
-            toast.error(result.message || 'Error al editar cliente');
+            toast.error(result.message || 'Error al editar cliente', { id: toastId });
         }
-
-        setOpenEditDialog(false);
     };
+
 
     const handleDelete = async (userId: string) => {
         if (!userId || userId === '' || !openDeleteDialog) return toast.error('Faltan parametros para completar la ejecución.');;
