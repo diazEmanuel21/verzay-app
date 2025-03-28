@@ -42,37 +42,37 @@ export default {
         }
 
         // verificación de email
-        if (!user.emailVerified) {
-          const verifyTokenExits = await db.verificationToken.findFirst({
-            where: {
-              identifier: user.email,
-            },
-          });
+        // if (!user.emailVerified) {
+        //   const verifyTokenExits = await db.verificationToken.findFirst({
+        //     where: {
+        //       identifier: user.email,
+        //     },
+        //   });
 
-          // si existe un token, lo eliminamos
-          if (verifyTokenExits?.identifier) {
-            await db.verificationToken.delete({
-              where: {
-                identifier: user.email,
-              },
-            });
-          }
+        //   // si existe un token, lo eliminamos
+        //   if (verifyTokenExits?.identifier) {
+        //     await db.verificationToken.delete({
+        //       where: {
+        //         identifier: user.email,
+        //       },
+        //     });
+        //   }
 
-          const token = nanoid();
+        //   const token = nanoid();
 
-          await db.verificationToken.create({
-            data: {
-              identifier: user.email,
-              token,
-              expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
-            },
-          });
+        //   await db.verificationToken.create({
+        //     data: {
+        //       identifier: user.email,
+        //       token,
+        //       expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
+        //     },
+        //   });
 
-          // enviar email de verificación
-          await sendEmailVerification(user.email, token);
+        //   // enviar email de verificación
+        //   await sendEmailVerification(user.email, token);
 
-          throw new Error("Por favor revisa tu correo electronico para tu verificacion.");
-        }
+        //   throw new Error("Por favor revisa tu correo electronico para tu verificacion.");
+        // }
 
         return user;
       },
