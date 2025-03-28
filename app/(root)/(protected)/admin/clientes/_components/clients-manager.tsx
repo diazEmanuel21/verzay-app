@@ -5,21 +5,24 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { DataTable } from './data-table';
 import { getColumns } from './columns';
+import { UserWithPausar } from '@/lib/types';
 import {
     createUserWithPausar,
     deleteUser,
     updateClientData
 } from '@/actions/userClientDataActions';
 import { Button } from '@/components/ui/button';
-import { User } from '@prisma/client';
 import { PlusCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { CreateDialog, DeleteDialog, ToolsDialog, EditDialog } from './';
 
-type UserWithPausar = User & { pausarMensaje?: string };
 export type DialogType = 'editar' | 'tools' | 'delete'
 
-export const ClientsManager = ({ users }: { users: UserWithPausar[] }) => {
+interface Props {
+    users: UserWithPausar[],
+};
+
+export const ClientsManager = ({ users }: Props) => {
     const router = useRouter();
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [openCreateDialog, setOpenCreateDialog] = useState(false);

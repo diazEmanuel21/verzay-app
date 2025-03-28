@@ -25,7 +25,7 @@ import { toast } from 'sonner'
 import { Tools } from '../tool-types'
 import { Button } from '@/components/ui/button'
 
-type UserWithPausar = User & { pausarMensaje?: string }
+import { UserWithPausar } from '@/lib/types'
 
 interface Props {
   user: UserWithPausar

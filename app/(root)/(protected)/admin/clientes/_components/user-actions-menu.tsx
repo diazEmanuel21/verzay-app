@@ -1,6 +1,5 @@
 'use client'
 
-import { UserWithPausar } from './columns'
 import { Button } from '@/components/ui/button'
 import { MoreHorizontal } from 'lucide-react'
 import {
@@ -12,6 +11,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { DialogType } from './clients-manager'
+import { UserWithPausar } from '@/lib/types'
 
 export const UserActionsMenu = ({
     user,

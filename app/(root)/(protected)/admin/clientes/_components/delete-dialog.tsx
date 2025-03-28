@@ -2,9 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { User } from '@prisma/client'
-
-type UserWithPausar = User & { pausarMensaje?: string };
+import { UserWithPausar } from '@/lib/types'
 
 interface Props {
   user: UserWithPausar,
