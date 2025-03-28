@@ -28,7 +28,7 @@ type EditableFields = {
 // Esquema de validación con Zod
 // ============================
 const clientSchema = z.object({
-    apiUrl: z.string().url({ message: 'La API URL no es válida' }).min(5),
+    apiUrl: z.string().min(10).max(80),
     company: z.string().min(3, { message: 'La empresa debe tener al menos 3 caracteres' }),
     notificationNumber: z.number().min(7).max(15),
     lat: z.string().optional(),

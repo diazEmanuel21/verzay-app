@@ -1,6 +1,7 @@
 import { transformationTypes } from '@/constants';
 import { db } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
+import { SessionComponent } from './_components';
 
 // Define un tipo literal que coincida con las claves de transformationTypes
 type TransformationTypeKeys = keyof typeof transformationTypes;
@@ -24,7 +25,7 @@ const SessionsPage = async ({ params: { type } }: SearchParamProps) => {
 
     return (
         <>
-            <h1>hello world</h1>
+            {/* <SessionComponent userId/> */}
         </>
     );
 }
