@@ -1,34 +1,38 @@
 'use client'
 
-import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
+
+import { updateSessionStatus } from "@/actions/session-action";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 interface Props {
-    userId: string
+    sessionId: number
     checked: boolean
 };
 
-export const SwitchStatus = ({ userId, checked }: Props) => {
+export const SwitchStatus = ({ sessionId, checked }: Props) => {
     const [localChecked, setLocalChecked] = useState(checked);
 
-    const handleUpdateClientStatus = (id: string, status: boolean) => {
+    const handleUpdateClientStatus = async (status: boolean) => {
+        setLocalChecked(status);
+
         const toastId = 'upating-client';
         toast.loading('Actualizando estado del cliente...', { id: toastId });
 
-        console.log(`Cliente ${id} actualizado a ${status ? 'activo' : 'inactivo'}`);
-        setLocalChecked(status);
-        // Aquí puedes llamar a tu API para actualizar el estado del cliente.
+        const result = await updateSessionStatus(sessionId, status);
 
-        setTimeout(() => {
+        if (result.success) {
             toast.success('Actualizado!', { id: toastId })
-        }, 2000);
+        } else {
+            toast.error(result.message || 'Error al editar cliente', { id: toastId });
+        }
     };
 
     return (
         <Switch
             checked={localChecked}
-            onCheckedChange={(checked) => handleUpdateClientStatus(userId, checked)}
+            onCheckedChange={(status) => handleUpdateClientStatus(status)}
         />
     )
 };

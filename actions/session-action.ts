@@ -34,6 +34,34 @@ export async function getSessionsByUserId(userId: string): Promise<SessionRespon
     }
 };
 
+export async function updateSessionStatus(sessionId: number, status: boolean): Promise<SessionResponse> {
+    try {
+        await db.session.update({ 
+            where: { id: sessionId },  // campo único para identificar la sesión
+            data: { status }          // campo que se actualizará
+        });
+
+        return {
+            success: true,
+            message: 'Estado de la sesión actualizado correctamente',
+        };
+
+    } catch (error) {
+        console.error('Error al actualizar la sesión:', error);
+
+        let errorMessage = 'No se pudo actualizar el estado de la sesión';
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+
+        return {
+            success: false,
+            message: errorMessage
+        };
+    }
+};
+
+
 export async function deleteSession(id: number): Promise<SessionResponse> {
     try {
         await db.session.delete({ where: { id } });

@@ -1,4 +1,5 @@
 "use client"
+
 import {
     ColumnDef,
 } from "@tanstack/react-table"
@@ -93,12 +94,12 @@ export const Columns: ColumnDef<Session>[] = [
         ),
         cell: ({ row }) => {
             const status = row.getValue("status") as boolean;
-            const userId = row.original.userId as string;
+            const sessionId = row.original.id as number;
 
             return (
                 <SwitchStatus
                     checked={status}
-                    userId={userId}
+                    sessionId={sessionId}
                 />
             );
         },
@@ -167,7 +168,6 @@ export const Columns: ColumnDef<Session>[] = [
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => toast.info('En construcción...')}
-
                             // onClick={() => deleteClient(userId, 'delete', true)}
                             className="text-red-600"
                         >

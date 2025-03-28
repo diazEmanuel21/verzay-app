@@ -33,13 +33,20 @@ import {
 import { Card } from "@/components/ui/card"
 
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
+    columns: ColumnDef<TData, TValue>[];
+    data: TData[];
 }
 
+const dictionaryFields = {
+    remoteJid: 'Teléfono',
+    pushName: 'Nombre',
+    status: 'Estado',
+    createdAt: 'Fecha de ingreso',
+};
+
 export function DataGrid<TData, TValue>({
-  columns,
-  data,
+    columns,
+    data,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -80,7 +87,7 @@ export function DataGrid<TData, TValue>({
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="ml-auto">
-                                Columns <ChevronDown />
+                                Columnas <ChevronDown />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -88,6 +95,7 @@ export function DataGrid<TData, TValue>({
                                 .getAllColumns()
                                 .filter((column) => column.getCanHide())
                                 .map((column) => {
+                                    const label = dictionaryFields[column.id as keyof typeof dictionaryFields] || column.id;
                                     return (
                                         <DropdownMenuCheckboxItem
                                             key={column.id}
@@ -97,7 +105,7 @@ export function DataGrid<TData, TValue>({
                                                 column.toggleVisibility(!!value)
                                             }
                                         >
-                                            {column.id}
+                                            {label}
                                         </DropdownMenuCheckboxItem>
                                     )
                                 })}
