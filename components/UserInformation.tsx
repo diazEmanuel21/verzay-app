@@ -30,7 +30,7 @@ type EditableFields = {
 const clientSchema = z.object({
     apiUrl: z.string().min(10).max(80),
     company: z.string().min(3, { message: 'La empresa debe tener al menos 3 caracteres' }),
-    notificationNumber: z.number().min(7).max(15),
+    notificationNumber: z.string().min(7).max(15),
     lat: z.string().optional(),
     lng: z.string().optional(),
     mapsUrl: z.string().url({ message: 'La URL de Google Maps no es válida' }),
