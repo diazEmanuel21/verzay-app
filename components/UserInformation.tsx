@@ -34,14 +34,16 @@ const clientSchema = z.object({
     lat: z.string().optional(),
     lng: z.string().optional(),
     mapsUrl: z.string().url({ message: 'La URL de Google Maps no es válida' }),
+    openMsg: z.string().min(3).max(45),
 });
 
 // ============================
 // Componente Principal
 // ============================
 export const UserInformation = ({ userId }: { userId: string }) => {
-    const [user, setUser] = useState<UserWithPausar>();
-    const [originalUser, setOriginalUser] = useState<UserWithPausar>();
+    /* Se extiende el user para poder utilizar openMsg from Pausar cómo un field nativo del User */
+    const [user, setUser] = useState<(UserWithPausar & { openMsg?: string })>();
+    const [originalUser, setOriginalUser] = useState<(UserWithPausar & { openMsg?: string })>();
     const [saveMapsUrl, setSaveMapsUrl] = useState(false);
     const [loadingField, setLoadingField] = useState<string | null>(null);
 
@@ -59,8 +61,10 @@ export const UserInformation = ({ userId }: { userId: string }) => {
             }
 
             const data = result.data;
-            setUser({ ...data });
-            setOriginalUser({ ...data });
+            const openMsg = data.pausar.filter(p => p.tipo === 'abrir')[0]?.mensaje || '';
+
+            setUser({ ...data, openMsg });
+            setOriginalUser({ ...data, openMsg });
         };
 
         fetchClientData();
@@ -69,7 +73,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
     // ============================
     // Guardar campo en onBlur
     // ============================
-    const handleBlur = async (field: keyof UserWithPausar, valueFied?: string) => {
+    const handleBlur = async (field: keyof (UserWithPausar & { openMsg?: string }), valueFied?: string) => {
         if (!user || !originalUser) return; // protección extra
 
         const newValue = user[field];
@@ -80,6 +84,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
         if (field === 'mapsUrl' && !saveMapsUrl) return;
 
         try {
+            let result;
             const fieldSchema = clientSchema.shape[field as keyof typeof clientSchema.shape];
             fieldSchema.parse(newValue);
 
@@ -90,7 +95,12 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                 ? valueFied ?? ''
                 : String(newValue ?? '');
 
-            const result = await updateClientDataByField(userId, field, fieldValue);
+            /* Ejecuta una función para actualizar dependiendo del campo.*/
+            if (field === 'openMsg') {
+                result = await updateAbrirPhrase(userId, fieldValue);
+            } else {
+                result = await updateClientDataByField(userId, field, fieldValue);
+            };
 
             if (!result.success) {
                 toast.error(result.message || `Error al guardar.`, { id: field });
@@ -112,13 +122,15 @@ export const UserInformation = ({ userId }: { userId: string }) => {
 
     // ============================
     // Cambiar valor de un campo
+    //  Como openMsg no es parte real de la tabla, lo debemos actualizar localmente:
     // ============================
-    const handleChange = (field: keyof UserWithPausar, value: string) => {
+    const handleChange = (field: keyof (UserWithPausar & { openMsg?: string }), value: string) => {
         setUser(prev => {
             if (!prev) return prev;
             return { ...prev, [field]: value };
         });
     };
+
 
     // ============================
     // Extraer lat/lng de Google Maps
@@ -212,7 +224,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                     { key: 'apiUrl', label: 'API key OpenAI', type: 'password' },
                                     { key: 'company', label: 'Empresa' },
                                     { key: 'notificationNumber', label: 'Número de notificación' },
-                                    // { key: 'abrirPhrase', label: 'Frase de reactivación' },
+                                    { key: 'openMsg', label: 'Frase de reactivación' },
                                 ].map(({ key, label, type }) => (
                                     <div key={key} className="space-y-2">
                                         <Label htmlFor={key} className="text-muted-foreground">{label}</Label>

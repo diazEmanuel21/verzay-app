@@ -63,6 +63,12 @@ export const ClientsManager = ({ users }: Props) => {
     const handleEdit = async (userId: string, formData: FormData) => {
         const toastId = 'edit-client';
         toast.loading('Actualizando...', { id: toastId });
+
+        if (formData.get('abrirPhrase')) {
+            debugger;
+            /* Se debe guardar la frase en pausar */
+        }
+
         const result = await updateClientData(userId, formData);
 
         if (result.success) {
