@@ -1,6 +1,5 @@
 'use client'
 
-import { UserWithPausar } from './columns'
 import { Button } from '@/components/ui/button'
 import { MoreHorizontal } from 'lucide-react'
 import {
@@ -11,18 +10,16 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
+import { DialogType } from './clients-manager'
+import { UserWithPausar } from '@/lib/types'
 
 export const UserActionsMenu = ({
     user,
     openDialogGetUserId
 }: {
     user: UserWithPausar
-    openDialogGetUserId: (userId: string, state: boolean) => void
+    openDialogGetUserId: (userId: string, dialog: DialogType, state: boolean) => void
 }) => {
-    const router = useRouter()
-    const handleOpenDialog = () => openDialogGetUserId(user.id, true);
 
     return (
         <>
@@ -34,19 +31,22 @@ export const UserActionsMenu = ({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-
-                    <DropdownMenuItem onClick={() => toast.info('En contrucción...')} >
+                    <DropdownMenuItem
+                        onClick={() => openDialogGetUserId(user.id, 'editar', true)}
+                    >
                         Editar
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem onClick={() => toast.info('En contrucción...')}>
+                    <DropdownMenuItem
+                        onClick={() => openDialogGetUserId(user.id, 'tools', true)}
+                    >
                         Herramientas
                     </DropdownMenuItem>
 
                     <DropdownMenuSeparator />
 
                     <DropdownMenuItem
-                        onClick={() => handleOpenDialog()}
+                        onClick={() => openDialogGetUserId(user.id, 'delete', true)}
                         className="text-red-600"
                     >
                         Eliminar

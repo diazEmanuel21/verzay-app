@@ -42,13 +42,13 @@ import { useDebounce } from '@/hooks/useDebounce';
 
 interface FormSystemMessageProps {
   userId: string;
-}
+};
 
 interface Message {
   id: string;
   title?: string;
   message: string;
-}
+};
 
 function MessagesSkeleton() {
   return (
@@ -58,7 +58,7 @@ function MessagesSkeleton() {
       ))}
     </div>
   );
-}
+};
 
 export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -99,7 +99,7 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
 
     setLoading(true);
     const formData = new FormData();
-    formData.append("title", title);
+    formData.append("title", title.toUpperCase());
     formData.append("message", message);
     formData.append("userId", userId);
 
@@ -131,7 +131,7 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
   };
 
   const openEditDialog = (msg: Message) => {
-    setTitle(msg.title ?? '');
+    setTitle((msg.title)?.toUpperCase() ?? '');
     setMessage(msg.message ?? '');
     setEditingId(msg.id);
     setDialogOpen(true);
@@ -261,7 +261,7 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
             {filteredMessages.map((msg) => (
               <Card key={msg.id} className="p-4 flex justify-between items-start">
                 <div>
-                  <h4 className="text-base font-medium">{msg.title}</h4>
+                  <h4 className="text-base font-medium">{(msg.title)?.toUpperCase()}</h4>
                   <p
                     className="text-sm text-muted-foreground cursor-pointer hover:underline"
                     onClick={() => openEditDialog(msg)}

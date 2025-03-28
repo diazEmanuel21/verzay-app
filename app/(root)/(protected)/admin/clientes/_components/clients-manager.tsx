@@ -5,23 +5,30 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { DataTable } from './data-table';
 import { getColumns } from './columns';
+import { UserWithPausar } from '@/lib/types';
 import {
     createUserWithPausar,
     deleteUser,
+    updateAbrirPhrase,
     updateClientData
 } from '@/actions/userClientDataActions';
 import { Button } from '@/components/ui/button';
-import { User } from '@prisma/client';
 import { PlusCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { CreateDialog, DeleteDialog, ToolsDialog, EditDialog } from './';
 
-type UserWithPausar = User & { pausarMensaje?: string };
+export type DialogType = 'editar' | 'tools' | 'delete'
 
-export const ClientsManager = ({ users }: { users: UserWithPausar[] }) => {
+interface Props {
+    users: UserWithPausar[],
+};
+
+export const ClientsManager = ({ users }: Props) => {
     const router = useRouter();
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [openCreateDialog, setOpenCreateDialog] = useState(false);
+    const [openToolsDialog, setOpenToolsDialog] = useState(false);
+    const [openEditDialog, setOpenEditDialog] = useState(false);
     const [user, setCurrentUser] = useState<UserWithPausar>();
 
     const handleCreate = async (formData: FormData) => {
@@ -32,10 +39,10 @@ export const ClientsManager = ({ users }: { users: UserWithPausar[] }) => {
             name: formData.get('name') as string,
             email: formData.get('email') as string,
             password: formData.get('password') as string,
-            openingPhrase: 'Fue un gusto ayudarte.',
+            openingPhrase: 'Fue un gusto ayudarle.',
             role: 'user',
             apiUrl: 'https://api.openAI.co',
-            company: 'Empresa Demo',
+            company: 'Nombre empresa',
             notificationNumber: '0000000000',
             lat: '0.0000',
             lng: '0.0000',
@@ -55,14 +62,39 @@ export const ClientsManager = ({ users }: { users: UserWithPausar[] }) => {
     };
 
     const handleEdit = async (userId: string, formData: FormData) => {
+        const toastId = 'edit-client';
+        toast.loading('Actualizando...', { id: toastId });
+
+        // === Validación y actualización de openMsg ===
+        if (formData.has('openMsg')) {
+            const currentValue = String(formData.get('openMsg') ?? '');
+
+            const currentUser = users.find(user => user.id === userId);
+            const savedMsg = currentUser?.pausar.find(p => p.tipo === 'abrir')?.mensaje ?? '';
+            if (savedMsg !== currentValue) {
+                const result = await updateAbrirPhrase(userId, currentValue);
+                if (!result.success) {
+                    toast.error(result.message || 'Error al actualizar abrirPhrase', { id: toastId });
+                    return;
+                }
+            }
+        }
+
+        // === Eliminar campo derivado ===
+        formData.delete('openMsg');
+
+        // === Actualización del cliente ===
         const result = await updateClientData(userId, formData);
+
         if (result.success) {
-            toast.success('Cliente actualizado');
+            toast.success('Cliente actualizado', { id: toastId });
             router.refresh();
+            setOpenEditDialog(false);
         } else {
-            toast.error(result.message || 'Error al editar cliente');
+            toast.error(result.message || 'Error al editar cliente', { id: toastId });
         }
     };
+
 
     const handleDelete = async (userId: string) => {
         if (!userId || userId === '' || !openDeleteDialog) return toast.error('Faltan parametros para completar la ejecución.');;
@@ -79,10 +111,13 @@ export const ClientsManager = ({ users }: { users: UserWithPausar[] }) => {
         }
     };
 
-    const openDialogGetUserId = (userId: string, state: boolean) => {
-        setOpenDeleteDialog(state);
+    const openDialogGetUserId = (userId: string, dialog: DialogType, state: boolean) => {
         const currentUser = users.filter(user => user.id === userId)[0];
         setCurrentUser(currentUser);
+
+        if (dialog === 'tools') return setOpenToolsDialog(state);
+        if (dialog === 'delete') return setOpenDeleteDialog(state);
+        if (dialog === 'editar') return setOpenEditDialog(state);
     };
 
     const openCreateDialogUser = () => {
@@ -116,10 +151,27 @@ export const ClientsManager = ({ users }: { users: UserWithPausar[] }) => {
             />
             {/* Dialog delete */}
             {user && (
+                <EditDialog
+                    openEditDialog={openEditDialog}
+                    setOpenEditDialog={setOpenEditDialog}
+                    handleEdit={handleEdit}
+                    user={user}
+                />
+            )}
+            {/* Dialog delete */}
+            {user && (
                 <DeleteDialog
                     handleDelete={handleDelete}
                     openDeleteDialog={openDeleteDialog}
                     setOpenDeleteDialog={setOpenDeleteDialog}
+                    user={user}
+                />
+            )}
+            {/* Tools */}
+            {user && (
+                <ToolsDialog
+                    openToolsDialog={openToolsDialog}
+                    setOpenToolsDialog={setOpenToolsDialog}
                     user={user}
                 />
             )}

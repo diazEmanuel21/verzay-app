@@ -9,7 +9,11 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { LogOut, User as UserIcon, Mail } from 'lucide-react';
+import { 
+  ArrowLeftEndOnRectangleIcon, 
+  UserIcon, 
+  EnvelopeIcon 
+} from "@heroicons/react/24/solid";
 import { signOut } from 'next-auth/react';
 import { User } from '@prisma/client';
 
@@ -28,7 +32,7 @@ const LogoutButton = ({ user }: SidebarProps) => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="flex items-center gap-2">
-          <UserIcon className="h-4 w-4" />
+          <UserIcon className="h-6" />
           {user?.company}
         </Button>
       </DropdownMenuTrigger>
@@ -44,7 +48,7 @@ const LogoutButton = ({ user }: SidebarProps) => {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem className="flex items-center gap-2">
-          <Mail className="h-4 w-4" />
+          <EnvelopeIcon className="h-6" />
           Instancia: <span className="ml-auto">{user?.name?.split('-')[1]}</span>
         </DropdownMenuItem>
 
@@ -54,7 +58,7 @@ const LogoutButton = ({ user }: SidebarProps) => {
           onClick={handleClick}
           className="flex items-center gap-2 text-red-600 focus:text-red-600"
         >
-          <LogOut className="h-4 w-4" />
+          <ArrowLeftEndOnRectangleIcon className="h-6" />
           Cerrar sesión
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -1,46 +1,74 @@
 
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { UserWithPausar } from "@/lib/types";
 
-export const EditDialog = () => {
+interface Props {
+  openEditDialog: boolean
+  setOpenEditDialog: (open: boolean) => void
+  handleEdit: (userId: string, formData: FormData) => void
+  user: UserWithPausar,
+}
+
+export const EditDialog = ({
+  openEditDialog,
+  setOpenEditDialog,
+  handleEdit,
+  user
+}: Props) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Edit Profile</CardTitle>
-        <CardDescription>
-          {"Make changes to your profile here. Click save when you're done."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
-              </Label>
-              <Input id="name" value="Pedro Duarte" className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="username" className="text-right">
-                Username
-              </Label>
-              <Input id="username" value="@peduarte" className="col-span-3" />
+    <Dialog open={openEditDialog} onOpenChange={setOpenEditDialog}>
+      <DialogContent >
+        <DialogHeader>
+          <DialogTitle>Editar cliente</DialogTitle>
+          <DialogDescription>
+            {"Realiza cambios del cliente aquí. Guarda los cambios cuando termines."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form
+          action={(formData) => {
+            handleEdit(user?.id, formData)
+          }}
+        >
+          <div className="overflow-auto max-h-96 pr-2">
+            <div className="grid gap-4 py-4">
+              {[
+                { id: "name", label: "Nombre", defaultValue: user.name },
+                { id: "email", label: "Email", defaultValue: user.email },
+                { id: "password", label: "Contraseña", defaultValue: user.password },
+                { id: "role", label: "Rol", defaultValue: user.role },
+                { id: "apiUrl", label: "Apikey OpenIA", defaultValue: user.apiUrl },
+                { id: "company", label: "Empresa", defaultValue: user.company },
+                { id: "notificationNumber", label: "Teléfono Notificación", defaultValue: user.notificationNumber },
+                { id: "openMsg", label: "Frase de reactivación", defaultValue: user.pausar.filter(pausas => pausas.tipo === 'abrir')[0]?.mensaje},
+                { id: "lat", label: "Latitud", defaultValue: user.lat },
+                { id: "lng", label: "Longitud", defaultValue: user.lng },
+                { id: "mapsUrl", label: "Maps URL", defaultValue: user.mapsUrl },
+              ].map(({ id, label, defaultValue }) => (
+                <div className="grid grid-cols-4 items-center gap-4" key={id}>
+                  <Label htmlFor={id} className="text-right">
+                    {label}
+                  </Label>
+                  <Input
+                    id={id}
+                    name={id}
+                    defaultValue={defaultValue ?? ""}
+                    className="col-span-3"
+                  />
+                </div>
+              ))}
             </div>
           </div>
+
+          <DialogFooter className="pt-6">
+            <Button type="submit">Guardar</Button>
+          </DialogFooter>
         </form>
-      </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button type="submit">Save changes</Button>
-      </CardFooter>
-    </Card>
+      </DialogContent>
+    </Dialog>
+
   )
 }

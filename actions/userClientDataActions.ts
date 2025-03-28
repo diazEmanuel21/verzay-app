@@ -1,7 +1,8 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { User, Pausar } from '@prisma/client';
+import { UserWithPausar } from '@/lib/types';
+import { Pausar } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 
@@ -12,30 +13,47 @@ interface ClientResponse<T = undefined> {
   data?: T;
 }
 
-type UserWithPausarMensaje = User & {
-  pausarMensaje?: string;
-};
-
 
 // ==============================
 // GET CLIENT DATA
 // ==============================
-export async function getAllUsers(): Promise<UserWithPausarMensaje[]> {
-  const users = await db.user.findMany({
-    include: { pausar: true },
-    orderBy: { createdAt: 'desc' },
-  });
+export async function getAllUsers(): Promise<ClientResponse<UserWithPausar[]>> {  // <-- Nota el array []
+  try {
+    const users = await db.user.findMany({
+      include: {
+        pausar: true
+        //{ where: { tipo: 'abrir' },  // Filtro opcional directamente en la query
+        //orderBy: { createdAt: 'desc' }  // Ordenar pausas si es necesario }
+      },
+      orderBy: { createdAt: 'desc' },
+    });
 
-  return users.map((user) => ({
-    ...user,
-    pausarMensaje: user.pausar.find((p) => p.tipo === 'abrir')?.mensaje || '',
-  }));
+    if (!users) {
+      return {
+        success: false,
+        message: 'No se encontraron registros.',
+      };
+    }
+
+    return {
+      success: true,
+      message: 'User and Pausar data fetched successfully.',
+      data: users
+    };
+
+  } catch (error) {
+    console.error('Error fetching client data:', error);
+    return {
+      success: false,
+      message: 'Error fetching client data.',
+    };
+  }
 }
 
 // ==============================
 // GET CLIENT DATA BY USER ID
 // ==============================
-export const getClientDataByUserId = async (userId: string): Promise<ClientResponse<User & { abrirPhrase?: string }>> => {
+export const getClientDataByUserId = async (userId: string): Promise<ClientResponse<UserWithPausar>> => {
   try {
     const user = await db.user.findUnique({
       where: { id: userId },
@@ -51,14 +69,11 @@ export const getClientDataByUserId = async (userId: string): Promise<ClientRespo
       };
     }
 
-    const abrirPhrase = user.pausar.find(p => p.tipo === 'abrir')?.mensaje;
-
     return {
       success: true,
       message: 'User and Pausar data fetched successfully.',
       data: {
-        ...user,
-        abrirPhrase: abrirPhrase || '',
+        ...user
       },
     };
   } catch (error) {
@@ -79,10 +94,16 @@ export const updateClientDataByField = async (
   value: string
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    if (field === 'abrirPhrase') {
+    if (field === 'openMsg') {
       return {
         success: false,
-        message: 'El campo abrirPhrase está restringido y no puede ser actualizado aquí.',
+        message: 'El campo openMsg está restringido y no puede ser actualizado aquí.',
+      };
+    }
+    if (field === '') {
+      return {
+        success: false,
+        message: 'El campo no existe en este formulario.',
       };
     }
 
@@ -111,7 +132,7 @@ export const updateClientData = async (
   formData: FormData
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    const restrictedFields = ['abrirPhrase']
+    const restrictedFields = ['openMsg']
 
     const dataToUpdate: Record<string, any> = {}
 
@@ -157,8 +178,12 @@ export const updateAbrirPhrase = async (userId: string, mensaje: string) => {
       },
     });
 
+    if (!userWithPausar) return { success: false, message: 'No se encontró el usuario.' };
+
     const pausa = userWithPausar?.pausar.find(p => p.tipo === 'abrir');
     const pausarId = pausa?.id;
+
+    if (!pausa) return { success: false, message: 'Debe existir una frase creada por defecto.' };
 
     await db.pausar.update({
       where: { id: pausarId },
@@ -167,7 +192,7 @@ export const updateAbrirPhrase = async (userId: string, mensaje: string) => {
 
     return { success: true, message: 'Frase actualizada correctamente' };
   } catch (error) {
-    console.error('Error actualizando abrirPhrase:', error);
+    console.error('Error actualizando openMsg:', error);
     return { success: false, message: 'Error actualizando la frase' };
   }
 };
@@ -177,23 +202,26 @@ export const updateAbrirPhrase = async (userId: string, mensaje: string) => {
 // CREATE USER + INSERT TO PAUSAR
 // ==============================
 export const createUserWithPausar = async (
-  userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'> & { openingPhrase?: string }
-): Promise<ClientResponse<User>> => {
+  userData: Omit<UserWithPausar, 'id' | 'createdAt' | 'updatedAt' | 'pausar'> & {
+    openingPhrase?: string;
+  }
+): Promise<ClientResponse<UserWithPausar>> => {
   try {
     const { openingPhrase, ...userFields } = userData;
 
-    console.log(userData);
+    // 1. Crear el usuario
     const user = await db.user.create({
-      data: {
-        ...userFields,
-      },
+      data: userFields,
     });
 
+    let pausarRecord: Pausar | null = null;
+
+    // 2. Crear registro Pausar si existe openingPhrase
     if (openingPhrase) {
-      await db.pausar.create({
+      pausarRecord = await db.pausar.create({
         data: {
           userId: user.id,
-          instanciaId: 'default-instancia-id',
+          instanciaId: 'default-instancia-id', // Considera hacer estos parámetros opcionales
           apikeyId: 'default-apikey-id',
           tipo: 'abrir',
           mensaje: openingPhrase,
@@ -202,16 +230,26 @@ export const createUserWithPausar = async (
       });
     }
 
+    // 3. Obtener el usuario con sus relaciones para devolverlo completo
+    const createdUser = await db.user.findUnique({
+      where: { id: user.id },
+      include: { pausar: true },
+    });
+
+    if (!createdUser) {
+      throw new Error('User creation failed');
+    }
+
     return {
       success: true,
-      message: 'User and Pausar data created successfully.',
-      data: user,
+      message: 'User and Pausar data created successfully',
+      data: createdUser as UserWithPausar,
     };
   } catch (error) {
     console.error('Error creating user and Pausar record:', error);
     return {
       success: false,
-      message: 'Error creating user.',
+      message: error instanceof Error ? error.message : 'Error creating user',
     };
   }
 };

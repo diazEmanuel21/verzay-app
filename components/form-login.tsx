@@ -19,10 +19,6 @@ import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { FaGithub, FaGoogle } from "react-icons/fa6";
-import ButtonSocial from "./button-social";
-import Link from "next/link";
-
 interface FormLoginProps {
   isVerified: boolean;
   OAuthAccountNotLinked: boolean;

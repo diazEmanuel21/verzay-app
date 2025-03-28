@@ -375,15 +375,16 @@
   display: flex;
   flex-flow: row-reverse;
   gap: 12px;
-}
+};
 
 .cl-userButtonOuterIdentifier {
   font-size: 16px;
   font-weight: 600;
   color: #384262;
-}
+};
 
 /* =====  CARD ACTIONS WORKFLOW */
 .top-negative-8 {
   top: -8px;
-}
+};
+

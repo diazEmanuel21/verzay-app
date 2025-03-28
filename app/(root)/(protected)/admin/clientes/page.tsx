@@ -1,11 +1,14 @@
-// app/(protected)/admin/clientes/page.tsx
+import { UserWithPausar } from "@/lib/types";
+import { ClientsManager } from "./_components/clients-manager";
+import { getAllUsers } from "@/actions/userClientDataActions";
 
-import { getAllUsers } from '@/actions/userClientDataActions';
-import { ClientsManager } from './_components/clients-manager';
+function hasUsers(result: { data?: UserWithPausar[] }): result is { data: UserWithPausar[] } {
+  return !!result.data;
+}
 
 export default async function ClientesPage() {
-  const users = await getAllUsers();
-
-  return <ClientsManager users={users} />;
-  
+  const result = await getAllUsers();
+  return hasUsers(result)
+    ? <ClientsManager users={result.data} />
+    : <h1>Error cargando usuarios</h1>;
 }

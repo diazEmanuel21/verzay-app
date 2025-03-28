@@ -1,81 +1,210 @@
 'use client'
 
-import { useParams, useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { toast } from 'sonner'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { User } from '@prisma/client'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
 import {
   FileText,
   FileSpreadsheet,
-  Folder
+  Folder,
+  Save,
+  RefreshCw,
+  Trash2
 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { createTool, getTools, updateTool, deleteTool } from '@/actions/tools-action'
+import { toast } from 'sonner'
+import { Tools } from '../tool-types'
+import { Button } from '@/components/ui/button'
 
-const tools = [
+import { UserWithPausar } from '@/lib/types'
+
+interface Props {
+  user: UserWithPausar
+  openToolsDialog: boolean
+  setOpenToolsDialog: (open: boolean) => void
+}
+
+const toolConfig = [
   {
     id: 'drive',
     label: 'Google Drive',
-    icon: <Folder className="w-10 h-10 text-blue-600" />,
+    description: 'Introduce el enlace de la carpeta de Google Drive.',
+    placeholder: 'https://drive.google.com/drive/folders/...',
+    icon: <Folder className="w-5 h-5 text-blue-600" />
   },
   {
     id: 'docs',
     label: 'Google Docs',
-    icon: <FileText className="w-10 h-10 text-blue-500" />,
+    description: 'Introduce el enlace de Google Docs.',
+    placeholder: 'https://docs.google.com/document/...',
+    icon: <FileText className="w-5 h-5 text-blue-500" />
   },
   {
     id: 'sheets',
     label: 'Google Sheets',
-    icon: <FileSpreadsheet className="w-10 h-10 text-green-600" />,
-  },
-]
+    description: 'Introduce el enlace de Google Sheets.',
+    placeholder: 'https://docs.google.com/spreadsheets/...',
+    icon: <FileSpreadsheet className="w-5 h-5 text-green-600" />
+  }
+] as const
 
-export const ToolsDialog = () => {
-  const { id } = useParams()
+export const ToolsDialog = ({
+  user,
+  openToolsDialog,
+  setOpenToolsDialog
+}: Props) => {
   const router = useRouter()
+  const [userTools, setUserTools] = useState<Record<string, { id: string, description: string }>>({})
+  const [formValues, setFormValues] = useState<Record<string, string>>({})
 
-  const [selectedTools, setSelectedTools] = useState<string[]>([])
+  useEffect(() => {
+    const loadTools = async () => {
+      if (!openToolsDialog) return
 
-  const toggleTool = (toolId: string) => {
-    setSelectedTools((prev) =>
-      prev.includes(toolId)
-        ? prev.filter((id) => id !== toolId)
-        : [...prev, toolId]
-    )
+      const response = await getTools(user.id)
+      if (!response.success || !response.data) return
+
+      const toolsMap: Record<string, { id: string, description: string }> = {}
+      const values: Record<string, string> = {}
+
+      for (const tool of response.data) {
+        toolsMap[tool.name] = { id: tool.id, description: tool.description || '' }
+        values[tool.name] = tool.description || ''
+      };
+
+      setUserTools(toolsMap);
+      setFormValues(values);
+    }
+
+    loadTools()
+  }, [openToolsDialog, user.id])
+
+  const handleChange = (id: string, value: string) => {
+    setFormValues(prev => ({ ...prev, [id]: value }))
   }
 
-  const handleSave = () => {
-    toast.success('Herramientas guardadas')
-    router.push('/admin/clientes')
+  const handleUpdate = async (toolId: Tools) => {
+    const dbId = userTools[toolId]?.id
+    const value = formValues[toolId]
+
+    if (!dbId || !value) return toast.error('No se puede actualizar, faltan datos.')
+
+    toast.loading('Actualizando herramienta...', { id: 'update-tool' })
+    const result = await updateTool(dbId, toolId, value)
+
+    if (result.success) {
+      toast.success('Herramienta actualizada', { id: 'update-tool' })
+      router.refresh()
+    } else {
+      toast.error(result.message, { id: 'update-tool' })
+    }
+  }
+
+  const handleDelete = async (toolId: Tools) => {
+    const dbId = userTools[toolId]?.id
+    if (!dbId) return toast.error('No se puede eliminar esta herramienta.')
+
+    toast.loading('Eliminando herramienta...', { id: 'delete-tool' })
+    const result = await deleteTool(dbId)
+
+    if (result.success) {
+      toast.success('Herramienta eliminada', { id: 'delete-tool' })
+      setFormValues(prev => ({ ...prev, [toolId]: '' }))
+      setUserTools(prev => {
+        const copy = { ...prev }
+        delete copy[toolId]
+        return copy
+      })
+    } else {
+      toast.error(result.message, { id: 'delete-tool' })
+    }
+  }
+
+  const handleCreate = async (toolId: Tools) => {
+    const value = formValues[toolId]
+    if (!value) return
+  
+    toast.loading('Creando herramienta...', { id: 'create-tool' })
+    const result = await createTool(user.id, toolId, value)
+  
+    if (result.success && result.data) {
+      toast.success('Herramienta creada', { id: 'create-tool' })
+      
+      // Actualizar estado local inmediatamente
+      setUserTools(prev => ({
+        ...prev,
+        [toolId]: {
+          id: result.data.id,
+          description: result.data.description || ''
+        }
+      }))
+      
+      router.refresh()
+    } else {
+      toast.error(result.message || 'Error al crear herramienta', { id: 'create-tool' })
+    }
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Asignar Herramientas</h1>
+    <Dialog open={openToolsDialog} onOpenChange={setOpenToolsDialog}>
+      <DialogContent className="max-w-4xl">
+        <DialogHeader className="flex justify-between items-center">
+          <DialogTitle className="text-2xl">Gestor de herramientas</DialogTitle>
+        </DialogHeader>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {tools.map((tool) => (
-          <Card
-            key={tool.id}
-            onClick={() => toggleTool(tool.id)}
-            className={`cursor-pointer transition border-2 ${selectedTools.includes(tool.id)
-                ? 'border-blue-600 shadow-md'
-                : 'border-transparent hover:border-gray-300'
-              }`}
-          >
-            <CardContent className="flex flex-col items-center justify-center p-6 space-y-4">
-              {tool.icon}
-              <Label className="text-center text-sm">{tool.label}</Label>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+        <form className="space-y-6 mt-4 px-2 pb-4">
+          {toolConfig.map(({ id, label, description, placeholder, icon }) => {
+            const isNewValue = !userTools[id]
+            return (
+              <div key={id}>
+                <Label className="flex items-center gap-2 mb-1">
+                  {icon} {label}
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder={placeholder}
+                    value={formValues[id] || ''}
+                    onChange={(e) => handleChange(id, e.target.value)}
+                  />
+                  <div className="flex items-center gap-1">
+                    {
+                      isNewValue &&
+                      <Button type="button" variant="secondary" onClick={() => handleCreate(id as Tools)}>
+                        <Save className="w-4 h-4" />
+                      </Button>
+                    }
+                    {
+                      !isNewValue &&
+                      <Button type="button" variant="secondary" onClick={() => handleUpdate(id as Tools)}>
+                        <RefreshCw className="w-4 h-4" />
+                      </Button>
+                    }
+                    <Button type="button" variant="destructive" onClick={() => handleDelete(id as Tools)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">{description}</p>
+              </div>
+            )
+          })}
+        </form>
 
-      <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={selectedTools.length === 0}>
-          Guardar herramientas
-        </Button>
-      </div>
-    </div>
+        <DialogFooter>
+          <Button variant="destructive" onClick={() => setOpenToolsDialog(false)}>
+            Cerrar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
