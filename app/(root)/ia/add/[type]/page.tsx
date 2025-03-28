@@ -2,13 +2,7 @@ import React from 'react';
 import { transformationTypes } from '@/constants';
 import { db } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
-
-import Header from '@/components/shared/header';
-import IaForm from '@/components/shared/iaForm';
-import OpenAICredentialManager from '@/components/form-credia';
-import CreateBotComponent from '@/components/form-botia';
 import FormSystemMessage from '@/components/form-system';
-import EnableToggleButton from '@/components/button-bot';
 
 // Define un tipo literal que coincida con las claves de transformationTypes
 type TransformationTypeKeys = keyof typeof transformationTypes;

@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Home } from 'lucide-react';
+import { HomeIcon } from '@heroicons/react/24/solid';
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -16,6 +17,7 @@ import { SidebarTrigger } from '../ui/sidebar';
 const breadcrumbLabels: Record<string, string> = {
   flow: 'flujos',
   profile: 'perfil',
+  sessions: 'Sesiónes',
   credits: 'planes',
   tools: 'herramientas',
   dashboard: 'conexiones',
@@ -51,7 +53,7 @@ export const Breadcrumbs = () => {
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
             <Link href="/" className="flex items-center gap-1 text-muted-foreground hover:text-primary">
-              <Home className="h-4 w-4" />
+              <HomeIcon className="h-5" />
               <span className="sr-only">Home</span>
             </Link>
           </BreadcrumbLink>

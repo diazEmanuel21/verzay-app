@@ -1,6 +1,5 @@
     import React from 'react'
 
-    import { notFound } from 'next/navigation'; // Importar notFound para manejar 404
     import { transformationTypes } from '@/constants';
     import Header from '@/components/shared/header';
     import { currentUser } from "@/lib/auth";

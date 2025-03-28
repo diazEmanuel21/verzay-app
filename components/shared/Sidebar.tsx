@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 
-import { navLinks } from '@/constants';
+import { navLinks } from '@/constants/navLinks';
 import { User } from '@prisma/client';
 
 import {
@@ -43,31 +43,27 @@ export function AppSidebar({ user }: AppSidebarProps) {
       {/* CONTENT */}
       <SidebarContent className="flex-1 flex flex-col gap-2 px-2">
         <SidebarGroup title="Menú">
-          {navLinks.map((link) => {
-            const isActive = pathname === link.route || (link.route !== '/' && pathname.startsWith(link.route));
+          {navLinks.map(({ route, icon: Icon, label }) => {
+            const isActive = pathname === route || (route !== '/' && pathname.startsWith(route));
             return (
               <Link
-                key={link.route}
-                href={link.route}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${
-                  isActive
-                    ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white'
-                    : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                }`}
+                key={route}
+                href={route}
+                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${isActive
+                  ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white'
+                  : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                  }`}
               >
-                <Image
-                  src={link.icon}
-                  alt={link.label}
-                  width={20}
-                  height={20}
-                  className={isActive ? 'invert brightness-200' : ''}
+                <Icon
+                  className={`${isActive ? 'invert brightness-200' : ''}  h-5`}
                 />
-                {link.label}
+                {label}
               </Link>
             );
           })}
         </SidebarGroup>
       </SidebarContent>
+
 
       {/* FOOTER */}
       <SidebarFooter className="flex flex-col gap-4 p-4 border-t border-zinc-200 dark:border-zinc-800">
