@@ -25,7 +25,7 @@ const SessionsPage = async ({ params: { type } }: SearchParamProps) => {
 
     return (
         <>
-            {/* <SessionComponent userId/> */}
+            <SessionComponent/>
         </>
     );
 }
