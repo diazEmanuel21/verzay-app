@@ -1,33 +1,22 @@
-import { transformationTypes } from '@/constants';
-import { db } from "@/lib/db";
-import { currentUser } from "@/lib/auth";
-import { SessionComponent } from './_components';
+import { currentUser } from "@/lib/auth"; // ajusta esta ruta según tu proyecto
+import { getSessionsByUserId } from "@/actions/session-action";
+import { Session } from "@prisma/client";
+import { MainSession } from "./_components";
 
-// Define un tipo literal que coincida con las claves de transformationTypes
-type TransformationTypeKeys = keyof typeof transformationTypes;
-
-interface SearchParamProps {
-    params: {
-        type: TransformationTypeKeys; // Usa el tipo literal aquí
-    };
+function hasSessions(result: { data?: Session[] }): result is { data: Session[] } {
+  return !!result.data;
 }
 
-const SessionsPage = async ({ params: { type } }: SearchParamProps) => {
-    const session = await currentUser();
+export default async function SessionsPage() {
+  const session = await currentUser();
 
-    const user = await db.user.findUnique({
-        where: { email: session?.email ?? "" }
-    });
+  if (!session) {
+    return <h1>No autorizado</h1>;
+  }
 
-    if (!user) {
-        return <div>Not authenticated</div>;
-    }
+  const result = await getSessionsByUserId(session.id);
 
-    return (
-        <>
-            <SessionComponent/>
-        </>
-    );
+  return hasSessions(result) 
+    ? <MainSession sessions={result.data} /> 
+    : <h1>Error cargando sesiones</h1>;
 }
-
-export default SessionsPage;
