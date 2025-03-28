@@ -40,7 +40,7 @@ export const EditDialog = ({
                 { id: "email", label: "Email", defaultValue: user.email },
                 { id: "password", label: "Contraseña", defaultValue: user.password },
                 { id: "role", label: "Rol", defaultValue: user.role },
-                { id: "apiUrl", label: "API URL", defaultValue: user.apiUrl },
+                { id: "apiUrl", label: "Apikey OpenIA", defaultValue: user.apiUrl },
                 { id: "company", label: "Empresa", defaultValue: user.company },
                 { id: "notificationNumber", label: "Teléfono Notificación", defaultValue: user.notificationNumber },
                 { id: "openMsg", label: "Teléfono Notificación", defaultValue: user.pausar.filter(pausas => pausas.tipo === 'abrir')[0]?.mensaje},
