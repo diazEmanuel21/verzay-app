@@ -68,18 +68,44 @@ export async function updateSessionStatus(sessionId: number, status: boolean): P
     }
 };
 
-
-export async function deleteSession(id: number): Promise<SessionResponse> {
+export async function deleteSession(
+    userId: string,
+    sessionId: number,
+    remoteJid: string
+): Promise<SessionResponse> {
     try {
-        await db.session.delete({ where: { id } });
+        // Verificar primero que exista la sesión con todos los criterios
+        const session = await db.session.findFirst({
+            where: {
+                AND: [
+                    { id: sessionId },
+                    { userId: userId },
+                    { remoteJid: remoteJid }
+                ]
+            }
+        });
+
+        if (!session) {
+            return {
+                success: false,
+                message: 'Sesión no encontrada o no coincide con los criterios.'
+            };
+        }
+
+        // Eliminar usando el ID que ya verificamos
+        await db.session.delete({
+            where: { id: sessionId }
+        });
 
         return {
             success: true,
-            message: 'Se eliminó correctamente.'
+            message: 'Sesión eliminada correctamente.'
         };
-
     } catch (error) {
-        console.error('Error al eliminar herramienta:', error)
-        return { success: false, message: 'No se pudo eliminar la sesión.' }
+        console.error('Error al eliminar sesión:', error);
+        return {
+            success: false,
+            message: 'Error al eliminar la sesión. Verifica los datos e intenta nuevamente.'
+        };
     }
-};
+}

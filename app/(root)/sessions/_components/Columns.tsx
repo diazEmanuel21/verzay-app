@@ -20,28 +20,40 @@ import { Session } from "@prisma/client"
 import { SwitchStatus } from "./SwitchStatus"
 import { toast } from "sonner"
 
-export const Columns: ColumnDef<Session>[] = [
+export const getColumns = (openDeleteDialog: (sessionId: number, remoteJid: string, userId: string) => void): ColumnDef<Session>[] => [
+    // {
+    //     id: "select",
+    //     header: ({ table }) => (
+    //         <Checkbox
+    //             checked={
+    //                 table.getIsAllPageRowsSelected() ||
+    //                 (table.getIsSomePageRowsSelected() && "indeterminate")
+    //             }
+    //             onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+    //             aria-label="Select all"
+    //         />
+    //     ),
+    //     cell: ({ row }) => (
+    //         <Checkbox
+    //             checked={row.getIsSelected()}
+    //             onCheckedChange={(value) => row.toggleSelected(!!value)}
+    //             aria-label="Select row"
+    //         />
+    //     ),
+    //     enableSorting: false,
+    //     enableHiding: false,
+    // },
     {
-        id: "select",
-        header: ({ table }) => (
-            <Checkbox
-                checked={
-                    table.getIsAllPageRowsSelected() ||
-                    (table.getIsSomePageRowsSelected() && "indeterminate")
-                }
-                onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                aria-label="Select all"
-            />
-        ),
-        cell: ({ row }) => (
-            <Checkbox
-                checked={row.getIsSelected()}
-                onCheckedChange={(value) => row.toggleSelected(!!value)}
-                aria-label="Select row"
-            />
-        ),
-        enableSorting: false,
-        enableHiding: false,
+        accessorKey: "id",
+        header: "ID",
+        enableHiding: true,
+        meta: { shouldShow: false }
+    },
+    {
+        accessorKey: "userId",
+        header: "Usuario",
+        enableHiding: true,
+        meta: { shouldShow: false }
     },
     {
         accessorKey: "remoteJid",
@@ -133,10 +145,10 @@ export const Columns: ColumnDef<Session>[] = [
         id: "actions",
         enableHiding: false,
         cell: ({ row }) => {
-            const userId = row.original.userId as string;
+            const sessionId = row.getValue("id") as number;
+            const userId = row.getValue("userId") as string;
             const remoteJid = row.getValue("remoteJid") as string;
             const phone = remoteJid.split('@')[0];
-
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -167,8 +179,7 @@ export const Columns: ColumnDef<Session>[] = [
                             Eliminar historial de conversación
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                            onClick={() => toast.info('En construcción...')}
-                            // onClick={() => deleteClient(userId, 'delete', true)}
+                            onClick={() => openDeleteDialog(sessionId, remoteJid, userId)}
                             className="text-red-600"
                         >
                             Eliminar cliente
