@@ -73,9 +73,6 @@ const CreditPage = () => {
   return (
     <>
       <div className="max-w-4xl mx-auto text-center">
-        <h2 className="text-sm font-semibold text-indigo-600 uppercase tracking-wider">
-          Planes de suscripción
-        </h2>
         <p className="mt-4 text-4xl font-bold text-gray-900 dark:text-white">
           Elige el plan ideal para tu negocio
         </p>
