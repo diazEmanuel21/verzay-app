@@ -50,7 +50,10 @@ export function DataGrid<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+        id: false, // Oculta la columna id
+        userId: false // Oculta la columna userId
+    })
     const [rowSelection, setRowSelection] = useState({})
 
     const table = useReactTable({
