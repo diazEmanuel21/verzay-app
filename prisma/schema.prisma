@@ -166,3 +166,13 @@ model WorkflowNode {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
+
+model n8n_chat_historial {
+  id         Int      @id @default(autoincrement())
+  sessionId  Int
+  message    String
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
