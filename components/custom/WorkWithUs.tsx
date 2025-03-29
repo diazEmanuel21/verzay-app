@@ -51,9 +51,6 @@ export const WorkWithUs = () => {
   return (
     <div className="mx-auto max-w-7xl pt-0 lg:px-8 py-12">
       <div className="text-center max-w-2xl mx-auto">
-        <h2 className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-          Impulsa tu negocio con Verzay
-        </h2>
 
         <p className="mt-4 text-4xl font-bold text-gray-900 dark:text-white">
           Automatización de ventas y atención al cliente con IA
