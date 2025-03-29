@@ -38,6 +38,7 @@ export async function deleteConversationN8N(
 
     // 3. Buscar conversación
     const sessionIdentifier = `${instance.instanceName}-${remoteJid}`;
+    console.log(`ID DEL BENDITO COSO ESE EHG====>${sessionIdentifier}`)
     const conversation = await db.n8n_chat_historial.findFirst({
       where: { session_id: sessionIdentifier },
       select: { id: true }
