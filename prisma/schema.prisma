@@ -22,13 +22,13 @@ model User {
   role          Role      @default(user)
 
   // Valores por defecto mejorados
-  apiUrl             String @default("https://api.openAI.co")
-  company            String @default("Empresa Demo")
-  notificationNumber String @default("0000000000")
-  lat                String @default("0.0000")
-  lng                String @default("0.0000")
+  apiUrl             String  @default("https://api.openAI.co")
+  company            String  @default("Empresa Demo")
+  notificationNumber String  @default("0000000000")
+  lat                String  @default("0.0000")
+  lng                String  @default("0.0000")
   openingPhrase      String? @default("DEPRECATED") // Aún presente por compatibilidad DEPRECATED - migrado a ChatPhrase
-  mapsUrl            String @default("https://maps.google.com/?q=0,0")
+  mapsUrl            String  @default("https://maps.google.com/?q=0,0")
 
   // Relaciones existentes
   sessions       Session[]
@@ -44,7 +44,7 @@ model User {
 }
 
 model Session {
-  id         Int      @id @default(autoincrement())
+  id         Int     @id @default(autoincrement())
   userId     String
   remoteJid  String
   pushName   String
@@ -58,13 +58,13 @@ model Session {
 }
 
 model Pausar {
-  id      Int     @id @default(autoincrement())
-  userId  String
-  instanciaId String 
+  id          Int    @id @default(autoincrement())
+  userId      String
+  instanciaId String
   apikeyId    String
-  mensaje String @default("Fue un gusto ayudarte.") 
-  tipo    String
-  baseurl String
+  mensaje     String @default("Fue un gusto ayudarte.")
+  tipo        String
+  baseurl     String
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -168,11 +168,10 @@ model WorkflowNode {
 }
 
 model n8n_chat_historial {
-  id         Int      @id @default(autoincrement())
-  sessionId  Int
+  id         Int    @id @default(autoincrement())
+  session_id String
   message    String
-  
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-}
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
