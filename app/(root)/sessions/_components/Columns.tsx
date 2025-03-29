@@ -19,8 +19,9 @@ import {
 import { Session } from "@prisma/client"
 import { SwitchStatus } from "./SwitchStatus"
 import { toast } from "sonner"
+import { DialogSessionType } from "./MainSession"
 
-export const getColumns = (openDeleteDialog: (sessionId: number, remoteJid: string, userId: string) => void): ColumnDef<Session>[] => [
+export const getColumns = (openDeleteDialog: (sessionId: number, remoteJid: string, userId: string, dialog: DialogSessionType) => void): ColumnDef<Session>[] => [
     // {
     //     id: "select",
     //     header: ({ table }) => (
@@ -171,15 +172,13 @@ export const getColumns = (openDeleteDialog: (sessionId: number, remoteJid: stri
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                            onClick={() => toast.info('En construcción...')}
-
-                            // onClick={() => deleteClient(userId, 'delete', true)}
+                            onClick={() => openDeleteDialog(sessionId, remoteJid, userId, 'deleteConversation')}
                             className="text-red-600"
                         >
                             Eliminar historial de conversación
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                            onClick={() => openDeleteDialog(sessionId, remoteJid, userId)}
+                            onClick={() => openDeleteDialog(sessionId, remoteJid, userId, 'deleteClient')}
                             className="text-red-600"
                         >
                             Eliminar cliente

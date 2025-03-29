@@ -17,7 +17,7 @@ import { SidebarTrigger } from '../ui/sidebar';
 const breadcrumbLabels: Record<string, string> = {
   flow: 'flujos',
   profile: 'perfil',
-  sessions: 'Sesiónes',
+  sessions: 'Leads',
   credits: 'planes',
   tools: 'herramientas',
   dashboard: 'conexiones',

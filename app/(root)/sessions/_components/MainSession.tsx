@@ -16,50 +16,72 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { deleteSession } from '@/actions/session-action';
+import { deleteConversationN8N } from '@/actions/n8n-chat-historial-action';
 
 interface SessionData {
     sessionId: number, remoteJid: string, userId: string
 }
 
+export type DialogSessionType = 'deleteClient' | 'deleteConversation'
+interface OperationResult {
+    success: boolean;
+    message: string;
+}
 export function MainSession({ sessions }: { sessions: Session[] }) {
     const router = useRouter();
-    const [showConfirm, setShowConfirm] = useState(false);
+    const [showConfirmDeleteClient, setShowConfirmDeleteClient] = useState(false);
+    const [showConfirmDeleteConversation, setShowConfirmDeleteConversation] = useState(false);
     const [sessionToDelete, setSessionToDelete] = useState<SessionData | null>(null);
 
 
-    const handleDeleteClient = (sessionId: number, remoteJid: string, userId: string) => {
+    const handleDeleteClient = (sessionId: number, remoteJid: string, userId: string, dialog: DialogSessionType) => {
         if (!remoteJid) {
             toast.error('Sesión no encontrada.');
             return;
         }
         setSessionToDelete({ sessionId, remoteJid, userId });
-        setShowConfirm(true);
+        if (dialog === 'deleteClient') return setShowConfirmDeleteClient(true);
+        if (dialog === 'deleteConversation') return setShowConfirmDeleteConversation(true);
     };
 
-    const confirmDelete = async () => {
-        if (!sessionToDelete) return;
+    const confirmDelete = async (dialogType: DialogSessionType) => {
+        if (!sessionToDelete) {
+            console.error('No session selected for deletion');
+            return;
+        }
 
-        const toastId = 'delete-client';
-        toast.loading('Eliminando cliente...', { id: toastId });
+        const isDeleteClient = dialogType === 'deleteClient';
+        const operationName = isDeleteClient ? 'cliente' : 'conversación';
+        const toastId = `delete-${dialogType}`;
+
+        toast.loading(`Eliminando ${operationName}...`, { id: toastId });
 
         try {
-            const result = await deleteSession(
-                sessionToDelete.userId,
-                sessionToDelete.sessionId,
-                sessionToDelete.remoteJid);
+            const { userId, sessionId, remoteJid } = sessionToDelete;
+            let result: OperationResult;
 
-            if (result) {
-                toast.success('Cliente eliminado correctamente', { id: toastId });
+            if (isDeleteClient) {
+                result = await deleteSession(userId, sessionId, remoteJid);
+            } else {
+                result = await deleteConversationN8N(userId, sessionId, remoteJid);
+            }
+
+            if (result.success) {
+                toast.success(result.message, { id: toastId });
                 router.refresh();
             } else {
-                toast.error('Error al eliminar el cliente', { id: toastId });
+                toast.error(result.message || `Error al eliminar ${operationName}`, { id: toastId });
             }
         } catch (error) {
-            toast.error('Ocurrió un error inesperado', { id: toastId });
-            console.error('Error deleting session:', error);
+            console.error(`Error deleting ${operationName}:`, error);
+            toast.error(
+                `Error inesperado al eliminar ${operationName}. Por favor intente nuevamente.`,
+                { id: toastId }
+            );
         } finally {
             setSessionToDelete(null);
-            setShowConfirm(false);
+            setShowConfirmDeleteClient(false);
+            setShowConfirmDeleteConversation(false);
         }
     };
 
@@ -68,16 +90,16 @@ export function MainSession({ sessions }: { sessions: Session[] }) {
     return (
         <>
             <DataGrid<Session, unknown> columns={columns} data={sessions} />
-
-            <AlertDialog open={showConfirm} onOpenChange={(open) => {
+            {/* Delete client */}
+            <AlertDialog open={showConfirmDeleteClient} onOpenChange={(open) => {
                 if (!open) {
                     setSessionToDelete(null);
                 }
-                setShowConfirm(open);
+                setShowConfirmDeleteClient(open);
             }}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
+                        <AlertDialogTitle>Eliminar cliente - ¿Estás absolutamente seguro?</AlertDialogTitle>
                         <AlertDialogDescription>
                             Esta acción no puede deshacerse. Esto eliminará permanentemente los datos
                             del cliente de nuestros servidores.
@@ -86,10 +108,36 @@ export function MainSession({ sessions }: { sessions: Session[] }) {
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={confirmDelete}
+                            onClick={() => confirmDelete('deleteClient')}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
-                            Eliminar definitivamente
+                            Eliminar cliente
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            {/* Delete conversation*/}
+            <AlertDialog open={showConfirmDeleteConversation} onOpenChange={(open) => {
+                if (!open) {
+                    setSessionToDelete(null);
+                }
+                setShowConfirmDeleteConversation(open);
+            }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Eliminar conversación - ¿Estás absolutamente seguro?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta acción no puede deshacerse. Esto eliminará permanentemente el <strong>HISTORIAL de CONVERSACIÓN</strong>&nbsp;
+                            del cliente de nuestros servidores.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => confirmDelete('deleteConversation')}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            Eliminar conversación
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

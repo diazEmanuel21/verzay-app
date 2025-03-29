@@ -41,7 +41,7 @@ import {
       icon: UserIcon,
     },
     {
-      label: "Sesiones",
+      label: "Leads",
       route: "/sessions",
       icon: UsersIcon, 
     },
