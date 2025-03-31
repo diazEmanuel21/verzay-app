@@ -107,10 +107,8 @@ export default function FormInstance({ userId }: { userId: string }) {
                 <p className="font-medium text-lg">| {instanceName}</p>
               </div>
               <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm">
-                    <Trash className="h-4 w-4" />
-                  </Button>
+                <AlertDialogTrigger asChild className="absolute bottom-7 right-14 cursor-pointer">
+                  <p className="text-[16px] font-bold text-green-500">Avanzado</p>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
@@ -121,7 +119,7 @@ export default function FormInstance({ userId }: { userId: string }) {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction 
+                    <AlertDialogAction
                       onClick={handleDelete}
                       disabled={deleteLoading}
                     >
@@ -137,7 +135,7 @@ export default function FormInstance({ userId }: { userId: string }) {
       </CardHeader>
 
       {!instanceExists && (
-        <CardContent>      
+        <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="instanceName" className="block text-sm font-medium mb-1">

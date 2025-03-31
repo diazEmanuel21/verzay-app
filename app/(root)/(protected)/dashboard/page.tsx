@@ -24,7 +24,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col justify-center items-center">
-      <Card className="max-w-[600px]">
+      <Card className="max-w-[600px] relative">
         <CardContent className="flex flex-col">
           {/* Contenedor para el formulario */}
           <FormInstance userId={user.id} />
@@ -58,7 +58,6 @@ export default async function DashboardPage() {
             Whatsapp |
           </p>
           <p className="pr-1 text-gray-400">Business</p>
-          <p className="pr-1 font-bold text-green-500">Avanzado</p>
         </CardFooter>
       </Card>
     </div>
