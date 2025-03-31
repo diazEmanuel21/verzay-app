@@ -1,12 +1,12 @@
 'use server';
 
 import { db } from "@/lib/db";
-import { n8n_chat_historial } from "@prisma/client";
+import { n8n_chat_histories } from "@prisma/client";
 
 interface N8nOperationResponse {
   success: boolean;
   message: string;
-  data?: n8n_chat_historial | null;
+  data?: n8n_chat_histories | null;
 }
 
 export async function deleteConversationN8N(
@@ -39,7 +39,7 @@ export async function deleteConversationN8N(
     // 3. Buscar conversación
     const sessionIdentifier = `${instance.instanceName}-${remoteJid}`;
     console.log(`ID DEL BENDITO COSO ESE EHG====>${sessionIdentifier}`)
-    const conversation = await db.n8n_chat_historial.findFirst({
+    const conversation = await db.n8n_chat_histories.findFirst({
       where: { session_id: sessionIdentifier },
       select: { id: true }
     });
@@ -52,7 +52,7 @@ export async function deleteConversationN8N(
     }
 
     // 4. Eliminar conversación
-    await db.n8n_chat_historial.delete({
+    await db.n8n_chat_histories.delete({
       where: { id: conversation.id }
     });
 
