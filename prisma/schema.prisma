@@ -171,7 +171,4 @@ model n8n_chat_historial {
   id         Int    @id @default(autoincrement())
   session_id String
   message    String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
