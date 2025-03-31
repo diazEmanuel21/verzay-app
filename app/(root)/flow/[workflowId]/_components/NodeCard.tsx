@@ -13,12 +13,11 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-
 import {
   TrashIcon,
   MessageSquareIcon,
+  UploadIcon,
 } from "lucide-react";
-
 import { updateNode, deleteNode, updateUrlNode } from "@/actions/createNode";
 import { toast } from "sonner";
 import { actions } from "../helpers";
@@ -31,15 +30,12 @@ interface Props {
 
 export const NodeCard = ({ nodes, workflowId }: Props) => {
   const router = useRouter();
-
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState(nodes.message);
   const [isPending, startTransition] = useTransition();
   const [isDeleting, setIsDeleting] = useState(false);
-
-  // Upload states
   const [file, setFile] = useState<File | null>(null);
-  const [previewURL, setPreviewURL] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const formattedDate = new Intl.DateTimeFormat('es-ES', {
     day: 'numeric',
@@ -48,14 +44,19 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
   }).format(new Date(nodes.createdAt));
 
   const nodeType = nodes.tipo?.toLowerCase() || '';
+  const hasContent = nodeType === 'texto' ? !!message : !!nodes.url;
+  const currentAction = actions.find(
+    (action) => action.label.toLowerCase() === nodeType
+  );
 
   const handleSave = () => {
     if (message !== nodes.message) {
       startTransition(async () => {
         try {
           await updateNode(nodes.id, message);
+          toast.success('Mensaje actualizado correctamente');
         } catch (error) {
-          toast.error(`Error actualizando el nodo:", ${error}`);
+          toast.error(`Error actualizando el nodo: ${error}`);
         }
       });
     }
@@ -68,7 +69,7 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
       await deleteNode(nodes.id, workflowId);
       toast.success('Nodo eliminado exitosamente.');
     } catch (error) {
-      toast.error(`Error eliminando el nodo:", ${error}`);
+      toast.error(`Error eliminando el nodo: ${error}`);
     } finally {
       setIsDeleting(false);
     }
@@ -78,13 +79,11 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
-      setPreviewURL(URL.createObjectURL(selectedFile));
     }
   };
 
   const handleCancelUpload = () => {
     setFile(null);
-    setPreviewURL(null);
   };
 
   const handleUpload = async () => {
@@ -93,42 +92,139 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
       return;
     }
 
+    setIsUploading(true);
     const toastLoading = toast.loading('Subiendo archivo...');
 
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
+      const formData = new FormData();
+      formData.append('file', file);
+
       const res = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
 
       const data = await res.json();
-      let result: ResApi;
 
       if (res.ok) {
-        setPreviewURL(data.url);
-        result = await updateUrlNode(nodes.id, data.url);
-
+        const result = await updateUrlNode(nodes.id, data.url);
         if (result.success) {
           toast.success(result.message, { id: toastLoading });
           router.refresh();
         } else {
           toast.error(result.message, { id: toastLoading });
         }
-
       } else {
-        toast.error(data.error || 'Error al subir', { id: toastLoading });
+        toast.error(data.error || 'Error al subir el archivo', { id: toastLoading });
       }
     } catch (error) {
-      toast.error(`Error al subir el archivo'${error}`, { id: toastLoading });
+      toast.error(`Error al subir el archivo: ${error}`, { id: toastLoading });
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const currentAction = actions.find(
-    (action) => action.label.toLowerCase() === nodeType
-  );
+  const renderContent = () => {
+    if (nodeType === 'texto') {
+      return isEditing ? (
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onBlur={handleSave}
+          rows={3}
+          autoFocus
+          disabled={isPending}
+          className="w-full p-2 border border-border rounded-md resize-none text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+      ) : (
+        <div
+          className="flex items-start gap-2 text-base cursor-pointer hover:underline whitespace-pre-wrap border border-muted-foreground/20 rounded-md p-3 bg-muted transition"
+          onClick={() => setIsEditing(true)}
+        >
+          <MessageSquareIcon className="w-5 h-5 text-muted-foreground" />
+          <span className="text-muted-foreground">{message}</span>
+        </div>
+      );
+    }
+
+    // Para tipos de archivo (imagen, video, audio, documento)
+    if (hasContent) {
+      return (
+        <div className="w-full border border-border rounded-md p-3 bg-muted">
+          {nodeType === 'imagen' && (
+            <img src={nodes.url!} alt="Contenido del nodo" className="rounded-md w-full h-auto max-h-64 object-contain" />
+          )}
+          {nodeType === 'video' && (
+            <video src={nodes.url!} controls className="rounded-md w-full h-auto max-h-64" />
+          )}
+          {nodeType === 'audio' && (
+            <audio src={nodes.url!} controls className="w-full" />
+          )}
+          {nodeType === 'archivo/documento' && (
+            <div className="flex items-center gap-2 p-2 bg-background rounded">
+              <a 
+                href={nodes.url!} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:underline"
+              >
+                Ver documento
+              </a>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Si no hay contenido, mostrar opción de subir archivo
+    return (
+      <div className="flex flex-col gap-4 w-full">
+        <div className="flex items-center justify-center w-full">
+          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted transition">
+            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+              <UploadIcon className="w-8 h-8 mb-3 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                <span className="font-semibold">Click para subir</span> o arrastra un archivo
+              </p>
+              {file && (
+                <p className="text-xs mt-2 text-muted-foreground">{file.name}</p>
+              )}
+            </div>
+            <Input 
+              type="file" 
+              className="hidden"
+              accept={nodeType === 'imagen'
+                ? 'image/*'
+                : nodeType === 'video'
+                  ? 'video/*'
+                  : nodeType === 'audio'
+                    ? 'audio/*'
+                    : '*'}
+              onChange={handleFileChange}
+            />
+          </label>
+        </div>
+
+        {file && (
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={handleCancelUpload}
+              disabled={isUploading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleUpload}
+              disabled={isUploading}
+            >
+              {isUploading ? "Subiendo..." : "Subir Archivo"}
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="relative w-full max-w-md mx-auto">
@@ -146,89 +242,13 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
       <Card className="shadow-md border border-border rounded-lg">
         <CardHeader>
           <CardTitle className="flex items-start justify-between gap-4 text-left text-lg">
-            {nodeType === 'texto' ? (
-              isEditing ? (
-                <textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onBlur={handleSave}
-                  rows={3}
-                  autoFocus
-                  disabled={isPending}
-                  className="w-full p-2 border border-border rounded-md resize-none text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              ) : (
-                <div
-                  className="flex items-start gap-2 text-base cursor-pointer hover:underline whitespace-pre-wrap border border-muted-foreground/20 rounded-md p-3 bg-muted transition"
-                  onClick={() => setIsEditing(true)}
-                >
-                  <MessageSquareIcon className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-muted-foreground">{message}</span>
-                </div>
-              )
-            ) : (
-              <div className="flex flex-col gap-4 w-full">
-                {/* Input file */}
-                <Input
-                  type="file"
-                  accept={nodeType === 'imagen'
-                    ? 'image/*'
-                    : nodeType === 'video'
-                      ? 'video/*'
-                      : nodeType === 'audio'
-                        ? 'audio/*'
-                        : '*'}
-                  onChange={handleFileChange}
-                />
-
-                {/* Preview del archivo */}
-                {previewURL && (
-                  <div className="w-full border border-border rounded-md p-3 bg-muted">
-                    {nodeType === 'imagen' && (
-                      <img src={previewURL} alt="Preview" className="rounded-md w-full h-auto" />
-                    )}
-
-                    {nodeType === 'video' && (
-                      <video src={previewURL} controls className="rounded-md w-full h-auto" />
-                    )}
-
-                    {nodeType === 'audio' && (
-                      <audio src={previewURL} controls className="w-full" />
-                    )}
-
-                    {nodeType === 'archivo/documento' && (
-                      <div className="text-sm text-muted-foreground">
-                        Archivo listo para subir: {file?.name}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={handleCancelUpload}
-                    disabled={!file}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    onClick={handleUpload}
-                    disabled={!file}
-                  >
-                    Subir Archivo
-                  </Button>
-                </div>
-              </div>
-            )}
+            {renderContent()}
           </CardTitle>
         </CardHeader>
 
         <Separator />
 
         <CardFooter className="flex justify-between items-center text-xs text-muted-foreground px-4 py-3">
-
-
           <p className="italic">Creado el {formattedDate}</p>
 
           <div className="flex items-center gap-2">
@@ -240,7 +260,6 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
-                {/* Properly use AlertDialogTitle as a component */}
                 <AlertDialogTitle>Eliminar nodo</AlertDialogTitle>
                 <AlertDialogDescription>
                   <p className="text-sm">¿Estás seguro de que deseas eliminar este nodo?</p>
@@ -258,4 +277,4 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
       </Card>
     </div>
   );
-}
+};
