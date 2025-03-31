@@ -23,7 +23,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col justify-center items-center">
+    <div className="flex flex-col items-center min-h-screen">
       <Card className="max-w-[600px] relative">
         <CardContent className="flex flex-col">
           {/* Contenedor para el formulario */}

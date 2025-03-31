@@ -1,10 +1,10 @@
 import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import React from 'react'
-import Node from './_components/Node';
 import { GetNodeforUser } from '@/actions/getNodeforUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import NodeCard from './_components/NodeCard';
+import {NodeCard} from './_components/NodeCard';
+import { CreateNodeComponent } from './_components/CrateNodeComponent';
 
 const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) => {
   const { workflowId } = params;
@@ -31,18 +31,19 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
   }
 
   return (
-    <>
+    <div className='flex flex-col items-center min-h-screen'>
       <div className='absolute top-3 right-2'>
-        <Node workflow={workflow} />
+        <CreateNodeComponent workflow={workflow} />
       </div>
 
       {nodes.length > 0 ? (
         <div className='flex flex-col h-full w-full gap-5 px-4 text-center pt-6' >
           {nodes.map((nodes) => (
             <NodeCard key={nodes.id} nodes={nodes} workflowId={workflow.id} />
+            // <NodeCard key={nodes.id}/>
           ))}
         </div>
-        
+
       ) : (
         <div className="flex flex-col items-center w-full">
           <div className="flex max-w-[300px]">
@@ -54,7 +55,7 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
         </div>
       )}
 
-    </>
+    </div>
   );
 }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useTransition } from "react";
+import { useRouter } from 'next/navigation';
 import { WorkflowNode } from "@prisma/client";
 import {
   Card,
@@ -16,23 +17,21 @@ import { Input } from "@/components/ui/input";
 import {
   TrashIcon,
   MessageSquareIcon,
-  FileText,
-  Image as ImageIcon,
-  Video,
-  File,
-  Music,
 } from "lucide-react";
 
-import { workflowActions } from "./Node";
-import { updateNode, deleteNode } from "@/actions/createNode";
+import { updateNode, deleteNode, updateUrlNode } from "@/actions/createNode";
 import { toast } from "sonner";
+import { actions } from "../helpers";
+import { ResApi } from '../../../../../lib/types/res-api';
 
 interface Props {
   workflowId: string;
   nodes: WorkflowNode;
 }
 
-function NodeCard({ nodes, workflowId }: Props) {
+export const NodeCard = ({ nodes, workflowId }: Props) => {
+  const router = useRouter();
+
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState(nodes.message);
   const [isPending, startTransition] = useTransition();
@@ -41,6 +40,15 @@ function NodeCard({ nodes, workflowId }: Props) {
   // Upload states
   const [file, setFile] = useState<File | null>(null);
   const [previewURL, setPreviewURL] = useState<string | null>(null);
+
+  const formattedDate = new Intl.DateTimeFormat('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).format(new Date(nodes.createdAt));
+
+  const nodeType = nodes.tipo?.toLowerCase() || '';
+
   const handleSave = () => {
     if (message !== nodes.message) {
       startTransition(async () => {
@@ -97,12 +105,19 @@ function NodeCard({ nodes, workflowId }: Props) {
       });
 
       const data = await res.json();
-      console.log(data);
+      let result: ResApi;
 
       if (res.ok) {
-        toast.success('Archivo subido con éxito', { id: toastLoading });
         setPreviewURL(data.url);
-        // Aquí puedes guardar la URL en el nodo si quieres
+        result = await updateUrlNode(nodes.id, data.url);
+
+        if (result.success) {
+          toast.success(result.message, { id: toastLoading });
+          router.refresh();
+        } else {
+          toast.error(result.message, { id: toastLoading });
+        }
+
       } else {
         toast.error(data.error || 'Error al subir', { id: toastLoading });
       }
@@ -111,8 +126,8 @@ function NodeCard({ nodes, workflowId }: Props) {
     }
   };
 
-  const currentAction = workflowActions.find(
-    (action) => action.label.toLowerCase() === nodes.tipo.toLowerCase()
+  const currentAction = actions.find(
+    (action) => action.label.toLowerCase() === nodeType
   );
 
   return (
@@ -131,7 +146,7 @@ function NodeCard({ nodes, workflowId }: Props) {
       <Card className="shadow-md border border-border rounded-lg">
         <CardHeader>
           <CardTitle className="flex items-start justify-between gap-4 text-left text-lg">
-            {nodes.tipo.toLowerCase() === 'texto' ? (
+            {nodeType === 'texto' ? (
               isEditing ? (
                 <textarea
                   value={message}
@@ -156,11 +171,11 @@ function NodeCard({ nodes, workflowId }: Props) {
                 {/* Input file */}
                 <Input
                   type="file"
-                  accept={nodes.tipo.toLowerCase() === 'imagen'
+                  accept={nodeType === 'imagen'
                     ? 'image/*'
-                    : nodes.tipo.toLowerCase() === 'video'
+                    : nodeType === 'video'
                       ? 'video/*'
-                      : nodes.tipo.toLowerCase() === 'audio'
+                      : nodeType === 'audio'
                         ? 'audio/*'
                         : '*'}
                   onChange={handleFileChange}
@@ -169,19 +184,19 @@ function NodeCard({ nodes, workflowId }: Props) {
                 {/* Preview del archivo */}
                 {previewURL && (
                   <div className="w-full border border-border rounded-md p-3 bg-muted">
-                    {nodes.tipo.toLowerCase() === 'imagen' && (
+                    {nodeType === 'imagen' && (
                       <img src={previewURL} alt="Preview" className="rounded-md w-full h-auto" />
                     )}
 
-                    {nodes.tipo.toLowerCase() === 'video' && (
+                    {nodeType === 'video' && (
                       <video src={previewURL} controls className="rounded-md w-full h-auto" />
                     )}
 
-                    {nodes.tipo.toLowerCase() === 'audio' && (
+                    {nodeType === 'audio' && (
                       <audio src={previewURL} controls className="w-full" />
                     )}
 
-                    {nodes.tipo.toLowerCase() === 'archivo/documento' && (
+                    {nodeType === 'archivo/documento' && (
                       <div className="text-sm text-muted-foreground">
                         Archivo listo para subir: {file?.name}
                       </div>
@@ -189,7 +204,6 @@ function NodeCard({ nodes, workflowId }: Props) {
                   </div>
                 )}
 
-                {/* Botones */}
                 <div className="flex justify-end gap-2">
                   <Button
                     variant="outline"
@@ -213,7 +227,9 @@ function NodeCard({ nodes, workflowId }: Props) {
         <Separator />
 
         <CardFooter className="flex justify-between items-center text-xs text-muted-foreground px-4 py-3">
-          <p className="italic">Creado el {nodes.createdAt.toLocaleDateString()}</p>
+
+
+          <p className="italic">Creado el {formattedDate}</p>
 
           <div className="flex items-center gap-2">
             {/* Eliminar nodo */}
@@ -243,5 +259,3 @@ function NodeCard({ nodes, workflowId }: Props) {
     </div>
   );
 }
-
-export default NodeCard;

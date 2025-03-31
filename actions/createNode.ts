@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { createNodeflowSchema, createNodeflowSchemaType } from "@/schema/nodeflow";
 import { redirect } from "next/navigation";
 
+
 export async function CreateNode(form: createNodeflowSchemaType) {
   const session = await auth(); // Obtén la sesión del usuario
 
@@ -50,6 +51,34 @@ export async function updateNode(nodeId: string, newMessage: string) {
   });
 
   return updatedNode;
+}
+
+export async function updateUrlNode(nodeId: string, url: string) {
+  try {
+    if (!nodeId || !url) {
+      return {
+        success: false,
+        message: 'Parámetros inválidos.'
+      }
+    }
+
+    const updatedNode = await db.workflowNode.update({
+      where: { id: nodeId },
+      data: { url },
+    });
+
+    return {
+      success: true,
+      message: 'Archivo subido con éxito.',
+      data: updatedNode
+    }
+  } catch (error) {
+    console.error('Error update node', error);
+    return {
+      success: false,
+      message: 'Ocurrió un error al intentar actualizar la url del nodo.',
+    };
+  }
 }
 
 // Método para eliminar un nodo
