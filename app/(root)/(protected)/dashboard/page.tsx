@@ -13,7 +13,7 @@ import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
   const session = await currentUser();
-  
+
   const user = await db.user.findUnique({
     where: { email: session?.email ?? "" },
   });
@@ -27,9 +27,7 @@ export default async function DashboardPage() {
       <Card className="max-w-[600px]">
         <CardContent className="flex flex-col">
           {/* Contenedor para el formulario */}
-          <div className="flex flex-col w-full">
-            <FormInstance userId={user.id} />
-          </div>
+          <FormInstance userId={user.id} />
 
           {/* Contenedor horizontal para QR y botón de toggle */}
           <div className="flex flex-row  justify-between items-center gap-2">
