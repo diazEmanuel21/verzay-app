@@ -112,20 +112,21 @@ export default function FormInstance({ userId }: { userId: string }) {
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                    <AlertDialogTitle><strong className="text-red-800">Se eliminará tu instancia</strong> ¿Estás seguro?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Esta acción no se puede deshacer. Esto eliminará permanentemente tu instancia.
+                      Esto eliminará <strong className="text-red-800 uppercase">permanentemente</strong> tu instancia. Esta acción no se puede deshacer.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
+                    <Button
                       onClick={handleDelete}
                       disabled={deleteLoading}
+                      variant={"destructive"}
                     >
                       {deleteLoading && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
                       Eliminar
-                    </AlertDialogAction>
+                    </Button>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>

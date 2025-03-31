@@ -68,7 +68,7 @@ const ToolsPage = async ({ params: { type } }: SearchParamProps) => {
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-gray-600 mb-4">
-                Gestiona tus clientes solicitudes, ventas y mas directamente desde Google Sheet.
+                Gestiona tus clientes solicitudes, ventas y mas directamente desde CRM Google Sheet.
               </p>
               {toolsMap.sheets ? (
                 <Link href={toolsMap.sheets} target="_blank">

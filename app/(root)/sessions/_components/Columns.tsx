@@ -161,17 +161,6 @@ export const getColumns = (openDeleteDialog: (sessionId: number, remoteJid: stri
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(phone)}
-                        >
-                            Copiar teléfono
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            onClick={() => toast.info('En construcción...')}
-                        >
-                            Mostrar el historial de conversación del agente AI
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
                             onClick={() => openDeleteDialog(sessionId, remoteJid, userId, 'deleteConversation')}
                             className="text-red-600"
                         >
