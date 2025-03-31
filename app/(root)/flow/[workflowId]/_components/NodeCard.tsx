@@ -20,8 +20,7 @@ import {
 } from "lucide-react";
 import { updateNode, deleteNode, updateUrlNode } from "@/actions/createNode";
 import { toast } from "sonner";
-import { actions } from "../helpers";
-import { ResApi } from '../../../../../lib/types/res-api';
+import { actions, validateFileType } from "../helpers";
 
 interface Props {
   workflowId: string;
@@ -36,6 +35,7 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const formattedDate = new Intl.DateTimeFormat('es-ES', {
     day: 'numeric',
@@ -77,7 +77,19 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
+    
     if (selectedFile) {
+      if (!validateFileType(selectedFile, nodeType)) {
+        toast.error(`Tipo de archivo no válido. Se esperaba: ${nodeType === 'imagen'
+          ? 'imagen (JPEG, PNG, GIF)'
+          : nodeType === 'video'
+            ? 'video (MP4, WebM)'
+            : nodeType === 'audio'
+              ? 'audio (MP3, WAV)'
+              : 'documento (PDF, DOC)'}`);
+        return;
+      }
+      
       setFile(selectedFile);
     }
   };
@@ -124,6 +136,41 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
     }
   };
 
+  /* Drag and drop events */
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) {
+      if (!validateFileType(droppedFile, nodeType)) {
+        toast.error(`Tipo de archivo no válido. Se esperaba: ${nodeType === 'imagen'
+          ? 'imagen'
+          : nodeType === 'video'
+            ? 'video'
+            : nodeType === 'audio'
+              ? 'audio'
+              : 'documento'}`);
+        return;
+      }
+      setFile(droppedFile);
+    }
+  };
+
   const renderContent = () => {
     if (nodeType === 'texto') {
       return isEditing ? (
@@ -162,9 +209,9 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
           )}
           {nodeType === 'archivo/documento' && (
             <div className="flex items-center gap-2 p-2 bg-background rounded">
-              <a 
-                href={nodes.url!} 
-                target="_blank" 
+              <a
+                href={nodes.url!}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-primary hover:underline"
               >
@@ -179,30 +226,35 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
     // Si no hay contenido, mostrar opción de subir archivo
     return (
       <div className="flex flex-col gap-4 w-full">
-        <div className="flex items-center justify-center w-full">
-          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted transition">
-            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-              <UploadIcon className="w-8 h-8 mb-3 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                <span className="font-semibold">Click para subir</span> o arrastra un archivo
-              </p>
-              {file && (
-                <p className="text-xs mt-2 text-muted-foreground">{file.name}</p>
-              )}
-            </div>
-            <Input 
-              type="file" 
-              className="hidden"
-              accept={nodeType === 'imagen'
-                ? 'image/*'
-                : nodeType === 'video'
-                  ? 'video/*'
-                  : nodeType === 'audio'
-                    ? 'audio/*'
-                    : '*'}
-              onChange={handleFileChange}
-            />
-          </label>
+        <div
+          className={`flex items-center justify-center w-full h-32 border-2 rounded-lg cursor-pointer transition 
+          ${isDragging ? 'border-primary bg-primary/10' : 'border-dashed border-muted-foreground/50 bg-muted/50'}`}
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onClick={() => document.getElementById('file-input')?.click()}
+        >
+          <div className="flex flex-col items-center justify-center p-5">
+            <UploadIcon className="w-8 h-8 mb-3 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground text-center">
+              {isDragging ? 'Suelta el archivo aquí' : 'Arrastra un archivo o haz click para seleccionar'}
+            </p>
+            {file && <p className="text-xs mt-2 text-muted-foreground">{file.name}</p>}
+          </div>
+          <Input
+            id="file-input"
+            type="file"
+            className="hidden"
+            accept={nodeType === 'imagen'
+              ? 'image/*'
+              : nodeType === 'video'
+                ? 'video/*'
+                : nodeType === 'audio'
+                  ? 'audio/*'
+                  : '*'}
+            onChange={handleFileChange}
+          />
         </div>
 
         {file && (
@@ -261,12 +313,16 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogTitle>Eliminar nodo</AlertDialogTitle>
-                <AlertDialogDescription>
-                  <p className="text-sm">¿Estás seguro de que deseas eliminar este nodo?</p>
+                <AlertDialogDescription className="text-sm">
+                  ¿Estás seguro de que deseas eliminar este nodo?
                 </AlertDialogDescription>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
                     {isDeleting ? "Eliminando..." : "Eliminar"}
                   </AlertDialogAction>
                 </AlertDialogFooter>
