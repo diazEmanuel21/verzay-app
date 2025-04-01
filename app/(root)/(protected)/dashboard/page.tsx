@@ -1,6 +1,3 @@
-import { db } from "@/lib/db";
-import { currentUser } from "@/lib/auth";
-
 import FormInstance from "@/components/form-Instance";
 import QRCodeGenerator from "@/components/form-qr";
 import EnableToggleButton from "@/components/button-bot";
@@ -8,18 +5,14 @@ import EnableToggleButton from "@/components/button-bot";
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { FaWhatsapp } from 'react-icons/fa';
 import { redirect } from "next/navigation";
-
+import { currentUser } from "@/lib/auth";
 
 
 export default async function DashboardPage() {
-  const session = await currentUser();
-
-  const user = await db.user.findUnique({
-    where: { email: session?.email ?? "" },
-  });
-
+  const user = await currentUser();
+  
   if (!user) {
-    redirect('/login'); // Redirección en el servidor
+    redirect("/login");
   }
 
   return (

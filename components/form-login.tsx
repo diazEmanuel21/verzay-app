@@ -1,5 +1,7 @@
 "use client";
 
+import { redirect, useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { loginSchema } from "@/lib/zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -16,8 +18,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 
 interface FormLoginProps {
   isVerified: boolean;
@@ -25,9 +25,10 @@ interface FormLoginProps {
 }
 
 const FormLogin = ({ isVerified, OAuthAccountNotLinked }: FormLoginProps) => {
+  const router = useRouter();
+
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -35,17 +36,23 @@ const FormLogin = ({ isVerified, OAuthAccountNotLinked }: FormLoginProps) => {
       email: "",
       password: "",
     },
+    mode: "onChange",
   });
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setError(null);
     startTransition(async () => {
       const response = await loginAction(values);
-      if (response.error) {
-        setError(response.error);
+
+      if (response?.error) {
+        setError(
+          response.error === "CredentialsSignin"
+            ? "Credenciales inválidas"
+            : response.error
+        );
       } else {
-        router.push("/dashboard");
-        window.location.reload();
+        router.refresh();
+        redirect("/dashboard");
       }
     });
   }

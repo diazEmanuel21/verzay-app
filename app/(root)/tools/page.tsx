@@ -1,4 +1,3 @@
-import React from 'react'
 import { transformationTypes } from '@/constants'
 import Header from '@/components/shared/header'
 import { currentUser } from "@/lib/auth"

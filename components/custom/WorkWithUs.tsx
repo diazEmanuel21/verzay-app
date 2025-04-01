@@ -68,7 +68,7 @@ export const WorkWithUs = () => {
             className="flex flex-col justify-start border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:shadow-lg dark:hover:shadow-md transition"
           >
             <CardContent className="flex flex-col items-start p-6">
-              <div className="flex items-center justify-center rounded-full bg-indigo-600 dark:bg-indigo-500 p-3 mb-4">
+              <div className="flex items-center justify-center rounded-full bg-blue-600 dark: to-blue-600 p-3 mb-4">
                 <feature.icon className="h-6 w-6 text-white" />
               </div>
 
@@ -77,7 +77,7 @@ export const WorkWithUs = () => {
               </h3>
 
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                
+
                 {feature.description}
               </p>
             </CardContent>

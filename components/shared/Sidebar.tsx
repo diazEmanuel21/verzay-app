@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 import { navLinks } from '@/constants/navLinks';
-import { User } from '@prisma/client';
 
 import {
   Sidebar,
@@ -17,12 +16,15 @@ import {
 
 import ThemeSwitcher from '../custom/ThemeSwitcher';
 import LogoutButton from '../logout-button';
+import { useUser } from '@/contexts/user-context';
+import { User } from '@prisma/client';
 
-type AppSidebarProps = {
-  user: User;
-};
+interface AppSidebarProps {
+  user: User
+}
 
 export function AppSidebar({ user }: AppSidebarProps) {
+  debugger;
   const pathname = usePathname();
 
   return (

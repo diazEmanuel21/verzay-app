@@ -88,7 +88,7 @@ export function MainSession({ sessions }: { sessions: Session[] }) {
     const columns = getColumns(handleDeleteClient);
 
     return (
-        <>
+        <div className='min-h-screen'>
             <DataGrid<Session, unknown> columns={columns} data={sessions} />
             {/* Delete client */}
             <AlertDialog open={showConfirmDeleteClient} onOpenChange={(open) => {
@@ -142,6 +142,6 @@ export function MainSession({ sessions }: { sessions: Session[] }) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </>
+        </div>
     );
 }

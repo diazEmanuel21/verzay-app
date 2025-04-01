@@ -1,29 +1,21 @@
-import { currentUser } from "@/lib/auth"; // ajusta esta ruta según tu proyecto
+// app/sessions/page.tsx (Server Component)
 import { getSessionsByUserId } from "@/actions/session-action";
-import { Session } from "@prisma/client";
 import { MainSession } from "./_components";
-import { db } from "@/lib/db";
-
-function hasSessions(result: { data?: Session[] }): result is { data: Session[] } {
-  return !!result.data;
-}
+import { redirect } from "next/navigation";
+import { currentUser } from "@/lib/auth";
 
 export default async function SessionsPage() {
-  const session = await currentUser();
-
-  if (!session) {
-    return <h1>No autorizado</h1>;
+  const user = await currentUser();
+  
+  if (!user) {
+    redirect('/login');
   }
 
-  const user = await db.user.findUnique({
-    where: { email: session?.email ?? '' },
-  });
+  const result = await getSessionsByUserId(user.id);
 
-  const userId = user?.id as string ;
+  if (!result.data) {
+    return <h1>Error cargando sesiones</h1>;
+  }
 
-  const result = await getSessionsByUserId(userId);
-
-  return hasSessions(result)
-    ? <MainSession sessions={result.data} />
-    : <h1>Error cargando sesiones</h1>;
+  return <MainSession sessions={result.data} />;
 }

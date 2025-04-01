@@ -172,7 +172,7 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
   };
 
   return (
-    <>
+    <div className='min-h-screen'>
       {/* Forzar toast por encima de Dialog */}
       {/* <div className="z-[9999] fixed top-0 right-0 w-full flex justify-end pointer-events-none" /> */}
       <div className="flex justify-between pb-6">
@@ -250,7 +250,6 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
       </div>
 
       <div>
-
         {loading ? (
           <MessagesSkeleton />) : messages.length === 0 ? (
             <p className="text-sm text-muted-foreground">Aún no hay mensajes configurados.</p>
@@ -313,7 +312,6 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
         )}
 
       </div>
-
-    </>
+    </div>
   );
 }

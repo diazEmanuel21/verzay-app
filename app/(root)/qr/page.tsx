@@ -1,25 +1,16 @@
-import React from 'react'
-
-
-import { db } from "@/lib/db";
-
-import { currentUser } from "@/lib/auth";
+import { redirect } from 'next/navigation';
+import { currentUser } from '@/lib/auth';
 
 const pageQr = async () => {
+  const user = await currentUser();
 
-  const session = await currentUser();
-  
-  const user = await db.user.findUnique({
-  where: {email: session?.email ?? ""}
-  });
-  
   if (!user) {
-    return <div>Not authenticated</div>;
-  }
+    redirect('/login');
+  };
 
   return (
     <>
-    
+
     </>
   )
 }

@@ -1,36 +1,27 @@
-import React from 'react';
-import { transformationTypes } from '@/constants';
-import { db } from "@/lib/db";
-import { currentUser } from "@/lib/auth";
+import { currentUser } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 import FormSystemMessage from '@/components/form-system';
 
-// Define un tipo literal que coincida con las claves de transformationTypes
-type TransformationTypeKeys = keyof typeof transformationTypes;
+interface PageProps {
+  params: { id?: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+};
 
-interface SearchParamProps {
-  params: {
-    type: TransformationTypeKeys; // Usa el tipo literal aquí
-  };
-}
-
-const AddIapage = async ({ params: { type } }: SearchParamProps) => {  
-  const ia = transformationTypes[type];
-
-  const session = await currentUser();
-
-  const user = await db.user.findUnique({
-    where: {email: session?.email ?? ""}
-  });
+const AddIapage = async ({ params, searchParams }: PageProps) => {
+  const user = await currentUser();
 
   if (!user) {
-    return <div>Not authenticated</div>;
-  }
+    redirect('/login');
+  };
 
   return (
-    <>
-      <FormSystemMessage userId={user.id} />
-    </>
+    <div className="p-4">
+      <FormSystemMessage 
+        userId={user.id} 
+        // additionalParams={searchParams} 
+      />
+    </div>
   );
-}
+};
 
 export default AddIapage;

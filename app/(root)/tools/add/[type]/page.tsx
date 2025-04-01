@@ -1,42 +1,32 @@
-    import React from 'react'
-
-    import { transformationTypes } from '@/constants';
-    import Header from '@/components/shared/header';
-    import { currentUser } from "@/lib/auth";
-    import { db } from "@/lib/db";
+import { transformationTypes } from '@/constants';
+import Header from '@/components/shared/header';
+import { redirect } from 'next/navigation';
+import { currentUser } from '@/lib/auth';
 
 
-    type TransformationTypeKeys = keyof typeof transformationTypes;
+type TransformationTypeKeys = keyof typeof transformationTypes;
 
-    interface SearchParamProps {
-      params: {
-        type: TransformationTypeKeys; // Usa el tipo literal aquí
-      };
-    }
+interface SearchParamProps {
+  params: {
+    type: TransformationTypeKeys; // Usa el tipo literal aquí
+  };
+}
 
+const herramientas = async ({ params: { type } }: SearchParamProps) => {
+  const user = await currentUser();
 
-    const herramientas = async ({ params: { type } }: SearchParamProps) => {
+  if (!user) {
+    redirect('/login');
+  };
 
-      const tools = transformationTypes[type];
+  return (
+    <>
+      <Header
+        title={'Herramientas'}
+        subtitle={'Crea tus herramientas de automatización'}
+      />
+    </>
+  )
+}
 
-      const session = await currentUser();
-
-        const user = await db.user.findUnique({
-        where: {email: session?.email ?? ""}
-        });
-
-        if (!user) {
-        return <div>Not authenticated</div>;
-        }
-
-      return (
-        <>
-          <Header 
-            title={'Herramientas'}
-            subtitle={'Crea tus herramientas de automatización'}
-          />
-        </>
-      )
-    }
-
-    export default herramientas
+export default herramientas

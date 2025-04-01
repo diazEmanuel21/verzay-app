@@ -1,7 +1,35 @@
-import {auth} from "@/auth"
+// lib/auth.ts
+import { auth } from "@/auth";
+import { db } from "@/lib/db";
 
-export const currentUser = async () => {
+// Cache para la duración de la request
+const userCache = new WeakMap<Request, Promise<any>>();
+
+export async function currentUser(request?: Request) {
+    // Si tenemos cache para esta request, la usamos
+    if (request && userCache.has(request)) {
+        return userCache.get(request);
+    }
+
     const session = await auth();
+    if (!session?.user?.email) return null;
 
-    return session?.user;
+    const userPromise = db.user.findUnique({
+        where: { email: session.user.email },
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            company: true,
+            notificationNumber: true,
+            // Solo selecciona los campos necesarios
+        },
+    });
+
+    if (request) {
+        userCache.set(request, userPromise);
+    }
+
+    return userPromise;
 }

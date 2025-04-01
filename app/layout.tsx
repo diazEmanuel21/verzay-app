@@ -13,6 +13,8 @@ import { Breadcrumbs } from '@/components/custom';
 import { AppSidebar } from '@/components/shared/Sidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
+import { UserProvider } from '@/contexts/user-context';
+
 // Fuente
 const poppins = Poppins({ subsets: ['latin'], weight: ['400', '700'] });
 
@@ -26,12 +28,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await currentUser();
-
-  const user = await db.user.findUnique({
-    where: { email: session?.email ?? '' },
-  });
-
+  const user = await currentUser();
   const isAuthenticated = user !== null && user !== undefined;
 
   return (
@@ -39,32 +36,34 @@ export default async function RootLayout({
       <body className={`${poppins.className} bg-white text-black dark:bg-gray-900 dark:text-white`}>
         <AppProviders>
           <ThemeProvider>
-            {isAuthenticated ? (
-              <div className="flex flex-col md:flex-row h-screen w-full bg-muted text-muted-foreground overflow-hidden">
-                {/* Sidebar */}
-                <SidebarProvider>
-                  <AppSidebar user={user} />
+            {/* <UserProvider user={user}> */}
+              {isAuthenticated ? (
+                <div className="flex flex-col md:flex-row h-screen w-full bg-muted text-muted-foreground overflow-hidden">
+                  {/* Sidebar */}
+                  <SidebarProvider>
+                    <AppSidebar user={user}/>
 
-                  {/* Main Content */}
-                  <div className="flex flex-col flex-1 h-full transition-all duration-300">
-                    <header className="flex items-center justify-between px-4 md:px-6 h-16 border-b bg-background">
-                      <Breadcrumbs />
-                    </header>
-                    <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 md:py-8">
-                      {children}
-                      <footer className="pt-6 hidden md:flex items-center justify-center border-t text-xs text-muted-foreground">
-                        © 2025 Verzay. Todos los derechos reservados.
-                      </footer>
-                    </main>
-                  </div>
-                </SidebarProvider>
-              </div>
-            ) : (
-              // PUBLIC / AUTH LAYOUT
-              <main className="flex min-h-screen w-full items-center justify-center">
-                {children}
-              </main>
-            )}
+                    {/* Main Content */}
+                    <div className="flex flex-col flex-1 h-full transition-all duration-300">
+                      <header className="flex items-center justify-between px-4 md:px-6 h-16 border-b bg-background">
+                        <Breadcrumbs />
+                      </header>
+                      <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 md:py-8">
+                        {children}
+                        <footer className="pt-6 hidden md:flex items-center justify-center border-t text-xs text-muted-foreground">
+                          © 2025 Verzay. Todos los derechos reservados.
+                        </footer>
+                      </main>
+                    </div>
+                  </SidebarProvider>
+                </div>
+              ) : (
+                // PUBLIC / AUTH LAYOUT
+                <main className="flex min-h-screen w-full items-center justify-center">
+                  {children}
+                </main>
+              )}
+            {/* </UserProvider> */}
           </ThemeProvider>
           <Toaster position="bottom-right" richColors />
         </AppProviders>
