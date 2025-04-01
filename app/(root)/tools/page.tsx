@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
 import { getTools } from "@/actions/tools-action"
+import { redirect } from 'next/navigation'
 
 type TransformationTypeKeys = keyof typeof transformationTypes
 
@@ -19,19 +20,14 @@ interface SearchParamProps {
   params: {
     type: TransformationTypeKeys
   }
-}
+};
 
 const ToolsPage = async ({ params: { type } }: SearchParamProps) => {
-  const me = transformationTypes[type]
-  const session = await currentUser()
-
-  const user = await db.user.findUnique({
-    where: { email: session?.email ?? "" }
-  })
+  const user = await currentUser();
 
   if (!user) {
-    return <div>Not authenticated</div>
-  }
+    redirect('/login')
+  };
 
   const toolResponse = await getTools(user.id)
 

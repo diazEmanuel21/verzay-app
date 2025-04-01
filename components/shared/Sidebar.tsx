@@ -16,7 +16,6 @@ import {
 
 import ThemeSwitcher from '../custom/ThemeSwitcher';
 import LogoutButton from '../logout-button';
-import { useUser } from '@/contexts/user-context';
 import { User } from '@prisma/client';
 
 interface AppSidebarProps {
@@ -24,7 +23,6 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ user }: AppSidebarProps) {
-  debugger;
   const pathname = usePathname();
 
   return (

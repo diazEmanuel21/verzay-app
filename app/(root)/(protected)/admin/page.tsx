@@ -1,22 +1,13 @@
-import { auth } from "@/auth";
-import { db } from "@/lib/db";
-
-import { agregarApi } from "@/actions/api-action";
-import Image from "next/image"
-import Link from "next/link"
 import ConexionButton from "@/components/shared/conexion";
 import Header from "@/components/shared/header";
+import { currentUser } from "@/lib/auth";
 
 const AdminPage = async () => {
-  const session = await auth();
+  const user = await currentUser();
 
-  // const user = await db.user.findUnique({
-  //   where: {email: session?.user.email ?? ""}
-  // });
-
-  if (session?.user?.role !== "admin") {
+  if (user?.role !== "admin") {
     return <div>Lo sentimos este portal solo esta hecho para distruibudores.</div>;
-  }
+  };
 
   return (  
     <>

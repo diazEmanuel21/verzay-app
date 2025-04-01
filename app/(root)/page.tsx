@@ -4,7 +4,7 @@ const Home = async ({ searchParams }: SearchParamProps) => {
 
   return (
     <>
-      <LeadsChart />
+      {/* <LeadsChart /> */}
       <div className="pb-5">
         <WorkWithUs />
       </div>

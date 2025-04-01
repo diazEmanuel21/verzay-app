@@ -1,5 +1,4 @@
-import { auth } from "@/auth";
-import { db } from "@/lib/db";
+import { currentUser } from "@/lib/auth";
 import { agregarApi } from "@/actions/api-action";
 import ApiKeysTable from "@/components/shared/apikeystable";
 
@@ -8,15 +7,11 @@ interface Props {
 }
 
 const AdminPage = async ({ searchParams }: Props) => {
-  const session = await auth();
+  const user = await currentUser();
 
-  const user = await db.user.findUnique({
-    where: { email: session?.user.email ?? "" }
-  });
-
-  if (session?.user?.role !== "admin") {
-    return <div>Lo sentimos este portal solo está hecho para distribuidores.</div>;
-  }
+  if (user?.role !== "admin") {
+    return <div>Lo sentimos este portal solo esta hecho para distruibudores.</div>;
+  };
 
   return (
     <div className="container">

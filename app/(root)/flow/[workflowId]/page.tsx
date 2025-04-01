@@ -1,28 +1,26 @@
-import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import React from 'react'
 import { GetNodeforUser } from '@/actions/getNodeforUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import {NodeCard} from './_components/NodeCard';
+import { NodeCard } from './_components/NodeCard';
 import { CreateNodeComponent } from './_components/CrateNodeComponent';
+import { currentUser } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 
 const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) => {
+  const user = await currentUser();
+  if (!user) {
+    redirect('/login');
+  };
+
   const { workflowId } = params;
 
   const nodes = await GetNodeforUser(workflowId);
 
-  const session = await auth();
-
-  const user = await db.user.findUnique({
-    where: { email: session?.user.email ?? "" }
-  });
-
-  if (!user) return <div>Not authenticated</div>;
-
   const workflow = await db.workflow.findUnique({
     where: {
       id: workflowId,
-      userId: user.id,
+      userId: user?.id,
     }
   })
 

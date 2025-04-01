@@ -7,13 +7,10 @@ import { AppProviders } from '@/components/providers/AppProviders';
 import { Toaster } from '@/components/ui/sonner';
 
 import { currentUser } from '@/lib/auth';
-import { db } from '@/lib/db';
 
 import { Breadcrumbs } from '@/components/custom';
 import { AppSidebar } from '@/components/shared/Sidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
-
-import { UserProvider } from '@/contexts/user-context';
 
 // Fuente
 const poppins = Poppins({ subsets: ['latin'], weight: ['400', '700'] });
@@ -36,7 +33,6 @@ export default async function RootLayout({
       <body className={`${poppins.className} bg-white text-black dark:bg-gray-900 dark:text-white`}>
         <AppProviders>
           <ThemeProvider>
-            {/* <UserProvider user={user}> */}
               {isAuthenticated ? (
                 <div className="flex flex-col md:flex-row h-screen w-full bg-muted text-muted-foreground overflow-hidden">
                   {/* Sidebar */}
@@ -63,7 +59,6 @@ export default async function RootLayout({
                   {children}
                 </main>
               )}
-            {/* </UserProvider> */}
           </ThemeProvider>
           <Toaster position="bottom-right" richColors />
         </AppProviders>

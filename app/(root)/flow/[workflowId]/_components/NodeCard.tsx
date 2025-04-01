@@ -77,7 +77,7 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
-    
+
     if (selectedFile) {
       if (!validateFileType(selectedFile, nodeType)) {
         toast.error(`Tipo de archivo no válido. Se esperaba: ${nodeType === 'imagen'
@@ -89,7 +89,7 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
               : 'documento (PDF, DOC)'}`);
         return;
       }
-      
+
       setFile(selectedFile);
     }
   };
@@ -154,7 +154,7 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) {
       if (!validateFileType(droppedFile, nodeType)) {
