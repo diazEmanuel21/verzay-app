@@ -44,9 +44,9 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
   }).format(new Date(nodes.createdAt));
 
   const nodeType = nodes.tipo?.toLowerCase() || '';
-  const hasContent = nodeType === 'texto' ? !!message : !!nodes.url;
+  const hasContent = nodeType === 'text' ? !!message : !!nodes.url;
   const currentAction = actions.find(
-    (action) => action.label.toLowerCase() === nodeType
+    (action) => action.type.toLowerCase() === nodeType
   );
 
   const handleSave = () => {
@@ -80,8 +80,8 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
 
     if (selectedFile) {
       if (!validateFileType(selectedFile, nodeType)) {
-        toast.error(`Tipo de archivo no válido. Se esperaba: ${nodeType === 'imagen'
-          ? 'imagen (JPEG, PNG, GIF)'
+        toast.error(`Tipo de archivo no válido. Se esperaba: ${nodeType === 'image'
+          ? 'image (JPEG, PNG, GIF)'
           : nodeType === 'video'
             ? 'video (MP4, WebM)'
             : nodeType === 'audio'
@@ -121,7 +121,7 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
       let optimizedBuffer;
       let blob;
 
-      if (nodeType === 'imagen') {
+      if (nodeType === 'image') {
         optimizedBuffer = new Uint8Array(optimizedFile.buffer);
         blob = new Blob([optimizedBuffer], { type: optimizedFile.type });
       } else {
@@ -129,7 +129,6 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
         blob = new Blob([optimizedBuffer], { type: optimizedFile.type });
       }
 
-      debugger;
       // 2. Crear FormData
       const formData = new FormData();
       formData.append('file', blob);
@@ -184,8 +183,8 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) {
       if (!validateFileType(droppedFile, nodeType)) {
-        toast.error(`Tipo de archivo no válido. Se esperaba: ${nodeType === 'imagen'
-          ? 'imagen'
+        toast.error(`Tipo de archivo no válido. Se esperaba: ${nodeType === 'image'
+          ? 'image'
           : nodeType === 'video'
             ? 'video'
             : nodeType === 'audio'
@@ -198,7 +197,7 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
   };
 
   const renderContent = () => {
-    if (nodeType === 'texto') {
+    if (nodeType === 'text') {
       return isEditing ? (
         <textarea
           value={message}
@@ -220,11 +219,11 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
       );
     }
 
-    // Para tipos de archivo (imagen, video, audio, documento)
+    // Para tipos de archivo (image, video, audio, documento)
     if (hasContent) {
       return (
         <div className="w-full border border-border rounded-md p-3 bg-muted">
-          {nodeType === 'imagen' && (
+          {nodeType === 'image' && (
             <img src={nodes.url!} alt="Contenido del nodo" className="rounded-md w-full h-auto max-h-64 object-contain" />
           )}
           {nodeType === 'video' && (
@@ -233,7 +232,7 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
           {nodeType === 'audio' && (
             <audio src={nodes.url!} controls className="w-full" />
           )}
-          {nodeType === 'archivo/documento' && (
+          {nodeType === 'document' && (
             <div className="flex items-center gap-2 p-2 bg-background rounded">
               <a
                 href={nodes.url!}
@@ -272,7 +271,7 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
             id="file-input"
             type="file"
             className="hidden"
-            accept={nodeType === 'imagen'
+            accept={nodeType === 'image'
               ? 'image/*'
               : nodeType === 'video'
                 ? 'video/*'

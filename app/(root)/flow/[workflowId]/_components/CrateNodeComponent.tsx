@@ -44,14 +44,22 @@ export const CreateNodeComponent = ({ workflow }: { workflow: Workflow }) => {
         (actionLabel: string) => {
             const defaultMessage = "msg";
 
-            form.setValue("tipo", actionLabel);
+            // Encontrar el action seleccionado
+            const actionSelected = actions.find(action => action.label === actionLabel);
+
+            if (!actionSelected) {
+                toast.error("Acción no encontrada", { id: "create-node" });
+                return;
+            }
+
+            form.setValue("tipo", actionSelected.type);
             form.setValue("message", defaultMessage);
 
             toast.loading("Creando acción...", { id: "create-node" });
 
             mutate({
                 workflowId: workflow.id,
-                tipo: actionLabel,
+                tipo: actionSelected.type,
                 message: defaultMessage,
             });
         },

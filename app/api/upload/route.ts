@@ -13,9 +13,9 @@ export async function POST(req: Request) {
   try {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-
+    const nameFormatted = file.name;
     const bucketName = process.env.S3_BUCKET_NAME || 'uploads';
-    const fileName = `${randomUUID()}-${file.name}`;
+    const fileName = `${randomUUID()}-${nameFormatted}`;
 
     await minioClient.putObject(
       bucketName,
