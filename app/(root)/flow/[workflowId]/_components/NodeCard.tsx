@@ -105,7 +105,7 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
     }
 
     setIsUploading(true);
-    const toastLoading = toast.loading('Comprimiendo archivo...');
+    const toastLoading = toast.loading('Subiendo archivo...');
 
     try {
       // 1. Optimizar el archivo (manejo correcto del tipo)
@@ -311,7 +311,7 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
           <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />
         )}
         <span className="text-xs font-medium text-muted-foreground capitalize">
-          {nodes.tipo || "Tipo desconocido"}
+          {currentAction?.label || "Tipo desconocido"}
         </span>
       </div>
 
