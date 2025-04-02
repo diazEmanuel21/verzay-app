@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { updateNode, deleteNode, updateUrlNode } from "@/actions/createNode";
 import { toast } from "sonner";
-import { actions, validateFileType } from "../helpers";
+import { actions, optimizeFile, validateFileType } from "../helpers";
 
 interface Props {
   workflowId: string;
@@ -105,32 +105,58 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
     }
 
     setIsUploading(true);
-    const toastLoading = toast.loading('Subiendo archivo...');
+    const toastLoading = toast.loading('Comprimiendo archivo...');
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      // 1. Optimizar el archivo (manejo correcto del tipo)
+      const content = await file.arrayBuffer();
+      const plainFile = {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        content: Array.from(new Uint8Array(content)) // lo convertimos en array serializable
+      };
 
+      const optimizedFile = await optimizeFile(plainFile);
+      let optimizedBuffer;
+      let blob;
+
+      if (nodeType === 'imagen') {
+        optimizedBuffer = new Uint8Array(optimizedFile.buffer);
+        blob = new Blob([optimizedBuffer], { type: optimizedFile.type });
+      } else {
+        optimizedBuffer = new Uint8Array(optimizedFile.content); // 👈 Cambio clave aquí
+        blob = new Blob([optimizedBuffer], { type: optimizedFile.type });
+      }
+
+      debugger;
+      // 2. Crear FormData
+      const formData = new FormData();
+      formData.append('file', blob);
+      formData.append('nodeId', nodes.id);
+
+      // 3. Subir a la API
       const res = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
 
-      const data = await res.json();
+      if (!res.ok) throw new Error(await res.text());
 
-      if (res.ok) {
-        const result = await updateUrlNode(nodes.id, data.url);
-        if (result.success) {
-          toast.success(result.message, { id: toastLoading });
-          router.refresh();
-        } else {
-          toast.error(result.message, { id: toastLoading });
-        }
-      } else {
-        toast.error(data.error || 'Error al subir el archivo', { id: toastLoading });
-      }
+      const { url } = await res.json();
+
+      // 4. Actualizar nodo
+      const result = await updateUrlNode(nodes.id, url);
+      if (!result.success) throw new Error(result.message);
+
+      toast.success(result.message, { id: toastLoading });
+      router.refresh();
+
     } catch (error) {
-      toast.error(`Error al subir el archivo: ${error}`, { id: toastLoading });
+      toast.error(
+        error instanceof Error ? error.message : 'Error al subir el archivo',
+        { id: toastLoading }
+      );
     } finally {
       setIsUploading(false);
     }

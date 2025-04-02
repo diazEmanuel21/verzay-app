@@ -36,29 +36,24 @@ export async function deleteConversationN8N(
       };
     }
 
-    // 3. Buscar conversación
+    // 3. Eliminar TODAS las conversaciones con ese session_id
     const sessionIdentifier = `${instance.instanceName}-${remoteJid}`;
-    console.log(`ID DEL BENDITO COSO ESE EHG====>${sessionIdentifier}`)
-    const conversation = await db.n8n_chat_histories.findFirst({
-      where: { session_id: sessionIdentifier },
-      select: { id: true }
+    console.log(`ID de sesión a eliminar: ${sessionIdentifier}`);
+    
+    const deleteResult = await db.n8n_chat_histories.deleteMany({
+      where: { session_id: sessionIdentifier }
     });
 
-    if (!conversation) {
+    if (deleteResult.count === 0) {
       return {
         success: false,
         message: 'No se encontró historial de conversación para este cliente'
       };
     }
 
-    // 4. Eliminar conversación
-    await db.n8n_chat_histories.delete({
-      where: { id: conversation.id }
-    });
-
     return {
       success: true,
-      message: 'Historial de conversación eliminado exitosamente',
+      message: `Se eliminaron ${deleteResult.count} registros de historial de conversación exitosamente`,
       data: null
     };
 
