@@ -216,13 +216,17 @@ export async function createInstance(data: FormData) {
       return { success: false, message: "El usuario ya tiene una instancia activa.", instancia: instanciaActiva };
     }
 
-    // Obtener la clave de API y la URL del servidor desde la base de datos
-    const apiKeyRecord = await db.apiKey.findFirst();
-    if (!apiKeyRecord) {
-      throw new Error('No se encontró una clave API para este usuario.');
+     // 🔥 Buscar el usuario y su ApiKey asignada
+     const user = await db.user.findUnique({
+      where: { id: userId },
+      include: { apiKey: true },
+    });
+
+    if (!user || !user.apiKey) {
+      throw new Error("El usuario no tiene una ApiKey asignada.");
     }
 
-    const { key: apiKey, url: serverUrl } = apiKeyRecord;
+    const { key: apiKey, url: serverUrl } = user.apiKey;
 
     // Configurar las opciones para la llamada a la API externa
     const options = {
