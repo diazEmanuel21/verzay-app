@@ -24,8 +24,10 @@ model User {
   mapsUrl            String          @default("https://maps.google.com/?q=0,0")
   notificationNumber String          @default("0000000000")
   openingPhrase      String?         @default("DEPRECATED")
+  apiKeyId           String?
+
   accounts           Account[]
-  apikeys            ApiKey[]
+  apiKey             ApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
   instancias         Instancias[]
   pausar             Pausar[]
   sessions           Session[]
@@ -62,10 +64,10 @@ model ApiKey {
   id        String   @id @default(cuid())
   url       String
   key       String
-  userId    String
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Users     User[]
 }
 
 model Account {
