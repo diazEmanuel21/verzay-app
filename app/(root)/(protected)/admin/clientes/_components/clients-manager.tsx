@@ -135,7 +135,7 @@ export const ClientsManager = ({ users }: Props) => {
                     variant="default"
                     className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all"
                 >
-                    Create
+                    Crear
                     <PlusCircle />
                 </Button>
             </div>
