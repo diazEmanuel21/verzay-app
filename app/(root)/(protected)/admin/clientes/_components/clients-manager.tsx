@@ -44,6 +44,7 @@ export const ClientsManager = ({ users }: Props) => {
             apiUrl: 'https://api.openAI.co',
             company: 'Nombre empresa',
             notificationNumber: '0000000000',
+            apiKeyId: null,
             lat: '0.0000',
             lng: '0.0000',
             mapsUrl: 'https://maps.google.com/?q=0,0',
