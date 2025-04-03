@@ -6,7 +6,6 @@ import { Pausar } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 
-
 interface ClientResponse<T = undefined> {
   success: boolean;
   message: string;

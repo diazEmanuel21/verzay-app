@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { agregarApi, eliminarApiKey } from "@/actions/api-action";
+import { agregarApi, editarApiKey, eliminarApiKey } from "@/actions/api-action";
 import ApiKeysTable from "@/components/shared/apikeystable";
 import { DialogApiKeyType } from "../connection-types";
 import { ApiKey, User } from "@prisma/client";
@@ -29,28 +29,54 @@ export const MainConnection = ({ searchParams, user, apiKeys }: Props) => {
     const currentApiKey = apiKeys.filter(ak => ak.id === apiKeyId)[0];
 
     const handleEdit = async (id: string, formData: FormData) => {
-        // const response = await editarApiKey(id, formData);
+        const toastId = 'edit-apikey';
+        toast.loading('Editando API Key...', { id: toastId });
+
+        formData.append('id', id);
+        const result = await editarApiKey(formData);
+
+        if (result.success) {
+            toast.success(result.message, { id: toastId });
+            router.refresh();
+        } else {
+            toast.error(result.message || 'Error al editar API Key', { id: toastId });
+        }
+
+        setOpenEditDialog(false);
     };
 
     const handleCreate = async (formData: FormData) => {
-        const toastId = 'create-client';
-        toast.loading('Creando cliente...', { id: toastId });
+        const toastId = 'create-apikey';
+        toast.loading('Creando API Key...', { id: toastId });
 
         const result = await agregarApi(formData);
 
-        // if (result.success) {
-        //     toast.success('Cliente creado', { id: toastId });
-        //     router.refresh();
-        // } else {
-        //     toast.error(result.message || 'Error al crear cliente', { id: toastId });
-        // }
+        if (result.success) {
+            toast.success(result.message, { id: toastId });
+            router.refresh();
+        } else {
+            toast.error(result.message || 'Error al crear API Key', { id: toastId });
+        }
 
         setOpenCreateDialog(false);
     };
 
 
     const handleDelete = async (id: string) => {
-        const response = await eliminarApiKey(id);
+
+        const toastId = 'delete-apikey';
+        toast.loading('Elimando API Key...', { id: toastId });
+
+        const result = await eliminarApiKey(id);
+
+        if (result.success) {
+            toast.success(result.message, { id: toastId });
+            router.refresh();
+        } else {
+            toast.error(result.message || 'Error al eliminar API Key', { id: toastId });
+        }
+
+        setOpenCreateDialog(false);
     };
 
     const handleDialogAction = (apiKeyId: string, dialogType: DialogApiKeyType) => {
@@ -59,6 +85,7 @@ export const MainConnection = ({ searchParams, user, apiKeys }: Props) => {
         if (dialogType === 'create') return setOpenCreateDialog(true);
         if (dialogType === 'edit') return setOpenEditDialog(true);
         if (dialogType === 'delete') return setOpenDeleteDialog(true);
+
     };
 
     const columns = getColumns(handleDialogAction);

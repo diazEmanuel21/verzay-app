@@ -1,9 +1,13 @@
 "use server"
 
 import { db } from "@/lib/db";
+import { ApiKey } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-
+interface ClientResponse<T = undefined> {
+  success: boolean
+  message: string
+  data?: T
+}
 interface WhatsAppConnectionStatus {
   qr?: {
     code: string; // Código QR en formato base64
@@ -89,54 +93,79 @@ export async function generarCodigoQR(instanceName: string, apiKey: string): Pro
   }
 }
 
-export async function agregarApi(data: FormData): Promise<void> {
-  const url = data.get('url') as string;
-  const key = data.get('key') as string;
-  const userId = data.get('userId') as string;
+export async function agregarApi(data: FormData): Promise<ClientResponse<ApiKey>> {
+  const url = data.get('url') as string
+  const key = data.get('key') as string
+
+  if (!url || !key) {
+    return {
+      success: false,
+      message: 'Todos los campos son obligatorios',
+    }
+  }
 
   try {
-    if (!url || !key || !userId) {
-      throw new Error('Todos los campos son obligatorios');
+    const createdApiKey = await db.apiKey.create({
+      data: { url, key }
+    })
+
+    return {
+      success: true,
+      message: 'API Key agregada exitosamente',
+      data: createdApiKey,
     }
 
-    await db.apiKey.create({
-      data: {
-        url,
-        key,
-        userId,
-      },
-    });
-
-    revalidatePath('/admin/conexion');
-
-    // ✅ Redirige y envía un query param para mostrar mensaje en la UI
-    redirect("/admin/conexion?success=API%20Key%20agregada%20exitosamente");
   } catch (error: any) {
-    console.error(error);
+    console.error(error)
 
-    // ❌ Redirige a la misma página, con error en los query params
-    redirect(`/admin/conexion?error=${encodeURIComponent(error.message || "Error al agregar la API Key")}`);
+    return {
+      success: false,
+      message: error.message || 'Error al agregar la API Key',
+    }
   }
 }
 
-export async function editarApiKey(id: string, data: { url: string; key: string; userId: string; }) {
+export async function editarApiKey(data: FormData): Promise<ClientResponse<ApiKey>> {
+  const id = data.get('id') as string
+  const url = data.get('url') as string
+  const key = data.get('key') as string
+
+  if (!url || !key || !id) {
+    return {
+      success: false,
+      message: 'Todos los campos son obligatorios',
+    }
+  }
+
   try {
     // Actualizar la API Key en la base de datos
     await db.apiKey.update({
       where: { id },
-      data,
+      data: { url, key }
     });
 
-    // Revalidar la página si es necesario
-    revalidatePath('/agregar-api');
+    return {
+      success: true,
+      message: "API Key actualizada exitosamente."
+    };
 
-    return { success: true, message: "API Key actualizada exitosamente." };
   } catch (error: any) {
-    return { success: false, message: error.message || "Error al actualizar la API Key." };
+    return {
+      success: false,
+      message: error.message
+        || "Error al actualizar la API Key."
+    };
   }
 }
 
 export async function eliminarApiKey(id: string) {
+  if (!id) {
+    return {
+      success: false,
+      message: 'No se encontró el id',
+    }
+  }
+
   try {
     // Eliminar la API Key de la base de datos
     await db.apiKey.delete({
@@ -146,9 +175,15 @@ export async function eliminarApiKey(id: string) {
     // Revalidar la página si es necesario
     revalidatePath('/agregar-api');
 
-    return { success: true, message: "API Key eliminada exitosamente." };
+    return {
+      success: true,
+      message: "API Key eliminada exitosamente."
+    };
   } catch (error: any) {
-    return { success: false, message: error.message || "Error al eliminar la API Key." };
+    return {
+      success: false,
+      message: error.message || "Error al eliminar la API Key."
+    };
   }
 }
 

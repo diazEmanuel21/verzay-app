@@ -60,17 +60,6 @@ export const getColumns = (
                         <span className="font-mono px-2 py-1 rounded">
                             {key.substring(0, 8)}...
                         </span>
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => {
-                                navigator.clipboard.writeText(key);
-                                toast.success("API Key copiada al portapapeles");
-                            }}
-                            className="ml-2"
-                        >
-                            Copiar
-                        </Button>
                     </div>
                 )
             },
