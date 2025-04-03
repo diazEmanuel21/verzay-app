@@ -156,12 +156,13 @@ export const ClientsManager = ({ users, apikeys }: Props) => {
                 />
             )}
             {/* Dialog delete */}
-            {user && (
+            {user && apikeys && (
                 <EditDialog
                     openEditDialog={openEditDialog}
                     setOpenEditDialog={setOpenEditDialog}
                     handleEdit={handleEdit}
                     user={user}
+                    apikeys={apikeys}
                 />
             )}
             {/* Dialog delete */}
