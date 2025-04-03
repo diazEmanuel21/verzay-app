@@ -16,14 +16,16 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { CreateDialog, DeleteDialog, ToolsDialog, EditDialog } from './';
+import { ApiKey } from '@prisma/client';
 
 export type DialogType = 'editar' | 'tools' | 'delete'
 
 interface Props {
     users: UserWithPausar[],
+    apikeys: ApiKey[],
 };
 
-export const ClientsManager = ({ users }: Props) => {
+export const ClientsManager = ({ users, apikeys }: Props) => {
     const router = useRouter();
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [openCreateDialog, setOpenCreateDialog] = useState(false);
@@ -44,7 +46,7 @@ export const ClientsManager = ({ users }: Props) => {
             apiUrl: 'https://api.openAI.co',
             company: 'Nombre empresa',
             notificationNumber: '0000000000',
-            apiKeyId: null,
+            apiKeyId: formData.get('apiKeyId') as string,
             lat: '0.0000',
             lng: '0.0000',
             mapsUrl: 'https://maps.google.com/?q=0,0',
@@ -145,11 +147,14 @@ export const ClientsManager = ({ users }: Props) => {
             <DataTable columns={columns} data={users} />
 
             {/* Dialog create */}
-            <CreateDialog
-                handleCreate={handleCreate}
-                setOpenCreateDialog={setOpenCreateDialog}
-                openCreateDialog={openCreateDialog}
-            />
+            {apikeys && (
+                <CreateDialog
+                    handleCreate={handleCreate}
+                    setOpenCreateDialog={setOpenCreateDialog}
+                    openCreateDialog={openCreateDialog}
+                    apikeys={apikeys}
+                />
+            )}
             {/* Dialog delete */}
             {user && (
                 <EditDialog

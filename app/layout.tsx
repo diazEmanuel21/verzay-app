@@ -48,9 +48,9 @@ export default async function RootLayout({
                       {children}
 
                     </main>
-                    <footer className="pt-6 hidden md:flex items-center justify-center border-t text-xs text-muted-foreground">
+                    {/* <footer className="pt-2 hidden md:flex items-center justify-center border-t text-xs text-muted-foreground">
                       © 2025 Verzay. Todos los derechos reservados.
-                    </footer>
+                    </footer> */}
                   </div>
                 </SidebarProvider>
               </div>

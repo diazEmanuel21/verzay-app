@@ -5,25 +5,38 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { ApiKey } from '@prisma/client'
 
 interface Props {
   openCreateDialog: boolean
   setOpenCreateDialog: (open: boolean) => void
   handleCreate: (formData: FormData) => void
+  apikeys: ApiKey[]
 }
 
 export const CreateDialog = ({
   openCreateDialog,
   setOpenCreateDialog,
   handleCreate,
+  apikeys
 }: Props) => {
   const [name, setName] = useState('Carlos Arcos')
   const [email, setEmail] = useState('instancia-000@verzay.com')
   const [password, setPassword] = useState('Verzay.123456')
+  const [selectedApiKey, setSelectedApiKey] = useState<string | undefined>()
 
   return (
     <Dialog open={openCreateDialog} onOpenChange={setOpenCreateDialog}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Crear cliente</DialogTitle>
           <DialogDescription>
@@ -35,6 +48,7 @@ export const CreateDialog = ({
             handleCreate(formData)
           }}
         >
+          <input type="hidden" name="apiKeyId" value={selectedApiKey} />
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">Nombre</Label>
@@ -43,6 +57,24 @@ export const CreateDialog = ({
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right">Email</Label>
               <Input name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="evo" className="text-right">Evo URL</Label>
+              <Select value={selectedApiKey} onValueChange={setSelectedApiKey} required>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Selecciona una API Key" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>API Keys disponibles</SelectLabel>
+                    {
+                      apikeys.map(({ id, url }) => (
+                        <SelectItem key={id} value={id} className='cursor-pointer'>{url}</SelectItem>
+                      ))
+                    }
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="password" className="text-right">Contraseña</Label>
