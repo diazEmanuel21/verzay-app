@@ -36,19 +36,19 @@ interface QRCodeResponse {
 }
 
 //Server-Action Para generar el QR
-export async function generarCodigoQR(instanceName: string, apiKey: string): Promise<QRCodeResponse> {
+export async function generarCodigoQR(instanceName: string, apiKey: string, userId: string): Promise<QRCodeResponse> {
   try {
-    // Obtener la clave de API y la URL del servidor desde la base de datos
-    const apiKeyRecord = await db.apiKey.findFirst();
-    if (!apiKeyRecord) {
-      throw new Error('No se encontró una clave API para este usuario.');
-    }
-    const { key: apiKey, url: serverUrl } = apiKeyRecord;
+    // 🔥 Buscar el usuario y su ApiKey asignada
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      include: { apiKey: true },
+    });
 
-    // Validación de campos
-    if (!instanceName || !apiKey) {
-      throw new Error('Todos los campos son obligatorios');
+    if (!user || !user.apiKey) {
+      throw new Error("El usuario no tiene una ApiKey asignada.");
     }
+
+    const { key: apiKey, url: serverUrl } = user.apiKey;
 
     // Lógica para obtener el código QR desde tu API
     const response = await fetch(`https://${serverUrl}/instance/connect/${instanceName}`, {
@@ -285,13 +285,17 @@ export async function eliminarInstancia(userId: string) {
 
     const instanceName = instanciaActiva.instanceName;
 
-    // Obtener la clave de API y la URL del servidor desde la base de datos
-    const apiKeyRecord = await db.apiKey.findFirst();
-    if (!apiKeyRecord) {
-      throw new Error('No se encontró una clave API para este usuario.');
+    // 🔥 Buscar el usuario y su ApiKey asignada
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      include: { apiKey: true },
+    });
+
+    if (!user || !user.apiKey) {
+      throw new Error("El usuario no tiene una ApiKey asignada.");
     }
 
-    const { key: apiKey, url: serverUrl } = apiKeyRecord;
+    const { key: apiKey, url: serverUrl } = user.apiKey;
 
     // 1. Logout de la instancia
     const logoutOptions = {

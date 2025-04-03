@@ -29,7 +29,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
 
     const fetchQRCode = async (instanceName: string, apiKey: string) => {
         setLoading(true);
-        const response = await generarCodigoQR(instanceName, apiKey);
+        const response = await generarCodigoQR(instanceName, apiKey, userId);
 
         if (response.success) {
             setQrCode(response.qr?.code || null);
