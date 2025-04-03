@@ -20,9 +20,14 @@ interface Props {
 
 export const MainConnection = ({ searchParams, user, apiKeys }: Props) => {
     const router = useRouter();
-    const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+    const [apiKeyId, setApiKeyId] = useState<string>();
+    /* Dialog actions */
     const [openCreateDialog, setOpenCreateDialog] = useState(false);
     const [openEditDialog, setOpenEditDialog] = useState(false);
+    const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+
+    const currentApiKey = apiKeys.filter(ak => ak.id === apiKeyId)[0];
+
     const handleEdit = async (id: string, formData: FormData) => {
         // const response = await editarApiKey(id, formData);
     };
@@ -49,6 +54,11 @@ export const MainConnection = ({ searchParams, user, apiKeys }: Props) => {
     };
 
     const handleDialogAction = (apiKeyId: string, dialogType: DialogApiKeyType) => {
+        setApiKeyId(apiKeyId);
+
+        if (dialogType === 'create') return setOpenCreateDialog(true);
+        if (dialogType === 'edit') return setOpenEditDialog(true);
+        if (dialogType === 'delete') return setOpenDeleteDialog(true);
     };
 
     const columns = getColumns(handleDialogAction);
@@ -76,25 +86,25 @@ export const MainConnection = ({ searchParams, user, apiKeys }: Props) => {
                 openCreateDialog={openCreateDialog}
             />
             {/* Dialog delete */}
-            {user && (
+            {currentApiKey && (
                 <EditDialog
                     handleEdit={handleEdit}
                     setOpenEditDialog={setOpenEditDialog}
                     openEditDialog={openEditDialog}
-                    user={user}
+                    apikey={currentApiKey}
                 />
             )}
             {/* Dialog delete */}
-            {user && (
+            {currentApiKey && (
                 <DeleteDialog
                     handleDelete={handleDelete}
                     setOpenDeleteDialog={setOpenDeleteDialog}
                     openDeleteDialog={openDeleteDialog}
-                    user={user}
+                    apikey={currentApiKey}
                 />
             )}
 
-{/* 
+            {/* 
             <div className="container">
                 <form action={agregarApi} className="flex flex-col gap-y-4">
                     <div className="mb-4">

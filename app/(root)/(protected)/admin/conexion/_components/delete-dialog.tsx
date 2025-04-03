@@ -2,17 +2,17 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { User } from '@prisma/client'
+import { ApiKey } from '@prisma/client'
 
 interface Props {
-  user: User,
+  apikey: ApiKey,
   openDeleteDialog: boolean
   setOpenDeleteDialog: (open: boolean) => void
-  handleDelete: (userId: string) => void
+  handleDelete: (apikey: string) => void
 }
 
 export const DeleteDialog = ({
-  user,
+  apikey,
   openDeleteDialog,
   setOpenDeleteDialog,
   handleDelete,
@@ -22,10 +22,10 @@ export const DeleteDialog = ({
     <Dialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>¿Eliminar cliente?</DialogTitle>
+          <DialogTitle>¿Eliminar APIKEY?</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <p>¿Estás seguro de eliminar a <strong>{user?.name || ''}</strong>?</p>
+          <p>¿Estás seguro? se perderá para siempre.</p>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setOpenDeleteDialog(false)}>
               Cancelar
@@ -33,7 +33,7 @@ export const DeleteDialog = ({
             <Button
               variant="destructive"
               onClick={() => {
-                handleDelete(user?.id || '');
+                handleDelete(apikey.id);
                 setOpenDeleteDialog(false)
               }}
             >
