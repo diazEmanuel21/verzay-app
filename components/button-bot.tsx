@@ -20,11 +20,15 @@ import { toast } from "sonner";
 interface EnableToggleButtonProps {
   userId: string;
   userName?: string | null;
+  apiurl: string;
+  apikey: string;
 }
 
 const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
   userId,
   userName,
+  apiurl,
+  apikey
 }) => {
   const [isEnabled, setIsEnabled] = useState<boolean | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -36,7 +40,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const baseUrl = "https://conexion-1.verzay.co";
+  const baseUrl = "https://"+apiurl;
 
   const loadInstanceData = async () => {
     try {
