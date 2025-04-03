@@ -23,9 +23,10 @@ export type DialogType = 'editar' | 'tools' | 'delete'
 interface Props {
     users: UserWithPausar[],
     apikeys: ApiKey[],
+    availableApikeys: ApiKey[],
 };
 
-export const ClientsManager = ({ users, apikeys }: Props) => {
+export const ClientsManager = ({ users, apikeys, availableApikeys }: Props) => {
     const router = useRouter();
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [openCreateDialog, setOpenCreateDialog] = useState(false);
@@ -147,12 +148,12 @@ export const ClientsManager = ({ users, apikeys }: Props) => {
             <DataTable columns={columns} data={users} />
 
             {/* Dialog create */}
-            {apikeys && (
+            {availableApikeys && (
                 <CreateDialog
                     handleCreate={handleCreate}
                     setOpenCreateDialog={setOpenCreateDialog}
                     openCreateDialog={openCreateDialog}
-                    apikeys={apikeys}
+                    apikeys={availableApikeys}
                 />
             )}
             {/* Dialog delete */}
