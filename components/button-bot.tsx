@@ -36,19 +36,18 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
   const [instanceData, setInstanceData] = useState<{
     instanceName: string;
     instanceId: string;
+    serverUrl: string;
   } | null>(null);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const baseUrl = "https://"+apiurl;
 
   const loadInstanceData = async () => {
     try {
       const instances = await getInstances(userId);
       if (instances && instances.length > 0) {
-        const { instanceName, instanceId } = instances[0];
-        setInstanceData({ instanceName, instanceId });
-        await fetchWebhookStatus(instanceName, instanceId);
+        const { instanceName, instanceId, serverUrl } = instances[0];
+        setInstanceData({ instanceName, instanceId, serverUrl });
+        await fetchWebhookStatus(instanceName, instanceId, serverUrl);
       } else {
         setError("No se encontraron instancias para este usuario.");
       }
@@ -62,13 +61,16 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
     }
   };
 
+  const baseUrl = "https://"+instanceData?.serverUrl;
+
   const fetchWebhookStatus = async (
     instanceName: string,
-    instanceId: string
+    instanceId: string,
+    serverUrl: string
   ) => {
     try {
       const response = await fetch(
-        `${baseUrl}/webhook/find/${instanceName}`,
+        `https://${serverUrl}/webhook/find/${instanceName}`,
         {
           method: "GET",
           headers: { apikey: instanceId },
@@ -104,7 +106,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
 
     try {
       const response = await fetch(
-        `${baseUrl}/webhook/set/${instanceData.instanceName}`,
+        `https://${instanceData.serverUrl}/webhook/set/${instanceData.instanceName}`,
         {
           method: "POST",
           headers: {
