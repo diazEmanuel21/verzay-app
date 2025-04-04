@@ -3,7 +3,6 @@
 import React, { useState, useTransition } from "react";
 import { useRouter } from 'next/navigation';
 import { User, WorkflowNode } from "@prisma/client";
-import { CreateNodeComponent } from "./";
 import { updateNode, deleteNode, updateUrlNode } from "@/actions/createNode";
 import { baseActions, optimizeFile, seguimientoActions, validateFileType } from "../helpers";
 import { Action } from "../types";
@@ -24,6 +23,7 @@ import {
   MessageSquareIcon,
   UploadIcon,
 } from "lucide-react";
+import { TimeInput } from "@/components/shared/TimeInput";
 interface Props {
   workflowId: string;
   nodes: WorkflowNode;
@@ -213,6 +213,10 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     }
   };
 
+  const handleTimeChange = (seconds: number) => {
+    console.log("Tiempo total en segundos:", seconds)
+  };
+
   const renderContent = () => {
     if (baseType === 'text') {
       return isEditing ? (
@@ -223,28 +227,38 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
           rows={3}
           autoFocus
           disabled={isPending}
-          className="w-full p-2 border border-border rounded-md resize-none text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          className="w-full p-3 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary
+                    sm:text-base
+                    md:rounded-xl
+                    lg:p-4
+                    resize-y min-h-[120px]"
         />
       ) : (
         <div
-          className="flex items-start gap-2 text-base cursor-pointer hover:underline whitespace-pre-wrap border border-muted-foreground/20 rounded-md p-3 bg-muted transition"
+          className="w-full flex items-start gap-3 p-3 text-sm cursor-pointer hover:bg-muted/50
+                    border border-muted-foreground/20 rounded-lg bg-muted transition-all
+                    sm:text-base
+                    md:p-4 md:rounded-xl
+                    lg:gap-4"
           onClick={() => setIsEditing(true)}
         >
-          <MessageSquareIcon className="w-5 h-5 text-muted-foreground" />
-          <span className="text-muted-foreground">{message}</span>
+          <MessageSquareIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+          <span className="text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">
+            {message || <span className="italic text-muted-foreground/50">Click para editar...</span>}
+          </span>
         </div>
       );
-    };
+    }
 
     // Para tipos de archivo (image, video, audio, documento)
     if (hasContent) {
       return (
         <div className="w-full border border-border rounded-md p-3 bg-muted">
           {baseType === 'image' && (
-            <img src={nodes.url!} alt="Contenido del nodo" className="rounded-md w-full h-auto max-h-64 object-contain" />
+            <img src={nodes.url!} alt="Contenido del nodo" className="rounded-md w-full h-auto max-h-20 object-contain" />
           )}
           {baseType === 'video' && (
-            <video src={nodes.url!} controls className="rounded-md w-full h-auto max-h-64" />
+            <video src={nodes.url!} controls className="rounded-md w-full h-auto max-h-20" />
           )}
           {baseType === 'audio' && (
             <audio src={nodes.url!} controls className="w-full" />
@@ -322,25 +336,27 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   };
 
   return (
-    <div className="relative w-full max-w-md mx-auto">
-      {/* Badge tipo de mensaje */}
-      <div className="absolute -top-4 left-4 flex items-center space-x-2 bg-background border border-border rounded-md px-3 py-1 shadow-md">
-        {currentAction?.icon || (
-          <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />
-        )}
-        <span className="text-xs font-medium text-muted-foreground capitalize">
-          {`${isSeguimiento ? labelSegumientoCategory : currentAction?.label}` || "Tipo desconocido"}
-        </span>
-      </div>
-
+    <div className="flex items-center justify-center">
       {/* Card principal */}
-      <Card className="shadow-md border border-border rounded-lg">
+      <Card className="relative shadow-md border border-border rounded-lg min-w-[300px] max-w-[300px]">
+        {/* Badge tipo de mensaje */}
+        <div className="absolute -top-4 left-4 flex items-center space-x-2 bg-background border border-border rounded-md px-3 py-1 shadow-md">
+          {currentAction?.icon || (
+            <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />
+          )}
+          <span className="text-xs font-medium text-muted-foreground capitalize">
+            {`${isSeguimiento ? labelSegumientoCategory : currentAction?.label}` || "Tipo desconocido"}
+          </span>
+        </div>
         <CardHeader>
-          <CardTitle className="flex items-start justify-between gap-4 text-left text-lg">
+          <CardTitle className="flex items-start justify-between text-left text-lg">
             {renderContent()}
           </CardTitle>
         </CardHeader>
 
+        <div className="px-6 pb-4">
+          <TimeInput className="text-xs text-muted-foreground" onChange={handleTimeChange} />
+        </div>
         <Separator />
 
         <CardFooter className="flex justify-between items-center text-xs text-muted-foreground px-4 py-3">
@@ -351,7 +367,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button size="icon" variant="ghost" disabled={isDeleting}>
-                  <TrashIcon className="h-4 w-4" />
+                  <TrashIcon className="h-4 w-4" color="#721b1c" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
