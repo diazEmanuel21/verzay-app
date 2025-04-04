@@ -3,6 +3,10 @@
 import React, { useState, useTransition } from "react";
 import { useRouter } from 'next/navigation';
 import { User, WorkflowNode } from "@prisma/client";
+import { CreateNodeComponent } from "./";
+import { updateNode, deleteNode, updateUrlNode } from "@/actions/createNode";
+import { actions, optimizeFile, validateFileType } from "../helpers";
+import { Action } from "../types";
 import {
   Card,
   CardHeader,
@@ -13,15 +17,13 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
+
+import { toast } from "sonner";
 import {
   TrashIcon,
   MessageSquareIcon,
   UploadIcon,
 } from "lucide-react";
-import { updateNode, deleteNode, updateUrlNode } from "@/actions/createNode";
-import { toast } from "sonner";
-import { actions, optimizeFile, validateFileType } from "../helpers";
-
 interface Props {
   workflowId: string;
   nodes: WorkflowNode;
@@ -44,7 +46,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     year: 'numeric'
   }).format(new Date(nodes.createdAt));
 
-  const nodeType = nodes.tipo?.toLowerCase() || '';
+  const nodeType = nodes.tipo?.toLowerCase() as Action['type'];
   const hasContent = nodeType === 'text' ? !!message : !!nodes.url;
   const currentAction = actions.find(
     (action) => action.type.toLowerCase() === nodeType
@@ -202,6 +204,12 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   };
 
   const renderContent = () => {
+    if (nodeType === "delaymsg") return (
+      <div className="flex items-center flex-col w-full">
+        <CreateNodeComponent workflowId={workflowId} />
+      </div>
+    );
+
     if (nodeType === 'text') {
       return isEditing ? (
         <textarea
@@ -249,6 +257,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
               </a>
             </div>
           )}
+
         </div>
       );
     }
