@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition } from "react";
 import { useRouter } from 'next/navigation';
-import { WorkflowNode } from "@prisma/client";
+import { User, WorkflowNode } from "@prisma/client";
 import {
   Card,
   CardHeader,
@@ -25,9 +25,10 @@ import { actions, optimizeFile, validateFileType } from "../helpers";
 interface Props {
   workflowId: string;
   nodes: WorkflowNode;
+  user: User;
 }
 
-export const NodeCard = ({ nodes, workflowId }: Props) => {
+export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState(nodes.message);
@@ -135,6 +136,8 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
       const formData = new FormData();
       formData.append('file', (nodeTypeIsImage ? blob : file) as Blob); // usamos el blob optimizado para imagen
       formData.append('file', file);
+      formData.append('userID', user.id);
+      formData.append('workflowID', workflowId);
 
       // 3. Subir a la API
       const res = await fetch('/api/upload', {

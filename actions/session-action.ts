@@ -10,6 +10,7 @@ interface SessionResponse<T = Session[]> {
 };
 
 export async function getSessionsByUserId(userId: string): Promise<SessionResponse> {
+    debugger;
 
     try {
         if (!userId) return {

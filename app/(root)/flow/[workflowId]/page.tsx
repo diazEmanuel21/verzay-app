@@ -37,8 +37,7 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
       {nodes.length > 0 ? (
         <div className='flex flex-col h-full w-full gap-5 px-4 text-center pt-6' >
           {nodes.map((nodes) => (
-            <NodeCard key={nodes.id} nodes={nodes} workflowId={workflow.id} />
-            // <NodeCard key={nodes.id}/>
+            <NodeCard key={nodes.id} nodes={nodes} workflowId={workflow.id} user={user}/>
           ))}
         </div>
 

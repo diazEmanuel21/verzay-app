@@ -148,7 +148,6 @@ export const getColumns = (openDeleteDialog: (sessionId: number, remoteJid: stri
             const sessionId = row.getValue("id") as number;
             const userId = row.getValue("userId") as string;
             const remoteJid = row.getValue("remoteJid") as string;
-            const phone = remoteJid.split('@')[0];
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
