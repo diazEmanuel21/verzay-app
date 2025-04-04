@@ -106,33 +106,35 @@ export const NodeCard = ({ nodes, workflowId }: Props) => {
 
     setIsUploading(true);
     const toastLoading = toast.loading('Subiendo archivo...');
+    const nodeTypeIsImage = nodeType === 'image';
+    let blob;
 
     try {
-      // 1. Optimizar el archivo (manejo correcto del tipo)
-      const content = await file.arrayBuffer();
-      const plainFile = {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        content: Array.from(new Uint8Array(content)) // lo convertimos en array serializable
-      };
+      if (nodeTypeIsImage) {
+        // 1. Optimizar el archivo (manejo correcto del tipo)
+        const content = await file.arrayBuffer();
+        const plainFile = {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          content: Array.from(new Uint8Array(content)) // lo convertimos en array serializable
+        };
 
-      const optimizedFile = await optimizeFile(plainFile);
-      let optimizedBuffer;
-      let blob;
+        const optimizedFile = await optimizeFile(plainFile);
+        let optimizedBuffer;
 
-      if (nodeType === 'image') {
         optimizedBuffer = new Uint8Array(optimizedFile.buffer);
         blob = new Blob([optimizedBuffer], { type: optimizedFile.type });
-      } else {
-        optimizedBuffer = new Uint8Array(optimizedFile.content); // 👈 Cambio clave aquí
-        blob = new Blob([optimizedBuffer], { type: optimizedFile.type });
-      }
+      };
+      // else {
+      //   optimizedBuffer = new Uint8Array(optimizedFile.content);
+      //   blob = new Blob([optimizedBuffer], { type: optimizedFile.type });
+      // }
 
       // 2. Crear FormData
       const formData = new FormData();
-      formData.append('file', blob);
-      formData.append('nodeId', nodes.id);
+      formData.append('file', (nodeTypeIsImage ? blob : file) as Blob); // usamos el blob optimizado para imagen
+      formData.append('file', file);
 
       // 3. Subir a la API
       const res = await fetch('/api/upload', {
