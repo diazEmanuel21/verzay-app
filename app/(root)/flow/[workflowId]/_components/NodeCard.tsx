@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { User, WorkflowNode } from "@prisma/client";
 import { CreateNodeComponent } from "./";
 import { updateNode, deleteNode, updateUrlNode } from "@/actions/createNode";
-import { actions, optimizeFile, validateFileType } from "../helpers";
+import { baseActions, optimizeFile, validateFileType } from "../helpers";
 import { Action } from "../types";
 import {
   Card,
@@ -48,7 +48,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
 
   const nodeType = nodes.tipo?.toLowerCase() as Action['type'];
   const hasContent = nodeType === 'text' ? !!message : !!nodes.url;
-  const currentAction = actions.find(
+  const currentAction = baseActions.find(
     (action) => action.type.toLowerCase() === nodeType
   );
 
@@ -204,7 +204,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   };
 
   const renderContent = () => {
-    if (nodeType === "delaymsg") return (
+    if (nodeType === 'seguimiento') return (
       <div className="flex items-center flex-col w-full">
         <CreateNodeComponent workflowId={workflowId} />
       </div>

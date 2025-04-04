@@ -10,7 +10,7 @@ function FlowEditor({ workflow }: { workflow: Workflow }) {
 
   return (
     <main className="h-full w-full">
-      <CreateNodeComponent workflow={workflow} />
+      <CreateNodeComponent workflowId={workflow.id} />
     </main>
   )
 }
