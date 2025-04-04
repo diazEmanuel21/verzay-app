@@ -17,10 +17,11 @@ const unitToSeconds: Record<TimeUnit, number> = {
 
 interface TimeInputProps {
     onChange?: (totalSeconds: number) => void
+    onBlur?: () => void
     className?: string
 }
 
-export function TimeInput({ onChange, className }: TimeInputProps) {
+export function TimeInput({ onChange, className, onBlur }: TimeInputProps) {
     const [unit, setUnit] = useState<TimeUnit>('seconds')
     const [value, setValue] = useState<number>(0)
 
@@ -60,6 +61,7 @@ export function TimeInput({ onChange, className }: TimeInputProps) {
                         type="number"
                         min={0}
                         value={value}
+                        onBlur={onBlur}
                         onChange={(e) => {
                             const num = parseInt(e.target.value, 10)
                             if (!isNaN(num)) {

@@ -3,7 +3,7 @@
 import React, { useState, useTransition } from "react";
 import { useRouter } from 'next/navigation';
 import { User, WorkflowNode } from "@prisma/client";
-import { updateNode, deleteNode, updateUrlNode } from "@/actions/createNode";
+import { updateNode, deleteNode, updateUrlNode, updateDelayNode } from "@/actions/createNode";
 import { baseActions, optimizeFile, seguimientoActions, validateFileType } from "../helpers";
 import { Action } from "../types";
 import {
@@ -34,6 +34,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState(nodes.message);
+  const [delay, setDelay] = useState<string>();
   const [isPending, startTransition] = useTransition();
   const [isDeleting, setIsDeleting] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -214,7 +215,24 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   };
 
   const handleTimeChange = (seconds: number) => {
-    console.log("Tiempo total en segundos:", seconds)
+    const delay = seconds.toString();
+    setDelay(delay);
+  };
+
+  const handleOnBlurTime = async () => {
+    if (!delay) return;
+    if (parseInt(delay) === 0) return;
+
+    try {
+      const res = await updateDelayNode(nodes.id, delay);
+      if (!res) return toast.error('404');
+      if (!res.success) return toast.error(res?.message);
+
+      toast.success(res?.message);
+
+    } catch (error) {
+      toast.error(`Error al actualizar un seguimiento. Contactese con nosotros. ${error}`)
+    }
   };
 
   const renderContent = () => {
@@ -353,10 +371,11 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
             {renderContent()}
           </CardTitle>
         </CardHeader>
-
-        <div className="px-6 pb-4">
-          <TimeInput className="text-xs text-muted-foreground" onChange={handleTimeChange} />
-        </div>
+        {
+          isSeguimiento && <div className="px-6 pb-4">
+            <TimeInput className="text-xs text-muted-foreground" onChange={handleTimeChange} onBlur={handleOnBlurTime} />
+          </div>
+        }
         <Separator />
 
         <CardFooter className="flex justify-between items-center text-xs text-muted-foreground px-4 py-3">
