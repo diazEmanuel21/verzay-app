@@ -23,6 +23,8 @@ export async function currentUser(request?: Request) {
             role: true,
             company: true,
             notificationNumber: true,
+            apiUrl: true,
+            apiKey: true,
             // Solo selecciona los campos necesarios
         },
     });

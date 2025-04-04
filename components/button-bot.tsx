@@ -20,11 +20,15 @@ import { toast } from "sonner";
 interface EnableToggleButtonProps {
   userId: string;
   userName?: string | null;
+  apiurl: string;
+  apikey: string;
 }
 
 const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
   userId,
   userName,
+  apiurl,
+  apikey
 }) => {
   const [isEnabled, setIsEnabled] = useState<boolean | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -32,19 +36,18 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
   const [instanceData, setInstanceData] = useState<{
     instanceName: string;
     instanceId: string;
+    serverUrl: string;
   } | null>(null);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const baseUrl = "https://conexion-1.verzay.co";
 
   const loadInstanceData = async () => {
     try {
       const instances = await getInstances(userId);
       if (instances && instances.length > 0) {
-        const { instanceName, instanceId } = instances[0];
-        setInstanceData({ instanceName, instanceId });
-        await fetchWebhookStatus(instanceName, instanceId);
+        const { instanceName, instanceId, serverUrl } = instances[0];
+        setInstanceData({ instanceName, instanceId, serverUrl });
+        await fetchWebhookStatus(instanceName, instanceId, serverUrl);
       } else {
         setError("No se encontraron instancias para este usuario.");
       }
@@ -58,13 +61,16 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
     }
   };
 
+  const baseUrl = "https://"+instanceData?.serverUrl;
+
   const fetchWebhookStatus = async (
     instanceName: string,
-    instanceId: string
+    instanceId: string,
+    serverUrl: string
   ) => {
     try {
       const response = await fetch(
-        `${baseUrl}/webhook/find/${instanceName}`,
+        `https://${serverUrl}/webhook/find/${instanceName}`,
         {
           method: "GET",
           headers: { apikey: instanceId },
@@ -100,7 +106,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
 
     try {
       const response = await fetch(
-        `${baseUrl}/webhook/set/${instanceData.instanceName}`,
+        `https://${instanceData.serverUrl}/webhook/set/${instanceData.instanceName}`,
         {
           method: "POST",
           headers: {
@@ -157,7 +163,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
           <Button
             onClick={toggleEnable}
             disabled={loading || !instanceData}
-            className="flex items-center gap-2 w-full max-w-xs justify-center py-6 rounded-xl text-base font-semibold transition-all"
+            className=" bg-green-600 hover:bg-green-700 flex items-center gap-2 w-full max-w-xs justify-center py-6 rounded-xl text-base font-semibold transition-all"
             variant="default"
           >
             {loading ? (

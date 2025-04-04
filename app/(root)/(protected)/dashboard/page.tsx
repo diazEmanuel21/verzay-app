@@ -41,7 +41,7 @@ export default async function DashboardPage() {
 
             {/* Enable Toggle Button */}
             <div className="flex-1 flex justify-end">
-              <EnableToggleButton userId={user.id} userName={user.name} />
+              <EnableToggleButton userId={user.id} userName={user.name} apiurl={user.apiurl} apikey={user.apikey} />
             </div>
 
           </div>

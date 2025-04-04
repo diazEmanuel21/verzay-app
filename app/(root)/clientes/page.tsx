@@ -4,7 +4,7 @@ import React from 'react'
 const ClientPage = () => {
   return (
     <div>
-      <EnableToggleButton userId='123'/>
+      {/* <EnableToggleButton userId='123'/> */}
     </div>
   )
 }

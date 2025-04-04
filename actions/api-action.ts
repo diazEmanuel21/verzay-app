@@ -435,7 +435,7 @@ export async function getWhatsAppConnectionStatus(userId: string) {
 // Funcion para traer datos del cliente
 export async function getInstances(userId: string) {
   try {
-    const instances = await db.instancias.findMany({
+    const instance = await db.instancias.findMany({
       where: {
         userId: userId,
       },
@@ -445,7 +445,26 @@ export async function getInstances(userId: string) {
       },
     });
 
+    // 🔥 Buscar el usuario y su ApiKey asignada
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      include: { apiKey: true },
+    });
+
+    if (!user || !user.apiKey) {
+      throw new Error("El usuario no tiene una ApiKey asignada.");
+    }
+
+    const { key: apiKey, url: serverUrl } = user.apiKey;
+
+    // Agregar apiKey y serverUrl a cada instancia
+    const instances = instance.map((instance) => ({
+      ...instance,
+      serverUrl
+    }));
+
     return instances;
+
   } catch (error) {
     console.error(`Error fetching from:`, error);
   }
