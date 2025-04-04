@@ -144,6 +144,7 @@ model WorkflowNode {
   updatedAt  DateTime @updatedAt
   tipo       String
   url        String?
+  delay      String?
 }
 
 model n8n_chat_histories {
