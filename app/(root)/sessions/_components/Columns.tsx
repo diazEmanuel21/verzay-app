@@ -163,7 +163,7 @@ export const getColumns = (openDeleteDialog: (sessionId: number, remoteJid: stri
                             onClick={() => openDeleteDialog(sessionId, remoteJid, userId, 'deleteConversation')}
                             className="text-red-600"
                         >
-                            Eliminar historial de conversación
+                            Eliminar historial
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => openDeleteDialog(sessionId, remoteJid, userId, 'deleteClient')}

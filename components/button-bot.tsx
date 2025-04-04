@@ -163,7 +163,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
           <Button
             onClick={toggleEnable}
             disabled={loading || !instanceData}
-            className="flex items-center gap-2 w-full max-w-xs justify-center py-6 rounded-xl text-base font-semibold transition-all"
+            className=" bg-green-600 hover:bg-green-700 flex items-center gap-2 w-full max-w-xs justify-center py-6 rounded-xl text-base font-semibold transition-all"
             variant="default"
           >
             {loading ? (
