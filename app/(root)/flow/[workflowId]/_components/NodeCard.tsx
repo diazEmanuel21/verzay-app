@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { User, WorkflowNode } from "@prisma/client";
 import { CreateNodeComponent } from "./";
 import { updateNode, deleteNode, updateUrlNode } from "@/actions/createNode";
-import { baseActions, optimizeFile, validateFileType } from "../helpers";
+import { baseActions, optimizeFile, seguimientoActions, validateFileType } from "../helpers";
 import { Action } from "../types";
 import {
   Card,
@@ -47,10 +47,20 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   }).format(new Date(nodes.createdAt));
 
   const nodeType = nodes.tipo?.toLowerCase() as Action['type'];
+  const baseType = nodeType.startsWith('seguimiento-')
+    ? nodeType.split('-')[1] as Action['type']
+    : nodeType;
   const hasContent = nodeType === 'text' ? !!message : !!nodes.url;
-  const currentAction = baseActions.find(
+  const allActions = [...baseActions, ...seguimientoActions];
+  const currentAction = allActions.find(
     (action) => action.type.toLowerCase() === nodeType
   );
+
+  // Mostrar "Seguimiento" en la etiqueta pero usar baseType para la lógica
+  const isSeguimiento = nodeType.startsWith('seguimiento-');
+  const labelSegumientoCategory = isSeguimiento
+    ? `Seguimiento ${currentAction?.label.replace('Seguimiento ', '')}`
+    : currentAction?.label;
 
   const handleSave = () => {
     if (message !== nodes.message) {
@@ -82,12 +92,12 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     const selectedFile = e.target.files?.[0];
 
     if (selectedFile) {
-      if (!validateFileType(selectedFile, nodeType)) {
-        toast.error(`Tipo de archivo no válido. Se esperaba: ${nodeType === 'image'
+      if (!validateFileType(selectedFile, baseType)) {
+        toast.error(`Tipo de archivo no válido. Se esperaba: ${baseType === 'image'
           ? 'image (JPEG, PNG, GIF)'
-          : nodeType === 'video'
+          : baseType === 'video'
             ? 'video (MP4, WebM)'
-            : nodeType === 'audio'
+            : baseType === 'audio'
               ? 'audio (MP3, WAV)'
               : 'documento (PDF, DOC)'}`);
         return;
@@ -109,7 +119,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
 
     setIsUploading(true);
     const toastLoading = toast.loading('Subiendo archivo...');
-    const nodeTypeIsImage = nodeType === 'image';
+    const nodeTypeIsImage = baseType === 'image';
     let blob;
 
     try {
@@ -189,12 +199,12 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
 
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) {
-      if (!validateFileType(droppedFile, nodeType)) {
-        toast.error(`Tipo de archivo no válido. Se esperaba: ${nodeType === 'image'
+      if (!validateFileType(droppedFile, baseType)) {
+        toast.error(`Tipo de archivo no válido. Se esperaba: ${baseType === 'image'
           ? 'image'
-          : nodeType === 'video'
+          : baseType === 'video'
             ? 'video'
-            : nodeType === 'audio'
+            : baseType === 'audio'
               ? 'audio'
               : 'documento'}`);
         return;
@@ -204,13 +214,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   };
 
   const renderContent = () => {
-    if (nodeType === 'seguimiento') return (
-      <div className="flex items-center flex-col w-full">
-        <CreateNodeComponent workflowId={workflowId} />
-      </div>
-    );
-
-    if (nodeType === 'text') {
+    if (baseType === 'text') {
       return isEditing ? (
         <textarea
           value={message}
@@ -230,22 +234,22 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
           <span className="text-muted-foreground">{message}</span>
         </div>
       );
-    }
+    };
 
     // Para tipos de archivo (image, video, audio, documento)
     if (hasContent) {
       return (
         <div className="w-full border border-border rounded-md p-3 bg-muted">
-          {nodeType === 'image' && (
+          {baseType === 'image' && (
             <img src={nodes.url!} alt="Contenido del nodo" className="rounded-md w-full h-auto max-h-64 object-contain" />
           )}
-          {nodeType === 'video' && (
+          {baseType === 'video' && (
             <video src={nodes.url!} controls className="rounded-md w-full h-auto max-h-64" />
           )}
-          {nodeType === 'audio' && (
+          {baseType === 'audio' && (
             <audio src={nodes.url!} controls className="w-full" />
           )}
-          {nodeType === 'document' && (
+          {baseType === 'document' && (
             <div className="flex items-center gap-2 p-2 bg-background rounded">
               <a
                 href={nodes.url!}
@@ -285,11 +289,11 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
             id="file-input"
             type="file"
             className="hidden"
-            accept={nodeType === 'image'
+            accept={baseType === 'image'
               ? 'image/*'
-              : nodeType === 'video'
+              : baseType === 'video'
                 ? 'video/*'
-                : nodeType === 'audio'
+                : baseType === 'audio'
                   ? 'audio/*'
                   : '*'}
             onChange={handleFileChange}
@@ -325,7 +329,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
           <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />
         )}
         <span className="text-xs font-medium text-muted-foreground capitalize">
-          {currentAction?.label || "Tipo desconocido"}
+          {`${isSeguimiento ? labelSegumientoCategory : currentAction?.label}` || "Tipo desconocido"}
         </span>
       </div>
 
