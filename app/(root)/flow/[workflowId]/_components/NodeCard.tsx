@@ -4,7 +4,7 @@ import React, { useState, useTransition } from "react";
 import { useRouter } from 'next/navigation';
 import { User, WorkflowNode } from "@prisma/client";
 import { updateNode, deleteNode, updateUrlNode, updateDelayNode } from "@/actions/createNode";
-import { baseActions, optimizeFile, seguimientoActions, validateFileType } from "../helpers";
+import { ACCEPT_TYPES, baseActions, getAcceptTypeString, optimizeFile, seguimientoActions, validateFileType } from "../helpers";
 import { Action } from "../types";
 import {
   Card,
@@ -24,11 +24,13 @@ import {
   UploadIcon,
 } from "lucide-react";
 import { TimeInput } from "@/components/shared/TimeInput";
+import { NodeActions } from "./NodeActions";
 interface Props {
   workflowId: string;
   nodes: WorkflowNode;
   user: User;
 }
+
 
 export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const router = useRouter();
@@ -41,12 +43,6 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
-  const formattedDate = new Intl.DateTimeFormat('es-ES', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  }).format(new Date(nodes.createdAt));
-
   const nodeType = nodes.tipo?.toLowerCase() as Action['type'];
   const baseType = nodeType.startsWith('seguimiento-')
     ? nodeType.split('-')[1] as Action['type']
@@ -57,6 +53,11 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     (action) => action.type.toLowerCase() === nodeType
   );
 
+  const accept = baseType && ACCEPT_TYPES[baseType]
+    ? ACCEPT_TYPES[baseType].join(',')
+    : '*';
+
+  debugger;
   // Mostrar "Seguimiento" en la etiqueta pero usar baseType para la lógica
   const isSeguimiento = nodeType.startsWith('seguimiento-');
   const labelSegumientoCategory = isSeguimiento
@@ -86,25 +87,6 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
       toast.error(`Error eliminando el nodo: ${error}`);
     } finally {
       setIsDeleting(false);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-
-    if (selectedFile) {
-      if (!validateFileType(selectedFile, baseType)) {
-        toast.error(`Tipo de archivo no válido. Se esperaba: ${baseType === 'image'
-          ? 'image (JPEG, PNG, GIF)'
-          : baseType === 'video'
-            ? 'video (MP4, WebM)'
-            : baseType === 'audio'
-              ? 'audio (MP3, WAV)'
-              : 'documento (PDF, DOC)'}`);
-        return;
-      }
-
-      setFile(selectedFile);
     }
   };
 
@@ -194,23 +176,30 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     e.preventDefault();
   };
 
+  const handleFile = (file: File) => {
+    if (!file) return;
+    const isValid = validateFileType(file, baseType);
+    if (!isValid) {
+      const readableTypes = getAcceptTypeString(baseType);
+      toast.error(`Tipo de archivo no válido. Se esperaba: ${baseType} (${readableTypes})`);
+      return;
+    }
+
+    setFile(file);
+  };
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
 
     const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile) {
-      if (!validateFileType(droppedFile, baseType)) {
-        toast.error(`Tipo de archivo no válido. Se esperaba: ${baseType === 'image'
-          ? 'image'
-          : baseType === 'video'
-            ? 'video'
-            : baseType === 'audio'
-              ? 'audio'
-              : 'documento'}`);
-        return;
-      }
-      setFile(droppedFile);
+    handleFile(droppedFile);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      handleFile(selectedFile);
     }
   };
 
@@ -271,7 +260,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     // Para tipos de archivo (image, video, audio, documento)
     if (hasContent) {
       return (
-        <div className="w-full border border-border rounded-md p-3 bg-muted">
+        <div className="w-full border border-border rounded-md bg-muted">
           {baseType === 'image' && (
             <img src={nodes.url!} alt="Contenido del nodo" className="rounded-md w-full h-auto max-h-20 object-contain" />
           )}
@@ -300,7 +289,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
 
     // Si no hay contenido, mostrar opción de subir archivo
     return (
-      <div className="flex flex-col gap-4 w-full">
+      <div className="flex flex-col gap-2 w-full">
         <div
           className={`flex items-center justify-center w-full h-32 border-2 rounded-lg cursor-pointer transition 
           ${isDragging ? 'border-primary bg-primary/10' : 'border-dashed border-muted-foreground/50 bg-muted/50'}`}
@@ -321,13 +310,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
             id="file-input"
             type="file"
             className="hidden"
-            accept={baseType === 'image'
-              ? 'image/*'
-              : baseType === 'video'
-                ? 'video/*'
-                : baseType === 'audio'
-                  ? 'audio/*'
-                  : '*'}
+            accept={accept}
             onChange={handleFileChange}
           />
         </div>
@@ -355,7 +338,6 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
 
   return (
     <div className="flex items-center justify-center">
-      {/* Card principal */}
       <Card className="relative shadow-md border border-border rounded-lg min-w-[300px] max-w-[300px]">
         {/* Badge tipo de mensaje */}
         <div className="absolute -top-4 left-4 flex items-center space-x-2 bg-background border border-border rounded-md px-3 py-1 shadow-md">
@@ -366,49 +348,54 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
             {`${isSeguimiento ? labelSegumientoCategory : currentAction?.label}` || "Tipo desconocido"}
           </span>
         </div>
+        <div className="absolute right-1">
+          <NodeActions
+            onDeleteFile={() => console.log("Eliminar archivo")}
+            onDeleteNode={() => console.log("Eliminar nodo")}
+            onEditType={() => console.log("Editar tipo")}
+            onChangePosition={() => console.log("Cambiar posición")}
+          />
+        </div>
         <CardHeader>
           <CardTitle className="flex items-start justify-between text-left text-lg">
             {renderContent()}
           </CardTitle>
         </CardHeader>
-        {
-          isSeguimiento && <div className="px-6 pb-4">
-            <TimeInput className="text-xs text-muted-foreground" onChange={handleTimeChange} onBlur={handleOnBlurTime} />
-          </div>
+        {isSeguimiento &&
+          <>
+            <Separator />
+            <CardFooter className="pt-2">
+              <TimeInput className="text-xs text-muted-foreground" onChange={handleTimeChange} onBlur={handleOnBlurTime} />
+            </CardFooter>
+          </>
         }
-        <Separator />
-
-        <CardFooter className="flex justify-between items-center text-xs text-muted-foreground px-4 py-3">
-          <p className="italic">Creado el {formattedDate}</p>
-
-          <div className="flex items-center gap-2">
-            {/* Eliminar nodo */}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button size="icon" variant="ghost" disabled={isDeleting}>
-                  <TrashIcon className="h-4 w-4" color="#721b1c" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogTitle>Eliminar nodo</AlertDialogTitle>
-                <AlertDialogDescription className="text-sm">
-                  ¿Estás seguro de que deseas eliminar este nodo?
-                </AlertDialogDescription>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    {isDeleting ? "Eliminando..." : "Eliminar"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </CardFooter>
       </Card>
     </div>
   );
 };
+
+
+
+// <AlertDialog>
+//   <AlertDialogTrigger asChild>
+//     <Button size="icon" variant="ghost" disabled={isDeleting}>
+//       <TrashIcon className="h-4 w-4" color="#721b1c" />
+//     </Button>
+//   </AlertDialogTrigger>
+//   <AlertDialogContent>
+//     <AlertDialogTitle>Eliminar nodo</AlertDialogTitle>
+//     <AlertDialogDescription className="text-sm">
+//       ¿Estás seguro de que deseas eliminar este nodo?
+//     </AlertDialogDescription>
+//     <AlertDialogFooter>
+//       <AlertDialogCancel>Cancelar</AlertDialogCancel>
+//       <AlertDialogAction
+//         onClick={handleDelete}
+//         disabled={isDeleting}
+//         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+//       >
+//         {isDeleting ? "Eliminando..." : "Eliminar"}
+//       </AlertDialogAction>
+//     </AlertDialogFooter>
+//   </AlertDialogContent>
+// </AlertDialog>

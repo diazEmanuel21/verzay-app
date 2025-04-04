@@ -28,10 +28,11 @@ interface CompressionSettings {
   };
 }
 
+
 const validTypes: Record<FileType, MimeType[]> = {
   imagen: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
   video: ['video/mp4', 'video/webm', 'video/ogg'],
-  audio: ['audio/mpeg', 'audio/ogg', 'audio/wav', 'audio/webm'],
+  audio: ['audio/mpeg', 'audio/ogg', 'audio/wav', 'audio/webm', 'audio/ogg'],
   documento: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
 };
 
