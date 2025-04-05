@@ -72,7 +72,7 @@ export const CreateNodeComponent = ({ workflowId }: PropsCreateNodeComponent) =>
 
     const handleActionSelect = useCallback(
         (actionType: Action['type']) => {
-            const defaultMessage = "msg";
+            const defaultMessage = "";
             const allActions = [...baseActions, ...seguimientoActions];
             const actionSelected = allActions.find(action => action.type === actionType);
 
