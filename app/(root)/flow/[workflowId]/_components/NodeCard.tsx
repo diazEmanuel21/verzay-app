@@ -14,12 +14,10 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 
 import { toast } from "sonner";
 import {
-  TrashIcon,
   MessageSquareIcon,
   UploadIcon,
 } from "lucide-react";
@@ -29,8 +27,7 @@ interface Props {
   workflowId: string;
   nodes: WorkflowNode;
   user: User;
-}
-
+};
 
 export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const router = useRouter();
@@ -38,7 +35,6 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const [message, setMessage] = useState(nodes.message);
   const [delay, setDelay] = useState<string>();
   const [isPending, startTransition] = useTransition();
-  const [isDeleting, setIsDeleting] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -79,14 +75,14 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   };
 
   const handleDelete = async () => {
-    setIsDeleting(true);
+    const toastId = `delete-${currentAction?.label}`;
+    toast.loading(`Eliminando ${currentAction?.label}...`, { id: toastId });
+
     try {
       await deleteNode(nodes.id, workflowId);
-      toast.success('Nodo eliminado exitosamente.');
+      toast.success('Nodo eliminado exitosamente.', { id: toastId });
     } catch (error) {
-      toast.error(`Error eliminando el nodo: ${error}`);
-    } finally {
-      setIsDeleting(false);
+      toast.error(`Error eliminando el nodo: ${error}`, { id: toastId });
     }
   };
 
@@ -260,7 +256,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     // Para tipos de archivo (image, video, audio, documento)
     if (hasContent) {
       return (
-        <div className="w-full border border-border rounded-md bg-muted">
+        <div className="w-full pt-2">
           {baseType === 'image' && (
             <img src={nodes.url!} alt="Contenido del nodo" className="rounded-md w-full h-auto max-h-20 object-contain" />
           )}
@@ -282,7 +278,6 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
               </a>
             </div>
           )}
-
         </div>
       );
     }
@@ -337,65 +332,41 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   };
 
   return (
-    <div className="flex items-center justify-center">
-      <Card className="relative shadow-md border border-border rounded-lg min-w-[300px] max-w-[300px]">
-        {/* Badge tipo de mensaje */}
-        <div className="absolute -top-4 left-4 flex items-center space-x-2 bg-background border border-border rounded-md px-3 py-1 shadow-md">
-          {currentAction?.icon || (
-            <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />
-          )}
-          <span className="text-xs font-medium text-muted-foreground capitalize">
-            {`${isSeguimiento ? labelSegumientoCategory : currentAction?.label}` || "Tipo desconocido"}
-          </span>
-        </div>
-        <div className="absolute right-1">
-          <NodeActions
-            onDeleteFile={() => console.log("Eliminar archivo")}
-            onDeleteNode={() => console.log("Eliminar nodo")}
-            onEditType={() => console.log("Editar tipo")}
-            onChangePosition={() => console.log("Cambiar posición")}
-          />
-        </div>
-        <CardHeader>
-          <CardTitle className="flex items-start justify-between text-left text-lg">
-            {renderContent()}
-          </CardTitle>
-        </CardHeader>
-        {isSeguimiento &&
-          <>
-            <Separator />
-            <CardFooter className="pt-2">
-              <TimeInput className="text-xs text-muted-foreground" onChange={handleTimeChange} onBlur={handleOnBlurTime} />
-            </CardFooter>
-          </>
-        }
-      </Card>
-    </div>
+    <>
+
+      <div className="flex items-center justify-center">
+        <Card className="relative shadow-md border border-border rounded-lg min-w-[300px] max-w-[300px]">
+          {/* Badge tipo de mensaje */}
+          <div className="absolute -top-4 left-4 flex items-center space-x-2 bg-background border border-border rounded-md px-3 py-1 shadow-md">
+            {currentAction?.icon || (
+              <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />
+            )}
+            <span className="text-xs font-medium text-muted-foreground capitalize">
+              {`${isSeguimiento ? labelSegumientoCategory : currentAction?.label}` || "Tipo desconocido"}
+            </span>
+          </div>
+          <div className="absolute right-1">
+            <NodeActions
+              onDeleteFile={() => console.log("Eliminar archivo")}
+              onDeleteNode={() => handleDelete()}
+              onEditType={() => console.log("Editar tipo")}
+            />
+          </div>
+          <CardHeader>
+            <CardTitle className="flex items-start justify-between text-left text-lg">
+              {renderContent()}
+            </CardTitle>
+          </CardHeader>
+          {isSeguimiento &&
+            <>
+              <Separator />
+              <CardFooter className="pt-2">
+                <TimeInput className="text-xs text-muted-foreground" onChange={handleTimeChange} onBlur={handleOnBlurTime} />
+              </CardFooter>
+            </>
+          }
+        </Card>
+      </div>
+    </>
   );
 };
-
-
-
-// <AlertDialog>
-//   <AlertDialogTrigger asChild>
-//     <Button size="icon" variant="ghost" disabled={isDeleting}>
-//       <TrashIcon className="h-4 w-4" color="#721b1c" />
-//     </Button>
-//   </AlertDialogTrigger>
-//   <AlertDialogContent>
-//     <AlertDialogTitle>Eliminar nodo</AlertDialogTitle>
-//     <AlertDialogDescription className="text-sm">
-//       ¿Estás seguro de que deseas eliminar este nodo?
-//     </AlertDialogDescription>
-//     <AlertDialogFooter>
-//       <AlertDialogCancel>Cancelar</AlertDialogCancel>
-//       <AlertDialogAction
-//         onClick={handleDelete}
-//         disabled={isDeleting}
-//         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-//       >
-//         {isDeleting ? "Eliminando..." : "Eliminar"}
-//       </AlertDialogAction>
-//     </AlertDialogFooter>
-//   </AlertDialogContent>
-// </AlertDialog>
