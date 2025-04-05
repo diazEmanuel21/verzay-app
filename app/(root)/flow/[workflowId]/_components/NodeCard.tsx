@@ -3,7 +3,7 @@
 import React, { useState, useTransition } from "react";
 import { useRouter } from 'next/navigation';
 import { User, WorkflowNode } from "@prisma/client";
-import { updateNode, deleteNode, updateUrlNode, updateDelayNode } from "@/actions/createNode";
+import { updateNode, deleteNode, updateUrlNode, updateDelayNode, deleteFileNode } from "@/actions/createNode";
 import { ACCEPT_TYPES, baseActions, getAcceptTypeString, optimizeFile, seguimientoActions, validateFileType } from "../helpers";
 import { Action } from "../types";
 import {
@@ -53,7 +53,6 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     ? ACCEPT_TYPES[baseType].join(',')
     : '*';
 
-  debugger;
   // Mostrar "Seguimiento" en la etiqueta pero usar baseType para la lógica
   const isSeguimiento = nodeType.startsWith('seguimiento-');
   const labelSegumientoCategory = isSeguimiento
@@ -74,15 +73,52 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     setIsEditing(false);
   };
 
-  const handleDelete = async () => {
+  const handleDeleteNode = async () => {
     const toastId = `delete-${currentAction?.label}`;
     toast.loading(`Eliminando ${currentAction?.label}...`, { id: toastId });
 
     try {
-      await deleteNode(nodes.id, workflowId);
-      toast.success('Nodo eliminado exitosamente.', { id: toastId });
+      // Paso 1: Eliminar archivo y limpiar la URL (si aplica)
+      if (nodes.url) {
+        const fileRes = await deleteFileNode(nodes.url, nodes.id);
+
+        if (!fileRes.success) {
+          toast.error(fileRes.message, { id: toastId });
+          return;
+        }
+      }
+      // Paso 2: Eliminar el nodo
+      const res = await deleteNode(nodes.id, workflowId);
+
+      if (!res || !res.success) {
+        toast.error(res?.message || "Error desconocido al eliminar el nodo.", { id: toastId });
+        return;
+      }
+
+      toast.success(res.message, { id: toastId });
+      router.refresh();
+
     } catch (error) {
-      toast.error(`Error eliminando el nodo: ${error}`, { id: toastId });
+      console.error("Error en eliminación:", error);
+      toast.error(`Error eliminando el nodo: ${error instanceof Error ? error.message : error}`, {
+        id: toastId,
+      });
+    }
+  };
+
+
+  const handleDeleteFile = async () => {
+    const toastId = `delete-${currentAction?.type}`;
+    toast.loading(`Eliminando ${currentAction?.type}...`, { id: toastId });
+
+    try {
+      const res = await deleteFileNode(nodes.url as string, nodes.id);
+      if (!res) return;
+      if (!res.success) return toast.error(res?.message, { id: toastId });
+      toast.success(res?.message, { id: toastId });
+      router.refresh();
+    } catch (error) {
+      toast.error(`Error eliminando el archivo: ${error}`, { id: toastId });
     }
   };
 
@@ -347,9 +383,8 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
           </div>
           <div className="absolute right-1">
             <NodeActions
-              onDeleteFile={() => console.log("Eliminar archivo")}
-              onDeleteNode={() => handleDelete()}
-              onEditType={() => console.log("Editar tipo")}
+              onDeleteFile={() => handleDeleteFile()}
+              onDeleteNode={() => handleDeleteNode()}
             />
           </div>
           <CardHeader>

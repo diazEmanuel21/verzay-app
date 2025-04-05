@@ -1,9 +1,9 @@
 "use server"
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { minioClient } from "@/lib/minio";
 import { createNodeflowSchema, createNodeflowSchemaType } from "@/schema/nodeflow";
 import { redirect } from "next/navigation";
-
 
 export async function CreateNode(form: createNodeflowSchemaType) {
   const session = await auth(); // Obtén la sesión del usuario
@@ -111,13 +111,66 @@ export async function updateDelayNode(nodeId: string, delay: string) {
 
 // Método para eliminar un nodo
 export async function deleteNode(nodeId: string, workflowId: string) {
-  if (!nodeId) {
-    throw new Error("ID del nodo no proporcionado.");
+  try {
+    if (!nodeId) {
+      return {
+        success: false,
+        message: "ID del nodo no proporcionado.",
+      }
+    }
+
+    const deletedNode = await db.workflowNode.delete({
+      where: { id: nodeId },
+    })
+
+    return {
+      success: true,
+      message: "Nodo eliminado con éxito.",
+      data: deletedNode,
+    }
+  } catch (error) {
+    console.error("Error al eliminar el nodo:", error)
+    return {
+      success: false,
+      message: "Ocurrió un error al eliminar el nodo.",
+    }
   }
+}
 
-  const deletedNode = await db.workflowNode.delete({
-    where: { id: nodeId },
-  });
+export async function deleteFileNode(minIoUrl: string, nodeId: string) {
+  try {
+    if (!minIoUrl || !nodeId) {
+      return {
+        success: false,
+        message: "Faltan parámetros necesarios.",
+      }
+    }
 
-  redirect(`/flow/${workflowId}`);
+    const url = new URL(minIoUrl)
+    const parts = url.pathname.split('/').filter(Boolean)
+
+    const bucket = parts[0]
+    const objectName = decodeURIComponent(parts.slice(1).join('/'))
+
+    console.log("Eliminando archivo de MinIO:", { bucket, objectName })
+    await minioClient.removeObject(bucket, objectName)
+
+    // ✅ Limpiar la URL del nodo en la base de datos
+    const updatedNode = await db.workflowNode.update({
+      where: { id: nodeId },
+      data: { url: null },
+    })
+
+    return {
+      success: true,
+      message: "Archivo eliminado y nodo actualizado con éxito.",
+      data: updatedNode,
+    }
+  } catch (error) {
+    console.error("Error al eliminar archivo o actualizar nodo:", error)
+    return {
+      success: false,
+      message: "Ocurrió un error al eliminar el archivo o actualizar el nodo.",
+    }
+  }
 }

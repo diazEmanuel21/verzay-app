@@ -12,13 +12,11 @@ import { MoreHorizontal, FileTextIcon, Trash2 } from 'lucide-react';
 interface NodeActionsProps {
   onDeleteFile: () => void
   onDeleteNode: () => void
-  onEditType: () => void
 }
 
 export function NodeActions({
   onDeleteFile,
   onDeleteNode,
-  onEditType,
 }: NodeActionsProps) {
   const [openConfirmDeleteNode, setOpenConfirmDeleteNode] = useState(false);
 
@@ -32,25 +30,17 @@ export function NodeActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={onDeleteFile}
-          >
+
+          <DropdownMenuItem onClick={onDeleteFile}>
             <FileTextIcon />
             Eliminar archivo
           </DropdownMenuItem>
 
-          <DropdownMenuItem onClick={() => setOpenConfirmDeleteNode(true)}
-            className="text-red-600"
-          >
+
+          <DropdownMenuItem onClick={() => setOpenConfirmDeleteNode(true)} className="text-red-600">
             <Trash2 />
             Eliminar nodo
           </DropdownMenuItem>
-          {/* <DropdownMenuItem
-          className="text-blue-600"
-          onClick={onEditType}
-        >
-          Editar tipo de nodo
-        </DropdownMenuItem> */}
         </DropdownMenuContent>
       </DropdownMenu>
 
