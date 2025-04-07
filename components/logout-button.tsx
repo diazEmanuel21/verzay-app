@@ -80,7 +80,8 @@ const LogoutButton = ({ user, collapsed = false }: LogoutButtonProps) => {
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent side="right" align="start" className="w-56">
+      {/* side="right" */}
+      <DropdownMenuContent  align="start" className="w-56">
         <DropdownMenuLabel className="flex items-center space-x-2">
           {renderAvatar(32)}
           <div className="flex flex-col">

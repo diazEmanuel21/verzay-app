@@ -64,7 +64,6 @@ export function TimeInput({ onChange, className, onBlur, currentValue }: TimeInp
 
     const handleLocalUnBlur = () => {
         const current = `${unit}-${value}`
-        debugger;
         if (current !== currentValue && onBlur) {
             onBlur()
         }

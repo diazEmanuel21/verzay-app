@@ -31,7 +31,7 @@ function WorkflowCard({workflow}: {workflow: Workflow}) {
   const isDraft = workflow.status === WorkflowStatus.DRAFT;
 
   return (
-    <Card className='border border-separate shadow-sm rounded-lg overflow-hidden hover:shadow-md dark:shadow-primary/30'>
+    <Card>
         <CardContent className='p-4 flex items-center justify-between h-[100px]'>
             <div className="flex items-center justify-end space-x-3">
             <div 

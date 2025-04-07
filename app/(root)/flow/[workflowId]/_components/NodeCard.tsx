@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition } from "react";
+import React, { ChangeEvent, useState, useTransition } from "react";
 import { useRouter } from 'next/navigation';
 import { User, WorkflowNode } from "@prisma/client";
 import { updateNode, deleteNode, updateUrlNode, updateDelayNode, deleteFileNode } from "@/actions/createNode";
@@ -30,11 +30,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { GenericTextarea } from "@/components/shared/GenericTextarea";
 interface Props {
   workflowId: string;
   nodes: WorkflowNode;
   user: User;
 };
+
+const MAX_MESSAGE_LENGTH = 1000;
 
 export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const router = useRouter();
@@ -264,41 +267,23 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
 
   const renderContent = () => {
     if (baseType === 'text') {
-      return isEditing ? (
-        <textarea
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onBlur={handleSave}
-          rows={3}
-          autoFocus
-          disabled={isPending}
-          className="w-full p-3 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary
-                    sm:text-base
-                    md:rounded-xl
-                    lg:p-4
-                    resize-y min-h-[120px]"
+      return (
+        <GenericTextarea
+          fileType={baseType}
+          message={message}
+          handleSave={handleSave}
+          setIsEditing={setIsEditing}
+          setMessage={handleChangeMessages}
+          isPending={isPending}
+          isEditing={isEditing}
         />
-      ) : (
-        <div
-          className="w-full flex items-start gap-3 p-3 text-sm cursor-pointer hover:bg-muted/50
-                    border border-muted-foreground/20 rounded-lg bg-muted transition-all
-                    sm:text-base
-                    md:p-4 md:rounded-xl
-                    lg:gap-4"
-          onClick={() => setIsEditing(true)}
-        >
-          <MessageSquareIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-          <span className="text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">
-            {message || <span className="italic text-muted-foreground/50">Click para editar...</span>}
-          </span>
-        </div>
-      );
+      )
     }
 
     // Para tipos de archivo (image, video, audio, documento)
     if (hasContent) {
       return (
-        <div className="w-full pt-2">
+        <div className="flex items-center w-full rounded">
           {baseType === 'image' && (
             <img src={nodes.url!} alt="Contenido del nodo" className="rounded-md w-full h-auto max-h-20 object-contain" />
           )}
@@ -329,7 +314,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
       <div className="flex flex-col gap-2 w-full">
         <div
           className={`flex items-center justify-center w-full h-32 border-2 rounded-lg cursor-pointer transition 
-        ${isDragging ? 'border-primary bg-primary/10' : 'border-dashed border-muted-foreground/50 bg-muted/50'}`}
+          ${isDragging ? 'border-primary bg-primary/10' : 'border-dashed border-muted-foreground/50 bg-muted/50'}`}
           onDragEnter={handleDragEnter}
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}
@@ -386,9 +371,25 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     );
   };
 
+  const handleChangeMessages = (e: ChangeEvent<HTMLTextAreaElement>): void => {
+    // Verificación de seguridad (TypeScript ya valida el tipo, pero es redundante por si el evento es manualmente disparado)
+    if (!e?.target) {
+      console.error('Evento inválido o sin target');
+      return;
+    }
+
+    const { value } = e.target;
+
+    if (value.length > MAX_MESSAGE_LENGTH) {
+      toast.info(`El mensaje excede el límite de ${MAX_MESSAGE_LENGTH} caracteres`)
+      return;
+    }
+
+    setMessage(value);
+  };
+
   return (
     <>
-
       <div className="flex items-center justify-center">
         <Card className="relative shadow-md border border-border rounded-lg min-w-[300px] max-w-[300px]">
           {/* Badge tipo de mensaje */}
@@ -402,13 +403,27 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
           </div>
           <div className="absolute right-1">
             <NodeActions
+              fileType={baseType}
               onDeleteFile={() => handleDeleteFile()}
               onDeleteNode={() => handleDeleteNode()}
             />
           </div>
           <CardHeader>
-            <CardTitle className="flex items-start justify-between text-left text-lg">
+            <CardTitle className="flex flex-col items-start justify-between text-left text-lg">
               {renderContent()}
+              {baseType !== 'text' &&
+                <div className="flex w-full mt-2">
+                  <GenericTextarea
+                    fileType={baseType}
+                    message={message}
+                    handleSave={handleSave}
+                    setIsEditing={setIsEditing}
+                    setMessage={handleChangeMessages}
+                    isPending={isPending}
+                    isEditing={isEditing}
+                  />
+                </div>
+              }
             </CardTitle>
           </CardHeader>
           {isSeguimiento &&
