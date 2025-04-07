@@ -45,6 +45,8 @@ model Session {
   status     Boolean
   id         Int      @id @default(autoincrement())
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seguimientos String? @default("")
+  inactividad String? @default("")
 }
 
 model Pausar {
@@ -145,12 +147,28 @@ model WorkflowNode {
   tipo       String
   url        String?
   delay      String?
+  inactividad Boolean?
 }
 
 model n8n_chat_histories {
   id         Int    @id @default(autoincrement())
   session_id String @db.VarChar(255)
   message    Json
+}
+
+model seguimientos {
+  id           Int    @id @default(autoincrement())
+  idNodo      String?
+  serverurl   String?
+  instancia   String?
+  apikey      String?
+  remoteJid   String?
+  mensaje     String?
+  tipo        String?
+  media       String?
+  time        String?
+  name_file   String?
+  consecutivo String?
 }
 
 enum Role {
