@@ -11,11 +11,11 @@ import {
 } from "@heroicons/react/24/solid";
 
 export const navLinks = [
-  {
-    label: "Inicio",
-    route: "/",
-    icon: HomeIcon,
-  },
+  // {
+  //   label: "Inicio",
+  //   route: "/",
+  //   icon: HomeIcon,
+  // },
   {
     label: "Admin",
     route: "/admin",
@@ -52,9 +52,9 @@ export const navLinks = [
     route: "/sessions",
     icon: UsersIcon,
   },
-  {
-    label: "Planes",
-    route: "/credits",
-    icon: ShoppingBagIcon,
-  },
+  // {
+  //   label: "Planes",
+  //   route: "/credits",
+  //   icon: ShoppingBagIcon,
+  // },
 ];

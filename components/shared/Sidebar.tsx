@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { redirect, usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -17,6 +17,7 @@ import {
 import ThemeSwitcher from '../custom/ThemeSwitcher';
 import LogoutButton from '../logout-button';
 import { User } from '@prisma/client';
+import { useEffect } from 'react';
 
 interface AppSidebarProps {
   user: User
@@ -24,6 +25,12 @@ interface AppSidebarProps {
 
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (!user) {
+      redirect('/login');
+    }
+  }, []);
 
   return (
     <Sidebar className="bg-white dark:bg-gray-900 text-gray-800 dark:text-zinc-100 border-r border-zinc-200 dark:border-gray-800">
