@@ -11,6 +11,7 @@ import { currentUser } from '@/lib/auth';
 import { Breadcrumbs } from '@/components/custom';
 import { AppSidebar } from '@/components/shared/Sidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { cookies } from 'next/headers';
 
 // Fuente
 const poppins = Poppins({ subsets: ['latin'], weight: ['400', '700'] });
@@ -27,6 +28,8 @@ export default async function RootLayout({
 }>) {
   const user = await currentUser();
   const isAuthenticated = user !== null && user !== undefined;
+  const cookieStore = await cookies()
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
 
   return (
     <html lang="en">
@@ -36,7 +39,7 @@ export default async function RootLayout({
             {isAuthenticated ? (
               <div className="flex flex-col md:flex-row h-screen w-full bg-muted text-muted-foreground overflow-hidden">
                 {/* Sidebar */}
-                <SidebarProvider>
+                <SidebarProvider defaultOpen={defaultOpen}>
                   <AppSidebar user={user} />
 
                   {/* Main Content */}

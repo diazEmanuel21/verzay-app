@@ -16,69 +16,96 @@ const unitToSeconds: Record<TimeUnit, number> = {
 }
 
 interface TimeInputProps {
-    onChange?: (totalSeconds: number) => void
+    onChange?: (value: string) => void // ahora retorna 'TimeUnit-value'
     onBlur?: () => void
+    currentValue?: string // espera 'TimeUnit-value'
     className?: string
 }
 
-export function TimeInput({ onChange, className, onBlur }: TimeInputProps) {
-    const [unit, setUnit] = useState<TimeUnit>('seconds')
-    const [value, setValue] = useState<number>(0)
+export function TimeInput({ onChange, className, onBlur, currentValue }: TimeInputProps) {
+    const maxSeconds = 30 * 24 * 60 * 60 // 30 días
 
-    const maxSeconds = 30 * 24 * 60 * 60 // 30 días en segundos
+    let initialUnit: TimeUnit = 'minutes'
+    let initialValue = 0
 
-    useEffect(() => {
-        const total = value * unitToSeconds[unit]
-        if (onChange) {
-            onChange(Math.min(total, maxSeconds))
+    if (currentValue && currentValue.includes('-')) {
+        const [unitPart, valuePart] = currentValue.split('-')
+        if (['seconds', 'minutes', 'hours', 'days'].includes(unitPart)) {
+            initialUnit = unitPart as TimeUnit
+            const parsed = parseInt(valuePart, 10)
+            if (!isNaN(parsed)) {
+                initialValue = parsed
+            }
         }
-    }, [value, unit, onChange])
+    }
 
+    const [unit, setUnit] = useState<TimeUnit>(initialUnit)
+    const [value, setValue] = useState<number>(initialValue)
 
+    // Llama a onChange con formato 'unit-value'
     useEffect(() => {
-        setValue(0)
-    }, [unit]);
+        if (onChange) {
+            onChange(`${unit}-${value}`)
+        }
+    }, [unit, value, onChange])
 
+    // Lógica cuando se cambia la unidad
+    const handleUnitChange = (newUnit: TimeUnit) => {
+        const totalSeconds = value * unitToSeconds[unit]
+        const newValue = Math.floor(totalSeconds / unitToSeconds[newUnit])
+
+        // Ajustar si se pasa del máximo
+        const maxValue = Math.floor(maxSeconds / unitToSeconds[newUnit])
+        const safeValue = Math.min(newValue, maxValue)
+
+        setUnit(newUnit)
+        setValue(safeValue)
+    }
+
+    const handleLocalUnBlur = () => {
+        const current = `${unit}-${value}`
+        debugger;
+        if (current !== currentValue && onBlur) {
+            onBlur()
+        }
+    }
 
     return (
-        <>
-            <div className={cn(className)}>
-                <Label className="text-xs">Duración de retraso. Maxímo 30 días</Label>
-                <div className="flex flex-row gap-2 mt-2">
-                    <Select value={unit} onValueChange={(val) => setUnit(val as TimeUnit)}>
-                        <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Selecciona unidad" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="seconds">Segundos</SelectItem>
-                            <SelectItem value="minutes">Minutos</SelectItem>
-                            <SelectItem value="hours">Horas</SelectItem>
-                            <SelectItem value="days">Días</SelectItem>
-                        </SelectContent>
-                    </Select>
+        <div className={cn(className)}>
+            <Label className="text-xs">Duración de retraso. Máximo 30 días</Label>
+            <div className="flex flex-row gap-2 mt-2">
+                <Select value={unit} onValueChange={handleUnitChange}>
+                    <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Selecciona unidad" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="minutes">Minutos</SelectItem>
+                        <SelectItem value="hours">Horas</SelectItem>
+                        <SelectItem value="days">Días</SelectItem>
+                    </SelectContent>
+                </Select>
 
-                    <Input
-                        type="number"
-                        min={0}
-                        value={value}
-                        onBlur={onBlur}
-                        onChange={(e) => {
-                            const num = parseInt(e.target.value, 10)
-                            if (!isNaN(num)) {
-                                const total = num * unitToSeconds[unit]
-                                if (total <= maxSeconds) {
-                                    setValue(num)
-                                } else {
-                                    const maxValue = Math.floor(maxSeconds / unitToSeconds[unit])
-                                    setValue(maxValue)
-                                }
+                <Input
+                    type="number"
+                    min={0}
+                    value={value}
+                    onBlur={handleLocalUnBlur}
+                    onChange={(e) => {
+                        const num = parseInt(e.target.value, 10)
+                        if (!isNaN(num)) {
+                            const total = num * unitToSeconds[unit]
+                            if (total <= maxSeconds) {
+                                setValue(num)
                             } else {
-                                setValue(0)
+                                const maxValue = Math.floor(maxSeconds / unitToSeconds[unit])
+                                setValue(maxValue)
                             }
-                        }}
-                    />
-                </div>
+                        } else {
+                            setValue(0)
+                        }
+                    }}
+                />
             </div>
-        </>
+        </div>
     )
 }

@@ -6,15 +6,14 @@ import { User, WorkflowNode } from "@prisma/client";
 import { updateNode, deleteNode, updateUrlNode, updateDelayNode, deleteFileNode } from "@/actions/createNode";
 import { ACCEPT_TYPES, baseActions, getAcceptTypeString, optimizeFile, seguimientoActions, validateFileType } from "../helpers";
 import { Action } from "../types";
+import { NodeActions } from "./NodeActions";
+
 import {
   Card,
   CardHeader,
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
 
 import { toast } from "sonner";
 import {
@@ -22,7 +21,15 @@ import {
   UploadIcon,
 } from "lucide-react";
 import { TimeInput } from "@/components/shared/TimeInput";
-import { NodeActions } from "./NodeActions";
+
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 interface Props {
   workflowId: string;
   nodes: WorkflowNode;
@@ -235,8 +242,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     }
   };
 
-  const handleTimeChange = (seconds: number) => {
-    const delay = seconds.toString();
+  const handleTimeChange = (delay: string) => {
     setDelay(delay);
   };
 
@@ -323,19 +329,30 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
       <div className="flex flex-col gap-2 w-full">
         <div
           className={`flex items-center justify-center w-full h-32 border-2 rounded-lg cursor-pointer transition 
-          ${isDragging ? 'border-primary bg-primary/10' : 'border-dashed border-muted-foreground/50 bg-muted/50'}`}
+        ${isDragging ? 'border-primary bg-primary/10' : 'border-dashed border-muted-foreground/50 bg-muted/50'}`}
           onDragEnter={handleDragEnter}
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
           onClick={() => document.getElementById('file-input')?.click()}
         >
-          <div className="flex flex-col items-center justify-center p-5">
-            <UploadIcon className="w-8 h-8 mb-3 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground text-center">
-              {isDragging ? 'Suelta el archivo aquí' : 'Arrastra un archivo o haz click para seleccionar'}
+          <div className="flex flex-col items-center justify-center w-full px-2">
+            <UploadIcon className="w-6 h-6 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground text-center mt-1">
+              {isDragging ? 'Suelta el archivo aquí' : 'Arrastra o haz click'}
             </p>
-            {file && <p className="text-xs mt-2 text-muted-foreground">{file.name}</p>}
+            {file && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <p className="text-xs text-muted-foreground truncate w-full px-2">
+                    {file.name}
+                  </p>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">{file.name}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
           <Input
             id="file-input"
@@ -350,16 +367,18 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
           <div className="flex justify-end gap-2">
             <Button
               variant="outline"
+              size="sm"
               onClick={handleCancelUpload}
               disabled={isUploading}
             >
               Cancelar
             </Button>
             <Button
+              size="sm"
               onClick={handleUpload}
               disabled={isUploading}
             >
-              {isUploading ? "Subiendo..." : "Subir Archivo"}
+              {isUploading ? "Subiendo..." : "Subir"}
             </Button>
           </div>
         )}
@@ -396,7 +415,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
             <>
               <Separator />
               <CardFooter className="pt-2">
-                <TimeInput className="text-xs text-muted-foreground" onChange={handleTimeChange} onBlur={handleOnBlurTime} />
+                <TimeInput className="text-xs text-muted-foreground" onChange={handleTimeChange} onBlur={handleOnBlurTime} currentValue={nodes.delay || 'minutes-0'} />
               </CardFooter>
             </>
           }

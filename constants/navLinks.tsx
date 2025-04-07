@@ -42,11 +42,11 @@ export const navLinks = [
     route: "/flow",
     icon: ChatBubbleLeftRightIcon,
   },
-  {
-    label: "Cuenta",
-    route: "/profile",
-    icon: UserIcon,
-  },
+  // {
+  //   label: "Cuenta",
+  //   route: "/profile",
+  //   icon: UserIcon,
+  // },
   {
     label: "Leads",
     route: "/sessions",
