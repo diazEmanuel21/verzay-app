@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Header from '@/components/shared/header';
 import { toast } from "sonner";
 import { getClientDataByUserId, updateClientDataByField, updateAbrirPhrase } from "@/actions/userClientDataActions";
-import { ACCEPT_TYPES, baseActions, getAcceptTypeString, optimizeFile, seguimientoActions, validateFileType } from "../app/(root)/flow/[workflowId]/helpers";
+import { optimizeFile } from "../app/(root)/flow/[workflowId]/helpers";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { z } from 'zod';
-import { ExternalLinkIcon } from "lucide-react";
+import { Camera, ExternalLinkIcon } from "lucide-react";
 import { UserWithPausar } from "@/lib/types";
+import { Button } from "./ui/button";
 
 // ============================
 // Tipado
@@ -29,14 +30,16 @@ type EditableFields = {
 // Esquema de validación con Zod
 // ============================
 const clientSchema = z.object({
-    apiUrl: z.string().min(10).max(80),
-    company: z.string().min(3, { message: 'La empresa debe tener al menos 3 caracteres' }),
+    apiUrl: z.string().min(10).max(200),
+    company: z.string().max(50).min(3, { message: 'La empresa debe tener al menos 3 caracteres' }),
     notificationNumber: z.string().min(7).max(15),
     lat: z.string().optional(),
     lng: z.string().optional(),
     mapsUrl: z.string().url({ message: 'La URL de Google Maps no es válida' }),
     openMsg: z.string().min(3).max(45),
 });
+
+const defaultImgUrl = 'https://images.pexels.com/photos/133356/pexels-photo-133356.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
 
 // ============================
 // Componente Principal
@@ -47,7 +50,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
     const [originalUser, setOriginalUser] = useState<(UserWithPausar & { openMsg?: string })>();
     const [saveMapsUrl, setSaveMapsUrl] = useState(false);
     const [loadingField, setLoadingField] = useState<string | null>(null);
-
+    const fileRef = useRef<HTMLInputElement | null>(null);
     // ============================
     // Cargar datos de cliente
     // ============================
@@ -267,12 +270,43 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                 user && (
                     <div className="px-6 md:px-12 py-8">
                         <div className="space-y-8">
-                            <Header
-                                title="Perfil de la Empresa"
-                                subtitle="Esta información se utilizará para la configuración de su agente."
-                            />
+                            <div className="flex flex-row justify-between">
+                                <Header
+                                    title="Perfil de la Empresa"
+                                    subtitle="Esta información se utilizará para la configuración de su agente."
+                                />
+                                <div className="space-y-2">
+                                    <Label className="text-muted-foreground">Foto de perfil</Label>
+
+                                    <div className="flex items-center gap-4">
+                                        <div
+                                            className="relative w-16 h-16 rounded-full overflow-hidden border border-border shadow-sm cursor-pointer hover:ring-2 hover:ring-primary"
+                                            onClick={() => fileRef.current?.click()}
+                                        >
+                                            <img
+                                                src={user?.image as string ?? defaultImgUrl}
+                                                alt="avatar-preview"
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition">
+                                                <Camera className="text-white h-4 w-4" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <Input
+                                        id="avatar"
+                                        type="file"
+                                        accept="image/*"
+                                        ref={fileRef}
+                                        onChange={(e) => handleImageUpload(e)}
+                                        className="hidden"
+                                    />
+                                </div>
+                            </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
                                 {[
                                     { key: 'apiUrl', label: 'API key OpenAI', type: 'password' },
                                     { key: 'company', label: 'Empresa' },
@@ -293,17 +327,6 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                         />
                                     </div>
                                 ))}
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="avatar" className="text-muted-foreground">Foto de perfil</Label>
-                                    <Input
-                                        id="avatar"
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => handleImageUpload(e)}
-                                        className="bg-background border border-border"
-                                    />
-                                </div>
 
                                 {/* URL Google Maps */}
                                 <div className="space-y-2 md:col-span-2">

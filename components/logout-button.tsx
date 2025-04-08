@@ -22,7 +22,7 @@ type LogoutButtonProps = {
   collapsed?: boolean
 }
 
-const   LogoutButton = ({ user, collapsed = false }: LogoutButtonProps) => {
+const LogoutButton = ({ user, collapsed = false }: LogoutButtonProps) => {
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -71,7 +71,7 @@ const   LogoutButton = ({ user, collapsed = false }: LogoutButtonProps) => {
         >
           {renderAvatar(28)}
           {!collapsed && (
-            <div className="ml-3 text-left">
+            <div className="ml-3 text-left overflow-hidden text-ellipsis whitespace-nowrap">
               <div className="text-sm font-medium">{user?.company}</div>
             </div>
           )}
@@ -79,7 +79,7 @@ const   LogoutButton = ({ user, collapsed = false }: LogoutButtonProps) => {
       </DropdownMenuTrigger>
 
       {/* side="right" */}
-      <DropdownMenuContent  align="start" className="w-56">
+      <DropdownMenuContent align="start" className="w-56">
         <DropdownMenuLabel className="flex items-center space-x-2">
           {renderAvatar(32)}
           <div className="flex flex-col">
