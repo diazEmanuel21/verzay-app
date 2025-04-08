@@ -22,7 +22,7 @@ type LogoutButtonProps = {
   collapsed?: boolean
 }
 
-const LogoutButton = ({ user, collapsed = false }: LogoutButtonProps) => {
+const   LogoutButton = ({ user, collapsed = false }: LogoutButtonProps) => {
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -38,11 +38,12 @@ const LogoutButton = ({ user, collapsed = false }: LogoutButtonProps) => {
   const renderAvatar = (size: number) => {
     if (user?.image) {
       return (
-        <Image
+        <img
           src={user.image}
           alt="Avatar"
           width={size}
           height={size}
+          onError={() => console.log('Error al cargar la imagen:', user.image)}
           className="rounded-full object-cover"
         />
       )
@@ -71,10 +72,7 @@ const LogoutButton = ({ user, collapsed = false }: LogoutButtonProps) => {
           {renderAvatar(28)}
           {!collapsed && (
             <div className="ml-3 text-left">
-              <div className="text-sm font-medium">{user?.name}</div>
-              <div className="text-xs text-muted-foreground">
-                {user?.email}
-              </div>
+              <div className="text-sm font-medium">{user?.company}</div>
             </div>
           )}
         </Button>
@@ -86,9 +84,7 @@ const LogoutButton = ({ user, collapsed = false }: LogoutButtonProps) => {
           {renderAvatar(32)}
           <div className="flex flex-col">
             <span className="text-sm font-medium">{user?.name ?? 'Usuario'}</span>
-            <span className="text-xs text-muted-foreground">
-              {user?.email ?? 'correo@correo.com'}
-            </span>
+
           </div>
         </DropdownMenuLabel>
 
@@ -115,7 +111,7 @@ const LogoutButton = ({ user, collapsed = false }: LogoutButtonProps) => {
 
         <DropdownMenuItem onClick={handleLogout} className="text-red-600">
           <LogOut className="mr-2 h-4 w-4" />
-          Log out
+          Salir
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
