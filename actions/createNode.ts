@@ -40,17 +40,31 @@ export async function CreateNode(form: createNodeflowSchemaType) {
 }
 
 // Método para editar un nodo
-export async function updateNode(nodeId: string, newMessage: string) {
-  if (!nodeId || !newMessage) {
-    throw new Error("Parámetros inválidos.");
+export async function updateNode(nodeId: string, newMessage?: string) {
+  try {
+    if (!nodeId) {
+      return {
+        success: false,
+        message: 'Parámetro "nodeId" es requerido.',
+      };
+    }
+
+    const updatedNode = await db.workflowNode.update({
+      where: { id: nodeId },
+      data: { message: newMessage ?? '' }, // Guarda string vacío si es null/undefined
+    });
+
+    return {
+      success: true,
+      message: 'Nodo actualizado con éxito.',
+      data: updatedNode,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: 'Error al actualizar el nodo' + error?.message || error,
+    };
   }
-
-  const updatedNode = await db.workflowNode.update({
-    where: { id: nodeId },
-    data: { message: newMessage },
-  });
-
-  return updatedNode;
 }
 
 export async function updateUrlNode(nodeId: string, url: string) {

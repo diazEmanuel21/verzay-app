@@ -403,6 +403,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
           </div>
           <div className="absolute right-1">
             <NodeActions
+              currentTypeAction={currentAction?.type as string}
               fileType={baseType}
               onDeleteFile={() => handleDeleteFile()}
               onDeleteNode={() => handleDeleteNode()}

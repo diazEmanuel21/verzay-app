@@ -7,20 +7,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { MoreHorizontal, FileTextIcon, Trash2 } from 'lucide-react';
+import { MoreHorizontal, FileTextIcon, Trash2, AlarmClock } from 'lucide-react';
 
 interface NodeActionsProps {
   onDeleteFile: () => void
   onDeleteNode: () => void
   fileType: string
+  currentTypeAction: string
 }
 
 export function NodeActions({
   onDeleteFile,
   onDeleteNode,
-  fileType
+  fileType,
+  currentTypeAction
 }: NodeActionsProps) {
   const [openConfirmDeleteNode, setOpenConfirmDeleteNode] = useState(false);
+  const isSeguimiento = currentTypeAction.startsWith('seguimiento-');
 
   return (
     <>
@@ -37,6 +40,13 @@ export function NodeActions({
             <DropdownMenuItem onClick={onDeleteFile}>
               <FileTextIcon />
               Eliminar archivo
+            </DropdownMenuItem>
+          }
+
+          {isSeguimiento &&
+            <DropdownMenuItem>
+              <AlarmClock />
+              Inactividad
             </DropdownMenuItem>
           }
 
