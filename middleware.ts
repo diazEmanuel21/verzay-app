@@ -8,7 +8,7 @@ const apiAuthPrefix = "/api/auth";
 
 // 🔐 Rutas protegidas por roles
 const protectedRoutes: Record<string, string[]> = {
-  "/flow": ["empresarial", "business"],
+  "/flow": ["empresarial", "business", "admin"],
   "/premium": ["empresarial", "business", "admin"]
 };
 
@@ -38,7 +38,6 @@ export default auth((req) => {
   );
 
   if (matchedProtectedRoute) {
-    debugger;
     const allowedRoles = protectedRoutes[matchedProtectedRoute];
     const hasRole = allowedRoles.includes(userRole as string);
 
