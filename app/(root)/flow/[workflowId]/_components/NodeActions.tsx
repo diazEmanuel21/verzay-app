@@ -13,25 +13,22 @@ interface NodeActionsProps {
   onDeleteFile: () => void
   onDeleteNode: () => void
   fileType: string
-  currentTypeAction: string
 }
 
 export function NodeActions({
   onDeleteFile,
   onDeleteNode,
   fileType,
-  currentTypeAction
 }: NodeActionsProps) {
   const [openConfirmDeleteNode, setOpenConfirmDeleteNode] = useState(false);
-  const isSeguimiento = currentTypeAction.startsWith('seguimiento-');
 
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
+          <Button variant="ghost">
             <span className="sr-only">Abrir menú</span>
-            <MoreHorizontal className="h-4 w-4" />
+            <MoreHorizontal className="h-4 w-4 m-0" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -40,13 +37,6 @@ export function NodeActions({
             <DropdownMenuItem onClick={onDeleteFile}>
               <FileTextIcon />
               Eliminar archivo
-            </DropdownMenuItem>
-          }
-
-          {isSeguimiento &&
-            <DropdownMenuItem>
-              <AlarmClock />
-              Inactividad
             </DropdownMenuItem>
           }
 

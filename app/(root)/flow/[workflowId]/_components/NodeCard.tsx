@@ -3,7 +3,7 @@
 import React, { ChangeEvent, useState, useTransition } from "react";
 import { useRouter } from 'next/navigation';
 import { User, WorkflowNode } from "@prisma/client";
-import { updateNode, deleteNode, updateUrlNode, updateDelayNode, deleteFileNode } from "@/actions/createNode";
+import { updateNode, deleteNode, updateUrlNode, updateDelayNode, deleteFileNode, updateInactivityNode } from "@/actions/createNode";
 import { ACCEPT_TYPES, baseActions, getAcceptTypeString, optimizeFile, seguimientoActions, validateFileType } from "../helpers";
 import { Action } from "../types";
 import { NodeActions } from "./NodeActions";
@@ -11,8 +11,8 @@ import { NodeActions } from "./NodeActions";
 import {
   Card,
   CardHeader,
-  CardTitle,
   CardFooter,
+  CardContent
 } from "@/components/ui/card";
 
 import { toast } from "sonner";
@@ -31,6 +31,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { GenericTextarea } from "@/components/shared/GenericTextarea";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 interface Props {
   workflowId: string;
   nodes: WorkflowNode;
@@ -47,7 +49,9 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const [isPending, startTransition] = useTransition();
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [inactivity, setInactivity] = useState(nodes.inactividad ?? false);
 
   const nodeType = nodes.tipo?.toLowerCase() as Action['type'];
   const baseType = nodeType.startsWith('seguimiento-')
@@ -68,6 +72,26 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const labelSegumientoCategory = isSeguimiento
     ? `Seguimiento ${currentAction?.label.replace('Seguimiento ', '')}`
     : currentAction?.label;
+
+  const handleInactivity = async (checked: boolean) => {
+    debugger;
+    if (loading) return;
+    setLoading(true);
+    setInactivity(checked);
+    const toastId = `update-inactivity`;
+
+    try {
+      const res = await updateInactivityNode(nodes.id, checked);
+      if (!res) return;
+      if (!res.success) return toast.error(res.message, { id: toastId });
+      toast.success(res.message, { id: toastId });
+    } catch (error) {
+      toast.error(`Server err: ${error}`, { id: toastId });
+    } finally {
+      setLoading(false);
+      router.refresh();
+    }
+  };
 
   const handleSave = () => {
     if (message !== nodes.message) {
@@ -115,7 +139,6 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
       });
     }
   };
-
 
   const handleDeleteFile = async () => {
     const toastId = `delete-${currentAction?.type}`;
@@ -391,42 +414,52 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   return (
     <>
       <div className="flex items-center justify-center">
-        <Card className="relative shadow-md border border-border rounded-lg min-w-[300px] max-w-[300px]">
-          {/* Badge tipo de mensaje */}
-          <div className="absolute -top-4 left-4 flex items-center space-x-2 bg-background border border-border rounded-md px-3 py-1 shadow-md">
-            {currentAction?.icon || (
-              <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />
-            )}
-            <span className="text-xs font-medium text-muted-foreground capitalize">
-              {`${isSeguimiento ? labelSegumientoCategory : currentAction?.label}` || "Tipo desconocido"}
-            </span>
-          </div>
-          <div className="absolute right-1">
-            <NodeActions
-              currentTypeAction={currentAction?.type as string}
-              fileType={baseType}
-              onDeleteFile={() => handleDeleteFile()}
-              onDeleteNode={() => handleDeleteNode()}
-            />
-          </div>
-          <CardHeader>
-            <CardTitle className="flex flex-col items-start justify-between text-left text-lg">
-              {renderContent()}
-              {baseType !== 'text' && baseType !== 'document' && baseType !== 'audio' &&
-                <div className="flex w-full mt-2">
-                  <GenericTextarea
-                    fileType={baseType}
-                    message={message}
-                    handleSave={handleSave}
-                    setIsEditing={setIsEditing}
-                    setMessage={handleChangeMessages}
-                    isPending={isPending}
-                    isEditing={isEditing}
-                  />
-                </div>
-              }
-            </CardTitle>
+        <Card className=" shadow-md border border-border rounded-lg min-w-[300px] max-w-[300px]">
+          <CardHeader className="relative">
+            {/* Badge tipo de mensaje */}
+            <div className="absolute -top-4 left-4 flex items-center space-x-2 bg-background border border-border rounded-md px-3 py-1 shadow-md">
+              {currentAction?.icon || (
+                <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />
+              )}
+              <span className="text-xs font-medium text-muted-foreground capitalize">
+                {`${isSeguimiento ? labelSegumientoCategory : currentAction?.label}` || "Tipo desconocido"}
+              </span>
+            </div>
+            <div className="absolute top-0 right-1">
+              <NodeActions
+                fileType={baseType}
+                onDeleteFile={() => handleDeleteFile()}
+                onDeleteNode={() => handleDeleteNode()}
+              />
+            </div>
           </CardHeader>
+          <CardContent>
+            {renderContent()}
+            {baseType !== 'text' && baseType !== 'document' && baseType !== 'audio' &&
+              <div className="flex w-full mt-2">
+                <GenericTextarea
+                  fileType={baseType}
+                  message={message}
+                  handleSave={handleSave}
+                  setIsEditing={setIsEditing}
+                  setMessage={handleChangeMessages}
+                  isPending={isPending}
+                  isEditing={isEditing}
+                />
+              </div>
+            }
+            {isSeguimiento &&
+              <div className="flex items-center gap-2 pt-4">
+                <Switch
+                  id="airplane-mode"
+                  checked={inactivity}
+                  onCheckedChange={handleInactivity}
+                  disabled={loading}
+                />
+                <Label htmlFor="inactividad-state">Inactividad</Label>
+              </div>
+            }
+          </CardContent>
           {isSeguimiento &&
             <>
               <Separator />

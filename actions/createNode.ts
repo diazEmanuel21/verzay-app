@@ -123,6 +123,34 @@ export async function updateDelayNode(nodeId: string, delay: string) {
   }
 }
 
+export async function updateInactivityNode(nodeId: string, inactividad: boolean) {
+  try {
+    if (!nodeId) {
+      return {
+        success: false,
+        message: 'Parámetros inválidos.'
+      }
+    };
+
+    const updatedNode = await db.workflowNode.update({
+      where: { id: nodeId },
+      data: { inactividad },
+    });
+
+    return {
+      success: true,
+      message: 'Seguimiento actualizado con éxito.',
+      data: updatedNode
+    }
+  } catch (error) {
+    console.error('Error update node', error);
+    return {
+      success: false,
+      message: 'Ocurrió un error al actualizar el seguimiento.',
+    };
+  }
+}
+
 // Método para eliminar un nodo
 export async function deleteNode(nodeId: string, workflowId: string) {
   try {
