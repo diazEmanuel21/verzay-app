@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Header from '@/components/shared/header';
 import { toast } from "sonner";
 import { getClientDataByUserId, updateClientDataByField, updateAbrirPhrase } from "@/actions/userClientDataActions";
+import { ACCEPT_TYPES, baseActions, getAcceptTypeString, optimizeFile, seguimientoActions, validateFileType } from "../app/(root)/flow/[workflowId]/helpers";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { z } from 'zod';
@@ -207,6 +208,58 @@ export const UserInformation = ({ userId }: { userId: string }) => {
         }
     };
 
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !userId) {
+          toast.error('No hay archivo seleccionado');
+          return;
+        }
+      
+        const toastId = toast.loading('Subiendo avatar...');
+        setLoadingField('image');
+      
+        try {
+          const content = await file.arrayBuffer();
+      
+          const plainFile = {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            content: Array.from(new Uint8Array(content))
+          };
+      
+          // Si tienes optimización (por ejemplo con sharp en backend o alguna lib en frontend)
+          const optimizedFile = await optimizeFile(plainFile); // 👈 debes tener esta función en tu proyecto
+          const optimizedBuffer = new Uint8Array(optimizedFile.buffer);
+          const blob = new Blob([optimizedBuffer], { type: optimizedFile.type });
+      
+          const formData = new FormData();
+          formData.append('file', blob); // usamos el blob optimizado
+          formData.append('userID', userId);
+          formData.append('workflowID', userId); // usamos el userId como workflowId para que no tengas que modificar backend
+      
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+      
+          if (!res.ok) throw new Error(await res.text());
+      
+          const { url } = await res.json();
+      
+          const result = await updateClientDataByField(userId, 'image', url);
+          if (!result.success) throw new Error(result.message);
+      
+          setUser(prev => prev ? { ...prev, image: url } : prev);
+          toast.success('Avatar actualizado', { id: toastId });
+      
+        } catch (error: any) {
+          toast.error(error?.message || 'Error al subir el avatar', { id: toastId });
+        } finally {
+          setLoadingField(null);
+        }
+      };
+
 
     return (
         <>
@@ -240,6 +293,17 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                         />
                                     </div>
                                 ))}
+
+<div className="space-y-2">
+  <Label htmlFor="avatar" className="text-muted-foreground">Foto de perfil</Label>
+  <Input
+    id="avatar"
+    type="file"
+    accept="image/*"
+    onChange={(e) => handleImageUpload(e)}
+    className="bg-background border border-border"
+  />
+</div>
 
                                 {/* URL Google Maps */}
                                 <div className="space-y-2 md:col-span-2">
