@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import authConfig from "./auth.config";
+import { Role } from "@prisma/client";
 
 const { auth } = NextAuth(authConfig);
 
@@ -8,34 +9,42 @@ const publicRoutes = ["/", "/prices"];
 const authRoutes = ["/login", "/register"];
 const apiAuthPrefix = "/api/auth";
 
+// 🔐 Rutas protegidas por roles
+const protectedRoutes: Record<string, string[]> = {
+  "/flow": ["empresarial", "business"],
+  "/premium": ["empresarial", "business", "admin"]
+};
+
 export default auth((req) => {
   const { nextUrl } = req;
+  const currentPath = nextUrl.pathname;
   const isLoggedIn = !!req.auth;
+  const userRole = req.auth?.user?.role as Role;
 
-  console.log({ isLoggedIn, path: nextUrl.pathname });
+  console.log({ isLoggedIn, currentPath, userRole });
 
-  // Permitir todas las rutas de API de autenticación
-  if (nextUrl.pathname.startsWith(apiAuthPrefix)) {
-    return NextResponse.next();
-  }
+  if (currentPath.startsWith(apiAuthPrefix)) return NextResponse.next();
+  if (publicRoutes.includes(currentPath)) return NextResponse.next();
 
-  // Permitir acceso a rutas públicas sin importar el estado de autenticación
-  if (publicRoutes.includes(nextUrl.pathname)) {
-    return NextResponse.next();
-  }
-
-  // Redirigir a /dashboard si el usuario está logueado y trata de acceder a rutas de autenticación
-  if (isLoggedIn && authRoutes.includes(nextUrl.pathname)) {
+  if (isLoggedIn && authRoutes.includes(currentPath)) {
     return NextResponse.redirect(new URL("/dashboard", nextUrl));
   }
 
-  // Redirigir a /login si el usuario no está logueado y trata de acceder a una ruta protegida
-  if (
-    !isLoggedIn &&
-    !authRoutes.includes(nextUrl.pathname) &&
-    !publicRoutes.includes(nextUrl.pathname)
-  ) {
+  if (!isLoggedIn && !authRoutes.includes(currentPath) && !publicRoutes.includes(currentPath)) {
     return NextResponse.redirect(new URL("/login", nextUrl));
+  }
+
+  const matchedProtectedRoute = Object.keys(protectedRoutes).find((route) =>
+    currentPath.startsWith(route)
+  );
+
+  if (matchedProtectedRoute) {
+    const allowedRoles = protectedRoutes[matchedProtectedRoute];
+    const hasRole = allowedRoles.includes(userRole);
+
+    if (!hasRole) {
+      return NextResponse.redirect(new URL("/credits", nextUrl));
+    }
   }
 
   return NextResponse.next();

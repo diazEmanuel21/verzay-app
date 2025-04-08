@@ -41,6 +41,7 @@ export const navLinks = [
     label: "Flujos",
     route: "/flow",
     icon: ChatBubbleLeftRightIcon,
+    premium: true
   },
   // {
   //   label: "Cuenta",

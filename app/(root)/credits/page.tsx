@@ -91,7 +91,7 @@ const CreditPage = () => {
             onCheckedChange={handleToggle}
           />
           <Label htmlFor="billing-toggle" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Anual <span className="text-indigo-600">(Hasta 30% OFF)</span>
+            Anual <span className="text-blue-600">(Hasta 30% OFF)</span>
           </Label>
         </div>
       </div>
@@ -104,16 +104,16 @@ const CreditPage = () => {
           return (
             <Card
               key={plan.id}
-              className={`flex flex-col justify-between shadow-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-colors ${plan.featured ? "border-2 border-indigo-600 dark:border-indigo-500" : ""
+              className={`flex flex-col justify-between shadow-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-colors ${plan.featured ? "border-2 border-blue-600 dark:border-blue-500" : ""
                 }`}
             >
               <CardHeader>
-                <CardTitle className={`text-lg font-semibold ${plan.featured ? "text-indigo-600 dark:text-indigo-400" : "text-gray-900 dark:text-white"
+                <CardTitle className={`text-lg font-semibold ${plan.featured ? "text-blue-600 dark:text-blue-400" : "text-gray-900 dark:text-white"
                   }`}>
                   {plan.name}
                 </CardTitle>
                 <div className="mt-4 flex items-baseline gap-x-2">
-                  <span className={`text-5xl font-bold ${plan.featured ? "text-indigo-600 dark:text-indigo-400" : "text-gray-900 dark:text-white"
+                  <span className={`text-5xl font-bold ${plan.featured ? "text-blue-600 dark:text-blue-400" : "text-gray-900 dark:text-white"
                     }`}>
                     ${price.toFixed(2)}
                   </span>
@@ -126,7 +126,7 @@ const CreditPage = () => {
                 <ul className="mt-6 space-y-4 text-sm text-gray-600 dark:text-gray-300">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-indigo-600 dark:text-indigo-400 mt-1" />
+                      <Check className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-1" />
                       {feature}
                     </li>
                   ))}
@@ -135,7 +135,7 @@ const CreditPage = () => {
                 <Button
                   variant={plan.featured ? "default" : "outline"}
                   className={`w-full mt-8 transition-colors ${plan.featured
-                      ? "bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white"
+                      ? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
                       : "border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                     }`}
                 >
