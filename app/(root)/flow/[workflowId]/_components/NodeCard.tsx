@@ -411,7 +411,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
           <CardHeader>
             <CardTitle className="flex flex-col items-start justify-between text-left text-lg">
               {renderContent()}
-              {baseType !== 'text' &&
+              {baseType !== 'text' && baseType !== 'document' && baseType !== 'audio' &&
                 <div className="flex w-full mt-2">
                   <GenericTextarea
                     fileType={baseType}
