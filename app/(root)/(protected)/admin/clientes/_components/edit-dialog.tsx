@@ -1,16 +1,23 @@
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { UserWithPausar } from "@/lib/types"
-import { ApiKey } from "@prisma/client"
+import { ApiKey, Role } from "@prisma/client"
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select"
 
 interface Props {
@@ -21,6 +28,7 @@ interface Props {
   apikeys: ApiKey[]
 }
 
+
 export const EditDialog = ({
   openEditDialog,
   setOpenEditDialog,
@@ -28,10 +36,13 @@ export const EditDialog = ({
   user,
   apikeys
 }: Props) => {
-  // Obtener el mensaje de apertura
-  const openMsg = user.pausar.find(p => p.tipo === 'abrir')?.mensaje || ''
+  const openMsg = user.pausar.find(p => p.tipo === 'abrir')?.mensaje || '';
+  const ROLES = Object.values(Role);
+  const ROLE_LABELS: Record<Role, string> = {
+    user: 'Usuario',
+    admin: 'Administrador'
+  }
 
-  // Campos del formulario
   const fields = [
     { id: "name", label: "Nombre", defaultValue: user.name },
     { id: "email", label: "Email", defaultValue: user.email },
@@ -44,8 +55,61 @@ export const EditDialog = ({
     { id: "lat", label: "Latitud", defaultValue: user.lat },
     { id: "lng", label: "Longitud", defaultValue: user.lng },
     { id: "mapsUrl", label: "Maps URL", defaultValue: user.mapsUrl },
-    { id: "apiKeyId", label: "Evo - API Key", defaultValue: user.apiKeyId },
+    { id: "apiKeyId", label: "Evo - API Key", defaultValue: user.apiKeyId }
   ]
+
+  const handleRenderField = (
+    id: string,
+    defaultValue: string | number | null | undefined
+  ) => {
+    switch (id) {
+      case 'apiKeyId':
+        return (
+          <Select name={id} defaultValue={defaultValue?.toString() ?? ""}>
+            <SelectTrigger className="col-span-3">
+              <SelectValue placeholder="Selecciona una API Key" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {apikeys.map(({ id, url }) => (
+                  <SelectItem key={id} value={id}>
+                    {url}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        )
+
+      case 'role':
+        return (
+          <Select name={id} defaultValue={defaultValue?.toString() ?? ""}>
+            <SelectTrigger className="col-span-3">
+              <SelectValue placeholder="Selecciona un rol" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {ROLES.map(role => (
+                  <SelectItem key={role} value={role}>
+                    {ROLE_LABELS[role]}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        )
+
+      default:
+        return (
+          <Input
+            id={id}
+            name={id}
+            defaultValue={defaultValue?.toString() ?? ""}
+            className="col-span-3"
+          />
+        )
+    }
+  }
 
   return (
     <Dialog open={openEditDialog} onOpenChange={setOpenEditDialog}>
@@ -63,33 +127,7 @@ export const EditDialog = ({
               {fields.map(({ id, label, defaultValue }) => (
                 <div className="grid grid-cols-4 items-center gap-4" key={id}>
                   <Label htmlFor={id} className="text-right">{label}</Label>
-                  
-                  {id === 'apiKeyId' ? (
-                    <Select 
-                      name={id}
-                      defaultValue={defaultValue?.toString() ?? ""}
-                    >
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Selecciona una API Key" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {apikeys.map(({ id, url }) => (
-                            <SelectItem key={id} value={id}>
-                              {url}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Input
-                      id={id}
-                      name={id}
-                      defaultValue={defaultValue?.toString() ?? ""}
-                      className="col-span-3"
-                    />
-                  )}
+                  {handleRenderField(id, defaultValue)}
                 </div>
               ))}
             </div>

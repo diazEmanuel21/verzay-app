@@ -22,9 +22,9 @@ export const EditDialog = ({
     <Dialog open={openEditDialog} onOpenChange={setOpenEditDialog}>
       <DialogContent >
         <DialogHeader>
-          <DialogTitle>Editar cliente</DialogTitle>
+          <DialogTitle>Editar conexión</DialogTitle>
           <DialogDescription>
-            {"Realiza cambios del cliente aquí. Guarda los cambios cuando termines."}
+            {"Realiza cambios de la conexión aquí. Guarda los cambios cuando termines."}
           </DialogDescription>
         </DialogHeader>
 
