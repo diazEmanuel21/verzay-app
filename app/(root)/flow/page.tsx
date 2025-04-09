@@ -8,6 +8,11 @@ import CreateWorflowDialog from './_components/CreateWorflowDialog';
 import WorkflowCard from './_components/WorkflowCard';
 import { GetWorkFlowforUser } from '@/actions/getWorkFlowforUser-action';
 import { currentUser } from '@/lib/auth';
+import { Workflow } from '@prisma/client';
+
+function hasWorkflow(result: { data?: Workflow[] }): result is { data: Workflow[] } {
+  return !!result.data;
+};
 
 const FlowPage = async () => {
   const user = await currentUser();
@@ -52,7 +57,8 @@ interface UserWorkflowsProps {
 }
 
 async function UserWorkflows({ userId }: UserWorkflowsProps) {
-  const workflows = await GetWorkFlowforUser(userId);
+  const resWorkflow = await GetWorkFlowforUser(userId);
+  const workflows = hasWorkflow(resWorkflow) ? resWorkflow.data : [];
 
   if (!workflows) {
     return (

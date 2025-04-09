@@ -9,7 +9,6 @@ const apiAuthPrefix = "/api/auth";
 // 🔐 Rutas protegidas por roles
 const protectedRoutes: Record<string, string[]> = {
   "/flow": ["empresarial", "business", "admin"],
-  "/premium": ["empresarial", "business", "admin"]
 };
 
 export default auth((req) => {

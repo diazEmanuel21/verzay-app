@@ -4,7 +4,7 @@ import React, { ChangeEvent, useState, useTransition } from "react";
 import { useRouter } from 'next/navigation';
 import { User, WorkflowNode } from "@prisma/client";
 import { updateNode, deleteNode, updateUrlNode, updateDelayNode, deleteFileNode, updateInactivityNode } from "@/actions/createNode";
-import { ACCEPT_TYPES, baseActions, getAcceptTypeString, optimizeFile, seguimientoActions, validateFileType } from "../helpers";
+import { ACCEPT_TYPES, baseActions, convertToSeconds, getAcceptTypeString, optimizeFile, seguimientoActions, validateFileType } from "../helpers";
 import { Action } from "../types";
 import { NodeActions } from "./NodeActions";
 
@@ -74,7 +74,6 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     : currentAction?.label;
 
   const handleInactivity = async (checked: boolean) => {
-    debugger;
     if (loading) return;
     setLoading(true);
     setInactivity(checked);
@@ -277,7 +276,9 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     if (parseInt(delay) === 0) return;
 
     try {
-      const res = await updateDelayNode(nodes.id, delay);
+      const delayInSeconds = convertToSeconds(delay);
+      const res = await updateDelayNode(nodes.id, delayInSeconds.toString());
+
       if (!res) return toast.error('404');
       if (!res.success) return toast.error(res?.message);
 
@@ -464,7 +465,12 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
             <>
               <Separator />
               <CardFooter className="pt-2">
-                <TimeInput className="text-xs text-muted-foreground" onChange={handleTimeChange} onBlur={handleOnBlurTime} currentValue={nodes.delay || 'minutes-0'} />
+                <TimeInput
+                  className="text-xs text-muted-foreground"
+                  onChange={handleTimeChange}
+                  onBlur={handleOnBlurTime}
+                  currentValue={nodes.delay || 'minutes-0'}
+                />
               </CardFooter>
             </>
           }
