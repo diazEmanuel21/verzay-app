@@ -277,6 +277,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
 
     try {
       const delayInSeconds = convertToSeconds(delay);
+
       const res = await updateDelayNode(nodes.id, delayInSeconds.toString());
 
       if (!res) return toast.error('404');

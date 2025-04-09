@@ -7,7 +7,7 @@ const unitToSeconds: Record<TimeUnit, number> = {
   days: 86400,
 };
 
-export function convertToSeconds(delay: string): number {
+export function convertToSeconds(delay: string): string {
   const [unit, valueStr] = delay.split('-');
   const value = parseInt(valueStr, 10);
 
@@ -15,6 +15,9 @@ export function convertToSeconds(delay: string): number {
     throw new Error(`Formato inválido: ${delay}`);
   }
 
-  debugger;
-  return value * unitToSeconds[unit as TimeUnit];
+  const seconds = value * unitToSeconds[unit as TimeUnit];
+  const newDelay = `${unit}-${seconds}`
+
+
+  return newDelay;
 }
