@@ -19,6 +19,7 @@ type EditableFields = {
     apiUrl: string;
     company: string;
     notificationNumber: string;
+    del_seguimiento: string;
     lat: string;
     lng: string;
     mapsUrl: string;
@@ -33,6 +34,7 @@ const clientSchema = z.object({
     apiUrl: z.string().min(10).max(200),
     company: z.string().max(50).min(3, { message: 'La empresa debe tener al menos 3 caracteres' }),
     notificationNumber: z.string().min(7).max(15),
+    del_seguimiento: z.string().min(3).max(45),
     lat: z.string().optional(),
     lng: z.string().optional(),
     mapsUrl: z.string().url({ message: 'La URL de Google Maps no es válida' }),
@@ -54,23 +56,26 @@ export const UserInformation = ({ userId }: { userId: string }) => {
     // ============================
     // Cargar datos de cliente
     // ============================
-    useEffect(() => {
-        if (!userId) return;
+    const fetchClientData = async () => {
+        if (!userId) return toast.error('El usuario no existe.');
 
-        const fetchClientData = async () => {
+        try {
             const result = await getClientDataByUserId(userId);
-            if (!result.success || !result.data) {
-                toast.error(result.message || 'Error al cargar los datos');
-                return;
-            }
+            if (!result) return;
+            if (!result.success || !result.data) return toast.error(result.message || 'Error al cargar los datos.');
+            if (Object.keys(result.data).length === 0) return toast.error('No se encontraron datos asociados al usuario.');
 
             const data = result.data;
             const openMsg = data.pausar.filter(p => p.tipo === 'abrir')[0]?.mensaje || '';
-
             setUser({ ...data, openMsg });
             setOriginalUser({ ...data, openMsg });
-        };
 
+        } catch (error) {
+            toast.error('Error al obtener data.' + error);
+        }
+    };
+
+    useEffect(() => {
         fetchClientData();
     }, [userId]);
 
@@ -312,6 +317,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                     { key: 'company', label: 'Empresa' },
                                     { key: 'notificationNumber', label: 'Número de notificación' },
                                     { key: 'openMsg', label: 'Frase de reactivación' },
+                                    { key: 'del_seguimiento', label: 'Eliminar seguimiento' },
                                 ].map(({ key, label, type }) => (
                                     <div key={key} className="space-y-2">
                                         <Label htmlFor={key} className="text-muted-foreground">{label}</Label>
@@ -319,7 +325,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                             id={key}
                                             name={key}
                                             type={type || 'text'}
-                                            value={user[key as keyof EditableFields]}
+                                            value={user[key as keyof EditableFields] as string}
                                             disabled={loadingField === key}
                                             onChange={(e) => handleChange(key as keyof UserWithPausar, e.target.value)}
                                             onBlur={() => handleBlur(key as keyof UserWithPausar)}
@@ -356,7 +362,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                             id={coord}
                                             name={coord}
                                             type="text"
-                                            value={user[coord as keyof EditableFields]}
+                                            value={user[coord as keyof EditableFields] as string}
                                             disabled
                                             readOnly
                                             className="bg-muted border border-border text-muted-foreground cursor-not-allowed"

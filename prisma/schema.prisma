@@ -53,7 +53,7 @@ model Session {
 model Pausar {
   userId      String
   mensaje     String   @default("Fue un gusto ayudarte.")
-  tipo        String
+  tipo        String   @default("abrir")
   baseurl     String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
