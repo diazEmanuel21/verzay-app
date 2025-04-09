@@ -17,7 +17,7 @@ import {
 
 import ThemeSwitcher from '../custom/ThemeSwitcher';
 import LogoutButton from '../logout-button';
-import { Crown } from 'lucide-react';
+import { PremiumModule } from './PremiumModule';
 
 interface AppSidebarProps {
   user: User
@@ -82,7 +82,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   {label}
                 </span>
                 {premium && (
-                  <Crown className="h-3 w-3 text-yellow-400" />
+                  <PremiumModule/>
                 )}
               </Link>
             );

@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { CreateNode } from "@/actions/createNode";
-import { Workflow } from "@prisma/client";
+import { Role, Workflow } from "@prisma/client";
 import { baseActions, seguimientoActions } from "../helpers";
 import { Action } from '../types';
 
@@ -18,32 +18,14 @@ import {
     CollapsibleContent,
 } from "@/components/ui/collapsible"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { ActionPopoverButton } from "./ActionPopoverButton";
 
 interface PropsCreateNodeComponent {
     workflowId: Workflow['id'];
+    role: Role;
 };
 
-const ActionButton = ({ 
-    action, 
-    onClick, 
-    disabled 
-}: { 
-    action: Action; 
-    onClick: () => void; 
-    disabled: boolean 
-}) => (
-    <Button
-        variant="outline"
-        onClick={onClick}
-        className="flex items-center justify-start gap-2 text-sm w-full"
-        disabled={disabled}
-    >
-        {action.icon}
-        {action.label}
-    </Button>
-);
-
-export const CreateNodeComponent = ({ workflowId }: PropsCreateNodeComponent) => {
+export const CreateNodeComponent = ({ workflowId, role }: PropsCreateNodeComponent) => {
     const [open, setOpen] = useState(false);
     const [isOpenCollapse, setIsOpenCollapse] = useState(false);
 
@@ -108,7 +90,7 @@ export const CreateNodeComponent = ({ workflowId }: PropsCreateNodeComponent) =>
                     className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all"
                 >
                     Agregar acción
-                    <FilePlus2/>
+                    <FilePlus2 />
                 </Button>
             </PopoverTrigger>
 
@@ -117,22 +99,24 @@ export const CreateNodeComponent = ({ workflowId }: PropsCreateNodeComponent) =>
 
                 <div className="flex flex-col gap-2">
                     {baseActions.map((action) => (
-                        <ActionButton
+                        <ActionPopoverButton
                             key={action.type}
                             action={action}
                             onClick={() => handleActionSelect(action.type)}
                             disabled={isPending}
+                            role={role}
                         />
                     ))}
-                    
+
                     <Collapsible open={isOpenCollapse} onOpenChange={setIsOpenCollapse}>
                         <CollapsibleContent className="ml-2 space-y-2">
                             {seguimientoActions.map((action) => (
-                                <ActionButton
+                                <ActionPopoverButton
                                     key={action.type}
                                     action={action}
                                     onClick={() => handleActionSelect(action.type)}
                                     disabled={isPending}
+                                    role={role}
                                 />
                             ))}
                         </CollapsibleContent>

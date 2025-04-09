@@ -31,7 +31,7 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
   return (
     <div className='flex flex-col items-center min-h-screen'>
       <div className='absolute top-3 right-2'>
-        <CreateNodeComponent workflowId={workflowId} />
+        <CreateNodeComponent workflowId={workflowId} role={user?.role} />
       </div>
 
       {nodes.length > 0 ? (
@@ -40,7 +40,7 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
             <NodeCard key={nodes.id} nodes={nodes} workflowId={workflow.id} user={user} />
           ))}
           <div className='flex items-center justify-center'>
-            <CreateNodeComponent workflowId={workflowId} />
+            <CreateNodeComponent workflowId={workflowId} role={user?.role} />
           </div>
         </div>
 
