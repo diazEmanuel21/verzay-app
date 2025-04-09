@@ -15,6 +15,7 @@ model User {
   emailVerified      DateTime?
   image              String?
   role               Role            @default(user)
+  plan               Plan            @default(pymes)
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
   apiUrl             String          @default("https://api.openAI.co")
@@ -175,6 +176,12 @@ model seguimientos {
 enum Role {
   user
   admin
+  empresarial
+  business
+  pymes
+}
+
+enum Plan {
   empresarial
   business
   pymes
