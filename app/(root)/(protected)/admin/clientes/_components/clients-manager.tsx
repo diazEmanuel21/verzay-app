@@ -44,6 +44,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys }: Props) => {
             password: formData.get('password') as string,
             openingPhrase: 'Fue un gusto ayudarle.',
             role: 'user',
+            del_seguimiento: 'Estamos para servirle.',
             apiUrl: 'https://api.openAI.co',
             company: 'Nombre empresa',
             notificationNumber: '0000000000',
