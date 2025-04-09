@@ -24,7 +24,8 @@ model User {
   mapsUrl            String          @default("https://maps.google.com/?q=0,0")
   notificationNumber String          @default("0000000000")
   openingPhrase      String?         @default("DEPRECATED")
-  apiKeyId           String?
+  apiKeyId           String?          
+  del_seguimiento    String?         @default("Estamos para servirle.")
 
   accounts           Account[]
   apiKey             ApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
