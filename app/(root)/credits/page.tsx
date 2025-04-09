@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -104,26 +104,29 @@ const CreditPage = () => {
           return (
             <Card
               key={plan.id}
-              className={`flex flex-col justify-between shadow-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-colors ${plan.featured ? "border-2 border-blue-600 dark:border-blue-500" : ""
+              className={`flex flex-col h-full shadow-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-colors ${plan.featured ? "border-2 border-blue-600 dark:border-blue-500" : ""
                 }`}
             >
               <CardHeader>
-                <CardTitle className={`text-lg font-semibold ${plan.featured ? "text-blue-600 dark:text-blue-400" : "text-gray-900 dark:text-white"
-                  }`}>
+                <CardTitle
+                  className={`text-lg font-semibold ${plan.featured ? "text-blue-600 dark:text-blue-400" : "text-gray-900 dark:text-white"
+                    }`}
+                >
                   {plan.name}
                 </CardTitle>
                 <div className="mt-4 flex items-baseline gap-x-2">
-                  <span className={`text-5xl font-bold ${plan.featured ? "text-blue-600 dark:text-blue-400" : "text-gray-900 dark:text-white"
-                    }`}>
+                  <span
+                    className={`text-5xl font-bold ${plan.featured ? "text-blue-600 dark:text-blue-400" : "text-gray-900 dark:text-white"
+                      }`}
+                  >
                     ${price.toFixed(2)}
                   </span>
                   <span className="text-sm text-gray-500 dark:text-gray-400">{period}</span>
                 </div>
               </CardHeader>
 
-              <CardContent>
-                <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">{plan.description}</p>
-                <ul className="mt-6 space-y-4 text-sm text-gray-600 dark:text-gray-300">
+              <CardContent className="flex-1 flex flex-col justify-between">
+                <ul className="space-y-4 text-sm text-gray-600 dark:text-gray-300">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-2">
                       <Check className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-1" />
@@ -131,18 +134,21 @@ const CreditPage = () => {
                     </li>
                   ))}
                 </ul>
+              </CardContent>
 
+              <CardFooter>
                 <Button
                   variant={plan.featured ? "default" : "outline"}
-                  className={`w-full mt-8 transition-colors ${plan.featured
+                  className={`w-full transition-colors ${plan.featured
                       ? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
                       : "border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                     }`}
                 >
                   Empezar ahora
                 </Button>
-              </CardContent>
+              </CardFooter>
             </Card>
+
           );
         })}
       </div>
