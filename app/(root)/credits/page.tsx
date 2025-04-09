@@ -77,9 +77,6 @@ const CreditPage = () => {
         <p className="mt-4 text-4xl font-bold text-gray-900 dark:text-white">
           Elige el plan ideal para tu negocio
         </p>
-        <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
-          Automatiza tus ventas y atención al cliente con nuestras soluciones de inteligencia artificial. Planes flexibles para cada etapa de tu negocio.
-        </p>
 
         {/* Toggle Switch */}
         <div className="flex items-center justify-center mt-8 space-x-4">
@@ -138,15 +135,22 @@ const CreditPage = () => {
               </CardContent>
 
               <CardFooter>
-                <Button
-                  variant={plan.featured ? "default" : "outline"}
-                  className={`w-full transition-colors ${plan.featured
-                      ? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
-                      : "border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
-                    }`}
+                <a
+                  href={plan.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full"
                 >
-                  Empezar ahora
-                </Button>
+                  <Button
+                    variant={plan.featured ? "default" : "outline"}
+                    className={`w-full transition-colors ${plan.featured
+                        ? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
+                        : "border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                      }`}
+                  >
+                    Empezar ahora
+                  </Button>
+                </a>
               </CardFooter>
             </Card>
 
