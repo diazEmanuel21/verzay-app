@@ -1,11 +1,9 @@
 import {
-  HomeIcon,
   ViewfinderCircleIcon,
   SparklesIcon,
-  UserIcon,
   UsersIcon,
-  ShoppingBagIcon,
   ChatBubbleLeftRightIcon,
+  ChatBubbleBottomCenterTextIcon,
   ClipboardDocumentListIcon,
   ShieldCheckIcon
 } from "@heroicons/react/24/solid";
@@ -43,19 +41,25 @@ export const navLinks = [
     icon: ChatBubbleLeftRightIcon,
     premium: true
   },
-  // {
-  //   label: "Cuenta",
-  //   route: "/profile",
-  //   icon: UserIcon,
-  // },
   {
     label: "Leads",
     route: "/sessions",
     icon: UsersIcon,
   },
+  {
+    label: "Respuestas rapidas",
+    route: "/auto-replies",
+    icon: ChatBubbleBottomCenterTextIcon,
+    premium: true
+  },
   // {
   //   label: "Planes",
   //   route: "/credits",
   //   icon: ShoppingBagIcon,
+  // },
+  // {
+  //   label: "Cuenta",
+  //   route: "/profile",
+  //   icon: UserIcon,
   // },
 ];

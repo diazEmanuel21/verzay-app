@@ -1,21 +1,32 @@
-"use server"
+"use server";
 
-import { currentUser } from "@/lib/auth";
-import { db } from "@/lib/db"   
+import { db } from "@/lib/db";
+import { Workflow } from "@prisma/client";
 
+interface GetWorkFlowResponse {
+    success: boolean;
+    data?: Workflow[];
+    error?: string;
+}
 
-export async function GetWorkFlowforUser(userId?: string) {
-
-    if(!userId){
-        throw new Error("Autenticación.")
+export async function GetWorkFlowforUser(userId?: string): Promise<GetWorkFlowResponse> {
+    if (!userId) {
+        return { success: false, error: "No autenticado." };
     }
-    
-    return db.workflow.findMany({
-        where: {
-            userId,
-        },
-        orderBy: {
-            createdAt: "asc"
-        }
-    })
+
+    try {
+        const workflows = await db.workflow.findMany({
+            where: {
+                userId,
+            },
+            orderBy: {
+                createdAt: "asc",
+            },
+        });
+
+        return { success: true, data: workflows };
+    } catch (error) {
+        console.error("Error al obtener los workflows:", error);
+        return { success: false, error: "Hubo un problema al obtener los workflows." };
+    }
 }

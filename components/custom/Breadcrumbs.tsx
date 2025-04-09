@@ -22,6 +22,7 @@ const breadcrumbLabels: Record<string, string> = {
   tools: 'herramientas',
   dashboard: 'conexiones',
   workflow: 'workflow',
+  'auto-replies': 'Respuestas rápidas',
 };
 
 export const Breadcrumbs = () => {
