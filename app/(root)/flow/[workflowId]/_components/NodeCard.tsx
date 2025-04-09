@@ -53,8 +53,6 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const [isDragging, setIsDragging] = useState(false);
   const [inactivity, setInactivity] = useState(nodes.inactividad ?? false);
 
-  const delayTime = nodes.delay || 'minutes-0';
-  console.log(delayTime);
   const nodeType = nodes.tipo?.toLowerCase() as Action['type'];
   const baseType = nodeType.startsWith('seguimiento-')
     ? nodeType.split('-')[1] as Action['type']
@@ -418,7 +416,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     <>
       <div className="flex items-center justify-center">
         <Card className=" shadow-md border border-border rounded-lg min-w-[300px] max-w-[300px]">
-          <CardHeader className="relative flex items-center justify-center">
+          <CardHeader className="relative flex items-center">
             {/* Badge tipo de mensaje */}
             <div className="absolute -top-4 flex items-center space-x-2 bg-background border border-border rounded-md px-3 py-1 shadow-md">
               {currentAction?.icon || (
@@ -471,7 +469,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
                   className="text-xs text-muted-foreground"
                   onChange={handleTimeChange}
                   onBlur={handleOnBlurTime}
-                  currentValue={delayTime}
+                  currentValue={nodes.delay || 'minutes-0'}
                 />
               </CardFooter>
             </>

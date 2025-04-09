@@ -15,5 +15,6 @@ export function convertToSeconds(delay: string): number {
     throw new Error(`Formato inválido: ${delay}`);
   }
 
+  debugger;
   return value * unitToSeconds[unit as TimeUnit];
 }
