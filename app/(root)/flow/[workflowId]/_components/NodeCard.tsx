@@ -53,6 +53,8 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const [isDragging, setIsDragging] = useState(false);
   const [inactivity, setInactivity] = useState(nodes.inactividad ?? false);
 
+  const delayTime = nodes.delay || 'minutes-0';
+  console.log(delayTime);
   const nodeType = nodes.tipo?.toLowerCase() as Action['type'];
   const baseType = nodeType.startsWith('seguimiento-')
     ? nodeType.split('-')[1] as Action['type']
@@ -309,10 +311,10 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
       return (
         <div className="flex items-center w-full rounded">
           {baseType === 'image' && (
-            <img src={nodes.url!} alt="Contenido del nodo" className="rounded-md w-full h-auto max-h-20 object-contain" />
+            <img src={nodes.url!} alt="Contenido del nodo" className="rounded-md w-full h-auto object-contain" />
           )}
           {baseType === 'video' && (
-            <video src={nodes.url!} controls className="rounded-md w-full h-auto max-h-20" />
+            <video src={nodes.url!} controls className="rounded-md w-full h-auto" />
           )}
           {baseType === 'audio' && (
             <audio src={nodes.url!} controls className="w-full" />
@@ -416,9 +418,9 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     <>
       <div className="flex items-center justify-center">
         <Card className=" shadow-md border border-border rounded-lg min-w-[300px] max-w-[300px]">
-          <CardHeader className="relative">
+          <CardHeader className="relative flex items-center justify-center">
             {/* Badge tipo de mensaje */}
-            <div className="absolute -top-4 left-4 flex items-center space-x-2 bg-background border border-border rounded-md px-3 py-1 shadow-md">
+            <div className="absolute -top-4 flex items-center space-x-2 bg-background border border-border rounded-md px-3 py-1 shadow-md">
               {currentAction?.icon || (
                 <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />
               )}
@@ -469,7 +471,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
                   className="text-xs text-muted-foreground"
                   onChange={handleTimeChange}
                   onBlur={handleOnBlurTime}
-                  currentValue={nodes.delay || 'minutes-0'}
+                  currentValue={delayTime}
                 />
               </CardFooter>
             </>

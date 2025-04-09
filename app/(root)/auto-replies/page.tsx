@@ -19,7 +19,7 @@ const AutoRepliesPage = async () => {
     const resWorkflow = await GetWorkFlowforUser(user.id);
     const workflows = hasWorkflow(resWorkflow) ? resWorkflow.data : [];
 
-    if (user) return <h1>En construcción...</h1>
+    // if (user) return <h1>En construcción...</h1>
 
     return (
         <Suspense fallback={<SkeletonAutoReplies />}>

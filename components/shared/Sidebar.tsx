@@ -52,7 +52,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
       {/* CONTENT */}
       <SidebarContent className="flex-1 flex flex-col gap-2">
         <SidebarGroup title="Menú">
-          {navLinks.map(({ route, icon: Icon, label, adminOnly, premium }) => {
+          {navLinks.map(({ route, icon: Icon, label, adminOnly, requiresPremium }) => {
             if (adminOnly && user.role !== 'admin') return null;
 
             const isActive = pathname === route || (route !== '/' && pathname.startsWith(route));
@@ -81,7 +81,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   <Icon className={`${isActive ? 'invert brightness-200' : ''} h-5`} />
                   {label}
                 </span>
-                {premium && (
+                {requiresPremium && (
                   <PremiumModule/>
                 )}
               </Link>
