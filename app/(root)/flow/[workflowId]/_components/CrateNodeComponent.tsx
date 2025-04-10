@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { CreateNode } from "@/actions/createNode";
-import { Role, Workflow } from "@prisma/client";
+import { Plan, Workflow } from "@prisma/client";
 import { baseActions, seguimientoActions } from "../helpers";
 import { Action } from '../types';
 
@@ -22,10 +22,10 @@ import { ActionPopoverButton } from "./ActionPopoverButton";
 
 interface PropsCreateNodeComponent {
     workflowId: Workflow['id'];
-    role: Role;
+    plan: Plan;
 };
 
-export const CreateNodeComponent = ({ workflowId, role }: PropsCreateNodeComponent) => {
+export const CreateNodeComponent = ({ workflowId, plan }: PropsCreateNodeComponent) => {
     const [open, setOpen] = useState(false);
     const [isOpenCollapse, setIsOpenCollapse] = useState(false);
 
@@ -104,7 +104,7 @@ export const CreateNodeComponent = ({ workflowId, role }: PropsCreateNodeCompone
                             action={action}
                             onClick={() => handleActionSelect(action.type)}
                             disabled={isPending}
-                            role={role}
+                            plan={plan}
                         />
                     ))}
 
@@ -116,7 +116,7 @@ export const CreateNodeComponent = ({ workflowId, role }: PropsCreateNodeCompone
                                     action={action}
                                     onClick={() => handleActionSelect(action.type)}
                                     disabled={isPending}
-                                    role={role}
+                                    plan={plan}
                                 />
                             ))}
                         </CollapsibleContent>

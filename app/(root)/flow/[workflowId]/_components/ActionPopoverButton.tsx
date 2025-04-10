@@ -1,25 +1,25 @@
 import { Action } from '../types';
 import { Button } from "@/components/ui/button";
 import { PremiumModule } from "@/components/shared/PremiumModule";
-import { Role } from '@prisma/client';
+import { Plan } from '@prisma/client';
 import { useRouter } from 'next/navigation';
 
 interface actionpopover {
     action: Action;
     onClick: () => void;
     disabled: boolean;
-    role: Role;
+    plan: Plan;
 }
 
 export const ActionPopoverButton = ({
     action,
     onClick,
     disabled,
-    role
+    plan
 }: actionpopover) => {
     const router = useRouter();
     const isSeguimiento = action.type === 'seguimiento' || action.type.startsWith('seguimiento-');
-    const isPremium = role === 'empresarial';
+    const isPremium = plan === 'empresarial';
 
     const handleSeguimiento = () => {
         if (isSeguimiento && !isPremium) return router.push('/credits');
