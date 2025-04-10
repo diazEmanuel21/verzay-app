@@ -45,11 +45,6 @@ export const MainAutoReplies = ({ user, Workflows }: Props) => {
 
   return (
     <div className="flex flex-col items-center justify-center">
-      <h1>USUARIO</h1>
-      {JSON.stringify(user)}
-      <h1>FLUJOS</h1>
-      {JSON.stringify(Workflows)}
-
       <Card className="w-[350px]">
         <CardHeader>
           <CardTitle>Crear respuesta rapida</CardTitle>
@@ -62,7 +57,7 @@ export const MainAutoReplies = ({ user, Workflows }: Props) => {
                 <Label htmlFor="phrase">Palabra para ejecutar respuesta rapida <strong>(Obligatorio)</strong></Label>
                 <Input
                   id="phrase"
-                  placeholder="Ya le envío los bonais"
+                  placeholder="Fue un gusto."
                   value={phrase}
                   onChange={(e) => setPhrase(e.target.value)}
                 />
