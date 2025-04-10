@@ -75,7 +75,7 @@ export const MainAutoReplies = ({ user, Workflows }: Props) => {
       if (existingRR) {
         res = await updateRR(existingRR.id, { mensaje: phrase });
       } else {
-        res = await createRR({ workflowId, mensaje: phrase });
+        res = await createRR({ workflowId, mensaje: phrase, userId: user.id });
       }
 
       if (!res.success) {
