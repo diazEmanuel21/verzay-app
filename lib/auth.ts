@@ -25,7 +25,8 @@ export async function currentUser(request?: Request) {
             notificationNumber: true,
             apiUrl: true,
             apiKey: true,
-            image: true
+            image: true,
+            plan: true,
             // Solo selecciona los campos necesarios
         },
     });

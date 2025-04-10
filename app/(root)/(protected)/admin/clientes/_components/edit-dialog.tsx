@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { UserWithPausar } from "@/lib/types"
-import { ApiKey, Role } from "@prisma/client"
+import { ApiKey, Plan, Role } from "@prisma/client"
 import {
   Select,
   SelectContent,
@@ -41,16 +41,21 @@ export const EditDialog = ({
   const ROLE_LABELS: Record<Role, string> = {
     user: 'Usuario',
     admin: 'Administrador',
+  };
+
+  const PLANS = Object.values(Plan);
+  const PLAN_LABELS: Record<Plan, string> = {
     business: 'Business',
     empresarial: 'Empresarial',
     pymes: 'Pymes'
-  }
+  };
 
   const fields = [
     { id: "name", label: "Nombre", defaultValue: user.name },
     { id: "email", label: "Email", defaultValue: user.email },
     { id: "password", label: "Contraseña", defaultValue: user.password },
     { id: "role", label: "Rol", defaultValue: user.role },
+    { id: "plan", label: "Plan", defaultValue: user.plan },
     { id: "apiUrl", label: "Apikey OpenIA", defaultValue: user.apiUrl },
     { id: "company", label: "Empresa", defaultValue: user.company },
     { id: "notificationNumber", label: "Teléfono Notificación", defaultValue: user.notificationNumber },
@@ -95,6 +100,23 @@ export const EditDialog = ({
                 {ROLES.map(role => (
                   <SelectItem key={role} value={role}>
                     {ROLE_LABELS[role]}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        )
+      case 'plan':
+        return (
+          <Select name={id} defaultValue={defaultValue?.toString() ?? ""}>
+            <SelectTrigger className="col-span-3">
+              <SelectValue placeholder="Selecciona un rol" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {PLANS.map(plan => (
+                  <SelectItem key={plan} value={plan}>
+                    {PLAN_LABELS[plan]}
                   </SelectItem>
                 ))}
               </SelectGroup>

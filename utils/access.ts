@@ -16,13 +16,10 @@ export function canAccessRoute({
   userPlan: string;
 }) {
   const link = getRouteAccess(route);
-  if (!link) return true; // rutas públicas
+  if (!link) return { allowed: true };
 
-  if (link.adminOnly && userRole !== 'admin') return false;
- 
-  if (link.allowedRoles && !link.allowedRoles.includes(userRole)) return false;
+  if (link.adminOnly && userRole !== 'admin') return { allowed: false, reason: 'adminOnly' };
+  if (link.allowedPlans && !link.allowedPlans.includes(userPlan)) return { allowed: false, reason: 'invalidPlan' };
 
-  if (link.requiresPremium && userPlan !== 'premium') return false;
-
-  return true;
+  return { allowed: true };
 }

@@ -18,6 +18,8 @@ import {
 import ThemeSwitcher from '../custom/ThemeSwitcher';
 import LogoutButton from '../logout-button';
 import { PremiumModule } from './PremiumModule';
+import { canAccessRoute, getRouteAccess } from '@/utils/access';
+import { toast } from 'sonner';
 
 interface AppSidebarProps {
   user: User
@@ -51,43 +53,61 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
       {/* CONTENT */}
       <SidebarContent className="flex-1 flex flex-col gap-2">
+
         <SidebarGroup title="Menú">
-          {navLinks.map(({ route, icon: Icon, label, adminOnly, requiresPremium }) => {
-            if (adminOnly && user.role !== 'admin') return null;
+          {navLinks
+            .filter(link => link.showInSidebar)
+            .filter(link => {
+              const access = getRouteAccess(link.route);
+              // Mostrar solo si no es adminOnly o el usuario es admin
+              return !access?.adminOnly || user.role === 'admin';
+            })
+            .map((link) => {
+              const { route, icon: Icon, label, requiresPremium } = link;
 
-            const isActive = pathname === route || (route !== '/' && pathname.startsWith(route));
+              const isActive =
+                pathname === route || (route !== '/' && pathname.startsWith(route));
 
-            const handleClick = (e: React.MouseEvent) => {
-              if (route === '/flow') {
-                const allowedRoles = ['empresarial', 'business'];
-                if (!allowedRoles.includes(user.role)) {
+              const handleClick = (e: React.MouseEvent) => {
+                const access = getRouteAccess(route);
+                const canIget = canAccessRoute({
+                  route,
+                  userRole: user.role,
+                  userPlan: user.plan,
+                });
+                // Validación de acceso por plan/admin (pero solo redirige, no oculta)
+                if (
+                  access &&
+                  !canIget.allowed
+                ) {
                   e.preventDefault();
+                  toast.info("Acceso limitado. Actualiza tu plan para desbloquear esta función premium.");
                   router.push('/credits');
                 }
-              }
-            };
+              };
 
-            return (
-              <Link
-                key={route}
-                href={route}
-                onClick={handleClick}
-                className={`flex items-center justify-between gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${isActive
-                  ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white'
-                  : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                  }`}
-              >
-                <span className="flex items-center gap-1">
-                  <Icon className={`${isActive ? 'invert brightness-200' : ''} h-5`} />
-                  {label}
-                </span>
-                {requiresPremium && (
-                  <PremiumModule/>
-                )}
-              </Link>
-            );
-          })}
+              return (
+                <Link
+                  key={route}
+                  href={route}
+                  onClick={handleClick}
+                  className={`flex items-center justify-between gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${isActive
+                    ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white'
+                    : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                    }`}
+                >
+                  <span className="flex items-center gap-1">
+                    <Icon
+                      className={`${isActive ? 'invert brightness-200' : ''} h-5`}
+                    />
+                    {label}
+                  </span>
+                  {requiresPremium && <PremiumModule />}
+                </Link>
+              );
+            })}
         </SidebarGroup>
+
       </SidebarContent>
 
       {/* FOOTER */}

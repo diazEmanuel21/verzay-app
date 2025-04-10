@@ -1,9 +1,21 @@
-import NextAuth from "next-auth";
+import NextAuth, { DefaultSession } from "next-auth";
 
 import { PrismaAdapter } from "@auth/prisma-adapter";
 
 import authConfig from "@/auth.config";
 import { db } from "@/lib/db";
+import { Plan, Role, User } from "@prisma/client";
+
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      role: Role;
+      plan: Plan;
+    } & DefaultSession["user"];
+  }
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(db),
@@ -14,18 +26,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     // Aquí es donde puedes agregar información adicional al token.
     jwt({ token, user }) {
       if (user) {
-        token.role = user.role;
+        const u = user as User;
+        token.id = u.id;
+        token.role = u.role;
+        token.plan = u.plan;
+    
       }
       return token;
     },
-    // session() se utiliza para agregar la información del token a la sesión del usuario,
-    // lo que hace que esté disponible en el cliente.
     session({ session, token }) {
       if (session.user) {
-        session.user.role = token.role;
+        session.user.id = token.id as string;
+        session.user.role = token.role as Role;
+        session.user.plan = token.plan as Plan;
       }
       return session;
-    },
+    }
   },
   events: {
     // El evento linkAccount se dispara cuando una cuenta (proveedor OAuth: GitHub, Google, Facebook, etc.)  se vincula a un usuario existente en tu base de datos.

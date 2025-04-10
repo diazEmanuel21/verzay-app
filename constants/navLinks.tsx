@@ -13,9 +13,9 @@ export interface NavLinkItem {
   route: string;
   icon: any;
   showInSidebar?: boolean;
-  allowedRoles?: string[];
-  requiresPremium?: boolean;
+  allowedPlans?: string[];
   adminOnly?: boolean;
+  requiresPremium?: boolean;
 }
 
 export const navLinks: NavLinkItem[] = [
@@ -31,40 +31,44 @@ export const navLinks: NavLinkItem[] = [
     route: "/dashboard",
     icon: ViewfinderCircleIcon,
     showInSidebar: true,
+    allowedPlans: ["pymes", "empresarial", "business"],
   },
   {
     label: "Crear IA",
     route: "/ia/add/create",
     icon: SparklesIcon,
     showInSidebar: true,
+    allowedPlans: ["pymes", "empresarial", "business"],
   },
   {
     label: "Leads",
     route: "/sessions",
     icon: UsersIcon,
     showInSidebar: true,
+    allowedPlans: ["pymes", "empresarial", "business"],
   },
   {
     label: "Flujos",
     route: "/flow",
     icon: ChatBubbleLeftRightIcon,
-    requiresPremium: true,
-    allowedRoles: ["empresarial", "business"],
+    allowedPlans: ["empresarial", "business"],
     showInSidebar: true,
+    requiresPremium: true,
   },
   {
     label: "Herramientas",
     route: "/tools",
     icon: ClipboardDocumentListIcon,
-    requiresPremium: true,
-    allowedRoles: ["empresarial", "business"],
+    allowedPlans: ["empresarial", "business"],
     showInSidebar: true,
+    requiresPremium: true,
   },
   {
     label: "Respuestas rápidas",
     route: "/auto-replies",
     icon: ChatBubbleBottomCenterTextIcon,
-    requiresPremium: true,
+    allowedPlans: ["empresarial", "business"],
     showInSidebar: true,
+    requiresPremium: true,
   },
 ];
