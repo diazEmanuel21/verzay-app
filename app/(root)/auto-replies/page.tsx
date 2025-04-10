@@ -33,7 +33,7 @@ const AutoRepliesPage = async () => {
                         <p className="text-muted-foreground text-sm mb-4">
                             Estamos desarrollando una nueva funcionalidad de <b>respuesta rápida</b> con envío de archivos adjuntos, además de <b>seguimientos inteligentes</b> impulsados por inteligencia artificial que conservan el contexto    .
                             <br /><br />
-                            Muy pronto tendrás acceso a herramientas que potenciaran tu negocio como nunca antes lo habia experimentado.
+                            Muy pronto tendrás acceso a herramientas que potenciaran tu negocio como nunca antes lo habia experimentado..
                         </p>
                         <span className="text-xs text-gray-400">Verzay a tu servicio. 2025 💜</span>
                     </CardContent>
