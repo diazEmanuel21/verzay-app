@@ -276,9 +276,10 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     if (parseInt(delay) === 0) return;
 
     try {
-      const delayInSeconds = convertToSeconds(delay);
+      //convierte los segundos
+      // const delayInSeconds = convertToSeconds(delay);
 
-      const res = await updateDelayNode(nodes.id, delayInSeconds.toString());
+      const res = await updateDelayNode(nodes.id, delay.toString());
 
       if (!res) return toast.error('404');
       if (!res.success) return toast.error(res?.message);
