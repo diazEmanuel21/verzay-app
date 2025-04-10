@@ -1,87 +1,154 @@
-'use client'
+'use client';
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { User, Workflow } from '@prisma/client'
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { User, Workflow, rr } from "@prisma/client";
+import { createRR, getAllRRs, updateRR } from "@/actions/rr-actions";
+import { toast } from "sonner";
 
 interface Props {
-  user: User
-  Workflows: Workflow[]
+  user: User;
+  Workflows: Workflow[];
 }
 
 export const MainAutoReplies = ({ user, Workflows }: Props) => {
-  const [phrase, setPhrase] = useState("")
-  const [workflowId, setWorkflowId] = useState("")
+  const [phrase, setPhrase] = useState("");
+  const [workflowId, setWorkflowId] = useState("");
+  const [existingRR, setExistingRR] = useState<rr | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const loadRR = async () => {
+      if (!workflowId) return;
+
+      const res = await getAllRRs(workflowId);
+
+      if (!res.success || !res.data) {
+        setExistingRR(null);
+        setPhrase("");
+        return;
+      }
+
+      // 🔍 Manejar ambas formas: rr[] o rr
+      const mensajeExistente = Array.isArray(res.data)
+        ? res.data[0]
+        : res.data;
+
+      if (mensajeExistente) {
+        setExistingRR(mensajeExistente);
+        setPhrase(mensajeExistente.mensaje ?? "");
+      } else {
+        setExistingRR(null);
+        setPhrase("");
+      }
+    };
+
+    loadRR();
+  }, [workflowId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!phrase || !workflowId) return alert("Debes completar todos los campos.")
+    e.preventDefault();
+    if (!phrase || !workflowId) return toast.warning("Debes completar todos los campos.");
 
-    // try {
-    //   const res = await fetch("/api/auto-replies", {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify({ phrase, workflowId, userId: user.id })
-    //   })
+    setLoading(true);
+    const toastId = "respuesta-rapida";
 
-    //   if (!res.ok) throw new Error("Error al crear la respuesta rápida")
+    try {
+      let res;
+      if (existingRR) {
+        res = await updateRR(existingRR.id, { mensaje: phrase });
+      } else {
+        res = await createRR({ workflowId, mensaje: phrase });
+      }
 
-    //   alert("Respuesta rápida creada exitosamente")
-    // } catch (err) {
-    //   console.error(err)
-    //   alert("Hubo un error al enviar el formulario")
-    // }
-  }
+      if (!res.success) {
+        toast.error(res.message, { id: toastId });
+        return;
+      }
+
+      toast.success(res.message, { id: toastId });
+      setExistingRR(res.data as rr);
+    } catch (error) {
+      toast.error(`Error del servidor: ${error}`, { id: toastId });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex flex-col items-center justify-center">
       <Card className="w-[350px]">
         <CardHeader>
-          <CardTitle>Crear respuesta rapida</CardTitle>
-          <CardDescription>Crea una respuesta rapida para tu flujo</CardDescription>
+          <CardTitle>Respuesta rápida</CardTitle>
+          <CardDescription>
+            {existingRR ? "Edita la respuesta para este flujo" : "Crea una nueva respuesta rápida"}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
             <div className="grid w-full items-center gap-4">
               <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="phrase">Palabra para ejecutar respuesta rapida <strong>(Obligatorio)</strong></Label>
+                <Label htmlFor="phrase">
+                  Mensaje automático <strong>(Obligatorio)</strong>
+                </Label>
                 <Input
                   id="phrase"
-                  placeholder="Fue un gusto."
+                  placeholder="Ej: Fue un gusto."
                   value={phrase}
                   onChange={(e) => setPhrase(e.target.value)}
+                  disabled={loading}
                 />
               </div>
               <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="workflow">Seleccione el flujo <strong>(Obligatorio)</strong></Label>
-                <Select onValueChange={(val) => setWorkflowId(val)}>
+                <Label htmlFor="workflow">
+                  Selecciona el flujo <strong>(Obligatorio)</strong>
+                </Label>
+                <Select
+                  onValueChange={(val) => setWorkflowId(val)}
+                  disabled={loading}
+                >
                   <SelectTrigger id="workflow">
                     <SelectValue placeholder="Selecciona un flujo" />
                   </SelectTrigger>
-                  <SelectContent position="popper">
+                  <SelectContent>
                     {Workflows.map((wf) => (
-                      <SelectItem key={wf.id} value={wf.id}>{wf.name}</SelectItem>
+                      <SelectItem key={wf.id} value={wf.id}>
+                        {wf.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <CardFooter className="mt-4">
-              <Button type="submit" className="w-full">Iniciar</Button>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading
+                  ? "Guardando..."
+                  : existingRR
+                    ? "Actualizar"
+                    : "Crear"}
+              </Button>
             </CardFooter>
           </form>
         </CardContent>
       </Card>
     </div>
-  )
-}
+  );
+};

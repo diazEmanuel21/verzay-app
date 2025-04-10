@@ -23,7 +23,9 @@ interface TimeInputProps {
 }
 
 export function TimeInput({ onChange, className, onBlur, currentValue }: TimeInputProps) {
-    const maxSeconds = 30 * 24 * 60 * 60 // 30 días
+    // const maxSeconds = 30 * 24 * 60 * 60 // 30 días
+    const maxSeconds = 365 * 24 * 60 * 60 // 365 días
+
 
     let initialUnit: TimeUnit = 'minutes'
     let initialValue = 0
@@ -71,7 +73,7 @@ export function TimeInput({ onChange, className, onBlur, currentValue }: TimeInp
 
     return (
         <div className={cn(className)}>
-            <Label className="text-xs">Duración de retraso. Máximo 30 días</Label>
+            <Label className="text-xs">Duración de retraso. Máximo 365 días</Label>
             <div className="flex flex-row gap-2 mt-2">
                 <Select value={unit} onValueChange={handleUnitChange}>
                     <SelectTrigger className="w-full">
