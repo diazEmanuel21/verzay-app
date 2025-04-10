@@ -16,4 +16,5 @@ export interface Action {
     type: ActionType;
     label: string;
     icon: JSX.Element;
+    bg?: string;
 };

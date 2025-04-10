@@ -87,7 +87,7 @@ export const CreateNodeComponent = ({ workflowId, role }: PropsCreateNodeCompone
             <PopoverTrigger asChild>
                 <Button
                     variant="default"
-                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all"
+                    className="bg-blue-600 hover:bg-blue-700 uppercase font-bold text-white shadow-sm transition-all"
                 >
                     Agregar acción
                     <FilePlus2 />

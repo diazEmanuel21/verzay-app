@@ -7,6 +7,7 @@ import { updateNode, deleteNode, updateUrlNode, updateDelayNode, deleteFileNode,
 import { ACCEPT_TYPES, baseActions, convertToSeconds, getAcceptTypeString, optimizeFile, seguimientoActions, validateFileType } from "../helpers";
 import { Action } from "../types";
 import { NodeActions } from "./NodeActions";
+import { cardBaseActions, cardSeguimientoActions } from "../helpers";
 
 import {
   Card,
@@ -28,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { GenericTextarea } from "@/components/shared/GenericTextarea";
@@ -60,6 +62,11 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const hasContent = nodeType === 'text' ? !!message : !!nodes.url;
   const allActions = [...baseActions, ...seguimientoActions];
   const currentAction = allActions.find(
+    (action) => action.type.toLowerCase() === nodeType
+  );
+
+  const allCardActions = [...cardBaseActions, ...cardSeguimientoActions];
+  const currentCardAction = allCardActions.find(
     (action) => action.type.toLowerCase() === nodeType
   );
 
@@ -416,16 +423,16 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
 
   return (
     <>
-      <div className="flex items-center justify-center">
-        <Card className=" shadow-md border border-border rounded-lg min-w-[300px] max-w-[300px]">
-          <CardHeader className="relative flex items-center">
+      <div className="flex items-center justify-center p-1">
+        <Card className=" shadow-md border border-border rounded-2xl min-w-[300px] max-w-[300px] transition-all duration-300 hover:shadow-lg hover:scale-105">
+          <CardHeader className="relative flex items-center p-3">
             {/* Badge tipo de mensaje */}
-            <div className="absolute -top-4 flex items-center space-x-2 bg-background border border-border rounded-md px-3 py-1 shadow-md">
-              {currentAction?.icon || (
+            <div className={`absolute -top-4 flex items-center space-x-2 ${currentCardAction?.bg || 'bg-background'} rounded-md px-3 py-1 shadow-md`}>
+              {currentCardAction?.icon || (
                 <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />
               )}
-              <span className="text-xs font-medium text-muted-foreground capitalize">
-                {`${isSeguimiento ? labelSegumientoCategory : currentAction?.label}` || "Tipo desconocido"}
+              <span className="text-xs font-bold uppercase text-white">
+                {`${isSeguimiento ? labelSegumientoCategory : currentCardAction?.label}` || "Tipo desconocido"}
               </span>
             </div>
             <div className="absolute top-0 right-1">
@@ -436,7 +443,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
               />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4">
             {renderContent()}
             {baseType !== 'text' && baseType !== 'document' && baseType !== 'audio' &&
               <div className="flex w-full mt-2">
@@ -452,14 +459,23 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
               </div>
             }
             {isSeguimiento &&
-              <div className="flex items-center gap-2 pt-4">
+              <div className="flex items-center gap-1 pt-2 text-sm">
                 <Switch
                   id="airplane-mode"
                   checked={inactivity}
                   onCheckedChange={handleInactivity}
                   disabled={loading}
+                  className="scale-75"
                 />
-                <Label htmlFor="inactividad-state">Inactividad</Label>
+                <Label htmlFor="inactividad-state">Activar Inactividad  </Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger className="w-5 h-5 flex items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">?</TooltipTrigger>
+                    <TooltipContent>
+                      <p>Seguimiento solo si no responden</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             }
           </CardContent>

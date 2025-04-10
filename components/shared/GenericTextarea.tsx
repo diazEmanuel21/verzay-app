@@ -29,11 +29,11 @@ export const GenericTextarea = ({ isEditing, message, handleSave, setIsEditing, 
                     />
                 ) : (
                     <div
-                        className="w-full flex items-start  text-xs cursor-pointer hover:bg-muted/50 border border-muted-foreground/20 rounded-lg bg-muted transition-all p-2"
+                        className="w-full flex items-start cursor-pointer hover:bg-muted/50 border border-muted-foreground/20 rounded-lg bg-muted transition-all p-2"
                         onClick={() => setIsEditing(true)}
                     >
                         <span className="text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">
-                            {message || <span className="text-muted-foreground/50 text-xs">Agregar mensaje...</span>}
+                            {message || <span className="text-muted-foreground/50 ">Agregar mensaje...</span>}
                         </span>
                     </div>
                 )
