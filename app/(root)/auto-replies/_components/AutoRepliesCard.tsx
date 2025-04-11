@@ -52,67 +52,20 @@ export const AutoRepliesCard = ({ autoReplie, workflows }: autoReplies) => {
     };
 
     return (
-        <Card className="transition-all duration-300 hover:shadow-lg">
-            <CardContent className="p-4 flex items-center justify-between h-[100px]">
-                <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-accent">
-                        <MessageCircleMoreIcon />
-                    </div>
-                    <div className="flex flex-col">
-                        {/* Edición inline */}
-                        {editing ? (
-                            <Input
-                                autoFocus
-                                value={mensaje}
-                                onChange={(e) => setMensaje(e.target.value)}
-                                onBlur={handleSave}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter") handleSave();
-                                    if (e.key === "Escape") {
-                                        setMensaje(autoReplie.mensaje ?? "");
-                                        setEditing(false);
-                                    }
-                                }}
-                                disabled={loading}
-                                className="text-sm"
-                            />
-                        ) : (
-                            <div
-                                className="flex items-center gap-1 cursor-pointer group"
-                                onClick={() => setEditing(true)}
-                            >
-                                <h3 className="text-base font-bold text-muted-foreground group-hover:underline">
-                                    {mensaje}
-                                </h3>
-                                <PencilIcon
-                                    size={16}
-                                    className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                />
-                            </div>
-                        )}
-
-                        {/* Workflows asociados */}
-                        {relatedWorkflows.length > 0 && (
-                            <div className="flex gap-1 flex-wrap pt-1">
-                                {relatedWorkflows.map((wf) => (
-                                    <Badge key={wf.id} variant="secondary" className="text-xs">
-                                        {wf.name}
-                                    </Badge>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Acciones */}
-                <div className="flex items-center space-x-2">
-                    <AutoRepliesActions
-                        mensaje={autoReplie.mensaje ?? ""}
-                        autoReplieId={autoReplie.id}
-                        workflowId={relatedWorkflows[0].id}
-                    />
-                </div>
-            </CardContent>
-        </Card>
+        <div className="flex justify-center">
+            <Card className="w-full max-w-xl shadow-xl">
+                <CardContent className="flex flex-col items-center text-center p-8">
+                    <h1 className="text-2xl font-bold mb-2">
+                        🚧 ¡Algo increíble está por llegar!
+                    </h1>
+                    <p className="text-muted-foreground text-sm mb-4">
+                        Estamos desarrollando una nueva funcionalidad de <b>respuesta rápida</b> con envío de archivos adjuntos, además de <b>seguimientos inteligentes</b> impulsados por inteligencia artificial que conservan el contexto    .
+                        <br /><br />
+                        Muy pronto tendrás acceso a herramientas que potenciaran tu negocio como nunca antes lo habia experimentado.
+                    </p>
+                    <span className="text-xs text-gray-400">Verzay a tu servicio. 2025 💜</span>
+                </CardContent>
+            </Card>
+        </div>
     );
 };

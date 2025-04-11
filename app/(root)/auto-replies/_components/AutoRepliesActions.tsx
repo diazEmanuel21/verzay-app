@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreVerticalIcon, PencilIcon, ShuffleIcon, TrashIcon } from "lucide-react";
+import { MoreVerticalIcon, ShuffleIcon, TrashIcon } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 
 import {
