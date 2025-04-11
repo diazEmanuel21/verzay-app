@@ -84,9 +84,13 @@ export const AutoRepliesCard = ({ autoReplie, workflows }: autoReplies) => {
                                 <h3 className="text-base font-bold text-muted-foreground group-hover:underline">
                                     {mensaje}
                                 </h3>
-                                <PencilIcon
+                                {/* <PencilIcon
                                     size={16}
                                     className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                /> */}
+                                <PencilIcon
+                                    size={16}
+                                    className="text-muted-foreground"
                                 />
                             </div>
                         )}

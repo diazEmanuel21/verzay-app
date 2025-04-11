@@ -19,14 +19,14 @@ import { toast } from "sonner";
 interface AutoReplies {
     user: User;
     Workflows: Workflow[];
+    onSuccessClose?: () => void;
 };
 
-export const CardCreateRr = ({ user, Workflows }: AutoReplies) => {
+export const CardCreateRr = ({ user, Workflows, onSuccessClose }: AutoReplies) => {
     const router = useRouter();
     const [phrase, setPhrase] = useState("");
     const [workflowId, setWorkflowId] = useState("");
     const [loading, setLoading] = useState(false);
-
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -42,16 +42,16 @@ export const CardCreateRr = ({ user, Workflows }: AutoReplies) => {
                 toast.error(res.message, { id: toastId });
                 return;
             }
-
             toast.success(res.message, { id: toastId });
             router.refresh();
+            onSuccessClose?.(); // ✅ CIERRA EL MODAL
         } catch (error) {
             toast.error(`Error del servidor: ${error}`, { id: toastId });
         } finally {
             setLoading(false);
         }
     };
-    
+
     return (
         <form onSubmit={handleSubmit}>
             <div className="grid w-full items-center gap-4">

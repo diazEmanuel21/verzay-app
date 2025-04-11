@@ -13,11 +13,12 @@ interface GenericEditDialogProps {
     icon?: LucideIcon;
     title: string;
     subTitle?: string;
-    children: ReactNode;
+    children: ReactNode | ((args: { onClose: () => void }) => ReactNode);
     buttonVariant?: "default" | "outline" | "ghost" | "link" | "secondary";
     buttonClassName?: string;
     size?: "default" | "sm" | "icon" | "lg";
     hideTrigger?: boolean;
+    onClose?: () => void;
 }
 
 export const GenericEditDialog = ({
@@ -31,7 +32,8 @@ export const GenericEditDialog = ({
     buttonVariant = "default",
     buttonClassName,
     hideTrigger = false,
-    size = "default"
+    size = "default",
+    onClose
 }: GenericEditDialogProps) => {
     const [internalOpen, setInternalOpen] = useState(false);
     const isControlled = open !== undefined && setOpen !== undefined;
@@ -49,7 +51,7 @@ export const GenericEditDialog = ({
             )}
             <DialogContent>
                 <CustomDialogHeader icon={icon} title={title} subTitle={subTitle} />
-                {children}
+                {children && typeof children === 'function' ? children({ onClose: () => setInternalOpen(false) }) : children}
             </DialogContent>
         </Dialog>
     );

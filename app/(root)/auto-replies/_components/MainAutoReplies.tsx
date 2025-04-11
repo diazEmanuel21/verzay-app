@@ -32,7 +32,7 @@ export const MainAutoReplies = ({ user, Workflows, autoReplies = [] }: Props) =>
             subtitle={'Crea tus respuestas rápidas de manera más organizada'}
           />
           <CreateAutoReplies
-            triggerText={'Crear'}
+            triggerText={'CREAR'}
             user={user}
             Workflows={Workflows}
           />

@@ -21,10 +21,13 @@ export const CreateAutoReplies = ({ user, Workflows, triggerText = 'Crear' }: Au
             subTitle="Comienza a construir tu respuesta rápida"
             triggerText={triggerText}
         >
-            <CardCreateRr
-                user={user}
-                Workflows={Workflows}
-            />
+            {({ onClose }) => (
+                <CardCreateRr
+                    user={user}
+                    Workflows={Workflows}
+                    onSuccessClose={onClose}
+                />
+            )}
         </GenericEditDialog>
     )
 }
