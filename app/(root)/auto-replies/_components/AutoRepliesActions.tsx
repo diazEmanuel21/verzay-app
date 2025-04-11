@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { MoreVerticalIcon, PencilIcon, TrashIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { MoreVerticalIcon, PencilIcon, ShuffleIcon, TrashIcon } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 
 import {
     DropdownMenu,
@@ -15,17 +15,18 @@ import {
 
 import TooltipWrapper from "@/components/TooltipWrapper";
 import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog";
-import { GenericEditDialog } from "@/components/shared/GenericEditDialog";
 import { deleteRR } from "@/actions/rr-actions";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface AutoRepliesActionsProps {
     mensaje: string;
     autoReplieId: number;
+    workflowId: string;
 }
 
-export const AutoRepliesActions = ({ mensaje, autoReplieId }: AutoRepliesActionsProps) => {
+export const AutoRepliesActions = ({ mensaje, autoReplieId, workflowId}: AutoRepliesActionsProps) => {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-    const [showEditDialog, setShowEditDialog] = useState(false);
 
     return (
         <>
@@ -38,15 +39,16 @@ export const AutoRepliesActions = ({ mensaje, autoReplieId }: AutoRepliesActions
                 entityLabel="respuesta rápida"
             />
 
-            <GenericEditDialog
-                hideTrigger
-                open={showEditDialog}
-                setOpen={setShowEditDialog}
-                title="Editar respuesta rapida"
-                subTitle="Comienza a editar tu respuesta rapida"
-            >
-                <h1>Hola</h1>
-            </GenericEditDialog>
+            <Link href={`flow/${workflowId}`} className={cn(
+                buttonVariants({
+                    variant: "outline",
+                    size: "sm"
+                }),
+                "flex items-center gap-2"
+            )}>
+                <ShuffleIcon size={16} />
+                Editar
+            </Link>
 
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -67,13 +69,6 @@ export const AutoRepliesActions = ({ mensaje, autoReplieId }: AutoRepliesActions
                         onSelect={() => setShowDeleteDialog(true)}
                     >
                         <TrashIcon size={16} /> Eliminar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                        disabled
-                        className="flex items-center gap-2"
-                        onSelect={() => setShowEditDialog(true)}
-                    >
-                        <PencilIcon size={16} /> Editar
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>

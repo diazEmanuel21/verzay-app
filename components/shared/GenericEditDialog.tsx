@@ -16,6 +16,7 @@ interface GenericEditDialogProps {
     children: ReactNode;
     buttonVariant?: "default" | "outline" | "ghost" | "link" | "secondary";
     buttonClassName?: string;
+    size?: "default" | "sm" | "icon" | "lg";
     hideTrigger?: boolean;
 }
 
@@ -30,6 +31,7 @@ export const GenericEditDialog = ({
     buttonVariant = "default",
     buttonClassName,
     hideTrigger = false,
+    size = "default"
 }: GenericEditDialogProps) => {
     // Comportamiento controlado vs interno
     const [internalOpen, setInternalOpen] = useState(false);
@@ -41,8 +43,8 @@ export const GenericEditDialog = ({
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             {!hideTrigger && (
                 <DialogTrigger asChild>
-                    <Button variant={buttonVariant} className={buttonClassName}>
-                        {triggerText.toUpperCase()}
+                    <Button variant={buttonVariant} className={buttonClassName} size={size}>
+                        {triggerText}
                     </Button>
                 </DialogTrigger>
             )}
