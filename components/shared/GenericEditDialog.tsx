@@ -33,7 +33,6 @@ export const GenericEditDialog = ({
     hideTrigger = false,
     size = "default"
 }: GenericEditDialogProps) => {
-    // Comportamiento controlado vs interno
     const [internalOpen, setInternalOpen] = useState(false);
     const isControlled = open !== undefined && setOpen !== undefined;
     const isOpen = isControlled ? open : internalOpen;

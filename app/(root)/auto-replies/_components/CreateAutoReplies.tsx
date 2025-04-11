@@ -1,3 +1,5 @@
+'use client'
+
 import { User, Workflow } from '@prisma/client';
 
 import { Layers2Icon } from 'lucide-react';
