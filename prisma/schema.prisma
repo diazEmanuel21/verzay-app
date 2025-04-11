@@ -25,30 +25,29 @@ model User {
   mapsUrl            String          @default("https://maps.google.com/?q=0,0")
   notificationNumber String          @default("0000000000")
   openingPhrase      String?         @default("DEPRECATED")
-  apiKeyId           String?          
+  apiKeyId           String?
   del_seguimiento    String?         @default("Estamos para servirle.")
-
   accounts           Account[]
-  apiKey             ApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
   instancias         Instancias[]
   pausar             Pausar[]
   sessions           Session[]
   systemMessages     SystemMessage[]
   tools              Tools[]
+  apiKey             ApiKey?         @relation(fields: [apiKeyId], references: [id])
 }
 
 model Session {
-  userId     String
-  remoteJid  String
-  pushName   String
-  instanceId String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  status     Boolean
-  id         Int      @id @default(autoincrement())
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  seguimientos String? @default("")
-  inactividad String? @default("")
+  userId       String
+  remoteJid    String
+  pushName     String
+  instanceId   String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  status       Boolean
+  id           Int      @id @default(autoincrement())
+  seguimientos String?  @default("")
+  inactividad  String?  @default("")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Pausar {
@@ -68,7 +67,6 @@ model ApiKey {
   id        String   @id @default(cuid())
   url       String
   key       String
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   Users     User[]
@@ -141,14 +139,14 @@ model Workflow {
 }
 
 model WorkflowNode {
-  id         String   @id @default(cuid())
-  workflowId String
-  message    String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  tipo       String
-  url        String?
-  delay      String?
+  id          String   @id @default(cuid())
+  workflowId  String
+  message     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tipo        String
+  url         String?
+  delay       String?
   inactividad Boolean?
 }
 
@@ -159,7 +157,7 @@ model n8n_chat_histories {
 }
 
 model seguimientos {
-  id           Int    @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   idNodo      String
   serverurl   String?
   instancia   String?
@@ -174,12 +172,12 @@ model seguimientos {
 }
 
 model rr {
-  id           Int    @id @default(autoincrement())
-  workflowId   String
-  mensaje      String?
-  userId       String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  workflowId String
+  mensaje    String?
+  userId     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 enum Role {

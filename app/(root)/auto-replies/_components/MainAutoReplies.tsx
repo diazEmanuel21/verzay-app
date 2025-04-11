@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -22,6 +22,9 @@ import { Label } from "@/components/ui/label";
 import { User, Workflow, rr } from "@prisma/client";
 import { createRR, getAllRRs, updateRR } from "@/actions/rr-actions";
 import { toast } from "sonner";
+import Link from "next/link";
+import { ShuffleIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Props {
   user: User;
@@ -137,7 +140,7 @@ export const MainAutoReplies = ({ user, Workflows }: Props) => {
                 </Select>
               </div>
             </div>
-            <CardFooter className="mt-4">
+            <CardFooter className="flex mt-4 gap-2">
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading
                   ? "Guardando..."
@@ -145,6 +148,18 @@ export const MainAutoReplies = ({ user, Workflows }: Props) => {
                     ? "Actualizar"
                     : "Crear"}
               </Button>
+              {existingRR &&
+                <Link href={`flow/${workflowId}`} className={cn(
+                  buttonVariants({
+                    variant: "outline",
+                    size: "sm"
+                  }),
+                  "flex items-center gap-2"
+                )}>
+                  <ShuffleIcon size={16} />
+                  Abrir
+                </Link>
+              }
             </CardFooter>
           </form>
         </CardContent>
