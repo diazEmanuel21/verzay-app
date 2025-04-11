@@ -1,5 +1,3 @@
-'use client';
-
 import { rr, User, Workflow } from '@prisma/client';
 import { MainAutoReplies } from './MainAutoReplies';
 import { UserWorkflows } from '../../flow/page';
