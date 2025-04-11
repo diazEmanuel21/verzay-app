@@ -1,17 +1,19 @@
 'use client';
 
-import { User, Workflow } from '@prisma/client';
+import { rr, User, Workflow } from '@prisma/client';
 import { MainAutoReplies } from './MainAutoReplies';
+import { UserWorkflows } from '../../flow/page';
 
 interface Props {
     user: User;
     workflows: Workflow[];
+    autoReplies: rr[];
 }
 
-export const AutoRepliesContent = ({ user, workflows }: Props) => {
+export const AutoRepliesContent = ({ user, workflows, autoReplies }: Props) => {
     if (workflows.length === 0) {
-        return <h1 className="text-center text-xl mt-6 text-muted-foreground">No se encontraron flujos asociados al usuario.</h1>;
+        return <UserWorkflows userId={user.id} />;
     }
 
-    return <MainAutoReplies user={user} Workflows={workflows} />;
+    return <MainAutoReplies user={user} Workflows={workflows} autoReplies={autoReplies} />;
 };

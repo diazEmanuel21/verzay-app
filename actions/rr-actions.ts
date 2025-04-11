@@ -6,7 +6,27 @@ import { rr } from '@prisma/client';
 interface RROperationResponse {
     success: boolean;
     message: string;
-    data?: rr | rr[];
+    data?: rr[];
+}
+
+export async function getAllRRs(userId: string): Promise<RROperationResponse> {
+    try {
+        const list = await db.rr.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+        });
+        return {
+            success: true,
+            message: 'Registros obtenidos correctamente.',
+            data: list,
+        };
+    } catch (error) {
+        console.error('Error al obtener registros rr:', error);
+        return {
+            success: false,
+            message: 'Error al obtener los registros.',
+        };
+    }
 }
 
 export async function createRR(data: {
@@ -15,11 +35,10 @@ export async function createRR(data: {
     userId: string;
 }): Promise<RROperationResponse> {
     try {
-        const created = await db.rr.create({ data });
+        await db.rr.create({ data });
         return {
             success: true,
             message: 'Registro creado correctamente.',
-            data: created,
         };
     } catch (error) {
         console.error('Error al crear rr:', error);
@@ -30,7 +49,7 @@ export async function createRR(data: {
     }
 }
 
-export async function getAllRRs(workflowId: string): Promise<RROperationResponse> {
+export async function getAllRRsByWorkflowId(workflowId: string): Promise<RROperationResponse> {
     try {
         const list = await db.rr.findMany({
             where: { workflowId },
@@ -52,14 +71,13 @@ export async function getAllRRs(workflowId: string): Promise<RROperationResponse
 
 export async function updateRR(id: number, data: Partial<rr>): Promise<RROperationResponse> {
     try {
-        const updated = await db.rr.update({
+        await db.rr.update({
             where: { id },
             data,
         });
         return {
             success: true,
             message: 'Registro actualizado correctamente.',
-            data: updated,
         };
     } catch (error) {
         console.error('Error al actualizar rr:', error);
@@ -72,11 +90,10 @@ export async function updateRR(id: number, data: Partial<rr>): Promise<RROperati
 
 export async function deleteRR(id: number): Promise<RROperationResponse> {
     try {
-        const deleted = await db.rr.delete({ where: { id } });
+        await db.rr.delete({ where: { id } });
         return {
             success: true,
             message: 'Registro eliminado correctamente.',
-            data: deleted,
         };
     } catch (error) {
         console.error('Error al eliminar rr:', error);

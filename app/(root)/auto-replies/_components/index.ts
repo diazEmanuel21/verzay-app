@@ -1,3 +1,7 @@
 export * from './MainAutoReplies';
 export * from './AutoRepliesContent';
 export * from './SkeletonAutoReplies';
+export * from './CreateAutoReplies';
+export * from './AutoRepliesCard';
+export * from './CardCreateRr';
+export * from './AutoRepliesActions';

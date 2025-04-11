@@ -1,169 +1,69 @@
-'use client';
-
-import { useEffect, useState } from "react";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { User, Workflow, rr } from "@prisma/client";
-import { createRR, getAllRRs, updateRR } from "@/actions/rr-actions";
-import { toast } from "sonner";
-import Link from "next/link";
-import { ShuffleIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { rr, User, Workflow } from "@prisma/client";
+import Header from '@/components/shared/header';
+import { AutoRepliesCard, CreateAutoReplies } from "./";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, InboxIcon } from "lucide-react";
 
 interface Props {
   user: User;
   Workflows: Workflow[];
+  autoReplies: rr[];
 }
 
-export const MainAutoReplies = ({ user, Workflows }: Props) => {
-  const [phrase, setPhrase] = useState("");
-  const [workflowId, setWorkflowId] = useState("");
-  const [existingRR, setExistingRR] = useState<rr | null>(null);
-  const [loading, setLoading] = useState(false);
+export const MainAutoReplies = ({ user, Workflows, autoReplies = [] }: Props) => {
 
-  useEffect(() => {
-    const loadRR = async () => {
-      if (!workflowId) return;
-
-      const res = await getAllRRs(workflowId);
-
-      if (!res.success || !res.data) {
-        setExistingRR(null);
-        setPhrase("");
-        return;
-      }
-
-      // 🔍 Manejar ambas formas: rr[] o rr
-      const mensajeExistente = Array.isArray(res.data)
-        ? res.data[0]
-        : res.data;
-
-      if (mensajeExistente) {
-        setExistingRR(mensajeExistente);
-        setPhrase(mensajeExistente.mensaje ?? "");
-      } else {
-        setExistingRR(null);
-        setPhrase("");
-      }
-    };
-
-    loadRR();
-  }, [workflowId]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!phrase || !workflowId) return toast.warning("Debes completar todos los campos.");
-
-    setLoading(true);
-    const toastId = "respuesta-rapida";
-
-    try {
-      let res;
-      if (existingRR) {
-        res = await updateRR(existingRR.id, { mensaje: phrase });
-      } else {
-        res = await createRR({ workflowId, mensaje: phrase, userId: user.id });
-      }
-
-      if (!res.success) {
-        toast.error(res.message, { id: toastId });
-        return;
-      }
-
-      toast.success(res.message, { id: toastId });
-      setExistingRR(res.data as rr);
-    } catch (error) {
-      toast.error(`Error del servidor: ${error}`, { id: toastId });
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (!autoReplies) {
+    return (
+      <Alert variant={'destructive'}>
+        <AlertCircle className='w-4 h-4' />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>Algo salió mal. Por favor intenta más tarde</AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center">
-      <Card className="w-[350px]">
-        <CardHeader>
-          <CardTitle>Respuesta rápida</CardTitle>
-          <CardDescription>
-            {existingRR ? "Edita la respuesta para este flujo" : "Crea una nueva respuesta rápida"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit}>
-            <div className="grid w-full items-center gap-4">
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="phrase">
-                  Mensaje automático <strong>(Obligatorio)</strong>
-                </Label>
-                <Input
-                  id="phrase"
-                  placeholder="Ej: Fue un gusto."
-                  value={phrase}
-                  onChange={(e) => setPhrase(e.target.value)}
-                  disabled={loading}
-                />
+    <div className="flex flex-col h-full">
+      {/* Header fijo */}
+      <div className="sticky top-0 z-10 mb-6">
+        <div className="flex justify-between items-center">
+          <Header
+            title={'Respuestas rápidas'}
+            subtitle={'Crea tus respuestas rápidas de manera más organizada'}
+          />
+          <CreateAutoReplies
+            triggerText={'Crear'}
+            user={user}
+            Workflows={Workflows}
+          />
+        </div>
+      </div>
+
+      {/* Scroll interno para el contenido */}
+      <div className="flex-1 overflow-y-auto px-1">
+        <div className="grid grid-cols-1 gap-4">
+          {autoReplies.length === 0 ? (
+            <div className="flex flex-col gap-4 h-full items-center justify-center">
+              <div className='rounded-full bg-accent w-20 h-20 flex items-center justify-center'>
+                <InboxIcon size={40} className='stroke-primary' />
               </div>
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="workflow">
-                  Selecciona el flujo <strong>(Obligatorio)</strong>
-                </Label>
-                <Select
-                  onValueChange={(val) => setWorkflowId(val)}
-                  disabled={loading}
-                >
-                  <SelectTrigger id="workflow">
-                    <SelectValue placeholder="Selecciona un flujo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Workflows.map((wf) => (
-                      <SelectItem key={wf.id} value={wf.id}>
-                        {wf.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className='flex flex-col gap-1 text-center'>
+                <p className="font-bold">No existe ninguna respuesta rápida</p>
+                <p className="text-sm text-muted-foreground">Click para crear una nueva respuesta rápida</p>
               </div>
+              <CreateAutoReplies
+                triggerText="Crea tu primera respuesta rápida"
+                user={user}
+                Workflows={Workflows}
+              />
             </div>
-            <CardFooter className="flex mt-4 gap-2">
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading
-                  ? "Guardando..."
-                  : existingRR
-                    ? "Actualizar"
-                    : "Crear"}
-              </Button>
-              {existingRR &&
-                <Link href={`flow/${workflowId}`} className={cn(
-                  buttonVariants({
-                    variant: "outline",
-                    size: "sm"
-                  }),
-                  "flex items-center gap-2"
-                )}>
-                  <ShuffleIcon size={16} />
-                  Abrir
-                </Link>
-              }
-            </CardFooter>
-          </form>
-        </CardContent>
-      </Card>
+          ) : (
+            autoReplies.map((autoReplie) => (
+              <AutoRepliesCard key={autoReplie.id} autoReplie={autoReplie} workflows={Workflows} />
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 };

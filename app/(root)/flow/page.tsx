@@ -56,7 +56,7 @@ interface UserWorkflowsProps {
   userId: string;
 }
 
-async function UserWorkflows({ userId }: UserWorkflowsProps) {
+export async function UserWorkflows({ userId }: UserWorkflowsProps) {
   const resWorkflow = await GetWorkFlowforUser(userId);
   const workflows = hasWorkflow(resWorkflow) ? resWorkflow.data : [];
 

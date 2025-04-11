@@ -1,12 +1,17 @@
 import { currentUser } from '@/lib/auth';
 import { GetWorkFlowforUser } from '@/actions/getWorkFlowforUser-action';
-import { Workflow } from '@prisma/client';
+import { rr, Workflow } from '@prisma/client';
 import { Suspense } from 'react';
 import { AutoRepliesContent, SkeletonAutoReplies } from './_components';
 import { Card, CardContent } from '@/components/ui/card';
 import { Sparkles } from 'lucide-react';
+import { getAllRRs } from '@/actions/rr-actions';
 
 function hasWorkflow(result: { data?: Workflow[] }): result is { data: Workflow[] } {
+    return !!result.data;
+}
+
+function hasAutoReplies(result: { data?: rr[] }): result is { data: rr[] } {
     return !!result.data;
 }
 
@@ -20,6 +25,9 @@ const AutoRepliesPage = async () => {
 
     const resWorkflow = await GetWorkFlowforUser(user.id);
     const workflows = hasWorkflow(resWorkflow) ? resWorkflow.data : [];
+
+    const resAutoReplies = await getAllRRs(user.id);
+    const autoReplies = hasAutoReplies(resAutoReplies) ? resAutoReplies.data : [];
 
     // if (user) {
     //     return (
@@ -44,7 +52,7 @@ const AutoRepliesPage = async () => {
 
     return (
         <Suspense fallback={<SkeletonAutoReplies />}>
-            <AutoRepliesContent user={user} workflows={workflows} />
+            <AutoRepliesContent user={user} workflows={workflows} autoReplies={autoReplies}/>
         </Suspense>
     );
 };
