@@ -17,7 +17,7 @@ export const AutoRepliesCard = ({ autoReplie, workflows }: autoReplies) => {
     const relatedWorkflows = workflows.filter((wf) => wf.id === autoReplie.workflowId);
 
     return (
-        <Card>
+        <Card className="transition-all duration-300 hover:shadow-lg">
             <CardContent className="p-4 flex items-center justify-between h-[100px]">
                 <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center bg-accent">

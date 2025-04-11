@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreVerticalIcon, TrashIcon } from "lucide-react";
+import { MoreVerticalIcon, PencilIcon, TrashIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -15,6 +15,7 @@ import {
 
 import TooltipWrapper from "@/components/TooltipWrapper";
 import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog";
+import { GenericEditDialog } from "@/components/shared/GenericEditDialog";
 import { deleteRR } from "@/actions/rr-actions";
 
 interface AutoRepliesActionsProps {
@@ -24,6 +25,7 @@ interface AutoRepliesActionsProps {
 
 export const AutoRepliesActions = ({ mensaje, autoReplieId }: AutoRepliesActionsProps) => {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showEditDialog, setShowEditDialog] = useState(false);
 
     return (
         <>
@@ -35,6 +37,16 @@ export const AutoRepliesActions = ({ mensaje, autoReplieId }: AutoRepliesActions
                 mutationFn={() => deleteRR(autoReplieId)}
                 entityLabel="respuesta rápida"
             />
+
+            <GenericEditDialog
+                hideTrigger
+                open={showEditDialog}
+                setOpen={setShowEditDialog}
+                title="Editar respuesta rapida"
+                subTitle="Comienza a editar tu respuesta rapida"
+            >
+                <h1>Hola</h1>
+            </GenericEditDialog>
 
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -55,6 +67,13 @@ export const AutoRepliesActions = ({ mensaje, autoReplieId }: AutoRepliesActions
                         onSelect={() => setShowDeleteDialog(true)}
                     >
                         <TrashIcon size={16} /> Eliminar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        disabled
+                        className="flex items-center gap-2"
+                        onSelect={() => setShowEditDialog(true)}
+                    >
+                        <PencilIcon size={16} /> Editar
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
