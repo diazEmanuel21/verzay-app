@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { rr, Workflow } from "@prisma/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { AutoRepliesActions } from "./";
-import { MessageCircleMoreIcon, PencilIcon } from "lucide-react";
+import { MessageCircleMoreIcon, PencilLine } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { updateRR } from "@/actions/rr-actions";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface autoReplies {
     autoReplie: rr;
@@ -16,6 +18,7 @@ interface autoReplies {
 }
 
 export const AutoRepliesCard = ({ autoReplie, workflows }: autoReplies) => {
+    const router = useRouter();
     const [editing, setEditing] = useState(false);
     const [mensaje, setMensaje] = useState(autoReplie.mensaje ?? "");
     const [loading, setLoading] = useState(false);
@@ -84,11 +87,8 @@ export const AutoRepliesCard = ({ autoReplie, workflows }: autoReplies) => {
                                 <h3 className="text-base font-bold text-muted-foreground group-hover:underline">
                                     {mensaje}
                                 </h3>
-                                {/* <PencilIcon
-                                    size={16}
-                                    className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                /> */}
-                                <PencilIcon
+                                <PencilLine
+                                    color="#1C61E7"
                                     size={16}
                                     className="text-muted-foreground"
                                 />
@@ -96,15 +96,49 @@ export const AutoRepliesCard = ({ autoReplie, workflows }: autoReplies) => {
                         )}
 
                         {/* Workflows asociados */}
-                        {relatedWorkflows.length > 0 && (
-                            <div className="flex gap-1 flex-wrap pt-1">
-                                {relatedWorkflows.map((wf) => (
-                                    <Badge key={wf.id} variant="secondary" className="text-xs">
-                                        {wf.name}
-                                    </Badge>
-                                ))}
-                            </div>
-                        )}
+                        {/* Selector de workflow asociado */}
+                        <div className="flex items-center gap-2 pt-2">
+                            <span className="text-xs text-muted-foreground">Flujo asociado:</span>
+
+                            <Select
+                                value={autoReplie.workflowId}
+                                onValueChange={async (newWorkflowId) => {
+                                    if (newWorkflowId === autoReplie.workflowId) return;
+
+                                    const toastId = `workflow-update-${autoReplie.id}`;
+                                    toast.loading("Actualizando flujo...", { id: toastId });
+
+                                    try {
+                                        const res = await updateRR(autoReplie.id, { workflowId: newWorkflowId });
+                                        if (res.success) {
+                                            toast.success("Flujo actualizado correctamente", { id: toastId });
+                                        } else {
+                                            toast.error(res.message, { id: toastId });
+                                        }
+                                    } catch (err) {
+                                        toast.error("Error al actualizar el flujo", { id: toastId });
+                                    }finally {
+                                        router.refresh();
+                                    }
+                                }}
+                            >
+                                <SelectTrigger className="h-7 rounded-md px-2 py-0 text-xs border-muted">
+                                    <SelectValue placeholder="Seleccionar flujo" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {workflows.map((wf) => (
+                                        <SelectItem
+                                            key={wf.id}
+                                            value={wf.id}
+                                            className="text-xs"
+                                        >
+                                            {wf.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
                     </div>
                 </div>
 
@@ -113,7 +147,7 @@ export const AutoRepliesCard = ({ autoReplie, workflows }: autoReplies) => {
                     <AutoRepliesActions
                         mensaje={autoReplie.mensaje ?? ""}
                         autoReplieId={autoReplie.id}
-                        workflowId={relatedWorkflows[0].id}
+                        workflowId={relatedWorkflows[0]?.id ?? "404"}
                     />
                 </div>
             </CardContent>
