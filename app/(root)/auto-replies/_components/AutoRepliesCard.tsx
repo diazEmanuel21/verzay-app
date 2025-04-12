@@ -98,7 +98,7 @@ export const AutoRepliesCard = ({ autoReplie, workflows }: autoReplies) => {
                         {/* Workflows asociados */}
                         {/* Selector de workflow asociado */}
                         <div className="flex items-center gap-2 pt-2">
-                            <span className="text-xs text-muted-foreground">Flujo asociado:</span>
+                            {/* <span className="text-xs text-muted-foreground">Flujo asociado:</span> */}
 
                             <Select
                                 value={autoReplie.workflowId}

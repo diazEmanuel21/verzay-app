@@ -161,11 +161,11 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     }
   };
 
-  const handleCancelUpload = () => {
-    setFile(null);
-  };
+  // const handleCancelUpload = () => {
+  //   setFile(null);
+  // };
 
-  const handleUpload = async () => {
+  const handleUpload = async (file: File) => {
     if (!file) {
       toast.error('No hay archivo seleccionado');
       return;
@@ -255,8 +255,8 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
       toast.error(`Tipo de archivo no válido. Se esperaba: ${baseType} (${readableTypes})`);
       return;
     }
-
-    setFile(file);
+    /* Implementación para subida de files automaticamente */
+    handleUpload(file);
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -381,7 +381,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
           />
         </div>
 
-        {file && (
+        {/* {file && (
           <div className="flex justify-end gap-2">
             <Button
               variant="outline"
@@ -399,7 +399,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
               {isUploading ? "Subiendo..." : "Subir"}
             </Button>
           </div>
-        )}
+        )} */}
       </div>
     );
   };
