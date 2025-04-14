@@ -4,6 +4,7 @@ import QRCodeGenerator from "@/components/form-qr";
 import EnableToggleButton from "@/components/button-bot";
 import { FaWhatsapp } from 'react-icons/fa';
 import { User } from '@prisma/client';
+import { BubbleMenu } from '@/components/shared/BubbleMenu';
 
 interface propsMainDashboard {
     user: User
@@ -48,6 +49,8 @@ export const MainDashboard = ({ user }: propsMainDashboard) => {
                     <p className="pr-1 text-gray-400">Business</p>
                 </CardFooter>
             </Card>
+
+            {/* <BubbleMenu user={user}/> */}
         </div>
     )
 }

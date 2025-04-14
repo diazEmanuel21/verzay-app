@@ -2,7 +2,6 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Home } from 'lucide-react';
 import { HomeIcon } from '@heroicons/react/24/solid';
 import {
   Breadcrumb,
