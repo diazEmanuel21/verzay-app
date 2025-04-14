@@ -99,7 +99,7 @@ model VerificationToken {
 
 model Instancias {
   id           Int    @id @default(autoincrement())
-  instanceName String @unique
+  instanceName String
   userId       String
   instanceId   String
   user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
