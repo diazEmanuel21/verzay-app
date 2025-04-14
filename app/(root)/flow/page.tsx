@@ -88,7 +88,7 @@ export async function UserWorkflows({ userId }: UserWorkflowsProps) {
   return (
     <div className="grid grid-cols-1 gap-4">
       {workflows.map((workflow) => (
-        <WorkflowCard key={workflow.id} workflow={workflow} />
+        <WorkflowCard key={workflow.id} workflow={workflow} userId={userId} />
       ))}
     </div>
   );

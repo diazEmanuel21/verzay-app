@@ -179,6 +179,34 @@ export async function deleteNode(nodeId: string, workflowId: string) {
   }
 }
 
+//Método para eliminar TODOS los nodos asociados a un workflowId
+export async function deleteAllNodes(workflowId: string) {
+  try {
+    if (!workflowId) {
+      return {
+        success: false,
+        message: "ID del flujo no proporcionado.",
+      }
+    }
+
+    const deletedNode = await db.workflowNode.deleteMany({
+      where: { workflowId },
+    })
+
+    return {
+      success: true,
+      message: "Nodos eliminados con éxito.",
+      data: deletedNode,
+    }
+  } catch (error) {
+    console.error("Error al intentar eliminar los nodos:", error)
+    return {
+      success: false,
+      message: "Ocurrió un error al eliminar los nodos.",
+    }
+  }
+}
+
 export async function deleteFileNode(minIoUrl: string, nodeId: string) {
   try {
     if (!minIoUrl || !nodeId) {
@@ -214,5 +242,48 @@ export async function deleteFileNode(minIoUrl: string, nodeId: string) {
       success: false,
       message: "Ocurrió un error al eliminar el archivo o actualizar el nodo.",
     }
+  }
+}
+
+/* Defectuoso */
+export async function deleteWorkflowFiles(userId: string, workflowId: string) {
+  const bucket = process.env.S3_BUCKET_NAME;
+  if (!bucket) {
+    throw new Error("Falta S3_BUCKET_NAME en variables de entorno.");
+  }
+  const basePrefix = `verzay-media/${userId}`;
+
+  try {
+    const stream = minioClient.listObjectsV2(bucket, basePrefix, true);
+    const objectsToDelete: string[] = [];
+
+    for await (const obj of stream) {
+      if (obj.name?.startsWith(`${basePrefix}${workflowId}/`)) {
+        objectsToDelete.push(obj.name);
+      }
+    }
+
+    if (objectsToDelete.length === 0) {
+      return {
+        success: true,
+        message: "No se encontraron archivos asociados al flujo.",
+        data: [],
+      };
+    }
+
+    await minioClient.removeObjects(bucket, objectsToDelete);
+
+    return {
+      success: true,
+      message: `Se eliminaron ${objectsToDelete.length} archivo(s) del flujo.`,
+      data: objectsToDelete,
+    };
+  } catch (error) {
+    console.error("Error al eliminar archivos del flujo:", error);
+    return {
+      success: false,
+      message: "Ocurrió un error al eliminar archivos del flujo.",
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
 }

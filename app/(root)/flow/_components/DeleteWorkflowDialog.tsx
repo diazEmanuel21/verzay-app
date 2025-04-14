@@ -1,74 +1,116 @@
-"use client"
+"use client";
 
-import { DeleteWorkflow } from "@/actions/deleteWorkflow";
+import { deleteEntireWorkflow } from "@/actions/deleteEntireWorkflow";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-  } from "@/components/ui/alert-dialog"
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMutation } from "@tanstack/react-query";
-
-  
-import React, { useState } from 'react'
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
-import { workerData } from "worker_threads";
 
 interface Props {
-    open: boolean;
-    setOpen: (open: boolean) => void;
-    workflowName: string;
-    workflowId: string;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  workflowName: string;
+  workflowId: string;
+  userId: string;
 }
 
-function DeleteWorkflowDialog({open, setOpen, workflowName, workflowId}: Props) {
+function DeleteWorkflowDialog({
+  open,
+  setOpen,
+  workflowName,
+  workflowId,
+  userId,
+}: Props) {
+  const router = useRouter();
   const [confirmText, setConfirmText] = useState("");
 
   const deleteMutation = useMutation({
-    mutationFn: DeleteWorkflow,
-    onSuccess: ()=>{
-      toast.success("Flujo elminado satisfactoriamente", {id: workflowId});
-      setConfirmText("");
+    mutationFn: async () => {
+      return await deleteEntireWorkflow(userId, workflowId);
     },
-    onError: ()=>{
-      toast.error("Hubo un error al eliminar el flujo", {id: workflowId})
-    }
-  })
+    onSuccess: (res) => {
+      if (!res.success) {
+        toast.error(`Fase: ${res.stage} - ${res.detail}`, { id: workflowId });
+        return;
+      }
+
+      toast.success("Flujo y datos eliminados correctamente", { id: workflowId });
+      setConfirmText("");
+      setOpen(false);
+      router.refresh();
+    },
+    onError: (error: any) => {
+      console.error("Error crítico al eliminar flujo:", error);
+      toast.error("Error inesperado al intentar eliminar el flujo.", {
+        id: workflowId,
+      });
+    },
+  });
+
+  const handleDelete = () => {
+    toast.loading("⏳ Eliminando flujo y archivos...", { id: workflowId });
+    deleteMutation.mutate();
+  };
+
+  const handleCancel = () => {
+    setConfirmText("");
+    setOpen(false);
+  };
+
   return (
-    <AlertDialog open={open} onOpenChange={setOpen} >
+    <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
-            <AlertDialogTitle>Estas seguro?</AlertDialogTitle>
-            <AlertDialogDescription>Si eliminas este flujo, mas adelante no podras recuperarlo.</AlertDialogDescription>
-            <div className="flex flex-col py-4 gap-2">
-                <p>Estas seguro en eliminar el flujo <b className="text-primary">{workflowName}</b>, Enter para confirmar.</p>
-                <Input value={confirmText} onChange={(e)=> setConfirmText(e.target.value)} />
-            </div>
+          <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Esta acción eliminará <strong>todos los nodos y archivos</strong> del flujo. Es irreversible.
+          </AlertDialogDescription>
+
+          <div className="flex flex-col py-4 gap-2">
+            <p>
+              Para confirmar, escribe: <b className="text-primary">{workflowName}</b>
+            </p>
+            <Input
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="Escribe el nombre del flujo"
+              disabled={deleteMutation.isPending}
+            />
+          </div>
         </AlertDialogHeader>
+
         <AlertDialogFooter>
-            <AlertDialogCancel onClick={()=>setConfirmText("")}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-             disabled={confirmText !== workflowName || deleteMutation.isPending}
-             className="bg-destructive text-destructive-foreground 
-             hover:bg-destructive/90"
-             onClick={(e)=>{
+          <AlertDialogCancel onClick={handleCancel} disabled={deleteMutation.isPending}>
+            Cancelar
+          </AlertDialogCancel>
+          <AlertDialogAction
+            disabled={
+              confirmText !== workflowName || deleteMutation.isPending
+            }
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={(e) => {
               e.stopPropagation();
-              toast.loading("Eliminado Flujo...", {id: workflowId})
-              deleteMutation.mutate(workflowId)
-             }} 
-            >
-              Eliminar
-            </AlertDialogAction>
+              handleDelete();
+            }}
+          >
+            {deleteMutation.isPending ? "Eliminando..." : "Eliminar"}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }
 
-export default DeleteWorkflowDialog
+export default DeleteWorkflowDialog;

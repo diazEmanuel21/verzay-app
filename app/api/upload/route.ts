@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const nameFormatted = file.name.replaceAll(' ', '_');
-    const bucketName = process.env.S3_BUCKET_NAME || 'uploads';
+    const bucketName = process.env.S3_BUCKET_NAME || 'verzay-media';
     
     // Estructura: userID/workflowID/UUID-filename.ext
     const filePath = `${userID}/${workflowID}/${randomUUID()}-${nameFormatted}`;
