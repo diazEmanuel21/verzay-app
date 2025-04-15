@@ -49,10 +49,10 @@ export function AppSidebar({ user }: AppSidebarProps) {
               className={clsx(
                 "text-2xl font-extrabold tracking-wide",
                 "text-blue-600 drop-shadow-sm",
-                "uppercase font-mono animate-pulse"
+                "uppercase font-mono"
               )}
             >
-              AGENTE.IA
+              AGENTE IA
             </Label>
             <BotMessageSquare className="text-blue-500 w-6 h-6 animate-bounce" />
           </div>
