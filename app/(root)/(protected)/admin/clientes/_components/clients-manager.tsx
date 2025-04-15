@@ -24,9 +24,10 @@ interface Props {
     users: UserWithPausar[],
     apikeys: ApiKey[],
     availableApikeys: ApiKey[],
+    currentUserRol: string,
 };
 
-export const ClientsManager = ({ users, apikeys, availableApikeys }: Props) => {
+export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRol }: Props) => {
     const router = useRouter();
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [openCreateDialog, setOpenCreateDialog] = useState(false);
@@ -130,7 +131,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys }: Props) => {
         setOpenCreateDialog(true);
     };
 
-    const columns = getColumns(openDialogGetUserId);
+    const columns = getColumns(openDialogGetUserId, currentUserRol);
 
     return (
         <Card className='p-6'>

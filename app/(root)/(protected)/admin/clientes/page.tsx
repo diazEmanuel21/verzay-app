@@ -56,5 +56,5 @@ export default async function ClientesPage() {
     return usage < 10
   })
 
-  return <ClientsManager users={users} apikeys={allApikeys} availableApikeys={availableApikeys} />
+  return <ClientsManager users={users} apikeys={allApikeys} availableApikeys={availableApikeys} currentUserRol={user.role}/>
 }

@@ -13,17 +13,17 @@ import {
 import { DialogType } from './clients-manager'
 import { UserWithPausar } from '@/lib/types'
 
-export const UserActionsMenu = ({
-    user,
-    openDialogGetUserId
-}: {
+interface propsActionsMenu {
+    currentUserRol: string
     user: UserWithPausar
     openDialogGetUserId: (userId: string, dialog: DialogType, state: boolean) => void
-}) => {
+}
 
+/* El user es el usuario seleccionado de la tabla y el currentUserRol es el usuario logueado */
+export const UserActionsMenu = ({ user, openDialogGetUserId, currentUserRol }: propsActionsMenu) => {
     return (
         <>
-            {user.role === 'admin' &&
+            {currentUserRol === 'admin' &&
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
@@ -39,7 +39,7 @@ export const UserActionsMenu = ({
                         </DropdownMenuItem>
 
                         <DropdownMenuItem
-                            onClick={() => openDialogGetUserId(user.id, 'tools', true)}
+                            onClick={() => openDialogGetUserId(user.id, 'tools', true,)}
                         >
                             Herramientas
                         </DropdownMenuItem>
