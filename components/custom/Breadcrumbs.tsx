@@ -22,6 +22,7 @@ const breadcrumbLabels: Record<string, string> = {
   dashboard: 'conexiones',
   workflow: 'workflow',
   'auto-replies': 'Respuestas rápidas',
+  reseller: 'afiliados'
 };
 
 export const Breadcrumbs = () => {

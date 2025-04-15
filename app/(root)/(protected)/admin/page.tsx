@@ -31,7 +31,7 @@ const AdminPage = async () => {
       title: "Administrador Reseller",
       description: "Gestiona a tus revendedores y su acceso a clientes o configuraciones.",
       icon: <ShieldCheck className=" text-purple-600" />,
-      href: "/admin/resellers",
+      href: "/admin/reseller",
       buttonLabel: "Ir a Resellers",
     },
   ]
