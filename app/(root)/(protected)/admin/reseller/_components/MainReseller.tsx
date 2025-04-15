@@ -21,13 +21,20 @@ interface Props {
 
 type Client = User
 
+const SectionHeader = ({ title }: { title: string }) => (
+    <div className="flex items-center justify-between">
+        <Label className="text-base font-semibold">{title}</Label>
+    </div>
+);
+
 export const MainReseller = ({ searchParams, user, resellers, defaultResellerId }: Props) => {
     const router = useRouter()
-    const [selectedReseller, setSelectedReseller] = useState<string>(defaultResellerId)
-    const [assignedClients, setAssignedClients] = useState<Client[]>([])
-    const [unassignedClients, setUnassignedClients] = useState<Client[]>([])
-    const [searchTerm, setSearchTerm] = useState("")
-    const [refreshTrigger, setRefreshTrigger] = useState(0)
+    const [selectedReseller, setSelectedReseller] = useState<string>(defaultResellerId);
+    const [assignedClients, setAssignedClients] = useState<Client[]>([]);
+    const [unassignedClients, setUnassignedClients] = useState<Client[]>([]);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [searchUnassigned, setSearchUnassigned] = useState("");
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     useEffect(() => {
         if (selectedReseller) {
@@ -74,6 +81,10 @@ export const MainReseller = ({ searchParams, user, resellers, defaultResellerId 
         (c.name ?? "").toLowerCase().includes(searchTerm.toLowerCase())
     )
 
+    const filteredUnassignedClients = unassignedClients.filter(c =>
+        (c.name ?? "").toLowerCase().includes(searchUnassigned.toLowerCase())
+    )
+
     return (
         <Card>
             <CardHeader>
@@ -94,43 +105,51 @@ export const MainReseller = ({ searchParams, user, resellers, defaultResellerId 
                     </Select>
                 </div>
 
-                <div>
-                    <Label>Buscar cliente</Label>
-                    <Input
-                        placeholder="Escribe el nombre del cliente..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
 
-                <div>
-                    <Label>Clientes asignados</Label>
-                    <ScrollArea className="h-60 border rounded-lg p-2 mt-2">
-                        {filteredAssignedClients.map(client => (
-                            <div key={client.id} className="flex justify-between items-center p-2 hover:bg-muted rounded">
-                                <span>{client.name}</span>
-                                <Button size="sm" variant="destructive" onClick={() => removeClient(client)}>Eliminar</Button>
-                            </div>
-                        ))}
-                        {filteredAssignedClients.length === 0 && (
-                            <p className="text-sm text-muted-foreground text-center mt-2">No hay clientes asignados</p>
-                        )}
-                    </ScrollArea>
-                </div>
+                <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-col flex-1 gap-2">
+                        <SectionHeader title="Clientes asignados" />
 
-                <div>
-                    <Label>Clientes sin asignar</Label>
-                    <ScrollArea className="h-60 border rounded-lg p-2 mt-2">
-                        {unassignedClients.map(client => (
-                            <div key={client.id} className="flex justify-between items-center p-2 hover:bg-muted rounded">
-                                <span>{client.name}</span>
-                                <Button size="sm" onClick={() => assignClient(client)}>Asignar</Button>
-                            </div>
-                        ))}
-                        {unassignedClients.length === 0 && (
-                            <p className="text-sm text-muted-foreground text-center mt-2">No hay clientes pendientes</p>
-                        )}
-                    </ScrollArea>
+                        <Input
+                            placeholder="Escribe el nombre del cliente..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+
+                        <ScrollArea className="h-60 border rounded-lg p-2">
+                            {filteredAssignedClients.map(client => (
+                                <div key={client.id} className="flex justify-between items-center p-2 hover:bg-muted rounded">
+                                    <span>{client.name}</span>
+                                    <Button size="sm" variant="destructive" onClick={() => removeClient(client)}>Eliminar</Button>
+                                </div>
+                            ))}
+                            {filteredAssignedClients.length === 0 && (
+                                <p className="text-sm text-muted-foreground text-center mt-2">No hay clientes asignados</p>
+                            )}
+                        </ScrollArea>
+                    </div>
+
+                    <div className="flex flex-col flex-1 gap-2">
+                        <SectionHeader title="Clientes sin asignar" />
+
+                        <Input
+                            placeholder="Escribe el nombre del cliente..."
+                            value={searchUnassigned}
+                            onChange={(e) => setSearchUnassigned(e.target.value)}
+                        />
+
+                        <ScrollArea className="h-60 border rounded-lg p-2">
+                            {filteredUnassignedClients.map(client => (
+                                <div key={client.id} className="flex justify-between items-center p-2 hover:bg-muted rounded">
+                                    <span>{client.name}</span>
+                                    <Button size="sm" onClick={() => assignClient(client)}>Asignar</Button>
+                                </div>
+                            ))}
+                            {filteredUnassignedClients.length === 0 && (
+                                <p className="text-sm text-muted-foreground text-center mt-2">No hay clientes pendientes</p>
+                            )}
+                        </ScrollArea>
+                    </div>
                 </div>
             </CardContent>
         </Card>
