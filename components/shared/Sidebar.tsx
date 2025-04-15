@@ -30,8 +30,6 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ user }: AppSidebarProps) {
-  if (!user) return;
-
   const pathname = usePathname();
   const router = useRouter();
 
@@ -40,7 +38,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
   useEffect(() => {
     onIsUserAssignedToReseller();
   }, []);
-
 
   const onIsUserAssignedToReseller = async () => {
     const isAssigned = await isUserAssignedToReseller(user.id)

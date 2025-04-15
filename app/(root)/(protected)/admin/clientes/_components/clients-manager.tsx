@@ -136,7 +136,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
     return (
         <Card className='p-6'>
             {/* button-create-client */}
-            {user?.role === 'admin' &&
+            {currentUserRol === 'admin' &&
                 <div className='absolute top-3 right-2'>
                     <Button
                         onClick={openCreateDialogUser}
@@ -169,6 +169,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
                     handleEdit={handleEdit}
                     user={user}
                     apikeys={apikeys}
+                    currentUserRol={currentUserRol}
                 />
             )}
             {/* Dialog delete */}

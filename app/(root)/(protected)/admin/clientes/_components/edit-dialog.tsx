@@ -26,6 +26,7 @@ interface Props {
   handleEdit: (userId: string, formData: FormData) => void
   user: UserWithPausar
   apikeys: ApiKey[]
+  currentUserRol: string
 }
 
 
@@ -34,7 +35,8 @@ export const EditDialog = ({
   setOpenEditDialog,
   handleEdit,
   user,
-  apikeys
+  apikeys,
+  currentUserRol
 }: Props) => {
   const openMsg = user.pausar.find(p => p.tipo === 'abrir')?.mensaje || '';
   const ROLES = Object.values(Role);
@@ -51,25 +53,38 @@ export const EditDialog = ({
     pymes: 'Pymes'
   };
 
-  const fields = [
-    { id: "name", label: "Nombre", defaultValue: user.name },
-    { id: "email", label: "Email", defaultValue: user.email },
-    { id: "password", label: "Contraseña", defaultValue: user.password },
-    { id: "role", label: "Rol", defaultValue: user.role },
-    { id: "plan", label: "Plan", defaultValue: user.plan },
-    { id: "apiUrl", label: "Apikey OpenIA", defaultValue: user.apiUrl },
-    { id: "company", label: "Empresa", defaultValue: user.company },
-    { id: "notificationNumber", label: "Teléfono Notificación", defaultValue: user.notificationNumber },
-    { id: "openMsg", label: "Frase de reactivación", defaultValue: openMsg },
-    { id: "lat", label: "Latitud", defaultValue: user.lat },
-    { id: "lng", label: "Longitud", defaultValue: user.lng },
-    { id: "mapsUrl", label: "Maps URL", defaultValue: user.mapsUrl },
-    { id: "apiKeyId", label: "Evo - API Key", defaultValue: user.apiKeyId }
-  ]
+  let fields = [
+    { id: "name", label: "Nombre", defaultValue: user.name, readOnly: false },
+    { id: "email", label: "Email", defaultValue: user.email, readOnly: false },
+    { id: "password", label: "Contraseña", defaultValue: user.password, readOnly: false },
+    { id: "role", label: "Rol", defaultValue: user.role, readOnly: false },
+    { id: "plan", label: "Plan", defaultValue: user.plan, readOnly: false },
+    { id: "apiUrl", label: "Apikey OpenIA", defaultValue: user.apiUrl, readOnly: false },
+    { id: "company", label: "Empresa", defaultValue: user.company, readOnly: false },
+    { id: "notificationNumber", label: "Teléfono Notificación", defaultValue: user.notificationNumber, readOnly: false },
+    { id: "openMsg", label: "Frase de reactivación", defaultValue: openMsg, readOnly: false },
+    { id: "lat", label: "Latitud", defaultValue: user.lat, readOnly: false },
+    { id: "lng", label: "Longitud", defaultValue: user.lng, readOnly: false },
+    { id: "mapsUrl", label: "Maps URL", defaultValue: user.mapsUrl, readOnly: false },
+    { id: "apiKeyId", label: "Evo - API Key", defaultValue: user.apiKeyId, readOnly: false },
+  ];
+
+  if (currentUserRol === 'reseller') {
+    const idsToRemove = ["apiKeyId"]
+    fields = fields.filter(field => !idsToRemove.includes(field.id))
+
+    const idsReadOnly = ["email"]
+    fields = fields.map(field =>
+      idsReadOnly.includes(field.id)
+        ? { ...field, readOnly: true }
+        : field
+    )
+  };
 
   const handleRenderField = (
     id: string,
-    defaultValue: string | number | null | undefined
+    defaultValue: string | number | null | undefined,
+    readOnly?: boolean
   ) => {
     switch (id) {
       case 'apiKeyId':
@@ -132,6 +147,7 @@ export const EditDialog = ({
             name={id}
             defaultValue={defaultValue?.toString() ?? ""}
             className="col-span-3"
+            readOnly={readOnly}
           />
         )
     }
@@ -150,10 +166,10 @@ export const EditDialog = ({
         <form action={(formData) => handleEdit(user.id, formData)}>
           <div className="overflow-auto max-h-96 pr-2">
             <div className="grid gap-4 py-4">
-              {fields.map(({ id, label, defaultValue }) => (
+              {fields.map(({ id, label, defaultValue, readOnly }) => (
                 <div className="grid grid-cols-4 items-center gap-4" key={id}>
                   <Label htmlFor={id} className="text-right">{label}</Label>
-                  {handleRenderField(id, defaultValue)}
+                  {handleRenderField(id, defaultValue, readOnly)}
                 </div>
               ))}
             </div>
