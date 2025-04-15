@@ -20,6 +20,9 @@ import LogoutButton from '../logout-button';
 import { PremiumModule } from './PremiumModule';
 import { canAccessRoute, getRouteAccess } from '@/utils/access';
 import { toast } from 'sonner';
+import { Label } from '@radix-ui/react-label';
+import { BotMessageSquare } from 'lucide-react';
+import clsx from 'clsx';
 
 interface AppSidebarProps {
   user: User
@@ -40,15 +43,30 @@ export function AppSidebar({ user }: AppSidebarProps) {
     <Sidebar className="bg-white dark:bg-gray-900 text-gray-800 dark:text-zinc-100 border-r border-zinc-200 dark:border-gray-800">
       {/* HEADER */}
       <SidebarHeader className="flex items-center justify-center py-4">
-        <Link href="/">
-          <Image
-            src="/assets/image/logo2.svg"
-            alt="logo"
-            width={140}
-            height={28}
-            className="cursor-pointer"
-          />
-        </Link>
+        {user.role === 'reseller' ?
+          <div className="flex items-center gap-2 text-center">
+            <Label
+              className={clsx(
+                "text-2xl font-extrabold tracking-wide",
+                "text-blue-600 drop-shadow-sm",
+                "uppercase font-mono animate-pulse"
+              )}
+            >
+              AGENTE.IA
+            </Label>
+            <BotMessageSquare className="text-blue-500 w-6 h-6 animate-bounce" />
+          </div>
+          :
+          <Link href="/">
+            <Image
+              src="/assets/image/logo2.svg"
+              alt="logo"
+              width={140}
+              height={28}
+              className="cursor-pointer"
+            />
+          </Link>
+        }
       </SidebarHeader>
 
       {/* CONTENT */}

@@ -23,36 +23,38 @@ export const UserActionsMenu = ({
 
     return (
         <>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="w-4 h-4" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                    <DropdownMenuItem
-                        onClick={() => openDialogGetUserId(user.id, 'editar', true)}
-                    >
-                        Editar
-                    </DropdownMenuItem>
+            {user.role === 'admin' &&
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                        <DropdownMenuItem
+                            onClick={() => openDialogGetUserId(user.id, 'editar', true)}
+                        >
+                            Editar
+                        </DropdownMenuItem>
 
-                    <DropdownMenuItem
-                        onClick={() => openDialogGetUserId(user.id, 'tools', true)}
-                    >
-                        Herramientas
-                    </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onClick={() => openDialogGetUserId(user.id, 'tools', true)}
+                        >
+                            Herramientas
+                        </DropdownMenuItem>
 
-                    <DropdownMenuSeparator />
+                        <DropdownMenuSeparator />
 
-                    <DropdownMenuItem
-                        onClick={() => openDialogGetUserId(user.id, 'delete', true)}
-                        className="text-red-600"
-                    >
-                        Eliminar
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+                        <DropdownMenuItem
+                            onClick={() => openDialogGetUserId(user.id, 'delete', true)}
+                            className="text-red-600"
+                        >
+                            Eliminar
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            }
         </>
     )
 }
