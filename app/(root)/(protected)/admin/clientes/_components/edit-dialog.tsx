@@ -63,9 +63,9 @@ export const EditDialog = ({
     { id: "company", label: "Empresa", defaultValue: user.company, readOnly: false },
     { id: "notificationNumber", label: "Teléfono Notificación", defaultValue: user.notificationNumber, readOnly: false },
     { id: "openMsg", label: "Frase de reactivación", defaultValue: openMsg, readOnly: false },
+    { id: "mapsUrl", label: "Maps URL", defaultValue: user.mapsUrl, readOnly: false },
     { id: "lat", label: "Latitud", defaultValue: user.lat, readOnly: false },
     { id: "lng", label: "Longitud", defaultValue: user.lng, readOnly: false },
-    { id: "mapsUrl", label: "Maps URL", defaultValue: user.mapsUrl, readOnly: false },
     { id: "apiKeyId", label: "Evo - API Key", defaultValue: user.apiKeyId, readOnly: false },
   ];
 
@@ -73,7 +73,10 @@ export const EditDialog = ({
     const idsToRemove = ["apiKeyId"]
     fields = fields.filter(field => !idsToRemove.includes(field.id))
 
-    const idsReadOnly = ["email"]
+    const idsReadOnly = ["name",
+      "email",
+      "role",
+      "plan",]
     fields = fields.map(field =>
       idsReadOnly.includes(field.id)
         ? { ...field, readOnly: true }
@@ -89,7 +92,7 @@ export const EditDialog = ({
     switch (id) {
       case 'apiKeyId':
         return (
-          <Select name={id} defaultValue={defaultValue?.toString() ?? ""}>
+          <Select name={id} defaultValue={defaultValue?.toString() ?? ""} disabled={readOnly}>
             <SelectTrigger className="col-span-3">
               <SelectValue placeholder="Selecciona una API Key" />
             </SelectTrigger>
@@ -107,7 +110,7 @@ export const EditDialog = ({
 
       case 'role':
         return (
-          <Select name={id} defaultValue={defaultValue?.toString() ?? ""}>
+          <Select name={id} defaultValue={defaultValue?.toString() ?? ""} disabled={readOnly}>
             <SelectTrigger className="col-span-3">
               <SelectValue placeholder="Selecciona un rol" />
             </SelectTrigger>
@@ -124,7 +127,7 @@ export const EditDialog = ({
         )
       case 'plan':
         return (
-          <Select name={id} defaultValue={defaultValue?.toString() ?? ""}>
+          <Select name={id} defaultValue={defaultValue?.toString() ?? ""} disabled={readOnly}>
             <SelectTrigger className="col-span-3">
               <SelectValue placeholder="Selecciona un rol" />
             </SelectTrigger>
@@ -148,6 +151,7 @@ export const EditDialog = ({
             defaultValue={defaultValue?.toString() ?? ""}
             className="col-span-3"
             readOnly={readOnly}
+            disabled={readOnly}
           />
         )
     }
