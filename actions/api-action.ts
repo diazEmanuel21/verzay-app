@@ -216,8 +216,8 @@ export async function createInstance(data: FormData) {
       return { success: false, message: "El usuario ya tiene una instancia activa.", instancia: instanciaActiva };
     }
 
-     // 🔥 Buscar el usuario y su ApiKey asignada
-     const user = await db.user.findUnique({
+    // 🔥 Buscar el usuario y su ApiKey asignada
+    const user = await db.user.findUnique({
       where: { id: userId },
       include: { apiKey: true },
     });
@@ -330,10 +330,16 @@ export async function eliminarInstancia(userId: string) {
     }
 
     // 3. Eliminar la instancia de la base de datos
+    const instancia = await db.instancias.findFirst({
+      where: { instanceName }
+    });
+
+    if (!instancia) {
+      throw new Error("No se encontró la instancia en la base de datos.");
+    }
+
     await db.instancias.delete({
-      where: {
-        instanceName: instanceName,
-      },
+      where: { id: instancia.id }
     });
 
     return { success: true, message: "Instancia eliminada exitosamente." };
