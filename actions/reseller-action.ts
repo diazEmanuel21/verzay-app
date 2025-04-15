@@ -58,3 +58,13 @@ export const removeClientFromReseller = async (clientId: string, resellerId: str
         },
     })
 }
+
+export const isUserAssignedToReseller = async (userId: string): Promise<boolean> => {
+    // 1. Buscar si existe una relación reseller con ese userId
+    const resellerAssignment = await db.reseller.findFirst({
+        where: { userId },
+    })
+
+    // 2. Retornar true si existe, false si no
+    return !!resellerAssignment
+}

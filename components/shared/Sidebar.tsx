@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { redirect, usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -23,15 +23,29 @@ import { toast } from 'sonner';
 import { Label } from '@radix-ui/react-label';
 import { BotMessageSquare } from 'lucide-react';
 import clsx from 'clsx';
+import { isUserAssignedToReseller } from '@/actions/reseller-action';
 
 interface AppSidebarProps {
   user: User
 }
 
 export function AppSidebar({ user }: AppSidebarProps) {
+  if (!user) return;
+
   const pathname = usePathname();
   const router = useRouter();
 
+  const [isAssigned, setUserAssignedToReseller] = useState(false);
+
+  useEffect(() => {
+    onIsUserAssignedToReseller();
+  }, []);
+
+
+  const onIsUserAssignedToReseller = async () => {
+    const isAssigned = await isUserAssignedToReseller(user.id)
+    setUserAssignedToReseller(isAssigned);
+  };
 
   useEffect(() => {
     if (!user) {
@@ -43,7 +57,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
     <Sidebar className="bg-white dark:bg-gray-900 text-gray-800 dark:text-zinc-100 border-r border-zinc-200 dark:border-gray-800">
       {/* HEADER */}
       <SidebarHeader className="flex items-center justify-center py-4">
-        {user.role === 'reseller' ?
+        {user.role === 'reseller' || isAssigned ?
           <div className="flex items-center gap-2 text-center">
             <Label
               className={clsx(
@@ -107,7 +121,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
               return (
                 <Link
                   key={route}
-                  href={route}
+                  href={user.role === 'reseller' && route === '/admin' ? '/admin/clientes' : route}
                   onClick={handleClick}
                   className={`flex items-center justify-between gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${isActive
                     ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white'
