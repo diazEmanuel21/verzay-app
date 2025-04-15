@@ -48,6 +48,51 @@ export async function getAllUsers(): Promise<ClientResponse<UserWithPausar[]>> {
     };
   }
 }
+// ==============================
+// GET CLIENT DATA BY ROL
+// ==============================
+export async function getUsersByResellerId(resellerId: string): Promise<ClientResponse<UserWithPausar[]>> {
+  try {
+    // Buscar usuarios asignados al reseller
+    const assignments = await db.reseller.findMany({
+      where: { resellerid: resellerId },
+      select: {
+        userId: true,
+      },
+    })
+
+    const userIds = assignments.map(a => a.userId).filter(Boolean) as string[]
+
+    if (!userIds.length) {
+      return {
+        success: true,
+        message: "No hay usuarios asignados.",
+        data: [],
+      }
+    }
+
+    // Buscar usuarios con relación a Pausar
+    const users = await db.user.findMany({
+      where: { id: { in: userIds } },
+      include: {
+        pausar: true,
+      },
+      orderBy: { createdAt: "desc" },
+    })
+
+    return {
+      success: true,
+      message: "Usuarios del reseller cargados correctamente.",
+      data: users,
+    }
+  } catch (error) {
+    console.error("Error al obtener usuarios del reseller:", error)
+    return {
+      success: false,
+      message: "Error al obtener usuarios del reseller.",
+    }
+  }
+}
 
 // ==============================
 // GET CLIENT DATA BY USER ID
@@ -195,8 +240,6 @@ export const updateAbrirPhrase = async (userId: string, mensaje: string) => {
     return { success: false, message: 'Error actualizando la frase' };
   }
 };
-
-
 // ==============================
 // CREATE USER + INSERT TO PAUSAR
 // ==============================
@@ -252,7 +295,6 @@ export const createUserWithPausar = async (
     };
   }
 };
-
 // ==============================
 // DELETE USER
 // ==============================

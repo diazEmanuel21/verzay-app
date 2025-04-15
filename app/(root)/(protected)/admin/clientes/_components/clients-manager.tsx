@@ -135,16 +135,18 @@ export const ClientsManager = ({ users, apikeys, availableApikeys }: Props) => {
     return (
         <Card className='p-6'>
             {/* button-create-client */}
-            <div className='absolute top-3 right-2'>
-                <Button
-                    onClick={openCreateDialogUser}
-                    variant="default"
-                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all"
-                >
-                    Crear
-                    <PlusCircle />
-                </Button>
-            </div>
+            {user?.role === 'admin' &&
+                <div className='absolute top-3 right-2'>
+                    <Button
+                        onClick={openCreateDialogUser}
+                        variant="default"
+                        className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all"
+                    >
+                        Crear
+                        <PlusCircle />
+                    </Button>
+                </div>
+            }
 
             {/* Tabla de datos */}
             <DataTable columns={columns} data={users} />

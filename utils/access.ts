@@ -18,7 +18,7 @@ export function canAccessRoute({
   const link = getRouteAccess(route);
   if (!link) return { allowed: true };
 
-  if (link.adminOnly && userRole !== 'admin') return { allowed: false, reason: 'adminOnly' };
+  if (link.adminOnly && userRole !== 'admin' && userRole !== 'reseller') return { allowed: false, reason: 'adminOnly' };
   if (link.allowedPlans && !link.allowedPlans.includes(userPlan)) return { allowed: false, reason: 'invalidPlan' };
 
   return { allowed: true };

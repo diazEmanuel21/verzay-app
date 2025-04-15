@@ -60,7 +60,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
             .filter(link => {
               const access = getRouteAccess(link.route);
               // Mostrar solo si no es adminOnly o el usuario es admin
-              return !access?.adminOnly || user.role === 'admin';
+              return !access?.adminOnly || user.role === 'admin' || user.role === 'reseller';
             })
             .map((link) => {
               const { route, icon: Icon, label, requiresPremium } = link;
