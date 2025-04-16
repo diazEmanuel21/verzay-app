@@ -2,12 +2,20 @@
 
 import { useRef, useEffect, useState } from 'react'
 import { motion, useAnimation, useInView } from 'framer-motion'
+import { Headphones } from "lucide-react"
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import Image from 'next/image'
 import { ShieldCheck, Star, Sparkles, CheckCircle, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import { ChevronDoubleDownIcon } from '@heroicons/react/24/solid'
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger
+} from "@/components/ui/popover"
+
+import { User } from '@prisma/client'
 
 const plans = [
     {
@@ -21,7 +29,7 @@ const plans = [
             'CRM en Google Sheets',
         ],
         featured: false,
-        href: 'https://wa.me/+573115616975?text=Hola%2C%20quiero%20actualizar%20mi%20plan',
+        href: (num: string) => `https://wa.me/+${num}?text=Hola%2C%20quiero%20actualizar%20mi%20plan%20a%20PYMES`,
     },
     {
         name: 'BUSINESS',
@@ -34,7 +42,7 @@ const plans = [
             'Captura y envía a Sheets',
         ],
         featured: true,
-        href: 'https://wa.me/+573115616975?text=Hola%2C%20quiero%20actualizar%20mi%20plan',
+        href: (num: string) => `https://wa.me/+${num}?text=Hola%2C%20quiero%20actualizar%20mi%20plan%20a%20BUSINESS`,
     },
     {
         name: 'EMPRESARIAL',
@@ -47,15 +55,23 @@ const plans = [
             'Google Sheets bidireccional',
         ],
         featured: false,
-        href: 'https://wa.me/+573115616975?text=Hola%2C%20quiero%20actualizar%20mi%20plan',
+        href: (num: string) => `https://wa.me/+${num}?text=Hola%2C%20quiero%20actualizar%20mi%20plan%20a%20EMPRESARIAL`,
     },
 ]
-        
-export const ResellerCreditPage = () => {
+
+interface propsReseller {
+    resellerInformation: User | null
+}
+
+export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
     const planSectionRef = useRef<HTMLDivElement | null>(null)
     const isInView = useInView(planSectionRef, { once: false, margin: '-100px' })
     const controls = useAnimation()
     const [highlightButton, setHighlightButton] = useState(false)
+
+    const numberReseller = resellerInformation?.notificationNumber.toString();
+    const emailReseller = resellerInformation?.email.toString();
+    const nameReseller = resellerInformation?.name;
 
     useEffect(() => {
         if (isInView) {
@@ -89,6 +105,7 @@ export const ResellerCreditPage = () => {
                             <p className="text-lg text-muted-foreground dark:text-gray-300">
                                 Lleva tu negocio al siguiente nivel al mejorar tu plan. Accede a herramientas avanzadas de inteligencia artificial, automatización profesional y soporte prioritario.
                             </p>
+
                             <ul className="space-y-2">
                                 <li className="flex items-center gap-2 text-sm">
                                     <Star className="w-4 h-4 text-yellow-500" />
@@ -103,6 +120,47 @@ export const ResellerCreditPage = () => {
                                     Potencia tu negocio con IA
                                 </li>
                             </ul>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute top-0 right-4 bg-white dark:bg-[#1c1c2b] border border-[#1C61E7]/20 shadow-sm hover:bg-[#1C61E7]/10"
+                                    >
+                                        <Headphones className="w-5 h-5 text-[#1C61E7]" />
+                                        <span className="sr-only">Ver asesor</span>
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent>
+                                    <h2 className="text-base font-semibold text-[#1C61E7] dark:text-white flex items-center gap-2 pb-2">
+                                        <ShieldCheck className="w-4 h-4 text-green-500" />
+                                        Tu asesor de confianza
+                                    </h2>
+                                    <div className="text-sm space-y-1 text-zinc-800 dark:text-gray-200 pb-4">
+                                        <p className="flex items-center gap-2">
+                                            <Sparkles className="w-4 h-4 text-yellow-500" />
+                                            <span className="font-medium">Nombre:</span> {resellerInformation?.name}
+                                        </p>
+                                        <p className="flex items-center gap-2">
+                                            <Star className="w-4 h-4 text-[#1C61E7]" />
+                                            <span className="font-medium">Correo:</span> {resellerInformation?.email}
+                                        </p>
+                                        <p className="flex items-center gap-2">
+                                            <ChevronDown className="w-4 h-4 text-green-600" />
+                                            <span className="font-medium">WhatsApp:</span> +{resellerInformation?.notificationNumber}
+                                        </p>
+                                    </div>
+                                    <Link
+                                        href={`https://wa.me/+${resellerInformation?.notificationNumber}?text=Hola%2C%20tengo%20una%20duda%20sobre%20mi%20plan`}
+                                        target="_blank"
+                                    >
+                                        <Button variant="outline" className="w-full border-[#1C61E7] text-[#1C61E7] hover:bg-[#1C61E7]/10 transition-all">
+                                            Chatear con asesor
+                                        </Button>
+                                    </Link>
+                                </PopoverContent>
+                            </Popover>
+
                             <Button
                                 size="lg"
                                 className={`mt-6 px-6 py-3 text-base bg-[#1C61E7] hover:bg-[#1553ca] text-white transition-all duration-500 ${highlightButton ? 'ring-4 ring-[#1C61E7]/40 shadow-xl scale-[1.03]' : ''
@@ -145,7 +203,7 @@ export const ResellerCreditPage = () => {
             </section>
 
             {/* PLAN SECTION */}
-            <section ref={planSectionRef} className="min-h-screen flex items-center justify-center px-6">
+            <section ref={planSectionRef} className="min-h-screen flex items-center justify-center flex-col">
                 <motion.div
                     className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full"
                     variants={{
@@ -182,7 +240,7 @@ export const ResellerCreditPage = () => {
                                     </li>
                                 ))}
                             </ul>
-                            <Link href={plan.href} target="_blank">
+                            <Link href={plan.href(numberReseller as string)} target="_blank">
                                 <Button
                                     className={`w-full ${plan.featured
                                         ? 'bg-white text-[#1C61E7] hover:bg-gray-100'
