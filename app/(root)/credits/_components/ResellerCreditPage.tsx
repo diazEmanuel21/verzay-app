@@ -70,8 +70,6 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
     const [highlightButton, setHighlightButton] = useState(false)
 
     const numberReseller = resellerInformation?.notificationNumber.toString();
-    const emailReseller = resellerInformation?.email.toString();
-    const nameReseller = resellerInformation?.name;
 
     useEffect(() => {
         if (isInView) {
