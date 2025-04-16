@@ -2,11 +2,11 @@
 
 import { useRef, useEffect, useState } from 'react'
 import { motion, useAnimation, useInView } from 'framer-motion'
-import { Headphones } from "lucide-react"
+import { Headphones, Info, Mail, User2Icon, UserRoundCheck } from "lucide-react"
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import Image from 'next/image'
-import { ShieldCheck, Star, Sparkles, CheckCircle, ChevronDown } from 'lucide-react'
+import { ShieldCheck, Star, Sparkles, CheckCircle, PhoneIcon } from 'lucide-react'
 import Link from 'next/link'
 import { ChevronDoubleDownIcon } from '@heroicons/react/24/solid'
 import {
@@ -16,17 +16,18 @@ import {
 } from "@/components/ui/popover"
 
 import { User } from '@prisma/client'
-
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 const plans = [
     {
         name: 'PYMES',
         features: [
             'Interpretación audios',
-            'Memoria contextual',
-            'Notificación a otro número',
-            'Solicitudes o citas',
-            '1 flujo por WhatsApp',
-            'CRM en Google Sheets',
+            'Sigue tu entrenamiento',
+            'Tiene memoria contextual',
+            'Toma solicitudes y/o citas',
+            '1 agente IA por una línea WhatsApp',
+            'Notificación de eventos a otro número',
+            'Captura datos y registro en WhatsApp',
         ],
         featured: false,
         href: (num: string) => `https://wa.me/+${num}?text=Hola%2C%20quiero%20actualizar%20mi%20plan%20a%20PYMES`,
@@ -35,11 +36,12 @@ const plans = [
         name: 'BUSINESS',
         features: [
             'Interpretación audios',
-            'Múltiples archivos',
-            'Pedidos o citas',
-            'Respuestas con archivos',
-            '3 flujos en tu WhatsApp',
-            'Captura y envía a Sheets',
+            'Sigue tu entrenamiento',
+            'Envío de múltiples archivos',
+            'Toma solicitudes, pedidos o citas',
+            '2 Agentes IA misma línea WhatsApp',
+            'Notificación de eventos a otro número',
+            'Captura y registro datos Google Sheets',
         ],
         featured: true,
         href: (num: string) => `https://wa.me/+${num}?text=Hola%2C%20quiero%20actualizar%20mi%20plan%20a%20BUSINESS`,
@@ -48,11 +50,12 @@ const plans = [
         name: 'EMPRESARIAL',
         features: [
             'Interpretación audios',
-            'Lee imágenes (png, jpeg)',
-            'Solicitudes o pedidos',
-            'Seguimientos automáticos',
-            '5 flujos activos',
-            'Google Sheets bidireccional',
+            'Lee imágenes en png y jpeg',
+            'Toma solicitudes, pedidos o citas',
+            'Respuestas rápidas envío archivos',
+            '3 Agentes IA misma línea WhatsApp',
+            'Captura y consulta en Google Sheets',
+            'Seguimientos, recordatorios, inactividad',
         ],
         featured: false,
         href: (num: string) => `https://wa.me/+${num}?text=Hola%2C%20quiero%20actualizar%20mi%20plan%20a%20EMPRESARIAL`,
@@ -70,6 +73,8 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
     const [highlightButton, setHighlightButton] = useState(false)
 
     const numberReseller = resellerInformation?.notificationNumber.toString();
+    const textClass = "max-w-[200px] truncate whitespace-nowrap overflow-hidden text-left"
+
 
     useEffect(() => {
         if (isInView) {
@@ -86,11 +91,11 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
 
     return (
         // <div className="bg-gradient-to-br from-gray-100 via-white to-blue-200 dark:from-dark-600 dark:via-gray-900 dark:to-dark-700">
-        <>
+        <div className="px-6">
             {/* HERO SECTION */}
-            <section className="relative min-h-screen flex flex-col items-center">
-                <Card className="w-full shadow-2xl border-none bg-white/70 dark:bg-dark-600/70 backdrop-blur-lg">
-                    <CardContent className="flex flex-col-reverse lg:flex-row items-center">
+            <section className="relative min-h-screen flex flex-col items-center tex">
+                <div className="w-full border-none bg-transparent backdrop-blur-lg">
+                    <div className="flex flex-col-reverse lg:flex-row items-center">
                         <motion.div
                             initial={{ opacity: 0, x: -30 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -118,35 +123,65 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
                                     Potencia tu negocio con IA
                                 </li>
                             </ul>
-                            <Popover>
+                            <Popover >
                                 <PopoverTrigger asChild>
                                     <Button
-                                        variant="ghost"
                                         size="icon"
-                                        className="absolute top-0 right-4 bg-white dark:bg-[#1c1c2b] border border-[#1C61E7]/20 shadow-sm hover:bg-[#1C61E7]/10"
+                                        className="absolute top-0 right-4"
                                     >
-                                        <Headphones className="w-5 h-5 text-[#1C61E7]" />
+                                        <Info className="w-8 h-8" />
                                         <span className="sr-only">Ver asesor</span>
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent>
+                                <PopoverContent align='end'>
                                     <h2 className="text-base font-semibold text-[#1C61E7] dark:text-white flex items-center gap-2 pb-2">
                                         <ShieldCheck className="w-4 h-4 text-green-500" />
                                         Tu asesor de confianza
                                     </h2>
-                                    <div className="text-sm space-y-1 text-zinc-800 dark:text-gray-200 pb-4">
-                                        <p className="flex items-center gap-2">
-                                            <Sparkles className="w-4 h-4 text-yellow-500" />
-                                            <span className="font-medium">Nombre:</span> {resellerInformation?.name}
-                                        </p>
-                                        <p className="flex items-center gap-2">
-                                            <Star className="w-4 h-4 text-[#1C61E7]" />
-                                            <span className="font-medium">Correo:</span> {resellerInformation?.email}
-                                        </p>
-                                        <p className="flex items-center gap-2">
-                                            <ChevronDown className="w-4 h-4 text-green-600" />
-                                            <span className="font-medium">WhatsApp:</span> +{resellerInformation?.notificationNumber}
-                                        </p>
+                                    <div className="text-sm space-y-1 p-2">
+                                        <TooltipProvider>
+                                            <div className="flex items-center gap-2">
+                                                <User2Icon className="w-4 h-4" />
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <p className={textClass}>
+                                                            {resellerInformation?.company || "—"}
+                                                        </p>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>{resellerInformation?.company}</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                <Mail className="w-4 h-4" />
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <p className={textClass}>
+                                                            {resellerInformation?.email || "—"}
+                                                        </p>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>{resellerInformation?.email}</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                <PhoneIcon className="w-4 h-4" />
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <p className={textClass}>
+                                                            +{resellerInformation?.notificationNumber || "—"}
+                                                        </p>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>+{resellerInformation?.notificationNumber}</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </div>
+                                        </TooltipProvider>
                                     </div>
                                     <Link
                                         href={`https://wa.me/+${resellerInformation?.notificationNumber}?text=Hola%2C%20tengo%20una%20duda%20sobre%20mi%20plan`}
@@ -185,8 +220,8 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
                                 className="object-contain drop-shadow-xl"
                             />
                         </motion.div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
 
                 <motion.div
                     onClick={() => {
@@ -201,7 +236,7 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
             </section>
 
             {/* PLAN SECTION */}
-            <section ref={planSectionRef} className="min-h-screen flex items-center justify-center flex-col">
+            <section ref={planSectionRef} className="flex items-center justify-center flex-col">
                 <motion.div
                     className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full"
                     variants={{
@@ -252,6 +287,6 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
                     ))}
                 </motion.div>
             </section>
-        </>
+        </div>
     )
 }
