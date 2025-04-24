@@ -15,12 +15,10 @@ const AddIapage = async ({ params, searchParams }: PageProps) => {
   };
 
   return (
-    <div className="p-4">
       <FormSystemMessage 
         userId={user.id} 
         // additionalParams={searchParams} 
       />
-    </div>
   );
 };
 

@@ -162,9 +162,27 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
     }
   };
 
-  const filteredMessages = messages.filter((msg) =>
-    (msg.title?.toLowerCase() ?? "").includes(debouncedSearchTerm.toLowerCase())
-  );
+  const filteredMessages = messages.filter((msg) => {
+    const lowerSearch = debouncedSearchTerm.toLowerCase();
+    return (
+      (msg.title?.toLowerCase().includes(lowerSearch) ?? false) ||
+      (msg.message?.toLowerCase().includes(lowerSearch) ?? false)
+    );
+  });
+
+  const highlightMatch = (text: string, query: string) => {
+    if (!query) return text;
+    const parts = text.split(new RegExp(`(${query})`, 'gi'));
+    return parts.map((part, i) =>
+      part.toLowerCase() === query.toLowerCase() ? (
+        <span key={i} className="bg-yellow-200 font-semibold">
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+  };
 
   const truncateMessage = (text: string, maxLength: number) => {
     if (text.length <= maxLength) return text;
@@ -172,7 +190,7 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
   };
 
   return (
-    <div className='min-h-screen'>
+    <div className='overflow-hidden'>
       {/* Forzar toast por encima de Dialog */}
       {/* <div className="z-[9999] fixed top-0 right-0 w-full flex justify-end pointer-events-none" /> */}
       <div className="flex justify-between pb-6">
@@ -254,18 +272,19 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
           <MessagesSkeleton />) : messages.length === 0 ? (
             <p className="text-sm text-muted-foreground">Aún no hay mensajes configurados.</p>
           ) : (
-          <div
-            className="flex flex-col gap-3 overflow-y-auto"
-          >
+
+          <div className="overflow-y-auto pr-1">
             {filteredMessages.map((msg) => (
               <Card key={msg.id} className="p-4 flex justify-between items-start">
                 <div>
-                  <h4 className="text-base font-medium">{(msg.title)?.toUpperCase()}</h4>
+                  <h4 className="text-base font-medium">
+                    {highlightMatch(msg.title?.toUpperCase() ?? "", debouncedSearchTerm)}
+                  </h4>
                   <p
                     className="text-sm text-muted-foreground cursor-pointer hover:underline"
                     onClick={() => openEditDialog(msg)}
                   >
-                    {truncateMessage(msg.message, 100)}
+                    {highlightMatch(truncateMessage(msg.message, 100), debouncedSearchTerm)}
                   </p>
                 </div>
 
@@ -310,7 +329,6 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
             ))}
           </div>
         )}
-
       </div>
     </div>
   );
