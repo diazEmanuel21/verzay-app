@@ -190,13 +190,11 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
   };
 
   return (
-    <div className='overflow-hidden'>
-      {/* Forzar toast por encima de Dialog */}
-      {/* <div className="z-[9999] fixed top-0 right-0 w-full flex justify-end pointer-events-none" /> */}
-      <div className="flex justify-between pb-6">
+    <div className="flex flex-col h-[90vh] overflow-hidden">
+      {/* Header + Botón */}
+      <div className="flex justify-between px-6 pt-6 pb-4">
         <Header
           title={'Entrena tu IA'}
-          subtitle={'Agrega y personaliza las instrucciones para tu IA.'}
         />
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -212,7 +210,10 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
             </Button>
           </DialogTrigger>
 
-          <DialogContent className="max-w-4xl h-[600px] flex flex-col">
+          <DialogContent
+            className="max-w-4xl h-[600px] flex flex-col"
+            onOpenAutoFocus={(e) => e.preventDefault()} // ← evita scroll al abrir
+          >
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Mensaje" : "Nuevo Mensaje"}</DialogTitle>
               <DialogDescription>
@@ -220,21 +221,17 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
               </DialogDescription>
             </DialogHeader>
 
-            {/* Contenedor que crece */}
             <div className="flex flex-col gap-4 flex-1">
-              {/* Campo Título */}
               <div className="flex flex-col gap-2">
                 <Label htmlFor="title">Título</Label>
                 <Input
                   id="title"
-                  maxLength={100} // Limita el input a 50 caracteres
+                  maxLength={100}
                   placeholder="Ejemplo: Bienvenida"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                 />
               </div>
-
-              {/* Campo Mensaje que ocupa el espacio restante */}
               <div className="flex flex-col gap-2 flex-1">
                 <Label htmlFor="message">Descripción</Label>
                 <Textarea
@@ -253,12 +250,11 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
               </Button>
             </DialogFooter>
           </DialogContent>
-
         </Dialog>
       </div>
 
       {/* Buscador */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="px-6">
         <Input
           placeholder="Buscar mensaje por título..."
           value={searchTerm}
@@ -267,13 +263,14 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
         />
       </div>
 
-      <div>
+      {/* Cards Scrollable */}
+      <div className="flex-1 overflow-y-auto px-6 pb-6">
         {loading ? (
-          <MessagesSkeleton />) : messages.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aún no hay mensajes configurados.</p>
-          ) : (
-
-          <div className="overflow-y-auto pr-1">
+          <MessagesSkeleton />
+        ) : messages.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Aún no hay mensajes configurados.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
             {filteredMessages.map((msg) => (
               <Card key={msg.id} className="p-4 flex justify-between items-start">
                 <div>
@@ -289,8 +286,7 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button className="bg-orange-500 text-white hover:bg-orange-600"
-                    size="icon" onClick={() => openEditDialog(msg)}>
+                  <Button className="bg-orange-500 text-white hover:bg-orange-600" size="icon" onClick={() => openEditDialog(msg)}>
                     <PencilSquareIcon className="h-5 w-5" />
                   </Button>
 
@@ -303,7 +299,6 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
                       >
                         <TrashIcon className="h-5 w-5" />
                       </Button>
-
                     </AlertDialogTrigger>
 
                     <AlertDialogContent>
@@ -313,7 +308,6 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
                           Esta acción no se puede deshacer. ¿Estás seguro de eliminar este mensaje?
                         </AlertDialogDescription>
                       </AlertDialogHeader>
-
                       <AlertDialogFooter>
                         <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
                           Cancelar
@@ -331,5 +325,6 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
         )}
       </div>
     </div>
+
   );
 }

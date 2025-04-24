@@ -46,7 +46,7 @@ export const Breadcrumbs = () => {
   });
 
   return (
-    <Breadcrumb>
+    <Breadcrumb className='py-4'>
       <BreadcrumbList>
         <SidebarTrigger /> |
 

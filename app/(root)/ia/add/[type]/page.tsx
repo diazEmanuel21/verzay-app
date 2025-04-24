@@ -15,9 +15,9 @@ const AddIapage = async ({ params, searchParams }: PageProps) => {
   };
 
   return (
-      <FormSystemMessage 
-        userId={user.id} 
-        // additionalParams={searchParams} 
+      <FormSystemMessage
+        userId={user.id}
+      // additionalParams={searchParams} 
       />
   );
 };
