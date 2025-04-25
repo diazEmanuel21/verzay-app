@@ -190,9 +190,9 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
   };
 
   return (
-    <div className="flex flex-col h-[90vh] overflow-hidden">
+    <div className="flex flex-col h-[89vh] overflow-hidden p-4 gap-4">
       {/* Header + Botón */}
-      <div className="flex justify-between px-6 pt-6 pb-4">
+      <div className="flex justify-between">
         <Header
           title={'Entrena tu IA'}
         />
@@ -254,7 +254,7 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
       </div>
 
       {/* Buscador */}
-      <div className="px-6">
+      <div>
         <Input
           placeholder="Buscar mensaje por título..."
           value={searchTerm}
@@ -264,7 +264,7 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
       </div>
 
       {/* Cards Scrollable */}
-      <div className="flex-1 overflow-y-auto px-6 pb-6">
+      <div className="flex-1 overflow-y-auto ">
         {loading ? (
           <MessagesSkeleton />
         ) : messages.length === 0 ? (
