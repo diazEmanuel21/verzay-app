@@ -1,7 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { Session } from '@prisma/client';
-import { getColumns } from './Columns';
+// import { getColumns } from './Columns';
 import { DataGrid } from './DataGrid';
 import { toast } from 'sonner';
 import { useState } from 'react';
@@ -85,11 +85,11 @@ export function MainSession({ sessions }: { sessions: Session[] }) {
         }
     };
 
-    const columns = getColumns(handleDeleteClient);
+    // const columns = getColumns(handleDeleteClient);
 
     return (
         <div className='min-h-screen'>
-            <DataGrid<Session, unknown> columns={columns} data={sessions} />
+            {/* <DataGrid<Session, unknown> columns={columns} data={sessions} /> */}
             {/* Delete client */}
             <AlertDialog open={showConfirmDeleteClient} onOpenChange={(open) => {
                 if (!open) {
