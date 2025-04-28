@@ -21,7 +21,8 @@ const MainCredits = async () => {
   return (
     <>
       {
-        isAssigned ? <ResellerCreditPage resellerInformation={resellerInformation.data} /> : < AdminCreditPage />
+        // isAssigned ? <ResellerCreditPage resellerInformation={resellerInformation.data} /> : < AdminCreditPage />
+        <ResellerCreditPage resellerInformation={resellerInformation.data} />
       }
     </>
   )

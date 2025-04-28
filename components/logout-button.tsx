@@ -109,22 +109,22 @@ const LogoutButton = ({ user, collapsed = false }: LogoutButtonProps) => {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem disabled>
+        {/* <DropdownMenuItem disabled>
           <Sparkles className="mr-2 h-4 w-4" />
           Actualízate a Pro
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
         <DropdownMenuItem onClick={() => goTo('/profile')}>
           <BadgeCheck className="mr-2 h-4 w-4" />
           Cuenta
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => goTo('/credits')}>
+        {/* <DropdownMenuItem onClick={() => goTo('/credits')}>
           <CreditCard className="mr-2 h-4 w-4" />
           Planes
-        </DropdownMenuItem>
-        <DropdownMenuItem disabled>
+        </DropdownMenuItem> */}
+        {/* <DropdownMenuItem disabled>
           <Bell className="mr-2 h-4 w-4" />
           Notificaciones
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
 
         <DropdownMenuSeparator />
 
