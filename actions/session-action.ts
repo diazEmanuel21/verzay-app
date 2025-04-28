@@ -36,13 +36,13 @@ export async function getSessionsCountByUserId(userId: string) {
         message: 'Error al obtener los conteos',
       };
     }
-  }
+}
 
 export async function getSessionsByUserId(
     userId: string,
     skip: number = 0,
     take: number = 20
-  ): Promise<SessionResponse> {
+): Promise<SessionResponse> {
     try {
       if (!userId) return {
         success: false,
@@ -76,13 +76,13 @@ export async function getSessionsByUserId(
         message: errorMessage
       };
     }
-  }
+}
 
 export async function updateSessionStatus(sessionId: number, status: boolean): Promise<SessionResponse> {
     try {
         await db.session.update({
-            where: { id: sessionId },  // campo único para identificar la sesión
-            data: { status }          // campo que se actualizará
+            where: { id: sessionId },
+            data: { status }
         });
 
         return {
@@ -111,7 +111,6 @@ export async function deleteSession(
     remoteJid: string
 ): Promise<SessionResponse> {
     try {
-        // Verificar primero que exista la sesión con todos los criterios
         const session = await db.session.findFirst({
             where: {
                 AND: [
@@ -129,7 +128,6 @@ export async function deleteSession(
             };
         }
 
-        // Eliminar usando el ID que ya verificamos
         await db.session.delete({
             where: { id: sessionId }
         });
@@ -144,5 +142,42 @@ export async function deleteSession(
             success: false,
             message: 'Error al eliminar la sesión. Verifica los datos e intenta nuevamente.'
         };
+    }
+}
+
+/**
+ * 🔎 Nueva función para buscar sesiones por nombre o número en toda la base de datos.
+ */
+export async function searchSessionsByUserId(userId: string, query: string): Promise<SessionResponse> {
+    try {
+      if (!userId) return {
+        success: false,
+        message: 'No existe el userId',
+        data: []
+      };
+  
+      const sessions = await db.session.findMany({
+        where: {
+          userId,
+          OR: [
+            { pushName: { contains: query, mode: 'insensitive' } },
+            { remoteJid: { contains: query, mode: 'insensitive' } }
+          ]
+        },
+        orderBy: { createdAt: "desc" },
+        take: 100  // puedes ajustar si quieres limitar resultados
+      });
+  
+      return {
+        success: true,
+        message: 'Resultados de búsqueda obtenidos correctamente',
+        data: sessions
+      };
+    } catch (error) {
+      console.error('Error al buscar sesiones:', error);
+      return {
+        success: false,
+        message: 'Error al buscar las sesiones'
+      };
     }
 }

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import useSWRInfinite from "swr/infinite";
-import { getSessionsByUserId, getSessionsCountByUserId } from "@/actions/session-action";
+import { getSessionsByUserId, getSessionsCountByUserId, searchSessionsByUserId } from "@/actions/session-action";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,8 +10,8 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { AlertCircle, CheckCircle2, Database, XCircle } from "lucide-react";
 import { UserSessionsSkeleton } from "./user-sessions-skeleton";
-import { DataTable } from "../../(protected)/admin/clientes/_components/data-table";
 import { columns } from "./Columns";
+import { DataTable } from "./data-table";
 
 interface SessionsContentProps {
   userId: string;
@@ -33,6 +33,8 @@ const PAGE_SIZE = 20;
 export function SessionsContent({ userId }: SessionsContentProps) {
   const [search, setSearch] = useState("");
   const [stats, setStats] = useState<{ total: number; active: number; inactive: number } | null>(null);
+  const [searchResults, setSearchResults] = useState<Session[] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const observerRef = useRef<HTMLDivElement>(null);
 
   const getKey = (pageIndex: number, previousPageData: Session[] | null) => {
@@ -55,15 +57,14 @@ export function SessionsContent({ userId }: SessionsContentProps) {
     }
   );
 
-  const sessions = data ? data.flat() : [];
+  const sessions = useMemo(() => {
+    if (search.trim() !== "" && searchResults !== null) {
+      return searchResults;
+    }
+    return data ? data.flat() : [];
+  }, [data, searchResults, search]);
 
-  const filteredSessions = useMemo(() => {
-    const query = search.toLowerCase();
-    return sessions.filter(
-      (session) =>
-        session.pushName?.toLowerCase().includes(query) || session.remoteJid?.toLowerCase().includes(query)
-    );
-  }, [sessions, search]);
+  const hasMore = !data || (data[data.length - 1]?.length === PAGE_SIZE);
 
   useEffect(() => {
     async function fetchStats() {
@@ -76,29 +77,27 @@ export function SessionsContent({ userId }: SessionsContentProps) {
   }, [userId]);
 
   useEffect(() => {
-    if (!observerRef.current) return;
+    if (!observerRef.current || search.trim() !== "") return;
 
     const observer = new IntersectionObserver((entries) => {
       const [entry] = entries;
-      if (entry.isIntersecting && !isValidating) {
-        setSize(size + 1);
+      if (entry.isIntersecting && !isValidating && hasMore && sessions.length > 0) {
+        setSize((prev) => prev + 1);
       }
     }, { threshold: 1.0 });
 
     observer.observe(observerRef.current);
 
     return () => observer.disconnect();
-  }, [size, isValidating]);
+  }, [isValidating, hasMore, sessions.length, search, setSize]);
 
-  // ⏰ Agregado: Revalidar automáticamente cada 30 segundos
   useEffect(() => {
     const interval = setInterval(() => {
       mutate();
-    }, 30000); // Cada 30 segundos (puedes poner 15000 para 15 segundos)
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [mutate]);
-  // ⏰ Fin de agregado
 
   const handleDeleteFromTable = (deletedId: number) => {
     mutate((currentData) => {
@@ -107,7 +106,32 @@ export function SessionsContent({ userId }: SessionsContentProps) {
     }, false);
   };
 
-  if (isLoading && size === 1) return <UserSessionsSkeleton />;
+  const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearch(value);
+
+    if (value.trim().length === 0) {
+      setSearchResults(null);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const res = await searchSessionsByUserId(userId, value);
+      if (res.success) {
+        setSearchResults(res.data || []);
+      } else {
+        setSearchResults([]);
+      }
+    } catch (err) {
+      console.error("Error buscando sesiones:", err);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  if (isLoading && size === 1 && !search) return <UserSessionsSkeleton />;
 
   if (error) {
     return (
@@ -121,13 +145,15 @@ export function SessionsContent({ userId }: SessionsContentProps) {
     );
   }
 
-  if (sessions.length === 0) {
+  const hasResults = sessions.length > 0;
+
+  if (!isLoading && !isSearching && !hasResults) {
     return (
-      <div className="flex justify-center mt-10">
+      <div className="flex flex-col items-center justify-center mt-10 space-y-4">
         <Alert>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>No hay sesiones registradas</AlertTitle>
-          <AlertDescription>Aún no tienes sesiones activas en el sistema.</AlertDescription>
+          <AlertTitle>No se encontraron resultados</AlertTitle>
+          <AlertDescription>Intenta buscar otro nombre o número.</AlertDescription>
         </Alert>
       </div>
     );
@@ -135,7 +161,6 @@ export function SessionsContent({ userId }: SessionsContentProps) {
 
   return (
     <>
-      {/* Cards de estadísticas */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 mb-6">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -192,27 +217,27 @@ export function SessionsContent({ userId }: SessionsContentProps) {
       </div>
 
       <Card className="p-6">
-        {/* Buscador */}
         <div className="py-2">
           <Input
             placeholder="Buscar por nombre o número..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearchChange}
             className="w-full sm:max-w-sm"
           />
         </div>
 
-        {/* DataTable */}
-        <DataTable columns={columns({ onDeleteSuccess: handleDeleteFromTable, mutateSessions: mutate })} data={filteredSessions} />
+        <DataTable columns={columns({ onDeleteSuccess: handleDeleteFromTable, mutateSessions: mutate })} data={sessions} />
       </Card>
 
-      {isValidating && (
+      {isValidating && !search && (
         <div className="flex justify-center py-4">
           <Skeleton className="h-6 w-[200px]" />
         </div>
       )}
 
-      <div ref={observerRef} className="h-10" />
+      {!search && hasResults && (
+        <div ref={observerRef} className="h-10" />
+      )}
     </>
   );
 }
