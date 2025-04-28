@@ -28,7 +28,6 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 
-// --- Tipado Session
 export type Session = {
   id: number;
   userId: string;
@@ -42,7 +41,6 @@ export type Session = {
   inactividad?: string | null;
 };
 
-// --- Nuevo componente para las acciones
 function ActionsCell({ session, onDeleteSuccess }: { session: Session, onDeleteSuccess: (deletedId: number) => void }) {
   const [openDeleteCliente, setOpenDeleteCliente] = useState(false);
   const [openDeleteHistorial, setOpenDeleteHistorial] = useState(false);
@@ -151,8 +149,8 @@ function ActionsCell({ session, onDeleteSuccess }: { session: Session, onDeleteS
   );
 }
 
-// --- Columnas
-export const columns = ({ onDeleteSuccess }: { onDeleteSuccess: (deletedId: number) => void }): ColumnDef<Session>[] => [
+// --- Columns corregido ---
+export const columns = ({ onDeleteSuccess, mutateSessions }: { onDeleteSuccess: (deletedId: number) => void, mutateSessions: () => void }): ColumnDef<Session>[] => [
   {
     accessorKey: "pushName",
     header: "Nombre",
@@ -173,7 +171,7 @@ export const columns = ({ onDeleteSuccess }: { onDeleteSuccess: (deletedId: numb
     cell: ({ row }) => {
       const status = row.getValue("status") as boolean;
       const sessionId = row.original.id;
-      return <SwitchStatus checked={status} sessionId={sessionId} />;
+      return <SwitchStatus checked={status} sessionId={sessionId} mutateSessions={mutateSessions} />;
     },
   },
   {

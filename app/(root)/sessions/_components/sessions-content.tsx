@@ -203,7 +203,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
         </div>
 
         {/* DataTable */}
-        <DataTable columns={columns({ onDeleteSuccess: handleDeleteFromTable })} data={filteredSessions} />
+        <DataTable columns={columns({ onDeleteSuccess: handleDeleteFromTable, mutateSessions: mutate })} data={filteredSessions} />
       </Card>
 
       {isValidating && (

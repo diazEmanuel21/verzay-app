@@ -1,41 +1,60 @@
 'use client'
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { updateSessionStatus } from "@/actions/session-action";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 interface Props {
-    sessionId: number
-    checked: boolean
+  sessionId: number;
+  checked: boolean;
+  mutateSessions?: (updater: (prevData: any) => any, shouldRevalidate?: boolean) => void; 
 };
 
-export const SwitchStatus = ({ sessionId, checked }: Props) => {
-    const router = useRouter();
+export const SwitchStatus = ({ sessionId, checked, mutateSessions }: Props) => {
+  const [localChecked, setLocalChecked] = useState(checked);
+  const [isLoading, setIsLoading] = useState(false);
 
-    const [localChecked, setLocalChecked] = useState(checked);
+  const handleUpdateClientStatus = async (status: boolean) => {
+    const previous = localChecked;
+    setLocalChecked(status);
+    setIsLoading(true);
 
-    const handleUpdateClientStatus = async (status: boolean) => {
-        setLocalChecked(status);
+    const toastId = 'updating-client';
+    toast.loading('Actualizando estado del cliente...', { id: toastId });
 
-        const toastId = 'upating-client';
-        toast.loading('Actualizando estado del cliente...', { id: toastId });
+    const result = await updateSessionStatus(sessionId, status);
 
-        const result = await updateSessionStatus(sessionId, status);
+    if (result.success) {
+      toast.success('Actualizado!', { id: toastId });
 
-        if (result.success) {
-            toast.success('Actualizado!', { id: toastId });
-            router.refresh();
-        } else {
-            toast.error(result.message || 'Error al editar cliente', { id: toastId });
-        }
-    };
+      // Mutar datos manualmente para evitar rebote
+      if (mutateSessions) {
+        mutateSessions((prev: any) => {
+          if (!prev) return prev;
+          return prev.map((page: any) =>
+            page.map((session: any) => {
+              if (session.id === sessionId) {
+                return { ...session, status: status };
+              }
+              return session;
+            })
+          );
+        }, false); // false = no revalidar de nuevo
+      }
+    } else {
+      toast.error(result.message || 'Error al editar cliente', { id: toastId });
+      setLocalChecked(previous); // Revertir si falla
+    }
 
-    return (
-        <Switch
-            checked={localChecked}
-            onCheckedChange={(status) => handleUpdateClientStatus(status)}
-        />
-    )
+    setIsLoading(false);
+  };
+
+  return (
+    <Switch
+      checked={localChecked}
+      disabled={isLoading}
+      onCheckedChange={handleUpdateClientStatus}
+    />
+  );
 };
