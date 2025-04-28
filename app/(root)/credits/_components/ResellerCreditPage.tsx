@@ -2,9 +2,8 @@
 
 import { useRef, useEffect, useState } from 'react'
 import { motion, useAnimation, useInView } from 'framer-motion'
-import { Headphones, Info, Mail, User2Icon, UserRoundCheck } from "lucide-react"
+import { Info, Mail, User2Icon } from "lucide-react"
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import Image from 'next/image'
 import { ShieldCheck, Star, Sparkles, CheckCircle, PhoneIcon } from 'lucide-react'
 import Link from 'next/link'
@@ -92,7 +91,7 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
 
     const handlePlanUpgrade = () => {
         if (isAizen) {
-            window.open(`https://wa.me/+57573115616975?text=Hola%2C%20quiero%20actualizar%20mi%20plan`, '_blank');
+            window.open(`https://wa.me/+573115616975?text=Hola%2C%20quiero%20actualizar%20mi%20plan`, '_blank');
         } else {
             planSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
         }
@@ -102,36 +101,54 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
         // <div className="bg-gradient-to-br from-gray-100 via-white to-blue-200 dark:from-dark-600 dark:via-gray-900 dark:to-dark-700">
         <div className="px-6">
             {/* HERO SECTION */}
-            <section className="relative min-h-screen flex flex-col items-center tex">
-                <div className="w-full border-none bg-transparent backdrop-blur-lg">
-                    <div className="flex flex-col-reverse lg:flex-row items-center">
+            <section className={`relative ${!isAizen && 'min-h-screen items-center'} flex flex-col pt-4`}>
+                <div className="flex w-full border-none bg-transparent backdrop-blur-lg">
+                    <div className="flex flex-col-reverse lg:flex-row">
                         <motion.div
                             initial={{ opacity: 0, x: -30 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.6 }}
-                            className="flex-1 space-y-6"
+                            className="flex flex-col flex-1 gap-2"
                         >
-                            <h1 className="text-4xl font-extrabold leading-tight text-[#1C61E7] dark:text-white flex items-center gap-2">
-                                ¡Actualiza tu plan y desbloquea tu potencial!
+                            <h1 className="flex text-4xl heigth-90px font-extrabold leading-tight text-[#1C61E7] dark:text-white">
+                                {/* ¡Actualiza tu plan y desbloquea tu potencial! */}
+                                Actualiza tu plan y desbloquea todo el potencial de tu agente
                             </h1>
-                            <p className="text-lg text-muted-foreground dark:text-gray-300">
-                                Lleva tu negocio al siguiente nivel al mejorar tu plan. Accede a herramientas avanzadas de inteligencia artificial, automatización profesional y soporte prioritario.
-                            </p>
+                            <div className="flex flex-1 flex-col gap-6 justify-center">
+                                <p className="text-lg text-muted-foreground dark:text-gray-300">
+                                    Ofrece una mejor experiencia a los usuarios, accediendo a herramientas mas avanzadas  para elevar tu negocio destacándote de la competencia y con soporte prioritario.
+                                    {/* Lleva tu negocio al siguiente nivel al mejorar tu plan. Accede a herramientas avanzadas de inteligencia artificial, automatización profesional y soporte prioritario. */}
+                                </p>
+                                <div className="flex flex-wrap ">
+                                    <div>
+                                        <ul className="space-y-2">
+                                            <li className="flex items-center gap-2 text-sm">
+                                                <Star className="w-4 h-4 text-yellow-500" />
+                                                No dejes escapar clientes listos para comprar
+                                            </li>
+                                            <li className="flex items-center gap-2 text-sm">
+                                                <ShieldCheck className="w-4 h-4 text-green-600" />
+                                                Impulsa tus resultados con herramientas exclusivas
+                                            </li>
+                                            <li className="flex items-center gap-2 text-sm">
+                                                <Sparkles className="w-4 h-4 text-[#1C61E7]" />
+                                                Desbloquea funciones premium que multiplican tu éxito
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div className='flex flex-1 justify-center items-center'>
+                                        <Button
+                                            size="lg"
+                                            className={`mt-6 px-6 py-3 text-base bg-[#1C61E7] hover:bg-[#1553ca] text-white transition-all duration-500 ${highlightButton ? 'ring-4 ring-[#1C61E7]/40 shadow-xl scale-[1.03]' : ''
+                                                }`}
+                                            onClick={handlePlanUpgrade}
+                                        >
+                                            Mejorar mi plan ahora
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
 
-                            <ul className="space-y-2">
-                                <li className="flex items-center gap-2 text-sm">
-                                    <Star className="w-4 h-4 text-yellow-500" />
-                                    Precios exclusivos para ti
-                                </li>
-                                <li className="flex items-center gap-2 text-sm">
-                                    <ShieldCheck className="w-4 h-4 text-green-600" />
-                                    Acceso garantizado y soporte directo
-                                </li>
-                                <li className="flex items-center gap-2 text-sm">
-                                    <Sparkles className="w-4 h-4 text-[#1C61E7]" />
-                                    Potencia tu negocio con IA
-                                </li>
-                            </ul>
                             {!isAizen &&
                                 <Popover >
                                     <PopoverTrigger asChild>
@@ -204,21 +221,13 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
                                     </PopoverContent>
                                 </Popover>
                             }
-                            <Button
-                                size="lg"
-                                className={`mt-6 px-6 py-3 text-base bg-[#1C61E7] hover:bg-[#1553ca] text-white transition-all duration-500 ${highlightButton ? 'ring-4 ring-[#1C61E7]/40 shadow-xl scale-[1.03]' : ''
-                                    }`}
-                                onClick={handlePlanUpgrade}
-                            >
-                                Mejorar mi plan ahora
-                            </Button>
                         </motion.div>
 
                         <motion.div
                             initial={{ opacity: 0, x: 30 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.6 }}
-                            className="flex-1 max-w-sm hidden lg:block p-8"
+                            className="flex-1 max-w-sm hidden lg:block p-8 justify-center items-center"
                         >
                             <Image
                                 src="/assets/image/reseller_upgrade.svg"
