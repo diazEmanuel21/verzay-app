@@ -1,178 +1,150 @@
-"use client"
+'use client'
 
-import {
-    ColumnDef,
-} from "@tanstack/react-table"
-import { ArrowUpDown, MoreHorizontal } from "lucide-react"
+import { useState } from "react";
+import { ColumnDef } from "@tanstack/react-table";
+import { SwitchStatus } from "./SwitchStatus";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { deleteSession } from "@/actions/session-action";
+import { deleteConversationN8N } from "@/actions/n8n-chat-historial-action";
+import { toast } from "sonner";
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
-import { Button } from "@/components/ui/button"
+export type Session = {
+  id: number;
+  userId: string;
+  remoteJid: string;
+  pushName: string;
+  instanceId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  status: boolean;
+  seguimientos?: string | null;
+  inactividad?: string | null;
+};
 
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Session } from "@prisma/client"
-import { SwitchStatus } from "./SwitchStatus"
-import { toast } from "sonner"
-import { DialogSessionType } from "./MainSession"
+export const columns = ({ onDeleteSuccess }: { onDeleteSuccess: (deletedId: number) => void }): ColumnDef<Session>[] => [
+  {
+    accessorKey: "pushName",
+    header: "Nombre",
+    cell: ({ row }) => <div className="truncate max-w-[150px]">{row.getValue("pushName") || "Sin nombre"}</div>,
+  },
+  {
+    accessorKey: "remoteJid",
+    header: "Celular",
+    cell: ({ row }) => {
+      const remoteJid = row.getValue("remoteJid") as string;
+      const phone = remoteJid.split('@')[0];
+      return <div className="capitalize">{phone}</div>;
+    },
+  },
+  {
+    accessorKey: "status",
+    header: "Estado",
+    cell: ({ row }) => {
+      const status = row.getValue("status") as boolean;
+      const sessionId = row.original.id;
+      return <SwitchStatus checked={status} sessionId={sessionId} />;
+    },
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Creado",
+    cell: ({ row }) => new Date(row.getValue("createdAt")).toLocaleString(),
+  },
+  {
+    accessorKey: "acciones",
+    header: "Acciones",
+    cell: ({ row }) => {
+      const session = row.original;
+      const [openDeleteCliente, setOpenDeleteCliente] = useState(false);
+      const [openDeleteHistorial, setOpenDeleteHistorial] = useState(false);
 
-export const getColumns = (openDeleteDialog: (sessionId: number, remoteJid: string, userId: string, dialog: DialogSessionType) => void): ColumnDef<Session>[] => [
-    // {
-    //     id: "select",
-    //     header: ({ table }) => (
-    //         <Checkbox
-    //             checked={
-    //                 table.getIsAllPageRowsSelected() ||
-    //                 (table.getIsSomePageRowsSelected() && "indeterminate")
-    //             }
-    //             onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-    //             aria-label="Select all"
-    //         />
-    //     ),
-    //     cell: ({ row }) => (
-    //         <Checkbox
-    //             checked={row.getIsSelected()}
-    //             onCheckedChange={(value) => row.toggleSelected(!!value)}
-    //             aria-label="Select row"
-    //         />
-    //     ),
-    //     enableSorting: false,
-    //     enableHiding: false,
-    // },
-    {
-        accessorKey: "id",
-        header: "ID",
-        enableHiding: true,
-        meta: { shouldShow: false }
-    },
-    {
-        accessorKey: "userId",
-        header: "Usuario",
-        enableHiding: true,
-        meta: { shouldShow: false }
-    },
-    {
-        accessorKey: "remoteJid",
-        header: ({ column }) => {
-            return (
-                <Button
-                    variant="ghost"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Teléfono
-                    <ArrowUpDown />
-                </Button>
-            )
-        },
-        cell: ({ row }) => {
-            const remoteJid = row.getValue("remoteJid") as string;
-            const phone = remoteJid.split('@')[0];
-            /* Obtener pais con base al indicativo */
-            // const country = getCountryByPhone(phone.toString());
-            return (
-                <div className="capitalize">{phone}</div>
-            )
-        },
-    },
-    {
-        accessorKey: "pushName",
-        header: ({ column }) => {
-            return (
-                <Button
-                    variant="ghost"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Nombre
-                    <ArrowUpDown />
-                </Button>
-            )
-        },
-        cell: ({ row }) => <div className="capitalize">{row.getValue("pushName")}</div>,
-    },
-    {
-        accessorKey: "status",
-        header: ({ column }) => (
-            <Button
-                variant="ghost"
-                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            >
-                Estado
-                <ArrowUpDown />
-            </Button>
-        ),
-        cell: ({ row }) => {
-            const status = row.getValue("status") as boolean;
-            const sessionId = row.original.id as number;
+      const handleDeleteCliente = async () => {
+        try {
+          const sessionRes = await deleteSession(session.userId, session.id, session.remoteJid);
+          if (!sessionRes.success) {
+            toast.error(sessionRes.message || "Error al eliminar sesión.");
+            return;
+          }
+          const conversationRes = await deleteConversationN8N(session.userId, session.id, session.remoteJid);
+          if (!conversationRes.success) {
+            toast.warning(conversationRes.message || "Sesión eliminada pero historial no encontrado.");
+          }
+          toast.success("Cliente eliminado correctamente.");
+          onDeleteSuccess(session.id);
+        } catch (error) {
+          toast.error("Error inesperado al eliminar cliente.");
+          console.error(error);
+        }
+      };
 
-            return (
-                <SwitchStatus
-                    checked={status}
-                    sessionId={sessionId}
-                />
-            );
-        },
-    },
-    {
-        accessorKey: "createdAt",
-        header: ({ column }) => {
-            return (
-                <Button
-                    variant="ghost"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Fecha de ingreso
-                    <ArrowUpDown />
-                </Button>
-            )
-        },
-        cell: ({ row }) => {
-            const date = row.getValue("createdAt") as Date;
+      const handleDeleteHistorial = async () => {
+        try {
+          const conversationRes = await deleteConversationN8N(session.userId, session.id, session.remoteJid);
+          if (conversationRes.success) {
+            toast.success("Historial eliminado correctamente.");
+          } else {
+            toast.error(conversationRes.message || "Error al eliminar historial.");
+          }
+        } catch (error) {
+          toast.error("Error inesperado al eliminar historial.");
+          console.error(error);
+        }
+      };
 
-            const formattedDate = new Intl.DateTimeFormat('es-CO', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            }).format(new Date(date));
+      return (
+        <>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setOpenDeleteHistorial(true); }} className="text-red-600">
+                Eliminar historial
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setOpenDeleteCliente(true); }} className="text-red-600">
+                Eliminar sesión
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-            return <div>{formattedDate}</div>;
-        },
+          <AlertDialog open={openDeleteHistorial} onOpenChange={setOpenDeleteHistorial}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Eliminar historial?</AlertDialogTitle>
+                <AlertDialogDescription>Eliminará solo el historial de conversación.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={handleDeleteHistorial}>
+                  Eliminar historial
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <AlertDialog open={openDeleteCliente} onOpenChange={setOpenDeleteCliente}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Eliminar sesión?</AlertDialogTitle>
+                <AlertDialogDescription>Eliminará la sesión y su historial. ¿Deseas continuar?</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={handleDeleteCliente}>
+                  Eliminar sesión
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      );
     },
-    {
-        id: "actions",
-        enableHiding: false,
-        cell: ({ row }) => {
-            const sessionId = row.getValue("id") as number;
-            const userId = row.getValue("userId") as string;
-            const remoteJid = row.getValue("remoteJid") as string;
-            return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem
-                            onClick={() => openDeleteDialog(sessionId, remoteJid, userId, 'deleteConversation')}
-                            className="text-red-600"
-                        >
-                            Eliminar historial
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            onClick={() => openDeleteDialog(sessionId, remoteJid, userId, 'deleteClient')}
-                            className="text-red-600"
-                        >
-                            Eliminar cliente
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            )
-        },
-    },
-]
+  },
+];

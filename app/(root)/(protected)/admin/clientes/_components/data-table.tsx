@@ -70,7 +70,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between gap-2">
+      {/* <div className="flex items-center justify-between gap-2">
         <Input
           placeholder="Buscar por correo..."
           value={(table.getColumn('email')?.getFilterValue() as string) ?? ''}
@@ -104,10 +104,10 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
               })}
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
+      </div> */}
 
-      <div className="rounded-md border">
-        <Table>
+<div className="rounded-md border overflow-x-auto">
+  <Table className="min-w-full table-auto">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>

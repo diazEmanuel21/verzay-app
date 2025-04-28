@@ -37,7 +37,7 @@ export default async function RootLayout({
         <AppProviders>
           <ThemeProvider>
             {isAuthenticated ? (
-              <div className="flex flex-col md:flex-row h-screen w-full bg-muted text-muted-foreground overflow-hidden">
+              <div className="flex flex-col md:flex-row h-screen w-full bg-muted text-muted-foreground">
                 {/* Sidebar */}
                 <SidebarProvider defaultOpen={defaultOpen}>
                   <AppSidebar user={user} />
@@ -47,7 +47,7 @@ export default async function RootLayout({
                     <header className="flex items-center justify-between px-4 md:px-6 h-16 border-b bg-background">
                       <Breadcrumbs />
                     </header>
-                    <main className="flex-1 p-2 overflow-y-auto">
+                    <main className="flex-1 p-2">
                       {children}
                     </main>
                     {/* <footer className="pt-2 hidden md:flex items-center justify-center border-t text-xs text-muted-foreground">

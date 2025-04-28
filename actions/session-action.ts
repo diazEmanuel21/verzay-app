@@ -9,37 +9,74 @@ interface SessionResponse<T = Session[]> {
     data?: T;
 };
 
-export async function getSessionsByUserId(userId: string): Promise<SessionResponse> {
-
+export async function getSessionsCountByUserId(userId: string) {
     try {
-        if (!userId) return {
-            success: false,
-            message: 'No existe el userId',
-            data: []
-        };
-
-        const sessions = await db.session.findMany({ where: { userId } });
-
-        return {
-            success: true,
-            message: 'Sesiones obtenidas correctamente',
-            data: sessions
-        };
-
-    } catch (error) {
-        console.error('Error al obtener las sesiones:', error);
-
-        let errorMessage = 'No se pudieron cargar las sesiones';
-        if (error instanceof Error) {
-            errorMessage = error.message;
+      const total = await db.session.count({
+        where: { userId },
+      });
+  
+      const active = await db.session.count({
+        where: { userId, status: true },
+      });
+  
+      const inactive = total - active;
+  
+      return {
+        success: true,
+        data: {
+          total,
+          active,
+          inactive,
         }
-
-        return {
-            success: false,
-            message: errorMessage
-        };
+      };
+    } catch (error) {
+      console.error('Error al obtener los conteos de sesiones:', error);
+      return {
+        success: false,
+        message: 'Error al obtener los conteos',
+      };
     }
-};
+  }
+
+export async function getSessionsByUserId(
+    userId: string,
+    skip: number = 0,
+    take: number = 20
+  ): Promise<SessionResponse> {
+    try {
+      if (!userId) return {
+        success: false,
+        message: 'No existe el userId',
+        data: []
+      };
+  
+      const sessions = await db.session.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take
+      });
+  
+      return {
+        success: true,
+        message: 'Sesiones obtenidas correctamente',
+        data: sessions
+      };
+  
+    } catch (error) {
+      console.error('Error al obtener las sesiones:', error);
+  
+      let errorMessage = 'No se pudieron cargar las sesiones';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+  
+      return {
+        success: false,
+        message: errorMessage
+      };
+    }
+  }
 
 export async function updateSessionStatus(sessionId: number, status: boolean): Promise<SessionResponse> {
     try {
