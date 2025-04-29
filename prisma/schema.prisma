@@ -26,6 +26,7 @@ model User {
   notificationNumber String          @default("0000000000")
   openingPhrase      String?         @default("DEPRECATED")
   apiKeyId           String?
+  autoReactivate     String?
   del_seguimiento    String?         @default("Estamos para servirle.")
   accounts           Account[]
   instancias         Instancias[]
@@ -50,6 +51,7 @@ model Session {
   id           Int      @id @default(autoincrement())
   seguimientos String?  @default("")
   inactividad  String?  @default("")
+  sessionDelay String?
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -205,4 +207,14 @@ model reseller {
   // Relaciones
   user     User? @relation("ClienteAsignado", fields: [userId], references: [id])
   reseller User? @relation("RevendedorAsignador", fields: [resellerid], references: [id])
+}
+
+model GuidesUrl {
+  id          String   @id @default(cuid())
+  path        String // Ej: "flow", "tools", "dashboard", "sessions", "auto-replies"
+  title       String
+  description String?
+  url         String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
