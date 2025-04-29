@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import Header from '@/components/shared/header'
 import { currentUser } from '@/lib/auth'
 import Link from 'next/link'
-import { Settings, ShieldCheck, Users } from 'lucide-react'
+import { BookOpenCheck, Settings, ShieldCheck, Users,  } from 'lucide-react'
 
 const AdminPage = async () => {
   const user = await currentUser()
@@ -33,6 +33,13 @@ const AdminPage = async () => {
       icon: <ShieldCheck className="text-purple-600" />,
       href: "/admin/reseller",
       buttonLabel: "Ir a Resellers",
+    },
+    {
+      title: "Administrador Guías",
+      description: "Gestiona las guías para cada modulo.",
+      icon: <BookOpenCheck className="text-yellow-600" />,
+      href: "/admin/guide",
+      buttonLabel: "Ir a Guías",
     },
   ]
 

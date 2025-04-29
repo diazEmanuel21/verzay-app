@@ -12,6 +12,15 @@ import {
   BreadcrumbEllipsis,
 } from '@/components/ui/breadcrumb';
 import { SidebarTrigger } from '../ui/sidebar';
+import { useEffect, useState } from 'react';
+import { getGuidesForPath } from '@/actions/guide-actions';
+import { BookOpen } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { GuidesUrl } from '@prisma/client';
 
 const breadcrumbLabels: Record<string, string> = {
   flow: 'flujos',
@@ -27,6 +36,17 @@ const breadcrumbLabels: Record<string, string> = {
 
 export const Breadcrumbs = () => {
   const pathname = usePathname();
+  const [guides, setGuides] = useState<GuidesUrl[]>([]);
+
+  useEffect(() => {
+    const fetchGuides = async () => {
+      const currentPath = pathname;
+      const data = await getGuidesForPath(currentPath);
+      setGuides(data);
+    };
+
+    if (segments.length > 0) fetchGuides();
+  }, [pathname]);
 
   // Dividimos la ruta en segmentos y eliminamos strings vacías
   const segments = pathname.split('/').filter((segment) => segment !== '');
@@ -106,6 +126,40 @@ export const Breadcrumbs = () => {
               {index !== breadcrumbs.length - 1 && <BreadcrumbSeparator />}
             </div>
           ))}
+
+        {guides.length > 0 && (
+          <>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="flex items-center gap-2 text-muted-foreground hover:text-primary transition text-sm sm:text-base">
+                    <span className="hidden sm:inline">Ver guía</span>
+                    <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </button>
+                </PopoverTrigger>
+
+                <PopoverContent align="end" className="w-72 p-2">
+                  <div className="text-sm font-semibold mb-2 text-muted-foreground">Guías disponibles</div>
+                  <ul className="space-y-1">
+                    {guides.map((guide) => (
+                      <li key={guide.id}>
+                        <a
+                          href={guide.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block px-2 py-1 rounded hover:bg-muted text-sm text-primary"
+                        >
+                          {guide.title}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </PopoverContent>
+              </Popover>
+            </BreadcrumbItem>
+          </>
+        )}
       </BreadcrumbList>
     </Breadcrumb>
   );
