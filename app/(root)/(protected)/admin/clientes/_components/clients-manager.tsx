@@ -56,6 +56,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             mapsUrl: 'https://maps.google.com/?q=0,0',
             image: null,
             emailVerified: null,
+            autoReactivate: '',
         });
 
         if (result.success) {
