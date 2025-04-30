@@ -6,6 +6,7 @@ import {
   ChatBubbleBottomCenterTextIcon,
   ClipboardDocumentListIcon,
   ShieldCheckIcon,
+  Cog6ToothIcon
 } from "@heroicons/react/24/solid";
 
 export interface NavLinkItem {
@@ -72,11 +73,11 @@ export const navLinks: NavLinkItem[] = [
     requiresPremium: true,
   },
   {
-    label: "Perfil",
+    label: "Configuración",
     route: "/profile",
-    icon: ShieldCheckIcon,
+    icon: Cog6ToothIcon,
     adminOnly: false,
-    showInSidebar: false,
+    showInSidebar: true,
     requiresPremium: false,
   },
 ];

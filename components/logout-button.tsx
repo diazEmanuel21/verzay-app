@@ -113,10 +113,10 @@ const LogoutButton = ({ user, collapsed = false }: LogoutButtonProps) => {
           <Sparkles className="mr-2 h-4 w-4" />
           Actualízate a Pro
         </DropdownMenuItem> */}
-        <DropdownMenuItem onClick={() => goTo('/profile')}>
+        {/* <DropdownMenuItem onClick={() => goTo('/profile')}>
           <BadgeCheck className="mr-2 h-4 w-4" />
           Cuenta
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
         {/* <DropdownMenuItem onClick={() => goTo('/credits')}>
           <CreditCard className="mr-2 h-4 w-4" />
           Planes

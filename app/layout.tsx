@@ -47,7 +47,7 @@ export default async function RootLayout({
                     <header className="flex items-center justify-between px-4 md:px-6 h-16 border-b bg-background">
                       <Breadcrumbs />
                     </header>
-                    <main className="flex-1 p-2">
+                    <main className="flex-1 p-2  bg-white text-black dark:bg-gray-800 dark:text-white">
                       {children}
                     </main>
                     {/* <footer className="pt-2 hidden md:flex items-center justify-center border-t text-xs text-muted-foreground">

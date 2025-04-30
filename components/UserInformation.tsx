@@ -7,7 +7,7 @@ import { getClientDataByUserId, updateClientDataByField, updateAbrirPhrase } fro
 import { optimizeFile } from "../app/(root)/flow/[workflowId]/helpers";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { z } from 'zod';
+import { number, z } from 'zod';
 import { Camera, ExternalLinkIcon } from "lucide-react";
 import { UserWithPausar } from "@/lib/types";
 import { Button } from "./ui/button";
@@ -23,6 +23,7 @@ type EditableFields = {
     lat: string;
     lng: string;
     mapsUrl: string;
+    autoReactivate: number;
     // Excluyendo campos no editables:
     // id, createdAt, updatedAt, pausar, etc.
 };
@@ -39,6 +40,7 @@ const clientSchema = z.object({
     lng: z.string().optional(),
     mapsUrl: z.string().url({ message: 'La URL de Google Maps no es válida' }),
     openMsg: z.string().min(3).max(45),
+    autoReactivate: z.string(),
 });
 
 const defaultImgUrl = 'https://images.pexels.com/photos/133356/pexels-photo-133356.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
@@ -318,6 +320,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                     { key: 'notificationNumber', label: 'Número de notificación' },
                                     { key: 'openMsg', label: 'Frase de reactivación' },
                                     { key: 'del_seguimiento', label: 'Eliminar seguimiento' },
+                                    { key: 'autoReactivate', label: 'Tiempo de reactivación(minutos)', type: 'number' },
                                 ].map(({ key, label, type }) => (
                                     <div key={key} className="space-y-2">
                                         <Label htmlFor={key} className="text-muted-foreground">{label}</Label>
