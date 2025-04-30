@@ -83,7 +83,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
       {/* CONTENT */}
       <SidebarContent className="flex-1 flex flex-col gap-2">
 
-        <SidebarGroup title="Menú">
+        <SidebarGroup title="Menú" className='flex flex-1'>
           {navLinks
             .filter(link => link.showInSidebar)
             .filter(link => {
@@ -116,23 +116,29 @@ export function AppSidebar({ user }: AppSidebarProps) {
               };
 
               return (
-                <Link
-                  key={route}
-                  href={user.role === 'reseller' && route === '/admin' ? '/admin/clientes' : route}
-                  onClick={handleClick}
-                  className={`flex items-center justify-between gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${isActive
-                    ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white'
-                    : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                    }`}
-                >
-                  <span className="flex items-center gap-1">
-                    <Icon
-                      className={`${isActive ? 'invert brightness-200' : ''} h-5`}
-                    />
-                    {label}
-                  </span>
-                  {requiresPremium && <PremiumModule />}
-                </Link>
+                <>
+                  {route === '/profile' &&
+                    <div className="credits-container flex flex-1 flex-col items-center">
+                      {/* Credits container */}
+                    </div>}
+                  <Link
+                    key={route}
+                    href={user.role === 'reseller' && route === '/admin' ? '/admin/clientes' : route}
+                    onClick={handleClick}
+                    className={`flex items-center justify-between gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${isActive
+                      ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white'
+                      : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                      }`}
+                  >
+                    <span className="flex items-center gap-1">
+                      <Icon
+                        className={`${isActive ? 'invert brightness-200' : ''} h-5`}
+                      />
+                      {label}
+                    </span>
+                    {requiresPremium && <PremiumModule />}
+                  </Link>
+                </>
               );
             })}
         </SidebarGroup>
