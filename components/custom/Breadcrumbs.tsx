@@ -12,6 +12,21 @@ import {
   BreadcrumbEllipsis,
 } from '@/components/ui/breadcrumb';
 import { SidebarTrigger } from '../ui/sidebar';
+import { useEffect, useState } from 'react';
+import { getGuidesForPath } from '@/actions/guide-actions';
+import { Play } from 'lucide-react';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogTitle,
+  DialogHeader,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+import { GuidesUrl } from '@prisma/client';
+import { Button } from '../ui/button';
 
 const breadcrumbLabels: Record<string, string> = {
   flow: 'flujos',
@@ -27,6 +42,17 @@ const breadcrumbLabels: Record<string, string> = {
 
 export const Breadcrumbs = () => {
   const pathname = usePathname();
+  const [guides, setGuides] = useState<GuidesUrl[]>([]);
+
+  useEffect(() => {
+    const fetchGuides = async () => {
+      const currentPath = pathname;
+      const data = await getGuidesForPath(currentPath);
+      setGuides(data);
+    };
+
+    if (segments.length > 0) fetchGuides();
+  }, [pathname]);
 
   // Dividimos la ruta en segmentos y eliminamos strings vacías
   const segments = pathname.split('/').filter((segment) => segment !== '');
@@ -46,8 +72,10 @@ export const Breadcrumbs = () => {
   });
 
   return (
-    <Breadcrumb className='py-4'>
-      <BreadcrumbList>
+    <Breadcrumb className='py-4 flex flex-row flex-1 overflow-hidden'>
+      {/* <BreadcrumbList> */}
+      <BreadcrumbList className="flex flex-wrap items-center gap-1">
+
         <SidebarTrigger /> |
 
         {/* Home link */}
@@ -107,6 +135,63 @@ export const Breadcrumbs = () => {
             </div>
           ))}
       </BreadcrumbList>
+
+      {/* Tutorials */}
+      {guides.length > 0 && (
+        <div className='flex justify-end flex-1'>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant="ghost"
+                className="bg-[#FF0033] hover:bg-[#e60000] text-white font-semibold transition duration-200 uppercase"
+              >
+                <Play className="h-4 w-4 text-white" />
+                <span className="hidden sm:inline">Ver tutoriales</span>
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent className="max-w-xl sm:max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>🎓 Tutoriales del módulo</DialogTitle>
+                <DialogDescription>
+                  Aprende a usar cada función con estos tutoriales.
+                </DialogDescription>
+              </DialogHeader>
+
+              <ScrollArea className="max-h-[60vh] pr-2">
+                <ul className="space-y-4 mt-4">
+                  {guides.map((guide) => (
+                    <li
+                      key={guide.id}
+                      className="border rounded-lg p-5 shadow-sm transition cursor-pointer group"
+                      onClick={() => window.open(guide.url, '_blank')}
+                    >
+                      {/* Título destacado */}
+                      <h3 className="text-base font-semibold text-foreground transition">
+                        {guide.title}
+                      </h3>
+
+                      {/* Botón sutil */}
+                      <Button
+                        className="mt-3 bg-[#FF0033] hover:bg-[#e60000] text-white font-semibold transition duration-200 uppercase px-4 py-2 text-sm"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Evita doble apertura
+                          window.open(guide.url, '_blank');
+                        }}
+                      >
+                        <Play className="w-4 h-4 text-white mr-2" />
+                        <span className="hidden sm:inline">Ver en YouTube</span>
+                      </Button>
+                      {/* Descripción secundaria */}
+                      <p className="text-sm text-muted-foreground mt-1">{guide.description}</p>
+                    </li>
+                  ))}
+                </ul>
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
     </Breadcrumb>
   );
 };
