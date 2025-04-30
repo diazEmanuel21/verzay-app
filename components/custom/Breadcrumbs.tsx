@@ -161,7 +161,11 @@ export const Breadcrumbs = () => {
               <ScrollArea className="max-h-[60vh] pr-2">
                 <ul className="space-y-4 mt-4">
                   {guides.map((guide) => (
-                    <li key={guide.id} className="border rounded-lg p-4 shadow-sm">
+                    <li
+                      key={guide.id}
+                      className="border rounded-lg p-4 shadow-sm cursor-pointer"
+                      onClick={() => window.open(guide.url, '_blank')}
+                    >
                       <h3 className="text-sm font-medium text-primary">{guide.title}</h3>
                       <p className="text-sm text-muted-foreground mt-1">{guide.description}</p>
                       <a
