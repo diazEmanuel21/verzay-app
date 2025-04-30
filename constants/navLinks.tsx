@@ -71,4 +71,12 @@ export const navLinks: NavLinkItem[] = [
     showInSidebar: true,
     requiresPremium: true,
   },
+  {
+    label: "Perfil",
+    route: "/profile",
+    icon: ShieldCheckIcon,
+    adminOnly: false,
+    showInSidebar: false,
+    requiresPremium: false,
+  },
 ];
