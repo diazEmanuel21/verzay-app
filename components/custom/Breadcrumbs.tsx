@@ -14,13 +14,19 @@ import {
 import { SidebarTrigger } from '../ui/sidebar';
 import { useEffect, useState } from 'react';
 import { getGuidesForPath } from '@/actions/guide-actions';
-import { BookOpen } from 'lucide-react';
+import { Play } from 'lucide-react';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogTitle,
+  DialogHeader,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { GuidesUrl } from '@prisma/client';
+import { Button } from '../ui/button';
 
 const breadcrumbLabels: Record<string, string> = {
   flow: 'flujos',
@@ -66,8 +72,10 @@ export const Breadcrumbs = () => {
   });
 
   return (
-    <Breadcrumb className='py-4'>
-      <BreadcrumbList>
+    <Breadcrumb className='py-4 flex flex-row flex-1 overflow-hidden'>
+      {/* <BreadcrumbList> */}
+      <BreadcrumbList className="flex flex-wrap items-center gap-1">
+
         <SidebarTrigger /> |
 
         {/* Home link */}
@@ -126,41 +134,52 @@ export const Breadcrumbs = () => {
               {index !== breadcrumbs.length - 1 && <BreadcrumbSeparator />}
             </div>
           ))}
-
-        {guides.length > 0 && (
-          <>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="flex items-center gap-2 text-muted-foreground hover:text-primary transition text-sm sm:text-base">
-                    <span className="hidden sm:inline">Ver guía</span>
-                    <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </button>
-                </PopoverTrigger>
-
-                <PopoverContent align="end" className="w-72 p-2">
-                  <div className="text-sm font-semibold mb-2 text-muted-foreground">Guías disponibles</div>
-                  <ul className="space-y-1">
-                    {guides.map((guide) => (
-                      <li key={guide.id}>
-                        <a
-                          href={guide.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block px-2 py-1 rounded hover:bg-muted text-sm text-primary"
-                        >
-                          {guide.title}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </PopoverContent>
-              </Popover>
-            </BreadcrumbItem>
-          </>
-        )}
       </BreadcrumbList>
+
+      {/* Tutorials */}
+      {guides.length > 0 && (
+        <div className='flex justify-end flex-1'>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant="ghost"
+                className="bg-[#FF0033] hover:bg-[#e60000] text-white font-semibold transition duration-200 uppercase"
+              >
+                <Play className="h-4 w-4 text-white" />
+                <span className="hidden sm:inline">Ver tutoriales</span>
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent className="max-w-xl sm:max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Tutoriales del módulo</DialogTitle>
+                <DialogDescription>
+                  Aquí puedes encontrar guías relacionadas al módulo actual.
+                </DialogDescription>
+              </DialogHeader>
+
+              <ScrollArea className="max-h-[60vh] pr-2">
+                <ul className="space-y-4 mt-4">
+                  {guides.map((guide) => (
+                    <li key={guide.id} className="border rounded-lg p-4 shadow-sm">
+                      <h3 className="text-sm font-medium text-primary">{guide.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{guide.description}</p>
+                      <a
+                        href={guide.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 underline mt-2 inline-block"
+                      >
+                        Ver tutorial
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
     </Breadcrumb>
   );
 };
