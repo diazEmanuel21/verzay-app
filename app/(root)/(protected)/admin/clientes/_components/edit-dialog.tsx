@@ -60,6 +60,7 @@ export const EditDialog = ({
     { id: "role", label: "Rol", defaultValue: user.role, readOnly: false },
     { id: "plan", label: "Plan", defaultValue: user.plan, readOnly: false },
     { id: "apiUrl", label: "Apikey OpenIA", defaultValue: user.apiUrl, readOnly: false },
+    { id: "webhookUrl", label: "Webhook URL", defaultValue: user.webhookUrl, readOnly: false },
     { id: "company", label: "Empresa", defaultValue: user.company, readOnly: false },
     { id: "notificationNumber", label: "Teléfono Notificación", defaultValue: user.notificationNumber, readOnly: false },
     { id: "openMsg", label: "Frase de reactivación", defaultValue: openMsg, readOnly: false },
