@@ -73,7 +73,7 @@ export const navLinks: NavLinkItem[] = [
     requiresPremium: true,
   },
   {
-    label: "Configuración",
+    label: "Ajustes de perfil",
     route: "/profile",
     icon: Cog6ToothIcon,
     adminOnly: false,

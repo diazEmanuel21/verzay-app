@@ -318,9 +318,9 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                     { key: 'apiUrl', label: 'API key OpenAI', type: 'password' },
                                     { key: 'company', label: 'Empresa' },
                                     { key: 'notificationNumber', label: 'Número de notificación' },
+                                    { key: 'autoReactivate', label: 'Tiempo de reactivación(minutos)', type: 'number' },
                                     { key: 'openMsg', label: 'Frase de reactivación' },
                                     { key: 'del_seguimiento', label: 'Eliminar seguimiento' },
-                                    { key: 'autoReactivate', label: 'Tiempo de reactivación(minutos)', type: 'number' },
                                 ].map(({ key, label, type }) => (
                                     <div key={key} className="space-y-2">
                                         <Label htmlFor={key} className="text-muted-foreground">{label}</Label>

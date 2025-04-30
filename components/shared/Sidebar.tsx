@@ -24,6 +24,7 @@ import { Label } from '@radix-ui/react-label';
 import { BotMessageSquare } from 'lucide-react';
 import clsx from 'clsx';
 import { isUserAssignedToReseller } from '@/actions/reseller-action';
+import { CreditsWidget } from '../custom';
 
 interface AppSidebarProps {
   user: User
@@ -118,8 +119,8 @@ export function AppSidebar({ user }: AppSidebarProps) {
               return (
                 <>
                   {route === '/profile' &&
-                    <div className="credits-container flex flex-1 flex-col items-center">
-                      {/* Credits container */}
+                    <div className="credits-container flex flex-1 flex-col items-center justify-end">
+                      {/* <CreditsWidget remaining={20} total={1000} /> */}
                     </div>}
                   <Link
                     key={route}
