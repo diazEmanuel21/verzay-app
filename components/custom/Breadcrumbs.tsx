@@ -152,9 +152,9 @@ export const Breadcrumbs = () => {
 
             <DialogContent className="max-w-xl sm:max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Tutoriales del módulo</DialogTitle>
+                <DialogTitle>🎓 Tutoriales del módulo</DialogTitle>
                 <DialogDescription>
-                  Aquí puedes encontrar guías relacionadas al módulo actual.
+                  Aprende a usar cada función con estos tutoriales.
                 </DialogDescription>
               </DialogHeader>
 
@@ -163,19 +163,27 @@ export const Breadcrumbs = () => {
                   {guides.map((guide) => (
                     <li
                       key={guide.id}
-                      className="border rounded-lg p-4 shadow-sm cursor-pointer"
+                      className="border rounded-lg p-5 shadow-sm transition cursor-pointer group"
                       onClick={() => window.open(guide.url, '_blank')}
                     >
-                      <h3 className="text-sm font-medium text-primary">{guide.title}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">{guide.description}</p>
-                      <a
-                        href={guide.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 underline mt-2 inline-block"
+                      {/* Título destacado */}
+                      <h3 className="text-base font-semibold text-foreground transition">
+                        {guide.title}
+                      </h3>
+
+                      {/* Botón sutil */}
+                      <Button
+                        className="mt-3 bg-[#FF0033] hover:bg-[#e60000] text-white font-semibold transition duration-200 uppercase px-4 py-2 text-sm"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Evita doble apertura
+                          window.open(guide.url, '_blank');
+                        }}
                       >
-                        Ver tutorial
-                      </a>
+                        <Play className="w-4 h-4 text-white mr-2" />
+                        <span className="hidden sm:inline">Ver en YouTube</span>
+                      </Button>
+                      {/* Descripción secundaria */}
+                      <p className="text-sm text-muted-foreground mt-1">{guide.description}</p>
                     </li>
                   ))}
                 </ul>
