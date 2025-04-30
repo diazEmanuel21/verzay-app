@@ -116,14 +116,14 @@ export const MainGuide = () => {
                         </DialogTrigger>
 
                         <DialogContent className="space-y-4">
-                            <DialogTitle>{form.id ? 'Edit Guide' : 'Create Guide'}</DialogTitle>
+                            <DialogTitle>{form.id ? 'Edit Guide' : 'Crear tutorial'}</DialogTitle>
                             <Input
-                                placeholder="Enter the title of the guide (e.g., How to Create an Account)"
+                                placeholder="Título de la guía (e.j., Cómo crear una cuenta)"
                                 value={form.title || ''}
                                 onChange={e => setForm({ ...form, title: e.target.value })}
                             />
                             <Input
-                                placeholder="Enter the URL (e.g., https://example.com/guide)"
+                                placeholder="URL (e.j., https://youtu.be/fP4DlWuwto0)"
                                 value={form.url || ''}
                                 onChange={e => setForm({ ...form, url: e.target.value })}
                             />
@@ -132,7 +132,7 @@ export const MainGuide = () => {
                                 onValueChange={(value) => setForm({ ...form, path: value })}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select a module/section" />
+                                    <SelectValue placeholder="Selecione un modulo/section" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {navLinks.map((link) => (
@@ -143,12 +143,12 @@ export const MainGuide = () => {
                                 </SelectContent>
                             </Select>
                             <Textarea
-                                placeholder="Short description of the guide purpose or instructions..."
+                                placeholder="Breve descripción del tutorial..."
                                 value={form.description || ''}
                                 onChange={e => setForm({ ...form, description: e.target.value })}
                             />
                             <Button onClick={handleSubmit} className="w-full">
-                                {form.id ? 'Update Guide' : 'Create Guide'}
+                                {form.id ? 'Actualizar tutorial' : 'Crear tutorial'}
                             </Button>
                         </DialogContent>
                     </Dialog>
