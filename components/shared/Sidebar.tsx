@@ -120,7 +120,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 <>
                   {route === '/profile' &&
                     <div className="credits-container flex flex-1 flex-col items-center justify-end">
-                      {/* <CreditsWidget remaining={20} total={1000} /> */}
+                      <CreditsWidget userId={user.id}/>
                     </div>}
                   <Link
                     key={route}

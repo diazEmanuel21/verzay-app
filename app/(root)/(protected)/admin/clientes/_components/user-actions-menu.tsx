@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { DialogType } from './clients-manager'
 import { UserWithPausar } from '@/lib/types'
+import { useRouter } from 'next/navigation'
 
 interface propsActionsMenu {
     currentUserRol: string
@@ -21,6 +22,8 @@ interface propsActionsMenu {
 
 /* El user es el usuario seleccionado de la tabla y el currentUserRol es el usuario logueado */
 export const UserActionsMenu = ({ user, openDialogGetUserId, currentUserRol }: propsActionsMenu) => {
+    const router = useRouter();
+
     return (
         <>
             <DropdownMenu>
@@ -43,6 +46,12 @@ export const UserActionsMenu = ({ user, openDialogGetUserId, currentUserRol }: p
                             Herramientas
                         </DropdownMenuItem>
                     }
+            
+                    <DropdownMenuItem
+                        onClick={() => router.push(`/admin/credits?userId=${user.id}`)}
+                    >
+                        Créditos
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     {currentUserRol === 'admin' &&
                         <DropdownMenuItem

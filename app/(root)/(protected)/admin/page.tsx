@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import Header from '@/components/shared/header'
 import { currentUser } from '@/lib/auth'
 import Link from 'next/link'
-import { BookOpenCheck, Settings, ShieldCheck, Users,  } from 'lucide-react'
+import { BookOpenCheck, Settings, ShieldCheck, Users, Zap,  } from 'lucide-react'
 
 const AdminPage = async () => {
   const user = await currentUser()
@@ -41,6 +41,13 @@ const AdminPage = async () => {
       href: "/admin/guide",
       buttonLabel: "Ir a Guías",
     },
+    // {
+    //   title: "Administrador Créditos",
+    //   description: "Gestiona los créditos de tu agente IA.",
+    //   icon: <Zap className="text-purple-700" />,
+    //   href: "/admin/credits",
+    //   buttonLabel: "Ir a Créditos",
+    // },
   ]
 
   // 🔐 Filtrar según rol del usuario
