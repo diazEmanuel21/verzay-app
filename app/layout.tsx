@@ -5,31 +5,16 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AppProviders } from '@/components/providers/AppProviders';
 import { Toaster } from '@/components/ui/sonner';
-
 import { currentUser } from '@/lib/auth';
-
-// import { Breadcrumbs } from '@/components/custom';
-// import { AppSidebar } from '@/components/shared/Sidebar';
-// import { SidebarProvider } from '@/components/ui/sidebar';
 import { cookies } from 'next/headers';
 
-
-import { AppSidebar } from "@/components/app-sidebar"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Breadcrumbs } from '@/components/custom';
+// import { AppSidebar } from "@/components/app-sidebar"
+import { AppSidebar } from '@/components/shared/Sidebar';
 
 // Fuente
 const poppins = Poppins({ subsets: ['latin'], weight: ['400', '700'] });
