@@ -11,6 +11,7 @@ import {
   BreadcrumbSeparator,
   BreadcrumbEllipsis,
 } from '@/components/ui/breadcrumb';
+import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from '../ui/sidebar';
 import { useEffect, useState } from 'react';
 import { getGuidesForPath } from '@/actions/guide-actions';
@@ -72,31 +73,55 @@ export const Breadcrumbs = () => {
   });
 
   return (
-    <Breadcrumb className='py-4 flex flex-row flex-1 overflow-hidden'>
-      {/* <BreadcrumbList> */}
-      <BreadcrumbList className="flex flex-wrap items-center gap-1">
+    <>
 
-        <SidebarTrigger /> |
+      <Breadcrumb className='py-4 flex flex-row flex-1 overflow-hidden'>
 
-        {/* Home link */}
-        <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link href="/" className="flex items-center gap-1 text-muted-foreground hover:text-primary">
-              <HomeIcon className="h-5" />
-              <span className="sr-only">Home</span>
-            </Link>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
+        {/* <BreadcrumbList> */}
+        {/* <BreadcrumbList className="flex flex-wrap items-center gap-1"> */}
+        <BreadcrumbList>
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          {/* Home link */}
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/" className="flex items-center gap-1 text-muted-foreground hover:text-primary">
+                <HomeIcon className="h-5" />
+                <span className="sr-only">Home</span>
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
 
-        {/* Separador inicial */}
-        {breadcrumbs.length > 0 && <BreadcrumbSeparator />}
+          {/* Separador inicial */}
+          {breadcrumbs.length > 0 && <BreadcrumbSeparator />}
 
-        {/* Si hay muchos segmentos, mostramos un BreadcrumbEllipsis */}
-        {breadcrumbs.length > 3 && (
-          <>
-            <BreadcrumbEllipsis />
-            <BreadcrumbSeparator />
-            {breadcrumbs.slice(-2).map((breadcrumb, index) => (
+          {/* Si hay muchos segmentos, mostramos un BreadcrumbEllipsis */}
+          {breadcrumbs.length > 3 && (
+            <>
+              <BreadcrumbEllipsis />
+              <BreadcrumbSeparator />
+              {breadcrumbs.slice(-2).map((breadcrumb, index) => (
+                <div key={breadcrumb.href} className="flex items-center">
+                  <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                      <Link
+                        href={breadcrumb.href}
+                        className={`capitalize ${index === breadcrumbs.length - 1 ? 'text-primary' : 'text-muted-foreground'
+                          } hover:text-primary transition`}
+                      >
+                        {breadcrumb.label}
+                      </Link>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  {index !== breadcrumbs.slice(-2).length - 1 && <BreadcrumbSeparator />}
+                </div>
+              ))}
+            </>
+          )}
+
+          {/* Si no hay muchos segmentos, mostramos todos */}
+          {breadcrumbs.length <= 3 &&
+            breadcrumbs.map((breadcrumb, index) => (
               <div key={breadcrumb.href} className="flex items-center">
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
@@ -109,89 +134,69 @@ export const Breadcrumbs = () => {
                     </Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
-                {index !== breadcrumbs.slice(-2).length - 1 && <BreadcrumbSeparator />}
+
+                {index !== breadcrumbs.length - 1 && <BreadcrumbSeparator />}
               </div>
             ))}
-          </>
-        )}
+        </BreadcrumbList>
 
-        {/* Si no hay muchos segmentos, mostramos todos */}
-        {breadcrumbs.length <= 3 &&
-          breadcrumbs.map((breadcrumb, index) => (
-            <div key={breadcrumb.href} className="flex items-center">
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link
-                    href={breadcrumb.href}
-                    className={`capitalize ${index === breadcrumbs.length - 1 ? 'text-primary' : 'text-muted-foreground'
-                      } hover:text-primary transition`}
-                  >
-                    {breadcrumb.label}
-                  </Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
+        {/* Tutorials */}
+        {guides.length > 0 && (
+          <div className='flex justify-end flex-1'>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="bg-[#FF0033] hover:bg-[#e60000] text-white font-semibold transition duration-200 uppercase"
+                >
+                  <Play className="h-4 w-4 text-white" />
+                  <span className="hidden sm:inline">Ver tutoriales</span>
+                </Button>
+              </DialogTrigger>
 
-              {index !== breadcrumbs.length - 1 && <BreadcrumbSeparator />}
-            </div>
-          ))}
-      </BreadcrumbList>
+              <DialogContent className="max-w-xl sm:max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>🎓 Tutoriales del módulo</DialogTitle>
+                  <DialogDescription>
+                    Aprende a usar cada función con estos tutoriales.
+                  </DialogDescription>
+                </DialogHeader>
 
-      {/* Tutorials */}
-      {guides.length > 0 && (
-        <div className='flex justify-end flex-1'>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                className="bg-[#FF0033] hover:bg-[#e60000] text-white font-semibold transition duration-200 uppercase"
-              >
-                <Play className="h-4 w-4 text-white" />
-                <span className="hidden sm:inline">Ver tutoriales</span>
-              </Button>
-            </DialogTrigger>
-
-            <DialogContent className="max-w-xl sm:max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>🎓 Tutoriales del módulo</DialogTitle>
-                <DialogDescription>
-                  Aprende a usar cada función con estos tutoriales.
-                </DialogDescription>
-              </DialogHeader>
-
-              <ScrollArea className="max-h-[60vh] pr-2">
-                <ul className="space-y-4 mt-4">
-                  {guides.map((guide) => (
-                    <li
-                      key={guide.id}
-                      className="border rounded-lg p-5 shadow-sm transition cursor-pointer group"
-                      onClick={() => window.open(guide.url, '_blank')}
-                    >
-                      {/* Título destacado */}
-                      <h3 className="text-base font-semibold text-foreground transition">
-                        {guide.title}
-                      </h3>
-
-                      {/* Botón sutil */}
-                      <Button
-                        className="mt-3 bg-[#FF0033] hover:bg-[#e60000] text-white font-semibold transition duration-200 uppercase px-4 py-2 text-sm"
-                        onClick={(e) => {
-                          e.stopPropagation(); // Evita doble apertura
-                          window.open(guide.url, '_blank');
-                        }}
+                <ScrollArea className="max-h-[60vh] pr-2">
+                  <ul className="space-y-4 mt-4">
+                    {guides.map((guide) => (
+                      <li
+                        key={guide.id}
+                        className="border rounded-lg p-5 shadow-sm transition cursor-pointer group"
+                        onClick={() => window.open(guide.url, '_blank')}
                       >
-                        <Play className="w-4 h-4 text-white mr-2" />
-                        <span className="hidden sm:inline">Ver en YouTube</span>
-                      </Button>
-                      {/* Descripción secundaria */}
-                      <p className="text-sm text-muted-foreground mt-1">{guide.description}</p>
-                    </li>
-                  ))}
-                </ul>
-              </ScrollArea>
-            </DialogContent>
-          </Dialog>
-        </div>
-      )}
-    </Breadcrumb>
+                        {/* Título destacado */}
+                        <h3 className="text-base font-semibold text-foreground transition">
+                          {guide.title}
+                        </h3>
+
+                        {/* Botón sutil */}
+                        <Button
+                          className="mt-3 bg-[#FF0033] hover:bg-[#e60000] text-white font-semibold transition duration-200 uppercase px-4 py-2 text-sm"
+                          onClick={(e) => {
+                            e.stopPropagation(); // Evita doble apertura
+                            window.open(guide.url, '_blank');
+                          }}
+                        >
+                          <Play className="w-4 h-4 text-white mr-2" />
+                          <span className="hidden sm:inline">Ver en YouTube</span>
+                        </Button>
+                        {/* Descripción secundaria */}
+                        <p className="text-sm text-muted-foreground mt-1">{guide.description}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </ScrollArea>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
+      </Breadcrumb>
+    </>
   );
 };

@@ -8,10 +8,28 @@ import { Toaster } from '@/components/ui/sonner';
 
 import { currentUser } from '@/lib/auth';
 
-import { Breadcrumbs } from '@/components/custom';
-import { AppSidebar } from '@/components/shared/Sidebar';
-import { SidebarProvider } from '@/components/ui/sidebar';
+// import { Breadcrumbs } from '@/components/custom';
+// import { AppSidebar } from '@/components/shared/Sidebar';
+// import { SidebarProvider } from '@/components/ui/sidebar';
 import { cookies } from 'next/headers';
+
+
+import { AppSidebar } from "@/components/app-sidebar"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
+import { Breadcrumbs } from '@/components/custom';
 
 // Fuente
 const poppins = Poppins({ subsets: ['latin'], weight: ['400', '700'] });
@@ -33,39 +51,33 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${poppins.className} overflow-x-hidden bg-white text-black dark:bg-gray-900 dark:text-white`}>
-        <AppProviders>
-          <ThemeProvider>
-            {isAuthenticated ? (
-              <div className="flex flex-col md:flex-row h-screen w-full bg-muted text-muted-foreground">
-                {/* Sidebar */}
-                <SidebarProvider defaultOpen={defaultOpen}>
-                  <AppSidebar user={user} />
-
-                  {/* Main Content */}
-                  <div className="flex flex-col flex-1 h-full transition-all duration-300">
-                    <header className="flex items-center justify-between px-4 md:px-6 h-16 border-b bg-background">
+      <body className={`${poppins.className}`}>
+        {isAuthenticated ? (
+          <AppProviders>
+            <ThemeProvider>
+              <SidebarProvider defaultOpen={defaultOpen}>
+                <AppSidebar user={user} />
+                <SidebarInset>
+                  <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+                    <div className="flex flex-1 flex-row gap-2 px-4">
                       <Breadcrumbs />
-                    </header>
-                    <main className="flex-1 p-2  bg-white text-black dark:bg-gray-800 dark:text-white">
-                      {children}
-                    </main>
-                    {/* <footer className="pt-2 hidden md:flex items-center justify-center border-t text-xs text-muted-foreground">
-                      © 2025 Verzay. Todos los derechos reservados.
-                    </footer> */}
-                  </div>
-                </SidebarProvider>
-              </div>
-            ) : (
-              // PUBLIC / AUTH LAYOUT
-              <main className="flex min-h-screen w-full items-center justify-center">
-                {children}
-              </main>
-            )}
-          </ThemeProvider>
-          <Toaster position="bottom-right" richColors />
-        </AppProviders>
+                    </div>
+                  </header>
+                  <main className="flex flex-1 flex-col gap-4 p-4 pt-0">
+                    {children}
+                  </main>
+                </SidebarInset>
+              </SidebarProvider>
+              <Toaster position="bottom-right" richColors />
+            </ThemeProvider>
+          </AppProviders>
+        ) : (
+          // PUBLIC / AUTH LAYOUT
+          <main className="flex min-h-screen w-full items-center justify-center">
+            {children}
+          </main>
+        )}
       </body>
-    </html>
+    </html >
   );
 }
