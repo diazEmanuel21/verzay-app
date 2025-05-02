@@ -51,10 +51,15 @@ export default async function ClientesPage() {
     }
   })
 
+  //Limita la candidad de usuarios que pueden asignar api por el rendimientos de servidor
+  // se habilito esta opcion
   const availableApikeys = allApikeys.filter(apiKey => {
     const usage = apiKeyUsageCount[apiKey.id] || 0
-    return usage < 10
+    return usage < 100
   })
+
+  console.log('🔍 Uso de apikeys:', apiKeyUsageCount);
+console.log('🟢 Apikeys disponibles:', availableApikeys);
 
   return <ClientsManager users={users} apikeys={allApikeys} availableApikeys={availableApikeys} currentUserRol={user.role}/>
 }
