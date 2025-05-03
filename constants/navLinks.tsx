@@ -17,6 +17,11 @@ export interface NavLinkItem {
   allowedPlans?: string[];
   adminOnly?: boolean;
   requiresPremium?: boolean;
+  items?: {
+    type: string,
+    url: string,
+    title: string,
+  }[]
 }
 
 export const navLinks: NavLinkItem[] = [

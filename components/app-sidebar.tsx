@@ -1,13 +1,11 @@
 "use client"
 
-import * as React from "react"
+import { useEffect, useState } from "react"
 import { User } from "@prisma/client"
 
 import {
-    AudioWaveform,
     BookOpen,
     Bot,
-    Command,
     Frame,
     GalleryVerticalEnd,
     Map,
@@ -25,9 +23,13 @@ import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
+    SidebarGroupLabel,
     SidebarHeader,
     SidebarRail,
 } from "@/components/ui/sidebar"
+import { isUserAssignedToReseller } from "@/actions/reseller-action"
+import ThemeSwitcher from "./custom/ThemeSwitcher"
+import LogoutButton from "./logout-button"
 
 // This is sample data.
 const data = {
@@ -38,19 +40,9 @@ const data = {
     },
     teams: [
         {
-            name: "Acme Inc",
+            name: "Verzay",
             logo: GalleryVerticalEnd,
-            plan: "Enterprise",
-        },
-        {
-            name: "Acme Corp.",
-            logo: AudioWaveform,
-            plan: "Startup",
-        },
-        {
-            name: "Evil Corp.",
-            logo: Command,
-            plan: "Free",
+            plan: "Pymes",
         },
     ],
     navMain: [
@@ -163,18 +155,35 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
     user: User;
 }
 
-export function AppSidebar({ ...props }: AppSidebarProps) {
+export function AppSidebar({ user, ...props }: AppSidebarProps) {
+    const [isAssigned, setUserAssignedToReseller] = useState(false);
+
+    useEffect(() => {
+        onIsUserAssignedToReseller();
+    }, []);
+
+    const onIsUserAssignedToReseller = async () => {
+        const isAssigned = await isUserAssignedToReseller(user.id)
+        setUserAssignedToReseller(isAssigned);
+    };
+
     return (
-        <Sidebar collapsible="icon" {...props}>
+        <Sidebar collapsible="icon" {...props} className="bg-white dark:bg-gray-900 text-gray-800 dark:text-zinc-100 border-r border-zinc-200 dark:border-gray-800">
             <SidebarHeader>
-                <TeamSwitcher teams={data.teams} />
+                <TeamSwitcher user={user} isAssigned={isAssigned} />
             </SidebarHeader>
             <SidebarContent>
-                <NavMain items={data.navMain} />
-                <NavProjects projects={data.projects} />
+                <NavMain user={user} />
             </SidebarContent>
             <SidebarFooter>
-                <NavUser user={data.user} />
+                <SidebarGroupLabel>IA Créditos</SidebarGroupLabel>
+                <div className="flex flex-row w-full justify-center items-center">
+                    <NavProjects user={user} />
+                    <div>
+                        <ThemeSwitcher />
+                    </div>
+                </div>
+                <LogoutButton user={user} />
             </SidebarFooter>
             <SidebarRail />
         </Sidebar>

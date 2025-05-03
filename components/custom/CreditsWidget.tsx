@@ -60,7 +60,7 @@ export const CreditsWidget = ({ userId }: CreditsWidgetProps) => {
             title="Haz clic para ver más información"
             onClick={credits ? onRedirectPlan : undefined}
         >
-            <CardContent className="flex items-center gap-3 p-0 min-h-[60px]">
+            <CardContent className="flex items-center gap-3 p-0 min-h-[30px]">
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
@@ -83,7 +83,6 @@ export const CreditsWidget = ({ userId }: CreditsWidgetProps) => {
                     ) : credits ? (
                         <>
                             <div className="flex justify-between text-xs font-medium text-muted-foreground">
-                                <span>IA Créditos</span>
                                 <span>{credits.remaining} / {credits.total}</span>
                             </div>
 

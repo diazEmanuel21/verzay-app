@@ -13,8 +13,8 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { Breadcrumbs } from '@/components/custom';
-// import { AppSidebar } from "@/components/app-sidebar"
-import { AppSidebar } from '@/components/shared/Sidebar';
+import { AppSidebar } from "@/components/app-sidebar"
+// import { AppSidebar } from '@/components/shared/Sidebar';
 
 // Fuente
 const poppins = Poppins({ subsets: ['latin'], weight: ['400', '700'] });
@@ -36,21 +36,26 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${poppins.className}`}>
+      <body className={`${poppins.className} overflow-x-hidden bg-slate-100 text-black dark:bg-gray-900 dark:text-white`}>
         {isAuthenticated ? (
           <AppProviders>
             <ThemeProvider>
               <SidebarProvider defaultOpen={defaultOpen}>
                 <AppSidebar user={user} />
-                <SidebarInset>
-                  <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-                    <div className="flex flex-1 flex-row gap-2 px-4">
+                <SidebarInset className="h-screen flex flex-col">
+
+                  {/* Header fijo, pero ocupa espacio */}
+                  <div className="h-16 shrink-0">
+                    <header className="sticky top-0 h-16 w-full border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur supports-[backdrop-filter]:bg-white-100/60 dark:supports-[backdrop-filter]:bg-gray-900/60 flex items-center px-4">
                       <Breadcrumbs />
-                    </div>
-                  </header>
-                  <main className="flex flex-1 flex-col gap-4 p-4 pt-0">
+                    </header>
+                  </div>
+
+                  {/* Main con scroll interno */}
+                  <main className="flex-1 overflow-auto p-4 bg-slate-100 text-black dark:bg-gray-900 dark:text-white">
                     {children}
                   </main>
+
                 </SidebarInset>
               </SidebarProvider>
               <Toaster position="bottom-right" richColors />
@@ -58,7 +63,7 @@ export default async function RootLayout({
           </AppProviders>
         ) : (
           // PUBLIC / AUTH LAYOUT
-          <main className="flex min-h-screen w-full items-center justify-center">
+          <main className="flex min-h-screen w-full items-center justify-center bg-slate-100 text-black dark:bg-gray-900 dark:text-white">
             {children}
           </main>
         )}
