@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import useSWRInfinite from "swr/infinite";
-import { getSessionsByUserId, getSessionsCountByUserId, searchSessionsByUserId } from "@/actions/session-action";
+import { activateAllSessions, deactivateAllSessions, deleteAllSessions, getSessionsByUserId, getSessionsCountByUserId, searchSessionsByUserId } from "@/actions/session-action";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import { AlertCircle, CheckCircle2, Database, XCircle } from "lucide-react";
 import { UserSessionsSkeleton } from "./user-sessions-skeleton";
 import { columns } from "./Columns";
 import { DataTable } from "./data-table";
+import { BulkActionsDropdown } from "./BulkActionsDropdown";
 
 interface SessionsContentProps {
   userId: string;
@@ -31,6 +33,7 @@ type Session = {
 const PAGE_SIZE = 20;
 
 export function SessionsContent({ userId }: SessionsContentProps) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [stats, setStats] = useState<{ total: number; active: number; inactive: number } | null>(null);
   const [searchResults, setSearchResults] = useState<Session[] | null>(null);
@@ -222,12 +225,23 @@ export function SessionsContent({ userId }: SessionsContentProps) {
           ))}
         </div>
 
-        <Input
-          placeholder="Buscar por nombre o número..."
-          value={search}
-          onChange={handleSearchChange}
-          className="w-full sm:max-w-sm text-xs"
-        />
+        <div className="flex items-center">
+          <Input
+            placeholder="Buscar por nombre o número..."
+            value={search}
+            onChange={handleSearchChange}
+            className="w-full sm:max-w-sm text-xs"
+          />
+          <BulkActionsDropdown
+            userId={userId}
+            onActivateAll={activateAllSessions}
+            onDeactivateAll={deactivateAllSessions}
+            onDeleteAll={deleteAllSessions}
+            onSuccess={() => router.refresh()}
+          />
+
+        </div>
+
       </div>
 
       <Card>

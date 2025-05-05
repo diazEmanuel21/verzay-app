@@ -14,8 +14,6 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
   Table,
   TableBody,
@@ -24,13 +22,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { ChevronDown } from 'lucide-react'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -55,7 +46,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
       columnFilters,
       columnVisibility,
       rowSelection,
-      pagination, 
+      pagination,
     },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
@@ -71,9 +62,8 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
   return (
     <div className="flex flex-col gap-2">
 
-
-<div className="w-full max-w-full overflow-x-auto rounded-md border">
-  <Table className="w-full table-auto">
+      <div className="w-full max-w-full overflow-x-auto rounded-md border">
+        <Table className="w-full table-auto">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -83,9 +73,9 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   )
                 })}
@@ -114,7 +104,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
         </Table>
       </div>
 
-      <div className="flex items-center justify-end space-x-2">
+      {/* <div className="flex items-center justify-end space-x-2">
         <Button
           variant="outline"
           size="sm"
@@ -131,7 +121,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
         >
           Siguiente
         </Button>
-      </div>
+      </div> */}
     </div>
   )
 }
