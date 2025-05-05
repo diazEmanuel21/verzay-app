@@ -77,8 +77,7 @@ export function NavMain({ user }: { user: User }) {
                         isActive && 'invert brightness-200'
                     );
 
-                    const targetRoute =
-                        user.role === 'reseller' && route === '/admin' ? '/admin/clientes' : route;
+                    const targetRoute = user.role === 'reseller' && route === '/admin' ? '/admin/clientes' : route;
 
                     // Si NO hay subitems, renderizar directamente como link
                     if (!items || items.length === 0) {
@@ -88,6 +87,7 @@ export function NavMain({ user }: { user: User }) {
                                     {Icon && <Icon className={iconClasses} />}
                                     <span>{label}</span>
                                     <ChevronRight className="invisible ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                    {route === '/profile' && <ChevronRight />}
                                     {requiresPremium && <PremiumModule />}
                                 </SidebarMenuButton>
 
