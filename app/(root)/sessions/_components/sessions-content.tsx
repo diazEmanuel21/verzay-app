@@ -159,73 +159,78 @@ export function SessionsContent({ userId }: SessionsContentProps) {
     );
   }
 
+  const cardStats = [
+    {
+      title: "Total de Leads",
+      icon: <Database className="h-4 w-4 text-gray-500" />,
+      value: stats?.total,
+      description: "Leads en total",
+      color: "",
+      progress: null,
+    },
+    {
+      title: "Leads Activos",
+      icon: <CheckCircle2 className="h-4 w-4 text-green-500" />,
+      value: stats?.active,
+      description: stats?.total ? `${Math.round((stats.active / stats.total) * 100)}% del total` : "0% del total",
+      color: "text-green-600",
+      progress: stats?.total ? (stats.active / stats.total) * 100 : 0,
+    },
+    {
+      title: "Leads Inactivos",
+      icon: <XCircle className="h-4 w-4 text-red-500" />,
+      value: stats?.inactive,
+      description: stats?.total ? `${100 - Math.round((stats.active / stats.total) * 100)}% del total` : "0% del total",
+      color: "text-red-600",
+      progress: stats?.total ? 100 - (stats.active / stats.total) * 100 : 0,
+    },
+  ];
+
   return (
     <>
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 mb-6">
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total de Leads</CardTitle>
-            <Database className="h-4 w-4 text-gray-500" />
-          </CardHeader>
-          <CardContent>
-            {stats ? (
-              <>
-                <div className="text-2xl font-bold">{stats.total}</div>
-                <p className="text-xs text-muted-foreground">Leads en total</p>
-              </>
-            ) : (
-              <Skeleton className="h-8 w-24" />
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Leads Activos</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            {stats ? (
-              <>
-                <div className="text-2xl font-bold text-green-600">{stats.active}</div>
-                <p className="text-xs text-muted-foreground">{stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0}% del total</p>
-                <Progress value={stats.total > 0 ? (stats.active / stats.total) * 100 : 0} className="h-2 mt-2" />
-              </>
-            ) : (
-              <Skeleton className="h-8 w-24" />
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Leads Inactivos</CardTitle>
-            <XCircle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            {stats ? (
-              <>
-                <div className="text-2xl font-bold text-red-600">{stats.inactive}</div>
-                <p className="text-xs text-muted-foreground">{stats.total > 0 ? 100 - Math.round((stats.active / stats.total) * 100) : 0}% del total</p>
-                <Progress value={stats.total > 0 ? 100 - (stats.active / stats.total) * 100 : 0} className="h-2 mt-2" />
-              </>
-            ) : (
-              <Skeleton className="h-8 w-24" />
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="p-6">
-        <div className="py-2">
-          <Input
-            placeholder="Buscar por nombre o número..."
-            value={search}
-            onChange={handleSearchChange}
-            className="w-full sm:max-w-sm"
-          />
+      <div className="sticky top-0 z-50 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/10 transition-shadow pb-1 mb-1">
+        <div className="container-stats flex gap-4 overflow-x-auto mb-2 px-2 sm:px-0">
+          {cardStats.map((card, idx) => (
+            <Card
+              key={idx}
+              className="min-w-[200px] sm:min-w-0 flex-1 flex flex-col overflow-hidden shadow-md"
+            >
+              <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
+                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+                  {card.title}
+                </CardTitle>
+                {card.icon}
+              </CardHeader>
+              <CardContent>
+                {stats ? (
+                  <>
+                    <div className={`text-lg sm:text-2xl font-bold ${card.color}`}>
+                      {card.value}
+                    </div>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">
+                      {card.description}
+                    </p>
+                    {card.progress !== null && (
+                      <Progress value={card.progress} className="h-2 mt-2" />
+                    )}
+                  </>
+                ) : (
+                  <Skeleton className="h-8 w-24" />
+                )}
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
+        <Input
+          placeholder="Buscar por nombre o número..."
+          value={search}
+          onChange={handleSearchChange}
+          className="w-full sm:max-w-sm text-xs"
+        />
+      </div>
+
+      <Card>
         <DataTable columns={columns({ onDeleteSuccess: handleDeleteFromTable, mutateSessions: mutate })} data={sessions} />
       </Card>
 
@@ -239,5 +244,6 @@ export function SessionsContent({ userId }: SessionsContentProps) {
         <div ref={observerRef} className="h-10" />
       )}
     </>
+
   );
 }

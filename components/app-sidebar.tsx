@@ -176,7 +176,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                 <NavMain user={user} />
             </SidebarContent>
             <SidebarFooter>
-                <SidebarGroupLabel>IA Créditos</SidebarGroupLabel>
+                {/* <SidebarGroupLabel>IA Créditos</SidebarGroupLabel> */}
                 <div className="flex flex-row w-full justify-center items-center">
                     <NavProjects user={user} />
                     <div>

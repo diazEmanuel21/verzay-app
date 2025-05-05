@@ -34,10 +34,10 @@ export function TeamSwitcher({ user, isAssigned }: TeamSwitcherProps) {
                                 />
                             </Link>
                         </div>
-                        <div className="grid flex-1 text-left text-sm leading-tight">
-                            <span className="truncate font-semibold">
+                        <div className="grid flex-1 text-left text-lg leading-tight">
+                            <span className="truncate font-semibold text-2xl">
                                 {/* {user.company} */}
-                                verzay
+                                Verzay
                             </span>
                             <span className="truncate text-xs">{user.plan}</span>
                         </div>
@@ -64,7 +64,7 @@ export function TeamSwitcher({ user, isAssigned }: TeamSwitcherProps) {
                                     AGENTE IA
                                 </Label>
                             </span>
-                            <span className="truncate text-xs">{user.plan}</span>
+                            <span className="truncate text-xs ">{user?.plan}</span>
                         </div>
                     </>
                 )}

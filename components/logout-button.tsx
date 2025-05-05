@@ -84,28 +84,28 @@ const LogoutButton = ({ user }: LogoutButtonProps) => {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
+            {/* <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => goTo('/credits')}>
                 <Sparkles />
                 Mejorar mi plan
               </DropdownMenuItem>
-            </DropdownMenuGroup>
+            </DropdownMenuGroup> */}
             {/* <DropdownMenuSeparator /> */}
-            <DropdownMenuGroup>
+            {/* <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => goTo('/profile')}>
                 <BadgeCheck />
                 Ajustes de perfil
               </DropdownMenuItem>
-              {/* <DropdownMenuItem>
+              <DropdownMenuItem>
                 <CreditCard />
                 Billing
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Bell />
                 Notifications
-              </DropdownMenuItem> */}
+              </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator /> */}
             <DropdownMenuItem onClick={handleLogout} className="text-red-600">
               <LogOut className="mr-2 h-4 w-4" />
               Salir

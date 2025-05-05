@@ -388,3 +388,6 @@
   top: -8px;
 };
 
+.capitalize-text {
+  text-transform: capitalize;
+}

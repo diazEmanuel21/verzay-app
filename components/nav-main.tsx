@@ -45,7 +45,7 @@ export function NavMain({ user }: { user: User }) {
 
     return (
         <SidebarGroup>
-            <SidebarGroupLabel>Módulos</SidebarGroupLabel>
+            {/* <SidebarGroupLabel>Módulos</SidebarGroupLabel> */}
             <SidebarMenu>
                 {navItems.map((item) => {
                     const { route, icon: Icon, label, requiresPremium, isActive, items } = item;

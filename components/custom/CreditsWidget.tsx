@@ -95,7 +95,7 @@ export const CreditsWidget = ({ userId }: CreditsWidgetProps) => {
                             />
                         </>
                     ) : (
-                        <span className="text-xs text-muted-foreground italic">Sin créditos configurados</span>
+                        <span className="text-xs text-muted-foreground">Sin créditos</span>
                     )}
                 </div>
             </CardContent>

@@ -12,12 +12,6 @@ export default async function SessionsPage() {
   };
 
   return (
-    <>
-
-      <div>
-        <SessionsContent userId={user.id} ></SessionsContent>
-      </div>
-
-    </>
+    <SessionsContent userId={user.id} />
   );
 }
