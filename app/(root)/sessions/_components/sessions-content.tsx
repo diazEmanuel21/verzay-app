@@ -191,7 +191,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
 
   return (
     <>
-      <div className="sticky top-0 z-50 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/10 transition-shadow pb-1 mb-1">
+      <div className="sticky -top-4 z-50 bg-slate-100 dark:bg-gray-900 transition-shadow pb-1 mb-1">
         <div className="container-stats flex gap-4 overflow-x-auto mb-2 px-2 sm:px-0">
           {cardStats.map((card, idx) => (
             <Card
@@ -225,7 +225,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
           ))}
         </div>
 
-        <div className="flex items-center">
+        <div className="flex flex-1 justify-between">
           <Input
             placeholder="Buscar por nombre o número..."
             value={search}
