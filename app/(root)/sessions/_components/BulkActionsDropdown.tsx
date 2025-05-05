@@ -55,20 +55,20 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
         toastId: string
     }> = {
         activate: {
-            label: 'Activar todos los clientes',
-            confirmPhrase: 'Activar todos los clientes',
+            label: 'Activar clientes',
+            confirmPhrase: 'Activar clientes',
             handler: onActivateAll,
             toastId: 'activate-all',
         },
         deactivate: {
-            label: 'Desactivar todos los clientes',
-            confirmPhrase: 'Desactivar todos los clientes',
+            label: 'Desactivar clientes',
+            confirmPhrase: 'Desactivar clientes',
             handler: onDeactivateAll,
             toastId: 'deactivate-all',
         },
         deleteAll: {
-            label: 'Eliminar todos los clientes',
-            confirmPhrase: 'Eliminar todos los clientes',
+            label: 'Eliminar clientes',
+            confirmPhrase: 'Eliminar clientes',
             handler: onDeleteAll,
             toastId: 'delete-all',
         },
