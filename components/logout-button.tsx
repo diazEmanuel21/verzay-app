@@ -2,9 +2,7 @@
 
 import { signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { User } from '@prisma/client'
-import Image from 'next/image'
-import { cn } from '@/lib/utils'
+import { Plan, User } from '@prisma/client'
 
 import {
   DropdownMenu,
@@ -23,7 +21,13 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 type LogoutButtonProps = {
   user: User | null
   collapsed?: boolean
-}
+};
+
+const planColors: Record<Plan, string> = {
+  empresarial: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+  business: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+  pymes: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+};
 
 const LogoutButton = ({ user }: LogoutButtonProps) => {
   const router = useRouter();
@@ -57,7 +61,9 @@ const LogoutButton = ({ user }: LogoutButtonProps) => {
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{user?.name}</span>
-                <span className="truncate text-xs">{user?.plan}</span>
+                <span className={`truncate text-xs capitalize p-1 rounded-sm ${planColors[user?.plan ?? 'pymes']}`}>
+                  {user?.plan}
+                </span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -79,7 +85,7 @@ const LogoutButton = ({ user }: LogoutButtonProps) => {
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{user?.name}</span>
-                  <span className="truncate text-xs capitalize">{user?.email}</span>
+                  <span className="truncate text-xs">{user?.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
