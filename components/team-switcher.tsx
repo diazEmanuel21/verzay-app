@@ -39,7 +39,7 @@ export function TeamSwitcher({ user, isAssigned }: TeamSwitcherProps) {
                                 {/* {user.company} */}
                                 Verzay
                             </span>
-                            {/* <span className="truncate text-xs">{user.plan}</span> */}
+                            {/* <span className="truncate text-xs">{user?.plan}</span> */}
                         </div>
                     </>
                 ) : (
@@ -64,7 +64,7 @@ export function TeamSwitcher({ user, isAssigned }: TeamSwitcherProps) {
                                     AGENTE IA
                                 </Label>
                             </span>
-                            <span className="truncate text-xs ">{user?.plan}</span>
+                            {/* <span className="truncate text-xs ">{user?.plan}</span> */}
                         </div>
                     </>
                 )}
