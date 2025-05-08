@@ -120,7 +120,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 <>
                   {route === '/profile' &&
                     <div className="credits-container flex flex-1 flex-col items-center justify-end">
-                      <CreditsWidget userId={user.id}/>
+                      <CreditsWidget userId={user.id} webhookUrl={user?.webhookUrl ?? ''} />
                     </div>}
                   <Link
                     key={route}

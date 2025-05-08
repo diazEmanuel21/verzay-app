@@ -10,6 +10,7 @@ import {
     getIaCreditByUser,
     rechargeIaCredit,
 } from '@/actions/actions-ia-credits';
+import { onTokensToCredits } from '@/utils/onTokensToCredits';
 
 interface Props {
     userId: string;
@@ -30,8 +31,11 @@ export const CreditMain = ({ userId }: Props) => {
 
                 if (res.success && res.data?.length) {
                     const credit = res.data[0];
+                    /* credit.used por defecto viene en tokens, se debe convertir a creditos: 1c = 1000t */
+                    const creditUsed = onTokensToCredits(credit.used);
+
                     setTotal(credit.total);
-                    setUsed(credit.used);
+                    setUsed(creditUsed);
                     setHasCredits(true);
                 } else {
                     setHasCredits(false);

@@ -1,19 +1,23 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Zap, CalendarCheck2 } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Zap, CalendarCheck2, TriangleAlert } from 'lucide-react';
+import { toast } from 'sonner';
+import { toggleWebhook } from '@/actions/webhook-actions';
 import { Card, CardContent } from '@/components/ui/card';
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { getIaCreditByUser } from '@/actions/actions-ia-credits';
+import { onTokensToCredits } from '@/utils/onTokensToCredits';
 
 interface CreditsWidgetProps {
     userId: string;
+    webhookUrl: string;
 }
 
-export const CreditsWidget = ({ userId }: CreditsWidgetProps) => {
+export const CreditsWidget = ({ userId, webhookUrl }: CreditsWidgetProps) => {
+    const pathname = usePathname();
     const router = useRouter();
 
     const [credits, setCredits] = useState<{
@@ -25,13 +29,16 @@ export const CreditsWidget = ({ userId }: CreditsWidgetProps) => {
     const [loading, setLoading] = useState(true);
     const [usedPercent, setUsedPercent] = useState(0);
 
+
     useEffect(() => {
         const fetchCredits = async () => {
             setLoading(true);
             const res = await getIaCreditByUser(userId);
             if (res.success && res.data && res.data.length > 0) {
                 const credit = res.data[0];
-                const remaining = credit.total - credit.used;
+                /* credit.used por defecto viene en tokens, se debe convertir a creditos: 1c = 1000t */
+                const creditUsed = onTokensToCredits(credit.used)
+                const remaining = credit.total - creditUsed;
 
                 setCredits({
                     total: credit.total,
@@ -39,8 +46,10 @@ export const CreditsWidget = ({ userId }: CreditsWidgetProps) => {
                     renewalDate: new Date(credit.renewalDate).toISOString(),
                 });
 
-                const percent = Math.min(100, Math.round((remaining / credit.total) * 100));
+                /* Calcular el porcentaje de uso */
+                const percent = Math.min(100, Math.round((creditUsed / credit.total) * 100));
                 setUsedPercent(percent);
+
             } else {
                 setCredits(null);
             }
@@ -50,6 +59,32 @@ export const CreditsWidget = ({ userId }: CreditsWidgetProps) => {
         if (userId) fetchCredits();
     }, [userId]);
 
+    useEffect(() => {
+        const lockendAndDisabled = async () => {
+            try {
+                const result = await toggleWebhook({
+                    userId,
+                    webhookUrl,
+                    enable: false,
+                });
+
+                if (result.success) {
+                    toast.warning("Webhook desactivado por falta de créditos");
+                    router.push("/credits");
+                } else {
+                    toast.error("Error al desactivar el webhook: " + result.message);
+                }
+            } catch (error) {
+                console.error('[HANDLE_WEBHOOK_FAIL]', error);
+                toast.error("Error inesperado al intentar apagar el webhook");
+            }
+        };
+
+        if (!loading && credits?.remaining === 0 && pathname !== "/credits") {
+            lockendAndDisabled();
+        }
+    }, [credits, loading, pathname]);
+
     const onRedirectPlan = () => {
         router.push('/credits');
     };
@@ -58,26 +93,17 @@ export const CreditsWidget = ({ userId }: CreditsWidgetProps) => {
         <Card
             className="bg-muted border-none shadow-none p-2 w-full cursor-pointer hover:bg-muted/80 transition"
             title="Haz clic para ver más información"
-            onClick={credits ? onRedirectPlan : undefined}
+            onClick={credits?.remaining === 0 ? onRedirectPlan : undefined}
         >
             <CardContent className="flex items-center gap-3 p-0 min-h-[30px]">
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div className="bg-[#1444A1]/10 p-2 rounded-full cursor-help">
-                                <Zap className="h-5 w-5 text-[#1444A1]" />
-                            </div>
-                        </TooltipTrigger>
-                        {credits?.renewalDate && (
-                            <TooltipContent className="text-xs">
-                                <CalendarCheck2 className="w-3 h-3 inline mr-1" />
-                                Renovación: {new Date(credits.renewalDate).toLocaleDateString()}
-                            </TooltipContent>
-                        )}
-                    </Tooltip>
-                </TooltipProvider>
+                <div className="bg-[#1444A1]/10 p-2 rounded-full cursor-help">
+                    <Zap className="h-5 w-5 text-[#1444A1]" />
+                </div>
+
 
                 <div className="flex-1">
+
+
                     {loading ? (
                         <span className="text-xs text-muted-foreground">Cargando créditos...</span>
                     ) : credits ? (
@@ -85,14 +111,32 @@ export const CreditsWidget = ({ userId }: CreditsWidgetProps) => {
                             <div className="flex justify-between text-xs font-medium text-muted-foreground">
                                 <span>{credits.remaining} / {credits.total}</span>
                             </div>
-
                             <Progress
                                 value={usedPercent}
                                 className={cn(
-                                    'h-1 mt-1 transition-all duration-300',
-                                    usedPercent < 30 ? 'bg-red-500' : 'bg-[#1444A1]'
+                                    'h-2 rounded transition-all duration-300',
+                                    usedPercent >= 75
+                                        ? 'bg-red-500 animate-pulse duration-1000'
+                                        : usedPercent >= 50
+                                            ? 'bg-orange-500'
+                                            : usedPercent >= 25
+                                                ? 'bg-yellow-500'
+                                                : 'bg-green-500'
                                 )}
                             />
+                            <span className="text-[10px] text-muted-foreground">
+                                {usedPercent}% Consumido
+                            </span>
+
+                            {credits.remaining <= 0 && (
+                                <div className="flex gap-1 justify-start items-center text-[10px] text-red-500">
+                                    <TriangleAlert size={12} />
+                                    <p>
+                                        Sin créditos.
+                                    </p>
+                                </div>
+                            )}
+
                         </>
                     ) : (
                         <span className="text-xs text-muted-foreground">Sin créditos</span>

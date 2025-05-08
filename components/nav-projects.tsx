@@ -15,7 +15,7 @@ export function NavProjects({ user }: { user: User }) {
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <CreditsWidget userId={user.id} />
+                    <CreditsWidget userId={user.id} webhookUrl={user.webhookUrl ?? 'null'} />
                 </SidebarMenuItem>
             </SidebarMenu>
         </SidebarGroup>
