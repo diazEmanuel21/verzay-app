@@ -118,8 +118,8 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
           body: JSON.stringify({
             webhook: {
               enabled: !isEnabled,
-              url: `https://n8npro.verzay.co/webhook/${userName}`,
-              // url: webhookUrl,
+              // url: `https://n8npro.verzay.co/webhook/${userName}`,
+              url: webhookUrl,
               base64: true,
               events: ["MESSAGES_UPSERT"],
             },
