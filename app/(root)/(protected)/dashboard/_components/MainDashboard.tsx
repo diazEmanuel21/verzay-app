@@ -14,8 +14,6 @@ interface propsMainDashboard {
 }
 
 export const MainDashboard = ({ user }: propsMainDashboard) => {
-    console.log({ userData: user });
-
     useEffect(() => {
         if (!user.webhookUrl) {
             toast.error('¡Alerta! Webhook no proporcionado');
