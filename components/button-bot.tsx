@@ -22,13 +22,15 @@ interface EnableToggleButtonProps {
   userName?: string | null;
   apiurl: string;
   apikey: string;
+  webhookUrl: string;
 }
 
 const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
   userId,
   userName,
   apiurl,
-  apikey
+  apikey,
+  webhookUrl
 }) => {
   const [isEnabled, setIsEnabled] = useState<boolean | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -61,7 +63,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
     }
   };
 
-  const baseUrl = "https://"+instanceData?.serverUrl;
+  const baseUrl = "https://" + instanceData?.serverUrl;
 
   const fetchWebhookStatus = async (
     instanceName: string,
@@ -117,6 +119,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
             webhook: {
               enabled: !isEnabled,
               url: `https://n8npro.verzay.co/webhook/${userName}`,
+              // url: webhookUrl,
               base64: true,
               events: ["MESSAGES_UPSERT"],
             },

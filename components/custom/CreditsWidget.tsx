@@ -61,26 +61,12 @@ export const CreditsWidget = ({ userId, webhookUrl }: CreditsWidgetProps) => {
 
     useEffect(() => {
         const lockendAndDisabled = async () => {
-            try {
-                const result = await toggleWebhook({
-                    userId,
-                    webhookUrl,
-                    enable: false,
-                });
-
-                if (result.success) {
-                    toast.warning("Webhook desactivado por falta de créditos");
-                    router.push("/credits");
-                } else {
-                    toast.error("Error al desactivar el webhook: " + result.message);
-                }
-            } catch (error) {
-                console.error('[HANDLE_WEBHOOK_FAIL]', error);
-                toast.error("Error inesperado al intentar apagar el webhook");
-            }
+            toast.error("Webhook desactivado por falta de créditos");
         };
 
-        if (!loading && credits?.remaining === 0 && pathname !== "/credits") {
+        if (!credits) return;
+
+        if (!loading && credits?.remaining <= 0 && pathname !== "/credits") {
             lockendAndDisabled();
         }
     }, [credits, loading, pathname]);
