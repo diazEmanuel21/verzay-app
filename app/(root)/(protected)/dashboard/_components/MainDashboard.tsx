@@ -1,15 +1,27 @@
+'use client'
+
 import FormInstance from '@/components/form-Instance'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import QRCodeGenerator from "@/components/form-qr";
 import EnableToggleButton from "@/components/button-bot";
 import { FaWhatsapp } from 'react-icons/fa';
 import { User } from '@prisma/client';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
 
 interface propsMainDashboard {
     user: User
 }
 
 export const MainDashboard = ({ user }: propsMainDashboard) => {
+    console.log({ userData: user });
+
+    useEffect(() => {
+        if (!user.webhookUrl) {
+            toast.error('¡Alerta! Webhook no proporcionado');
+        }
+    }, [user]);
+
     return (
         <div className="flex flex-col items-center min-h-screen">
             <Card className="max-w-[600px] relative">
@@ -36,7 +48,13 @@ export const MainDashboard = ({ user }: propsMainDashboard) => {
 
                         {/* Enable Toggle Button */}
                         <div className="flex-1 flex justify-end">
-                            <EnableToggleButton userId={user.id} userName={user.name} apiurl={user.apiUrl} apikey={user.apiKeyId as string} webhookUrl={user.webhookUrl ?? 'null'}/>
+                            <EnableToggleButton
+                                userId={user.id}
+                                userName={user.name}
+                                apiurl={user.apiUrl}
+                                apikey={user.apiKeyId as string}
+                                webhookUrl={user?.webhookUrl ?? 'http://82.29.152.30:4001/webhook'}
+                            />
                         </div>
 
                     </div>

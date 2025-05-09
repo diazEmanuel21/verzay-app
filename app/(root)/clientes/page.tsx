@@ -1,10 +1,7 @@
-import EnableToggleButton from '@/components/button-bot'
-import React from 'react'
-
 const ClientPage = () => {
   return (
     <div>
-      {/* <EnableToggleButton userId='123'/> */}
+      <h1>decapreted</h1>
     </div>
   )
 }
