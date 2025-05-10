@@ -3,7 +3,7 @@ import { rr, Workflow } from '@prisma/client';
 import { Suspense } from 'react';
 import { AutoRepliesContent, SkeletonAutoReplies } from './_components';
 import { getAllRRs } from '@/actions/rr-actions';
-import { GetWorkFlowforUser } from '@/actions/workflow-actions';
+import { getWorkFlowforUser } from '@/actions/workflow-actions';
 
 function hasWorkflow(result: { data?: Workflow[] }): result is { data: Workflow[] } {
     return !!result.data;
@@ -20,7 +20,7 @@ const AutoRepliesPage = async () => {
         return <h1 className="text-center text-2xl font-bold mt-10">404 - Usuario no autorizado</h1>;
     }
 
-    const resWorkflow = await GetWorkFlowforUser(user.id);
+    const resWorkflow = await getWorkFlowforUser(user.id);
     const workflows = hasWorkflow(resWorkflow) ? resWorkflow.data : [];
 
     const resAutoReplies = await getAllRRs(user.id);

@@ -13,8 +13,13 @@ interface GetWorkFlowResponse {
     error?: string;
     data?: Workflow[];
 };
+interface RROperationResponse {
+    success: boolean;
+    message: string;
+    data?: Workflow[];
+};
 
-export const GetWorkFlowforUser = async (userId?: string): Promise<GetWorkFlowResponse> => {
+export const getWorkFlowforUser = async (userId?: string): Promise<GetWorkFlowResponse> => {
     if (!userId) {
         return { success: false, error: "No autenticado." };
     }
@@ -36,7 +41,7 @@ export const GetWorkFlowforUser = async (userId?: string): Promise<GetWorkFlowRe
     }
 };
 
-export const CreateWorkflow = async (form: createWorkflowSchemaType) => {
+export const createWorkflow = async (form: createWorkflowSchemaType) => {
     const session = await auth(); // Obtén la sesión del usuario
 
     const user = await db.user.findUnique({
@@ -72,7 +77,7 @@ export const CreateWorkflow = async (form: createWorkflowSchemaType) => {
     redirect(`flow/${result.id}`);
 };
 
-export const DeleteWorkflow = async (id: string) => {
+export const deleteWorkflow = async (id: string) => {
     try {
         const session = await auth();
 
@@ -155,7 +160,7 @@ export const deleteEntireWorkflow = async (userId: string, workflowId: string) =
         }
 
         // #5. Eliminar el flujo
-        const workflowRes = await DeleteWorkflow(workflowId);
+        const workflowRes = await deleteWorkflow(workflowId);
         if (!workflowRes.success) {
             return {
                 success: false,
@@ -177,6 +182,30 @@ export const deleteEntireWorkflow = async (userId: string, workflowId: string) =
             message: "Error inesperado al eliminar el flujo completo.",
             stage: "general",
             detail: error instanceof Error ? error.message : String(error),
+        };
+    }
+};
+
+export const updateWorkflow = async (id: string, data: Partial<Workflow>): Promise<RROperationResponse> => {
+    try {
+        if (!id) {
+            return { success: false, message: "Identificador no proporcionado." };
+        };
+
+        await db.workflow.update({
+            where: { id },
+            data,
+        });
+
+        return {
+            success: true,
+            message: 'Registro actualizado correctamente.',
+        };
+
+    } catch (error) {
+        return {
+            success: false,
+            message: 'Error al actualizar el registro.',
         };
     }
 };

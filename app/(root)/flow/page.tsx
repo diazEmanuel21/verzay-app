@@ -2,16 +2,19 @@ import React, { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import Header from '@/components/shared/header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, InboxIcon } from 'lucide-react';
+
 import CreateWorflowDialog from './_components/CreateWorflowDialog';
 import { currentUser } from '@/lib/auth';
-import { Workflow } from '@prisma/client';
-import { WorkflowCard } from './_components';
-import { GetWorkFlowforUser } from '@/actions/workflow-actions';
+import { UserWorkflows } from './_components';
 
-function hasWorkflow(result: { data?: Workflow[] }): result is { data: Workflow[] } {
-  return !!result.data;
+function UserWorkFlowSkeleton() {
+  return (
+    <div className='space-y-2'>
+      {[1, 2, 3, 4].map(i => (
+        <Skeleton key={i} className='h-32 w-full' />
+      ))}
+    </div>
+  );
 };
 
 const FlowPage = async () => {
@@ -22,9 +25,10 @@ const FlowPage = async () => {
   };
 
   return (
-    <>
-      <div>
-        <div className="flex justify-between">
+    <div className="flex flex-col h-full">
+      {/* Header fijo */}
+      <div className="sticky top-0 z-10 mb-6">
+        <div className="flex justify-between items-center">
           <Header
             title={'Flujos'}
             subtitle={'Crea tus Flujos de manera mas organizada'}
@@ -33,65 +37,12 @@ const FlowPage = async () => {
         </div>
       </div>
 
-      <div className='h-full py-6'>
-        <Suspense fallback={<UserWorkFlowSkeleton />}>
-          <UserWorkflows userId={user.id} />
-        </Suspense>
-      </div>
-    </>
+
+      <Suspense fallback={<UserWorkFlowSkeleton />}>
+        <UserWorkflows userId={user.id} />
+      </Suspense>
+    </div>
   );
 };
-
-function UserWorkFlowSkeleton() {
-  return (
-    <div className='space-y-2'>
-      {[1, 2, 3, 4].map(i => (
-        <Skeleton key={i} className='h-32 w-full' />
-      ))}
-    </div>
-  );
-}
-
-interface UserWorkflowsProps {
-  userId: string;
-}
-
-export async function UserWorkflows({ userId }: UserWorkflowsProps) {
-  const resWorkflow = await GetWorkFlowforUser(userId);
-  const workflows = hasWorkflow(resWorkflow) ? resWorkflow.data : [];
-
-  if (!workflows) {
-    return (
-      <Alert variant={'destructive'}>
-        <AlertCircle className='w-4 h-4' />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>Algo salió mal. Por favor intenta más tarde</AlertDescription>
-      </Alert>
-    );
-  }
-
-  if (workflows.length === 0) {
-    return (
-      <div className="flex flex-col gap-4 h-full items-center justify-center">
-        <div className='rounded-full bg-accent w-20 h-20 flex items-center justify-center'>
-          <InboxIcon size={40} className='stroke-primary' />
-        </div>
-        <div className='flex flex-col gap-1 text-center'>
-          <p className="font-bold">NO EXISTE NINGUN FLUJO</p>
-          <p className="text-sm text-muted-foreground">Click en botón para crear un nuevo Flujo</p>
-        </div>
-        <CreateWorflowDialog triggerText="CREA TU PRIMER FLUJO" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 gap-4">
-      {workflows.map((workflow) => (
-        <WorkflowCard key={workflow.id} workflow={workflow} userId={userId} />
-      ))}
-    </div>
-  );
-}
 
 export default FlowPage;

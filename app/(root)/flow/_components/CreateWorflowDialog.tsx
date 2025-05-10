@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from "sonner";
 
 import { useMutation } from "@tanstack/react-query";
-import { CreateWorkflow } from '@/actions/workflow-actions';
+import { createWorkflow } from '@/actions/workflow-actions';
 
 
 function CreateWorflowDialog({triggerText}:{triggerText?: String}){
@@ -27,7 +27,7 @@ function CreateWorflowDialog({triggerText}:{triggerText?: String}){
 
   // Configuración de la mutación
   const {mutate, isPending} = useMutation({
-    mutationFn: CreateWorkflow,
+    mutationFn: createWorkflow,
     onSuccess: () => {
       toast.success("Flujo Creado", {id: "create-workflow"})
     },

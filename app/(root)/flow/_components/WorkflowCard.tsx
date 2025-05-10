@@ -1,12 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Workflow } from "@prisma/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { MessageCircleMoreIcon, PencilLine } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
-import { WorkflowAction } from "./WorkflowAction";
+import { PencilLine, FileTextIcon } from "lucide-react";
+import { toast } from "sonner";
+import { updateWorkflow } from "@/actions/workflow-actions";
+import { WorkflowAction } from "./";
+import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { workflowShema } from "@/lib/zod";
+import { z } from "zod";
 
 export const WorkflowCard = ({
     workflow,
@@ -15,15 +22,23 @@ export const WorkflowCard = ({
     workflow: Workflow;
     userId: string;
 }) => {
-
     const router = useRouter();
     const [editing, setEditing] = useState(false);
-    const [mensaje, setMensaje] = useState(workflow.description ?? "");
     const [loading, setLoading] = useState(false);
 
+    const form = useForm<z.infer<typeof workflowShema>>({
+        resolver: zodResolver(workflowShema),
+        defaultValues: {
+            name: workflow.name ?? "",
+            description: workflow.description ?? "",
+        },
+    });
 
-    const handleSave = async () => {
-        if (mensaje === workflow.description) {
+    const handleSubmit = form.handleSubmit(async (values) => {
+        const nameChanged = values.name !== workflow.name;
+        const descChanged = values.description !== workflow.description;
+
+        if (!nameChanged && !descChanged) {
             setEditing(false);
             return;
         }
@@ -31,75 +46,110 @@ export const WorkflowCard = ({
         setLoading(true);
         const toastId = `workflow-${workflow.id}`;
 
-        // try {
-        //     const res = await updateRR(workflow.id, { mensaje });
+        try {
+            const res = await updateWorkflow(workflow.id, {
+                name: values.name,
+                description: values.description,
+            });
 
-        //     if (!res.success) {
-        //         toast.error(res.message, { id: toastId });
-        //         setMensaje(workflow.mensaje ?? "");
-        //     } else {
-        //         toast.success("Mensaje actualizado", { id: toastId });
-        //     }
-        // } catch (error) {
-        //     toast.error("Error al actualizar", { id: toastId });
-        //     setMensaje(workflow.mensaje ?? "");
-        // } finally {
-        //     setLoading(false);
-        //     setEditing(false);
-        // }
+            if (!res.success) {
+                toast.error(res.message, { id: toastId });
+                form.reset(); // restore old values
+            } else {
+                toast.success("Flujo actualizado correctamente", { id: toastId });
+            }
+        } catch {
+            toast.error("Error al actualizar el flujo", { id: toastId });
+            form.reset();
+        } finally {
+            setLoading(false);
+            setEditing(false);
+            router.refresh();
+        }
+    });
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") handleSubmit();
+        if (e.key === "Escape") {
+            form.reset();
+            setEditing(false);
+        }
     };
 
     return (
-        <Card className="transition-all duration-300 hover:shadow-lg">
-            <CardContent className="p-4 flex items-center justify-between h-[100px]">
-                <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-accent">
-                        <MessageCircleMoreIcon />
+        <Card>
+            <CardContent className="p-4 flex flex-1 gap-2 items-center justify-between">
+                <div className="flex flex-1 gap-4 justify-center items-center">
+                    <div className="w-10 h-10 rounded-sm flex items-center justify-center bg-blue-500 cursor-pointer"
+                        onClick={() => router.push(`flow/${workflow.id}`)}>
+                        <FileTextIcon />
                     </div>
-                    <div className="flex flex-col">
-                        {/* Edición inline */}
+
+                    <div className="flex flex-col flex-1 gap-2">
                         {editing ? (
-                            <Input
-                                autoFocus
-                                value={mensaje}
-                                onChange={(e) => setMensaje(e.target.value)}
-                                onBlur={handleSave}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter") handleSave();
-                                    if (e.key === "Escape") {
-                                        setMensaje(workflow.description ?? "");
-                                        setEditing(false);
-                                    }
-                                }}
-                                disabled={loading}
-                                className="text-sm"
-                            />
+                            <Form {...form}>
+                                <form onSubmit={handleSubmit} onBlur={handleSubmit} className="flex gap-2 flex-col">
+                                    <FormField
+                                        control={form.control}
+                                        name="name"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <Input
+                                                        {...field}
+                                                        placeholder="Nombre del flujo"
+                                                        className="text-base font-semibold"
+                                                        disabled={loading}
+                                                        onKeyDown={handleKeyDown}
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="description"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <Input
+                                                        {...field}
+                                                        placeholder="Descripción del flujo"
+                                                        className="text-sm text-muted-foreground"
+                                                        disabled={loading}
+                                                        onKeyDown={handleKeyDown}
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </form>
+                            </Form>
                         ) : (
-                            <div
-                                className="flex items-center gap-1 cursor-pointer group"
-                                onClick={() => setEditing(true)}
-                            >
-                                <h3 className="text-base font-bold text-muted-foreground group-hover:underline">
-                                    {mensaje}
-                                </h3>
-                                <PencilLine
-                                    color="#1C61E7"
-                                    size={16}
-                                    className="text-muted-foreground"
-                                />
-                            </div>
+                            <>
+                                <div
+                                    className="flex items-center gap-2 cursor-pointer group"
+                                    onClick={() => setEditing(true)}
+                                >
+                                    <h3 className="text-base font-semibold text-muted-foreground group-hover:underline">
+                                        {workflow.name}
+                                    </h3>
+                                    <PencilLine className="w-4 h-4 text-muted-foreground opacity-60 group-hover:opacity-100 transition" />
+                                </div>
+                                <div
+                                    className="flex items-center gap-2 cursor-pointer group"
+                                    onClick={() => setEditing(true)}
+                                >
+                                    <p className="text-sm text-muted-foreground group-hover:underline">
+                                        {workflow.description || "Sin descripción"}
+                                    </p>
+                                </div>
+                            </>
                         )}
-
-                        <div className="flex items-center gap-2 pt-2">
-                            {/* <span className="text-xs text-muted-foreground">Flujo asociado:</span> */}
-
-                        </div>
-
                     </div>
                 </div>
 
-                {/* Acciones */}
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center">
                     <WorkflowAction
                         workflowName={workflow.name}
                         workflowId={workflow.id}
@@ -109,4 +159,4 @@ export const WorkflowCard = ({
             </CardContent>
         </Card>
     );
-}
+};

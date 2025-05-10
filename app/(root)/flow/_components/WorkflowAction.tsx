@@ -11,15 +11,17 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import TooltipWrapper from '@/components/TooltipWrapper'
-import { Button } from "@/components/ui/button";
-import { MoreVerticalIcon, TrashIcon } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { MoreVerticalIcon, ShuffleIcon, TrashIcon } from "lucide-react";
 import DeleteWorkflowDialog from "./DeleteWorkflowDialog";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export const WorkflowAction = ({ workflowName, workflowId, userId }: { workflowName: string, workflowId: string, userId: string }) => {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
     return (
-        <>
+        <div className="flex flex-row gap-2">
             <DeleteWorkflowDialog
                 open={showDeleteDialog}
                 setOpen={setShowDeleteDialog}
@@ -27,6 +29,16 @@ export const WorkflowAction = ({ workflowName, workflowId, userId }: { workflowN
                 workflowId={workflowId}
                 userId={userId}
             />
+            <Link href={`flow/${workflowId}`} className={cn(
+                buttonVariants({
+                    variant: "outline",
+                    size: "sm"
+                }),
+                "flex items-center gap-2"
+            )}>
+                <ShuffleIcon size={16} />
+                Editar
+            </Link>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
 
@@ -52,7 +64,7 @@ export const WorkflowAction = ({ workflowName, workflowId, userId }: { workflowN
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
-        </>
+        </div>
     )
 
 }
