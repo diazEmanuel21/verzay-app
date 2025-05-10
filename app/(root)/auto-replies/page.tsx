@@ -1,9 +1,9 @@
 import { currentUser } from '@/lib/auth';
-import { GetWorkFlowforUser } from '@/actions/getWorkFlowforUser-action';
 import { rr, Workflow } from '@prisma/client';
 import { Suspense } from 'react';
 import { AutoRepliesContent, SkeletonAutoReplies } from './_components';
 import { getAllRRs } from '@/actions/rr-actions';
+import { GetWorkFlowforUser } from '@/actions/workflow-actions';
 
 function hasWorkflow(result: { data?: Workflow[] }): result is { data: Workflow[] } {
     return !!result.data;

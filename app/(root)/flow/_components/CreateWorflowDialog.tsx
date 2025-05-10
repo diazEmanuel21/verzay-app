@@ -11,10 +11,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { CreateWorkflow } from '@/actions/createWorkflow';
 import { toast } from "sonner";
 
 import { useMutation } from "@tanstack/react-query";
+import { CreateWorkflow } from '@/actions/workflow-actions';
 
 
 function CreateWorflowDialog({triggerText}:{triggerText?: String}){

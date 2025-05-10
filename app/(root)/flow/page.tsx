@@ -5,10 +5,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, InboxIcon } from 'lucide-react';
 import CreateWorflowDialog from './_components/CreateWorflowDialog';
-import WorkflowCard from './_components/WorkflowCard';
-import { GetWorkFlowforUser } from '@/actions/getWorkFlowforUser-action';
 import { currentUser } from '@/lib/auth';
 import { Workflow } from '@prisma/client';
+import { WorkflowCard } from './_components';
+import { GetWorkFlowforUser } from '@/actions/workflow-actions';
 
 function hasWorkflow(result: { data?: Workflow[] }): result is { data: Workflow[] } {
   return !!result.data;

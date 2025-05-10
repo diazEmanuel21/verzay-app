@@ -1,6 +1,6 @@
 "use client";
 
-import { deleteEntireWorkflow } from "@/actions/deleteEntireWorkflow";
+import { deleteEntireWorkflow } from "@/actions/workflow-actions";
 import {
   AlertDialog,
   AlertDialogAction,
