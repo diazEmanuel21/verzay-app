@@ -6,7 +6,8 @@ import {
   ChatBubbleBottomCenterTextIcon,
   ClipboardDocumentListIcon,
   ShieldCheckIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  BellAlertIcon
 } from "@heroicons/react/24/solid";
 
 export interface NavLinkItem {
@@ -52,6 +53,14 @@ export const navLinks: NavLinkItem[] = [
     icon: UsersIcon,
     showInSidebar: true,
     allowedPlans: ["pymes", "empresarial", "business"],
+  },
+  {
+    label: "Recordatorios",
+    route: "/reminders",
+    icon: BellAlertIcon,
+    showInSidebar: true,
+    allowedPlans: ["pymes", "empresarial", "business"],
+    requiresPremium: true,
   },
   {
     label: "Flujos",
