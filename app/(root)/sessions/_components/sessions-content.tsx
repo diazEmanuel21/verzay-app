@@ -190,41 +190,43 @@ export function SessionsContent({ userId }: SessionsContentProps) {
   ];
 
   return (
-    <>
-      <div className="sticky -top-4 z-50 bg-slate-100 dark:bg-gray-900 transition-shadow pb-1 mb-1">
-        <div className="container-stats flex gap-4 overflow-x-auto mb-2 px-2 sm:px-0">
-          {cardStats.map((card, idx) => (
-            <Card
-              key={idx}
-              className="min-w-[200px] sm:min-w-0 flex-1 flex flex-col overflow-hidden shadow-md"
-            >
-              <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
-                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                  {card.title}
-                </CardTitle>
-                {card.icon}
-              </CardHeader>
-              <CardContent>
-                {stats ? (
-                  <>
-                    <div className={`text-lg sm:text-2xl font-bold ${card.color}`}>
-                      {card.value}
-                    </div>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">
-                      {card.description}
-                    </p>
-                    {card.progress !== null && (
-                      <Progress value={card.progress} className="h-2 mt-2" />
-                    )}
-                  </>
-                ) : (
-                  <Skeleton className="h-8 w-24" />
-                )}
-              </CardContent>
-            </Card>
-          ))}
+    <div className="flex flex-col h-full">
+      {/* Header fijo */}
+      <div className="sticky top-0 z-10 mb-6">
+        <div className="flex justify-between items-center">
+          <div className="container-stats flex flex-1 gap-4 overflow-x-auto mb-2 px-2 sm:px-0">
+            {cardStats.map((card, idx) => (
+              <Card
+                key={idx}
+                className="min-w-[200px] sm:min-w-0 flex-1 flex flex-col overflow-hidden shadow-md"
+              >
+                <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+                    {card.title}
+                  </CardTitle>
+                  {card.icon}
+                </CardHeader>
+                <CardContent>
+                  {stats ? (
+                    <>
+                      <div className={`text-lg sm:text-2xl font-bold ${card.color}`}>
+                        {card.value}
+                      </div>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">
+                        {card.description}
+                      </p>
+                      {card.progress !== null && (
+                        <Progress value={card.progress} className="h-2 mt-2" />
+                      )}
+                    </>
+                  ) : (
+                    <Skeleton className="h-8 w-24" />
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
-
         <div className="flex flex-1 justify-between">
           <Input
             placeholder="Buscar por nombre o número..."
@@ -239,25 +241,27 @@ export function SessionsContent({ userId }: SessionsContentProps) {
             onDeleteAll={deleteAllSessions}
             onSuccess={() => router.refresh()}
           />
-
         </div>
-
       </div>
 
-      <Card>
-        <DataTable columns={columns({ onDeleteSuccess: handleDeleteFromTable, mutateSessions: mutate })} data={sessions} />
-      </Card>
+      {/* Scroll interno para el contenido */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="grid grid-cols-1 gap-4">
+          <Card>
+            <DataTable columns={columns({ onDeleteSuccess: handleDeleteFromTable, mutateSessions: mutate })} data={sessions} />
+          </Card>
 
-      {isValidating && !search && (
-        <div className="flex justify-center py-4">
-          <Skeleton className="h-6 w-[200px]" />
+          {isValidating && !search && (
+            <div className="flex justify-center py-4">
+              <Skeleton className="h-6 w-[200px]" />
+            </div>
+          )}
+
+          {!search && hasResults && (
+            <div ref={observerRef} className="h-10" />
+          )}
         </div>
-      )}
-
-      {!search && hasResults && (
-        <div ref={observerRef} className="h-10" />
-      )}
-    </>
-
+      </div>
+    </div>
   );
 }

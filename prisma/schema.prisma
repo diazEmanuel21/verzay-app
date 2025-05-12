@@ -245,3 +245,31 @@ model IaCredit {
 
   @@map("ia_credits")
 }
+
+model Reminders {
+  id           String     @id @default(cuid())
+  title        String
+  description  String?
+  time         DateTime // Primera ejecución o próxima ejecución
+  repeatType   RepeatType @default(NONE)
+  repeatEvery  Int? // Cada X días/semanas/meses/años, si aplica (por ejemplo, cada 3 días)
+  endsAt       DateTime? // Opcional, para detener la recurrencia
+  instanceName String
+  serverUrl    String
+  apikey       String
+  userId       String
+  workflowId   String
+  remoteJid    String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+enum RepeatType {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+  WEEKDAYS // Lunes a viernes
+  EVERYDAY // Todos los días
+}

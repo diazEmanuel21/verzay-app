@@ -55,14 +55,6 @@ export const navLinks: NavLinkItem[] = [
     allowedPlans: ["pymes", "empresarial", "business"],
   },
   {
-    label: "Recordatorios",
-    route: "/reminders",
-    icon: BellAlertIcon,
-    showInSidebar: true,
-    allowedPlans: ["pymes", "empresarial", "business"],
-    requiresPremium: true,
-  },
-  {
     label: "Flujos",
     route: "/flow",
     icon: ChatBubbleLeftRightIcon,
@@ -76,6 +68,14 @@ export const navLinks: NavLinkItem[] = [
     icon: ClipboardDocumentListIcon,
     allowedPlans: ["empresarial", "business"],
     showInSidebar: true,
+    requiresPremium: true,
+  },
+  {
+    label: "Recordatorios",
+    route: "/reminders",
+    icon: BellAlertIcon,
+    showInSidebar: true,
+    allowedPlans: ["pymes", "empresarial", "business"],
     requiresPremium: true,
   },
   {

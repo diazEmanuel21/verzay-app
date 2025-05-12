@@ -190,71 +190,69 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
   };
 
   return (
-    <div className="flex flex-col h-[89vh] overflow-hidden p-4 gap-4">
-      {/* Header + Botón */}
-      <div className="flex justify-between">
-        <Header
-          title={'Entrena tu IA'}
-        />
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button
-              className="font-bold uppercase"
-              onClick={() => {
-                setEditingId(null);
-                setTitle("");
-                setMessage("");
-              }}
-            >
-              Agregar
-            </Button>
-          </DialogTrigger>
-
-          <DialogContent
-            className="max-w-4xl h-[600px] flex flex-col"
-            onOpenAutoFocus={(e) => e.preventDefault()} // ← evita scroll al abrir
-          >
-            <DialogHeader>
-              <DialogTitle>{editingId ? "Editar Mensaje" : "Nuevo Mensaje"}</DialogTitle>
-              <DialogDescription>
-                Completa los campos para personalizar tu IA
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="flex flex-col gap-4 flex-1">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="title">Título</Label>
-                <Input
-                  id="title"
-                  maxLength={100}
-                  placeholder="Ejemplo: Bienvenida"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </div>
-              <div className="flex flex-col gap-2 flex-1">
-                <Label htmlFor="message">Descripción</Label>
-                <Textarea
-                  id="message"
-                  placeholder="Ejemplo: Saluda cordialmente al usuario y ofrece ayuda."
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="flex-1 resize-none overflow-y-auto"
-                />
-              </div>
-            </div>
-
-            <DialogFooter className="mt-4">
-              <Button onClick={handleSubmit} disabled={loading}>
-                {loading ? "Guardando..." : editingId ? "Actualizar" : "Guardar"}
+    <div className="flex flex-col h-full">
+      {/* Header fijo */}
+      <div className="sticky top-0 z-10 mb-6">
+        <div className="flex justify-between items-center">
+          <Header
+            title={'Entrena tu IA'}
+          />
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                className="font-bold uppercase"
+                onClick={() => {
+                  setEditingId(null);
+                  setTitle("");
+                  setMessage("");
+                }}
+              >
+                Agregar
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+            </DialogTrigger>
 
-      {/* Buscador */}
-      <div>
+            <DialogContent
+              className="max-w-4xl h-[600px] flex flex-col"
+              onOpenAutoFocus={(e) => e.preventDefault()} // ← evita scroll al abrir
+            >
+              <DialogHeader>
+                <DialogTitle>{editingId ? "Editar Mensaje" : "Nuevo Mensaje"}</DialogTitle>
+                <DialogDescription>
+                  Completa los campos para personalizar tu IA
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="flex flex-col gap-4 flex-1">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="title">Título</Label>
+                  <Input
+                    id="title"
+                    maxLength={100}
+                    placeholder="Ejemplo: Bienvenida"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2 flex-1">
+                  <Label htmlFor="message">Descripción</Label>
+                  <Textarea
+                    id="message"
+                    placeholder="Ejemplo: Saluda cordialmente al usuario y ofrece ayuda."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    className="flex-1 resize-none overflow-y-auto"
+                  />
+                </div>
+              </div>
+
+              <DialogFooter className="mt-4">
+                <Button onClick={handleSubmit} disabled={loading}>
+                  {loading ? "Guardando..." : editingId ? "Actualizar" : "Guardar"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
         <Input
           placeholder="Buscar mensaje por título..."
           value={searchTerm}
@@ -264,67 +262,68 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
       </div>
 
       {/* Cards Scrollable */}
-      <div className="flex-1 overflow-y-auto ">
-        {loading ? (
-          <MessagesSkeleton />
-        ) : messages.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Aún no hay mensajes configurados.</p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {filteredMessages.map((msg) => (
-              <Card key={msg.id} className="p-4 flex justify-between items-start">
-                <div>
-                  <h4 className="text-base font-medium">
-                    {highlightMatch(msg.title?.toUpperCase() ?? "", debouncedSearchTerm)}
-                  </h4>
-                  <p
-                    className="text-sm text-muted-foreground cursor-pointer hover:underline"
-                    onClick={() => openEditDialog(msg)}
-                  >
-                    {highlightMatch(truncateMessage(msg.message, 100), debouncedSearchTerm)}
-                  </p>
-                </div>
+      <div className="flex-1 overflow-y-auto">
+        <div className="grid grid-cols-1 gap-4">
+          {loading ? (
+            <MessagesSkeleton />
+          ) : messages.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Aún no hay mensajes configurados.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {filteredMessages.map((msg) => (
+                <Card key={msg.id} className="p-4 flex justify-between items-start">
+                  <div>
+                    <h4 className="text-base font-medium">
+                      {highlightMatch(msg.title?.toUpperCase() ?? "", debouncedSearchTerm)}
+                    </h4>
+                    <p
+                      className="text-sm text-muted-foreground cursor-pointer hover:underline"
+                      onClick={() => openEditDialog(msg)}
+                    >
+                      {highlightMatch(truncateMessage(msg.message, 100), debouncedSearchTerm)}
+                    </p>
+                  </div>
 
-                <div className="flex gap-2">
-                  <Button className="bg-orange-500 text-white hover:bg-orange-600" size="icon" onClick={() => openEditDialog(msg)}>
-                    <PencilSquareIcon className="h-5 w-5" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button className="bg-orange-500 text-white hover:bg-orange-600" size="icon" onClick={() => openEditDialog(msg)}>
+                      <PencilSquareIcon className="h-5 w-5" />
+                    </Button>
 
-                  <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => confirmDelete(msg.id)}
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </Button>
-                    </AlertDialogTrigger>
-
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>¿Eliminar mensaje?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Esta acción no se puede deshacer. ¿Estás seguro de eliminar este mensaje?
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-                          Cancelar
+                    <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => confirmDelete(msg.id)}
+                        >
+                          <TrashIcon className="h-5 w-5" />
                         </Button>
-                        <Button variant="destructive" onClick={handleDelete} disabled={loading}>
-                          {loading ? "Eliminando..." : "Eliminar"}
-                        </Button>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
+                      </AlertDialogTrigger>
+
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>¿Eliminar mensaje?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta acción no se puede deshacer. ¿Estás seguro de eliminar este mensaje?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                            Cancelar
+                          </Button>
+                          <Button variant="destructive" onClick={handleDelete} disabled={loading}>
+                            {loading ? "Eliminando..." : "Eliminar"}
+                          </Button>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
-
   );
 }
