@@ -220,6 +220,7 @@ model GuidesUrl {
   path        String // Ej: "flow", "tools", "dashboard", "sessions", "auto-replies"
   title       String
   description String?
+  tipo        String?
   url         String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -262,6 +263,14 @@ model Reminders {
   remoteJid    String
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+}
+
+model SessionTrigger {
+  id         Int      @id @default(autoincrement())
+  sessionId     String
+  time       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 enum RepeatType {
