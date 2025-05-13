@@ -143,7 +143,7 @@ export async function deleteSession(
       message: 'Error al eliminar la sesión. Verifica los datos e intenta nuevamente.'
     };
   }
-}
+};
 
 /**
  * 🔎 Nueva función para buscar sesiones por nombre o número en toda la base de datos.
@@ -180,7 +180,7 @@ export async function searchSessionsByUserId(userId: string, query: string): Pro
       message: 'Error al buscar las sesiones'
     };
   }
-}
+};
 
 /* General actions */
 // 🟢 Activar todos los clientes de un usuario
@@ -202,7 +202,7 @@ export async function activateAllSessions(userId: string): Promise<SessionRespon
       message: 'No se pudieron activar todas las sesiones.',
     }
   }
-}
+};
 
 // 🔴 Desactivar todos los clientes de un usuario
 export async function deactivateAllSessions(userId: string): Promise<SessionResponse> {
@@ -223,7 +223,7 @@ export async function deactivateAllSessions(userId: string): Promise<SessionResp
       message: 'No se pudieron desactivar todas las sesiones.',
     }
   }
-}
+};
 
 // 🗑️ Eliminar todos los clientes de un usuario
 export async function deleteAllSessions(userId: string): Promise<SessionResponse> {
@@ -243,4 +243,31 @@ export async function deleteAllSessions(userId: string): Promise<SessionResponse
       message: 'No se pudieron eliminar las sesiones.',
     }
   }
+};
+
+// Register new session(lead)
+export async function registerSession(userId: string, remoteJid: string, pushName: string, instanceId: string) {
+  const existingSession = await db.session.findFirst({
+    where: { remoteJid, instanceId },
+  });
+
+  if (existingSession) {
+    return db.session.update({
+      where: { id: existingSession.id },
+      data: {
+        pushName,
+        updatedAt: new Date(),
+      },
+    });
+  }
+
+  return db.session.create({
+    data: {
+      userId,
+      remoteJid,
+      pushName,
+      instanceId,
+      status: true,
+    },
+  });
 }

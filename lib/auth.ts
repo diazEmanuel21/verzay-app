@@ -28,6 +28,7 @@ export async function currentUser(request?: Request) {
             image: true,
             plan: true,
             webhookUrl: true,
+            apiKeyId: true,
             // Solo selecciona los campos necesarios
         },
     });

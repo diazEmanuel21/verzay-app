@@ -199,6 +199,22 @@ export async function obtenerApiKeys() {
   }
 }
 
+export async function getApiKeyById(id: string) {
+  try {
+    if (!id) return { success: false, message: 'Missing id' };
+
+    // Obtener todas las API Keys de la base de datos
+    const apiKey = await db.apiKey.findUnique({
+      where: { id }
+    });
+
+    return { success: true, data: apiKey };
+  } catch (error: any) {
+    // Manejo de errores
+    return { success: false, message: error.message || "Error al obtener las API Keys." };
+  }
+}
+
 // Función para crear una instancia si el usuario no tiene una
 export async function createInstance(data: FormData) {
   const instanceName = data.get('instanceName') as string;
