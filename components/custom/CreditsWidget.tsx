@@ -23,6 +23,7 @@ export const CreditsWidget = ({ userId, webhookUrl }: CreditsWidgetProps) => {
     const [credits, setCredits] = useState<{
         total: number;
         remaining: number;
+        creditUsed: number;
         renewalDate?: string;
     } | null>(null);
 
@@ -43,6 +44,7 @@ export const CreditsWidget = ({ userId, webhookUrl }: CreditsWidgetProps) => {
                 setCredits({
                     total: credit.total,
                     remaining,
+                    creditUsed,
                     renewalDate: new Date(credit.renewalDate).toISOString(),
                 });
 
@@ -95,7 +97,7 @@ export const CreditsWidget = ({ userId, webhookUrl }: CreditsWidgetProps) => {
                     ) : credits ? (
                         <>
                             <div className="flex justify-between text-xs font-medium text-muted-foreground">
-                                <span>{credits.total} / {credits.remaining}</span>
+                                <span>{credits.total} / {credits.creditUsed}</span>
                             </div>
                             <Progress
                                 value={usedPercent}

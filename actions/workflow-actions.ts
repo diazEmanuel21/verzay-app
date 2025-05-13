@@ -19,7 +19,7 @@ interface RROperationResponse {
     data?: Workflow[];
 };
 
-export const getWorkFlowforUser = async (userId?: string): Promise<GetWorkFlowResponse> => {
+export const getWorkFlowByUser = async (userId?: string): Promise<GetWorkFlowResponse> => {
     if (!userId) {
         return { success: false, error: "No autenticado." };
     }

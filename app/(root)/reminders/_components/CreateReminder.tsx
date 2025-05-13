@@ -11,10 +11,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { format } from "date-fns"
 import { getSessionsByUserId } from "@/actions/session-action"
-import { Session } from '@prisma/client';
+import { Session, Workflow } from '@prisma/client';
 import { DateTimePicker, SelectComboBox, UtilComboBox } from "@/components/custom"
 import { toast } from "sonner"
 import { reminderSchema, repeatTypes } from "@/schema/reminder"
+import { getWorkFlowByUser } from "@/actions/workflow-actions"
 
 
 type FormValues = z.infer<typeof reminderSchema>
@@ -27,6 +28,7 @@ interface reminderInterface {
 
 export const CreateReminder = ({ userId, serverUrl, apikey }: reminderInterface) => {
   const [leads, setLeads] = useState<Session[]>([]);
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [CreateDialog, setCreateDialog] = useState(false);
 
@@ -58,13 +60,23 @@ export const CreateReminder = ({ userId, serverUrl, apikey }: reminderInterface)
   });
 
   useEffect(() => {
-    async function fetchStats() {
+    async function fetchLeads() {
       const res = await getSessionsByUserId(userId);
       if (res.success && res.data) {
         setLeads(res.data);
       }
     }
-    fetchStats();
+    fetchLeads();
+  }, [userId]);
+
+  useEffect(() => {
+    async function fetchWorkflows() {
+      const res = await getWorkFlowByUser(userId);
+      if (res.success && res.data) {
+        setWorkflows(res.data);
+      }
+    }
+    fetchWorkflows();
   }, [userId]);
 
 
@@ -135,7 +147,21 @@ export const CreateReminder = ({ userId, serverUrl, apikey }: reminderInterface)
       </div>
 
       <Input type="number" placeholder="Cada cuántos (días/meses...)" {...register("repeatEvery")} />
+      {/* lead */}
+      <div>
+        <SelectComboBox
+          leads={leads}
+          onSelect={(lead) => {
+            setValue("userId", lead.userId, { shouldValidate: true, shouldDirty: true })
+            setValue("remoteJid", lead.remoteJid, { shouldValidate: true, shouldDirty: true })
+            setValue("instanceName", lead.instanceId, { shouldValidate: true, shouldDirty: true })
+            setValue("pushName", lead.pushName, { shouldValidate: true, shouldDirty: true })
+          }}
+          onLeadCreated={() => console.log('Hey!')}
+        />
+      </div>
 
+      {/* Workflow */}
       <div>
         <SelectComboBox
           leads={leads}

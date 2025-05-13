@@ -31,19 +31,22 @@ export const SelectComboBox = ({ leads, onSelect, onLeadCreated }: Props) => {
   const [createLead, setCreateLead] = useState(false);
 
   const getVal = (value: string) => {
-    
-    const lead = leads.find((lead) => {
-      const leadName = lead.pushName === '' ? 'Sin nombre' : lead.pushName;
-      const leadPhone = lead.remoteJid.split("@")[0];
 
+    const lead = leads.find((lead) => {
+      const leadName = lead.pushName === '' ? 'Sin nombre' : lead.pushName
+      const leadPhone = lead.remoteJid.split("@")[0]
       const fullValue = `${leadName} ${leadPhone}`
       return fullValue === value
     })
 
-    console.log({ lead })
-    return lead?.pushName
-  }
+    if (!lead) return null
 
+    const nameValidate = lead.pushName === ''
+    const leadName = nameValidate ? 'Sin nombre' : lead.pushName
+    const leadPhone = lead.remoteJid.split("@")[0]
+
+    return nameValidate ? leadPhone : `${leadName}`
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -56,7 +59,7 @@ export const SelectComboBox = ({ leads, onSelect, onLeadCreated }: Props) => {
         >
           {value
             ? getVal(value)
-            : "Lead..."}
+            : "Seleccione un lead..."}
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>

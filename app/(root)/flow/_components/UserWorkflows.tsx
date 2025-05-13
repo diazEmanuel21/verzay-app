@@ -1,7 +1,7 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, InboxIcon } from 'lucide-react';
 
-import { getWorkFlowforUser } from '@/actions/workflow-actions';
+import { getWorkFlowByUser } from '@/actions/workflow-actions';
 import { Workflow } from '@prisma/client';
 import CreateWorflowDialog from './CreateWorflowDialog';
 import { WorkflowCard } from '.';
@@ -15,7 +15,7 @@ interface UserWorkflowsProps {
 }
 
 export async function UserWorkflows({ userId }: UserWorkflowsProps) {
-    const resWorkflow = await getWorkFlowforUser(userId);
+    const resWorkflow = await getWorkFlowByUser(userId);
     const workflows = hasWorkflow(resWorkflow) ? resWorkflow.data : [];
 
     if (!workflows) {
