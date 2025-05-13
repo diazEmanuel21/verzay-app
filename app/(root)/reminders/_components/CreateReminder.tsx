@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format } from "date-fns"
 import { getSessionsByUserId } from "@/actions/session-action"
 import { Session } from '@prisma/client';
-import { DateTimePicker, SelectComboBox } from "@/components/custom"
+import { DateTimePicker, SelectComboBox, UtilComboBox } from "@/components/custom"
 import { toast } from "sonner"
 import { reminderSchema, repeatTypes } from "@/schema/reminder"
 
@@ -137,23 +137,6 @@ export const CreateReminder = ({ userId, serverUrl, apikey }: reminderInterface)
       <Input type="number" placeholder="Cada cuántos (días/meses...)" {...register("repeatEvery")} />
 
       <div>
-        {/* <SelectComboBox
-          items={leads}
-          // getLabel={(lead) => `${lead.pushName} - ${lead.remoteJid.split("@")[0]}`}
-          getLabel={(lead) => `${lead.pushName}`}
-          getSubLabel={(lead) => lead.remoteJid.split("@")[0]} // ← este es opcional
-          getValue={(lead) => `${lead.userId}-${lead.remoteJid}`}
-          placeholder="Buscar o seleccionar lead"
-          onSelect={(lead) => {
-            setValue("userId", lead.userId, { shouldValidate: true, shouldDirty: true })
-            setValue("remoteJid", lead.remoteJid, { shouldValidate: true, shouldDirty: true })
-            setValue("instanceName", lead.instanceId, { shouldValidate: true, shouldDirty: true })
-            setValue("pushName", lead.pushName, { shouldValidate: true, shouldDirty: true })
-          }}
-          onEmptyAction={() => setCreateDialog(true)}
-          emptyLabel="No se encontró ningún lead"
-          createLabel="+ Crear nuevo lead"
-        /> */}
         <SelectComboBox
           leads={leads}
           onSelect={(lead) => {

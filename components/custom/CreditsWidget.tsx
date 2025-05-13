@@ -95,7 +95,7 @@ export const CreditsWidget = ({ userId, webhookUrl }: CreditsWidgetProps) => {
                     ) : credits ? (
                         <>
                             <div className="flex justify-between text-xs font-medium text-muted-foreground">
-                                <span>{credits.remaining} / {credits.total}</span>
+                                <span>{credits.total} / {credits.remaining}</span>
                             </div>
                             <Progress
                                 value={usedPercent}

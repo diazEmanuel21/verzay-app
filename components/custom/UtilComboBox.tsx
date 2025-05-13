@@ -30,7 +30,7 @@ interface SelectComboBoxProps<T> {
   createLabel?: string
 }
 
-export function SelectComboBox<T>({
+export function UtilComboBox<T>({
   items,
   getLabel,
   getSubLabel,

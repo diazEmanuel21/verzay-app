@@ -6,3 +6,4 @@ export * from './CreditsWidget';
 export * from './UnderConstruction';
 export * from './DateTimePicker';
 export * from './SelectComboBox';
+export * from './UtilComboBox';

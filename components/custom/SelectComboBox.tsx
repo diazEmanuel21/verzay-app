@@ -30,6 +30,21 @@ export const SelectComboBox = ({ leads, onSelect, onLeadCreated }: Props) => {
   const [value, setValue] = useState("");
   const [createLead, setCreateLead] = useState(false);
 
+  const getVal = (value: string) => {
+    
+    const lead = leads.find((lead) => {
+      const leadName = lead.pushName === '' ? 'Sin nombre' : lead.pushName;
+      const leadPhone = lead.remoteJid.split("@")[0];
+
+      const fullValue = `${leadName} ${leadPhone}`
+      return fullValue === value
+    })
+
+    console.log({ lead })
+    return lead?.pushName
+  }
+
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -40,14 +55,14 @@ export const SelectComboBox = ({ leads, onSelect, onLeadCreated }: Props) => {
           className="w-full justify-between"
         >
           {value
-            ? leads.find((lead) => `${lead.pushName} ${lead.remoteJid}` === value)?.pushName
-            : "Select framework..."}
+            ? getVal(value)
+            : "Lead..."}
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
         <Command>
-          <CommandInput placeholder="Search framework..." className="h-9" />
+          <CommandInput placeholder="Search lead..." className="h-9" />
           <CommandList>
             <CommandEmpty>
               <div className="p-2 text-sm text-center">
@@ -66,28 +81,33 @@ export const SelectComboBox = ({ leads, onSelect, onLeadCreated }: Props) => {
               </div>
             </CommandEmpty>
             <CommandGroup>
-              {leads.map((lead) => (
-                <CommandItem
-                  key={lead.id}
-                  value={`${lead.pushName} ${lead.remoteJid}`}
-                  onSelect={(currentValue) => {
-                    setValue(currentValue === value ? "" : currentValue)
-                    onSelect(lead)
-                    setOpen(false)
-                  }}
-                >
-                  <div className="flex flex-col">
-                    <span className="font-medium">{lead.pushName}</span>
-                    <span className="text-muted-foreground text-xs">{lead.remoteJid.split("@")[0]}</span>
-                  </div>
-                  <Check
-                    className={cn(
-                      "ml-auto",
-                      value === `${lead.pushName} ${lead.remoteJid}` ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                </CommandItem>
-              ))}
+              {leads.map((lead) => {
+                const leadName = lead.pushName === '' ? 'Sin nombre' : lead.pushName;
+                const leadPhone = lead.remoteJid.split("@")[0];
+
+                return (
+                  <CommandItem
+                    key={lead.id}
+                    value={`${leadName} ${leadPhone}`}
+                    onSelect={(currentValue) => {
+                      setValue(currentValue === value ? "" : currentValue)
+                      onSelect(lead)
+                      setOpen(false)
+                    }}
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-medium">{leadName}</span>
+                      <span className="text-muted-foreground text-xs">{leadPhone}</span>
+                    </div>
+                    <Check
+                      className={cn(
+                        "ml-auto",
+                        value === `${leadName} ${leadPhone}` ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                  </CommandItem>
+                )
+              })}
             </CommandGroup>
           </CommandList>
         </Command>

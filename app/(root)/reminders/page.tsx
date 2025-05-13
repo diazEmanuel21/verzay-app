@@ -3,6 +3,7 @@ import { currentUser } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getApiKeyById } from "@/actions/api-action"
 import { ApiKey } from "@prisma/client"
+import { UnderConstruction } from "@/components/custom"
 
 function hasApiKey(result: { data?: ApiKey | null }): result is { data: ApiKey } {
     return !!result.data
@@ -20,7 +21,8 @@ const RemindersPage = async () => {
         return <strong>Ups! parece que hubo un problema al realizar la petición.</strong>
     };
 
-    return <MainReminders user={user} apiKey={resApikey.data} />
+    // return <MainReminders user={user} apiKey={resApikey.data} />
+    return <UnderConstruction />
 }
 
 export default RemindersPage
