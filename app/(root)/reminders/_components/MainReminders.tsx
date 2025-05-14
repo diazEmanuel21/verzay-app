@@ -4,20 +4,26 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import Header from '@/components/shared/header';
 import { CreateReminder, ReminderListClient, CreateReminderSkeleton, ReminderSkeleton } from './';
 import { Button } from '@/components/ui/button';
-import { ArrowDownUp, PlusIcon } from 'lucide-react';
+import { ArrowDownUp, PlusIcon, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { mainReminderInterface } from '@/schema/reminder';
 import { Input } from '@/components/ui/input';
 import { useReminderDialogStore } from '@/stores';
+import { GenericDeleteDialog } from '@/components/shared/GenericDeleteDialog';
+import { deleteReminder } from '@/actions/reminders-actions';
+
+import { motion, AnimatePresence } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 
 export const MainReminders = ({ user, apiKey, reminders, leads, workflows }: mainReminderInterface) => {
-  const { openDialog, selectedReminderId } = useReminderDialogStore();
+  const { openDialog, selectedReminderId, close } = useReminderDialogStore();
 
   useEffect(() => {
     console.log({ openDialog })
   }, [openDialog])
 
-  const [open, setOpen] = useState(false);
+  const [openPopover, setOpenPopover] = useState(false);
   const [search, setSearch] = useState("");
   const [sortAsc, setSortAsc] = useState(true);
 
@@ -44,7 +50,7 @@ export const MainReminders = ({ user, apiKey, reminders, leads, workflows }: mai
               title={'Recordatorios'}
               subtitle={'Agenda recordatorios para tus leads'}
             />
-            <Popover open={open} onOpenChange={setOpen}>
+            <Popover open={openPopover} onOpenChange={setOpenPopover}>
               <PopoverTrigger asChild>
                 <Button>
                   <PlusIcon className="h-4 w-4 mr-2" />
@@ -63,7 +69,7 @@ export const MainReminders = ({ user, apiKey, reminders, leads, workflows }: mai
                     leads={leads}
                     workflows={workflows}
                     serverUrl={apiKey.url}
-                    onSuccess={() => setOpen(false)} // para cerrar al crear
+                    onSuccess={() => setOpenPopover(false)}
                   />
                 </Suspense>
               </PopoverContent>
@@ -103,16 +109,65 @@ export const MainReminders = ({ user, apiKey, reminders, leads, workflows }: mai
           </Suspense>
         </div>
       </div>
-      {/* <EditReminderDialog
-        open={openDialog === 'edit'}
-        reminderId={selectedReminderId}
-        onClose={closeDialog}
-      />
-      <DeleteReminderDialog
-        open={openDialog === 'delete'}
-        reminderId={selectedReminderId}
-        onClose={closeDialog}
-      /> */}
+
+      <AnimatePresence>
+        {openDialog === 'edit' && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="w-full max-w-md p-2"
+            >
+              <Card className="relative shadow-2xl border border-border rounded-2xl bg-background">
+                <CardHeader className="flex items-center justify-between flex-row">
+                  <CardTitle>Editar Recordatorio</CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => close()}
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Suspense fallback={<CreateReminderSkeleton />}>
+                    <CreateReminder
+                      userId={user.id}
+                      apikey={apiKey.key}
+                      leads={leads}
+                      workflows={workflows}
+                      serverUrl={apiKey.url}
+                      onSuccess={() => close()} // para cerrar al crear
+                    />
+                  </Suspense>
+                  <Button variant={"default"} className="w-full" onClick={() => close()}>
+                    Guardar
+                  </Button>
+                      <Button variant={"ghost"} className="w-full" onClick={() => close()}>
+                    Cancelar
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+
+      {openDialog && selectedReminderId &&
+        <GenericDeleteDialog
+          open={openDialog === 'delete'}
+          setOpen={(val) => {
+            if (!val) close(); // cerrar si el usuario cancela o se cierra el modal
+          }}
+          itemName="Eliminar recordatorio"
+          itemId={selectedReminderId}
+          mutationFn={() => deleteReminder(selectedReminderId)}
+          entityLabel="recordatorio"
+        />
+      }
     </div>
   );
 };
