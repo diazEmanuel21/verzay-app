@@ -58,7 +58,6 @@ export const MainReminders = ({ user, apiKey, reminders, leads, workflows }: mai
               className="w-full md:max-w-sm"
             />
 
-
             <Button
               variant="ghost"
               onClick={() => setSortAsc(!sortAsc)}

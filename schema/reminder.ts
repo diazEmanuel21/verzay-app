@@ -70,6 +70,7 @@ export interface reminderInterface {
     apikey: string,
     workflows: Workflow[]
     leads: Session[],
+    initialData?: formValuesReminderSchema | null;
     onSuccess?: () => void,
 };
 

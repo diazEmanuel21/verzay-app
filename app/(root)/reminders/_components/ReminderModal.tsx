@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
 import { Suspense } from "react"
-import { CreateReminder, CreateReminderSkeleton } from "./"
+import { CreateReminderSkeleton, ReminderForm } from "./"
 import { ApiKey, Session, Workflow, User } from "@prisma/client"
 
 interface ReminderModalProps {
@@ -18,7 +18,24 @@ interface ReminderModalProps {
 }
 
 export const ReminderModal = ({ user, apiKey, leads, workflows }: ReminderModalProps) => {
-    const { openDialog } = useReminderDialogStore()
+    const { openDialog, reminderData } = useReminderDialogStore()
+
+    const transformedReminder = reminderData
+        ? {
+            title: reminderData.title,
+            time: new Date(reminderData.time),
+            repeatType: reminderData.repeatType,
+            instanceName: reminderData.instanceName,
+            pushName: reminderData.pushName,
+            serverUrl: apiKey.url,
+            apikey: apiKey.key,
+            userId: reminderData.userId,
+            workflowId: reminderData.workflowId,
+            remoteJid: reminderData.remoteJid,
+            description: reminderData.description || '',
+            repeatEvery: reminderData.repeatEvery || undefined,
+        }
+        : null;
 
     return (
         <AnimatePresence>
@@ -46,12 +63,13 @@ export const ReminderModal = ({ user, apiKey, leads, workflows }: ReminderModalP
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <Suspense fallback={<CreateReminderSkeleton />}>
-                                    <CreateReminder
+                                    <ReminderForm
                                         userId={user.id}
                                         apikey={apiKey.key}
                                         serverUrl={apiKey.url}
                                         leads={leads}
                                         workflows={workflows}
+                                        initialData={transformedReminder}
                                         onSuccess={() => closeDialog()}
                                     />
                                 </Suspense>

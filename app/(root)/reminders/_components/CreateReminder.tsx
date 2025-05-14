@@ -146,7 +146,7 @@ export const CreateReminder = ({ userId, serverUrl, apikey, onSuccess, workflows
             setValue("instanceName", lead.instanceId, { shouldValidate: true, shouldDirty: true })
             setValue("pushName", lead.pushName, { shouldValidate: true, shouldDirty: true })
           }}
-          onLeadCreated={() => console.log('Hey!')}
+          onLeadCreated={() => setCreateDialog(true)}
         />
       </div>
 

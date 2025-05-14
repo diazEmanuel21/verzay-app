@@ -29,7 +29,7 @@ export const ReminderActions = ({ reminder }: { reminder: Reminders }) => {
                 <DropdownMenuGroup>
                     <DropdownMenuItem
                         // className="text-blue-600"
-                        onClick={() => openEditDialog(reminder.id)}
+                        onClick={() => openEditDialog(reminder.id, reminder)}
                     >
                         Editar
                         <DropdownMenuShortcut>

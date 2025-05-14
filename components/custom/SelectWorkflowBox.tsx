@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Workflow } from "@prisma/client"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -22,11 +22,16 @@ import { Check, ChevronsUpDown } from "lucide-react"
 interface Props {
     workflows: Workflow[]
     onSelect: (workflow: Workflow) => void
+    initialValue?: string
 }
 
-export const SelectWorkflowBox = ({ workflows, onSelect }: Props) => {
+export const SelectWorkflowBox = ({ workflows, onSelect, initialValue }: Props) => {
     const [open, setOpen] = useState(false);
-    const [value, setValue] = useState("");
+    const [value, setValue] = useState(initialValue || "");
+
+    useEffect(() => {
+        if (initialValue) setValue(initialValue);
+    }, [initialValue]);
 
     return (
         <Popover open={open} onOpenChange={setOpen}>

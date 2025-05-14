@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Session } from "@prisma/client"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -23,15 +23,18 @@ interface Props {
   leads: Session[]
   onSelect: (lead: Session) => void
   onLeadCreated: () => void // para recargar leads luego de crear
+  initialValue?: string; // Agregar este prop
 }
 
-export const SelectComboBox = ({ leads, onSelect, onLeadCreated }: Props) => {
+export const SelectComboBox = ({ leads, onSelect, onLeadCreated, initialValue }: Props) => {
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState("");
-  const [createLead, setCreateLead] = useState(false);
+  const [value, setValue] = useState(initialValue || "");
+
+  useEffect(() => {
+    if (initialValue) setValue(initialValue);
+  }, [initialValue]);
 
   const getVal = (value: string) => {
-
     const lead = leads.find((lead) => {
       const leadName = lead.pushName === '' ? 'Sin nombre' : lead.pushName
       const leadPhone = lead.remoteJid.split("@")[0]
@@ -75,7 +78,7 @@ export const SelectComboBox = ({ leads, onSelect, onLeadCreated }: Props) => {
                   variant="link"
                   className="text-blue-500 mt-2"
                   onClick={() => {
-                    setCreateLead(true)
+                    onLeadCreated()
                     setOpen(false)
                   }}
                 >
