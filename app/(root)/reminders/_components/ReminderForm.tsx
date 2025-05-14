@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { useMutation } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
@@ -15,19 +15,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DateTimePicker, SelectComboBox, SelectWorkflowBox } from "@/components/custom"
 import { createReminder, updateReminder } from "@/actions/reminders-actions"
 import { useReminderDialogStore } from "@/stores"
-
+import { LeadCreateForm } from "../../sessions/_components"
+import { Card } from "@/components/ui/card"
 
 export const ReminderForm = ({
+    userId,
     serverUrl,
     apikey,
     leads,
     workflows,
+    instanceNameReminder,
     onSuccess,
     initialData
 }: reminderInterface) => {
     const router = useRouter();
     const { selectedReminderId: reminderId } = useReminderDialogStore();
-    const isEdit = !!initialData
+    const [createLead, setCreateLead] = useState(true);
 
     const reminderForm = useForm<formValuesReminderSchema>({
         resolver: zodResolver(reminderSchema),
@@ -45,7 +48,9 @@ export const ReminderForm = ({
             apikey: "",
             serverUrl: "",
         }
-    })
+    });
+
+    const isEdit = !!initialData
 
     const { register, handleSubmit, setValue, watch, formState: { errors } } = reminderForm;
     const initialLeadValue = initialData
@@ -89,67 +94,87 @@ export const ReminderForm = ({
     }
 
     return (
-        <form onSubmit={handleSubmit(onSubmit, onError)} className="flex flex-col gap-4 p-4">
-            {/* Campos ocultos */}
-            {["userId", "remoteJid", "instanceName", "pushName", "workflowId", "apikey", "serverUrl"].map((name) => (
-                <input key={name} type="hidden" {...register(name as keyof formValuesReminderSchema)} />
-            ))}
+        <>
+            <form onSubmit={handleSubmit(onSubmit, onError)} className="flex flex-col gap-4 p-4">
+                {/* Campos ocultos */}
+                {["userId", "remoteJid", "instanceName", "pushName", "workflowId", "apikey", "serverUrl"].map((name) => (
+                    <input key={name} type="hidden" {...register(name as keyof formValuesReminderSchema)} />
+                ))}
 
-            <Input placeholder="Título" {...register("title")} />
-            {errors.title && <p className="text-sm text-red-500">{errors.title.message}</p>}
+                <Input placeholder="Título" {...register("title")} />
+                {errors.title && <p className="text-sm text-red-500">{errors.title.message}</p>}
 
-            <Textarea placeholder="Descripción" {...register("description")} />
+                <Textarea placeholder="Descripción" {...register("description")} />
 
-            <DateTimePicker
-                value={watch("time")}
-                onChange={(val) => setValue("time", val)}
-            />
-
-            <div>
-                <label className="block mb-1 font-medium">Tipo de Repetición</label>
-                <Controller
-                    control={reminderForm.control}
-                    name="repeatType"
-                    render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {repeatTypes.map((rt) => (
-                                    <SelectItem key={rt.value} value={rt.value}>
-                                        {rt.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    )}
+                <DateTimePicker
+                    value={watch("time")}
+                    onChange={(val) => setValue("time", val)}
                 />
-            </div>
 
-            <Input type="number" placeholder="Cada cuántos (días/meses...)" {...register("repeatEvery")} />
+                <div>
+                    <label className="block mb-1 font-medium">Tipo de Repetición</label>
+                    <Controller
+                        control={reminderForm.control}
+                        name="repeatType"
+                        render={({ field }) => (
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccionar" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {repeatTypes.map((rt) => (
+                                        <SelectItem key={rt.value} value={rt.value}>
+                                            {rt.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                    />
+                </div>
 
-            <SelectComboBox
-                leads={leads}
-                onSelect={(lead) => {
-                    setValue("userId", lead.userId, { shouldValidate: true })
-                    setValue("remoteJid", lead.remoteJid, { shouldValidate: true })
-                    setValue("instanceName", lead.instanceId, { shouldValidate: true })
-                    setValue("pushName", lead.pushName, { shouldValidate: true })
-                }}
-                onLeadCreated={() => toast.info('Crear lead')}
-                initialValue={initialLeadValue}
-            />
+                <Input type="number" placeholder="Cada cuántos (días/meses...)" {...register("repeatEvery")} />
 
-            <SelectWorkflowBox
-                workflows={workflows}
-                onSelect={(workflow) => setValue("workflowId", workflow.id, { shouldValidate: true })}
-                initialValue={initialWorkflowId}
-            />
+                <SelectComboBox
+                    leads={leads}
+                    onSelect={(lead) => {
+                        setValue("userId", lead.userId, { shouldValidate: true })
+                        setValue("remoteJid", lead.remoteJid, { shouldValidate: true })
+                        setValue("instanceName", lead.instanceId, { shouldValidate: true })
+                        setValue("pushName", lead.pushName, { shouldValidate: true })
+                    }}
+                    onLeadCreated={() => setCreateLead(true)}
+                    initialValue={initialLeadValue}
+                />
 
-            <Button type="submit" disabled={mutation.isPending} className="w-full">
-                {mutation.isPending ? "Guardando..." : isEdit ? "Actualizar" : "Crear Recordatorio"}
-            </Button>
-        </form>
+
+                <SelectWorkflowBox
+                    workflows={workflows}
+                    onSelect={(workflow) => setValue("workflowId", workflow.id, { shouldValidate: true })}
+                    initialValue={initialWorkflowId}
+                />
+
+                <Button type="submit" disabled={mutation.isPending} className="w-full">
+                    {mutation.isPending ? "Guardando..." : isEdit ? "Actualizar" : "Crear Recordatorio"}
+                </Button>
+            </form>
+            {createLead && (
+                <Card className="p-4">
+                    <LeadCreateForm
+                        userId={userId}
+                        instanceId={instanceNameReminder}
+                        onCreated={(lead) => {
+                            // setLeads((prev) => [...prev, lead]);
+                            // setValue("userId", lead.userId);
+                            // setValue("remoteJid", lead.remoteJid);
+                            // setValue("instanceName", lead.instanceId);
+                            // setValue("pushName", lead.pushName);
+                            setCreateLead(false);
+                        }}
+                        onCancel={() => setCreateLead(false)}
+                    />
+                </Card>
+            )}
+        </>
     )
 }

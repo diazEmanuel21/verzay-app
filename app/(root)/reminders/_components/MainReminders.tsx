@@ -11,7 +11,7 @@ import { closeDialog, openCreateDialog, useReminderDialogStore } from '@/stores'
 import { GenericDeleteDialog } from '@/components/shared/GenericDeleteDialog';
 import { deleteReminder } from '@/actions/reminders-actions';
 
-export const MainReminders = ({ user, apiKey, reminders, leads, workflows }: mainReminderInterface) => {
+export const MainReminders = ({ user, apiKey, reminders, leads, workflows, instancia }: mainReminderInterface) => {
   const { openDialog, selectedReminderId } = useReminderDialogStore();
 
   const [search, setSearch] = useState("");
@@ -86,6 +86,7 @@ export const MainReminders = ({ user, apiKey, reminders, leads, workflows }: mai
       </div>
 
       <ReminderModal
+        instancia={instancia}
         user={user}
         apiKey={apiKey}
         leads={leads}

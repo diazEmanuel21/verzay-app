@@ -1,4 +1,4 @@
-import { ApiKey, Reminders, Session, User, Workflow } from "@prisma/client";
+import { ApiKey, Instancias, Reminders, Session, User, Workflow } from "@prisma/client";
 import { z } from "zod";
 
 export const repeatTypes = [
@@ -68,7 +68,8 @@ export interface reminderInterface {
     userId: string,
     serverUrl: string,
     apikey: string,
-    workflows: Workflow[]
+    workflows: Workflow[],
+    instanceNameReminder: string,
     leads: Session[],
     initialData?: formValuesReminderSchema | null;
     onSuccess?: () => void,
@@ -80,6 +81,7 @@ export interface mainReminderInterface {
     reminders: Reminders[],
     leads: Session[],
     workflows: Workflow[]
+    instancia: Instancias
 }
 
 export interface reminderListInterface {

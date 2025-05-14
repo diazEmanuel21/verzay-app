@@ -2,10 +2,11 @@ import { MainReminders } from "./_components"
 import { currentUser } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getApiKeyById } from "@/actions/api-action"
-import { ApiKey, Reminders, Session, Workflow } from "@prisma/client"
+import { ApiKey, Instancias, Reminders, Session, Workflow } from "@prisma/client"
 import { getRemindersByUserId } from "@/actions/reminders-actions"
 import { getSessionsByUserId } from "@/actions/session-action"
 import { getWorkFlowByUser } from "@/actions/workflow-actions"
+import { getInstancesByUserId } from "@/actions/instances-actions"
 
 function hasApiKey(result: { data?: ApiKey | null }): result is { data: ApiKey } {
     return !!result.data
@@ -20,6 +21,10 @@ function hasSession(result: { data?: Session[] }): result is { data: Session[] }
 }
 
 function hasWorkflow(result: { data?: Workflow[] }): result is { data: Workflow[] } {
+    return !!result.data
+}
+
+function hasInstancia(result: { data?: Instancias | null }): result is { data: Instancias } {
     return !!result.data
 }
 
@@ -58,6 +63,13 @@ const RemindersPage = async () => {
     }
     const workflows = hasWorkflow(resWorkflow) ? resWorkflow.data : []
 
+
+    const resInstancia = await getInstancesByUserId(user.id)
+    if (!resInstancia.success || !hasInstancia(resInstancia)) {
+        console.error("[REMINDERS_PAGE] No se encontró una API Key válida para el usuario.")
+        return <strong className="text-red-500">No se encontró una API Key válida.</strong>
+    }
+
     return (
         <MainReminders
             user={user}
@@ -65,6 +77,7 @@ const RemindersPage = async () => {
             reminders={reminders}
             leads={sessions}
             workflows={workflows}
+            instancia={resInstancia.data}
         />
     )
 

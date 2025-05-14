@@ -1,7 +1,9 @@
 'use server'
 
 import { db } from '@/lib/db'
+import { registerSessionSchema } from '@/schema/session';
 import { Session } from '@prisma/client';
+import { z } from 'zod';
 
 interface SessionResponse<T = Session[]> {
   success: boolean;
@@ -245,29 +247,68 @@ export async function deleteAllSessions(userId: string): Promise<SessionResponse
   }
 };
 
-// Register new session(lead)
-export async function registerSession(userId: string, remoteJid: string, pushName: string, instanceId: string) {
-  const existingSession = await db.session.findFirst({
-    where: { remoteJid, instanceId },
-  });
+// export async function registerSession(
+//   userId: string,
+//   remoteJid: string,
+//   pushName: string,
+//   instanceId: string
+// ): Promise<SessionResponse<Session>> {
 
-  if (existingSession) {
-    return db.session.update({
-      where: { id: existingSession.id },
-      data: {
-        pushName,
-        updatedAt: new Date(),
-      },
-    });
+export async function registerSession(input: z.infer<typeof registerSessionSchema>): Promise<SessionResponse<Session>> {
+  const validation = registerSessionSchema.safeParse(input);
+
+  if (!validation.success) {
+    const issues = validation.error.issues.map(issue => issue.message).join(", ");
+    return {
+      success: false,
+      message: `Datos inválidos: ${issues}`,
+    };
   }
 
-  return db.session.create({
-    data: {
-      userId,
-      remoteJid,
-      pushName,
-      instanceId,
-      status: true,
-    },
-  });
+  const { userId, remoteJid, pushName, instanceId } = validation.data;
+
+  try {
+    const existingSession = await db.session.findFirst({
+      where: { remoteJid, instanceId },
+    });
+
+    if (existingSession) {
+      const updated = await db.session.update({
+        where: { id: existingSession.id },
+        data: {
+          pushName,
+          updatedAt: new Date(),
+        },
+      });
+
+      return {
+        success: true,
+        message: "Sesión actualizada correctamente.",
+        data: updated,
+      };
+    }
+
+    const created = await db.session.create({
+      data: {
+        userId,
+        remoteJid,
+        pushName,
+        instanceId,
+        status: true,
+      },
+    });
+
+    return {
+      success: true,
+      message: "Sesión creada correctamente.",
+      data: created,
+    };
+  } catch (error) {
+    console.error("[REGISTER_SESSION]", error);
+    return {
+      success: false,
+      message: "Error al registrar la sesión.",
+    };
+  }
 }
+

@@ -8,16 +8,17 @@ import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
 import { Suspense } from "react"
 import { CreateReminderSkeleton, ReminderForm } from "./"
-import { ApiKey, Session, Workflow, User } from "@prisma/client"
+import { ApiKey, Session, Workflow, User, Instancias } from "@prisma/client"
 
 interface ReminderModalProps {
     user: User
     apiKey: ApiKey
     leads: Session[]
     workflows: Workflow[]
+    instancia: Instancias
 }
 
-export const ReminderModal = ({ user, apiKey, leads, workflows }: ReminderModalProps) => {
+export const ReminderModal = ({ user, apiKey, leads, workflows, instancia }: ReminderModalProps) => {
     const { openDialog, reminderData } = useReminderDialogStore()
 
     const transformedReminder = reminderData
@@ -48,7 +49,7 @@ export const ReminderModal = ({ user, apiKey, leads, workflows }: ReminderModalP
                         transition={{ duration: 0.2 }}
                         className="w-full max-w-md p-2"
                     >
-                        <Card className="relative shadow-2xl border border-border rounded-2xl bg-background">
+                        <Card className="relative shadow-2xl border border-border rounded-md bg-background">
                             <CardHeader className="flex items-center justify-between flex-row">
                                 <CardTitle>
                                     {openDialog === 'edit' ? "Editar Recordatorio" : "Crear Recordatorio"}
@@ -64,6 +65,7 @@ export const ReminderModal = ({ user, apiKey, leads, workflows }: ReminderModalP
                             <CardContent className="space-y-4">
                                 <Suspense fallback={<CreateReminderSkeleton />}>
                                     <ReminderForm
+                                        instanceNameReminder={instancia.instanceName}
                                         userId={user.id}
                                         apikey={apiKey.key}
                                         serverUrl={apiKey.url}
