@@ -36,7 +36,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${poppins.className} overflow-x-hidden bg-slate-100 text-black dark:bg-gray-900 dark:text-white`}>
+      <body className={`${poppins.className} overflow-hidden bg-slate-100 text-black dark:bg-gray-900 dark:text-white`}>
         {isAuthenticated ? (
           <AppProviders>
             <ThemeProvider>

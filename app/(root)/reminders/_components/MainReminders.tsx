@@ -1,41 +1,22 @@
 'use client'
 
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Header from '@/components/shared/header';
-import { CreateReminder, ReminderListClient } from './';
+import { CreateReminder, ReminderListClient, CreateReminderSkeleton, ReminderSkeleton } from './';
 import { Button } from '@/components/ui/button';
 import { ArrowDownUp, PlusIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Skeleton } from '@/components/ui/skeleton';
 import { mainReminderInterface } from '@/schema/reminder';
 import { Input } from '@/components/ui/input';
-
-const ReminderSkeleton = () => {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-      {[1, 2, 3].map((i) => (
-        <Skeleton key={i} className="h-40 w-full rounded-xl" />
-      ))}
-    </div>
-  )
-};
-
-const CreateReminderSkeleton = () => {
-  return (
-    <div className="flex flex-col overflow-hidden gap-4 p-2">
-      <Skeleton className="bg-muted/50 dark:bg-muted/30 h-10 w-full rounded-md" /> {/* título */}
-      <Skeleton className="bg-muted/50 dark:bg-muted/30 h-24 w-full rounded-md" /> {/* descripción */}
-      <Skeleton className="bg-muted/50 dark:bg-muted/30 h-10 w-1/2 rounded-md" /> {/* fecha */}
-      <Skeleton className="bg-muted/50 dark:bg-muted/30 h-10 w-1/2 rounded-md" /> {/* repetición */}
-      <Skeleton className="bg-muted/50 dark:bg-muted/30 h-10 w-2/3 rounded-md" /> {/* lead */}
-      <Skeleton className="bg-muted/50 dark:bg-muted/30 h-10 w-2/3 rounded-md" /> {/* workflow */}
-      <Skeleton className="bg-muted/50 dark:bg-muted/30 h-10 w-2/3 rounded-md" /> {/* workflow */}
-      <Skeleton className="bg-muted/50 dark:bg-muted/30 h-10 w-full rounded-md" /> {/* botón */}
-    </div>
-  )
-};
+import { useReminderDialogStore } from '@/stores';
 
 export const MainReminders = ({ user, apiKey, reminders, leads, workflows }: mainReminderInterface) => {
+  const { openDialog, selectedReminderId } = useReminderDialogStore();
+
+  useEffect(() => {
+    console.log({ openDialog })
+  }, [openDialog])
+
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [sortAsc, setSortAsc] = useState(true);
@@ -56,7 +37,7 @@ export const MainReminders = ({ user, apiKey, reminders, leads, workflows }: mai
   return (
     <div className="flex flex-col h-full">
       {/* Header fijo */}
-      <div className="sticky top-0 z-10 mb-2">
+      <div className="sticky top-0 z-1 mb-2">
         <div className="flex flex-col overflow-hidden justify-between flex-1 gap-4 p-2">
           <div className="flex justify-between items-center">
             <Header
@@ -122,6 +103,16 @@ export const MainReminders = ({ user, apiKey, reminders, leads, workflows }: mai
           </Suspense>
         </div>
       </div>
+      {/* <EditReminderDialog
+        open={openDialog === 'edit'}
+        reminderId={selectedReminderId}
+        onClose={closeDialog}
+      />
+      <DeleteReminderDialog
+        open={openDialog === 'delete'}
+        reminderId={selectedReminderId}
+        onClose={closeDialog}
+      /> */}
     </div>
   );
 };

@@ -1,14 +1,16 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { format } from "date-fns"
-import { Button } from "@/components/ui/button"
 import { CalendarDaysIcon, ClockIcon } from "lucide-react"
-import { reminderListInterface } from "@/schema/reminder"
+import { reminderListInterface, repeatTypes } from "@/schema/reminder"
+import { ReminderActions } from "./"
 
 export const ReminderList = ({ reminder, workflow }: reminderListInterface) => {
+
+    const repeatLabel = reminder.repeatType === "NONE"
+        ? "Único"
+        : `${repeatTypes.find(rt => rt.value === reminder.repeatType)?.label} - ${reminder.repeatEvery} ${reminder.repeatEvery === 1 ? "vez" : "veces"}`;
 
     return (
         <Card key={reminder.id} className="border border-muted">
@@ -17,11 +19,7 @@ export const ReminderList = ({ reminder, workflow }: reminderListInterface) => {
                     <h3 className="font-semibold text-base text-primary">
                         {reminder.title}
                     </h3>
-                    <span className="text-xs text-muted-foreground">
-                        {reminder.repeatType === "NONE"
-                            ? "Único"
-                            : `${reminder.repeatType} cada ${reminder.repeatEvery}x`}
-                    </span>
+                    <ReminderActions reminder={reminder} />
                 </div>
 
                 {reminder.description && (
@@ -40,8 +38,11 @@ export const ReminderList = ({ reminder, workflow }: reminderListInterface) => {
                     Enviar a <strong className="ml-1">+{reminder.remoteJid.split("@")[0]}</strong>
                 </div>
 
-                <div className="text-xs text-muted-foreground">
-                    Flujo | {workflow?.name}
+                <div className="flex items-center justify-between">
+                    <div className="text-xs text-muted-foreground">
+                        Flujo | {workflow?.name}
+                    </div>
+                    <span className="text-xs text-muted-foreground">{repeatLabel}</span>
                 </div>
             </CardContent>
         </Card>

@@ -25,7 +25,7 @@ export const MainAutoReplies = ({ user, Workflows, autoReplies = [] }: Props) =>
   return (
     <div className="flex flex-col h-full">
       {/* Header fijo */}
-      <div className="sticky top-0 z-10 mb-6">
+      <div className="sticky top-0 z-1 mb-6">
         <div className="flex justify-between items-center">
           <Header
             title={'Respuestas rápidas'}

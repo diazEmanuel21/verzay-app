@@ -192,7 +192,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header fijo */}
-      <div className="sticky top-0 z-10 mb-6">
+      <div className="sticky top-0 z-1 mb-6">
         <div className="flex justify-between items-center">
           <div className="container-stats flex flex-1 gap-4 overflow-x-auto mb-2 px-2 sm:px-0">
             {cardStats.map((card, idx) => (
