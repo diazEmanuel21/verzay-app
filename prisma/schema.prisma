@@ -256,6 +256,7 @@ model Reminders {
   repeatEvery  Int? // Cada X días/semanas/meses/años, si aplica (por ejemplo, cada 3 días)
   endsAt       DateTime? // Opcional, para detener la recurrencia
   instanceName String
+  pushName     String
   serverUrl    String
   apikey       String
   userId       String
@@ -266,11 +267,11 @@ model Reminders {
 }
 
 model SessionTrigger {
-  id         Int      @id @default(autoincrement())
-  sessionId     String
-  time       String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  sessionId String
+  time      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum RepeatType {

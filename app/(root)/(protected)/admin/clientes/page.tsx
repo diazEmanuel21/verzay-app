@@ -58,8 +58,5 @@ export default async function ClientesPage() {
     return usage < 100
   })
 
-  console.log('🔍 Uso de apikeys:', apiKeyUsageCount);
-console.log('🟢 Apikeys disponibles:', availableApikeys);
-
-  return <ClientsManager users={users} apikeys={allApikeys} availableApikeys={availableApikeys} currentUserRol={user.role}/>
+  return <ClientsManager users={users} apikeys={allApikeys} availableApikeys={availableApikeys} currentUserRol={user.role} />
 }

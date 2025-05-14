@@ -2,48 +2,34 @@
 
 import { Controller, useForm } from "react-hook-form"
 import { useEffect, useState } from "react"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { format } from "date-fns"
 import { getSessionsByUserId } from "@/actions/session-action"
 import { Session, Workflow } from '@prisma/client';
-import { DateTimePicker, SelectComboBox, UtilComboBox } from "@/components/custom"
+import { DateTimePicker, SelectComboBox, SelectWorkflowBox } from "@/components/custom"
 import { toast } from "sonner"
-import { reminderSchema, repeatTypes } from "@/schema/reminder"
+import { formValuesReminderSchema, reminderInterface, reminderSchema, repeatTypes } from "@/schema/reminder"
 import { getWorkFlowByUser } from "@/actions/workflow-actions"
+import { useRouter } from "next/navigation"
+import { createReminder } from "@/actions/reminders-actions"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Skeleton } from "@/components/ui/skeleton"
 
+export const CreateReminder = ({ userId, serverUrl, apikey, onSuccess }: reminderInterface) => {
+  const router = useRouter();
 
-type FormValues = z.infer<typeof reminderSchema>
-
-interface reminderInterface {
-  userId: string,
-  serverUrl: string,
-  apikey: string,
-};
-
-export const CreateReminder = ({ userId, serverUrl, apikey }: reminderInterface) => {
   const [leads, setLeads] = useState<Session[]>([]);
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
+  const [leadsLoading, setLeadsLoading] = useState(true);
+  const [workflowsLoading, setWorkflowsLoading] = useState(true);
+
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [CreateDialog, setCreateDialog] = useState(false);
 
-  // const createReminder = useMutation({
-  //   mutationFn: async (data: FormValues) => {
-  //     return fetch("/api/reminders", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({ ...data, instanceName: "inst", serverUrl: "url", apikey: "key", workflowId: "flow" })
-  //     })
-  //   },
-  //   onSuccess: () => form.reset()
-  // });
-
-  const form = useForm<FormValues>({
+  const reminderForm = useForm<formValuesReminderSchema>({
     resolver: zodResolver(reminderSchema),
     defaultValues: {
       title: "",
@@ -56,7 +42,37 @@ export const CreateReminder = ({ userId, serverUrl, apikey }: reminderInterface)
       instanceName: "",
       pushName: "",
       workflowId: "",
+      apikey: "",
+      serverUrl: "",
     }
+  });
+
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = reminderForm
+
+  const onCreateReminder = useMutation({
+    mutationFn: async (data: formValuesReminderSchema) => {
+      return await createReminder(data);
+    },
+    onSuccess: (res) => {
+      reminderForm.reset()
+
+      if (!res.success) {
+        toast.error(res.message);
+        return;
+      }
+
+      toast.success(res.message, { id: 'reminder-form' });
+      router.refresh();
+    },
+    onError: (error: any) => {
+      console.error("Error crítico al guardar recordatorio:", error);
+      toast.error("Error inesperado al guardar recordatorio.", {
+        id: 'reminder-form',
+      });
+    },
+    onSettled: () => {
+      if (onSuccess) return onSuccess();
+    },
   });
 
   useEffect(() => {
@@ -64,6 +80,7 @@ export const CreateReminder = ({ userId, serverUrl, apikey }: reminderInterface)
       const res = await getSessionsByUserId(userId);
       if (res.success && res.data) {
         setLeads(res.data);
+        setLeadsLoading(false);
       }
     }
     fetchLeads();
@@ -74,26 +91,22 @@ export const CreateReminder = ({ userId, serverUrl, apikey }: reminderInterface)
       const res = await getWorkFlowByUser(userId);
       if (res.success && res.data) {
         setWorkflows(res.data);
+        setWorkflowsLoading(false);
       }
     }
     fetchWorkflows();
   }, [userId]);
 
+  useEffect(() => {
+    setValue("apikey", apikey, { shouldValidate: true })
+    setValue("serverUrl", serverUrl, { shouldValidate: true })
+  }, [apikey, serverUrl, setValue,])
 
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = form
-
-  const onSubmit = (data: FormValues) => {
-    debugger;
-    const payload = {
-      ...data,
-      serverUrl,
-      apikey,
-    };
-
-    console.log({ payload })
+  const onSubmit = (payload: formValuesReminderSchema) => {
+    onCreateReminder.mutate(payload)
   };
 
-  const onError = (errors: typeof form.formState.errors) => {
+  const onError = (errors: typeof reminderForm.formState.errors) => {
     const allMessages = Object.values(errors)
       .map((err) => err?.message)
       .filter(Boolean)
@@ -110,72 +123,91 @@ export const CreateReminder = ({ userId, serverUrl, apikey }: reminderInterface)
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-4 p-6 rounded-2xl shadow-lg">
+    <>
+      {leadsLoading || workflowsLoading ? (
+        <div className="space-y-4">
+          <Skeleton className="bg-white/50 dark:bg-muted/30 h-10 w-full rounded-md" /> {/* título */}
+          <Skeleton className="bg-white/50 dark:bg-muted/30 h-24 w-full rounded-md" /> {/* descripción */}
+          <Skeleton className="bg-white/50 dark:bg-muted/30 h-10 w-1/2 rounded-md" /> {/* fecha */}
+          <Skeleton className="bg-white/50 dark:bg-muted/30 h-10 w-1/2 rounded-md" /> {/* repetición */}
+          <Skeleton className="bg-white/50 dark:bg-muted/30 h-10 w-2/3 rounded-md" /> {/* lead */}
+          <Skeleton className="bg-white/50 dark:bg-muted/30 h-10 w-2/3 rounded-md" /> {/* workflow */}
+          <Skeleton className="bg-white/50 dark:bg-muted/30 h-10 w-full rounded-md" /> {/* botón */}
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-4 p-6 rounded-2xl shadow-lg">
+          <input type="hidden" {...register("userId")} />
+          <input type="hidden" {...register("remoteJid")} />
+          <input type="hidden" {...register("instanceName")} />
+          <input type="hidden" {...register("pushName")} />
+          <input type="hidden" {...register("workflowId")} />
+          <input type="hidden" {...register("apikey")} />
+          <input type="hidden" {...register("serverUrl")} />
 
-      <Input placeholder="Título" {...register("title")} />
-      {errors.title && <p className="text-sm text-red-500">{errors.title.message}</p>}
+          <Input placeholder="Título" {...register("title")} />
+          {errors.title && <p className="text-sm text-red-500">{errors.title.message}</p>}
 
-      <Textarea placeholder="Descripción" {...register("description")} />
+          <Textarea placeholder="Descripción" {...register("description")} />
 
-      <div>
-        <DateTimePicker
-          value={watch("time")}
-          onChange={(val) => setValue("time", val)}
-        />
-      </div>
+          <div>
+            <DateTimePicker
+              value={watch("time")}
+              onChange={(val) => setValue("time", val)}
+            />
+          </div>
 
-      <div>
-        <label className="block mb-1 font-medium">Tipo de Repetición</label>
-        <Controller
-          control={form.control}
-          name="repeatType"
-          render={({ field }) => (
-            <Select onValueChange={field.onChange} value={field.value}>
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar" />
-              </SelectTrigger>
-              <SelectContent>
-                {repeatTypes.map((rt) => (
-                  <SelectItem key={rt.value} value={rt.value}>
-                    {rt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-      </div>
+          <div>
+            <label className="block mb-1 font-medium">Tipo de Repetición</label>
+            <Controller
+              control={reminderForm.control}
+              name="repeatType"
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {repeatTypes.map((rt) => (
+                      <SelectItem key={rt.value} value={rt.value}>
+                        {rt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
 
-      <Input type="number" placeholder="Cada cuántos (días/meses...)" {...register("repeatEvery")} />
-      {/* lead */}
-      <div>
-        <SelectComboBox
-          leads={leads}
-          onSelect={(lead) => {
-            setValue("userId", lead.userId, { shouldValidate: true, shouldDirty: true })
-            setValue("remoteJid", lead.remoteJid, { shouldValidate: true, shouldDirty: true })
-            setValue("instanceName", lead.instanceId, { shouldValidate: true, shouldDirty: true })
-            setValue("pushName", lead.pushName, { shouldValidate: true, shouldDirty: true })
-          }}
-          onLeadCreated={() => console.log('Hey!')}
-        />
-      </div>
+          <Input type="number" placeholder="Cada cuántos (días/meses...)" {...register("repeatEvery")} />
+          {/* lead */}
+          <div>
+            <SelectComboBox
+              leads={leads}
+              onSelect={(lead) => {
+                setValue("userId", lead.userId, { shouldValidate: true, shouldDirty: true })
+                setValue("remoteJid", lead.remoteJid, { shouldValidate: true, shouldDirty: true })
+                setValue("instanceName", lead.instanceId, { shouldValidate: true, shouldDirty: true })
+                setValue("pushName", lead.pushName, { shouldValidate: true, shouldDirty: true })
+              }}
+              onLeadCreated={() => console.log('Hey!')}
+            />
+          </div>
 
-      {/* Workflow */}
-      <div>
-        <SelectComboBox
-          leads={leads}
-          onSelect={(lead) => {
-            setValue("userId", lead.userId, { shouldValidate: true, shouldDirty: true })
-            setValue("remoteJid", lead.remoteJid, { shouldValidate: true, shouldDirty: true })
-            setValue("instanceName", lead.instanceId, { shouldValidate: true, shouldDirty: true })
-            setValue("pushName", lead.pushName, { shouldValidate: true, shouldDirty: true })
-          }}
-          onLeadCreated={() => console.log('Hey!')}
-        />
-      </div>
+          {/* Workflow */}
+          <div>
+            <SelectWorkflowBox
+              workflows={workflows}
+              onSelect={(workflow) => {
+                setValue("workflowId", workflow.id, { shouldValidate: true, shouldDirty: true })
+              }}
+            />
+          </div>
 
-      <Button type="submit" className="w-full">Crear Recordatorio</Button>
-    </form>
+          <Button type="submit" disabled={onCreateReminder.isPending} className="w-full">
+            {onCreateReminder.isPending ? "Creando..." : "Crear Recordatorio"}
+          </Button>
+        </form>
+      )}
+    </>
   )
 }

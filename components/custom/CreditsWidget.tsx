@@ -90,8 +90,6 @@ export const CreditsWidget = ({ userId, webhookUrl }: CreditsWidgetProps) => {
 
 
                 <div className="flex-1">
-
-
                     {loading ? (
                         <span className="text-xs text-muted-foreground">Cargando créditos...</span>
                     ) : credits ? (

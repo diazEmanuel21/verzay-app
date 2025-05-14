@@ -35,7 +35,6 @@ const IaForm = () => { // <- Cambiado a "IaForm" con mayúscula ✅
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Do something with the form values.
-    console.log(values)
   }
 
   return (

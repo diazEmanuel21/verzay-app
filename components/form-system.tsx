@@ -170,8 +170,6 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
     );
   });
 
-  console.log(filteredMessages)
-
   const highlightMatch = (text: string, query: string) => {
     if (!query) return text;
     const parts = text.split(new RegExp(`(${query})`, 'gi'));

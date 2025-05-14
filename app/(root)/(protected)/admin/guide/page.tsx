@@ -16,7 +16,6 @@ const GuidePage = async ({ searchParams }: Props) => {
     };
 
     const result = await getAllGuides();
-    console.log({result})
 
     if (!result.data) {
         return <h1>Error al cargar las apikey</h1>;

@@ -119,7 +119,6 @@ const OpenAICredentialManager: React.FC<OpenAICredentialComponentProps> = ({ use
     setLoading(true);
     setError(null);
     try {
-      console.log(instanceId);
       const response = await fetch(`${baseUrl}/openai/creds/${credId}/${instanceName}`, {
         method: 'DELETE',
         headers: {

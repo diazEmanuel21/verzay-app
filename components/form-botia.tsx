@@ -51,8 +51,6 @@ const CreateBotComponent = ({ userId }: UserIdProps) => {
       setLoading(true);
       setError('');
       const result = await createBotAction(formData);
-
-      console.log('Bot creado exitosamente:', result);
       setBotCreated(true);
     } catch (err) {
       setError('Error al crear el bot: ' + (err instanceof Error ? err.message : String(err)));

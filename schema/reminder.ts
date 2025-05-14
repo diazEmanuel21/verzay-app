@@ -34,21 +34,38 @@ export const reminderSchema = z.object({
 
     userId: z.string({
         required_error: "El ID de usuario es obligatorio.",
-    }),
+    }).min(1, "El ID de usuario es obligatorio."),
 
     remoteJid: z.string({
         required_error: "El número del lead es obligatorio.",
-    }),
+    }).min(1, "El número del lead es obligatorio."),
 
     instanceName: z.string({
         required_error: "El nombre de la instancia es obligatorio.",
-    }),
+    }).min(1, "El nombre de la instancia es obligatorio."),
 
     pushName: z.string({
         required_error: "El nombre del lead es obligatorio.",
-    }),
+    }).min(1, "El nombre del lead es obligatorio."),
 
     workflowId: z.string({
         required_error: "El flujo es obligatorio.",
-    }),
+    }).min(1, "El flujo es obligatorio."),
+
+    serverUrl: z.string({
+        required_error: "serverUrl es obligatorio.",
+    }).min(1, "serverUrl es obligatorio."),
+
+    apikey: z.string({
+        required_error: "apikey es obligatorio.",
+    }).min(1, "apikey es obligatorio."),
 })
+
+export type formValuesReminderSchema = z.infer<typeof reminderSchema>
+
+export interface reminderInterface {
+    userId: string,
+    serverUrl: string,
+    apikey: string,
+    onSuccess? : () => void,
+};
