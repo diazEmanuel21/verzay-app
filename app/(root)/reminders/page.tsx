@@ -2,9 +2,10 @@ import { MainReminders } from "./_components"
 import { currentUser } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getApiKeyById } from "@/actions/api-action"
-import { ApiKey, Reminders } from "@prisma/client"
+import { ApiKey, Reminders, Session, Workflow } from "@prisma/client"
 import { getRemindersByUserId } from "@/actions/reminders-actions"
-
+import { getSessionsByUserId } from "@/actions/session-action"
+import { getWorkFlowByUser } from "@/actions/workflow-actions"
 
 function hasApiKey(result: { data?: ApiKey | null }): result is { data: ApiKey } {
     return !!result.data
@@ -14,21 +15,59 @@ function hasReminder(result: { data?: Reminders[] }): result is { data: Reminder
     return !!result.data
 }
 
+function hasSession(result: { data?: Session[] }): result is { data: Session[] } {
+    return !!result.data
+}
+
+function hasWorkflow(result: { data?: Workflow[] }): result is { data: Workflow[] } {
+    return !!result.data
+}
+
 const RemindersPage = async () => {
     const user = await currentUser()
-
     if (!user) redirect("/login")
 
-    const resApikey = await getApiKeyById(user.apiKeyId);
-    if (!hasApiKey(resApikey)) {
-        console.error('No se encontró una Api Key asociada al usuario.')
-        return <strong>Ups! parece que hubo un problema al realizar la petición.</strong>
-    };
+    // Obtener API Key
+    const resApikey = await getApiKeyById(user.apiKeyId)
+    if (!resApikey.success || !hasApiKey(resApikey)) {
+        console.error("[REMINDERS_PAGE] No se encontró una API Key válida para el usuario.")
+        return <strong className="text-red-500">No se encontró una API Key válida.</strong>
+    }
 
-    const resReminder = await getRemindersByUserId(user.id);
+    // Obtener recordatorios
+    const resReminder = await getRemindersByUserId(user.id)
+    if (!resReminder.success) {
+        console.error("[REMINDERS_PAGE] Error al obtener recordatorios:", resReminder.message)
+        return <strong>404</strong>
+    }
     const reminders = hasReminder(resReminder) ? resReminder.data : []
 
-    return <MainReminders user={user} apiKey={resApikey.data} reminders={reminders} />
+    // Obtener sesiones
+    const resSession = await getSessionsByUserId(user.id)
+    if (!resSession.success) {
+        console.error("[REMINDERS_PAGE] Error al obtener sesiones:", resSession.message)
+        return <strong>404</strong>
+    }
+    const sessions = hasSession(resSession) ? resSession.data : []
+
+    // Obtener workflows
+    const resWorkflow = await getWorkFlowByUser(user.id)
+    if (!resWorkflow.success) {
+        console.error("[REMINDERS_PAGE] Error al obtener flujos de trabajo:", resWorkflow.message)
+        return <strong>404</strong>
+    }
+    const workflows = hasWorkflow(resWorkflow) ? resWorkflow.data : []
+
+    return (
+        <MainReminders
+            user={user}
+            apiKey={resApikey.data}
+            reminders={reminders}
+            leads={sessions}
+            workflows={workflows}
+        />
+    )
+
 }
 
 export default RemindersPage

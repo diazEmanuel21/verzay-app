@@ -11,6 +11,7 @@ import { deleteAllNodes, deleteFileNode } from "./createNode";
 interface GetWorkFlowResponse {
     success: boolean;
     error?: string;
+    message?: string;
     data?: Workflow[];
 };
 interface RROperationResponse {
@@ -21,7 +22,7 @@ interface RROperationResponse {
 
 export const getWorkFlowByUser = async (userId?: string): Promise<GetWorkFlowResponse> => {
     if (!userId) {
-        return { success: false, error: "No autenticado." };
+        return { success: false, error: "No autenticado.", message: "No autenticado." };
     }
 
     try {
@@ -37,7 +38,7 @@ export const getWorkFlowByUser = async (userId?: string): Promise<GetWorkFlowRes
         return { success: true, data: workflows };
     } catch (error) {
         console.error("Error al obtener los workflows:", error);
-        return { success: false, error: "Hubo un problema al obtener los workflows." };
+        return { success: false, error: "Hubo un problema al obtener los workflows.", message: "Hubo un problema al obtener los workflows." };
     }
 };
 
