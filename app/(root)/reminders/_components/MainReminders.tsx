@@ -2,30 +2,24 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import Header from '@/components/shared/header';
-import { CreateReminder, ReminderListClient, CreateReminderSkeleton, ReminderSkeleton } from './';
+import { ReminderListClient, ReminderSkeleton, ReminderModal } from './';
 import { Button } from '@/components/ui/button';
 import { ArrowDownUp, PlusIcon, X } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { mainReminderInterface } from '@/schema/reminder';
 import { Input } from '@/components/ui/input';
-import { useReminderDialogStore } from '@/stores';
+import { closeDialog, openCreateDialog, useReminderDialogStore } from '@/stores';
 import { GenericDeleteDialog } from '@/components/shared/GenericDeleteDialog';
 import { deleteReminder } from '@/actions/reminders-actions';
 
-import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
-
 export const MainReminders = ({ user, apiKey, reminders, leads, workflows }: mainReminderInterface) => {
-  const { openDialog, selectedReminderId, close } = useReminderDialogStore();
+  const { openDialog, selectedReminderId } = useReminderDialogStore();
+
+  const [search, setSearch] = useState("");
+  const [sortAsc, setSortAsc] = useState(true);
 
   useEffect(() => {
     console.log({ openDialog })
   }, [openDialog])
-
-  const [openPopover, setOpenPopover] = useState(false);
-  const [search, setSearch] = useState("");
-  const [sortAsc, setSortAsc] = useState(true);
 
   const filteredReminders = useMemo(() => {
     const sorted = [...reminders].sort((a, b) => {
@@ -50,30 +44,10 @@ export const MainReminders = ({ user, apiKey, reminders, leads, workflows }: mai
               title={'Recordatorios'}
               subtitle={'Agenda recordatorios para tus leads'}
             />
-            <Popover open={openPopover} onOpenChange={setOpenPopover}>
-              <PopoverTrigger asChild>
-                <Button>
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  Crear
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                align="end"
-                side="bottom"
-                className="p-0 w-[420px] max-w-[90vw]"
-              >
-                <Suspense fallback={<CreateReminderSkeleton />}>
-                  <CreateReminder
-                    userId={user.id}
-                    apikey={apiKey.key}
-                    leads={leads}
-                    workflows={workflows}
-                    serverUrl={apiKey.url}
-                    onSuccess={() => setOpenPopover(false)}
-                  />
-                </Suspense>
-              </PopoverContent>
-            </Popover>
+            <Button onClick={() => openCreateDialog()}>
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Crear
+            </Button>
           </div>
 
           <div className="flex flex-row gap-2 items-center justify-start">
@@ -84,9 +58,11 @@ export const MainReminders = ({ user, apiKey, reminders, leads, workflows }: mai
               className="w-full md:max-w-sm"
             />
 
+
             <Button
               variant="ghost"
               onClick={() => setSortAsc(!sortAsc)}
+              title={sortAsc ? "Ordenar descendente" : "Ordenar ascendente"}
               className="flex items-center gap-2"
             >
               <ArrowDownUp className="h-4 w-4" />
@@ -110,57 +86,18 @@ export const MainReminders = ({ user, apiKey, reminders, leads, workflows }: mai
         </div>
       </div>
 
-      <AnimatePresence>
-        {openDialog === 'edit' && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              className="w-full max-w-md p-2"
-            >
-              <Card className="relative shadow-2xl border border-border rounded-2xl bg-background">
-                <CardHeader className="flex items-center justify-between flex-row">
-                  <CardTitle>Editar Recordatorio</CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => close()}
-                  >
-                    <X className="w-5 h-5" />
-                  </Button>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Suspense fallback={<CreateReminderSkeleton />}>
-                    <CreateReminder
-                      userId={user.id}
-                      apikey={apiKey.key}
-                      leads={leads}
-                      workflows={workflows}
-                      serverUrl={apiKey.url}
-                      onSuccess={() => close()} // para cerrar al crear
-                    />
-                  </Suspense>
-                  <Button variant={"default"} className="w-full" onClick={() => close()}>
-                    Guardar
-                  </Button>
-                      <Button variant={"ghost"} className="w-full" onClick={() => close()}>
-                    Cancelar
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
+      <ReminderModal
+        user={user}
+        apiKey={apiKey}
+        leads={leads}
+        workflows={workflows}
+      />
 
       {openDialog && selectedReminderId &&
         <GenericDeleteDialog
           open={openDialog === 'delete'}
           setOpen={(val) => {
-            if (!val) close(); // cerrar si el usuario cancela o se cierra el modal
+            if (!val) closeDialog(); // cerrar si el usuario cancela o se cierra el modal
           }}
           itemName="Eliminar recordatorio"
           itemId={selectedReminderId}

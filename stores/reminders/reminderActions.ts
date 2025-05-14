@@ -1,5 +1,9 @@
 import { useReminderDialogStore } from './reminderDialogStore';
 
+export const openCreateDialog = () => {
+    useReminderDialogStore.getState().open('create');
+};
+
 export const openEditDialog = (id: string) => {
     useReminderDialogStore.getState().open('edit', id);
 };

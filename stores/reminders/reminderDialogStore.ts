@@ -1,12 +1,12 @@
 // stores/reminders/reminderDialogStore.ts
 import { create } from 'zustand';
 
-type DialogType = 'edit' | 'delete' | null;
+type DialogType = 'edit' | 'delete' | 'create' | null;
 
 interface ReminderDialogState {
   openDialog: DialogType;
   selectedReminderId: string | null;
-  open: (type: DialogType, id: string) => void;
+  open: (type: DialogType, id?: string) => void;
   close: () => void;
 }
 
