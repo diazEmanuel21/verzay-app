@@ -127,7 +127,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                     href={user.role === 'reseller' && route === '/admin' ? '/admin/clientes' : route}
                     onClick={handleClick}
                     className={`flex items-center justify-between gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${isActive
-                      ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white'
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white'
                       : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                       }`}
                   >

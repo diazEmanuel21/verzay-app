@@ -37,9 +37,9 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${poppins.className} overflow-hidden bg-slate-100 text-black dark:bg-gray-900 dark:text-white`}>
-        {isAuthenticated ? (
-          <AppProviders>
-            <ThemeProvider>
+        <AppProviders>
+          <ThemeProvider>
+            {isAuthenticated ? (
               <SidebarProvider defaultOpen={defaultOpen}>
                 <AppSidebar user={user} />
                 <SidebarInset className="h-screen flex flex-col">
@@ -58,15 +58,16 @@ export default async function RootLayout({
 
                 </SidebarInset>
               </SidebarProvider>
-              <Toaster position="bottom-right" richColors />
-            </ThemeProvider>
-          </AppProviders>
-        ) : (
-          // PUBLIC / AUTH LAYOUT
-          <main className="flex min-h-screen w-full items-center justify-center bg-slate-100 text-black dark:bg-gray-900 dark:text-white">
-            {children}
-          </main>
-        )}
+            ) : (
+              // PUBLIC / AUTH LAYOUT
+              <main className="flex min-h-screen w-full items-center justify-center bg-slate-100 text-black dark:bg-gray-900 dark:text-white">
+                {children}
+              </main>
+            )}
+            <Toaster position="bottom-right" richColors />
+          </ThemeProvider>
+        </AppProviders>
+
       </body>
     </html >
   );

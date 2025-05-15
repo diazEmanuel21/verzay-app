@@ -128,7 +128,7 @@ const FormLogin = ({ isVerified, OAuthAccountNotLinked }: FormLoginProps) => {
             <Button
               type="submit"
               disabled={isPending}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+              className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
             >
               {isPending ? "Ingresando..." : "Ingresar"}
             </Button>
@@ -156,7 +156,7 @@ const FormLogin = ({ isVerified, OAuthAccountNotLinked }: FormLoginProps) => {
 
         {/* Enlace de recuperación */}
         {/* <div className="text-center mt-6">
-          <Link href="/forgot-password" className="text-sm text-indigo-600 hover:underline dark:text-indigo-400">
+          <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
             ¿Olvidaste tu contraseña?
           </Link>
         </div> */}

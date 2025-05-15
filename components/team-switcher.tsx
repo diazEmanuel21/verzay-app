@@ -20,31 +20,9 @@ export function TeamSwitcher({ user, isAssigned }: TeamSwitcherProps) {
     return (
         <SidebarMenu>
             <SidebarMenuItem className="flex">
-                {!isAgent ? (
+                {isAgent ? (
                     <>
-                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground mr-2">
-                            <Link href="/" aria-label="Volver al inicio">
-                                <Image
-                                    src="/assets/image/logo_animal.png"
-                                    alt="Logo Verzay"
-                                    width={140}
-                                    height={28}
-                                    className="cursor-pointer"
-                                    priority
-                                />
-                            </Link>
-                        </div>
-                        <div className="grid flex-1 text-left text-lg leading-tight">
-                            <span className="truncate font-semibold text-2xl">
-                                {/* {user.company} */}
-                                Verzay
-                            </span>
-                            {/* <span className="truncate text-xs">{user?.plan}</span> */}
-                        </div>
-                    </>
-                ) : (
-                    <>
-                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground mr-2">
+                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground mr-2">
                             <Link href="/" aria-label="Volver al inicio">
                                 <BotMessageSquare
                                     className="text-blue-500 w-6 h-6 animate-bounce"
@@ -65,6 +43,28 @@ export function TeamSwitcher({ user, isAssigned }: TeamSwitcherProps) {
                                 </Label>
                             </span>
                             {/* <span className="truncate text-xs ">{user?.plan}</span> */}
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg mr-2">
+                            <Link href="/" aria-label="Volver al inicio">
+                                <Image
+                                    src="/assets/image/logo_animal.png"
+                                    alt="Logo Verzay"
+                                    width={140}
+                                    height={28}
+                                    className="cursor-pointer"
+                                    priority
+                                />
+                            </Link>
+                        </div>
+                        <div className="grid flex-1 text-left text-lg leading-tight">
+                            <span className="truncate font-semibold text-2xl">
+                                {/* {user.company} */}
+                                Verzay
+                            </span>
+                            {/* <span className="truncate text-xs">{user?.plan}</span> */}
                         </div>
                     </>
                 )}
