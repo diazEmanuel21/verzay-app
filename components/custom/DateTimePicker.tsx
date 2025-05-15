@@ -16,7 +16,7 @@ export function DateTimePicker({
     onChange: (val: string) => void
 }) {
     const parsedInitial = value
-        ? parse(value, "EEEE, dd 'de' MMMM h:mm a", new Date(), { locale: es })
+        ? parse(value, "dd/MM/yyyy HH:mm", new Date())
         : new Date();
 
     // ✅ Si no es válida, usamos new Date()
@@ -28,7 +28,7 @@ export function DateTimePicker({
 
     useEffect(() => {
         const updated = setMinutes(setHours(date, hour), minute)
-        onChange(format(updated, "EEEE, dd 'de' MMMM h:mm a", { locale: es }))
+        onChange(format(updated, "dd/MM/yyyy HH:mm"))
     }, []) // solo al montar
 
     const updateDateTime = (newDate?: Date, newHour?: number, newMinute?: number) => {
@@ -40,19 +40,19 @@ export function DateTimePicker({
         setDate(updated)
         setHour(h)
         setMinute(m)
-        onChange(format(updated, "EEEE, dd 'de' MMMM h:mm a", { locale: es }))
+        onChange(format(updated, "dd/MM/yyyy HH:mm"))
+
     }
 
     return (
         <div className="gap-2">
-            <label className="block font-medium">Fecha y hora</label>
             <Popover>
                 <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-start text-left">
-                        {date ? format(date, "EEEE, dd 'de' MMMM h:mm a", { locale: es }) : "Seleccionar fecha y hora"}
+                        {date ? format(date, "dd/MM/yyyy HH:mm") : "Seleccionar fecha y hora"}
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="flex flex-col space-y-4 p-4">
+                <PopoverContent side="top" align="start" >
                     <Calendar
                         mode="single"
                         selected={date}

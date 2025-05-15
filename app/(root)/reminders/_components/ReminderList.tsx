@@ -1,7 +1,6 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { format } from "date-fns"
 import { CalendarDaysIcon, ClockIcon } from "lucide-react"
 import { reminderListInterface, repeatTypes } from "@/schema/reminder"
 import { ReminderActions } from "./"

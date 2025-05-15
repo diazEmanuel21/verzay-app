@@ -112,7 +112,7 @@ export const ReminderForm = ({
                 />
 
                 <div>
-                    <label className="block mb-1 font-medium">Tipo de Repetición</label>
+                    {/* <label className="block mb-1 font-medium">Tipo de Repetición</label> */}
                     <Controller
                         control={reminderForm.control}
                         name="repeatType"
