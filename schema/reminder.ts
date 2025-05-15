@@ -19,7 +19,7 @@ export const reminderSchema = z.object({
 
     description: z.string().optional(),
 
-    time: z.date({
+    time: z.string({
         required_error: "La fecha y hora son obligatorias.",
         invalid_type_error: "Selecciona una fecha y hora válidas.",
     }),

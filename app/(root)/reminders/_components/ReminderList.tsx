@@ -30,7 +30,7 @@ export const ReminderList = ({ reminder, workflow }: reminderListInterface) => {
 
                 <div className="flex items-center gap-2 text-sm">
                     <CalendarDaysIcon className="h-4 w-4 text-muted-foreground" />
-                    {format(new Date(reminder.time), "PPPp")}
+                    {reminder.time}
                 </div>
 
                 <div className="flex items-center gap-2 text-sm">

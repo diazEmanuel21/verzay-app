@@ -1,36 +1,46 @@
 'use client'
 
+import { useEffect, useState } from "react"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
-import { format, setHours, setMinutes } from "date-fns"
-import { useState } from "react"
+import { format, isValid, parse, setHours, setMinutes } from "date-fns"
+import { es } from "date-fns/locale"
+import { cn } from "@/lib/utils"
 
 export function DateTimePicker({
     value,
     onChange
 }: {
-    value: Date | undefined
-    onChange: (date: Date) => void
+    value: string | undefined
+    onChange: (val: string) => void
 }) {
-    const [date, setDate] = useState<Date | undefined>(value ?? new Date())
-    const [hour, setHour] = useState(date?.getHours() ?? 0)
-    const [minute, setMinute] = useState(date?.getMinutes() ?? 0)
+    const parsedInitial = value
+        ? parse(value, "EEEE, dd 'de' MMMM h:mm a", new Date(), { locale: es })
+        : new Date();
 
-    const handleChange = (newDate: Date | undefined) => {
-        if (!newDate) return
-        const updated = setMinutes(setHours(newDate, hour), minute)
-        setDate(updated)
-        onChange(updated)
-    }
+    // ✅ Si no es válida, usamos new Date()
+    const initialDate = isValid(parsedInitial) ? parsedInitial : new Date()
 
-    const updateTime = (newHour: number, newMinute: number) => {
-        if (!date) return
-        const updated = setMinutes(setHours(date, newHour), newMinute)
-        setHour(newHour)
-        setMinute(newMinute)
+    const [date, setDate] = useState<Date>(initialDate)
+    const [hour, setHour] = useState(initialDate.getHours())
+    const [minute, setMinute] = useState(initialDate.getMinutes())
+
+    useEffect(() => {
+        const updated = setMinutes(setHours(date, hour), minute)
+        onChange(format(updated, "EEEE, dd 'de' MMMM h:mm a", { locale: es }))
+    }, []) // solo al montar
+
+    const updateDateTime = (newDate?: Date, newHour?: number, newMinute?: number) => {
+        const base = newDate ?? date
+        const h = newHour ?? hour
+        const m = newMinute ?? minute
+        const updated = setMinutes(setHours(base, h), m)
+
         setDate(updated)
-        onChange(updated)
+        setHour(h)
+        setMinute(m)
+        onChange(format(updated, "EEEE, dd 'de' MMMM h:mm a", { locale: es }))
     }
 
     return (
@@ -39,35 +49,46 @@ export function DateTimePicker({
             <Popover>
                 <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-start text-left">
-                        {date ? format(date, "PPPPp") : "Seleccionar fecha y hora"}
+                        {date ? format(date, "EEEE, dd 'de' MMMM h:mm a", { locale: es }) : "Seleccionar fecha y hora"}
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="flex flex-col space-y-2">
+                <PopoverContent className="flex flex-col space-y-4 p-4">
                     <Calendar
                         mode="single"
                         selected={date}
-                        onSelect={handleChange}
+                        onSelect={(d) => d && updateDateTime(d)}
                     />
+
                     <div className="flex gap-2">
-                        <select
-                            className="border rounded px-2 py-1"
-                            value={hour}
-                            onChange={(e) => updateTime(parseInt(e.target.value), minute)}
-                        >
-                            {[...Array(24)].map((_, i) => (
-                                <option key={i} value={i}>{i.toString().padStart(2, '0')}</option>
-                            ))}
-                        </select>
-                        :
-                        <select
-                            className="border rounded px-2 py-1"
-                            value={minute}
-                            onChange={(e) => updateTime(hour, parseInt(e.target.value))}
-                        >
-                            {[0, 15, 30, 45].map((m) => (
-                                <option key={m} value={m}>{m.toString().padStart(2, '0')}</option>
-                            ))}
-                        </select>
+                        <div className="flex flex-col w-1/2">
+                            <label className="text-sm text-muted-foreground mb-1">Hora</label>
+                            <select
+                                className={cn("border rounded-md px-2 py-1 text-sm bg-background")}
+                                value={hour}
+                                onChange={(e) => updateDateTime(undefined, parseInt(e.target.value), undefined)}
+                            >
+                                {[...Array(24)].map((_, i) => (
+                                    <option key={i} value={i}>
+                                        {i.toString().padStart(2, '0')}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="flex flex-col w-1/2">
+                            <label className="text-sm text-muted-foreground mb-1">Minuto</label>
+                            <select
+                                className={cn("border rounded-md px-2 py-1 text-sm bg-background")}
+                                value={minute}
+                                onChange={(e) => updateDateTime(undefined, undefined, parseInt(e.target.value))}
+                            >
+                                {[0, 15, 30, 45].map((m) => (
+                                    <option key={m} value={m}>
+                                        {m.toString().padStart(2, '0')}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                 </PopoverContent>
             </Popover>

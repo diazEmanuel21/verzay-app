@@ -17,15 +17,11 @@ export const MainReminders = ({ user, apiKey, reminders, leads, workflows, insta
   const [search, setSearch] = useState("");
   const [sortAsc, setSortAsc] = useState(true);
 
-  useEffect(() => {
-    console.log({ openDialog })
-  }, [openDialog])
-
   const filteredReminders = useMemo(() => {
     const sorted = [...reminders].sort((a, b) => {
       return sortAsc
-        ? new Date(a.time).getTime() - new Date(b.time).getTime()
-        : new Date(b.time).getTime() - new Date(a.time).getTime()
+        ? new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
+        : new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     })
 
     return sorted.filter((r) => {

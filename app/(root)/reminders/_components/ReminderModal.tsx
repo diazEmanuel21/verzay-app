@@ -9,6 +9,8 @@ import { X } from "lucide-react"
 import { Suspense } from "react"
 import { CreateReminderSkeleton, ReminderForm } from "./"
 import { ApiKey, Session, Workflow, User, Instancias } from "@prisma/client"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
 
 interface ReminderModalProps {
     user: User
@@ -24,7 +26,7 @@ export const ReminderModal = ({ user, apiKey, leads, workflows, instancia }: Rem
     const transformedReminder = reminderData
         ? {
             title: reminderData.title,
-            time: new Date(reminderData.time),
+            time: reminderData.time,
             repeatType: reminderData.repeatType,
             instanceName: reminderData.instanceName,
             pushName: reminderData.pushName,

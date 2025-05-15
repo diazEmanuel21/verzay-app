@@ -30,14 +30,14 @@ export const ReminderForm = ({
 }: reminderInterface) => {
     const router = useRouter();
     const { selectedReminderId: reminderId } = useReminderDialogStore();
-    const [createLead, setCreateLead] = useState(true);
+    const [createLead, setCreateLead] = useState(false);
 
     const reminderForm = useForm<formValuesReminderSchema>({
         resolver: zodResolver(reminderSchema),
         defaultValues: initialData || {
             title: "",
             description: "",
-            time: new Date(),
+            time: "",
             repeatType: "NONE",
             repeatEvery: undefined,
             userId: "",
