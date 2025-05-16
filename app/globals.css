@@ -90,11 +90,8 @@
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+.h3-bold {
+  font-size: 1.5em;
+  font-weight: 700;
+  line-height: 140%;
 }

@@ -18,40 +18,6 @@ module.exports = {
 		},
 		extend: {
 			colors: {
-				border: 'hsl(var(--border))',
-				input: 'hsl(var(--input))',
-				ring: 'hsl(var(--ring))',
-				background: 'hsl(var(--background))',
-				foreground: 'hsl(var(--foreground))',
-				blue: {
-					'50': '#F5F9FF',
-					'100': '#E0EDFF',
-					'200': '#B3D1FF',
-					'300': '#80B3FF',
-					'400': '#4D94FF',
-					'500': '#1C61E6',  // Tu color base
-					'600': '#1652C4',
-					'700': '#1041A2',
-					'800': '#0A3080',
-					'900': '#051F5F'
-
-					// '50': '#FFF8F5',
-					// '100': '#FFEDE5',
-					// '200': '#FFD1B8',
-					// '300': '#FFB38A',
-					// '400': '#FF965C',
-					// '500': '#FF7E33',  // Color base vibrante
-					// '600': '#E6671E',
-					// '700': '#CC520F',
-					// '800': '#A3410B',
-					// '900': '#7A3008'
-				},
-				dark: {
-					'400': '#7986AC',
-					'500': '#606C80',
-					'600': '#2B3674',
-					'700': '#384262'
-				},
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))'
@@ -60,26 +26,32 @@ module.exports = {
 					DEFAULT: 'hsl(var(--secondary))',
 					foreground: 'hsl(var(--secondary-foreground))'
 				},
-				destructive: {
-					DEFAULT: 'hsl(var(--destructive))',
-					foreground: 'hsl(var(--destructive-foreground))'
+				accent: {
+					DEFAULT: 'hsl(var(--accent))',
+					foreground: 'hsl(var(--accent-foreground))'
 				},
 				muted: {
 					DEFAULT: 'hsl(var(--muted))',
 					foreground: 'hsl(var(--muted-foreground))'
 				},
-				accent: {
-					DEFAULT: 'hsl(var(--accent))',
-					foreground: 'hsl(var(--accent-foreground))'
-				},
-				popover: {
-					DEFAULT: 'hsl(var(--popover))',
-					foreground: 'hsl(var(--popover-foreground))'
+				destructive: {
+					DEFAULT: 'hsl(var(--destructive))',
+					foreground: 'hsl(var(--destructive-foreground))'
 				},
 				card: {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				popover: {
+					DEFAULT: 'hsl(var(--popover))',
+					foreground: 'hsl(var(--popover-foreground))'
+				},
+				background: 'hsl(var(--background))',
+				foreground: 'hsl(var(--foreground))',
+				border: 'hsl(var(--border))',
+				input: 'hsl(var(--input))',
+				ring: 'hsl(var(--ring))',
+
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
