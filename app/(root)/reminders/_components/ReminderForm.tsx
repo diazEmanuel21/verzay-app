@@ -95,7 +95,7 @@ export const ReminderForm = ({
 
     return (
         <>
-            <form onSubmit={handleSubmit(onSubmit, onError)} className="flex flex-col gap-4 p-4">
+            <form onSubmit={handleSubmit(onSubmit, onError)} className="flex flex-col gap-4">
                 {/* Campos ocultos */}
                 {["userId", "remoteJid", "instanceName", "pushName", "workflowId", "apikey", "serverUrl"].map((name) => (
                     <input key={name} type="hidden" {...register(name as keyof formValuesReminderSchema)} />

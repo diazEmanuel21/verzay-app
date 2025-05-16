@@ -58,40 +58,40 @@ export function DateTimePicker({
                         selected={date}
                         onSelect={(d) => d && updateDateTime(d)}
                     />
-
-                    <div className="flex gap-2">
-                        <div className="flex flex-col w-1/2">
-                            <label className="text-sm text-muted-foreground mb-1">Hora</label>
-                            <select
-                                className={cn("border rounded-md px-2 py-1 text-sm bg-background")}
-                                value={hour}
-                                onChange={(e) => updateDateTime(undefined, parseInt(e.target.value), undefined)}
-                            >
-                                {[...Array(24)].map((_, i) => (
-                                    <option key={i} value={i}>
-                                        {i.toString().padStart(2, '0')}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="flex flex-col w-1/2">
-                            <label className="text-sm text-muted-foreground mb-1">Minuto</label>
-                            <select
-                                className={cn("border rounded-md px-2 py-1 text-sm bg-background")}
-                                value={minute}
-                                onChange={(e) => updateDateTime(undefined, undefined, parseInt(e.target.value))}
-                            >
-                                {[0, 15, 30, 45].map((m) => (
-                                    <option key={m} value={m}>
-                                        {m.toString().padStart(2, '0')}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
                 </PopoverContent>
             </Popover>
+
+            <div className="flex gap-2 justify-between mt-4">
+                <div className="flex flex-row flex-1 justify-start items-center">
+                    <label className="text-sm text-muted-foreground mr-1">Hora:</label>
+                    <select
+                        className={cn("border rounded-md px-2 py-1 text-sm bg-background")}
+                        value={hour}
+                        onChange={(e) => updateDateTime(undefined, parseInt(e.target.value), undefined)}
+                    >
+                        {[...Array(24)].map((_, i) => (
+                            <option key={i} value={i}>
+                                {i.toString().padStart(2, '0')}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="flex flex-row flex-1 justify-start items-center">
+                    <label className="text-sm text-muted-foreground mr-1">Minutos:</label>
+                    <select
+                        className={cn("border rounded-md px-2 py-1 text-sm bg-background")}
+                        value={minute}
+                        onChange={(e) => updateDateTime(undefined, undefined, parseInt(e.target.value))}
+                    >
+                        {[0, 15, 30, 45].map((m) => (
+                            <option key={m} value={m}>
+                                {m.toString().padStart(2, '0')}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </div>
         </div>
     )
 }
