@@ -8,3 +8,4 @@ export * from './DateTimePicker';
 export * from './SelectComboBox';
 export * from './UtilComboBox';
 export * from './SelectWorkflowBox';
+export * from './BrandSelector';

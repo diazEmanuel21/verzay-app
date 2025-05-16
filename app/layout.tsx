@@ -46,7 +46,7 @@ export default async function RootLayout({
 
                   {/* Header fijo, pero ocupa espacio */}
                   <div className="h-16 shrink-0">
-                    <header className="sticky top-0 h-16 w-full border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur supports-[backdrop-filter]:bg-white-100/60 dark:supports-[backdrop-filter]:bg-gray-900/60 flex items-center px-4">
+                    <header className="sticky top-0 h-16 w-full border-b flex items-center px-4 bg-slate-100 text-black dark:bg-gray-900 dark:text-white">
                       <Breadcrumbs />
                     </header>
                   </div>

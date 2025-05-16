@@ -239,7 +239,7 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
                         </motion.div>
                     </div>
                 </div>
-                {
+                {/* {
                     !isAizen &&
                     <motion.div
                         onClick={() => {
@@ -251,11 +251,10 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
                     >
                         <ChevronDoubleDownIcon className="w-10 h-10 text-blue-500 dark:text-white" />
                     </motion.div>
-                }
+                } */}
             </section>
 
-            {/* PLAN SECTION */}
-            {
+            {/* {
                 !isAizen &&
                 <section ref={planSectionRef} className="flex items-center justify-center flex-col">
                     <motion.div
@@ -308,7 +307,7 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
                         ))}
                     </motion.div>
                 </section>
-            }
+            } */}
         </div>
     )
 }

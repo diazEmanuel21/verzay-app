@@ -76,7 +76,7 @@ export const Breadcrumbs = () => {
   return (
     <>
 
-      <Breadcrumb className='py-4 flex flex-row flex-1 overflow-hidden'>
+      <Breadcrumb className='py-4 flex flex-row flex-1 overflow-hidden bg-slate-100 text-black dark:bg-gray-900 dark:text-white'>
 
         {/* <BreadcrumbList> */}
         {/* <BreadcrumbList className="flex flex-wrap items-center gap-1"> */}

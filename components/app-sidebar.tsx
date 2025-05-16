@@ -30,6 +30,7 @@ import {
 import { isUserAssignedToReseller } from "@/actions/reseller-action"
 import ThemeSwitcher from "./custom/ThemeSwitcher"
 import LogoutButton from "./logout-button"
+import { BrandSelector } from "./custom"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
     user: User;
@@ -56,6 +57,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                 <NavMain user={user} />
             </SidebarContent>
             <SidebarFooter>
+                {/* <BrandSelector /> */}
                 {/* <SidebarGroupLabel>IA Créditos</SidebarGroupLabel> */}
                 <div className="flex flex-row w-full justify-center items-center">
                     <NavProjects user={user} />
