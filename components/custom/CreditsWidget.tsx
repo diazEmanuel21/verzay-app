@@ -84,8 +84,8 @@ export const CreditsWidget = ({ userId, webhookUrl }: CreditsWidgetProps) => {
             onClick={credits?.remaining === 0 ? onRedirectPlan : undefined}
         >
             <CardContent className="flex items-center gap-3 p-0 min-h-[30px]">
-                <div className="bg-[#1444A1]/10 p-2 rounded-full cursor-help">
-                    <Zap className="h-5 w-5 text-[#1444A1]" />
+                <div className="bg-blue-500/10 p-2 rounded-full cursor-help">
+                    <Zap className="h-5 w-5 text-blue-500" />
                 </div>
 
 

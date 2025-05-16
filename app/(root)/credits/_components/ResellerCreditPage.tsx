@@ -110,7 +110,7 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
                             transition={{ duration: 0.6 }}
                             className="flex flex-col flex-1 gap-2"
                         >
-                            <h1 className="flex text-4xl heigth-90px font-extrabold leading-tight text-[#1C61E7] dark:text-white">
+                            <h1 className="flex text-4xl heigth-90px font-extrabold leading-tight text-blue-500 dark:text-white">
                                 {/* ¡Actualiza tu plan y desbloquea tu potencial! */}
                                 Actualiza tu plan y desbloquea todo el potencial de tu agente
                             </h1>
@@ -131,7 +131,7 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
                                                 Impulsa tus resultados con herramientas exclusivas
                                             </li>
                                             <li className="flex items-center gap-2 text-sm">
-                                                <Sparkles className="w-4 h-4 text-[#1C61E7]" />
+                                                <Sparkles className="w-4 h-4 text-blue-500" />
                                                 Desbloquea funciones premium que multiplican tu éxito
                                             </li>
                                         </ul>
@@ -139,7 +139,7 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
                                     <div className='flex flex-1 justify-center items-center'>
                                         <Button
                                             size="lg"
-                                            className={`mt-6 px-6 py-3 text-base bg-[#1C61E7] hover:bg-[#1553ca] text-white transition-all duration-500 ${highlightButton ? 'ring-4 ring-[#1C61E7]/40 shadow-xl scale-[1.03]' : ''
+                                            className={`mt-6 px-6 py-3 text-base bg-blue-500 hover:bg-blue-600 text-white transition-all duration-500 ${highlightButton ? 'ring-4 ring-blue-500/40 shadow-xl scale-[1.03]' : ''
                                                 }`}
                                             onClick={handlePlanUpgrade}
                                         >
@@ -161,7 +161,7 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent align='end'>
-                                        <h2 className="text-base font-semibold text-[#1C61E7] dark:text-white flex items-center gap-2 pb-2">
+                                        <h2 className="text-base font-semibold text-blue-500 dark:text-white flex items-center gap-2 pb-2">
                                             <ShieldCheck className="w-4 h-4 text-green-500" />
                                             Tu asesor de confianza
                                         </h2>
@@ -214,7 +214,7 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
                                             href={`https://wa.me/+${resellerInformation?.notificationNumber}?text=Hola%2C%20tengo%20una%20duda%20sobre%20mi%20plan`}
                                             target="_blank"
                                         >
-                                            <Button variant="outline" className="w-full border-[#1C61E7] text-[#1C61E7] hover:bg-[#1C61E7]/10 transition-all">
+                                            <Button variant="outline" className="w-full border-blue-500 text-blue-500 hover:bg-blue-500/10 transition-all">
                                                 Chatear con asesor
                                             </Button>
                                         </Link>
@@ -249,7 +249,7 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
                         transition={{ repeat: Infinity, duration: 1.5 }}
                         className="absolute bottom-28 cursor-pointer"
                     >
-                        <ChevronDoubleDownIcon className="w-10 h-10 text-[#1C61E7] dark:text-white" />
+                        <ChevronDoubleDownIcon className="w-10 h-10 text-blue-500 dark:text-white" />
                     </motion.div>
                 }
             </section>
@@ -275,8 +275,8 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
                             <motion.div
                                 key={index}
                                 className={`rounded-2xl p-6 shadow-xl border-2 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl ${plan.featured
-                                    ? 'bg-[#1C61E7] text-white border-[#1C61E7]'
-                                    : 'bg-white/80 dark:bg-dark-500/80 text-zinc-900 dark:text-white border-zinc-200 dark:border-gray-700 hover:border-[#1C61E7]'
+                                    ? 'bg-blue-500 text-white border-blue-500'
+                                    : 'bg-white/80 dark:bg-dark-500/80 text-zinc-900 dark:text-white border-zinc-200 dark:border-gray-700 hover:border-blue-500'
                                     }`}
                                 initial={{ opacity: 0, y: 30 }}
                                 whileInView={{ opacity: 1, y: 0 }}
@@ -288,7 +288,7 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
                                     {plan.features.map((feature, i) => (
                                         <li key={i} className="flex items-start gap-2">
                                             <CheckCircle
-                                                className={`w-4 h-4 ${plan.featured ? 'text-white' : 'text-[#1C61E7]'}`}
+                                                className={`w-4 h-4 ${plan.featured ? 'text-white' : 'text-blue-500'}`}
                                             />
                                             <span>{feature}</span>
                                         </li>
@@ -297,8 +297,8 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
                                 <Link href={plan.href(numberReseller as string)} target="_blank">
                                     <Button
                                         className={`w-full ${plan.featured
-                                            ? 'bg-white text-[#1C61E7] hover:bg-gray-100'
-                                            : 'bg-[#1C61E7] text-white hover:bg-[#1553ca]'
+                                            ? 'bg-white text-blue-500 hover:bg-gray-100'
+                                            : 'bg-blue-500 text-white hover:bg-blue-600'
                                             }`}
                                     >
                                         Solicitar actualización

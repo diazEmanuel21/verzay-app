@@ -27,7 +27,7 @@ export const LeadsChart = () => {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="ventas" fill="#2563EB" />
+                    <Bar dataKey="ventas"/>
                 </BarChart>
             </ResponsiveContainer>
         </div>

@@ -88,9 +88,8 @@ export const AutoRepliesCard = ({ autoReplie, workflows }: autoReplies) => {
                                     {mensaje}
                                 </h3>
                                 <PencilLine
-                                    color="#1C61E7"
                                     size={16}
-                                    className="text-muted-foreground"
+                                    className="text-blue-500"
                                 />
                             </div>
                         )}
