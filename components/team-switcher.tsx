@@ -50,7 +50,7 @@ export function TeamSwitcher({ user, isAssigned }: TeamSwitcherProps) {
                         <div className="flex aspect-square size-8 items-center justify-center rounded-lg mr-2">
                             <Link href="/" aria-label="Volver al inicio">
                                 <Image
-                                    src="/assets/image/logo_animal.png"
+                                    src="/assets/image/logo_app.png"
                                     alt="Logo Verzay"
                                     width={140}
                                     height={28}

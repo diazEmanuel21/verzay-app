@@ -71,7 +71,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
           :
           <Link href="/">
             <Image
-              src="/assets/image/logo2.svg"
+              src="/assets/image/logo_app.png"
               alt="logo"
               width={140}
               height={28}

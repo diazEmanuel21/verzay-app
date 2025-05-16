@@ -3,20 +3,8 @@
 import { useEffect, useState } from "react"
 import { User } from "@prisma/client"
 
-import {
-    BookOpen,
-    Bot,
-    Frame,
-    GalleryVerticalEnd,
-    Map,
-    PieChart,
-    Settings2,
-    SquareTerminal,
-} from "lucide-react"
-
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
-import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
 
 import {
@@ -57,7 +45,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                 <NavMain user={user} />
             </SidebarContent>
             <SidebarFooter>
-                <BrandSelector />
+                {/* <BrandSelector /> */}
                 {/* <SidebarGroupLabel>IA Créditos</SidebarGroupLabel> */}
                 <div className="flex flex-row w-full justify-center items-center">
                     <NavProjects user={user} />

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Breadcrumbs } from '@/components/custom';
 import { AppSidebar } from "@/components/app-sidebar"
+import AppInitializer from '@/components/custom/AppInitializer';
 // import { AppSidebar } from '@/components/shared/Sidebar';
 
 // Fuente
@@ -39,6 +40,7 @@ export default async function RootLayout({
       <body className={`${poppins.className} overflow-hidden bg-slate-100 text-black dark:bg-gray-900 dark:text-white`}>
         <AppProviders>
           <ThemeProvider>
+            <AppInitializer />
             {isAuthenticated ? (
               <SidebarProvider defaultOpen={defaultOpen}>
                 <AppSidebar user={user} />

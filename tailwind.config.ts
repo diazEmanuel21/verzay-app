@@ -18,8 +18,13 @@ module.exports = {
 		},
 		extend: {
 			colors: {
+				border: 'hsl(var(--border))',
+				input: 'hsl(var(--input))',
+				ring: 'hsl(var(--ring))',
+				background: 'hsl(var(--background))',
+				foreground: 'hsl(var(--foreground))',
 				blue: {
-					50:  'hsl(var(--blue-50))',
+					50: 'hsl(var(--blue-50))',
 					100: 'hsl(var(--blue-100))',
 					200: 'hsl(var(--blue-200))',
 					300: 'hsl(var(--blue-300))',
@@ -64,12 +69,6 @@ module.exports = {
 					DEFAULT: 'hsl(var(--popover))',
 					foreground: 'hsl(var(--popover-foreground))'
 				},
-				background: 'hsl(var(--background))',
-				foreground: 'hsl(var(--foreground))',
-				border: 'hsl(var(--border))',
-				input: 'hsl(var(--input))',
-				ring: 'hsl(var(--ring))',
-
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
