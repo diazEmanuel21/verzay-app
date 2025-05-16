@@ -52,7 +52,7 @@ export function DateTimePicker({
                         {date ? format(date, "dd/MM/yyyy HH:mm") : "Seleccionar fecha y hora"}
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent side="top" align="start" >
+                <PopoverContent side="top" align="start" className="w-auto p-0" >
                     <Calendar
                         mode="single"
                         selected={date}
