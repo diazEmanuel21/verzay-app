@@ -83,7 +83,7 @@ export function DataGrid<TData, TValue>({
                 data.length > 0 && data && <LeadsInformation data={data as Session[]} />
             }
 
-            <Card className='p-6'>
+            <Card className="border border-border p-6">
                 <div className="w-full">
                     <div className="flex items-center py-4">
                         <Input
@@ -122,11 +122,13 @@ export function DataGrid<TData, TValue>({
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
-                    <div className="rounded-md border">
-                        <Table>
+                    <div className="rounded-md border-border overflow-x-auto">
+                        <Table className="w-full border-border table-auto">
                             <TableHeader>
                                 {table.getHeaderGroups().map((headerGroup) => (
-                                    <TableRow key={headerGroup.id}>
+                                    <TableRow key={headerGroup.id}
+                                        className="border-border"
+                                    >
                                         {headerGroup.headers.map((header) => {
                                             return (
                                                 <TableHead key={header.id}>
@@ -147,6 +149,7 @@ export function DataGrid<TData, TValue>({
                                     table.getRowModel().rows.map((row) => (
                                         <TableRow
                                             key={row.id}
+                                            className="border-border"
                                             data-state={row.getIsSelected() && "selected"}
                                         >
                                             {row.getVisibleCells().map((cell) => (
@@ -160,7 +163,9 @@ export function DataGrid<TData, TValue>({
                                         </TableRow>
                                     ))
                                 ) : (
-                                    <TableRow>
+                                    <TableRow
+                                        className="border-border"
+                                    >
                                         <TableCell
                                             colSpan={columns.length}
                                             className="h-24 text-center"
@@ -193,7 +198,7 @@ export function DataGrid<TData, TValue>({
                         </div>
                     </div>
                 </div>
-            </Card>
-        </div>
+            </Card >
+        </div >
     )
 }

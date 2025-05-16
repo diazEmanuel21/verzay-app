@@ -62,11 +62,13 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
   return (
     <div className="flex flex-col gap-2">
 
-      <div className="w-full max-w-full overflow-x-auto rounded-md border">
-        <Table className="w-full table-auto">
+      <div className="rounded-md border-border overflow-x-auto">
+        <Table className="w-full border-border table-auto">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id}
+                className="border-border"
+              >
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead key={header.id}>
@@ -85,7 +87,9 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow key={row.id}
+                  className="border-border"
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -94,7 +98,9 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
                 </TableRow>
               ))
             ) : (
-              <TableRow>
+              <TableRow
+                className="border-border"
+              >
                 <TableCell colSpan={columns.length} className="h-24 text-center">
                   No hay resultados.
                 </TableCell>
@@ -122,6 +128,6 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
           Siguiente
         </Button>
       </div> */}
-    </div>
+    </div >
   )
 }

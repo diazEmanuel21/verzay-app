@@ -166,7 +166,7 @@ export const MainGuide = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 min-w-[400px]">
                             {filteredGuides.length > 0 ? (
                                 filteredGuides.map(guide => (
-                                    <Card key={guide.id} className="relative">
+                                    <Card key={guide.id} className="relative border border-border">
                                         <CardHeader>
                                             <CardTitle>{guide.title}</CardTitle>
                                         </CardHeader>

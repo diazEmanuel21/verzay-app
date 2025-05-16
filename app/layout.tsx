@@ -45,8 +45,8 @@ export default async function RootLayout({
                 <SidebarInset className="h-screen flex flex-col">
 
                   {/* Header fijo, pero ocupa espacio */}
-                  <div className="h-16 shrink-0">
-                    <header className="sticky top-0 h-16 w-full border-b flex items-center px-4 bg-slate-100 text-black dark:bg-gray-900 dark:text-white">
+                  <div className="h-18 shrink-0">
+                    <header className="sticky top-0 h-18 w-full border border-border flex items-center px-4 bg-slate-100 text-black dark:bg-gray-900 dark:text-white">
                       <Breadcrumbs />
                     </header>
                   </div>

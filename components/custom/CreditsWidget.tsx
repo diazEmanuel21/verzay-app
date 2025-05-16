@@ -79,7 +79,7 @@ export const CreditsWidget = ({ userId, webhookUrl }: CreditsWidgetProps) => {
 
     return (
         <Card
-            className="bg-muted border-none shadow-none p-2 w-full cursor-pointer hover:bg-muted/80 transition"
+            className="bg-muted border border-border p-2 w-full cursor-pointer hover:bg-muted/80 transition"
             title="Haz clic para ver más información"
             onClick={credits?.remaining === 0 ? onRedirectPlan : undefined}
         >

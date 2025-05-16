@@ -271,7 +271,7 @@ export default function FormSystemMessage({ userId }: FormSystemMessageProps) {
           ) : (
             <div className="flex flex-col gap-2">
               {filteredMessages.map((msg) => (
-                <Card key={msg.id} className="p-4 flex justify-between items-start">
+                <Card key={msg.id} className="p-4 flex justify-between items-start border border-border">
                   <div>
                     <h4 className="text-base font-medium">
                       {highlightMatch(msg.title?.toUpperCase() ?? "", debouncedSearchTerm)}

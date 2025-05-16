@@ -136,7 +136,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
     const columns = getColumns(openDialogGetUserId, currentUserRol);
 
     return (
-        <Card className='p-6'>
+        <Card className='p-6 border border-border'>
             {/* button-create-client */}
             {currentUserRol === 'admin' &&
                 <div className='absolute top-3 right-2'>

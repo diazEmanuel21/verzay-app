@@ -131,13 +131,13 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
                         className="text-blue-600"
                         onClick={() => openDialog('activate')}
                     >
-                        Activar todos los clientes
+                        Activar clientes
                     </DropdownMenuItem>
                     <DropdownMenuItem
                         className="text-red-600"
                         onClick={() => openDialog('deactivate')}
                     >
-                        Desactivar todos los clientes
+                        Desactivar clientes
                     </DropdownMenuItem>
                     {/* <DropdownMenuItem onClick={() => openDialog('clearHistory')}>
                         Borrar historial de todos
@@ -146,7 +146,7 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
                         className="text-red-600"
                         onClick={() => openDialog('deleteAll')}
                     >
-                        Eliminar todos los clientes
+                        Eliminar clientes
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>

@@ -65,7 +65,7 @@ export const WorkWithUs = () => {
         {features.map((feature) => (
           <Card
             key={feature.name}
-            className="flex flex-col justify-start border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:shadow-lg dark:hover:shadow-md transition"
+            className="flex flex-col justify-start border border-border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:shadow-lg dark:hover:shadow-md transition"
           >
             <CardContent className="flex flex-col items-start p-6">
               <div className="flex items-center justify-center rounded-full bg-blue-600 dark: to-blue-600 p-3 mb-4">

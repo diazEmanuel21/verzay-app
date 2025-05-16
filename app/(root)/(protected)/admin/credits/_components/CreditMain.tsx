@@ -78,7 +78,7 @@ export const CreditMain = ({ userId }: Props) => {
     };
 
     return (
-        <Card>
+        <Card className="border border-border">
             <CardHeader>
                 <CardTitle>Gestión de Créditos IA</CardTitle>
             </CardHeader>

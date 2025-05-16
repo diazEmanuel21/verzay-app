@@ -55,7 +55,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
       columnFilters,
       columnVisibility,
       rowSelection,
-      pagination, 
+      pagination,
     },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
@@ -106,20 +106,22 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
         </DropdownMenu>
       </div>
 
-<div className="rounded-md border overflow-x-auto">
-  <Table className="min-w-full table-auto">
+      <div className="rounded-md border-border overflow-x-auto">
+        <Table className="w-full border-border table-auto">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id}
+                className="border-border"
+              >
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead key={header.id}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   )
                 })}
@@ -129,7 +131,9 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow key={row.id}
+                  className="border-border"
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -138,7 +142,9 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
                 </TableRow>
               ))
             ) : (
-              <TableRow>
+              <TableRow
+                className="border border-border"
+              >
                 <TableCell colSpan={columns.length} className="h-24 text-center">
                   No hay resultados.
                 </TableCell>

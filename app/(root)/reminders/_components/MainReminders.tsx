@@ -95,7 +95,7 @@ export const MainReminders = ({ user, apiKey, reminders, leads, workflows, insta
           setOpen={(val) => {
             if (!val) closeDialog(); // cerrar si el usuario cancela o se cierra el modal
           }}
-          itemName="Eliminar recordatorio"
+          itemName="Si"
           itemId={selectedReminderId}
           mutationFn={() => deleteReminder(selectedReminderId)}
           entityLabel="recordatorio"

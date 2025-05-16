@@ -102,7 +102,7 @@ export const AdminCreditPage = () => {
                     return (
                         <Card
                             key={plan.id}
-                            className={`flex flex-col h-full shadow-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-colors ${plan.featured ? "border-2 border-blue-600 dark:border-blue-500" : ""
+                            className={`flex flex-col h-full shadow-md border border-border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-colors ${plan.featured ? "border-2 border-blue-600 dark:border-blue-500" : ""
                                 }`}
                         >
                             <CardHeader>

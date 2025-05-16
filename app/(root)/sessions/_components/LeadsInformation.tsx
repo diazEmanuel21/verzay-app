@@ -16,7 +16,7 @@ export const LeadsInformation = ({ data }: propsLeadsInformation) => {
     return (
         <div className="grid gap-4 md:grid-cols-3">
             {/* Tarjeta de Total */}
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className="hover:shadow-lg transition-shadow border border-border">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                         Total de Leads
@@ -30,7 +30,7 @@ export const LeadsInformation = ({ data }: propsLeadsInformation) => {
             </Card>
 
             {/* Tarjeta de Activos */}
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className="hover:shadow-lg transition-shadow border border-border">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                         Leads Activos
@@ -47,7 +47,7 @@ export const LeadsInformation = ({ data }: propsLeadsInformation) => {
             </Card>
 
             {/* Tarjeta de Inactivos */}
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className="hover:shadow-lg transition-shadow border border-border">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                         Leads Inactivos

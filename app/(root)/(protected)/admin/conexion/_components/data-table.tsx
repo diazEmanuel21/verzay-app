@@ -82,7 +82,7 @@ export const DataGrid = <TData, TValue>({
 
     return (
         <div className="flex gap-4 flex-col">
-            <Card className='p-6'>
+            <Card className='p-6 border border-border'>
                 <div className="w-full">
                     <div className="flex items-center py-4">
                         <Input
@@ -121,11 +121,13 @@ export const DataGrid = <TData, TValue>({
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
-                    <div className="rounded-md border">
-                        <Table>
+                    <div className="rounded-md border-border overflow-x-auto">
+                        <Table className="w-full border-border table-auto">
                             <TableHeader>
                                 {table.getHeaderGroups().map((headerGroup) => (
-                                    <TableRow key={headerGroup.id}>
+                                    <TableRow
+                                        className="border-border"
+                                        key={headerGroup.id}>
                                         {headerGroup.headers.map((header) => {
                                             return (
                                                 <TableHead key={header.id}>
@@ -145,6 +147,7 @@ export const DataGrid = <TData, TValue>({
                                 {table.getRowModel().rows?.length ? (
                                     table.getRowModel().rows.map((row) => (
                                         <TableRow
+                                            className="border-border"
                                             key={row.id}
                                             data-state={row.getIsSelected() && "selected"}
                                         >
@@ -162,7 +165,7 @@ export const DataGrid = <TData, TValue>({
                                     <TableRow>
                                         <TableCell
                                             colSpan={columns.length}
-                                            className="h-24 text-center"
+                                            className="h-24 text-center border-border"
                                         >
                                             No results.
                                         </TableCell>
