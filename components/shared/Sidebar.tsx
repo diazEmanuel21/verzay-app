@@ -23,7 +23,6 @@ import { toast } from 'sonner';
 import { Label } from '@radix-ui/react-label';
 import { BotMessageSquare } from 'lucide-react';
 import clsx from 'clsx';
-import { isUserAssignedToReseller } from '@/actions/reseller-action';
 import { CreditsWidget } from '../custom';
 
 interface AppSidebarProps {
@@ -35,15 +34,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const router = useRouter();
 
   const [isAssigned, setUserAssignedToReseller] = useState(false);
-
-  useEffect(() => {
-    onIsUserAssignedToReseller();
-  }, []);
-
-  const onIsUserAssignedToReseller = async () => {
-    const isAssigned = await isUserAssignedToReseller(user.id)
-    setUserAssignedToReseller(isAssigned);
-  };
 
   useEffect(() => {
     if (!user) {

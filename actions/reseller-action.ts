@@ -2,8 +2,22 @@
 
 import { db } from "@/lib/db"
 import { currentUser } from "@/lib/auth"
-import { Role } from "@prisma/client"
-import { getClientDataByUserId } from "./userClientDataActions"
+import { reseller, Role, ThemeApp, User } from "@prisma/client"
+interface ResellerCustomization {
+    userId: string,
+    theme?: ThemeApp,
+    logo?: string
+}
+interface ResellerResponse<T = reseller[]> {
+    success: boolean;
+    message: string;
+    data?: T;
+};
+interface ResellerAsUserResponse<T = User> {
+    success: boolean;
+    message: string;
+    data?: T;
+};
 
 export const getClientsByReseller = async (resellerId: string) => {
     const user = await currentUser()
@@ -58,17 +72,50 @@ export const removeClientFromReseller = async (clientId: string, resellerId: str
             userId: clientId,
         },
     })
-}
+};
 
-export const isUserAssignedToReseller = async (userId: string): Promise<boolean> => {
-    // 1. Buscar si existe una relación reseller con ese userId
-    const resellerAssignment = await db.reseller.findFirst({
-        where: { userId },
-    })
+export const isUserAssignedToReseller = async (
+    userId: string
+): Promise<ResellerAsUserResponse> => {
+    debugger;
+    try {
+        // Buscar si el usuario está asignado a algún reseller
+        const assignment = await db.reseller.findFirst({
+            where: { userId },
+        });
 
-    // 2. Retornar true si existe, false si no
-    return !!resellerAssignment
-}
+        if (!assignment?.resellerid) {
+            return {
+                success: false,
+                message: "Este usuario no está asignado a ningún reseller.",
+            };
+        }
+
+        // Buscar el usuario revendedor asignado
+        const resellerUser = await db.user.findUnique({
+            where: { id: assignment.resellerid },
+        });
+
+        if (!resellerUser) {
+            return {
+                success: false,
+                message: "No se encontró el usuario revendedor asociado.",
+            };
+        }
+
+        return {
+            success: true,
+            message: "Usuario asignado a un reseller.",
+            data: resellerUser,
+        };
+    } catch (error) {
+        console.error("Error en isUserAssignedToReseller:", error);
+        return {
+            success: false,
+            message: "Error interno al buscar asignación de reseller.",
+        };
+    }
+};
 
 export const getResellerInformation = async (userId: string) => {
     try {
@@ -124,3 +171,82 @@ export const getResellerInformation = async (userId: string) => {
         };
     }
 };
+
+export async function getThemeForUser(user: User): Promise<ThemeApp> {
+    if (!user) return 'Default';
+
+    // Si es reseller, usa su propio theme
+    if (user.role === Role.reseller) {
+        const resellerTheme = await db.reseller.findFirst({
+            where: { userId: user.id },
+            select: { theme: true },
+        })
+
+        return resellerTheme?.theme || 'Default'
+    }
+
+    // Si es un cliente asignado a un reseller, busca el reseller asignado
+    if (user.role === Role.user) {
+        const reseller = await db.reseller.findFirst({
+            where: { userId: user.id },
+        })
+
+        if (reseller?.resellerid) {
+            return reseller?.theme || 'Default'
+        }
+    }
+
+    // Por defecto
+    return 'Default'
+}
+
+export async function updateResellerTheme({
+    theme,
+    userId,
+}: ResellerCustomization): Promise<ResellerResponse> {
+    if (!userId) {
+        return {
+            success: false,
+            message: "Se requiere el userId para actualizar el reseller.",
+        };
+    }
+
+    if (!theme) {
+        return {
+            success: false,
+            message: "Debes proporcionar al menos un campo para actualizar (logo o theme).",
+        };
+    }
+
+    try {
+        const existing = await db.reseller.findFirst({
+            where: { userId },
+        });
+
+        if (!existing) {
+            return {
+                success: false,
+                message: `No se encontró un reseller con userId: ${userId}`,
+            };
+        }
+
+        const updated = await db.reseller.update({
+            where: { id: existing.id },
+            data: {
+                ...(theme && { theme }),
+            },
+        });
+
+        return {
+            success: true,
+            message: "Reseller actualizado correctamente.",
+            data: [updated],
+        };
+    } catch (error) {
+        console.error("Error al actualizar reseller:", error);
+        return {
+            success: false,
+            message: "Ocurrió un error al actualizar el reseller.",
+        };
+    }
+}

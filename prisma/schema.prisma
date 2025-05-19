@@ -191,22 +191,12 @@ model rr {
   updatedAt  DateTime @updatedAt
 }
 
-enum Role {
-  user
-  admin
-  reseller
-}
-
-enum Plan {
-  empresarial
-  business
-  pymes
-}
-
 model reseller {
   id         Int      @id @default(autoincrement())
   resellerid String?
   userId     String?
+  theme      ThemeApp    @default(Default) // Tema asignado al reseller
+
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -282,4 +272,27 @@ enum RepeatType {
   YEARLY
   WEEKDAYS // Lunes a viernes
   EVERYDAY // Todos los días
+}
+
+enum ThemeApp {
+  Default
+  Red
+  Rose
+  Orange
+  Green
+  Blue
+  Yellow
+  Violet
+}
+
+enum Role {
+  user
+  admin
+  reseller
+}
+
+enum Plan {
+  empresarial
+  business
+  pymes
 }

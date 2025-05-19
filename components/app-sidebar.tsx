@@ -25,27 +25,34 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 }
 
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
-    const [isAssigned, setUserAssignedToReseller] = useState(false);
+    const [resellerInformation, setResellerInformation] = useState<User | null>(null)
 
     useEffect(() => {
-        onIsUserAssignedToReseller();
-    }, []);
+        const fetchReseller = async () => {
+            const response = await isUserAssignedToReseller(user.id)
 
-    const onIsUserAssignedToReseller = async () => {
-        const isAssigned = await isUserAssignedToReseller(user.id)
-        setUserAssignedToReseller(isAssigned);
-    };
+            if (response.success && response.data) {
+                setResellerInformation(response.data)
+            } else {
+                setResellerInformation(null)
+            }
+        }
+
+        fetchReseller()
+    }, [user.id])
 
     return (
         <Sidebar collapsible="icon" {...props} className="bg-white dark:bg-gray-900 text-gray-800 dark:text-zinc-100 border-r border-zinc-200 dark:border-gray-800">
             <SidebarHeader>
-                <TeamSwitcher user={user} isAssigned={isAssigned} />
+                {
+                    resellerInformation &&
+                    <TeamSwitcher user={user} resellerInformation={resellerInformation} />
+                }
             </SidebarHeader>
             <SidebarContent>
                 <NavMain user={user} />
             </SidebarContent>
             <SidebarFooter>
-                {/* <BrandSelector /> */}
                 {/* <SidebarGroupLabel>IA Créditos</SidebarGroupLabel> */}
                 <div className="flex flex-row w-full justify-center items-center">
                     <NavProjects user={user} />
@@ -53,6 +60,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                         <ThemeSwitcher />
                     </div>
                 </div>
+                <BrandSelector />
                 <LogoutButton user={user} />
             </SidebarFooter>
             <SidebarRail />

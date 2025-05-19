@@ -15,6 +15,7 @@ import {
 import { Breadcrumbs } from '@/components/custom';
 import { AppSidebar } from "@/components/app-sidebar"
 import AppInitializer from '@/components/custom/AppInitializer';
+import { getThemeForUser } from '@/actions/reseller-action';
 // import { AppSidebar } from '@/components/shared/Sidebar';
 
 // Fuente
@@ -31,6 +32,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const user = await currentUser();
+  const colorTheme = await getThemeForUser(user);
   const isAuthenticated = user !== null && user !== undefined;
   const cookieStore = await cookies()
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
@@ -40,7 +42,7 @@ export default async function RootLayout({
       <body className={`${poppins.className} overflow-hidden bg-slate-100 text-black dark:bg-gray-900 dark:text-white`}>
         <AppProviders>
           <ThemeProvider>
-            <AppInitializer />
+            <AppInitializer colorTheme={colorTheme} />
             {isAuthenticated ? (
               <SidebarProvider defaultOpen={defaultOpen}>
                 <AppSidebar user={user} />

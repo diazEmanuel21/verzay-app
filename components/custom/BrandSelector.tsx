@@ -1,19 +1,32 @@
 'use client'
-import { Button } from '@/components/ui/button'
+
 import { useThemeStore } from '@/stores'
 import { Label } from '../ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { ThemeApp } from '@prisma/client'
+import { themes } from '@/schema/theme'
 
 export function BrandSelector() {
-    const setTheme = useThemeStore((s) => s.setTheme)
+    const { current, setTheme } = useThemeStore()
 
     return (
-        <>
-            <Label>Theme selector</Label>
-            <div className="flex gap-2 flex-col">
-                <Button onClick={() => setTheme('verzay')}>Verzay</Button>
-                <Button onClick={() => setTheme('aizen bots')}>Aizen Bots</Button>
-                <Button onClick={() => setTheme('wat bot')}>Wat Bot</Button>
-            </div>
-        </>
+        <Select value={current} onValueChange={(value) => setTheme(value as ThemeApp)}>
+            <SelectTrigger>
+                <SelectValue placeholder="Selecciona un tema" />
+            </SelectTrigger>
+            <SelectContent>
+                {Object.entries(themes).map(([key, value]) => (
+                    <SelectItem key={key} value={key}>
+                        <span className="flex items-center gap-2">
+                            <span
+                                className="w-4 h-4 rounded-full border"
+                                style={{ backgroundColor: `hsl(${value['--primary']})` }}
+                            />
+                            {key}
+                        </span>
+                    </SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
     )
 }
