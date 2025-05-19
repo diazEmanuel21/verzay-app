@@ -14,27 +14,28 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input";
 import { useMutation } from "@tanstack/react-query";
-
 import { toast } from "sonner";
 
 interface GenericDeleteDialogProps {
     open: boolean;
     setOpen: (open: boolean) => void;
-    itemName: string;
+    itemName?: string; // Solo se requiere si `requireConfirmationText` es true
     itemId: string | number;
     mutationFn: (id: string) => Promise<any>;
     entityLabel: string; // Ej: "Flujos", "respuesta rápida"
+    requireConfirmationText?: boolean; // Si es true, exige escribir el nombre
 }
 
 export function GenericDeleteDialog({
     open,
     setOpen,
-    itemName,
+    itemName = '',
     itemId,
     mutationFn,
     entityLabel,
+    requireConfirmationText = false,
 }: GenericDeleteDialogProps) {
-    const router =  useRouter();
+    const router = useRouter();
     const [confirmText, setConfirmText] = useState("");
 
     const deleteMutation = useMutation({
@@ -42,6 +43,7 @@ export function GenericDeleteDialog({
         onSuccess: () => {
             toast.success(`${capitalize(entityLabel)} eliminado satisfactoriamente`, { id: itemId });
             setConfirmText("");
+            setOpen(false);
             router.refresh();
         },
         onError: () => {
@@ -49,25 +51,33 @@ export function GenericDeleteDialog({
         }
     });
 
+    const isConfirmDisabled = requireConfirmationText
+        ? confirmText !== itemName || deleteMutation.isPending
+        : deleteMutation.isPending;
+
     return (
         <AlertDialog open={open} onOpenChange={setOpen}>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Si eliminas este {entityLabel}, no podrás recuperarlo.
+                        Esta acción eliminará el {entityLabel} permanentemente. ¿Deseas continuar?
                     </AlertDialogDescription>
-                    <div className="flex flex-col py-4 gap-2">
-                        <p>
-                            Escribe <b className="text-primary">{itemName}</b> para confirmar.
-                        </p>
-                        <Input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
-                    </div>
+
+                    {requireConfirmationText && (
+                        <div className="flex flex-col py-4 gap-2">
+                            <p>
+                                Escribe <b className="text-primary">{itemName}</b> para confirmar.
+                            </p>
+                            <Input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
+                        </div>
+                    )}
                 </AlertDialogHeader>
+
                 <AlertDialogFooter>
                     <AlertDialogCancel onClick={() => setConfirmText("")}>Cancelar</AlertDialogCancel>
                     <AlertDialogAction
-                        disabled={confirmText !== itemName || deleteMutation.isPending}
+                        disabled={isConfirmDisabled}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         onClick={(e) => {
                             e.stopPropagation();

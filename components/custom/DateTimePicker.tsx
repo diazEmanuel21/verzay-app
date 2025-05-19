@@ -47,11 +47,47 @@ export function DateTimePicker({
     return (
         <div className="gap-2">
             <Popover>
-                <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left">
-                        {date ? format(date, "dd/MM/yyyy HH:mm") : "Seleccionar fecha y hora"}
-                    </Button>
-                </PopoverTrigger>
+                <div className="flex flex-1 flex-row justify-between items-center gap-2">
+                    {/* Field date */}
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" className="justify-start text-left flex-1">
+                            {date ? format(date, "dd/MM/yyyy HH:mm") : "Seleccionar fecha y hora"}
+                        </Button>
+                    </PopoverTrigger>
+
+                    {/* Fields HH:MM */}
+                    <div className="flex gap-2 justify-between">
+                        <div className="flex flex-row flex-1 justify-start items-center">
+                            <label className="text-sm text-muted-foreground mr-1">HH:</label>
+                            <select
+                                className={cn("border rounded-md px-2 py-1 text-sm bg-background")}
+                                value={hour}
+                                onChange={(e) => updateDateTime(undefined, parseInt(e.target.value), undefined)}
+                            >
+                                {[...Array(24)].map((_, i) => (
+                                    <option key={i} value={i}>
+                                        {i.toString().padStart(2, '0')}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="flex flex-row flex-1 justify-start items-center">
+                            <label className="text-sm text-muted-foreground mr-1">MM:</label>
+                            <select
+                                className={cn("border rounded-md px-2 py-1 text-sm bg-background")}
+                                value={minute}
+                                onChange={(e) => updateDateTime(undefined, undefined, parseInt(e.target.value))}
+                            >
+                                {[0, 15, 30, 45].map((m) => (
+                                    <option key={m} value={m}>
+                                        {m.toString().padStart(2, '0')}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                </div>
                 <PopoverContent side="top" align="start" className="w-auto p-0" >
                     <Calendar
                         mode="single"
@@ -60,38 +96,6 @@ export function DateTimePicker({
                     />
                 </PopoverContent>
             </Popover>
-
-            <div className="flex gap-2 justify-between mt-4">
-                <div className="flex flex-row flex-1 justify-start items-center">
-                    <label className="text-sm text-muted-foreground mr-1">Hora:</label>
-                    <select
-                        className={cn("border rounded-md px-2 py-1 text-sm bg-background")}
-                        value={hour}
-                        onChange={(e) => updateDateTime(undefined, parseInt(e.target.value), undefined)}
-                    >
-                        {[...Array(24)].map((_, i) => (
-                            <option key={i} value={i}>
-                                {i.toString().padStart(2, '0')}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="flex flex-row flex-1 justify-start items-center">
-                    <label className="text-sm text-muted-foreground mr-1">Minutos:</label>
-                    <select
-                        className={cn("border rounded-md px-2 py-1 text-sm bg-background")}
-                        value={minute}
-                        onChange={(e) => updateDateTime(undefined, undefined, parseInt(e.target.value))}
-                    >
-                        {[0, 15, 30, 45].map((m) => (
-                            <option key={m} value={m}>
-                                {m.toString().padStart(2, '0')}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            </div>
         </div>
     )
 }
