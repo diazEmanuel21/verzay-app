@@ -18,7 +18,6 @@ export const CreateAutoReplies = ({ user, Workflows, triggerText = 'Crear' }: Au
         <GenericEditDialog
             icon={Layers2Icon}
             title="CREAR RESPUESTA RÁPIDA"
-            subTitle="Comienza a construir tu respuesta rápida"
             triggerText={triggerText}
         >
             {({ onClose }) => (

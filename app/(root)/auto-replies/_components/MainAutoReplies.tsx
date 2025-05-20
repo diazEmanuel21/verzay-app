@@ -29,7 +29,6 @@ export const MainAutoReplies = ({ user, Workflows, autoReplies = [] }: Props) =>
         <div className="flex justify-between items-center">
           <Header
             title={'Respuestas rápidas'}
-            subtitle={'Crea tus respuestas rápidas de manera más organizada'}
           />
           <CreateAutoReplies
             triggerText={'CREAR'}

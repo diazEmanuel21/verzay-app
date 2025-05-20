@@ -23,7 +23,6 @@ const herramientas = async ({ params: { type } }: SearchParamProps) => {
     <>
       <Header
         title={'Herramientas'}
-        subtitle={'Crea tus herramientas de automatización'}
       />
     </>
   )

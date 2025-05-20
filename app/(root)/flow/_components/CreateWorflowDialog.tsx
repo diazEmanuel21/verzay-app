@@ -53,7 +53,6 @@ function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
         <CustomDialogHeader
           icon={Layers2Icon}
           title="CREAR FLUJO"
-          subTitle="Comienza a construir tu flujo"
         />
         <div className="p-6">
           <Form {...form}>

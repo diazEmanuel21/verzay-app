@@ -284,7 +284,6 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                             <div className="flex flex-row justify-between">
                                 <Header
                                     title="Perfil de la Empresa"
-                                    subtitle="Esta información se utilizará para la configuración de su agente."
                                 />
                                 <div className="space-y-2">
                                     <Label className="text-muted-foreground">Foto de perfil</Label>

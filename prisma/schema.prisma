@@ -283,6 +283,13 @@ enum ThemeApp {
   Blue
   Yellow
   Violet
+  Cyan
+  Black
+  White
+  Teal
+  MidnightBlue
+  AquaBlue
+  LightBlue
 }
 
 enum Role {

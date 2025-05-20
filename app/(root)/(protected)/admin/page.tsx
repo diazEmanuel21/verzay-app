@@ -60,7 +60,6 @@ const AdminPage = async () => {
     <>
       <Header
         title="Panel Super Administrativo"
-        subtitle="Puedes administrar cualquier operación en la plataforma"
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">

@@ -38,7 +38,6 @@ export const MainReminders = ({ user, apiKey, reminders, leads, workflows, insta
           <div className="flex justify-between items-center">
             <Header
               title={'Recordatorios'}
-              subtitle={'Agenda recordatorios para tus leads'}
             />
             <Button onClick={() => openCreateDialog()}>
               <PlusIcon className="h-4 w-4 mr-2" />

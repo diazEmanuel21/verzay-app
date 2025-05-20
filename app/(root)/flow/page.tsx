@@ -31,7 +31,6 @@ const FlowPage = async () => {
         <div className="flex justify-between items-center">
           <Header
             title={'Flujos'}
-            subtitle={'Crea tus Flujos de manera mas organizada'}
           />
           <CreateWorflowDialog />
         </div>

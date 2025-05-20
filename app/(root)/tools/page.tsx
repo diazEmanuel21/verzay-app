@@ -43,7 +43,6 @@ const ToolsPage = async ({ params: { type } }: SearchParamProps) => {
     <>
       <Header
         title={'Herramientas'}
-        subtitle={'Crea tus herramientas de automatización'}
       />
 
       <div className='max-w-screen-lg mx-auto'>

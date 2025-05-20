@@ -29,13 +29,13 @@ export const WorkflowCard = ({
     const form = useForm<z.infer<typeof workflowShema>>({
         resolver: zodResolver(workflowShema),
         defaultValues: {
-            name: workflow.name ?? "",
+            name: workflow.name.toUpperCase() ?? "",
             description: workflow.description ?? "",
         },
     });
 
     const handleSubmit = form.handleSubmit(async (values) => {
-        const nameChanged = values.name !== workflow.name;
+        const nameChanged = values.name !== workflow.name.toUpperCase();
         const descChanged = values.description !== workflow.description;
 
         if (!nameChanged && !descChanged) {
@@ -45,10 +45,9 @@ export const WorkflowCard = ({
 
         setLoading(true);
         const toastId = `workflow-${workflow.id}`;
-
         try {
             const res = await updateWorkflow(workflow.id, {
-                name: values.name,
+                name: values.name.toUpperCase(),
                 description: values.description,
             });
 
@@ -98,7 +97,7 @@ export const WorkflowCard = ({
                                                     <Input
                                                         {...field}
                                                         placeholder="Nombre del flujo"
-                                                        className="text-base font-semibold"
+                                                        className="text-base uppercase font-semibold "
                                                         disabled={loading}
                                                         onKeyDown={handleKeyDown}
                                                     />
@@ -132,7 +131,7 @@ export const WorkflowCard = ({
                                     onClick={() => setEditing(true)}
                                 >
                                     <h3 className="text-base font-semibold text-muted-foreground group-hover:underline">
-                                        {workflow.name}
+                                        {workflow.name.toUpperCase()}
                                     </h3>
                                     <PencilLine className="w-4 h-4 text-muted-foreground opacity-60 group-hover:opacity-100 transition" />
                                 </div>
@@ -151,7 +150,7 @@ export const WorkflowCard = ({
 
                 <div className="flex items-center">
                     <WorkflowAction
-                        workflowName={workflow.name}
+                        workflowName={workflow.name.toUpperCase()}
                         workflowId={workflow.id}
                         userId={userId}
                     />
