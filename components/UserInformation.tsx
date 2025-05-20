@@ -346,7 +346,6 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                 {/* Nuevo bloque para BrandSelector */}
                                 {user.role === Role.reseller &&
                                     <div className="space-y-2">
-                                        <Label className="text-muted-foreground">Marca visual</Label>
                                         <BrandSelector />
                                     </div>
                                 }

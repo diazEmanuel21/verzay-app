@@ -10,15 +10,29 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { User } from '@prisma/client';
 import { Avatar, AvatarImage } from './ui/avatar';
+import { Skeleton } from './ui/skeleton';
 
 interface TeamSwitcherProps {
     user: User;
 }
 
 export function TeamSwitcher({ user }: TeamSwitcherProps) {
-    const reseller = useResellerStore((s) => s.reseller);
-    const resellerInfo = reseller && reseller;
+    const { reseller, isLoaded } = useResellerStore();
 
+    if (!isLoaded) {
+        return (
+            <SidebarMenu>
+                <SidebarMenuItem className="flex gap-3 items-center">
+                    <Skeleton className="w-8 h-8 rounded-lg" />
+                    <div className="space-y-1">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-20" />
+                    </div>
+                </SidebarMenuItem>
+            </SidebarMenu>
+        )
+    }
+    const resellerInfo = reseller;
     return (
         <SidebarMenu>
             <SidebarMenuItem className="flex">

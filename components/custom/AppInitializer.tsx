@@ -8,7 +8,7 @@ import { useResellerStore } from '@/stores/resellers/resellerStore';
 
 export default function AppInitializer({ onReseller }: { onReseller: ResellerInfoResponse }) {
     const initTheme = useThemeStore((s) => s.initTheme)
-    const setReseller = useResellerStore((s) => s.setReseller)
+    const { setReseller, clearReseller } = useResellerStore();
 
     const theme: ThemeApp = onReseller.success
         ? onReseller.data?.theme ?? 'Default'
@@ -23,6 +23,8 @@ export default function AppInitializer({ onReseller }: { onReseller: ResellerInf
     useEffect(() => {
         if (onReseller.success && onReseller.data) {
             setReseller(onReseller.data)
+        } else {
+            clearReseller();
         }
     }, [onReseller, setReseller])
 

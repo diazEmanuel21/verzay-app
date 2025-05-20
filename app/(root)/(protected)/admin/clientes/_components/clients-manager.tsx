@@ -54,6 +54,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             lat: '0.0000',
             lng: '0.0000',
             mapsUrl: 'https://maps.google.com/?q=0,0',
+            theme: 'Default',
             image: null,
             emailVerified: null,
             autoReactivate: '',
