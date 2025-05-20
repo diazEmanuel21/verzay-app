@@ -2,21 +2,22 @@
 
 import * as React from 'react';
 import { BotMessageSquare } from 'lucide-react';
+import { useResellerStore } from '@/stores/resellers/resellerStore';
 import { SidebarMenu, SidebarMenuItem } from '@/components/ui/sidebar';
 import { Label } from './ui/label';
 import clsx from 'clsx';
 import Image from 'next/image';
 import Link from 'next/link';
 import { User } from '@prisma/client';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Avatar, AvatarImage } from './ui/avatar';
 
 interface TeamSwitcherProps {
     user: User;
-    resellerInformation: User;
 }
 
-export function TeamSwitcher({ user, resellerInformation }: TeamSwitcherProps) {
-    const resellerInfo = user.role === 'reseller' || resellerInformation;
+export function TeamSwitcher({ user }: TeamSwitcherProps) {
+    const reseller = useResellerStore((s) => s.reseller);
+    const resellerInfo = reseller && reseller;
 
     return (
         <SidebarMenu>
@@ -25,14 +26,14 @@ export function TeamSwitcher({ user, resellerInformation }: TeamSwitcherProps) {
                     <>
                         <div className="flex aspect-square size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground mr-2">
                             <Link href="/" aria-label="Volver al inicio">
-                                {!user.image
+                                {!resellerInfo.image
                                     ? <BotMessageSquare
                                         className="text-blue-500 w-6 h-6 animate-bounce"
                                         aria-label="Agente activo"
                                     />
                                     :
                                     <Avatar className="h-8 w-8 rounded-lg">
-                                        <AvatarImage src={user?.image} alt={user?.name ?? ''} />
+                                        <AvatarImage src={resellerInfo?.image} alt={resellerInfo?.name ?? ''} />
                                     </Avatar>
                                 }
                             </Link>
@@ -47,7 +48,7 @@ export function TeamSwitcher({ user, resellerInformation }: TeamSwitcherProps) {
                                     )}
                                 >
                                     {/* AGENTE IA */}
-                                    {user.company}
+                                    {resellerInfo.company}
                                 </Label>
                             </span>
                             {/* <span className="truncate text-xs ">{user?.plan}</span> */}

@@ -7,10 +7,12 @@ import { getClientDataByUserId, updateClientDataByField, updateAbrirPhrase } fro
 import { optimizeFile } from "../app/(root)/flow/[workflowId]/helpers";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { number, z } from 'zod';
+import { z } from 'zod';
 import { Camera, ExternalLinkIcon } from "lucide-react";
 import { UserWithPausar } from "@/lib/types";
-import { Button } from "./ui/button";
+import { BrandSelector } from "./custom";
+import { useResellerStore } from "@/stores/resellers/resellerStore";
+import { Role } from "@prisma/client";
 
 // ============================
 // Tipado
@@ -49,6 +51,8 @@ const defaultImgUrl = 'https://images.pexels.com/photos/133356/pexels-photo-1333
 // Componente Principal
 // ============================
 export const UserInformation = ({ userId }: { userId: string }) => {
+    const reseller = useResellerStore((state) => state.reseller);
+
     /* Se extiende el user para poder utilizar openMsg from Pausar cómo un field nativo del User */
     const [user, setUser] = useState<(UserWithPausar & { openMsg?: string })>();
     const [originalUser, setOriginalUser] = useState<(UserWithPausar & { openMsg?: string })>();
@@ -310,6 +314,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                         className="hidden"
                                     />
                                 </div>
+
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -317,6 +322,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                 {[
                                     { key: 'apiUrl', label: 'API key OpenAI', type: 'password' },
                                     { key: 'company', label: 'Empresa' },
+
                                     { key: 'notificationNumber', label: 'Número de notificación' },
                                     { key: 'autoReactivate', label: 'Tiempo de reactivación(minutos)', type: 'number' },
                                     { key: 'openMsg', label: 'Frase de reactivación' },
@@ -336,6 +342,14 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                         />
                                     </div>
                                 ))}
+
+                                {/* Nuevo bloque para BrandSelector */}
+                                {user.role === Role.reseller &&
+                                    <div className="space-y-2">
+                                        <Label className="text-muted-foreground">Marca visual</Label>
+                                        <BrandSelector />
+                                    </div>
+                                }
 
                                 {/* URL Google Maps */}
                                 <div className="space-y-2 md:col-span-2">

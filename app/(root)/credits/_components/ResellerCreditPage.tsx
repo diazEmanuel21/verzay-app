@@ -5,17 +5,16 @@ import { motion, useAnimation, useInView } from 'framer-motion'
 import { Info, Mail, User2Icon } from "lucide-react"
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
-import { ShieldCheck, Star, Sparkles, CheckCircle, PhoneIcon } from 'lucide-react'
+import { ShieldCheck, Star, Sparkles, PhoneIcon } from 'lucide-react'
 import Link from 'next/link'
-import { ChevronDoubleDownIcon } from '@heroicons/react/24/solid'
 import {
     Popover,
     PopoverContent,
     PopoverTrigger
 } from "@/components/ui/popover"
 
-import { User } from '@prisma/client'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useResellerStore } from '@/stores/resellers/resellerStore'
 const plans = [
     {
         name: 'PYMES',
@@ -61,20 +60,17 @@ const plans = [
     },
 ]
 
-interface propsReseller {
-    resellerInformation: User | null
-}
+export const ResellerCreditPage = () => {
+    const reseller = useResellerStore((state) => state.reseller);
 
-export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
     const planSectionRef = useRef<HTMLDivElement | null>(null)
     const isInView = useInView(planSectionRef, { once: false, margin: '-100px' })
     const controls = useAnimation()
     const [highlightButton, setHighlightButton] = useState(false)
 
-    const numberReseller = resellerInformation?.notificationNumber.toString();
     const textClass = "max-w-[200px] truncate whitespace-nowrap overflow-hidden text-left"
-
-    const isAizen = !resellerInformation;
+    const resellerInformation = reseller;
+    const isReseller = !reseller;
 
     useEffect(() => {
         if (isInView) {
@@ -90,7 +86,7 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
     }, [])
 
     const handlePlanUpgrade = () => {
-        if (isAizen) {
+        if (isReseller) {
             window.open(`https://wa.me/+573115616975?text=Hola%2C%20quiero%20actualizar%20mi%20plan`, '_blank');
         } else {
             planSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -101,7 +97,7 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
         // <div className="bg-gradient-to-br from-gray-100 via-white to-blue-200 dark:from-dark-600 dark:via-gray-900 dark:to-dark-700">
         <div className="px-6">
             {/* HERO SECTION */}
-            <section className={`relative ${!isAizen && 'min-h-screen items-center'} flex flex-col pt-4`}>
+            <section className={`relative ${!isReseller && 'min-h-screen items-center'} flex flex-col pt-4`}>
                 <div className="flex w-full border-none bg-transparent backdrop-blur-lg">
                     <div className="flex flex-col-reverse lg:flex-row">
                         <motion.div
@@ -149,7 +145,7 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
                                 </div>
                             </div>
 
-                            {!isAizen &&
+                            {!isReseller &&
                                 <Popover >
                                     <PopoverTrigger asChild>
                                         <Button
@@ -240,7 +236,7 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
                     </div>
                 </div>
                 {/* {
-                    !isAizen &&
+                    !isReseller &&
                     <motion.div
                         onClick={() => {
                             planSectionRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -255,7 +251,7 @@ export const ResellerCreditPage = ({ resellerInformation }: propsReseller) => {
             </section>
 
             {/* {
-                !isAizen &&
+                !isReseller &&
                 <section ref={planSectionRef} className="flex items-center justify-center flex-col">
                     <motion.div
                         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full"

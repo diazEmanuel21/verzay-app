@@ -1,7 +1,6 @@
 'use client'
 
 import { useThemeStore } from '@/stores'
-import { Label } from '../ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { ThemeApp } from '@prisma/client'
 import { themes } from '@/schema/theme'

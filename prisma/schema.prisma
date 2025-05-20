@@ -14,6 +14,7 @@ model User {
   password           String?
   emailVerified      DateTime?
   image              String?
+  theme              ThemeApp?       @default(Default) // Tema asignado al reseller
   role               Role            @default(user)
   plan               Plan            @default(pymes)
   createdAt          DateTime        @default(now())
@@ -195,8 +196,7 @@ model reseller {
   id         Int      @id @default(autoincrement())
   resellerid String?
   userId     String?
-  theme      ThemeApp    @default(Default) // Tema asignado al reseller
-
+  theme      ThemeApp @default(Default) //TODO: DEPRECATED
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
