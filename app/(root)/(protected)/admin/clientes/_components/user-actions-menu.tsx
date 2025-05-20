@@ -13,6 +13,9 @@ import {
 import { DialogType } from './clients-manager'
 import { UserWithPausar } from '@/lib/types'
 import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
+import { loginAction } from '@/actions/auth-action'
+import { toast } from 'sonner'
 
 interface propsActionsMenu {
     currentUserRol: string
@@ -22,7 +25,30 @@ interface propsActionsMenu {
 
 /* El user es el usuario seleccionado de la tabla y el currentUserRol es el usuario logueado */
 export const UserActionsMenu = ({ user, openDialogGetUserId, currentUserRol }: propsActionsMenu) => {
-    const router = useRouter();
+    const router = useRouter()
+    const [isPending, startTransition] = useTransition()
+
+    const handleUserDashboard = () => {
+        if (!user.email || !user.password) {
+            toast.error('No se puede iniciar sesión: el usuario no tiene credenciales válidas')
+            return
+        }
+
+        startTransition(async () => {
+            const res = await loginAction({
+                email: user.email,
+                password: user.password ?? ''
+            })
+
+            if (res?.success) {
+                toast.success(`Iniciaste sesión como ${user.email}`)
+                router.refresh()
+                router.push('/')
+            } else {
+                toast.error(res?.error || 'No se pudo iniciar sesión como ese usuario')
+            }
+        })
+    }
 
     return (
         <>
@@ -46,20 +72,27 @@ export const UserActionsMenu = ({ user, openDialogGetUserId, currentUserRol }: p
                             Herramientas
                         </DropdownMenuItem>
                     }
-            
+
                     <DropdownMenuItem
                         onClick={() => router.push(`/admin/credits?userId=${user.id}`)}
                     >
                         Créditos
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                        onClick={() => handleUserDashboard()}
+                    >
+                        Ingresar
+                    </DropdownMenuItem>
                     {currentUserRol === 'admin' &&
-                        <DropdownMenuItem
-                            onClick={() => openDialogGetUserId(user.id, 'delete', true)}
-                            className="text-red-600"
-                        >
-                            Eliminar
-                        </DropdownMenuItem>
+                        <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                onClick={() => openDialogGetUserId(user.id, 'delete', true)}
+                                className="text-red-600"
+                            >
+                                Eliminar
+                            </DropdownMenuItem>
+                        </>
                     }
                 </DropdownMenuContent>
             </DropdownMenu>

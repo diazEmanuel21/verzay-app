@@ -24,13 +24,17 @@ const poppins = Poppins({ subsets: ['latin'], weight: ['400', '700'] });
 //Generic class 
 const themeClass = "bg-slate-100 text-black dark:bg-gray-900 dark:text-white";
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
+
 export const metadata: Metadata = {
   title: 'Verzay IA',
   description: 'La plataforma de inteligencia artificial que potencia y automatiza tu negocio.',
   icons: {
     icon: '/favicon.ico',
   },
-  viewport: 'width=device-width, initial-scale=1',
 };
 
 export default async function RootLayout({
