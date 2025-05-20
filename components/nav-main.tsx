@@ -18,6 +18,11 @@ import {
     SidebarMenuSubButton,
     SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
+
+import {
+    BookOpenIcon
+} from "@heroicons/react/24/solid";
+
 import {
     Collapsible,
     CollapsibleContent,
@@ -47,6 +52,21 @@ export function NavMain({ user }: { user: User }) {
         <SidebarGroup>
             {/* <SidebarGroupLabel>Módulos</SidebarGroupLabel> */}
             <SidebarMenu>
+                <SidebarMenuItem>
+                    <SidebarMenuButton
+                        onClick={() =>
+                            window.open(
+                                'https://drive.google.com/drive/u/3/folders/108EnY4aEGfMgsmQWn_ye9rW8qqC2e-wg',
+                                '_blank'
+                            )
+                        }
+                    >
+                        <BookOpenIcon />
+                        <span>Manuales</span>
+                        <ChevronRight className="invisible ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+
                 {navItems.map((item) => {
                     const { route, icon: Icon, label, requiresPremium, isActive, items } = item;
 
