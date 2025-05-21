@@ -17,7 +17,7 @@ import { deleteManual, createManual, updateManual, getManuals } from '@/actions/
 import { z } from 'zod'
 import { Textarea } from '@/components/ui/textarea'
 import { User, Manual, Role } from '@prisma/client'
-import { Edit2Icon, Trash2 } from 'lucide-react'
+import { Edit2Icon, Search, Trash2 } from 'lucide-react'
 interface MainGuideProps {
   user: User
 }
@@ -40,18 +40,21 @@ export function MainGuide({ user }: MainGuideProps) {
   const [search, setSearch] = useState('')
   const [isPending, startTransition] = useTransition()
 
+  const [loading, setLoading] = useState(true);
+
   const [editData, setEditData] = useState<ManualClient | null>(null)
   const [open, setOpen] = useState(false)
   const [formData, setFormData] = useState({ name: '', description: '', url: '' })
 
   const fetchManuals = async () => {
+    setLoading(true)
     const res = await getManuals()
-
     if (res.success && Array.isArray(res.data)) {
       setManuals(res.data)
     } else {
       toast.error(res.message)
     }
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -73,15 +76,22 @@ export function MainGuide({ user }: MainGuideProps) {
   const handleUpdate = async () => {
     startTransition(async () => {
       if (!editData) return;
-      const res = await updateManual({ id: editData.id, name: formData.name, description: formData.description })
+      const res = await updateManual({
+        id: editData.id,
+        name: formData.name,
+        description: formData.description,
+        url: formData.url, // ⬅️ agregar esto
+      })
       if (res.success) {
         toast.success(res.message)
         setEditData(null)
+        setFormData({ name: '', description: '', url: '' })
         setOpen(false)
         fetchManuals()
       } else toast.error(res.message)
     })
   }
+
 
   const handleDelete = async (id: string) => {
     startTransition(async () => {
@@ -102,57 +112,93 @@ export function MainGuide({ user }: MainGuideProps) {
   const filtered = manuals.filter(m => m.name.toLowerCase().includes(search.toLowerCase()))
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <Input placeholder="Buscar manual..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full max-w-sm" />
-        {user.role === Role.admin &&
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button>Nuevo manual</Button>
-            </DialogTrigger>
-            <DialogContent className="border-border">
-              <DialogHeader>
-                <DialogTitle>{editData ? 'Editar Manual' : 'Crear Manual'}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <Input placeholder="Nombre" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-                <Textarea placeholder="Descripción" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
-                {!editData && (
-                  <Input placeholder="URL" value={formData.url} onChange={(e) => setFormData({ ...formData, url: e.target.value })} />
-                )}
-              </div>
-              <DialogFooter>
-                <Button onClick={editData ? handleUpdate : handleCreate} disabled={isPending}>
-                  {editData ? 'Actualizar' : 'Crear'}
+    <div className="flex flex-col p-4 gap-6 overflow-hidden">
+
+      {/* Header y Filtro */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between overflow-hidden">
+        <div className="flex flex-1 gap-2 items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar manual..."
+              className="pl-8"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          {user.role === Role.admin &&
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  onClick={() => {
+                    setEditData(null) // ⬅️ importante
+                    setFormData({ name: '', description: '', url: '' }) // ⬅️ limpio para crear
+                  }}
+                >
+                  Nuevo manual
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        }
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((manual) => (
-          <Card key={manual.id} className="relative group border-border">
-            <CardContent className="space-y-2 py-4">
-              <h3 className="text-lg font-semibold line-clamp-1">{manual.name}</h3>
-              <p className="text-sm text-muted-foreground line-clamp-2">{manual.description}</p>
-              <a href={manual.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 underline">
-                Ver Manual
-              </a>
-              {user.role === Role.admin &&
-                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
-                  <Button variant="outline" size="icon" onClick={() => openEdit(manual)}>
-                    <Edit2Icon />
-                  </Button>
-                  <Button variant="destructive" size="icon" onClick={() => handleDelete(manual.id)}>
-                    <Trash2 />
-                  </Button>
+              </DialogTrigger>
+
+              <DialogContent className="border-border">
+                <DialogHeader>
+                  <DialogTitle>{editData ? 'Editar Manual' : 'Crear Manual'}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Input placeholder="Nombre" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                  <Textarea placeholder="Descripción" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+                  <Input placeholder="https://medias3.verzay.co/verzay-documentation/..." value={formData.url} onChange={(e) => setFormData({ ...formData, url: e.target.value })} />
                 </div>
-              }
-            </CardContent>
-          </Card>
-        ))}
+                <DialogFooter>
+                  <Button onClick={editData ? handleUpdate : handleCreate} disabled={isPending}>
+                    {isPending ? 'Guardando...' : editData ? 'Actualizar' : 'Crear'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          }
+        </div>
       </div>
+
+
+      {/* Cards */}
+      {loading ? (
+        <div className="flex justify-center items-center py-20">
+          <p className="text-muted-foreground">Loading manual...</p>
+        </div>
+      ) : (
+        <div className="flex-1">
+          <div className="max-h-[70vh] overflow-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 min-w-[400px] p-2">
+              {filtered.map((manual) => (
+                <Card key={manual.id} className="relative border-border      
+                    transition-all 
+                    duration-300 
+                    hover:shadow-lg 
+                    hover:scale-[1.015] 
+                    hover:border-primary">
+                  <CardContent className="space-y-2 py-4">
+                    <h3 className="text-lg font-semibold line-clamp-1">{manual.name}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{manual.description}</p>
+                    <a href={manual.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 underline">
+                      Ver Manual
+                    </a>
+                    {user.role === Role.admin &&
+                      <div className="absolute top-4 right-4 flex gap-2">
+                        <Button variant="outline" size="icon" onClick={() => openEdit(manual)}>
+                          <Edit2Icon />
+                        </Button>
+                        <Button variant="destructive" size="icon" onClick={() => handleDelete(manual.id)}>
+                          <Trash2 />
+                        </Button>
+                      </div>
+                    }
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

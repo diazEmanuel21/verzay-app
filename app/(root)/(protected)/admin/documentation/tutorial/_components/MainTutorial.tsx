@@ -162,11 +162,17 @@ export const MainTutorial = () => {
                 </div>
             ) : (
                 <div className="flex-1">
-                    <div className="max-h-[70vh] overflow-auto">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 min-w-[400px]">
+                    <div className="max-h-[70vh] overflow-auto p-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 min-w-[400px] p-2">
                             {filteredGuides.length > 0 ? (
                                 filteredGuides.map(guide => (
-                                    <Card key={guide.id} className="relative border-border">
+                                    <Card key={guide.id} className="relative border-border
+                                        transition-all 
+                                        duration-300 
+                                        hover:shadow-lg 
+                                        hover:scale-[1.015] 
+                                        hover:border-primary
+                                        ">
                                         <CardHeader>
                                             <CardTitle>{guide.title}</CardTitle>
                                         </CardHeader>

@@ -84,6 +84,7 @@ export async function getManuals(): Promise<ManualResponse> {
 const updateManualSchema = z.object({
     id: z.string().uuid(),
     name: z.string().min(3, 'Nombre requerido'),
+    url: z.string().min(3, 'Url requerida'),
     description: z.string().optional(),
 })
 

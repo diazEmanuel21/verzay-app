@@ -38,7 +38,7 @@ const AdminPage = async () => {
       title: "Administrador Guías",
       description: "Gestiona las guías para cada modulo.",
       icon: <BookOpenCheck className="text-yellow-600" />,
-      href: "/admin/guide",
+      href: "/admin/documentation",
       buttonLabel: "Ir a Guías",
     },
     // {

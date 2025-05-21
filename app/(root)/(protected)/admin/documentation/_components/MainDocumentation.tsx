@@ -10,14 +10,14 @@ export const MainDocumentation = () => {
     const modules = [
         {
             title: "Administrador tutoriales",
-            description: "Configura cada cliente. Puedes agregar, editar, eliminar y cambiar su información.",
+            description: "Gestión de videos tutoriales por modulo.",
             icon: <Play className="text-red-600" />,
             href: "/admin/documentation/tutorial",
             buttonLabel: "Ir a Tutoriales",
         },
         {
             title: "Administrador guías",
-            description: "Gestiona a tus revendedores y su acceso a clientes o configuraciones.",
+            description: "Gestion de documentación/manuales de usuario.",
             icon: <BookOpen className="text-blue-600" />,
             href: "/admin/documentation/guide",
             buttonLabel: "Ir a Guías",
