@@ -19,7 +19,6 @@ export interface NavLinkItem {
   adminOnly?: boolean;
   requiresPremium?: boolean;
   items?: {
-    type: string,
     url: string,
     title: string,
   }[]
@@ -32,6 +31,24 @@ export const navLinks: NavLinkItem[] = [
     icon: ShieldCheckIcon,
     adminOnly: true,
     showInSidebar: true,
+    items: [
+      {
+        url: '/admin/conexion',
+        title: 'API',
+      },
+      {
+        url: '/admin/clientes',
+        title: 'Clientes',
+      },
+      {
+        url: '/admin/reseller',
+        title: 'Resellers',
+      },
+      {
+        url: '/admin/documentation',
+        title: 'Documentación',
+      },
+    ]
   },
   {
     label: "Conexión",

@@ -86,7 +86,7 @@ export const MainReseller = ({ searchParams, user, resellers, defaultResellerId 
     )
 
     return (
-        <Card className="border border-border">
+        <Card className="border-border">
             <CardHeader>
                 <CardTitle>Gestión de clientes por revendedor</CardTitle>
             </CardHeader>
@@ -116,7 +116,7 @@ export const MainReseller = ({ searchParams, user, resellers, defaultResellerId 
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
 
-                        <ScrollArea className="h-60 border border-border rounded-lg p-2">
+                        <ScrollArea className="h-60 border-border rounded-lg p-2">
                             {filteredAssignedClients.map(client => (
                                 <div key={client.id} className="flex justify-between items-center p-2 hover:bg-muted rounded">
                                     <span>{client.name}</span>
@@ -138,7 +138,7 @@ export const MainReseller = ({ searchParams, user, resellers, defaultResellerId 
                             onChange={(e) => setSearchUnassigned(e.target.value)}
                         />
 
-                        <ScrollArea className="h-60 border border-border rounded-lg p-2">
+                        <ScrollArea className="h-60 border-border rounded-lg p-2">
                             {filteredUnassignedClients.map(client => (
                                 <div key={client.id} className="flex justify-between items-center p-2 hover:bg-muted rounded">
                                     <span>{client.name}</span>

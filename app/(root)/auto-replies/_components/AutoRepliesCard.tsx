@@ -55,7 +55,7 @@ export const AutoRepliesCard = ({ autoReplie, workflows }: autoReplies) => {
     };
 
     return (
-        <Card className="transition-all duration-300 hover:shadow-lg border border-border">
+        <Card className="transition-all duration-300 hover:shadow-lg border-border">
             <CardContent className="p-4 flex items-center justify-between h-[100px]">
                 <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center bg-accent">

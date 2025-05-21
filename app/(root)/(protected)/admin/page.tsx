@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import Header from '@/components/shared/header'
 import { currentUser } from '@/lib/auth'
 import Link from 'next/link'
-import { BookOpenCheck, Settings, ShieldCheck, Users, Zap,  } from 'lucide-react'
+import { BookOpenCheck, Settings, ShieldCheck, Users, Zap, } from 'lucide-react'
 
 const AdminPage = async () => {
   const user = await currentUser()
@@ -62,11 +62,23 @@ const AdminPage = async () => {
         title="Panel Super Administrativo"
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
+      <div className="flex flex-wrap gap-2 items-center pt-4">
         {visibleCards.map((card, index) => (
           <Card
             key={index}
-            className="flex flex-col justify-between border border-border rounded-2xl transition-all duration-300 hover:shadow-lg hover:scale-[1.015] hover:border-primary bg-background w-full"
+            className="
+              flex flex-col 
+              justify-between 
+              border-border 
+              rounded-2xl 
+              transition-all 
+              duration-300 
+              hover:shadow-lg 
+              hover:scale-[1.015] 
+              hover:border-primary 
+              bg-background
+              max-w-80
+              min-w-80"
           >
             <CardHeader className="p-5 pb-3">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">

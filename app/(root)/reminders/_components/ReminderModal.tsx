@@ -49,7 +49,7 @@ export const ReminderModal = ({ user, apiKey, leads, workflows, instancia }: Rem
                         transition={{ duration: 0.2 }}
                         className="w-full max-w-md p-2"
                     >
-                        <Card className="relative shadow-2xl border border-border rounded-md bg-background">
+                        <Card className="relative shadow-2xl border-border rounded-md bg-background">
                             <CardHeader className="flex items-center justify-between flex-row">
                                 <CardTitle>
                                     {openDialog === 'edit' ? "Editar Recordatorio" : "Crear Recordatorio"}

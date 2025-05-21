@@ -143,7 +143,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
               ))
             ) : (
               <TableRow
-                className="border border-border"
+                className="border-border"
               >
                 <TableCell colSpan={columns.length} className="h-24 text-center">
                   No hay resultados.

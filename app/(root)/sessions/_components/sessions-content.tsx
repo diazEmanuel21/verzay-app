@@ -198,7 +198,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
             {cardStats.map((card, idx) => (
               <Card
                 key={idx}
-                className="min-w-[200px] sm:min-w-0 flex-1 flex flex-col overflow-hidden border border-border"
+                className="min-w-[200px] sm:min-w-0 flex-1 flex flex-col overflow-hidden border-border"
               >
                 <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
                   <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
@@ -247,7 +247,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
       {/* Scroll interno para el contenido */}
       <div className="flex-1 overflow-y-auto">
         <div className="grid grid-cols-1 gap-4">
-          <Card className="border border-border">
+          <Card className="border-border">
             <DataTable columns={columns({ onDeleteSuccess: handleDeleteFromTable, mutateSessions: mutate })} data={sessions} />
           </Card>
 

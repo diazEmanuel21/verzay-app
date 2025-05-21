@@ -22,7 +22,7 @@ export const MainDashboard = ({ user }: propsMainDashboard) => {
 
     return (
         <div className="flex flex-col items-center min-h-screen">
-            <Card className="max-w-[600px] relative border border-border">
+            <Card className="max-w-[600px] relative border-border">
                 <CardContent className="flex flex-col">
                     {/* Contenedor para el formulario */}
                     <FormInstance userId={user.id} />

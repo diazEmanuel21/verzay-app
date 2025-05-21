@@ -159,7 +159,7 @@ export const ReminderForm = ({
                 </Button>
             </form>
             {createLead && (
-                <Card className="p-4 border border-border">
+                <Card className="p-4 border-border">
                     <LeadCreateForm
                         userId={userId}
                         instanceId={instanceNameReminder}

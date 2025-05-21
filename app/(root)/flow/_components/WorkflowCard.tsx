@@ -76,7 +76,7 @@ export const WorkflowCard = ({
     };
 
     return (
-        <Card className="border border-border">
+        <Card className="border-border">
             <CardContent className="p-4 flex flex-1 gap-2 items-center justify-between">
                 <div className="flex flex-1 gap-4 justify-center items-center">
                     <div className="w-10 h-10 rounded-sm flex items-center justify-center bg-blue-500 cursor-pointer"

@@ -141,7 +141,20 @@ export function NavMain({ user }: { user: User }) {
                                                     <Link
                                                         href={subItem.url}
                                                         onClick={handleClick}
-                                                        className="text-muted-foreground hover:text-foreground text-sm"
+                                                        className='text-sm
+                                                        text-muted-foreground
+                                                        flex
+                                                        items-center
+                                                        justify-between
+                                                        py-2
+                                                        rounded-md
+                                                        font-medium
+                                                        transition
+                                                        text-zinc-600
+                                                        dark:text-zinc-300
+                                                        hover:bg-zinc-100
+                                                        dark:hover:bg-zinc-800'
+                                                    // className=" hover:text-foreground "
                                                     >
                                                         {subItem.title}
                                                     </Link>
@@ -155,6 +168,6 @@ export function NavMain({ user }: { user: User }) {
                     );
                 })}
             </SidebarMenu>
-        </SidebarGroup>
+        </SidebarGroup >
     );
 }

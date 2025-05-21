@@ -82,7 +82,7 @@ export const DataGrid = <TData, TValue>({
 
     return (
         <div className="flex gap-4 flex-col">
-            <Card className='p-6 border border-border'>
+            <Card className='p-6 border-border'>
                 <div className="w-full">
                     <div className="flex items-center py-4">
                         <Input

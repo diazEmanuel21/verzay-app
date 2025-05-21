@@ -39,7 +39,10 @@ const breadcrumbLabels: Record<string, string> = {
   workflow: 'workflow',
   'auto-replies': 'Respuestas rápidas',
   reseller: 'afiliados',
-  reminders: 'recordatorios'
+  reminders: 'recordatorios',
+  tutorial: 'tutoriales',
+  guide: 'guías',
+  documentation: 'documentación'
 };
 
 export const Breadcrumbs = () => {

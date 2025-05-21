@@ -63,7 +63,7 @@ export default async function RootLayout({
 
                   {/* Header fijo, pero ocupa espacio */}
                   <div className="h-18 shrink-0">
-                    <header className={`sticky top-0 h-18 w-full border border-border flex items-center px-4 ${themeClass}`}>
+                    <header className={`sticky top-0 h-18 w-full border-border flex items-center px-4 ${themeClass}`}>
                       <Breadcrumbs />
                     </header>
                   </div>

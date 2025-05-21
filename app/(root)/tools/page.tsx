@@ -49,7 +49,7 @@ const ToolsPage = async ({ params: { type } }: SearchParamProps) => {
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2'>
 
           {/* GOOGLE SHEETS */}
-          <Card className="w-full max-w-md bg-white dark:bg-gray-900 shadow-lg rounded-2xl border border-border p-6 hover:shadow-xl transition">
+          <Card className="w-full max-w-md bg-white dark:bg-gray-900 shadow-lg rounded-2xl border-border p-6 hover:shadow-xl transition">
             <CardHeader className="flex flex-col items-center text-center">
               <div className="w-16 h-16 mb-4">
                 <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
@@ -79,7 +79,7 @@ const ToolsPage = async ({ params: { type } }: SearchParamProps) => {
           </Card>
 
           {/* GOOGLE DRIVE */}
-          <Card className="w-full max-w-md bg-white dark:bg-gray-900 shadow-lg rounded-2xl border border-border p-6 hover:shadow-xl transition">
+          <Card className="w-full max-w-md bg-white dark:bg-gray-900 shadow-lg rounded-2xl border-border p-6 hover:shadow-xl transition">
             <CardHeader className="flex flex-col items-center text-center">
               <div className="w-16 h-16 mb-4">
                 <img
@@ -109,7 +109,7 @@ const ToolsPage = async ({ params: { type } }: SearchParamProps) => {
           </Card>
 
           {/* GOOGLE DOCS */}
-          <Card className="w-full max-w-md bg-white dark:bg-gray-900 shadow-lg rounded-2xl border border-border p-6 hover:shadow-xl transition">
+          <Card className="w-full max-w-md bg-white dark:bg-gray-900 shadow-lg rounded-2xl border-border p-6 hover:shadow-xl transition">
             <CardHeader className="flex flex-col items-center text-center">
               <div className="w-16 h-16 mb-4">
                 <img

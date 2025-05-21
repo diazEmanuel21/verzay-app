@@ -83,7 +83,7 @@ export function DataGrid<TData, TValue>({
                 data.length > 0 && data && <LeadsInformation data={data as Session[]} />
             }
 
-            <Card className="border border-border p-6">
+            <Card className="border-border p-6">
                 <div className="w-full">
                     <div className="flex items-center py-4">
                         <Input

@@ -290,7 +290,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
 
                                     <div className="flex items-center gap-4">
                                         <div
-                                            className="relative w-16 h-16 rounded-full overflow-hidden border border-border shadow-sm cursor-pointer hover:ring-2 hover:ring-primary"
+                                            className="relative w-16 h-16 rounded-full overflow-hidden border-border shadow-sm cursor-pointer hover:ring-2 hover:ring-primary"
                                             onClick={() => fileRef.current?.click()}
                                         >
                                             <img
@@ -337,7 +337,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                             disabled={loadingField === key}
                                             onChange={(e) => handleChange(key as keyof UserWithPausar, e.target.value)}
                                             onBlur={() => handleBlur(key as keyof UserWithPausar)}
-                                            className="bg-background border border-border focus-visible:ring-2 focus-visible:ring-primary"
+                                            className="bg-background border-border focus-visible:ring-2 focus-visible:ring-primary"
                                         />
                                     </div>
                                 ))}
@@ -363,7 +363,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                         disabled={loadingField === 'mapsUrl'}
                                         onChange={(e) => handleMapsUrlChange(e.target.value)}
                                         onBlur={() => handleBlur('mapsUrl')}
-                                        className="bg-background border border-border focus-visible:ring-2 focus-visible:ring-primary"
+                                        className="bg-background border-border focus-visible:ring-2 focus-visible:ring-primary"
                                     />
                                 </div>
 
@@ -380,7 +380,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                             value={user[coord as keyof EditableFields] as string}
                                             disabled
                                             readOnly
-                                            className="bg-muted border border-border text-muted-foreground cursor-not-allowed"
+                                            className="bg-muted border-border text-muted-foreground cursor-not-allowed"
                                         />
                                     </div>
                                 ))}
@@ -392,7 +392,7 @@ export const UserInformation = ({ userId }: { userId: string }) => {
                                     Vista previa de ubicación
                                 </h3>
                                 {user?.lat && user?.lng ? (
-                                    <div className="rounded-md overflow-hidden border border-border">
+                                    <div className="rounded-md overflow-hidden border-border">
                                         <iframe
                                             src={`https://www.google.com/maps?q=${user.lat},${user.lng}&output=embed`}
                                             width="100%"
