@@ -13,22 +13,26 @@ import {
 import TooltipWrapper from '@/components/TooltipWrapper'
 import { Button, buttonVariants } from "@/components/ui/button";
 import { MoreVerticalIcon, ShuffleIcon, TrashIcon } from "lucide-react";
-import DeleteWorkflowDialog from "./DeleteWorkflowDialog";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog";
+import { deleteEntireWorkflow } from "@/actions/workflow-actions";
 
 export const WorkflowAction = ({ workflowName, workflowId, userId }: { workflowName: string, workflowId: string, userId: string }) => {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
     return (
         <div className="flex flex-row gap-2">
-            <DeleteWorkflowDialog
-                open={showDeleteDialog}
-                setOpen={setShowDeleteDialog}
-                workflowName={workflowName}
-                workflowId={workflowId}
-                userId={userId}
-            />
+            {showDeleteDialog && workflowId &&
+                <GenericDeleteDialog
+                    open={showDeleteDialog}
+                    setOpen={setShowDeleteDialog}
+                    itemId={workflowId}
+                    mutationFn={() => deleteEntireWorkflow(userId, workflowId)}
+                    entityLabel="Flujo"
+                />
+            }
+
             <Link href={`flow/${workflowId}`} className={cn(
                 buttonVariants({
                     variant: "outline",

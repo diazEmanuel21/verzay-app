@@ -89,7 +89,6 @@ export const getResellerProfileForUser = async (
                 message: "Usuario no encontrado.",
             }
         }
-
         // 1. Si es reseller, retorna sus propios datos
         if (user.role === Role.reseller) {
             return {

@@ -57,11 +57,11 @@ export function GenericDeleteDialog({
 
     return (
         <AlertDialog open={open} onOpenChange={setOpen}>
-            <AlertDialogContent>
+            <AlertDialogContent className='border-border'>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                    <AlertDialogTitle>Se eliminará el <strong className="text-red-800">{entityLabel.toUpperCase()}</strong> ¿Estás seguro?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Esta acción eliminará el {entityLabel} permanentemente. ¿Deseas continuar?
+                        Esta acción eliminará el <strong className="text-red-800 uppercase">{entityLabel}</strong>. Esta acción no se puede deshacer.  ¿Deseas continuar?
                     </AlertDialogDescription>
 
                     {requireConfirmationText && (

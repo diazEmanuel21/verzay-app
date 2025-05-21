@@ -9,7 +9,6 @@ import { useResellerStore } from '@/stores/resellers/resellerStore';
 export default function AppInitializer({ onReseller }: { onReseller: ResellerInfoResponse }) {
     const initTheme = useThemeStore((s) => s.initTheme)
     const { setReseller, clearReseller } = useResellerStore();
-
     const theme: ThemeApp = onReseller.success
         ? onReseller.data?.theme ?? 'Default'
         : 'Default';

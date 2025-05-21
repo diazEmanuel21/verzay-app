@@ -62,7 +62,7 @@ export function NavMain({ user }: { user: User }) {
                         }
                     >
                         <BookOpenIcon />
-                        <span>Manuales</span>
+                        <span>Guías</span>
                         <ChevronRight className="invisible ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                     </SidebarMenuButton>
                 </SidebarMenuItem>
