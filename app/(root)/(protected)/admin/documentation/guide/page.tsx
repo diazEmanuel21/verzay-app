@@ -10,6 +10,10 @@ interface Props {
 const GuidePage = async ({ searchParams }: Props) => {
     const user = await currentUser();
 
+    if (!user || user?.role !== "admin") {
+        return <div>Lo sentimos este portal solo esta hecho para distruibudores.</div>;
+    };
+
     return (
         <MainGuide user={user} />
     );

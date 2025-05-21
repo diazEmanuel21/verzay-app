@@ -7,7 +7,8 @@ import {
   ClipboardDocumentListIcon,
   ShieldCheckIcon,
   Cog6ToothIcon,
-  BellAlertIcon
+  BellAlertIcon,
+  BookOpenIcon
 } from "@heroicons/react/24/solid";
 
 export interface NavLinkItem {
@@ -49,6 +50,12 @@ export const navLinks: NavLinkItem[] = [
         title: 'Documentación',
       },
     ]
+  },
+  {
+    label: "Guías",
+    route: "/documentation",
+    icon: BookOpenIcon,
+    showInSidebar: true,
   },
   {
     label: "Conexión",

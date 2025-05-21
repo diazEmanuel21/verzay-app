@@ -12,7 +12,7 @@ const ResellerPage = async ({ searchParams }: Props) => {
     const user = await currentUser()
 
     // Verificación de permisos
-    if (!user || user.role !== "admin") {
+    if (!user || user?.role !== "admin") {
         return <div>Lo sentimos, este portal solo está hecho para distribuidores.</div>
     }
 

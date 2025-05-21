@@ -1,143 +1,158 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { Upload, FileText, Trash2, Pencil } from 'lucide-react'
+import { useEffect, useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
-import { User } from '@prisma/client'
-
-interface Guide {
-  id: number
-  name: string
-  file: File
-}
-
+import { deleteManual, createManual, updateManual, getManuals } from '@/actions/manual-actions'
+import { z } from 'zod'
+import { Textarea } from '@/components/ui/textarea'
+import { User, Manual, Role } from '@prisma/client'
+import { Edit2Icon, Trash2 } from 'lucide-react'
 interface MainGuideProps {
   user: User
 }
 
-export function MainGuide({ user }: MainGuideProps) {
-  const [guides, setGuides] = useState<Guide[]>([])
-  const [editingGuide, setEditingGuide] = useState<Guide | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+type ManualClient = {
+  id: string
+  name: string
+  description?: string | null
+  url: string
+}
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file && file.type === 'application/pdf') {
-      const newGuide = {
-        id: Date.now(),
-        name: file.name,
-        file,
-      }
-      setGuides((prev) => [...prev, newGuide])
-      toast.success('Manual cargado correctamente')
+const manualFormSchema = z.object({
+  name: z.string().min(3, 'El nombre del manual es obligatorio.'),
+  url: z.string().url('La URL del manual no es válida.'),
+})
+
+export function MainGuide({ user }: MainGuideProps) {
+  const [manuals, setManuals] = useState<ManualClient[]>([])
+
+  const [search, setSearch] = useState('')
+  const [isPending, startTransition] = useTransition()
+
+  const [editData, setEditData] = useState<ManualClient | null>(null)
+  const [open, setOpen] = useState(false)
+  const [formData, setFormData] = useState({ name: '', description: '', url: '' })
+
+  const fetchManuals = async () => {
+    const res = await getManuals()
+
+    if (res.success && Array.isArray(res.data)) {
+      setManuals(res.data)
     } else {
-      toast.error('Solo se permiten archivos PDF')
+      toast.error(res.message)
     }
   }
 
-  const handleDelete = (id: number) => {
-    setGuides((prev) => prev.filter((guide) => guide.id !== id))
-    toast.success('Manual eliminado')
+  useEffect(() => {
+    fetchManuals()
+  }, [])
+
+  const handleCreate = async () => {
+    startTransition(async () => {
+      const res = await createManual('userId', formData)
+      if (res.success) {
+        toast.success(res.message)
+        setFormData({ name: '', description: '', url: '' })
+        setOpen(false)
+        fetchManuals()
+      } else toast.error(res.message)
+    })
   }
 
-  const handleEdit = (id: number, newName: string) => {
-    setGuides((prev) =>
-      prev.map((guide) =>
-        guide.id === id ? { ...guide, name: newName } : guide
-      )
-    )
-    toast.success('Nombre del manual actualizado')
+  const handleUpdate = async () => {
+    startTransition(async () => {
+      if (!editData) return;
+      const res = await updateManual({ id: editData.id, name: formData.name, description: formData.description })
+      if (res.success) {
+        toast.success(res.message)
+        setEditData(null)
+        setOpen(false)
+        fetchManuals()
+      } else toast.error(res.message)
+    })
   }
+
+  const handleDelete = async (id: string) => {
+    startTransition(async () => {
+      const res = await deleteManual(id)
+      if (res.success) {
+        toast.success(res.message)
+        fetchManuals()
+      } else toast.error(res.message)
+    })
+  }
+
+  const openEdit = (manual: ManualClient) => {
+    setEditData(manual)
+    setFormData({ name: manual.name, description: manual.description || '', url: manual.url || '' })
+    setOpen(true)
+  }
+
+  const filtered = manuals.filter(m => m.name.toLowerCase().includes(search.toLowerCase()))
 
   return (
-    <section className="p-4 sm:p-6">
-      <h2 className="text-2xl font-semibold mb-4 text-blue-800">Manuales del Usuario</h2>
-
-      {user.role === 'admin' && (
-        <div className="mb-6 flex items-center gap-4">
-          <Input
-            ref={fileInputRef}
-            type="file"
-            accept="application/pdf"
-            className="hidden"
-            onChange={handleFileUpload}
-          />
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            className="bg-blue-600 text-white hover:bg-blue-700"
-          >
-            <Upload className="w-4 h-4 mr-2" /> Cargar Manual
-          </Button>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {guides.map((guide) => (
-          <Card key={guide.id} className="bg-blue-50 border border-blue-200">
-            <CardContent className="p-4 flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <div className="text-blue-900 font-medium truncate">
-                  <FileText className="inline mr-2 text-blue-500" />
-                  {guide.name}
-                </div>
-                {user.role === 'admin' && (
-                  <div className="flex gap-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="ghost" className="text-blue-600 hover:text-blue-800">
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Editar nombre del manual</DialogTitle>
-                        </DialogHeader>
-                        <form
-                          onSubmit={(e) => {
-                            e.preventDefault()
-                            const formData = new FormData(e.currentTarget)
-                            const newName = formData.get('name') as string
-                            handleEdit(guide.id, newName)
-                          }}
-                          className="space-y-4"
-                        >
-                          <Input
-                            name="name"
-                            defaultValue={guide.name}
-                            className="text-blue-800"
-                          />
-                          <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-700">
-                            Guardar cambios
-                          </Button>
-                        </form>
-                      </DialogContent>
-                    </Dialog>
-                    <Button
-                      variant="ghost"
-                      className="text-red-600 hover:text-red-800"
-                      onClick={() => handleDelete(guide.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+    <div className="max-w-4xl mx-auto p-6 space-y-4">
+      <div className="flex items-center justify-between gap-4">
+        <Input placeholder="Buscar manual..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full max-w-sm" />
+        {user.role === Role.admin &&
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button>Nuevo manual</Button>
+            </DialogTrigger>
+            <DialogContent className="border-border">
+              <DialogHeader>
+                <DialogTitle>{editData ? 'Editar Manual' : 'Crear Manual'}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input placeholder="Nombre" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                <Textarea placeholder="Descripción" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+                {!editData && (
+                  <Input placeholder="URL" value={formData.url} onChange={(e) => setFormData({ ...formData, url: e.target.value })} />
                 )}
               </div>
-              <a
-                href={URL.createObjectURL(guide.file)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:underline"
-              >
-                Ver manual
+              <DialogFooter>
+                <Button onClick={editData ? handleUpdate : handleCreate} disabled={isPending}>
+                  {editData ? 'Actualizar' : 'Crear'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        }
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {filtered.map((manual) => (
+          <Card key={manual.id} className="relative group border-border">
+            <CardContent className="space-y-2 py-4">
+              <h3 className="text-lg font-semibold line-clamp-1">{manual.name}</h3>
+              <p className="text-sm text-muted-foreground line-clamp-2">{manual.description}</p>
+              <a href={manual.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 underline">
+                Ver Manual
               </a>
+              {user.role === Role.admin &&
+                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                  <Button variant="outline" size="icon" onClick={() => openEdit(manual)}>
+                    <Edit2Icon />
+                  </Button>
+                  <Button variant="destructive" size="icon" onClick={() => handleDelete(manual.id)}>
+                    <Trash2 />
+                  </Button>
+                </div>
+              }
             </CardContent>
           </Card>
         ))}
       </div>
-    </section>
+    </div>
   )
 }

@@ -11,7 +11,7 @@ interface Props {
 const AdminPage = async ({ searchParams }: Props) => {
   const user = await currentUser();
 
-  if (user?.role !== "admin") {
+  if (!user || user?.role !== "admin") {
     return <div>Lo sentimos este portal solo esta hecho para distruibudores.</div>;
   };
 
