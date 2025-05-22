@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deleteSession } from "@/actions/session-action";
 import { deleteConversationN8N } from "@/actions/n8n-chat-historial-action";
@@ -167,7 +167,17 @@ export const columns = ({ onDeleteSuccess, mutateSessions }: { onDeleteSuccess: 
   },
   {
     accessorKey: "status",
-    header: "Estado",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Estado
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
     cell: ({ row }) => {
       const status = row.getValue("status") as boolean;
       const sessionId = row.original.id;

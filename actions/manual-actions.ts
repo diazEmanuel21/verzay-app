@@ -61,7 +61,7 @@ export async function createManual(
 export async function getManuals(): Promise<ManualResponse> {
     try {
         const list = await db.manual.findMany({
-            orderBy: { createdAt: 'desc' },
+            orderBy: { name: 'asc' },
         })
 
         return {
