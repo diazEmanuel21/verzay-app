@@ -42,7 +42,8 @@ const breadcrumbLabels: Record<string, string> = {
   reminders: 'recordatorios',
   tutorial: 'tutoriales',
   guide: 'guías',
-  documentation: 'documentación'
+  documentation: 'documentación',
+  module: 'módulos'
 };
 
 export const Breadcrumbs = () => {

@@ -36,6 +36,10 @@ export const navLinks: NavLinkItem[] = [
     hiddenModule: true,
     items: [
       {
+        url: '/admin/module',
+        title: 'Módulos',
+      },
+      {
         url: '/admin/conexion',
         title: 'API',
       },
