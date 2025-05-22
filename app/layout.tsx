@@ -30,7 +30,7 @@ export const viewport = {
 }
 
 export const metadata: Metadata = {
-  title: 'Verzay IA',
+  title: 'Agente IA',
   description: 'La plataforma de inteligencia artificial que potencia y automatiza tu negocio.',
   icons: {
     icon: '/favicon.ico',
