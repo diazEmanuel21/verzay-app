@@ -9,3 +9,4 @@ export * from './SelectComboBox';
 export * from './UtilComboBox';
 export * from './SelectWorkflowBox';
 export * from './BrandSelector';
+export * from './ModulesSelector';

@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { z } from 'zod';
 import { Camera, ExternalLinkIcon } from "lucide-react";
 import { UserWithPausar } from "@/lib/types";
-import { BrandSelector } from "./custom";
+import { BrandSelector, ModulesSelector } from "./custom";
 import { useResellerStore } from "@/stores/resellers/resellerStore";
 import { Role } from "@prisma/client";
 
@@ -279,134 +279,135 @@ export const UserInformation = ({ userId }: { userId: string }) => {
         <>
             {
                 user && (
-                    <div className="px-6 md:px-12 py-8">
-                        <div className="space-y-8">
-                            <div className="flex flex-row justify-between">
-                                <Header
-                                    title="Perfil de la Empresa"
-                                />
-                                <div className="space-y-2">
-                                    <Label className="text-muted-foreground">Foto de perfil</Label>
-
-                                    <div className="flex items-center gap-4">
-                                        <div
-                                            className="relative w-16 h-16 rounded-full overflow-hidden border-border shadow-sm cursor-pointer hover:ring-2 hover:ring-primary"
-                                            onClick={() => fileRef.current?.click()}
-                                        >
-                                            <img
-                                                src={user?.image as string ?? defaultImgUrl}
-                                                alt="avatar-preview"
-                                                className="w-full h-full object-cover"
-                                            />
-                                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition">
-                                                <Camera className="text-white h-4 w-4" />
-                                            </div>
+                    <div className="flex flex-col gap-4">
+                        <div className="flex flex-row justify-between">
+                            <Header
+                                title="Ajustes de perfil"
+                            />
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-4">
+                                    <div
+                                        className="relative w-16 h-16 rounded-full overflow-hidden border-border shadow-sm cursor-pointer hover:ring-2 hover:ring-primary"
+                                        onClick={() => fileRef.current?.click()}
+                                    >
+                                        <img
+                                            src={user?.image as string ?? defaultImgUrl}
+                                            alt="avatar-preview"
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition">
+                                            <Camera className="text-white h-4 w-4" />
                                         </div>
                                     </div>
-
-                                    <Input
-                                        id="avatar"
-                                        type="file"
-                                        accept="image/*"
-                                        ref={fileRef}
-                                        onChange={(e) => handleImageUpload(e)}
-                                        className="hidden"
-                                    />
                                 </div>
 
+                                <Input
+                                    id="avatar"
+                                    type="file"
+                                    accept="image/*"
+                                    ref={fileRef}
+                                    onChange={(e) => handleImageUpload(e)}
+                                    className="hidden"
+                                />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        </div>
 
-                                {[
-                                    { key: 'apiUrl', label: 'API key OpenAI', type: 'password' },
-                                    { key: 'company', label: 'Empresa' },
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {[
+                                { key: 'apiUrl', label: 'API key OpenAI', type: 'password' },
+                                { key: 'company', label: 'Empresa' },
 
-                                    { key: 'notificationNumber', label: 'Número de notificación' },
-                                    { key: 'autoReactivate', label: 'Tiempo de reactivación(minutos)', type: 'number' },
-                                    { key: 'openMsg', label: 'Frase de reactivación' },
-                                    { key: 'del_seguimiento', label: 'Eliminar seguimiento' },
-                                ].map(({ key, label, type }) => (
-                                    <div key={key} className="space-y-2">
-                                        <Label htmlFor={key} className="text-muted-foreground">{label}</Label>
-                                        <Input
-                                            id={key}
-                                            name={key}
-                                            type={type || 'text'}
-                                            value={user[key as keyof EditableFields] as string}
-                                            disabled={loadingField === key}
-                                            onChange={(e) => handleChange(key as keyof UserWithPausar, e.target.value)}
-                                            onBlur={() => handleBlur(key as keyof UserWithPausar)}
-                                            className="bg-background border-border focus-visible:ring-2 focus-visible:ring-primary"
-                                        />
-                                    </div>
-                                ))}
-
-                                {/* Nuevo bloque para BrandSelector */}
-                                {user.role === Role.reseller &&
-                                    <div className="space-y-2">
-                                        <BrandSelector />
-                                    </div>
-                                }
-
-                                {/* URL Google Maps */}
-                                <div className="space-y-2 md:col-span-2">
-                                    <Label htmlFor="mapsUrl" className="text-muted-foreground">
-                                        URL de Google Maps
-                                    </Label>
+                                { key: 'notificationNumber', label: 'Número de notificación' },
+                                { key: 'autoReactivate', label: 'Tiempo de reactivación(minutos)', type: 'number' },
+                                { key: 'openMsg', label: 'Frase de reactivación' },
+                                { key: 'del_seguimiento', label: 'Eliminar seguimiento' },
+                            ].map(({ key, label, type }) => (
+                                <div key={key} className="space-y-2">
+                                    <Label htmlFor={key} className="text-muted-foreground">{label}</Label>
                                     <Input
-                                        id="mapsUrl"
-                                        name="mapsUrl"
-                                        type="text"
-                                        placeholder="Pega aquí la URL de Google Maps"
-                                        value={user?.mapsUrl}
-                                        disabled={loadingField === 'mapsUrl'}
-                                        onChange={(e) => handleMapsUrlChange(e.target.value)}
-                                        onBlur={() => handleBlur('mapsUrl')}
+                                        id={key}
+                                        name={key}
+                                        type={type || 'text'}
+                                        value={user[key as keyof EditableFields] as string}
+                                        disabled={loadingField === key}
+                                        onChange={(e) => handleChange(key as keyof UserWithPausar, e.target.value)}
+                                        onBlur={() => handleBlur(key as keyof UserWithPausar)}
                                         className="bg-background border-border focus-visible:ring-2 focus-visible:ring-primary"
                                     />
                                 </div>
+                            ))}
 
-                                {/* Latitud y Longitud */}
-                                {['lat', 'lng'].map(coord => (
-                                    <div key={coord} className="space-y-2">
-                                        <Label htmlFor={coord} className="text-muted-foreground">
-                                            {coord === 'lat' ? 'Latitud' : 'Longitud'}
-                                        </Label>
-                                        <Input
-                                            id={coord}
-                                            name={coord}
-                                            type="text"
-                                            value={user[coord as keyof EditableFields] as string}
-                                            disabled
-                                            readOnly
-                                            className="bg-muted border-border text-muted-foreground cursor-not-allowed"
-                                        />
-                                    </div>
-                                ))}
+                            {/* Selector de color(theme) */}
+                            {user.role === Role.reseller &&
+                                <div className="space-y-2">
+                                    <BrandSelector />
+                                </div>
+                            }
+                            {/* Selector de modulos */}
+                            {user.role === Role.reseller &&
+                                <div className="space-y-2">
+                                    <ModulesSelector />
+                                </div>
+                            }
+
+                            {/* URL Google Maps */}
+                            <div className="space-y-2 md:col-span-2">
+                                <Label htmlFor="mapsUrl" className="text-muted-foreground">
+                                    URL de Google Maps
+                                </Label>
+                                <Input
+                                    id="mapsUrl"
+                                    name="mapsUrl"
+                                    type="text"
+                                    placeholder="Pega aquí la URL de Google Maps"
+                                    value={user?.mapsUrl}
+                                    disabled={loadingField === 'mapsUrl'}
+                                    onChange={(e) => handleMapsUrlChange(e.target.value)}
+                                    onBlur={() => handleBlur('mapsUrl')}
+                                    className="bg-background border-border focus-visible:ring-2 focus-visible:ring-primary"
+                                />
                             </div>
 
-                            {/* Vista previa del mapa */}
-                            <div className="space-y-4">
-                                <h3 className="text-sm font-medium text-muted-foreground">
-                                    Vista previa de ubicación
-                                </h3>
-                                {user?.lat && user?.lng ? (
-                                    <div className="rounded-md overflow-hidden border-border">
-                                        <iframe
-                                            src={`https://www.google.com/maps?q=${user.lat},${user.lng}&output=embed`}
-                                            width="100%"
-                                            height="300"
-                                            loading="lazy"
-                                            className="w-full h-72"
-                                        />
-                                    </div>
-                                ) : (
-                                    <p className="text-sm text-muted-foreground">
-                                        Ingresa una URL válida de Google Maps para ver la ubicación.
-                                    </p>
-                                )}
-                            </div>
+                            {/* Latitud y Longitud */}
+                            {['lat', 'lng'].map(coord => (
+                                <div key={coord} className="space-y-2">
+                                    <Label htmlFor={coord} className="text-muted-foreground">
+                                        {coord === 'lat' ? 'Latitud' : 'Longitud'}
+                                    </Label>
+                                    <Input
+                                        id={coord}
+                                        name={coord}
+                                        type="text"
+                                        value={user[coord as keyof EditableFields] as string}
+                                        disabled
+                                        readOnly
+                                        className="bg-muted border-border text-muted-foreground cursor-not-allowed"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Vista previa del mapa */}
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-medium text-muted-foreground">
+                                Vista previa de ubicación
+                            </h3>
+                            {user?.lat && user?.lng ? (
+                                <div className="rounded-md overflow-hidden border-border">
+                                    <iframe
+                                        src={`https://www.google.com/maps?q=${user.lat},${user.lng}&output=embed`}
+                                        width="100%"
+                                        height="300"
+                                        loading="lazy"
+                                        className="w-full h-72"
+                                    />
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">
+                                    Ingresa una URL válida de Google Maps para ver la ubicación.
+                                </p>
+                            )}
                         </div>
                     </div>
                 )

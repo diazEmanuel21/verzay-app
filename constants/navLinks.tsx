@@ -15,6 +15,7 @@ export interface NavLinkItem {
   label: string;
   route: string;
   icon: any;
+  hiddenModule?: boolean;
   showInSidebar?: boolean;
   allowedPlans?: string[];
   adminOnly?: boolean;
@@ -32,6 +33,7 @@ export const navLinks: NavLinkItem[] = [
     icon: ShieldCheckIcon,
     adminOnly: true,
     showInSidebar: true,
+    hiddenModule: true,
     items: [
       {
         url: '/admin/conexion',
@@ -114,8 +116,8 @@ export const navLinks: NavLinkItem[] = [
     label: "Ajustes de perfil",
     route: "/profile",
     icon: Cog6ToothIcon,
-    adminOnly: false,
     showInSidebar: true,
     requiresPremium: false,
+    hiddenModule: true,
   },
 ];
