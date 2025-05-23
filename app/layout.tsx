@@ -22,7 +22,7 @@ import { getResellerProfileForUser } from '@/actions/reseller-action';
 const poppins = Poppins({ subsets: ['latin'], weight: ['400', '700'] });
 
 //Generic class 
-const themeClass = "bg-slate-100 text-black dark:bg-gray-900 dark:text-white";
+const themeClass = "bg-slate-100 text-black dark:bg-black dark:text-white";
 
 export const viewport = {
   width: 'device-width',
@@ -52,7 +52,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${poppins.className} overflow-hidden ${themeClass}`}>
+      <body className={`${poppins.className} overflow-hidden`}>
         <AppProviders>
           <ThemeProvider>
             <AppInitializer onReseller={onReseller} />
@@ -63,7 +63,7 @@ export default async function RootLayout({
 
                   {/* Header fijo, pero ocupa espacio */}
                   <div className="h-18 shrink-0">
-                    <header className={`sticky top-0 h-18 w-full border-border flex items-center px-4 ${themeClass}`}>
+                    <header className={`sticky top-0 h-18 w-full border-border flex items-center px-4 dark:bg-gray-900 dark:text-white`}>
                       <Breadcrumbs />
                     </header>
                   </div>
