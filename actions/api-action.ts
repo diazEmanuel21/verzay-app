@@ -3,6 +3,12 @@
 import { db } from "@/lib/db";
 import { ApiKey } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+
+interface GenerateQrInterface {
+  instanceName: string
+  userId: string
+  apiKey?: string
+}
 interface ClientResponse<T = undefined> {
   success: boolean
   message: string
@@ -36,7 +42,7 @@ interface QRCodeResponse {
 }
 
 //Server-Action Para generar el QR
-export async function generarCodigoQR(instanceName: string, apiKey: string, userId: string): Promise<QRCodeResponse> {
+export async function generateQRCode({ instanceName, userId, apiKey }: GenerateQrInterface): Promise<QRCodeResponse> {
   try {
     // 🔥 Buscar el usuario y su ApiKey asignada
     const user = await db.user.findUnique({
@@ -227,7 +233,7 @@ export async function createInstance(data: FormData) {
     }
 
     // Verificar si el usuario ya tiene una instancia activa
-    const instanciaActiva = await verificarInstanciaActiva(userId);
+    const instanciaActiva = await checkActiveInstance(userId);
     if (instanciaActiva) {
       return { success: false, message: "El usuario ya tiene una instancia activa.", instancia: instanciaActiva };
     }
@@ -291,10 +297,10 @@ export async function createInstance(data: FormData) {
   }
 }
 
-export async function eliminarInstancia(userId: string) {
+export async function deleteInstance(userId: string) {
   try {
     // Verificar si el usuario tiene una instancia activa
-    const instanciaActiva = await verificarInstanciaActiva(userId);
+    const instanciaActiva = await checkActiveInstance(userId);
     if (!instanciaActiva) {
       return { success: false, message: "El usuario no tiene ninguna instancia activa." };
     }
@@ -365,7 +371,7 @@ export async function eliminarInstancia(userId: string) {
 }
 
 // Función para verificar si el usuario ya tiene una instancia
-export async function verificarInstanciaActiva(userId: string) {
+export async function checkActiveInstance(userId: string) {
   const instanciaActiva = await db.instancias.findFirst({
     where: { userId },
   });

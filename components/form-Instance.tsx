@@ -1,15 +1,14 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { createInstance, eliminarInstancia, verificarInstanciaActiva } from "@/actions/api-action";
+import { createInstance, deleteInstance, checkActiveInstance } from "@/actions/api-action";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { Trash, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -28,7 +27,7 @@ export default function FormInstance({ userId }: { userId: string }) {
 
   useEffect(() => {
     const checkInstance = async () => {
-      const activeInstance = await verificarInstanciaActiva(userId);
+      const activeInstance = await checkActiveInstance(userId);
       setInstanceExists(!!activeInstance);
       setInstanceName(activeInstance?.instanceName || "");
     };
@@ -79,7 +78,7 @@ export default function FormInstance({ userId }: { userId: string }) {
     setMessage(null);
 
     try {
-      const result = await eliminarInstancia(userId);
+      const result = await deleteInstance(userId);
       setMessage(result.message);
 
       if (result.success) {

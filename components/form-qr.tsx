@@ -1,14 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getInstances, generarCodigoQR } from '@/actions/api-action';
+import { getInstances, generateQRCode } from '@/actions/api-action';
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, QrCode, CheckCircle, Link, X } from "lucide-react";
+import { Loader2, QrCode, CheckCircle } from "lucide-react";
 import Image from "next/image";
-import { toast } from "sonner";
 
 interface QRCodeGeneratorProps {
     instanceName: string;
@@ -29,7 +27,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
 
     const fetchQRCode = async (instanceName: string, apiKey: string) => {
         setLoading(true);
-        const response = await generarCodigoQR(instanceName, apiKey, userId);
+        const response = await generateQRCode({ instanceName, apiKey, userId });
 
         if (response.success) {
             setQrCode(response.qr?.code || null);
@@ -75,22 +73,20 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
     };
 
     return (
-        <div className="flex flex-col items-center justify-center gap-4">
+        <>
             <Button
+                className="w-full"
                 onClick={handleOpenModal}
                 variant={connectionStatus ? "default" : "secondary"}
-                // className="flex items-center gap-2"
-                className="flex items-center gap-2 w-full max-w-xs justify-center py-6 rounded-xl text-base font-semibold transition-all"
-
             >
                 {connectionStatus ? (
                     <>
-                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <QrCode />
                         Conectado
                     </>
                 ) : (
                     <>
-                        <Link className="w-4 h-4" />
+                        <QrCode />
                         Conectar
                     </>
                 )}
@@ -115,13 +111,6 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
                             <Loader2 className="animate-spin w-6 h-6" />
                         </div>
                     )}
-
-                    {/* {error && (
-                        <Alert variant="destructive">
-                            <AlertTitle>Error</AlertTitle>
-                            <AlertDescription>{error}</AlertDescription>
-                        </Alert>
-                    )} */}
 
                     {!error && !loading && (
                         <>
@@ -161,7 +150,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
                     )}
                 </DialogContent>
             </Dialog>
-        </div>
+        </>
     );
 };
 

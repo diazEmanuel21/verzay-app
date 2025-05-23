@@ -1,28 +1,23 @@
 'use client'
 
-import { deleteGuide } from '@/actions/guide-actions'
+import EnableToggleButton from '@/components/button-bot'
+import QRCodeGenerator from '@/components/form-qr'
 import { GenericDeleteDialog } from '@/components/shared/GenericDeleteDialog'
-import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { User } from '@prisma/client'
-import { Eye, Copy, Trash2, Settings, MessageCircle, Users } from 'lucide-react'
+import { MessageCircle, Users } from 'lucide-react'
 import { useState } from 'react'
 import { FaWhatsapp } from 'react-icons/fa'
-import { toast } from 'sonner'
-
+import { ConnectionActions } from './'
+import { deleteInstance } from '@/actions/api-action'
 interface ClientInstanceCardProps {
   intanceName: string
   user: User
   intanceNumber: string
-  connected: boolean
   messages: number
   contacts: number
-  apiKey: string
-}
+};
 
 const instanceId = 'ABC123'
 
@@ -30,86 +25,84 @@ export const ClientInstanceCard = ({
   intanceName,
   user,
   intanceNumber,
-  connected,
   messages,
   contacts,
-  apiKey,
 }: ClientInstanceCardProps) => {
-  const [showKey, setShowKey] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const userInitial = user?.name?.charAt(0).toUpperCase() ?? '?'
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(apiKey)
-    toast.success('API Key copiada')
-  }
-
   return (
-    <Card className="border-border max-w-96">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <CardTitle>{intanceName}</CardTitle>
-          <Settings className="h-4 w-4 text-muted-foreground cursor-pointer" />
-        </div>
-        <CardDescription>Gestiona tu conexión con nuestra IA</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-3 mt-3">
-          <Avatar className="rounded-lg">
-            {user?.image && <AvatarImage src={user?.image} alt={user?.name ?? ''} />}
-            <AvatarFallback className="rounded-lg">
-              {userInitial}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <div className="text-sm font-medium">{user?.name}</div>
-            <div className="text-xs text-muted-foreground">{intanceNumber}</div>
+    <>
+      <Card className="border-border max-w-96">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>{intanceName}</CardTitle>
+            <ConnectionActions handleDelete={setShowDeleteDialog} />
           </div>
-        </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-3">
+            <Avatar className="rounded-lg">
+              {user?.image && <AvatarImage src={user?.image} alt={user?.name ?? ''} />}
+              <AvatarFallback className="rounded-lg">
+                {userInitial}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="text-sm font-medium">{user?.name}</div>
+              <div className="text-xs text-muted-foreground">{intanceNumber}</div>
+            </div>
+          </div>
 
-        <div className="flex items-center justify-between mt-4 text-xs">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Users size={16} strokeWidth={1.5} />
-              <span>{contacts}</span>
+          <div className="flex items-center justify-between mt-4 text-xs flex-col gap-2">
+            <div className="flex flex-1 items-center gap-2 text-muted-foreground justify-start w-full">
+              <div className="flex items-center gap-1">
+                <Users size={16} strokeWidth={1.5} />
+                <span>{contacts}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <MessageCircle size={16} strokeWidth={1.5} />
+                <span>{messages}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <MessageCircle size={16} strokeWidth={1.5} />
-              <span>{messages}</span>
-            </div>
-          </div>
-          <div className="flex justify-end gap-1">
-            <div className={`text-xs font-medium px-2 py-1 rounded-full ${connected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-              {connected ? 'Conectado' : 'Desconectado'}
-            </div>
-            <Switch id="airplane-mode" />
-          </div>
-        </div>
-      </CardContent>
-      <CardFooter className="flex flex-row justify-center items-center">
 
-        <Button
-          variant={"ghost"}
-          onClick={() => setShowDeleteDialog(true)}
-        >
-          <FaWhatsapp
-            className="text-green-500 rounded-sm"
-          />
-          <span className="font-bold">Whatsapp</span>
-          <hr className="w-4 rotate-90" />
-          <span className="text-gray-400">Business</span>
-          <span className="text-green-500">avanzado</span>
-        </Button>
-        <GenericDeleteDialog
-          open={showDeleteDialog}
-          setOpen={setShowDeleteDialog}
-          itemName={'Bot IA'}
-          itemId={instanceId}
-          mutationFn={() => deleteGuide(instanceId)}
-          entityLabel="Bot IA"
-        />
-      </CardFooter>
-    </Card>
+            <div className="flex flex-1 justify-end gap-1 items-center flex-row w-full">
+              <QRCodeGenerator userId={user.id} />
+              <EnableToggleButton
+                userId={user.id}
+                userName={user.name}
+                apiurl={user.apiUrl}
+                apikey={user.apiKeyId as string}
+                webhookUrl={user?.webhookUrl ?? 'http://82.29.152.30:4001/webhook'}
+              />
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className="flex flex-row justify-start items-center">
+
+          <div className="flex flex-1 flex-row items-center gap-1">
+            <FaWhatsapp
+              className="text-green-500 rounded-sm"
+            />
+            <span className="text-sm font-bold">Whatsapp</span>
+            <hr className="w-4 rotate-90" />
+            <span className="text-sm text-gray-400">Business</span>
+            <span className="text-sm text-green-500">avanzado</span>
+          </div>
+
+
+        </CardFooter>
+      </Card>
+
+      <GenericDeleteDialog
+        open={showDeleteDialog}
+        setOpen={setShowDeleteDialog}
+        itemName={'Bot IA'}
+        itemId={instanceId}
+        mutationFn={() => deleteInstance(user.id)}
+        entityLabel="Bot IA"
+      />
+    </>
   )
 }
