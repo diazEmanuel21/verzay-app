@@ -42,7 +42,7 @@ export const ClientInstanceCard = ({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-3">
+          {/* <div className="flex items-center gap-3">
             <Avatar className="rounded-lg">
               {user?.image && <AvatarImage src={user?.image} alt={user?.name ?? ''} />}
               <AvatarFallback className="rounded-lg">
@@ -53,10 +53,11 @@ export const ClientInstanceCard = ({
               <div className="text-sm font-medium">{user?.name}</div>
               <div className="text-xs text-muted-foreground">{intanceNumber}</div>
             </div>
-          </div>
+          </div> */}
 
-          <div className="flex items-center justify-between mt-4 text-xs flex-col gap-2">
-            <div className="flex flex-1 items-center gap-2 text-muted-foreground justify-start w-full">
+          {/* <div className="flex items-center justify-between mt-4 text-xs flex-col gap-2"> */}
+          <div className="flex items-center justify-between text-xs flex-col gap-2">
+            {/* <div className="flex flex-1 items-center gap-2 text-muted-foreground justify-start w-full">
               <div className="flex items-center gap-1">
                 <Users size={16} strokeWidth={1.5} />
                 <span>{contacts}</span>
@@ -65,7 +66,7 @@ export const ClientInstanceCard = ({
                 <MessageCircle size={16} strokeWidth={1.5} />
                 <span>{messages}</span>
               </div>
-            </div>
+            </div> */}
 
             <div className="flex flex-1 justify-end gap-1 items-center flex-row w-full">
               <QRCodeGenerator userId={user.id} />
