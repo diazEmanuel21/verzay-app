@@ -49,7 +49,7 @@ export const ConnectionMain = ({ user, instance }: { user: User, instance?: Inst
                 instance
                     ?
                     <ClientInstanceCard
-                        intanceName={'Dasilrod Multitienda'}
+                        intanceName={instanceName}
                         user={user}
                         intanceNumber={'584129109044'}
                         messages={21610}

@@ -80,7 +80,6 @@ export const ClientInstanceCard = ({
           </div>
         </CardContent>
         <CardFooter className="flex flex-row justify-start items-center">
-
           <div className="flex flex-1 flex-row items-center gap-1">
             <FaWhatsapp
               className="text-green-500 rounded-sm"
@@ -90,8 +89,6 @@ export const ClientInstanceCard = ({
             <span className="text-sm text-gray-400">Business</span>
             <span className="text-sm text-green-500">avanzado</span>
           </div>
-
-
         </CardFooter>
       </Card>
 
