@@ -11,7 +11,7 @@ export function UnderConstruction() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
             className={cn(
-                "relative border backdrop-blur-xl rounded-2xl shadow-xl p-8 max-w-96 w-full text-center space-y-6",
+                "relative border backdrop-blur-xl rounded-md shadow-xl p-4 max-w-96 w-full text-center space-y-6",
                 "bg-white/60 border-white/30 dark:bg-black/40 dark:border-white/20"
             )}
         >

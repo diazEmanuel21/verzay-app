@@ -4,33 +4,30 @@ import EnableToggleButton from '@/components/button-bot'
 import QRCodeGenerator from '@/components/form-qr'
 import { GenericDeleteDialog } from '@/components/shared/GenericDeleteDialog'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { User } from '@prisma/client'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { MessageCircle, Users } from 'lucide-react'
 import { useState } from 'react'
 import { FaWhatsapp } from 'react-icons/fa'
 import { ConnectionActions } from './'
 import { deleteInstance } from '@/actions/api-action'
-interface ClientInstanceCardProps {
-  intanceName: string
-  user: User
-  intanceNumber: string
-  messages: number
-  contacts: number
-};
-
-const instanceId = 'ABC123'
+import { ClientInstanceCardProps } from '@/schema/connection'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export const ClientInstanceCard = ({
   intanceName,
   user,
-  intanceNumber,
-  messages,
-  contacts,
+  currentInstanceInfo
 }: ClientInstanceCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const userInitial = user?.name?.charAt(0).toUpperCase() ?? '?'
+  const instanceId = currentInstanceInfo?.id;
+  const ownerJid = currentInstanceInfo?.ownerJid;
+  const profileName = currentInstanceInfo?.profileName;
+  const profilePicUrl = currentInstanceInfo?.profilePicUrl;
+  const chats = currentInstanceInfo?._count?.Chat;
+  const contacts = currentInstanceInfo?._count?.Contact;
+  const messages = currentInstanceInfo?._count?.Message;
+  const userInitial = intanceName.charAt(0).toUpperCase() ?? '?'
 
   return (
     <>
@@ -42,22 +39,30 @@ export const ClientInstanceCard = ({
           </div>
         </CardHeader>
         <CardContent>
-          {/* <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <Avatar className="rounded-lg">
-              {user?.image && <AvatarImage src={user?.image} alt={user?.name ?? ''} />}
+              {profilePicUrl && <AvatarImage src={profilePicUrl} alt={intanceName ?? ''} />}
               <AvatarFallback className="rounded-lg">
                 {userInitial}
               </AvatarFallback>
             </Avatar>
             <div>
-              <div className="text-sm font-medium">{user?.name}</div>
-              <div className="text-xs text-muted-foreground">{intanceNumber}</div>
+              {profileName ? (
+                <>
+                  <div className="text-sm font-medium">{profileName}</div>
+                  <div className="text-xs text-muted-foreground">{ownerJid}</div>
+                </>
+              ) : (
+                <>
+                  <Skeleton className="h-4 w-[120px] mb-1" />
+                  <Skeleton className="h-3 w-[100px]" />
+                </>
+              )}
             </div>
-          </div> */}
+          </div>
 
-          {/* <div className="flex items-center justify-between mt-4 text-xs flex-col gap-2"> */}
-          <div className="flex items-center justify-between text-xs flex-col gap-2">
-            {/* <div className="flex flex-1 items-center gap-2 text-muted-foreground justify-start w-full">
+          <div className="flex items-center justify-between mt-4 text-xs flex-col gap-2">
+            <div className="flex flex-1 items-center gap-2 text-muted-foreground justify-start w-full">
               <div className="flex items-center gap-1">
                 <Users size={16} strokeWidth={1.5} />
                 <span>{contacts}</span>
@@ -66,7 +71,7 @@ export const ClientInstanceCard = ({
                 <MessageCircle size={16} strokeWidth={1.5} />
                 <span>{messages}</span>
               </div>
-            </div> */}
+            </div>
 
             <div className="flex flex-1 justify-end gap-1 items-center flex-row w-full">
               <QRCodeGenerator userId={user.id} />
@@ -97,7 +102,7 @@ export const ClientInstanceCard = ({
         open={showDeleteDialog}
         setOpen={setShowDeleteDialog}
         itemName={'Bot IA'}
-        itemId={instanceId}
+        itemId={instanceId ?? 'instance-123'}
         mutationFn={() => deleteInstance(user.id)}
         entityLabel="Bot IA"
       />

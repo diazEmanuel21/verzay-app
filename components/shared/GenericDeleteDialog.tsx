@@ -59,7 +59,7 @@ export function GenericDeleteDialog({
         <AlertDialog open={open} onOpenChange={setOpen}>
             <AlertDialogContent className='border-border'>
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="dark:text-gray-100">Se eliminará <strong className="text-red-800">{entityLabel.toUpperCase()}</strong> ¿Estás seguro?</AlertDialogTitle>
+                    <AlertDialogTitle className="text-black dark:text-gray-100">Se eliminará <strong className="text-red-800">{entityLabel.toUpperCase()}</strong> ¿Estás seguro?</AlertDialogTitle>
                     <AlertDialogDescription>
                         Esta acción eliminará <strong className="text-red-800 uppercase">{entityLabel}</strong>. Esta acción no se puede deshacer.  ¿Deseas continuar?
                     </AlertDialogDescription>
@@ -75,7 +75,7 @@ export function GenericDeleteDialog({
                 </AlertDialogHeader>
 
                 <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setConfirmText("")} className="dark:text-gray-100">Cancelar</AlertDialogCancel>
+                    <AlertDialogCancel onClick={() => setConfirmText("")} className="text-black dark:text-gray-100">Cancelar</AlertDialogCancel>
                     <AlertDialogAction
                         disabled={isConfirmDisabled}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

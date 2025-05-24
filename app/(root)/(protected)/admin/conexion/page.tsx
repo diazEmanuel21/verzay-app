@@ -8,7 +8,7 @@ interface Props {
   searchParams: { [key: string]: string | undefined }
 }
 
-const AdminPage = async ({ searchParams }: Props) => {
+const ConnectionPage = async ({ searchParams }: Props) => {
   const user = await currentUser();
 
   if (!user || user?.role !== "admin") {
@@ -28,5 +28,5 @@ const AdminPage = async ({ searchParams }: Props) => {
   );
 };
 
-export default AdminPage;
+export default ConnectionPage;
 

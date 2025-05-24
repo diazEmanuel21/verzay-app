@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Loader2, QrCode, CheckCircle } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from 'next/navigation';
+import { Skeleton } from './ui/skeleton';
 
 interface QRCodeGeneratorProps {
     instanceName: string;
@@ -18,6 +20,7 @@ interface QRCodeGeneratorComponentProps {
 }
 
 const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) => {
+    const router = useRouter();
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -28,10 +31,10 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
     const fetchQRCode = async (instanceName: string, apiKey: string) => {
         setLoading(true);
         const response = await generateQRCode({ instanceName, apiKey, userId });
-        console.log({ responseQR: response })
         if (response.success) {
             setQrCode(response.qr?.code || null);
             setConnectionStatus(response.connectionState?.instance.state || null);
+            router.refresh();
         }
         setLoading(false);
     };
@@ -74,26 +77,24 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
 
     return (
         <>
-            <Button
-                className="w-full"
-                onClick={handleOpenModal}
-                variant={connectionStatus ? "default" : "secondary"}
-            >
-                {connectionStatus ? (
-                    <>
-                        <QrCode />
-                        Conectado
-                    </>
-                ) : (
-                    <>
-                        <QrCode />
-                        Conectar
-                    </>
-                )}
-            </Button>
+            {loading ? (
+                <Skeleton className="w-full h-10 rounded-md" />
+            ) : (
+                <Button
+                    className={`w-full transition-all duration-300 ${!connectionStatus
+                            ? "shadow-[0_0_12px_#22c55e] hover:shadow-[0_0_18px_#22c55e] ring-1 ring-green-400"
+                            : ""
+                        }`}
+                    onClick={handleOpenModal}
+                    variant={connectionStatus ? "default" : "secondary"}
+                >
+                    <QrCode className="mr-2 h-4 w-4" />
+                    {connectionStatus ? "Conectado" : "Conectar"}
+                </Button>
+            )}
 
             <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
-                <DialogContent onClick={handleBackdropClick}>
+                <DialogContent onClick={handleBackdropClick} className="border-border">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <QrCode className="w-5 h-5" />
