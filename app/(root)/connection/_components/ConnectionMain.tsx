@@ -8,9 +8,7 @@ import { ConnectionMainInterface, FormInstanceConnectionValues } from "@/schema/
 
 export const ConnectionMain = ({ user, instance, instanceInfo }: ConnectionMainInterface) => {
     const [loading, setLoading] = useState<boolean>(false);
-
     const instanceName = !instance ? '' : instance.instanceName;
-
     const currentInstanceInfo = instanceInfo?.find(i => i.name === instanceName);
 
     const onSubmit = async (data: FormInstanceConnectionValues) => {
