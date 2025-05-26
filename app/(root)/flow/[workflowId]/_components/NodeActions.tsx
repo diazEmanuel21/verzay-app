@@ -42,7 +42,7 @@ export function NodeActions({
 
           <DropdownMenuItem onClick={() => setOpenConfirmDeleteNode(true)} className="text-red-600">
             <Trash2 />
-            Eliminar
+            Eliminar nodo
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

@@ -8,7 +8,11 @@ import {
   ShieldCheckIcon,
   Cog6ToothIcon,
   BellAlertIcon,
-  BookOpenIcon
+  BookOpenIcon,
+  ChartPieIcon,
+  DocumentTextIcon,
+  ChatBubbleLeftEllipsisIcon,
+  FunnelIcon
 } from "@heroicons/react/24/solid";
 
 export interface NavLinkItem {
@@ -58,9 +62,21 @@ export const navLinks: NavLinkItem[] = [
     ]
   },
   {
+    label: "Dashboard",
+    route: "/dashboard",
+    icon: ChartPieIcon,
+    showInSidebar: true,
+  },
+  {
     label: "Guías",
     route: "/documentation",
     icon: BookOpenIcon,
+    showInSidebar: true,
+  },
+  {
+    label: "Plantillas",
+    route: "/templates",
+    icon: DocumentTextIcon,
     showInSidebar: true,
   },
   {
@@ -78,6 +94,12 @@ export const navLinks: NavLinkItem[] = [
     allowedPlans: ["pymes", "empresarial", "business"],
   },
   {
+    label: "Chats",
+    route: "/chats",
+    icon: ChatBubbleLeftEllipsisIcon,
+    showInSidebar: true,
+  },
+  {
     label: "Leads",
     route: "/sessions",
     icon: UsersIcon,
@@ -89,6 +111,13 @@ export const navLinks: NavLinkItem[] = [
     route: "/flow",
     icon: ChatBubbleLeftRightIcon,
     allowedPlans: ["empresarial", "business"],
+    showInSidebar: true,
+    requiresPremium: true,
+  },
+  {
+    label: "Campañas",
+    route: "/campaigns",
+    icon: FunnelIcon,
     showInSidebar: true,
     requiresPremium: true,
   },
