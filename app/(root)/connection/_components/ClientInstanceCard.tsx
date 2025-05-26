@@ -50,7 +50,7 @@ export const ClientInstanceCard = ({
               {profileName ? (
                 <>
                   <div className="text-sm font-medium">{profileName}</div>
-                  <div className="text-xs text-muted-foreground">{ownerJid}</div>
+                  <div className="text-xs text-muted-foreground">+{ownerJid?.split('@')[0]}</div>
                 </>
               ) : (
                 <>
@@ -62,7 +62,7 @@ export const ClientInstanceCard = ({
           </div>
 
           <div className="flex items-center justify-between mt-4 text-xs flex-col gap-2">
-            <div className="flex flex-1 items-center gap-2 text-muted-foreground justify-start w-full">
+            {/* <div className="flex flex-1 items-center gap-2 text-muted-foreground justify-start w-full">
               <div className="flex items-center gap-1">
                 <Users size={16} strokeWidth={1.5} />
                 <span>{contacts}</span>
@@ -71,7 +71,7 @@ export const ClientInstanceCard = ({
                 <MessageCircle size={16} strokeWidth={1.5} />
                 <span>{messages}</span>
               </div>
-            </div>
+            </div> */}
 
             <div className="flex flex-1 justify-end gap-1 items-center flex-row w-full">
               <QRCodeGenerator userId={user.id} />

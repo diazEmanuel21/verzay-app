@@ -65,7 +65,7 @@ export const navLinks: NavLinkItem[] = [
   },
   {
     label: "Conexión",
-    route: "/dashboard",
+    route: "/connection",
     icon: ViewfinderCircleIcon,
     showInSidebar: true,
     allowedPlans: ["pymes", "empresarial", "business"],

@@ -52,7 +52,7 @@ const FormLogin = ({ isVerified, OAuthAccountNotLinked }: FormLoginProps) => {
         );
       } else {
         router.refresh();
-        redirect("/dashboard");
+        redirect("/connection");
       }
     });
   }
