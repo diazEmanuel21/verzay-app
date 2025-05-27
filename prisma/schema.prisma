@@ -41,6 +41,35 @@ model User {
   // Relaciones inversas
   clientesAsignados  reseller[]      @relation("RevendedorAsignador")
   esClienteDe        reseller[]      @relation("ClienteAsignado")
+  modules            Module[]        @relation("UserModules")
+}
+
+model Module {
+  id                     String  @id @default(cuid())
+  label                  String
+  route                  String  @unique
+  icon                   String
+  showInSidebar          Boolean @default(true)
+  hiddenModuleToSelector Boolean @default(false)
+  adminOnly              Boolean @default(false)
+  requiresPremium        Boolean @default(false)
+  allowedPlans           Plan[]
+
+  users User[]       @relation("UserModules")
+  items ModuleItem[] @relation("ParentModule")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ModuleItem {
+  id       String @id @default(cuid())
+  title    String
+  url      String
+  moduleId String
+  module   Module @relation("ParentModule", fields: [moduleId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Session {

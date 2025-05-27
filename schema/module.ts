@@ -14,6 +14,7 @@ import {
     ChatBubbleLeftEllipsisIcon,
     FunnelIcon
 } from "@heroicons/react/24/solid";
+import { Plan } from "@prisma/client";
 
 export const iconMap = {
     ShieldCheckIcon,
@@ -34,6 +35,8 @@ export const iconMap = {
 
 import { z } from "zod"
 
+const PlanValues = Object.values(Plan) as [Plan, ...Plan[]];
+
 export const ItemModuleSchema = z.object({
     url: z.string().min(1),
     title: z.string().min(1),
@@ -44,10 +47,10 @@ export const FormModuleSchema = z.object({
     route: z.string().min(1, "Campo requerido"),
     icon: z.string().min(1, "Campo requerido"),
     showInSidebar: z.boolean().default(true),
-    hiddenModule: z.boolean().default(false),
+    hiddenModuleToSelector: z.boolean().default(false),
     adminOnly: z.boolean().default(false),
     requiresPremium: z.boolean().default(false),
-    allowedPlans: z.array(z.string()).optional(),
+    allowedPlans: z.array(z.enum(PlanValues)),
     items: z.array(ItemModuleSchema).optional(),
 })
 

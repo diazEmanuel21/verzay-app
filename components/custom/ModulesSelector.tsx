@@ -90,7 +90,7 @@ export function ModulesSelector() {
                                                     {modules.map(module => (
                                                         <>
                                                             {
-                                                                !module.hiddenModule && (
+                                                                !module.hiddenModuleToSelector && (
                                                                     <CommandItem
                                                                         key={module.label}
                                                                         onSelect={() => toggleOption(module.route)}

@@ -1,6 +1,7 @@
 "use client"
 
 import { SubmitHandler, useFieldArray, useForm } from "react-hook-form"
+import { Plan } from "@prisma/client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Input } from "@/components/ui/input"
@@ -19,6 +20,7 @@ export const ModuleForm = ({
     onSubmit: SubmitHandler<FormModuleValues>;
     defaultValues?: Partial<FormModuleValues>;
 }) => {
+    const plans: Plan[] = ["pymes", "empresarial", "business"];
 
     const form = useForm<FormModuleValues>({
         resolver: zodResolver(FormModuleSchema),
@@ -74,7 +76,7 @@ export const ModuleForm = ({
                     )}
                 />
 
-                {['showInSidebar', 'hiddenModule', 'adminOnly', 'requiresPremium'].map((key) => (
+                {['showInSidebar', 'hiddenModuleToSelector', 'adminOnly', 'requiresPremium'].map((key) => (
                     <FormField
                         key={key}
                         control={form.control}
@@ -89,7 +91,7 @@ export const ModuleForm = ({
                                 </FormControl>
                                 <FormLabel>{
                                     key === 'showInSidebar' ? 'Mostrar en Sidebar' :
-                                        key === 'hiddenModule' ? 'Ocultar módulo para reseller' :
+                                        key === 'hiddenModuleToSelector' ? 'Ocultar módulo para reseller' :
                                             key === 'adminOnly' ? 'Solo Admin' : 'Requiere Premium'
                                 }</FormLabel>
                             </FormItem>
@@ -104,18 +106,19 @@ export const ModuleForm = ({
                         <FormItem>
                             <FormLabel>Planes permitidos:</FormLabel>
                             <div className="flex gap-4">
-                                {['pymes', 'empresarial', 'business'].map(plan => (
+                                {plans.map((plan) => (
                                     <div key={plan} className="flex items-center gap-2">
                                         <Checkbox
                                             checked={field.value?.includes(plan)}
                                             onCheckedChange={(checked: CheckedState) => {
-                                                const newPlans = field.value?.includes(plan)
-                                                    ? field.value.filter((p: string) => p !== plan)
-                                                    : [...(field.value || []), plan]
-                                                field.onChange(newPlans)
+                                                const current: Plan[] = field.value || [];
+                                                const newPlans = current.includes(plan)
+                                                    ? current.filter((p) => p !== plan)
+                                                    : [...current, plan];
+                                                field.onChange(newPlans);
                                             }}
                                         />
-                                        <span className="text-sm">{plan}</span>
+                                        <span className="text-sm capitalize">{plan}</span>
                                     </div>
                                 ))}
                             </div>

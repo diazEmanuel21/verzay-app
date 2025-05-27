@@ -1,6 +1,7 @@
 // utils/access.ts
 
 import { NavLinkItem } from '@/constants/navLinks';
+import { Plan } from '@prisma/client';
 
 export function getRouteAccess(route: string, modules: NavLinkItem[]) {
   return modules.find(module => route.startsWith(module.route));
@@ -14,7 +15,7 @@ export function canAccessRoute({
 }: {
   route: string;
   userRole: string;
-  userPlan: string;
+  userPlan: Plan;
   modules: NavLinkItem[]
 }) {
   const link = getRouteAccess(route, modules);
