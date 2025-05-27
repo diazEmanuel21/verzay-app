@@ -1,12 +1,12 @@
 'use client'
 
-import { NavLinkItem } from '@/schema/module';
+import { ModuleWithItems } from '@/schema/module';
 import { create } from 'zustand';
 interface ModuleState {
-    modules: NavLinkItem[];
-    setModules: (modules: NavLinkItem[]) => void;
-    addModule: (module: NavLinkItem) => void;
-    updateModule: (route: string, updated: Partial<NavLinkItem>) => void;
+    modules: ModuleWithItems[];
+    setModules: (modules: ModuleWithItems[]) => void;
+    addModule: (module: ModuleWithItems) => void;
+    updateModule: (route: string, updated: Partial<ModuleWithItems>) => void;
     removeModule: (route: string) => void;
     resetModules: () => void;
 }

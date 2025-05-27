@@ -1,4 +1,18 @@
-import { NavLinkItem } from "@/schema/module";
+import { Plan } from "@prisma/client";
+export interface NavLinkItem {
+    label: string;
+    route: string;
+    icon: string;
+    hiddenModuleToSelector: boolean;
+    showInSidebar: boolean;
+    allowedPlans: Plan[];
+    adminOnly: boolean;
+    requiresPremium: boolean;
+    items?: {
+        url: string,
+        title: string,
+    }[]
+}
 
 export const navLinksData: NavLinkItem[] = [
   {

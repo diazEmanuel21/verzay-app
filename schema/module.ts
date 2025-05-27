@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { Plan } from "@prisma/client";
+import { Module, ModuleItem, Plan } from "@prisma/client";
 import {
     ShieldCheckIcon,
     ChartPieIcon,
@@ -34,21 +34,6 @@ export const iconMap = {
     FunnelIcon,
 };
 
-export interface NavLinkItem {
-    label: string;
-    route: string;
-    icon: string;
-    hiddenModuleToSelector: boolean;
-    showInSidebar: boolean;
-    allowedPlans: Plan[];
-    adminOnly: boolean;
-    requiresPremium: boolean;
-    items?: {
-        url: string,
-        title: string,
-    }[]
-}
-
 const PlanValues = Object.values(Plan) as [Plan, ...Plan[]];
 
 export const ItemModuleSchema = z.object({
@@ -69,3 +54,7 @@ export const FormModuleSchema = z.object({
 })
 
 export type FormModuleValues = z.infer<typeof FormModuleSchema>
+
+export type ModuleWithItems = Module & {
+  items: ModuleItem[];
+};

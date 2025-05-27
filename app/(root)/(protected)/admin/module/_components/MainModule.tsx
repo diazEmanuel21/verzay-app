@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState, useTransition } from 'react';
 import { ModuleCreator } from './ModuleCreator';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
@@ -8,61 +9,71 @@ import { ModuleCard } from './ModuleCard';
 import { ModuleCardSkeleton } from './ModuleCardSkeleton';
 import { useModuleStore } from '@/stores/modules/useModuleStore';
 import { toast } from 'sonner';
-import { FormModuleValues, NavLinkItem } from '@/schema/module'
+import { FormModuleValues, ModuleWithItems } from '@/schema/module'
 import { Dialog, DialogContent, DialogFooter, DialogHeader } from "@/components/ui/dialog"
 import { DialogTitle } from "@radix-ui/react-dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ModuleForm } from "./ModuleForm"
 import { Button } from '@/components/ui/button';
+import { createModule, updateModule } from '@/actions/module-actions';
 
 export const MainModule = () => {
-    const { addModule, updateModule } = useModuleStore();
+    const router = useRouter();
     const { modules } = useModuleStore();
 
-    const [loading, setloading] = useState(true);
     const [search, setSearch] = useState('');
-    const [filteredModules, setFilteredModules] = useState<NavLinkItem[]>([]);
+    const [filteredModules, setFilteredModules] = useState<ModuleWithItems[]>([]);
+
+    const [isPending, startTransition] = useTransition();
 
     /* Dialgos state */
     const [openModuleCreator, setOpenModuleCreator] = useState(false);
-    const [editData, setEditData] = useState<{ state: boolean, module?: NavLinkItem }>({
+    const [editData, setEditData] = useState<{ state: boolean, module?: ModuleWithItems }>({
         state: false,
         module: undefined
     });
-
-    useEffect(() => {
-        setTimeout(() => {
-            setloading(false)
-        }, 2000);
-
-    }, []);
 
     useEffect(() => {
         const filtered = modules.filter((module) =>
             module.label.toLowerCase().includes(search.toLowerCase())
         );
         setFilteredModules(filtered);
-    }, [search]);
+    }, [search, modules]);
 
-    const setEditModule = (state: boolean = true, module: NavLinkItem) => {
+    const setEditModule = (state: boolean = true, module: ModuleWithItems) => {
         setEditData({ state, module });
     };
 
     const onSubmit = (data: FormModuleValues) => {
         const isEditing = modules.some((mod) => mod.route === data.route);
 
-        if (isEditing) {
-            updateModule(data.route, data);
-            toast.success('Módulo actualizado correctamente')
-        } else {
-            addModule(data);
-            toast.success(
-                toast.success('Módulo creado correctamente')
-            );
-        }
-        // Cerrar el diálogo de creación/edición
-        setOpenModuleCreator(false);
-        setEditData({ state: false }); // Asegura cerrar modo edición también
+        startTransition(async () => {
+            try {
+                if (isEditing) {
+                    const res = await updateModule(data.route, data);
+                    if (res.success) {
+                        toast.success("Módulo actualizado correctamente");
+                    } else {
+                        toast.error("Error al actualizar el módulo");
+                    }
+                } else {
+                    const res = await createModule(data);
+                    if (res.success) {
+                        toast.success("Módulo creado correctamente");
+                    } else {
+                        toast.error("Error al crear el módulo");
+                    }
+                }
+
+                // Refrescar la vista y cerrar modal
+                router.refresh();
+                setOpenModuleCreator(false);
+                setEditData({ state: false });
+            } catch (error) {
+                console.error("onSubmit error", error);
+                toast.error("Ocurrió un error al guardar el módulo");
+            }
+        });
     };
 
     return (
@@ -90,7 +101,7 @@ export const MainModule = () => {
             {/* Scroll interno para el contenido */}
             <div className="flex-1 overflow-y-auto">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 min-w-[300px] p-2">
-                    {loading ? (
+                    {isPending ? (
                         <ModuleCardSkeleton />
                     ) : (
                         filteredModules.map((module) => (

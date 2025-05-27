@@ -5,26 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ShieldCheck, EyeOff, Eye, Star, Edit2Icon, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { iconMap, NavLinkItem } from "@/schema/module"
+import { iconMap, ModuleWithItems } from "@/schema/module"
 import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog"
-import { useModuleStore } from "@/stores/modules/useModuleStore"
-import { deleteManual } from '@/actions/manual-actions';
+import { deleteModule } from '@/actions/module-actions';
 
 export const ModuleCard = ({
     module,
     setOpenModule }: {
-        module: NavLinkItem
+        module: ModuleWithItems
         setOpenModule: (state: boolean) => void
     }) => {
-    const { removeModule } = useModuleStore();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
     const Icon = iconMap[module.icon as keyof typeof iconMap];
-
-    const onDeleteModule = async () => {
-        await deleteManual('')
-        removeModule(module.route)
-    };
 
     return (
         <Card className="
@@ -92,7 +84,7 @@ export const ModuleCard = ({
                         setOpen={setShowDeleteDialog}
                         itemName={'modulo'}
                         itemId={module.route}
-                        mutationFn={() => onDeleteModule()}
+                        mutationFn={() => deleteModule(module.route)}
                         entityLabel="modulo"
                     />
                 </div>

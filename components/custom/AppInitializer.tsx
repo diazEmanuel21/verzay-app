@@ -1,18 +1,18 @@
 'use client'
 
 import { useEffect } from 'react'
+import { ModuleWithItems } from '@/schema/module';
 import { ThemeApp, User } from '@prisma/client'
 import { useModuleStore } from '@/stores/modules/useModuleStore';
 import { ResellerInfoResponse } from '@/schema/reseller';
 import { useThemeStore } from '@/stores'
 import { useResellerStore } from '@/stores/resellers/resellerStore';
-import { NavLinkItem } from '@/schema/module';
 import { usePathname, useRouter } from 'next/navigation';
 import { canAccessRoute } from '@/utils/access';
 
 interface AppInitializerInterface {
     onReseller: ResellerInfoResponse
-    modules: NavLinkItem[]
+    modules: ModuleWithItems[]
     user: User
 };
 

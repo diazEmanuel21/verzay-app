@@ -67,7 +67,7 @@ export default async function RootLayout({
       <body className={`${poppins.className} overflow-hidden`}>
         <AppProviders>
           <ThemeProvider>
-            <AppInitializer onReseller={onReseller} modules={modules} />
+            <AppInitializer onReseller={onReseller} modules={modules} user={user} />
             {isAuthenticated ? (
               <SidebarProvider defaultOpen={defaultOpen}>
                 <AppSidebar user={user} />

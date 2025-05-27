@@ -1,6 +1,6 @@
 import { FormModuleSchema, FormModuleValues } from '@/schema/module';
-import { PrismaClient, Plan } from '@prisma/client';
-import type { Prisma, Module } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import type { Module } from '@prisma/client';
 
 export interface ModuleResponse {
     success: boolean;
