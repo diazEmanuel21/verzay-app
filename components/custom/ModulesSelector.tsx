@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react';
+import { useModuleStore } from '@/stores/modules/useModuleStore';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
-import { navLinks } from '@/constants/navLinks'
 import { AnimatePresence, motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { CardFooter } from '@/components/ui/card';
@@ -14,6 +14,8 @@ import { Label } from '../ui/label';
 import { Check, ChevronsUpDown, X } from 'lucide-react'
 
 export function ModulesSelector() {
+    const { modules } = useModuleStore();
+
     const [open, setOpen] = useState(false)
     const [selectedValues, setSelectedValues] = useState<string[]>([])
     const [openCard, setOpenCard] = useState(false);
@@ -85,23 +87,23 @@ export function ModulesSelector() {
                                                 <CommandInput placeholder="Buscar..." />
                                                 <CommandEmpty>No se encontraron resultados.</CommandEmpty>
                                                 <CommandGroup>
-                                                    {navLinks.map(navlink => (
+                                                    {modules.map(module => (
                                                         <>
                                                             {
-                                                                !navlink.hiddenModule && (
+                                                                !module.hiddenModule && (
                                                                     <CommandItem
-                                                                        key={navlink.label}
-                                                                        onSelect={() => toggleOption(navlink.route)}
+                                                                        key={module.label}
+                                                                        onSelect={() => toggleOption(module.route)}
                                                                     >
                                                                         <div
                                                                             className={cn(
                                                                                 'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
-                                                                                selectedValues.includes(navlink.route) && 'bg-blue-500 text-white'
+                                                                                selectedValues.includes(module.route) && 'bg-blue-500 text-white'
                                                                             )}
                                                                         >
-                                                                            {selectedValues.includes(navlink.route) && <Check className="h-4 w-4" />}
+                                                                            {selectedValues.includes(module.route) && <Check className="h-4 w-4" />}
                                                                         </div>
-                                                                        <span>{navlink.label}</span>
+                                                                        <span>{module.label}</span>
                                                                     </CommandItem>
                                                                 )
                                                             }
@@ -115,7 +117,7 @@ export function ModulesSelector() {
                                     {selectedValues.length > 0 && (
                                         <div className="mt-3 flex flex-wrap gap-2">
                                             {selectedValues.map(value => {
-                                                const label = navLinks.find(o => o.route === value)?.label || value
+                                                const label = modules.find(o => o.route === value)?.label || value
                                                 return (
                                                     <Badge key={value} variant="secondary" className="flex items-center gap-1">
                                                         {label}

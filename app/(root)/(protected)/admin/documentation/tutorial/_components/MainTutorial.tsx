@@ -17,9 +17,11 @@ import {
 } from '@/components/ui/select'
 import { toast } from 'sonner';
 import { Pencil, Trash2, Plus, Search } from 'lucide-react';
-import { navLinks } from '@/constants/navLinks';
+import { useModuleStore } from '@/stores/modules/useModuleStore';
 
 export const MainTutorial = () => {
+    const { modules } = useModuleStore();
+
     const [guides, setGuides] = useState<Guide[]>([]);
     const [loading, setLoading] = useState(false);
     const [form, setForm] = useState<Partial<Guide>>({});
@@ -135,7 +137,7 @@ export const MainTutorial = () => {
                                     <SelectValue placeholder="Selecione un modulo/section" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {navLinks.map((link) => (
+                                    {modules.map((link) => (
                                         <SelectItem key={link.route} value={link.route}>
                                             {link.label}
                                         </SelectItem>

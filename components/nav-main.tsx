@@ -5,12 +5,10 @@ import { toast } from 'sonner';
 import { ChevronRight } from 'lucide-react';
 
 import { canAccessRoute, getRouteAccess } from '@/utils/access';
-import { navLinks } from '@/constants/navLinks';
 import { PremiumModule } from './shared/PremiumModule';
 
 import {
     SidebarGroup,
-    SidebarGroupLabel,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
@@ -18,10 +16,6 @@ import {
     SidebarMenuSubButton,
     SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
-
-import {
-    BookOpenIcon
-} from "@heroicons/react/24/solid";
 
 import {
     Collapsible,
@@ -32,15 +26,18 @@ import {
 import Link from 'next/link';
 import { User } from '@prisma/client';
 import clsx from 'clsx';
+import { iconMap } from '@/schema/module';
+import { useModuleStore } from '@/stores/modules/useModuleStore';
 
 export function NavMain({ user }: { user: User }) {
+    const { modules } = useModuleStore();
     const pathname = usePathname();
     const router = useRouter();
 
-    const navItems = navLinks
+    const navItems = modules
         .filter(link => link.showInSidebar)
         .filter(link => {
-            const access = getRouteAccess(link.route);
+            const access = getRouteAccess(link.route, modules);
             return !access?.adminOnly || user.role === 'admin' || user.role === 'reseller';
         })
         .map(link => {
@@ -53,11 +50,13 @@ export function NavMain({ user }: { user: User }) {
             {/* <SidebarGroupLabel>Módulos</SidebarGroupLabel> */}
             <SidebarMenu>
                 {navItems.map((item) => {
-                    const { route, icon: Icon, label, requiresPremium, isActive, items } = item;
+                    const { route, icon, label, requiresPremium, isActive, items } = item;
+                    const Icon = iconMap[icon as keyof typeof iconMap];
 
                     const handleClick = (e: React.MouseEvent) => {
-                        const access = getRouteAccess(route);
+                        const access = getRouteAccess(route, modules);
                         const canIget = canAccessRoute({
+                            modules,
                             route,
                             userRole: user.role,
                             userPlan: user.plan,

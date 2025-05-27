@@ -1,3 +1,37 @@
+import {
+    ShieldCheckIcon,
+    ChartPieIcon,
+    BookOpenIcon,
+    ViewfinderCircleIcon,
+    SparklesIcon,
+    UsersIcon,
+    ChatBubbleLeftRightIcon,
+    ChatBubbleBottomCenterTextIcon,
+    ClipboardDocumentListIcon,
+    Cog6ToothIcon,
+    BellAlertIcon,
+    DocumentTextIcon,
+    ChatBubbleLeftEllipsisIcon,
+    FunnelIcon
+} from "@heroicons/react/24/solid";
+
+export const iconMap = {
+    ShieldCheckIcon,
+    ChartPieIcon,
+    BookOpenIcon,
+    ViewfinderCircleIcon,
+    SparklesIcon,
+    UsersIcon,
+    ChatBubbleLeftRightIcon,
+    ChatBubbleBottomCenterTextIcon,
+    ClipboardDocumentListIcon,
+    Cog6ToothIcon,
+    BellAlertIcon,
+    DocumentTextIcon,
+    ChatBubbleLeftEllipsisIcon,
+    FunnelIcon,
+};
+
 import { z } from "zod"
 
 export const ItemModuleSchema = z.object({

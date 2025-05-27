@@ -101,10 +101,10 @@ export const ClientInstanceCard = ({
       <GenericDeleteDialog
         open={showDeleteDialog}
         setOpen={setShowDeleteDialog}
-        itemName={'Bot IA'}
+        itemName={'Agente IA'}
         itemId={instanceId ?? 'instance-123'}
         mutationFn={() => deleteInstance(user.id)}
-        entityLabel="Bot IA"
+        entityLabel="Agente IA"
       />
     </>
   )

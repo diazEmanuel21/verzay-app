@@ -110,9 +110,9 @@ export const CreditsWidget = ({ userId, webhookUrl }: CreditsWidgetProps) => {
                                                 : 'bg-green-500'
                                 )}
                             />
-                            <span className="text-[10px] text-muted-foreground">
+                            {/* <span className="text-[10px] text-muted-foreground">
                                 {usedPercent}% Consumido
-                            </span>
+                            </span> */}
 
                             {credits.remaining <= 0 && (
                                 <div className="flex gap-1 justify-start items-center text-[10px] text-red-500">

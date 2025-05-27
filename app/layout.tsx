@@ -16,7 +16,7 @@ import { Breadcrumbs } from '@/components/custom';
 import { AppSidebar } from "@/components/app-sidebar"
 import AppInitializer from '@/components/custom/AppInitializer';
 import { getResellerProfileForUser } from '@/actions/reseller-action';
-// import { AppSidebar } from '@/components/shared/Sidebar';
+import { navLinksData } from '@/constants/navLinks';
 
 // Fuente
 const poppins = Poppins({ subsets: ['latin'], weight: ['400', '700'] });
@@ -55,7 +55,7 @@ export default async function RootLayout({
       <body className={`${poppins.className} overflow-hidden`}>
         <AppProviders>
           <ThemeProvider>
-            <AppInitializer onReseller={onReseller} />
+            <AppInitializer onReseller={onReseller} modules={navLinksData} />
             {isAuthenticated ? (
               <SidebarProvider defaultOpen={defaultOpen}>
                 <AppSidebar user={user} />
@@ -84,7 +84,6 @@ export default async function RootLayout({
             <Toaster position="bottom-right" richColors />
           </ThemeProvider>
         </AppProviders>
-
       </body>
     </html >
   );

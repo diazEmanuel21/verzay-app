@@ -1,24 +1,7 @@
-import {
-  ViewfinderCircleIcon,
-  SparklesIcon,
-  UsersIcon,
-  ChatBubbleLeftRightIcon,
-  ChatBubbleBottomCenterTextIcon,
-  ClipboardDocumentListIcon,
-  ShieldCheckIcon,
-  Cog6ToothIcon,
-  BellAlertIcon,
-  BookOpenIcon,
-  ChartPieIcon,
-  DocumentTextIcon,
-  ChatBubbleLeftEllipsisIcon,
-  FunnelIcon
-} from "@heroicons/react/24/solid";
-
 export interface NavLinkItem {
   label: string;
   route: string;
-  icon: any;
+  icon: string;
   hiddenModule?: boolean;
   showInSidebar?: boolean;
   allowedPlans?: string[];
@@ -30,11 +13,11 @@ export interface NavLinkItem {
   }[]
 }
 
-export const navLinks: NavLinkItem[] = [
+export const navLinksData: NavLinkItem[] = [
   {
     label: "Admin",
     route: "/admin",
-    icon: ShieldCheckIcon,
+    icon: 'ShieldCheckIcon',
     adminOnly: true,
     showInSidebar: true,
     hiddenModule: true,
@@ -64,52 +47,52 @@ export const navLinks: NavLinkItem[] = [
   {
     label: "Dashboard",
     route: "/dashboard",
-    icon: ChartPieIcon,
+    icon: 'ChartPieIcon',
     showInSidebar: true,
   },
   {
     label: "Guías",
     route: "/documentation",
-    icon: BookOpenIcon,
+    icon: 'BookOpenIcon',
     showInSidebar: true,
   },
   {
     label: "Plantillas",
     route: "/templates",
-    icon: DocumentTextIcon,
+    icon: 'DocumentTextIcon',
     showInSidebar: true,
   },
   {
     label: "Conexión",
     route: "/connection",
-    icon: ViewfinderCircleIcon,
+    icon: 'ViewfinderCircleIcon',
     showInSidebar: true,
     allowedPlans: ["pymes", "empresarial", "business"],
   },
   {
     label: "Crear IA",
     route: "/ia/add/create",
-    icon: SparklesIcon,
+    icon: 'SparklesIcon',
     showInSidebar: true,
     allowedPlans: ["pymes", "empresarial", "business"],
   },
   {
     label: "Chats",
     route: "/chats",
-    icon: ChatBubbleLeftEllipsisIcon,
+    icon: 'ChatBubbleLeftEllipsisIcon',
     showInSidebar: true,
   },
   {
     label: "Leads",
     route: "/sessions",
-    icon: UsersIcon,
+    icon: 'UsersIcon',
     showInSidebar: true,
     allowedPlans: ["pymes", "empresarial", "business"],
   },
   {
     label: "Flujos",
     route: "/flow",
-    icon: ChatBubbleLeftRightIcon,
+    icon: 'ChatBubbleLeftRightIcon',
     allowedPlans: ["empresarial", "business"],
     showInSidebar: true,
     requiresPremium: true,
@@ -117,14 +100,14 @@ export const navLinks: NavLinkItem[] = [
   {
     label: "Campañas",
     route: "/campaigns",
-    icon: FunnelIcon,
+    icon: 'FunnelIcon',
     showInSidebar: true,
     requiresPremium: true,
   },
   {
     label: "Herramientas",
     route: "/tools",
-    icon: ClipboardDocumentListIcon,
+    icon: 'ClipboardDocumentListIcon',
     allowedPlans: ["empresarial", "business"],
     showInSidebar: true,
     requiresPremium: true,
@@ -132,7 +115,7 @@ export const navLinks: NavLinkItem[] = [
   {
     label: "Recordatorios",
     route: "/reminders",
-    icon: BellAlertIcon,
+    icon: 'BellAlertIcon',
     showInSidebar: true,
     allowedPlans: ["pymes", "empresarial", "business"],
     requiresPremium: true,
@@ -140,7 +123,7 @@ export const navLinks: NavLinkItem[] = [
   {
     label: "Respuestas rápidas",
     route: "/auto-replies",
-    icon: ChatBubbleBottomCenterTextIcon,
+    icon: 'ChatBubbleBottomCenterTextIcon',
     allowedPlans: ["empresarial", "business"],
     showInSidebar: true,
     requiresPremium: true,
@@ -148,7 +131,7 @@ export const navLinks: NavLinkItem[] = [
   {
     label: "Ajustes de perfil",
     route: "/profile",
-    icon: Cog6ToothIcon,
+    icon: 'Cog6ToothIcon',
     showInSidebar: true,
     requiresPremium: false,
     hiddenModule: true,

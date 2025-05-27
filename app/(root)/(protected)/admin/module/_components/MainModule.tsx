@@ -1,18 +1,35 @@
 'use client'
 
 import { useEffect, useState } from 'react';
-import { NavLinkItem, navLinks } from '@/constants/navLinks';
+import { NavLinkItem } from '@/constants/navLinks';
 import { ModuleCreator } from './ModuleCreator';
-import { ModuleForm } from './ModuleForm';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { ModuleCard } from './ModuleCard';
 import { ModuleCardSkeleton } from './ModuleCardSkeleton';
+import { useModuleStore } from '@/stores/modules/useModuleStore';
+import { toast } from 'sonner';
+import { FormModuleValues } from '@/schema/module'
+import { Dialog, DialogContent, DialogFooter, DialogHeader } from "@/components/ui/dialog"
+import { DialogTitle } from "@radix-ui/react-dialog"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { ModuleForm } from "./ModuleForm"
+import { Button } from '@/components/ui/button';
 
 export const MainModule = () => {
+    const { addModule, updateModule } = useModuleStore();
+    const { modules } = useModuleStore();
+
     const [loading, setloading] = useState(true);
     const [search, setSearch] = useState('');
     const [filteredModules, setFilteredModules] = useState<NavLinkItem[]>([]);
+
+    /* Dialgos state */
+    const [openModuleCreator, setOpenModuleCreator] = useState(false);
+    const [editData, setEditData] = useState<{ state: boolean, module?: NavLinkItem }>({
+        state: false,
+        module: undefined
+    });
 
     useEffect(() => {
         setTimeout(() => {
@@ -22,17 +39,32 @@ export const MainModule = () => {
     }, []);
 
     useEffect(() => {
-        const filtered = navLinks.filter((module) =>
+        const filtered = modules.filter((module) =>
             module.label.toLowerCase().includes(search.toLowerCase())
         );
         setFilteredModules(filtered);
     }, [search]);
 
-    const onSave = (module: NavLinkItem) => {
-        console.log({ module })
+    const setEditModule = (state: boolean = true, module: NavLinkItem) => {
+        setEditData({ state, module });
+    };
 
-        setFilteredModules((prev) => [...prev, module]);
-    }
+    const onSubmit = (data: FormModuleValues) => {
+        const isEditing = modules.some((mod) => mod.route === data.route);
+
+        if (isEditing) {
+            updateModule(data.route, data);
+            toast.success('Módulo actualizado correctamente')
+        } else {
+            addModule(data);
+            toast.success(
+                toast.success('Módulo creado correctamente')
+            );
+        }
+        // Cerrar el diálogo de creación/edición
+        setOpenModuleCreator(false);
+        setEditData({ state: false }); // Asegura cerrar modo edición también
+    };
 
     return (
         <div className="flex flex-col h-full">
@@ -48,7 +80,12 @@ export const MainModule = () => {
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
-                    <ModuleCreator onSave={onSave} />
+                    <ModuleCreator
+                        onSave={onSubmit}
+                        openModule={openModuleCreator}
+                        setOpenModule={setOpenModuleCreator}
+
+                    />
                 </div>
             </div>
             {/* Scroll interno para el contenido */}
@@ -57,12 +94,29 @@ export const MainModule = () => {
                     {loading ? (
                         <ModuleCardSkeleton />
                     ) : (
-                        filteredModules.map((navLink) => (
-                            <ModuleCard key={navLink.route} navLink={navLink} />
+                        filteredModules.map((module) => (
+                            <ModuleCard
+                                key={module.route}
+                                module={module}
+                                setOpenModule={() => setEditModule(true, module)}
+                            />
                         ))
                     )}
                 </div>
             </div>
+            <Dialog open={editData.state} onOpenChange={() => setEditData({ state: false })}>
+                <DialogContent className="border-border">
+                    <DialogHeader>
+                        <DialogTitle>Edición de módulos</DialogTitle>
+                    </DialogHeader>
+                    <ScrollArea className="max-h-[70vh] overflow-y-auto">
+                        <ModuleForm onSubmit={onSubmit} defaultValues={editData.module} />
+                    </ScrollArea>
+                    <DialogFooter>
+                        <Button form="module-form" type="submit">Editar módulo</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

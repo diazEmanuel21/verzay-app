@@ -12,20 +12,18 @@ import type { CheckedState } from "@radix-ui/react-checkbox"
 import { FormModuleSchema, FormModuleValues } from "@/schema/module"
 import { Trash2 } from "lucide-react"
 
-export const ModuleForm = ({ onSubmit }: { onSubmit: SubmitHandler<FormModuleValues> }) => {
+export const ModuleForm = ({
+    onSubmit,
+    defaultValues,
+}: {
+    onSubmit: SubmitHandler<FormModuleValues>;
+    defaultValues?: Partial<FormModuleValues>;
+}) => {
 
     const form = useForm<FormModuleValues>({
         resolver: zodResolver(FormModuleSchema),
         defaultValues: {
-            label: '',
-            route: '',
-            icon: '',
-            showInSidebar: true,
-            hiddenModule: false,
-            adminOnly: false,
-            requiresPremium: false,
-            allowedPlans: [],
-            items: [],
+            ...defaultValues,
         },
     });
 
@@ -36,7 +34,7 @@ export const ModuleForm = ({ onSubmit }: { onSubmit: SubmitHandler<FormModuleVal
 
     return (
         <Form {...form}>
-            <form id="module-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form id="module-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-2">
                 <FormField
                     control={form.control}
                     name="label"
@@ -132,7 +130,7 @@ export const ModuleForm = ({ onSubmit }: { onSubmit: SubmitHandler<FormModuleVal
                             <Input placeholder="URL" {...form.register(`items.${index}.url`)} />
                             <Input placeholder="Título" {...form.register(`items.${index}.title`)} />
                             <Button type="button" variant="destructive" onClick={() => remove(index)}>
-                                <Trash2/>
+                                <Trash2 />
                             </Button>
                         </div>
                     ))}
