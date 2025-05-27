@@ -138,7 +138,7 @@ export const MainTutorial = () => {
                                 </SelectTrigger>
                                 <SelectContent>
                                     {modules.map((link) => (
-                                        <SelectItem key={link.route} value={link.route}>
+                                        <SelectItem key={link.id} value={link.id}>
                                             {link.label}
                                         </SelectItem>
                                     ))}

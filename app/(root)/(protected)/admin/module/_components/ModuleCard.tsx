@@ -83,8 +83,8 @@ export const ModuleCard = ({
                         open={showDeleteDialog}
                         setOpen={setShowDeleteDialog}
                         itemName={'modulo'}
-                        itemId={module.route}
-                        mutationFn={() => deleteModule(module.route)}
+                        itemId={module.id}
+                        mutationFn={() => deleteModule(module.id)}
                         entityLabel="modulo"
                     />
                 </div>

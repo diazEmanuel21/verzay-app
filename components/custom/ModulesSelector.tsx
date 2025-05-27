@@ -93,15 +93,15 @@ export function ModulesSelector() {
                                                                 !module.hiddenModuleToSelector && (
                                                                     <CommandItem
                                                                         key={module.label}
-                                                                        onSelect={() => toggleOption(module.route)}
+                                                                        onSelect={() => toggleOption(module.id)}
                                                                     >
                                                                         <div
                                                                             className={cn(
                                                                                 'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
-                                                                                selectedValues.includes(module.route) && 'bg-blue-500 text-white'
+                                                                                selectedValues.includes(module.id) && 'bg-blue-500 text-white'
                                                                             )}
                                                                         >
-                                                                            {selectedValues.includes(module.route) && <Check className="h-4 w-4" />}
+                                                                            {selectedValues.includes(module.id) && <Check className="h-4 w-4" />}
                                                                         </div>
                                                                         <span>{module.label}</span>
                                                                     </CommandItem>
@@ -117,7 +117,7 @@ export function ModulesSelector() {
                                     {selectedValues.length > 0 && (
                                         <div className="mt-3 flex flex-wrap gap-2">
                                             {selectedValues.map(value => {
-                                                const label = modules.find(o => o.route === value)?.label || value
+                                                const label = modules.find(o => o.id === value)?.label || value
                                                 return (
                                                     <Badge key={value} variant="secondary" className="flex items-center gap-1">
                                                         {label}

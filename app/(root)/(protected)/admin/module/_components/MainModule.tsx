@@ -45,23 +45,27 @@ export const MainModule = () => {
     };
 
     const onSubmit = (data: FormModuleValues) => {
-        const isEditing = modules.some((mod) => mod.route === data.route);
+        const isEditing = modules.some((mod) => mod.id === data.id);
 
         startTransition(async () => {
             try {
                 if (isEditing) {
-                    const res = await updateModule(data.route, data);
+                    if (!data.id) {
+                        toast.error("Se necesita el id para actualizar el modulo.");
+                        return;
+                    }
+                    const res = await updateModule(data.id, data);
                     if (res.success) {
-                        toast.success("Módulo actualizado correctamente");
+                        toast.success(res.message);
                     } else {
-                        toast.error("Error al actualizar el módulo");
+                        toast.error(res.message);
                     }
                 } else {
                     const res = await createModule(data);
                     if (res.success) {
-                        toast.success("Módulo creado correctamente");
+                        toast.success(res.message);
                     } else {
-                        toast.error("Error al crear el módulo");
+                        toast.error(res.message);
                     }
                 }
 
@@ -106,7 +110,7 @@ export const MainModule = () => {
                     ) : (
                         filteredModules.map((module) => (
                             <ModuleCard
-                                key={module.route}
+                                key={module.id}
                                 module={module}
                                 setOpenModule={() => setEditModule(true, module)}
                             />

@@ -1,11 +1,10 @@
-import { FormModuleSchema, FormModuleValues } from '@/schema/module';
+import { FormModuleSchema, FormModuleValues, ModuleWithItems } from '@/schema/module';
 import { PrismaClient } from '@prisma/client';
-import type { Module } from '@prisma/client';
 
 export interface ModuleResponse {
     success: boolean;
     message: string;
-    data?: Module[];
+    data?: ModuleWithItems[];
 }
 
 const prisma = new PrismaClient();
@@ -82,6 +81,7 @@ export async function createModule(formData: FormModuleValues): Promise<ModuleRe
  * Actualiza un módulo por su ID incluyendo sus items.
  */
 export async function updateModule(moduleId: string, formData: FormModuleValues): Promise<ModuleResponse> {
+    debugger;
     if (!moduleId) {
         return {
             success: false,

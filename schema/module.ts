@@ -42,6 +42,7 @@ export const ItemModuleSchema = z.object({
 })
 
 export const FormModuleSchema = z.object({
+    id: z.string().optional(),
     label: z.string().min(1, "Campo requerido"),
     route: z.string().min(1, "Campo requerido"),
     icon: z.string().min(1, "Campo requerido"),
@@ -56,5 +57,5 @@ export const FormModuleSchema = z.object({
 export type FormModuleValues = z.infer<typeof FormModuleSchema>
 
 export type ModuleWithItems = Module & {
-  items: ModuleItem[];
+    items: ModuleItem[];
 };
