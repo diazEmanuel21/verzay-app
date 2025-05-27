@@ -1,8 +1,7 @@
 'use client'
 
+import { NavLinkItem } from '@/schema/module';
 import { create } from 'zustand';
-import { NavLinkItem } from '@/constants/navLinks'; // Ajusta la ruta si es diferente
-
 interface ModuleState {
     modules: NavLinkItem[];
     setModules: (modules: NavLinkItem[]) => void;

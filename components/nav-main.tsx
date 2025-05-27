@@ -56,10 +56,10 @@ export function NavMain({ user }: { user: User }) {
                     const handleClick = (e: React.MouseEvent) => {
                         const access = getRouteAccess(route, modules);
                         const canIget = canAccessRoute({
-                            modules,
                             route,
                             userRole: user.role,
                             userPlan: user.plan,
+                            modules
                         });
 
                         if (access && !canIget.allowed) {

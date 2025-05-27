@@ -1,12 +1,11 @@
 'use client'
 
 import { useState } from 'react';
-import { NavLinkItem } from "@/constants/navLinks"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ShieldCheck, EyeOff, Eye, Star, Edit2Icon, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { iconMap } from "@/schema/module"
+import { iconMap, NavLinkItem } from "@/schema/module"
 import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog"
 import { useModuleStore } from "@/stores/modules/useModuleStore"
 import { deleteManual } from '@/actions/manual-actions';

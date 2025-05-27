@@ -1,0 +1,154 @@
+import { FormModuleSchema, FormModuleValues } from '@/schema/module';
+import { PrismaClient, Plan } from '@prisma/client';
+import type { Prisma, Module } from '@prisma/client';
+
+export interface ModuleResponse {
+    success: boolean;
+    message: string;
+    data?: Module[];
+}
+
+const prisma = new PrismaClient();
+
+/**
+ * Obtiene todos los módulos, incluyendo sus items.
+ */
+export async function getAllModules(): Promise<ModuleResponse> {
+    try {
+        const modules = await prisma.module.findMany({
+            include: {
+                items: true,
+            },
+        });
+
+        return {
+            success: true,
+            message: 'Módulos obtenidos correctamente',
+            data: modules,
+        };
+    } catch (error) {
+        console.error('getAllModules error:', error);
+        return {
+            success: false,
+            message: 'Error al obtener módulos',
+        };
+    }
+}
+
+/**
+ * Crea un nuevo módulo con items relacionados.
+ */
+export async function createModule(formData: FormModuleValues): Promise<ModuleResponse> {
+    const parse = FormModuleSchema.safeParse(formData);
+
+    if (!parse.success) {
+        return {
+            success: false,
+            message: "Datos inválidos. Corrige los campos requeridos.",
+        };
+    }
+
+    const { items, ...moduleData } = parse.data;
+
+    try {
+        const module = await prisma.module.create({
+            data: {
+                ...moduleData,
+                items: items && items.length > 0 ? {
+                    create: items.map(item => ({
+                        title: item.title,
+                        url: item.url,
+                    })),
+                } : undefined,
+            },
+            include: { items: true },
+        });
+
+        return {
+            success: true,
+            message: 'Módulo creado correctamente',
+            data: [module],
+        };
+    } catch (error) {
+        console.error('createModule error:', error);
+        return {
+            success: false,
+            message: 'Error al crear el módulo',
+        };
+    }
+}
+
+/**
+ * Actualiza un módulo por su ID incluyendo sus items.
+ */
+export async function updateModule(moduleId: string, formData: FormModuleValues): Promise<ModuleResponse> {
+    if (!moduleId) {
+        return {
+            success: false,
+            message: "El ID del módulo es obligatorio.",
+        };
+    }
+
+    const parse = FormModuleSchema.safeParse(formData);
+
+    if (!parse.success) {
+        return {
+            success: false,
+            message: "Datos inválidos. Corrige los campos requeridos.",
+        };
+    }
+
+    const { items, ...moduleData } = parse.data;
+
+    try {
+        const module = await prisma.module.update({
+            where: { id: moduleId },
+            data: {
+                ...moduleData,
+                items: items
+                    ? {
+                        deleteMany: {}, // Borra todos los anteriores
+                        create: items.map(item => ({
+                            title: item.title,
+                            url: item.url,
+                        })),
+                    }
+                    : undefined,
+            },
+            include: { items: true },
+        });
+
+        return {
+            success: true,
+            message: 'Módulo actualizado correctamente',
+            data: [module],
+        };
+    } catch (error) {
+        console.error('updateModule error:', error);
+        return {
+            success: false,
+            message: 'Error al actualizar el módulo',
+        };
+    }
+}
+
+/**
+ * Elimina un módulo por su ID, incluyendo sus items.
+ */
+export async function deleteModule(moduleId: string): Promise<ModuleResponse> {
+    try {
+        await prisma.moduleItem.deleteMany({ where: { moduleId } });
+        await prisma.module.delete({ where: { id: moduleId } });
+
+        return {
+            success: true,
+            message: 'Módulo eliminado correctamente',
+        };
+    } catch (error) {
+        console.error('deleteModule error:', error);
+        return {
+            success: false,
+            message: 'Error al eliminar el módulo',
+        };
+    }
+}

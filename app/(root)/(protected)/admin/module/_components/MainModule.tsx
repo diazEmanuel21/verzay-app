@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react';
-import { NavLinkItem } from '@/constants/navLinks';
 import { ModuleCreator } from './ModuleCreator';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
@@ -9,7 +8,7 @@ import { ModuleCard } from './ModuleCard';
 import { ModuleCardSkeleton } from './ModuleCardSkeleton';
 import { useModuleStore } from '@/stores/modules/useModuleStore';
 import { toast } from 'sonner';
-import { FormModuleValues } from '@/schema/module'
+import { FormModuleValues, NavLinkItem } from '@/schema/module'
 import { Dialog, DialogContent, DialogFooter, DialogHeader } from "@/components/ui/dialog"
 import { DialogTitle } from "@radix-ui/react-dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"

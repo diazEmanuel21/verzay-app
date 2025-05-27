@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
 import { auth } from '@/auth';
-import { canAccessRoute } from "./utils/access";
-import { navLinksData } from "./constants/navLinks";
-// const { auth } = NextAuth(authConfig);
 const publicRoutes = ["/", "/prices"];
 const authRoutes = ["/login", "/register"];
 const apiAuthPrefix = "/api/auth";
@@ -29,13 +26,6 @@ export default auth((req) => {
     const loginUrl = new URL("/login", nextUrl);
     loginUrl.searchParams.set("callbackUrl", currentPath);
     return NextResponse.redirect(loginUrl);
-  }
-
-  const access = canAccessRoute({ route: currentPath, userRole, userPlan, modules: navLinksData });
-
-  if (!access.allowed) {
-    console.warn("Acceso denegado por:", access.reason);
-    return NextResponse.redirect(new URL("/credits", nextUrl));
   }
 
   return NextResponse.next();

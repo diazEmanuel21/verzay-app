@@ -1,3 +1,5 @@
+import { z } from "zod"
+import { Plan } from "@prisma/client";
 import {
     ShieldCheckIcon,
     ChartPieIcon,
@@ -14,7 +16,6 @@ import {
     ChatBubbleLeftEllipsisIcon,
     FunnelIcon
 } from "@heroicons/react/24/solid";
-import { Plan } from "@prisma/client";
 
 export const iconMap = {
     ShieldCheckIcon,
@@ -33,7 +34,20 @@ export const iconMap = {
     FunnelIcon,
 };
 
-import { z } from "zod"
+export interface NavLinkItem {
+    label: string;
+    route: string;
+    icon: string;
+    hiddenModuleToSelector: boolean;
+    showInSidebar: boolean;
+    allowedPlans: Plan[];
+    adminOnly: boolean;
+    requiresPremium: boolean;
+    items?: {
+        url: string,
+        title: string,
+    }[]
+}
 
 const PlanValues = Object.values(Plan) as [Plan, ...Plan[]];
 

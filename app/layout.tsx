@@ -16,7 +16,8 @@ import { Breadcrumbs } from '@/components/custom';
 import { AppSidebar } from "@/components/app-sidebar"
 import AppInitializer from '@/components/custom/AppInitializer';
 import { getResellerProfileForUser } from '@/actions/reseller-action';
-import { navLinksData } from '@/constants/navLinks';
+import { getAllModules } from '@/actions/module-actions';
+import AppSkeleton from '@/components/custom/AppSkeleton';
 
 // Fuente
 const poppins = Poppins({ subsets: ['latin'], weight: ['400', '700'] });
@@ -47,15 +48,26 @@ export default async function RootLayout({
   const onReseller = isAuthenticated
     ? await getResellerProfileForUser(user.id)
     : { success: false, message: "Sin sesión activa" };
-  const cookieStore = await cookies()
-  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+
+  // Obtener módulos solo si hay sesión
+  const modules = isAuthenticated
+    ? (await getAllModules()).data ?? []
+    : [];
+
+  const loading = isAuthenticated && (!user || modules.length === 0);
+
+  if (loading) {
+    return <AppSkeleton />;
+  }
 
   return (
     <html lang="en">
       <body className={`${poppins.className} overflow-hidden`}>
         <AppProviders>
           <ThemeProvider>
-            <AppInitializer onReseller={onReseller} modules={navLinksData} />
+            <AppInitializer onReseller={onReseller} modules={modules} />
             {isAuthenticated ? (
               <SidebarProvider defaultOpen={defaultOpen}>
                 <AppSidebar user={user} />
