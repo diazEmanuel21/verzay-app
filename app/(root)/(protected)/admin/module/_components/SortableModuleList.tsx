@@ -15,20 +15,18 @@ import {
     useSortable,
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import { useEffect, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { GripVertical } from 'lucide-react'
 import { updateModuleOrder } from '@/actions/module-actions'
 import { ModuleWithItems } from '@/schema/module'
 import { toast } from 'sonner'
+import { ModuleCard } from './ModuleCard'
 
 interface SortableListProps {
     modules: ModuleWithItems[]
+    setOpenModule: (state: boolean, module: ModuleWithItems) => void
 }
 
-export function SortableModuleList({ modules }: SortableListProps) {
+export function SortableModuleList({ modules, setOpenModule }: SortableListProps) {
     const router = useRouter();
 
     const [items, setItems] = useState(modules)
@@ -82,40 +80,14 @@ export function SortableModuleList({ modules }: SortableListProps) {
             onDragEnd={handleDragEnd}
         >
             <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-3">
-                    {items.map((module) => (
-                        <SortableItem key={module.id} module={module} />
-                    ))}
-                </div>
+                {items.map((module) => (
+                    <ModuleCard
+                        key={module.id}
+                        module={module}
+                        setOpenModule={setOpenModule}
+                    />
+                ))}
             </SortableContext>
         </DndContext>
-    )
-}
-
-function SortableItem({ module }: { module: ModuleWithItems }) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-    } = useSortable({ id: module.id })
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-    }
-
-    return (
-        <Card
-            ref={setNodeRef}
-            style={style}
-            className="flex items-center justify-between p-4 cursor-grab border border-border shadow-sm rounded-lg bg-white dark:bg-gray-900"
-        >
-            <div className="text-sm font-medium">{module.label}</div>
-            <Button variant="ghost" size="icon" {...attributes} {...listeners}>
-                <GripVertical className="w-4 h-4 text-muted-foreground" />
-            </Button>
-        </Card>
     )
 }

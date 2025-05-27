@@ -10,8 +10,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form"
 import { toast } from "sonner"
 import type { CheckedState } from "@radix-ui/react-checkbox"
-import { FormModuleSchema, FormModuleValues } from "@/schema/module"
+import { FormModuleSchema, FormModuleValues, iconMap } from "@/schema/module"
 import { Trash2 } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export const ModuleForm = ({
     onSubmit,
@@ -68,13 +69,28 @@ export const ModuleForm = ({
                     name="icon"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Nombre del icono</FormLabel>
-                            <FormControl>
-                                <Input placeholder="Ej: UsersIcon" {...field} />
-                            </FormControl>
+                            <FormLabel>Icono del módulo</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecciona un icono" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {Object.entries(iconMap).map(([key, IconComponent]) => (
+                                        <SelectItem key={key} value={key}>
+                                            <div className="flex items-center gap-2">
+                                                <IconComponent className="w-4 h-4" />
+                                                {key}
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </FormItem>
                     )}
                 />
+
 
                 {['showInSidebar', 'hiddenModuleToSelector', 'adminOnly', 'requiresPremium'].map((key) => (
                     <FormField

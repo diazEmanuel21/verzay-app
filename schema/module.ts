@@ -14,7 +14,25 @@ import {
     BellAlertIcon,
     DocumentTextIcon,
     ChatBubbleLeftEllipsisIcon,
-    FunnelIcon
+    FunnelIcon,
+
+    //NUEVOS PARA TU MENÚ
+    HomeIcon,                       // Inicio
+    InboxIcon,                      // Bandeja de entrada
+    CurrencyDollarIcon,            // Finanzas o precios
+    CreditCardIcon,                // Pagos
+    ShoppingCartIcon,              // Compras / Ecommerce
+    CalendarDaysIcon,              // Agendamiento / calendario
+    ChartBarIcon,                  // Reportes / Estadísticas
+    ServerIcon,                    // Infraestructura / Integraciones
+    GlobeAltIcon,                  // Web / internacional
+    PuzzlePieceIcon,               // Extensiones / Plugins
+    BoltIcon,                      // Automatización / AI
+    AdjustmentsHorizontalIcon,     // Configuración avanzada
+    IdentificationIcon,            // Perfiles / identificaciones
+    KeyIcon,                       // Accesos / credenciales
+    DevicePhoneMobileIcon,         // Versión móvil
+    LifebuoyIcon                   // Soporte / Ayuda
 } from "@heroicons/react/24/solid";
 
 export const iconMap = {
@@ -32,6 +50,23 @@ export const iconMap = {
     DocumentTextIcon,
     ChatBubbleLeftEllipsisIcon,
     FunnelIcon,
+
+    HomeIcon,
+    InboxIcon,
+    CurrencyDollarIcon,
+    CreditCardIcon,
+    ShoppingCartIcon,
+    CalendarDaysIcon,
+    ChartBarIcon,
+    ServerIcon,
+    GlobeAltIcon,
+    PuzzlePieceIcon,
+    BoltIcon,
+    AdjustmentsHorizontalIcon,
+    IdentificationIcon,
+    KeyIcon,
+    DevicePhoneMobileIcon,
+    LifebuoyIcon
 };
 
 const PlanValues = Object.values(Plan) as [Plan, ...Plan[]];

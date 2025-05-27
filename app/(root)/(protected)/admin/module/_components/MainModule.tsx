@@ -105,18 +105,14 @@ export const MainModule = () => {
             </div>
             {/* Scroll interno para el contenido */}
             <div className="flex-1 overflow-y-auto">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 min-w-[300px] p-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {isPending ? (
                         <ModuleCardSkeleton />
                     ) : (
-                            <SortableModuleList modules={modules} />
-                        // filteredModules.map((module) => (
-                        //     <ModuleCard
-                        //         key={module.id}
-                        //         module={module}
-                        //         setOpenModule={() => setEditModule(true, module)}
-                        //     />
-                        // ))
+                        <SortableModuleList
+                            modules={modules}
+                            setOpenModule={setEditModule}
+                        />
                     )}
                 </div>
             </div>

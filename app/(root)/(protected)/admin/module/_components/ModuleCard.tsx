@@ -1,94 +1,160 @@
 'use client'
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ShieldCheck, EyeOff, Eye, Star, Edit2Icon, Trash2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { iconMap, ModuleWithItems } from "@/schema/module"
-import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog"
-import { deleteModule } from '@/actions/module-actions';
+import { useState } from 'react'
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle
+} from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import {
+    ShieldCheck,
+    EyeOff,
+    Eye,
+    Star,
+    Edit2Icon,
+    Trash2,
+    GripVertical
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { iconMap, ModuleWithItems } from '@/schema/module'
+import { GenericDeleteDialog } from '@/components/shared/GenericDeleteDialog'
+import { deleteModule } from '@/actions/module-actions'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion"
 
 export const ModuleCard = ({
     module,
-    setOpenModule }: {
-        module: ModuleWithItems
-        setOpenModule: (state: boolean) => void
-    }) => {
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-    const Icon = iconMap[module.icon as keyof typeof iconMap];
+    setOpenModule
+}: {
+    module: ModuleWithItems
+    setOpenModule: (state: boolean, module: ModuleWithItems) => void
+}) => {
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+    const Icon = iconMap[module.icon as keyof typeof iconMap]
+
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition
+    } = useSortable({ id: module.id })
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    }
 
     return (
-        <Card className="
-                group
-                relative 
-                border-border      
-                transition-all 
-                duration-300 
-                hover:shadow-lg 
-                hover:scale-[1.015] 
-                hover:border-primary">
-            <CardHeader>
+        <Card
+            ref={setNodeRef}
+            style={style}
+            className="relative flex flex-col justify-between min-h-[280px] border border-border rounded-xl shadow-sm bg-background p-4"
+        >
+            {/* Drag handle */}
+            <div
+                className="absolute left-3 top-3 z-10 cursor-grab"
+                {...attributes}
+                {...listeners}
+            >
+                <GripVertical className="w-4 h-4 text-muted-foreground" />
+            </div>
+
+            <CardHeader className="pl-8 pr-4 pt-2 pb-1">
                 <CardTitle className="flex items-center gap-2 text-lg">
                     {Icon && <Icon className="h-5 w-5 text-primary" />}
                     {module.label}
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">{module.route}</p>
+                <p className="text-xs text-muted-foreground truncate">{module.route}</p>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-                {module.adminOnly && (
-                    <Badge variant="secondary" className="flex items-center gap-1">
-                        <ShieldCheck className="h-4 w-4" /> Solo admin
-                    </Badge>
-                )}
-                {module.requiresPremium && (
-                    <Badge variant="default" className="flex items-center gap-1">
-                        <Star className="h-4 w-4" /> Premium
-                    </Badge>
-                )}
-                <div className="flex items-center gap-2">
-                    {module.showInSidebar
-                        ? <Badge variant="outline" className="flex items-center gap-1"><Eye className="h-4 w-4" /> Sidebar</Badge>
-                        : <Badge variant="destructive" className="flex items-center gap-1"><EyeOff className="h-4 w-4" /> Oculto</Badge>}
+
+            <CardContent className="pl-8 pr-4 pt-2 pb-2 space-y-4 text-sm">
+                <div className="flex flex-wrap gap-2">
+                    {module.adminOnly && (
+                        <Badge variant="secondary" className="flex items-center gap-1">
+                            <ShieldCheck className="h-4 w-4" /> Admin
+                        </Badge>
+                    )}
+                    {module.requiresPremium && (
+                        <Badge variant="default" className="flex items-center gap-1">
+                            <Star className="h-4 w-4" /> Premium
+                        </Badge>
+                    )}
+                    {module.showInSidebar ? (
+                        <Badge variant="outline" className="flex items-center gap-1">
+                            <Eye className="h-4 w-4" /> Sidebar
+                        </Badge>
+                    ) : (
+                        <Badge variant="destructive" className="flex items-center gap-1">
+                            <EyeOff className="h-4 w-4" /> Oculto
+                        </Badge>
+                    )}
                 </div>
-                {module.allowedPlans && module.allowedPlans.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
+
+                {module.allowedPlans?.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-1">
                         {module.allowedPlans.map(plan => (
-                            <Badge key={plan} variant="outline">{plan}</Badge>
+                            <Badge key={plan} variant="outline" className="text-xs">
+                                {plan}
+                            </Badge>
                         ))}
                     </div>
                 )}
-                {module.items && module.items.length > 0 && (
-                    <div className="mt-4">
-                        <p className="font-medium mb-1">Submódulos:</p>
-                        <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                            {module.items.map((item, index) => (
-                                <li key={index}>
-                                    <span className="font-medium">{item.title}</span> – <span className="text-xs">{item.url}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+
+                {module.items?.length > 0 && (
+                    <Accordion type="single" collapsible className="pt-1">
+                        <AccordionItem value="items">
+                            <AccordionTrigger className="text-sm text-muted-foreground hover:no-underline">
+                                Ver submódulos ({module.items.length})
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <ul className="list-disc list-inside text-muted-foreground text-xs space-y-1">
+                                    {module.items.map((item, index) => (
+                                        <li key={index}>
+                                            <span className="font-medium">{item.title}</span> –{' '}
+                                            <span className="text-muted-foreground">{item.url}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
                 )}
-                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="outline" size="icon" onClick={() => setOpenModule(true)}>
-                        <Edit2Icon />
-                    </Button>
-
-                    <Button variant="destructive" size="icon" onClick={() => setShowDeleteDialog(true)}>
-                        <Trash2 />
-                    </Button>
-
-                    <GenericDeleteDialog
-                        open={showDeleteDialog}
-                        setOpen={setShowDeleteDialog}
-                        itemName={'modulo'}
-                        itemId={module.id}
-                        mutationFn={() => deleteModule(module.id)}
-                        entityLabel="modulo"
-                    />
-                </div>
             </CardContent>
+
+            <div className="flex justify-end gap-2 pt-2 px-4">
+                <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setOpenModule(true, module)}
+                >
+                    <Edit2Icon className="w-4 h-4" />
+                </Button>
+                <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => setShowDeleteDialog(true)}
+                >
+                    <Trash2 className="w-4 h-4" />
+                </Button>
+            </div>
+
+            <GenericDeleteDialog
+                open={showDeleteDialog}
+                setOpen={setShowDeleteDialog}
+                itemName="modulo"
+                itemId={module.id}
+                mutationFn={() => deleteModule(module.id)}
+                entityLabel="modulo"
+            />
         </Card>
     )
 }
