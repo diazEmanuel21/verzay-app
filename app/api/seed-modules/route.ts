@@ -20,6 +20,7 @@ export async function POST() {
                     allowedPlans: module.allowedPlans,
                     adminOnly: module.adminOnly,
                     requiresPremium: module.requiresPremium,
+                    order: module.order
                 },
             });
         }

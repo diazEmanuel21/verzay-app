@@ -17,9 +17,8 @@ const prisma = new PrismaClient();
 export async function getAllModules(): Promise<ModuleResponse> {
     try {
         const modules = await prisma.module.findMany({
-            include: {
-                items: true,
-            },
+            include: { items: true },
+            orderBy: { order: 'asc' },
         });
 
         return {
@@ -151,5 +150,18 @@ export async function deleteModule(moduleId: string): Promise<ModuleResponse> {
             success: false,
             message: 'Error al eliminar el módulo',
         };
+    }
+}
+
+export async function updateModuleOrder(id: string, order: number) {
+    try {
+        await prisma.module.update({
+            where: { id },
+            data: { order },
+        })
+        return { success: true }
+    } catch (error) {
+        console.error("updateModuleOrder error:", error)
+        return { success: false, error }
     }
 }

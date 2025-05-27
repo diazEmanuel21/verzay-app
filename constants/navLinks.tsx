@@ -1,17 +1,18 @@
 import { Plan } from "@prisma/client";
 export interface NavLinkItem {
-    label: string;
-    route: string;
-    icon: string;
-    hiddenModuleToSelector: boolean;
-    showInSidebar: boolean;
-    allowedPlans: Plan[];
-    adminOnly: boolean;
-    requiresPremium: boolean;
-    items?: {
-        url: string,
-        title: string,
-    }[]
+  label: string;
+  route: string;
+  icon: string;
+  hiddenModuleToSelector: boolean;
+  showInSidebar: boolean;
+  allowedPlans: Plan[];
+  adminOnly: boolean;
+  requiresPremium: boolean;
+  order: number;
+  items?: {
+    url: string,
+    title: string,
+  }[]
 }
 
 export const navLinksData: NavLinkItem[] = [
@@ -24,6 +25,7 @@ export const navLinksData: NavLinkItem[] = [
     allowedPlans: ["pymes", "empresarial", "business"],
     adminOnly: true,
     requiresPremium: false,
+    order: 0,
     items: [
       {
         url: '/admin/module',
@@ -56,6 +58,7 @@ export const navLinksData: NavLinkItem[] = [
     allowedPlans: ["pymes", "empresarial", "business"],
     adminOnly: false,
     requiresPremium: false,
+    order: 1,
   },
   {
     label: "Guías",
@@ -66,6 +69,7 @@ export const navLinksData: NavLinkItem[] = [
     allowedPlans: ["pymes", "empresarial", "business"],
     adminOnly: false,
     requiresPremium: false,
+    order: 2,
   },
   {
     label: "Plantillas",
@@ -76,6 +80,7 @@ export const navLinksData: NavLinkItem[] = [
     allowedPlans: ["pymes", "empresarial", "business"],
     adminOnly: false,
     requiresPremium: false,
+    order: 3,
   },
   {
     label: "Conexión",
@@ -86,6 +91,7 @@ export const navLinksData: NavLinkItem[] = [
     allowedPlans: ["pymes", "empresarial", "business"],
     adminOnly: false,
     requiresPremium: false,
+    order: 4,
   },
   {
     label: "Crear IA",
@@ -96,6 +102,7 @@ export const navLinksData: NavLinkItem[] = [
     allowedPlans: ["pymes", "empresarial", "business"],
     adminOnly: false,
     requiresPremium: false,
+    order: 5,
   },
   {
     label: "Chats",
@@ -106,6 +113,7 @@ export const navLinksData: NavLinkItem[] = [
     allowedPlans: ["pymes", "empresarial", "business"],
     adminOnly: false,
     requiresPremium: false,
+    order: 6,
   },
   {
     label: "Leads",
@@ -116,6 +124,7 @@ export const navLinksData: NavLinkItem[] = [
     allowedPlans: ["pymes", "empresarial", "business"],
     adminOnly: false,
     requiresPremium: false,
+    order: 7,
   },
   {
     label: "Flujos",
@@ -126,6 +135,7 @@ export const navLinksData: NavLinkItem[] = [
     allowedPlans: ["pymes", "empresarial", "business"],
     adminOnly: false,
     requiresPremium: true,
+    order: 8,
   },
   {
     label: "Campañas",
@@ -136,6 +146,7 @@ export const navLinksData: NavLinkItem[] = [
     allowedPlans: ["pymes", "empresarial", "business"],
     adminOnly: false,
     requiresPremium: true,
+    order: 9,
   },
   {
     label: "Herramientas",
@@ -146,6 +157,7 @@ export const navLinksData: NavLinkItem[] = [
     allowedPlans: ["empresarial", "business"],
     adminOnly: false,
     requiresPremium: true,
+    order: 10,
   },
   {
     label: "Recordatorios",
@@ -156,6 +168,7 @@ export const navLinksData: NavLinkItem[] = [
     allowedPlans: ["pymes", "empresarial", "business"],
     adminOnly: false,
     requiresPremium: true,
+    order: 11,
   },
   {
     label: "Respuestas rápidas",
@@ -166,6 +179,7 @@ export const navLinksData: NavLinkItem[] = [
     allowedPlans: ["empresarial", "business"],
     adminOnly: false,
     requiresPremium: true,
+    order: 12,
   },
   {
     label: "Ajustes de perfil",
@@ -176,5 +190,6 @@ export const navLinksData: NavLinkItem[] = [
     allowedPlans: ["pymes", "empresarial", "business"],
     adminOnly: false,
     requiresPremium: false,
+    order: 13,
   },
 ];

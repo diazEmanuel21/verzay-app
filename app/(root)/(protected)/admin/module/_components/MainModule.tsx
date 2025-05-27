@@ -16,6 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { ModuleForm } from "./ModuleForm"
 import { Button } from '@/components/ui/button';
 import { createModule, updateModule } from '@/actions/module-actions';
+import { SortableModuleList } from './SortableModuleList';
 
 export const MainModule = () => {
     const router = useRouter();
@@ -108,13 +109,14 @@ export const MainModule = () => {
                     {isPending ? (
                         <ModuleCardSkeleton />
                     ) : (
-                        filteredModules.map((module) => (
-                            <ModuleCard
-                                key={module.id}
-                                module={module}
-                                setOpenModule={() => setEditModule(true, module)}
-                            />
-                        ))
+                            <SortableModuleList modules={modules} />
+                        // filteredModules.map((module) => (
+                        //     <ModuleCard
+                        //         key={module.id}
+                        //         module={module}
+                        //         setOpenModule={() => setEditModule(true, module)}
+                        //     />
+                        // ))
                     )}
                 </div>
             </div>
