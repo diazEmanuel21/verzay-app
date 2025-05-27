@@ -28,6 +28,7 @@ export default function AppInitializer({ onReseller, modules, user }: AppInitial
         : 'Default';
 
     useEffect(() => {
+        if (!user) return;
         const access = canAccessRoute({
             route: pathname,
             userRole: user.role,
@@ -39,7 +40,7 @@ export default function AppInitializer({ onReseller, modules, user }: AppInitial
             console.warn("Acceso denegado por:", access.reason);
             router.push("/credits"); // 👈 redirección en cliente
         }
-    }, [pathname, user.role, user.plan, modules, router]);
+    }, [pathname, user, modules, router]);
 
     //Setear modulos de la app
     useEffect(() => {

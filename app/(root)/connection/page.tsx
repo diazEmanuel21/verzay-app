@@ -8,7 +8,6 @@ import { getInstancesByUserId } from "@/actions/instances-actions";
 import { fetchInstanceAction } from '@/actions/fetch-intance-action';
 import { getApiKeyById } from '@/actions/api-action';
 import { UnderConstruction } from '@/components/custom';
-import { SeedModules } from '@/components/custom/SeedModules';
 
 function hasInstancia(result: { data?: Instancias | null }): result is { data: Instancias } {
     return !!result.data
@@ -43,7 +42,6 @@ const ConnectionPage = async () => {
 
     return (
         <div className="flex flex-1 flex-wrap gap-4 items-center justify-center">
-            {/* <SeedModules /> */}
             <ConnectionMain user={user} instance={instance} instanceInfo={instanceInfo?.data} />
             <UnderConstruction />
         </div>

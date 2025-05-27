@@ -1,7 +1,6 @@
 'use client'
 
 import { create } from 'zustand'
-import { devtools } from 'zustand/middleware'
 import { ResellerData } from '@/schema/reseller'
 
 interface ResellerStore {
@@ -11,26 +10,15 @@ interface ResellerStore {
     clearReseller: () => void
 }
 
-export const useResellerStore = create<ResellerStore>()(
-    devtools(
-        (set) => ({
-            reseller: null,
-            isLoaded: false,
+export const useResellerStore = create<ResellerStore>((set) => ({
+    reseller: null,
+    isLoaded: false,
 
-            setReseller: (data) =>
-                set(
-                    { reseller: data, isLoaded: true },
-                    false,
-                    'reseller/set'
-                ),
+    setReseller: (data) => {
+        set({ reseller: data, isLoaded: true });
+    },
 
-            clearReseller: () =>
-                set(
-                    { reseller: null, isLoaded: true },
-                    false,
-                    'reseller/clear'
-                ),
-        }),
-        { name: 'Reseller Store' }
-    )
-)
+    clearReseller: () => {
+        set({ reseller: null, isLoaded: true });
+    }
+}));
