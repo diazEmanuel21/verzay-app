@@ -38,7 +38,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
             <SidebarFooter>
                 {
                     pathname === '/multiagente' &&
-                    <div className="flex items-center justify-center">
+                    <div className="flex items-center justify-end">
                         <SidebarTrigger />
                     </div>
                 }
