@@ -3,6 +3,7 @@ export interface NavigationRoutesInterface {
 }
 
 export const navigationRoutes: NavigationRoutesInterface[] = [
+    { route: '/multiagente' },
     { route: '/admin/module' },
     { route: '/admin/conexion' },
     { route: '/admin/clientes' },

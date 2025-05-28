@@ -144,7 +144,7 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
                         className="text-red-600"
                         onClick={() => openDialog('clearHistory')}
                     >
-                        Borrar historial de todos
+                        Borrar historial de clientes
                     </DropdownMenuItem>
                     <DropdownMenuItem
                         className="text-red-600"
