@@ -58,7 +58,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             image: null,
             emailVerified: null,
             autoReactivate: '30',
-            webhookUrl: 'https://n8npro.verzay.co/webhook'
+            webhookUrl: 'https://n8npro.verzay.co/webhook',
         });
 
         if (result.success) {

@@ -108,7 +108,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
 
       <div className="rounded-md border-border overflow-x-auto">
         <Table className="w-full border-border table-auto">
-          <TableHeader>
+          <TableHeader className='sticky top-0'>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}
                 className="border-border"
@@ -135,7 +135,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
                   className="border-border"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className='h-2'>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

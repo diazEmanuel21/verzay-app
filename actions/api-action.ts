@@ -543,3 +543,56 @@ export async function eliminarMensaje(id: string) {
     return { success: false, message: "Error al eliminar el mensaje." };
   }
 }
+
+//Datos para api status
+export async function getDataApi(userId: string, apiKeyId: string) {
+  try {
+    const apiKey = await db.apiKey.findFirst({
+      where: {
+        id: apiKeyId
+      },  
+      select: {
+        id: true,
+        url: true,
+        key: true,
+      },
+    });
+
+    const instancia = await db.instancias.findFirst({
+      where: { userId },
+      select: {
+        id: true,
+        instanceName: true,
+        instanceId: true,
+      },
+    });
+
+    console.log("API KEY encontrada:", apiKey);
+    console.log("Instancia encontrada:", instancia);
+
+    if (!apiKey || !instancia) {
+      return {
+        success: false,
+        data: null,
+        message: "No se encontró ApiKey o Instancia para este usuario.",
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        apiKeyId: apiKey.id,
+        url: apiKey.url,
+        key: instancia.instanceId,
+        instanceName: instancia.instanceName,
+        instanceId: instancia.instanceId,
+      },
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.message || "Error al obtener datos de la API.",
+    };
+  }
+}
+
