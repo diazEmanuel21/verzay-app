@@ -67,18 +67,14 @@ export default async function RootLayout({
       <body className={`${poppins.className} overflow-hidden`}>
         <AppProviders>
           <ThemeProvider>
-            <AppInitializer onReseller={onReseller} modules={modules} user={user}/>
+            <AppInitializer onReseller={onReseller} modules={modules} user={user} />
             {isAuthenticated ? (
               <SidebarProvider defaultOpen={defaultOpen}>
                 <AppSidebar user={user} />
                 <SidebarInset className="h-screen flex flex-col">
 
                   {/* Header fijo, pero ocupa espacio */}
-                  <div className="h-18 shrink-0">
-                    <header className={`sticky top-0 h-18 w-full border-border flex items-center px-4 dark:bg-gray-900 dark:text-white`}>
-                      <Breadcrumbs />
-                    </header>
-                  </div>
+                  <Breadcrumbs />
 
                   {/* Main con scroll interno */}
                   <main className={`flex-1 overflow-auto p-4 ${themeClass}`}>

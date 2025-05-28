@@ -12,16 +12,19 @@ import {
     SidebarFooter,
     SidebarHeader,
     SidebarRail,
+    SidebarTrigger,
 } from "@/components/ui/sidebar"
 import ThemeSwitcher from "./custom/ThemeSwitcher"
 import LogoutButton from "./logout-button"
 import { ResellerInfoResponse } from "@/schema/reseller"
+import { usePathname } from "next/navigation"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
     user: User;
 }
 
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
+    const pathname = usePathname();
 
     return (
         <Sidebar collapsible="icon" {...props} className="bg-white dark:bg-gray-900 text-gray-800 dark:text-zinc-100 border-r border-zinc-200 dark:border-gray-800">
@@ -32,7 +35,12 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                 <NavMain user={user} />
             </SidebarContent>
             <SidebarFooter>
-                {/* <SidebarGroupLabel>IA Créditos</SidebarGroupLabel> */}
+                {
+                    pathname === '/multiagente' &&
+                    <div className="flex items-center justify-end">
+                        <SidebarTrigger />
+                    </div>
+                }
                 <div className="flex flex-row w-full justify-center items-center">
                     <NavProjects user={user} />
                     <div>
