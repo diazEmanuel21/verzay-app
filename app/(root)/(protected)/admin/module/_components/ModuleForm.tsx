@@ -13,6 +13,7 @@ import type { CheckedState } from "@radix-ui/react-checkbox"
 import { FormModuleSchema, FormModuleValues, iconMap } from "@/schema/module"
 import { Trash2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { navigationRoutes } from "@/lib/navigation-routes"
 
 export const ModuleForm = ({
     onSubmit,
@@ -57,9 +58,23 @@ export const ModuleForm = ({
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Ruta</FormLabel>
-                            <FormControl>
-                                <Input placeholder="Ej: /sessions" {...field} />
-                            </FormControl>
+                            <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                            >
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecciona una ruta" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {navigationRoutes.map((item) => (
+                                        <SelectItem key={item.route} value={item.route}>
+                                            {item.route}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </FormItem>
                     )}
                 />
@@ -142,12 +157,36 @@ export const ModuleForm = ({
                     )}
                 />
 
-                <div className="space-y-4 flex justify-between items-center flex-wrap">
+                <div className="flex flex-col flex-1 gap-2">
                     <FormLabel>Submódulos</FormLabel>
                     {fields.map((field, index) => (
-                        <div key={field.id} className="flex flex-col md:flex-row gap-2 items-center">
-                            <Input placeholder="URL" {...form.register(`items.${index}.url`)} />
-                            <Input placeholder="Título" {...form.register(`items.${index}.title`)} />
+                        <div key={field.id} className="flex flex-row flex-1 justify-between gap-2">
+                            {/* SELECT para URL */}
+                            <Select
+                                onValueChange={(value) => form.setValue(`items.${index}.url`, value)}
+                                defaultValue={form.watch(`items.${index}.url`)}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Selecciona URL" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {navigationRoutes.map((route) => (
+                                        <SelectItem key={route.route} value={route.route}>
+                                            {route.route}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
+                            {/* <Input placeholder="URL" {...form.register(`items.${index}.url`)} /> */}
+
+                            {/* INPUT para título */}
+                            <Input
+                                placeholder="Título"
+                                {...form.register(`items.${index}.title`)}
+                                className="w-full"
+                            />
+                            {/* <Input placeholder="Título" {...form.register(`items.${index}.title`)} /> */}
                             <Button type="button" variant="destructive" onClick={() => remove(index)}>
                                 <Trash2 />
                             </Button>

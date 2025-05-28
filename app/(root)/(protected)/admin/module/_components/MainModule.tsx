@@ -121,7 +121,7 @@ export const MainModule = () => {
                     <DialogHeader>
                         <DialogTitle>Edición de módulos</DialogTitle>
                     </DialogHeader>
-                    <ScrollArea className="max-h-[70vh] overflow-y-auto">
+                    <ScrollArea className="max-h-[70vh] overflow-hidden">
                         <ModuleForm onSubmit={onSubmit} defaultValues={editData.module} />
                     </ScrollArea>
                     <DialogFooter>

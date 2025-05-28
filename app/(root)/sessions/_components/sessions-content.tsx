@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import useSWRInfinite from "swr/infinite";
 import { activateAllSessions, deactivateAllSessions, deleteAllSessions, getSessionsByUserId, getSessionsCountByUserId, searchSessionsByUserId } from "@/actions/session-action";
+import { clearAllHistory } from "@/actions/n8n-chat-historial-action";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -239,6 +240,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
             onActivateAll={activateAllSessions}
             onDeactivateAll={deactivateAllSessions}
             onDeleteAll={deleteAllSessions}
+            onClearHistory={clearAllHistory}
             onSuccess={() => router.refresh()}
           />
         </div>

@@ -24,15 +24,15 @@ import { toast } from 'sonner'
 import { MoreHorizontal } from 'lucide-react'
 import { useState } from 'react'
 
-// type BulkActionType = 'activate' | 'deactivate' | 'deleteAll' | 'clearHistory'
-type BulkActionType = 'activate' | 'deactivate' | 'deleteAll'
+type BulkActionType = 'activate' | 'deactivate' | 'deleteAll' | 'clearHistory'
+// type BulkActionType = 'activate' | 'deactivate' | 'deleteAll'
 
 interface BulkActionsDropdownProps {
     userId: string
     onActivateAll: (userId: string) => Promise<any>
     onDeactivateAll: (userId: string) => Promise<any>
     onDeleteAll: (userId: string) => Promise<any>
-    onClearHistory?: (userId: string) => Promise<any>
+    onClearHistory: (userId: string) => Promise<any>
     onSuccess?: () => void
 }
 
@@ -75,12 +75,13 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
             handler: onDeleteAll,
             toastId: 'delete-all',
         },
-        // clearHistory: {
-        //     label: 'Borrar historial de todos',
-        //     confirmPhrase: 'Borrar historial de todos',
-        //     handler: onClearHistory,
-        //     toastId: 'clear-history',
-        // },
+        clearHistory: {
+            label: 'Borrar historial de todos',
+            // confirmPhrase: 'Borrar historial de todos',
+            confirmPhrase: 'si',
+            handler: onClearHistory,
+            toastId: 'clear-history',
+        },
     }
 
     const openDialog = (type: BulkActionType) => {
@@ -139,9 +140,12 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
                     >
                         Desactivar clientes
                     </DropdownMenuItem>
-                    {/* <DropdownMenuItem onClick={() => openDialog('clearHistory')}>
+                    <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => openDialog('clearHistory')}
+                    >
                         Borrar historial de todos
-                    </DropdownMenuItem> */}
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                         className="text-red-600"
                         onClick={() => openDialog('deleteAll')}

@@ -39,7 +39,7 @@ export async function deleteConversationN8N(
     // 3. Eliminar TODAS las conversaciones con ese session_id
     const sessionIdentifier = `${instance.instanceName}-${remoteJid}`;
     console.log(`ID de sesión a eliminar: ${sessionIdentifier}`);
-    
+
     const deleteResult = await db.n8n_chat_histories.deleteMany({
       where: { session_id: sessionIdentifier }
     });
@@ -62,6 +62,64 @@ export async function deleteConversationN8N(
     return {
       success: false,
       message: 'Error interno al eliminar la conversación',
+      data: null
+    };
+  }
+}
+
+// 🗑️ Eliminar el historial de todos los usuarios
+export async function clearAllHistory(userId: string): Promise<N8nOperationResponse> {
+  try {
+    // 1. Validar que userId está presente
+    if (!userId || typeof userId !== 'string') {
+      return {
+        success: false,
+        message: 'El userId es requerido y debe ser una cadena de texto',
+      };
+    }
+
+    // 2. Buscar la instancia asociada al usuario
+    const instance = await db.instancias.findFirst({
+      where: { userId },
+      select: { instanceName: true }
+    });
+
+    if (!instance?.instanceName || typeof instance.instanceName !== 'string') {
+      return {
+        success: false,
+        message: 'No se encontró una instancia válida asociada al usuario',
+      };
+    }
+
+    const instancePrefix = `${instance.instanceName}-`;
+
+    // 3. Eliminar todos los historiales con session_id que comiencen con el instanceName
+    const deleteResult = await db.n8n_chat_histories.deleteMany({
+      where: {
+        session_id: {
+          startsWith: instancePrefix, // Prisma no soporta ILIKE directamente, pero startsWith funciona para este caso
+        }
+      }
+    });
+
+    if (deleteResult.count === 0) {
+      return {
+        success: false,
+        message: 'No se encontraron registros de historial para esta instancia',
+      };
+    }
+
+    return {
+      success: true,
+      message: `Se eliminaron ${deleteResult.count} registros de historial exitosamente`,
+      data: null
+    };
+
+  } catch (error) {
+    console.error('Error en clearAllHistory:', error);
+    return {
+      success: false,
+      message: 'Error interno al eliminar los historiales',
       data: null
     };
   }

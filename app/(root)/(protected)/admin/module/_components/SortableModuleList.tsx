@@ -20,6 +20,7 @@ import { updateModuleOrder } from '@/actions/module-actions'
 import { ModuleWithItems } from '@/schema/module'
 import { toast } from 'sonner'
 import { ModuleCard } from './ModuleCard'
+import { ModuleCardSkeleton } from './ModuleCardSkeleton'
 
 interface SortableListProps {
     modules: ModuleWithItems[]
@@ -66,11 +67,7 @@ export function SortableModuleList({ modules, setOpenModule }: SortableListProps
     }
 
     if (!items || items.length === 0) {
-        return (
-            <div className="text-muted-foreground text-sm">
-                No hay módulos disponibles para ordenar.
-            </div>
-        )
+        return <ModuleCardSkeleton />
     }
 
     return (

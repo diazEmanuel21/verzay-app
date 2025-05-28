@@ -247,13 +247,6 @@ export async function deleteAllSessions(userId: string): Promise<SessionResponse
   }
 };
 
-// export async function registerSession(
-//   userId: string,
-//   remoteJid: string,
-//   pushName: string,
-//   instanceId: string
-// ): Promise<SessionResponse<Session>> {
-
 export async function registerSession(input: z.infer<typeof registerSessionSchema>): Promise<SessionResponse<Session>> {
   const validation = registerSessionSchema.safeParse(input);
 
@@ -310,5 +303,4 @@ export async function registerSession(input: z.infer<typeof registerSessionSchem
       message: "Error al registrar la sesión.",
     };
   }
-}
-
+};
