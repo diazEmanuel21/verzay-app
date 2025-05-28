@@ -28,21 +28,20 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
 
     return (
         <Sidebar collapsible="icon" {...props} className="bg-white dark:bg-gray-900 text-gray-800 dark:text-zinc-100 border-r border-zinc-200 dark:border-gray-800">
+            <SidebarHeader>
+                <TeamSwitcher user={user} />
+            </SidebarHeader>
 
-            {
-                pathname === '/multiagente' ?
-                    <div className="flex items-center justify-center">
-                        <SidebarTrigger />
-                    </div>
-                    :
-                    <SidebarHeader>
-                        <TeamSwitcher user={user} />
-                    </SidebarHeader>
-            }
             <SidebarContent>
                 <NavMain user={user} />
             </SidebarContent>
             <SidebarFooter>
+                {
+                    pathname === '/multiagente' &&
+                    <div className="flex items-center justify-center">
+                        <SidebarTrigger />
+                    </div>
+                }
                 <div className="flex flex-row w-full justify-center items-center">
                     <NavProjects user={user} />
                     <div>
