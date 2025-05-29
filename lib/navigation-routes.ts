@@ -25,4 +25,5 @@ export const navigationRoutes: NavigationRoutesInterface[] = [
     { route: "/profile" },
     { route: "/tools/sheets" },
     { route: "/tools/docs" },
+    { route: "/evo" },
 ];
