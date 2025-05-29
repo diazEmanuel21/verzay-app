@@ -13,7 +13,7 @@ export default function IframeRenderer({ url }: Props) {
     return (
         <iframe
             src={url}
-            className="w-full h-screen border-0"
+            className="w-full h-full border-0"
             allow="fullscreen"
         />
     );
