@@ -64,17 +64,11 @@ const ToolsPage = async ({ params: { type } }: SearchParamProps) => {
               <p className="text-gray-600 mb-4">
                 Gestiona tus clientes solicitudes, ventas y mas directamente desde CRM Google Sheet.
               </p>
-              {toolsMap.sheets ? (
-                <Link href={toolsMap.sheets} target="_blank">
-                  <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-medium">
-                    Acceder al CRM
-                  </Button>
-                </Link>
-              ) : (
-                <Button disabled className="w-full">
-                  Enlace no disponible
-                </Button>
-              )}
+            <Link href="/tools/sheet">
+              <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-medium">
+                Acceder al CRM
+              </Button>
+            </Link>
             </CardContent>
           </Card>
 
@@ -125,7 +119,7 @@ const ToolsPage = async ({ params: { type } }: SearchParamProps) => {
                 Agrega las preguntas y respuestas frecuentes en nuestro documento de Google Docs.
               </p>
               {toolsMap.docs ? (
-                <Link href={toolsMap.docs} target="_blank">
+                <Link href="/tools/sheet">
                   <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium">
                     Ver Documento
                   </Button>
