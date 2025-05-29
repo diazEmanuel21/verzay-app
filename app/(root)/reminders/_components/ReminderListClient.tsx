@@ -4,7 +4,6 @@ import { reminderListClientInterface } from "@/schema/reminder";
 import { ReminderList } from "./";
 
 export const ReminderListClient = ({ workflows, filteredReminders }: reminderListClientInterface) => {
-
     return (
         <>
             {filteredReminders.length === 0 ? (
@@ -15,7 +14,6 @@ export const ReminderListClient = ({ workflows, filteredReminders }: reminderLis
                 <>
                     {filteredReminders.map((reminder) => {
                         const workflow = workflows.find(w => w.id === reminder.workflowId);
-                        if (!workflow) return null;
 
                         return (
                             <ReminderList

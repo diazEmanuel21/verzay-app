@@ -49,9 +49,7 @@ export const reminderSchema = z.object({
         required_error: "El nombre del lead es obligatorio.",
     }).min(1, "El nombre del lead es obligatorio."),
 
-    workflowId: z.string({
-        required_error: "El flujo es obligatorio.",
-    }).min(1, "El flujo es obligatorio."),
+    workflowId: z.string().optional(),
 
     serverUrl: z.string({
         required_error: "serverUrl es obligatorio.",
@@ -86,7 +84,7 @@ export interface mainReminderInterface {
 
 export interface reminderListInterface {
     reminder: Reminders
-    workflow: Workflow
+    workflow?: Workflow
 }
 export interface reminderListClientInterface {
     filteredReminders: Reminders[]

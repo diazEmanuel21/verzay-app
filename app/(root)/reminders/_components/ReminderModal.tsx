@@ -31,7 +31,7 @@ export const ReminderModal = ({ user, apiKey, leads, workflows, instancia }: Rem
             serverUrl: apiKey.url,
             apikey: apiKey.key,
             userId: reminderData.userId,
-            workflowId: reminderData.workflowId,
+            workflowId: reminderData?.workflowId || '',
             remoteJid: reminderData.remoteJid,
             description: reminderData.description || '',
             repeatEvery: reminderData.repeatEvery || undefined,

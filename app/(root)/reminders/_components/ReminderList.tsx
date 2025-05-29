@@ -6,7 +6,6 @@ import { reminderListInterface, repeatTypes } from "@/schema/reminder"
 import { ReminderActions } from "./"
 
 export const ReminderList = ({ reminder, workflow }: reminderListInterface) => {
-
     const repeatLabel = reminder.repeatType === "NONE"
         ? "Único"
         : `${repeatTypes.find(rt => rt.value === reminder.repeatType)?.label} - ${reminder.repeatEvery} ${reminder.repeatEvery === 1 ? "vez" : "veces"}`;
@@ -39,7 +38,7 @@ export const ReminderList = ({ reminder, workflow }: reminderListInterface) => {
 
                 <div className="flex items-center justify-between">
                     <div className="text-xs text-muted-foreground">
-                        Flujo | {workflow?.name}
+                        Flujo | {workflow?.name ?? 'No asignado'}
                     </div>
                     <span className="text-xs text-muted-foreground">{repeatLabel}</span>
                 </div>
