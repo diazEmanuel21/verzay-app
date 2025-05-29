@@ -64,7 +64,7 @@ const ToolsPage = async ({ params: { type } }: SearchParamProps) => {
               <p className="text-gray-600 mb-4">
                 Gestiona tus clientes solicitudes, ventas y mas directamente desde CRM Google Sheet.
               </p>
-            <Link href="/tools/sheet">
+            <Link href="/tools/sheets">
               <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-medium">
                 Acceder al CRM
               </Button>

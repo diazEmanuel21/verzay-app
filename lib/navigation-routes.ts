@@ -3,7 +3,6 @@ export interface NavigationRoutesInterface {
 }
 
 export const navigationRoutes: NavigationRoutesInterface[] = [
-    { route: 'https://web.whatsapp.com' },
     { route: '/multiagente' },
     { route: '/admin/module' },
     { route: '/admin/conexion' },
@@ -24,4 +23,6 @@ export const navigationRoutes: NavigationRoutesInterface[] = [
     { route: "/reminders" },
     { route: "/auto-replies" },
     { route: "/profile" },
+    { route: "/tool/sheets" },
+    { route: "/tool/docs" },
 ];
