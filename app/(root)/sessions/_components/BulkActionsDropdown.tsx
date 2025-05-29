@@ -1,5 +1,6 @@
 'use client'
 
+import { exportToExcel } from '@/helpers/exportToExcel'
 import {
     DropdownMenu,
     DropdownMenuTrigger,
@@ -7,6 +8,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuItem,
+    DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu'
 import {
     AlertDialog,
@@ -21,8 +23,16 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { MoreHorizontal } from 'lucide-react'
 import { useState } from 'react'
+
+import {
+    FileDown,
+    UserCheck,
+    UserX,
+    Trash2,
+    History,
+    MoreHorizontal
+} from 'lucide-react'
 
 type BulkActionType = 'activate' | 'deactivate' | 'deleteAll' | 'clearHistory'
 // type BulkActionType = 'activate' | 'deactivate' | 'deleteAll'
@@ -125,31 +135,58 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
                         <MoreHorizontal className="h-4 w-4" />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Acciones generales</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
+
+                <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel className="flex flex-row gap-2 justify-start items-center">
+                        {/* <FileArchive className="h-4 w-4" /> */}
+                        Exportar
+                    </DropdownMenuLabel>
                     <DropdownMenuItem
-                        className="text-blue-600"
-                        onClick={() => openDialog('activate')}
+                        onClick={exportToExcel}
+                        className="text-green-600 hover:bg-green-50 dark:hover:bg-green-900/40"
                     >
+                        <FileDown className="mr-2 h-4 w-4" />
+                        Exportar a Excel
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuLabel className="flex flex-row gap-2 justify-start items-center">
+                        {/* <Cog className="h-4 w-4" /> */}
+                        Gestión masiva
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem
+                        onClick={() => openDialog('activate')}
+                        className="text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/40"
+                    >
+                        <UserCheck className="mr-2 h-4 w-4" />
                         Activar clientes
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                        className="text-red-600"
                         onClick={() => openDialog('deactivate')}
+                        className="text-red-600 hover:bg-orange-50 dark:hover:bg-orange-900/40"
                     >
+                        <UserX className="mr-2 h-4 w-4" />
                         Desactivar clientes
                     </DropdownMenuItem>
+
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuLabel className="flex flex-row gap-2 justify-start items-center">
+                        Riesgo alto
+                    </DropdownMenuLabel>
                     <DropdownMenuItem
-                        className="text-red-600"
                         onClick={() => openDialog('clearHistory')}
+                        className="text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/40"
                     >
-                        Borrar historial de clientes
+                        <History className="mr-2 h-4 w-4" />
+                        Borrar historial
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                        className="text-red-600"
                         onClick={() => openDialog('deleteAll')}
+                        className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/40"
                     >
+                        <Trash2 className="mr-2 h-4 w-4" />
                         Eliminar clientes
                     </DropdownMenuItem>
                 </DropdownMenuContent>
