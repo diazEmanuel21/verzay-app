@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { DialogType } from './clients-manager'
-import { UserWithPausar } from '@/lib/types'
+import { ClientInterface } from '@/lib/types'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { loginAction } from '@/actions/auth-action'
@@ -19,7 +19,7 @@ import { toast } from 'sonner'
 
 interface propsActionsMenu {
     currentUserRol: string
-    user: UserWithPausar
+    user: ClientInterface
     openDialogGetUserId: (userId: string, dialog: DialogType, state: boolean) => void
 }
 

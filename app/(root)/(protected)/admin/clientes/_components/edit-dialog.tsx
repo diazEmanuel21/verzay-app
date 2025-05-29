@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { UserWithPausar } from "@/lib/types"
+import { ClientInterface } from "@/lib/types"
 import { ApiKey, Plan, Role } from "@prisma/client"
 import {
   Select,
@@ -24,7 +24,7 @@ interface Props {
   openEditDialog: boolean
   setOpenEditDialog: (open: boolean) => void
   handleEdit: (userId: string, formData: FormData) => void
-  user: UserWithPausar
+  user: ClientInterface
   apikeys: ApiKey[]
   currentUserRol: string
 }

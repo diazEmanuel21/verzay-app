@@ -3,13 +3,13 @@
 import { ColumnDef } from '@tanstack/react-table'
 import { UserActionsMenu } from './user-actions-menu'
 import { DialogType } from './clients-manager'
-import { UserWithPausar } from '@/lib/types'
+import { ClientInterface } from '@/lib/types'
 import { StatusCell } from '@/components/StatusCell'
 import { ArrowUpDown, XCircleIcon } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { Button } from '@/components/ui/button'
 
-export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogType, state: boolean) => void, currentUserRol: string): ColumnDef<UserWithPausar>[] => [
+export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogType, state: boolean) => void, currentUserRol: string): ColumnDef<ClientInterface>[] => [
   {
     accessorKey: 'name',
     header: 'Nombre',
@@ -23,7 +23,7 @@ export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogT
     header: 'Marca',
   },
   {
-    accessorKey: 'isEnabled',
+    accessorKey: 'isEvoEnabled',
     header: ({ column }) => (
       <Button
         variant="ghost"
@@ -34,37 +34,24 @@ export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogT
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    cell: ({ row }) => {
-      const user = row.original
-      const userId = user.id;
-      const instanceId = user.apiKeyId
-
-      if (!userId || !instanceId) {
-        return (
-          <Badge
-            className="flex gap-1 px-1.5 text-muted-foreground [&_svg]:size-3"
-          >
-            <XCircleIcon className="text-gray-400" />
-            Sin datos
-          </Badge>
-        )
-      }
-
-      return (
-        <StatusCell
-          userId={userId}
-          instanceId={instanceId}
-        />
-      )
-    }
+    cell: ({ row }) => <StatusCell isEvoEnabled={row.original.isEvoEnabled} />,
   },
+  // {
+  //   accessorKey: 'messagePause',
+  //   header: 'Frase',
+  //   cell: ({ row }) => (
+  //     <span className="italic text-muted-foreground text-sm">
+  //       {row.original.pausar.filter(pausas => pausas.tipo === 'abrir')[0]?.mensaje || '—'}
+  //     </span>
+  //   ),
+  // },
   {
     accessorKey: 'webhookUrl',
-        header: ({ column }) => (
+    header: ({ column }) => (
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        className="text-sm" 
+        className="text-sm"
       >
         Webhook
         <ArrowUpDown className="ml-2 h-4 w-4" />

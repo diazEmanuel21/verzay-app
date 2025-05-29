@@ -25,10 +25,10 @@ import { toast } from 'sonner'
 import { Tools } from '../tool-types'
 import { Button } from '@/components/ui/button'
 
-import { UserWithPausar } from '@/lib/types'
+import { ClientInterface } from '@/lib/types'
 
 interface Props {
-  user: UserWithPausar
+  user: ClientInterface
   openToolsDialog: boolean
   setOpenToolsDialog: (open: boolean) => void
 }

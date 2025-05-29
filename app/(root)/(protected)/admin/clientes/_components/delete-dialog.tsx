@@ -2,10 +2,10 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { UserWithPausar } from '@/lib/types'
+import { ClientInterface } from '@/lib/types'
 
 interface Props {
-  user: UserWithPausar,
+  user: ClientInterface,
   openDeleteDialog: boolean
   setOpenDeleteDialog: (open: boolean) => void
   handleDelete: (userId: string) => void

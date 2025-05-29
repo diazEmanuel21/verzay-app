@@ -1,11 +1,11 @@
-import { UserWithPausar } from "@/lib/types"
+import { ClientInterface } from "@/lib/types"
 import { ClientsManager } from "./_components/clients-manager"
-import { getAllUsers, getUsersByResellerId } from "@/actions/userClientDataActions"
+import { getAllUsers, getAllClients, getClientsByResellerId, getUsersByResellerId } from "@/actions/userClientDataActions"
 import { obtenerApiKeys } from "@/actions/api-action"
 import { ApiKey } from "@prisma/client"
 import { currentUser } from "@/lib/auth"
 
-function hasUsers(result: { data?: UserWithPausar[] }): result is { data: UserWithPausar[] } {
+function hasUsers(result: { data?: ClientInterface[] }): result is { data: ClientInterface[] } {
   return !!result.data
 }
 
@@ -23,9 +23,9 @@ export default async function ClientesPage() {
   // 🔁 Obtener usuarios según el rol
   let resUsers
   if (user.role === "reseller") {
-    resUsers = await getUsersByResellerId(user.id) // <- función que debes crear
+    resUsers = await getClientsByResellerId(user.id) // <- función que debes crear
   } else {
-    resUsers = await getAllUsers()
+    resUsers = await getAllClients()
   }
 
   const users = hasUsers(resUsers) ? resUsers.data : []

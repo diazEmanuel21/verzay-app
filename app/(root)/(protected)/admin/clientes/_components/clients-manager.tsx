@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { DataTable } from './data-table';
 import { getColumns } from './columns';
-import { UserWithPausar } from '@/lib/types';
+import { ClientInterface } from '@/lib/types';
 import {
     createUserWithPausar,
     deleteUser,
@@ -21,7 +21,7 @@ import { ApiKey } from '@prisma/client';
 export type DialogType = 'editar' | 'tools' | 'delete'
 
 interface Props {
-    users: UserWithPausar[],
+    users: ClientInterface[],
     apikeys: ApiKey[],
     availableApikeys: ApiKey[],
     currentUserRol: string,
@@ -33,7 +33,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
     const [openCreateDialog, setOpenCreateDialog] = useState(false);
     const [openToolsDialog, setOpenToolsDialog] = useState(false);
     const [openEditDialog, setOpenEditDialog] = useState(false);
-    const [user, setCurrentUser] = useState<UserWithPausar>();
+    const [user, setCurrentUser] = useState<ClientInterface>();
 
     const handleCreate = async (formData: FormData) => {
         const toastId = 'create-client';
