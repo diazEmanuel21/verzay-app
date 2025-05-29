@@ -15,6 +15,14 @@ import { Trash2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { navigationRoutes } from "@/lib/navigation-routes"
 
+const labelMap: Record<string, string> = {
+    showInSidebar: 'Mostrar en Sidebar',
+    hiddenModuleToSelector: 'Ocultar módulo para reseller',
+    adminOnly: 'Solo Admin',
+    requiresPremium: 'Requiere Premium',
+    showOnlySelectedPlans: 'Mostrar solo para planes seleccionados',
+}
+
 export const ModuleForm = ({
     onSubmit,
     defaultValues,
@@ -107,7 +115,7 @@ export const ModuleForm = ({
                 />
 
 
-                {['showInSidebar', 'hiddenModuleToSelector', 'adminOnly', 'requiresPremium'].map((key) => (
+                {['showInSidebar', 'hiddenModuleToSelector', 'adminOnly', 'requiresPremium', 'showOnlySelectedPlans'].map((key) => (
                     <FormField
                         key={key}
                         control={form.control}
@@ -120,11 +128,7 @@ export const ModuleForm = ({
                                         onCheckedChange={(checked: CheckedState) => field.onChange(!!checked)}
                                     />
                                 </FormControl>
-                                <FormLabel>{
-                                    key === 'showInSidebar' ? 'Mostrar en Sidebar' :
-                                        key === 'hiddenModuleToSelector' ? 'Ocultar módulo para reseller' :
-                                            key === 'adminOnly' ? 'Solo Admin' : 'Requiere Premium'
-                                }</FormLabel>
+                                <FormLabel>{labelMap[key]}</FormLabel>
                             </FormItem>
                         )}
                     />

@@ -85,6 +85,7 @@ export const FormModuleSchema = z.object({
     hiddenModuleToSelector: z.boolean().default(false),
     adminOnly: z.boolean().default(false),
     requiresPremium: z.boolean().default(false),
+    showOnlySelectedPlans: z.boolean().default(false),
     allowedPlans: z.array(z.enum(PlanValues)),
     items: z.array(ItemModuleSchema).optional(),
 })

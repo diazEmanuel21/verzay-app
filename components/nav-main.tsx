@@ -34,7 +34,7 @@ export function NavMain({ user }: { user: User }) {
     const pathname = usePathname();
     const router = useRouter();
 
-    const navItems = modules
+    const navItemsOriginal = modules
         .filter(link => link.showInSidebar)
         .filter(link => {
             const access = getRouteAccess(link.route, modules);
@@ -44,6 +44,32 @@ export function NavMain({ user }: { user: User }) {
             const isActive = pathname === link.route || pathname.startsWith(link.route);
             return { ...link, isActive };
         });
+
+
+    const navItems = modules
+        .filter(link => link.showInSidebar)
+        .filter(link => {
+            const access = getRouteAccess(link.route, modules);
+
+            // Control de acceso por rol
+            if (access?.adminOnly && user.role !== 'admin' && user.role !== 'reseller') {
+                return false;
+            }
+
+            // 🔐 Control por plan específico
+            if (link.showOnlySelectedPlans) {
+                if (!link.allowedPlans || !link.allowedPlans.includes(user.plan)) {
+                    return false;
+                }
+            }
+
+            return true;
+        })
+        .map(link => {
+            const isActive = pathname === link.route || pathname.startsWith(link.route);
+            return { ...link, isActive };
+        });
+
 
     return (
         <SidebarGroup>

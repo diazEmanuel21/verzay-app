@@ -88,6 +88,11 @@ export const ModuleCard = ({
                             <Star className="h-4 w-4" /> Premium
                         </Badge>
                     )}
+                    {module.showOnlySelectedPlans && (
+                        <Badge variant="default" className="flex items-center gap-1">
+                            <Eye className="h-4 w-4" /> Solo planes seleccionados
+                        </Badge>
+                    )}
                     {module.showInSidebar ? (
                         <Badge variant="outline" className="flex items-center gap-1">
                             <Eye className="h-4 w-4" /> Sidebar
