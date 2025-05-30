@@ -11,6 +11,10 @@ import { Button } from '@/components/ui/button'
 
 export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogType, state: boolean) => void, currentUserRol: string): ColumnDef<ClientInterface>[] => [
   {
+    accessorKey: 'role',
+    header: 'Rol',
+  },
+  {
     accessorKey: 'name',
     header: 'Nombre',
   },
@@ -20,6 +24,11 @@ export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogT
   },
   {
     accessorKey: 'company',
+    header: 'Empresa',
+  },
+
+  {
+    accessorKey: 'Marca',
     header: 'Marca',
   },
   {

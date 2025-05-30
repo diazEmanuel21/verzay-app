@@ -152,11 +152,6 @@ function ActionsCell({ session, onDeleteSuccess }: { session: Session, onDeleteS
 // --- Columns corregido ---
 export const columns = ({ onDeleteSuccess, mutateSessions }: { onDeleteSuccess: (deletedId: number) => void, mutateSessions: () => void }): ColumnDef<Session>[] => [
   {
-    accessorKey: "pushName",
-    header: "Nombre",
-    cell: ({ row }) => <div className="truncate max-w-[150px]">{row.getValue("pushName") || "Sin nombre"}</div>,
-  },
-  {
     accessorKey: "remoteJid",
     header: "Celular",
     cell: ({ row }) => {
@@ -164,6 +159,11 @@ export const columns = ({ onDeleteSuccess, mutateSessions }: { onDeleteSuccess: 
       const phone = remoteJid.split('@')[0];
       return <div className="capitalize">{phone}</div>;
     },
+  },
+  {
+    accessorKey: "pushName",
+    header: "Nombre",
+    cell: ({ row }) => <div className="truncate max-w-[150px]">{row.getValue("pushName") || "Sin nombre"}</div>,
   },
   {
     accessorKey: "status",

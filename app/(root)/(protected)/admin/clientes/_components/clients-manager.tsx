@@ -12,9 +12,6 @@ import {
     updateAbrirPhrase,
     updateClientData
 } from '@/actions/userClientDataActions';
-import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
-import { Card } from '@/components/ui/card';
 import { CreateDialog, DeleteDialog, ToolsDialog, EditDialog } from './';
 import { ApiKey } from '@prisma/client';
 
@@ -137,23 +134,14 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
     const columns = getColumns(openDialogGetUserId, currentUserRol);
 
     return (
-        <Card className='p-6 border-border'>
-            {/* button-create-client */}
-            {currentUserRol === 'admin' &&
-                <div className='absolute top-3 right-2'>
-                    <Button
-                        onClick={openCreateDialogUser}
-                        variant="default"
-                        className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all"
-                    >
-                        Crear
-                        <PlusCircle />
-                    </Button>
-                </div>
-            }
-
-            {/* Tabla de datos */}
-            <DataTable columns={columns} data={users} />
+        <>
+            {/* Gestión de clients */}
+            <DataTable
+                columns={columns}
+                data={users}
+                currentUserRol={currentUserRol}
+                openCreateDialogUser={openCreateDialogUser}
+            />
 
             {/* Dialog create */}
             {availableApikeys && (
@@ -192,6 +180,6 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
                     user={user}
                 />
             )}
-        </Card>
+        </>
     );
 };

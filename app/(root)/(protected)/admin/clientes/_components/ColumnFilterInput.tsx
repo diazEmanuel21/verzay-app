@@ -30,12 +30,13 @@ export function ColumnFilterInput<TData>({ table }: Props<TData>) {
                     handleFilter('', val)
                 }}
             >
-                <SelectTrigger className="w-full sm:max-w-[180px]">
+                <SelectTrigger className="sm:max-w-[180px]">
                     <SelectValue placeholder="Filtrar por..." />
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="email">Correo</SelectItem>
                     <SelectItem value="name">Nombre</SelectItem>
+                    <SelectItem value="company">Empresa</SelectItem>
                     <SelectItem value="company">Marca</SelectItem>
                 </SelectContent>
             </Select>
