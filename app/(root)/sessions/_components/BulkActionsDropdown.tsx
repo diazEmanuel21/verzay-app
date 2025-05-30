@@ -8,7 +8,6 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuItem,
-    DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu'
 import {
     AlertDialog,
@@ -33,6 +32,8 @@ import {
     History,
     MoreHorizontal
 } from 'lucide-react'
+import { Session } from '@prisma/client'
+import { useReactTable } from '@tanstack/react-table'
 
 type BulkActionType = 'activate' | 'deactivate' | 'deleteAll' | 'clearHistory'
 // type BulkActionType = 'activate' | 'deactivate' | 'deleteAll'
@@ -92,13 +93,13 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
             handler: onClearHistory,
             toastId: 'clear-history',
         },
-    }
+    };
 
     const openDialog = (type: BulkActionType) => {
         setActionType(type)
         setConfirmationText('')
         setDialogOpen(true)
-    }
+    };
 
     const confirmAction = async () => {
         if (!actionType) return
@@ -121,11 +122,11 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
         } finally {
             setDialogOpen(false)
         }
-    }
+    };
 
     const isConfirmValid = actionType
         ? confirmationText.trim() === actionMap[actionType].confirmPhrase
-        : false
+        : false;
 
     return (
         <>
@@ -142,7 +143,11 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
                         Exportar
                     </DropdownMenuLabel>
                     <DropdownMenuItem
-                        onClick={exportToExcel}
+                        onClick={() => exportToExcel({
+                            // data: table.getFilteredRowModel().rows.map(row => row.original),
+                            filename: 'clientes.xlsx',
+                            sheetName: 'Clientes'
+                        })}
                         className="text-green-600 hover:bg-green-50 dark:hover:bg-green-900/40"
                     >
                         <FileDown className="mr-2 h-4 w-4" />

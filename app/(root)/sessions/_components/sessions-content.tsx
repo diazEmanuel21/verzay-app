@@ -199,7 +199,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
             {cardStats.map((card, idx) => (
               <Card
                 key={idx}
-                className="min-w-[200px] sm:min-w-0 flex-1 flex flex-col overflow-hidden border-border"
+                className="flex-1 flex flex-col overflow-hidden border-border"
               >
                 <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
                   <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">

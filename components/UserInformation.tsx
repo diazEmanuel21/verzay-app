@@ -13,6 +13,8 @@ import { UserWithPausar } from "@/lib/types";
 import { BrandSelector, ModulesSelector } from "./custom";
 import { useResellerStore } from "@/stores/resellers/resellerStore";
 import { Role } from "@prisma/client";
+import { Country } from "@/actions/get-country-action";
+import { CountryCodeSelect } from './custom/CountryCodeSelect';
 
 // ============================
 // Tipado
@@ -50,7 +52,7 @@ const defaultImgUrl = 'https://images.pexels.com/photos/133356/pexels-photo-1333
 // ============================
 // Componente Principal
 // ============================
-export const UserInformation = ({ userId }: { userId: string }) => {
+export const UserInformation = ({ userId, countries }: { userId: string, countries: { name: string; code: string; flag: string }[] }) => {
     const reseller = useResellerStore((state) => state.reseller);
 
     /* Se extiende el user para poder utilizar openMsg from Pausar cómo un field nativo del User */
@@ -313,11 +315,11 @@ export const UserInformation = ({ userId }: { userId: string }) => {
 
                         </div>
 
+                        {/* <CountryCodeSelect countries={countries} /> */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {[
                                 { key: 'apiUrl', label: 'API key OpenAI', type: 'password' },
                                 { key: 'company', label: 'Empresa' },
-
                                 { key: 'notificationNumber', label: 'Número de notificación' },
                                 { key: 'autoReactivate', label: 'Tiempo de reactivación(minutos)', type: 'number' },
                                 { key: 'openMsg', label: 'Frase de reactivación' },
