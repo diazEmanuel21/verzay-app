@@ -567,9 +567,6 @@ export async function getDataApi(userId: string, apiKeyId: string) {
       },
     });
 
-    console.log("API KEY encontrada:", apiKey);
-    console.log("Instancia encontrada:", instancia);
-
     if (!apiKey || !instancia) {
       return {
         success: false,

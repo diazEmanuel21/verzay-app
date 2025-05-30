@@ -35,7 +35,6 @@ export const LeadCreateForm = ({ userId, instanceId, onCreated, onCancel }: regi
                 remoteJid: `${values.remoteJid}${wppFormat}`,
             };
 
-            console.log({payload})
             return await registerSession(payload);
         },
         onSuccess: (res) => {

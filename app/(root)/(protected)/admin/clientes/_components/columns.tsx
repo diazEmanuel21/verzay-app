@@ -5,14 +5,29 @@ import { UserActionsMenu } from './user-actions-menu'
 import { DialogType } from './clients-manager'
 import { ClientInterface } from '@/lib/types'
 import { StatusCell } from '@/components/StatusCell'
-import { ArrowUpDown, XCircleIcon } from 'lucide-react'
+import { ArrowUpDown } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { Button } from '@/components/ui/button'
+import { Row } from '@tanstack/react-table'
+
+const resellerFilterFn = (row: Row<any>, columnId: string, filterValue: string) => {
+  const resellerName = row.original.reseller?.company?.toLowerCase() ?? ''
+  return resellerName.includes(filterValue.toLowerCase())
+};
 
 export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogType, state: boolean) => void, currentUserRol: string): ColumnDef<ClientInterface>[] => [
   {
     accessorKey: 'role',
-    header: 'Rol',
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        className="text-sm"
+      >
+        Rol
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
   },
   {
     accessorKey: 'name',
@@ -26,10 +41,14 @@ export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogT
     accessorKey: 'company',
     header: 'Empresa',
   },
-
   {
-    accessorKey: 'Marca',
+    accessorKey: 'reseller',
     header: 'Marca',
+    filterFn: resellerFilterFn, // Aquí se usa
+
+    cell: ({ row }) => (
+      row.original.reseller?.company ?? ''
+    ),
   },
   {
     accessorKey: 'isEvoEnabled',
@@ -80,9 +99,12 @@ export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogT
       return <Badge variant="outline">—</Badge>;
     },
   },
-  {
-    accessorKey: 'Creditos',
-    header: 'Creditos',
+    {
+    accessorKey: 'credits',
+    header: 'Créditos ',
+    cell: ({ row }) => (
+      row.original.credits?.total ?? '0'
+    ),
   },
   {
     id: 'acciones',

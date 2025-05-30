@@ -102,7 +102,6 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
         }
     };
 
-
     const handleDelete = async (userId: string) => {
         if (!userId || userId === '' || !openDeleteDialog) return toast.error('Faltan parametros para completar la ejecución.');;
 

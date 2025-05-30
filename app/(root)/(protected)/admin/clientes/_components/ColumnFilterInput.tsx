@@ -7,8 +7,10 @@ interface Props<TData> {
     table: Table<TData>
 }
 
+type FilterFields = 'email' | 'name' | 'company' | 'reseller'
+
 export function ColumnFilterInput<TData>({ table }: Props<TData>) {
-    const [selectedColumn, setSelectedColumn] = useState<'email' | 'name' | 'company'>('email')
+    const [selectedColumn, setSelectedColumn] = useState<FilterFields>('email')
     const [value, setValue] = useState<string>('')
 
     const handleFilter = (val: string, column: string) => {
@@ -24,7 +26,7 @@ export function ColumnFilterInput<TData>({ table }: Props<TData>) {
             {/* Select */}
             <Select
                 value={selectedColumn}
-                onValueChange={(val: 'email' | 'name' | 'company') => {
+                onValueChange={(val: FilterFields) => {
                     setSelectedColumn(val)
                     setValue('')
                     handleFilter('', val)
@@ -37,7 +39,7 @@ export function ColumnFilterInput<TData>({ table }: Props<TData>) {
                     <SelectItem value="email">Correo</SelectItem>
                     <SelectItem value="name">Nombre</SelectItem>
                     <SelectItem value="company">Empresa</SelectItem>
-                    <SelectItem value="company">Marca</SelectItem>
+                    <SelectItem value="reseller">Marca</SelectItem>
                 </SelectContent>
             </Select>
 

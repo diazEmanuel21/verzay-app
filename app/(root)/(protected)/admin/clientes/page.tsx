@@ -1,6 +1,6 @@
 import { ClientInterface } from "@/lib/types"
 import { ClientsManager } from "./_components/clients-manager"
-import { getAllUsers, getAllClients, getClientsByResellerId, getUsersByResellerId } from "@/actions/userClientDataActions"
+import { getEnrichedClients } from "@/actions/userClientDataActions"
 import { obtenerApiKeys } from "@/actions/api-action"
 import { ApiKey } from "@prisma/client"
 import { currentUser } from "@/lib/auth"
@@ -23,9 +23,9 @@ export default async function ClientesPage() {
   // 🔁 Obtener usuarios según el rol
   let resUsers
   if (user.role === "reseller") {
-    resUsers = await getClientsByResellerId(user.id) // <- función que debes crear
+    resUsers = await getEnrichedClients({ resellerId: user.id }) // <- función que debes crear
   } else {
-    resUsers = await getAllClients()
+    resUsers = await getEnrichedClients()
   }
 
   const users = hasUsers(resUsers) ? resUsers.data : []
