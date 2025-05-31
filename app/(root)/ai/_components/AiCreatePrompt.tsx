@@ -1,11 +1,14 @@
-// AiCreatePrompt refactorizado con useForm y zodResolver
-
 'use client'
 
 import { useForm } from 'react-hook-form'
-import { z } from 'zod'
 import { AiCreatePromptProps, PromptAiFormValues, PromptAiSchema, TYPE_AI_LABELS } from '@/schema/ai'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { TypePromptAi } from '@prisma/client'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form'
+
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -16,19 +19,15 @@ import {
     DialogDescription,
     DialogFooter,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form'
-import { TypePromptAi } from '@prisma/client'
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { createPromptAi, updatePromptAi } from '@/actions/ai-actions';
 
 export const AiCreatePrompt = ({
-    loading,
     dialogOpen,
     editingId,
     setDialogOpen,
     setEditingId,
-    onSubmit,
     defaultValues,
 }: AiCreatePromptProps) => {
     const form = useForm<PromptAiFormValues>({
@@ -38,23 +37,40 @@ export const AiCreatePrompt = ({
             message: '',
             typePrompt: TypePromptAi.TRAINING,
         },
+    });
+
+    const isEditing = !!editingId;
+
+    const mutation = useMutation({
+        mutationFn: async (data: PromptAiFormValues) => {
+
+            if (isEditing) {
+                return await updatePromptAi({ ...data, id: editingId! })
+            } else {
+                return await createPromptAi(data)
+            }
+        },
+        onSuccess: () => {
+            toast.success(isEditing ? 'Mensaje actualizado con éxito.' : 'Mensaje creado con éxito.')
+            setDialogOpen(false)
+            setEditingId(null)
+        },
+        onError: (error: any) => {
+            console.error(error)
+            toast.error('Ocurrió un error. Intenta nuevamente.')
+        },
     })
+
+    const onSubmit = (data: PromptAiFormValues) => {
+        debugger;
+        mutation.mutate(data)
+    };
 
     return (
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-                <Button
-                    className="font-bold uppercase"
-                    onClick={() => {
-                        setEditingId(null)
-                        form.reset({
-                            title: '',
-                            message: '',
-                            typePrompt: TypePromptAi.TRAINING,
-                        })
-                    }}
-                >
-                    Agregar
+                <Button onClick={() => { setEditingId(null) }}>
+                    Crear
                 </Button>
             </DialogTrigger>
 
@@ -65,7 +81,7 @@ export const AiCreatePrompt = ({
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4 flex-1">
+                    <form id={"ai-prompt-form"} onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4 flex-1">
                         <FormField
                             control={form.control}
                             name="title"
@@ -121,8 +137,8 @@ export const AiCreatePrompt = ({
                         />
 
                         <DialogFooter className="mt-4">
-                            <Button type="submit" disabled={loading}>
-                                {loading ? 'Guardando...' : editingId ? 'Actualizar' : 'Guardar'}
+                            <Button type="submit" disabled={mutation.isPending} form="ai-prompt-form">
+                                {mutation.isPending ? 'Guardando...' : editingId ? 'Actualizar' : 'Guardar'}
                             </Button>
                         </DialogFooter>
                     </form>

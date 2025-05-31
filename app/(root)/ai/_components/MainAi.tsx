@@ -7,7 +7,6 @@ import { useDebounce } from '@/hooks/useDebounce';
 import {
     createPromptAi,
     updatePromptAi,
-    deletePromptAi,
 } from "@/actions/ai-actions";
 import Header from '@/components/shared/header';
 import { Input } from "@/components/ui/input";
@@ -25,76 +24,16 @@ function MessagesSkeleton() {
     );
 };
 
-export const MainAi = ({ userId, promptAi }: FormPromptAiProps) => {
+export const MainAi = ({ promptAi }: FormPromptAiProps) => {
     const [loading, setLoading] = useState<boolean>(false);
-
     const [editingId, setEditingId] = useState<string | null>(null);
-
     const [dialogOpen, setDialogOpen] = useState<boolean>(false);
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
-    const [deleteId, setDeleteId] = useState<string | null>(null);
-
     const [searchTerm, setSearchTerm] = useState<string>("");
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
-
-
-    const handleSubmit = async (data: PromptAiFormValues) => {
-        debugger;
-        if (!promptAi) return;
-        setLoading(true);
-        const isEditing = promptAi.some((p) => p.id === data.id);
-
-        try {
-            let result;
-
-            if (isEditing) {
-                result = await updatePromptAi(data);
-            } else {
-                result = await createPromptAi(data);
-            }
-
-            if (result.success) {
-                toast.success(result.message);
-                setDialogOpen(false);
-                setEditingId(null);
-            } else {
-                toast.error(result.message);
-            }
-        } catch (error) {
-            toast.error("Hubo un error al procesar la solicitud.");
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const openEditDialog = (msg: SystemMessage) => {
         setEditingId(msg.id);
         setDialogOpen(true);
-    };
-
-    const confirmDelete = (id: string) => {
-        setDeleteId(id);
-        setDeleteDialogOpen(true);
-        handleDelete();
-    };
-
-    const handleDelete = async () => {
-        if (!deleteId) return;
-        setLoading(true);
-
-        try {
-            const result = await deletePromptAi(deleteId);
-            if (result.success) {
-                toast.success(result.message);
-            } else {
-                toast.error(result.message);
-            }
-        } catch (error) {
-            toast.error("Error al eliminar el mensaje");
-        } finally {
-            setLoading(false);
-            setDeleteDialogOpen(false);
-        }
     };
 
     const filteredMessages = (promptAi ?? []).filter((msg) => {
@@ -133,12 +72,10 @@ export const MainAi = ({ userId, promptAi }: FormPromptAiProps) => {
                         title={'Entrena tu IA'}
                     />
                     <AiCreatePrompt
-                        loading={loading}
                         dialogOpen={dialogOpen}
                         editingId={editingId}
                         setDialogOpen={() => setDialogOpen(!dialogOpen)}
                         setEditingId={() => setEditingId(null)}
-                        onSubmit={handleSubmit}
                     />
                 </div>
                 <Input
@@ -164,8 +101,6 @@ export const MainAi = ({ userId, promptAi }: FormPromptAiProps) => {
                                 highlightMatch={highlightMatch}
                                 truncateMessage={truncateMessage}
                                 openEditDialog={openEditDialog}
-                                confirmDelete={confirmDelete}
-                                loading={loading}
                             />
                         </div>
                     )}

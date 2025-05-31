@@ -23,7 +23,7 @@ const AiPage = async ({ params, searchParams }: PageProps) => {
     const resPromptAi = await getPromptAiByUserId(user.id);
     const promptAi = hasAiPrompt(resPromptAi) ? resPromptAi.data : null
 
-    return <MainAi userId={user.id} promptAi={promptAi} />
+    return <MainAi promptAi={promptAi} />
 };
 
 export default AiPage;

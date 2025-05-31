@@ -21,6 +21,8 @@ import {
     AlertDialogFooter,
 } from '@/components/ui/alert-dialog'
 import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { GenericDeleteDialog } from '@/components/shared/GenericDeleteDialog'
+import { deletePromptAi } from '@/actions/ai-actions'
 
 export function MessageTabs({
     messages,
@@ -28,11 +30,8 @@ export function MessageTabs({
     highlightMatch,
     truncateMessage,
     openEditDialog,
-    confirmDelete,
-    loading = false,
 }: PromptTabsProps) {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-    const [toDeleteId, setToDeleteId] = useState<string | null>(null)
 
     const TYPE_LABELS: Record<TypePromptAi, string> = {
         [TypePromptAi.TRAINING]: 'Entrenamiento',
@@ -41,13 +40,6 @@ export function MessageTabs({
     };
 
     const enumKeys = Object.keys(TYPE_LABELS) as (keyof typeof TYPE_LABELS)[];
-
-    const handleDelete = () => {
-        if (toDeleteId) {
-            confirmDelete(toDeleteId)
-            setDeleteDialogOpen(false)
-        }
-    }
 
     return (
         <Tabs defaultValue="Entrenamiento" className="w-full">
@@ -93,44 +85,14 @@ export function MessageTabs({
                                             <PencilSquareIcon className="h-5 w-5" />
                                         </Button>
 
-                                        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                                            <AlertDialogTrigger asChild>
-                                                <Button
-                                                    variant="destructive"
-                                                    size="icon"
-                                                    onClick={() => {
-                                                        setToDeleteId(msg.id)
-                                                        setDeleteDialogOpen(true)
-                                                    }}
-                                                >
-                                                    <TrashIcon className="h-5 w-5" />
-                                                </Button>
-                                            </AlertDialogTrigger>
-
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>¿Eliminar mensaje?</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                        Esta acción no se puede deshacer. ¿Estás seguro de eliminar este mensaje?
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <Button
-                                                        variant="outline"
-                                                        onClick={() => setDeleteDialogOpen(false)}
-                                                    >
-                                                        Cancelar
-                                                    </Button>
-                                                    <Button
-                                                        variant="destructive"
-                                                        onClick={handleDelete}
-                                                        disabled={loading}
-                                                    >
-                                                        {loading ? 'Eliminando...' : 'Eliminar'}
-                                                    </Button>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
+                                        <GenericDeleteDialog
+                                            open={deleteDialogOpen}
+                                            setOpen={setDeleteDialogOpen}
+                                            itemName="prompt"
+                                            itemId={module.id}
+                                            mutationFn={() => deletePromptAi(msg.id)}
+                                            entityLabel="prompt AI"
+                                        />
                                     </div>
                                 </Card>
                             ))}
