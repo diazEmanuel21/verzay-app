@@ -1,7 +1,7 @@
 import IframeRenderer from "@/components/custom/IframeRenderer";
 
 const MultiagentePage = async () => {
-    const url = "https://multiagente.verzay.co";
+    const url = "https://multiagente.ia-app.co";
     
     return <IframeRenderer url={url} />;
 }
