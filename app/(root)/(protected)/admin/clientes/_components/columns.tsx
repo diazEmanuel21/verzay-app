@@ -108,22 +108,22 @@ export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogT
       return <Badge variant="outline">—</Badge>;
     },
   },
-  {
-    accessorKey: 'credits',
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        className="text-sm"
-      >
-        Créditos
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => (
-      row.original.credits?.total ?? '0'
-    ),
-  },
+  // {
+  //   accessorKey: 'credits',
+  //   header: ({ column }) => (
+  //     <Button
+  //       variant="ghost"
+  //       onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+  //       className="text-sm"
+  //     >
+  //       Créditos
+  //       <ArrowUpDown className="ml-2 h-4 w-4" />
+  //     </Button>
+  //   ),
+  //   cell: ({ row }) => (
+  //     row.original.credits?.total ?? '0'
+  //   ),
+  // },
   {
     id: 'acciones',
     enableHiding: false,

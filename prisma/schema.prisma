@@ -146,13 +146,14 @@ model Instancias {
 }
 
 model SystemMessage {
-  id        String   @id @default(cuid())
-  message   String
-  userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  title     String   @default("Sin título")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String       @id @default(cuid())
+  title      String       @default("Sin título")
+  message    String
+  typePrompt TypePromptAi @default(TRAINING)
+  userId     String
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Tools {
@@ -342,4 +343,10 @@ enum Plan {
   empresarial
   business
   pymes
+}
+
+enum TypePromptAi {
+  TRAINING
+  FAQs
+  ACTIONS
 }

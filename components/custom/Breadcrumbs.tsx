@@ -37,6 +37,7 @@ const breadcrumbLabels: Record<string, string> = {
   tools: 'herramientas',
   connection: 'conexiones',
   workflow: 'workflow',
+  ai: 'ia',
   'auto-replies': 'Respuestas rápidas',
   reseller: 'afiliados',
   reminders: 'recordatorios',

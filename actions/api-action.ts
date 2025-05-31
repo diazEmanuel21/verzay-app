@@ -507,7 +507,7 @@ export async function agregarMensaje(data: FormData) {
 }
 
 //Edita el Promt de IA Mensaje System:
-export async function obtenerMensajes(userId: string) {
+export async function getPromptAi(userId: string) {
   return await db.systemMessage.findMany({
     where: { userId },
   });
