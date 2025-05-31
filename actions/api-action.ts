@@ -98,7 +98,6 @@ export async function generateQRCode({ instanceName, userId, apiKey }: GenerateQ
     return { success: false, message: error.message || 'Error al generar el código QR.' };
   }
 }
-
 export async function agregarApi(data: FormData): Promise<ClientResponse<ApiKey>> {
   const url = data.get('url') as string
   const key = data.get('key') as string
@@ -130,7 +129,6 @@ export async function agregarApi(data: FormData): Promise<ClientResponse<ApiKey>
     }
   }
 }
-
 export async function editarApiKey(data: FormData): Promise<ClientResponse<ApiKey>> {
   const id = data.get('id') as string
   const url = data.get('url') as string
@@ -163,7 +161,6 @@ export async function editarApiKey(data: FormData): Promise<ClientResponse<ApiKe
     };
   }
 }
-
 export async function eliminarApiKey(id: string) {
   if (!id) {
     return {
@@ -192,7 +189,6 @@ export async function eliminarApiKey(id: string) {
     };
   }
 }
-
 export async function obtenerApiKeys() {
   try {
     // Obtener todas las API Keys de la base de datos
@@ -204,7 +200,6 @@ export async function obtenerApiKeys() {
     return { success: false, message: error.message || "Error al obtener las API Keys." };
   }
 }
-
 export async function getApiKeyById(id: string) {
   try {
     if (!id) return { success: false, message: 'Missing id' };
@@ -220,7 +215,6 @@ export async function getApiKeyById(id: string) {
     return { success: false, message: error.message || "Error al obtener las API Keys." };
   }
 }
-
 // Función para crear una instancia si el usuario no tiene una
 export async function createInstance(data: FormData) {
   const instanceName = data.get('instanceName') as string;
@@ -296,7 +290,6 @@ export async function createInstance(data: FormData) {
     return { success: false, message: error.message || "Error al crear la instancia." };
   }
 }
-
 export async function deleteInstance(userId: string) {
   try {
     // Verificar si el usuario tiene una instancia activa
@@ -369,7 +362,6 @@ export async function deleteInstance(userId: string) {
     return { success: false, message: error.message || "Error al eliminar la instancia." };
   }
 }
-
 // Función para verificar si el usuario ya tiene una instancia
 export async function checkActiveInstance(userId: string) {
   const instanciaActiva = await db.instancias.findFirst({
@@ -378,7 +370,6 @@ export async function checkActiveInstance(userId: string) {
 
   return instanciaActiva;
 }
-
 // Funcion para traer datos del cliente
 export async function getInstances(userId: string) {
   try {
@@ -416,7 +407,6 @@ export async function getInstances(userId: string) {
     console.error(`Error fetching from:`, error);
   }
 }
-
 // actions/createBotAction.ts
 export async function createBotAction(data: FormData) {
   const instanceName = data.get('instanceName') as string;
@@ -471,79 +461,6 @@ export async function createBotAction(data: FormData) {
     console.error(`Error:`, err);
   }
 }
-
-//Guardar mensaje del systema por usuario
-export async function agregarMensaje(data: FormData) {
-  const title = data.get('title') as string;
-  const message = data.get('message') as string;
-  const userId = data.get('userId') as string;
-
-  try {
-    // Validación de campos
-    if (!title || !message || !userId) {
-      throw new Error('Todos los campos son obligatorios');
-    }
-
-    // Crear el mensaje en la base de datos
-    await db.systemMessage.create({
-      data: {
-        message,
-        title,
-        user: {
-          connect: { id: userId }, // Conectar el mensaje al usuario
-        },
-      },
-    });
-
-    // Revalidar la página si es necesario
-    revalidatePath('/agregar-mensaje'); // Cambia esto a la ruta correspondiente
-
-    // Retorna un estado de éxito
-    return { success: true, message: "Mensaje del sistema agregado exitosamente." };
-  } catch (error: any) {
-    // Manejo de errores
-    return { success: false, message: error.message || "Error al agregar el mensaje del sistema." };
-  }
-}
-
-//Edita el Promt de IA Mensaje System:
-export async function getPromptAi(userId: string) {
-  return await db.systemMessage.findMany({
-    where: { userId },
-  });
-}
-
-//Edita el Promt de IA Mensaje System:
-export async function editarMensaje(data: FormData) {
-  const id = data.get('id') as string;
-  const title = data.get('title') as string;
-  const message = data.get('message') as string;
-
-  try {
-    // Validación de campos
-    if (!title || !message || !message) {
-      throw new Error('Todos los campos son obligatorios');
-    }
-    await db.systemMessage.update({
-      where: { id },
-      data: { message, title },
-    });
-    return { success: true, message: "Mensaje actualizado exitosamente." };
-  } catch (error) {
-    return { success: false, message: "Error al actualizar el mensaje." };
-  }
-}
-
-//Edita el Promt de IA Mensaje System:
-export async function eliminarMensaje(id: string) {
-  try {
-    await db.systemMessage.delete({ where: { id } });
-    return { success: true, message: "Mensaje eliminado exitosamente." };
-  } catch (error) {
-    return { success: false, message: "Error al eliminar el mensaje." };
-  }
-}
-
 //Datos para api status
 export async function getDataApi(userId: string, apiKeyId: string) {
   try {
@@ -592,4 +509,3 @@ export async function getDataApi(userId: string, apiKeyId: string) {
     };
   }
 }
-

@@ -1,5 +1,12 @@
-import { Button } from "@/components/ui/button";
-import { TypePromptAi } from "@prisma/client";
+// AiCreatePrompt refactorizado con useForm y zodResolver
+
+'use client'
+
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { AiCreatePromptProps, PromptAiFormValues, PromptAiSchema, TYPE_AI_LABELS } from '@/schema/ai'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Button } from '@/components/ui/button'
 import {
     Dialog,
     DialogTrigger,
@@ -8,32 +15,30 @@ import {
     DialogTitle,
     DialogDescription,
     DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { InterfaceAiCreatePrompt } from "@/schema/ai";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form'
+import { TypePromptAi } from '@prisma/client'
 
 export const AiCreatePrompt = ({
     loading,
     dialogOpen,
-    title,
-    message,
     editingId,
     setDialogOpen,
     setEditingId,
-    setTitle,
-    setMessage,
-    type,
-    setType,
-    handleSubmit
-}: InterfaceAiCreatePrompt) => {
-    const TYPE_LABELS: Record<TypePromptAi, string> = {
-        [TypePromptAi.TRAINING]: 'Entrenamiento',
-        [TypePromptAi.FAQs]: 'Preguntas frecuentes',
-        [TypePromptAi.ACTIONS]: 'Acciones',
-    };
+    onSubmit,
+    defaultValues,
+}: AiCreatePromptProps) => {
+    const form = useForm<PromptAiFormValues>({
+        resolver: zodResolver(PromptAiSchema),
+        defaultValues: defaultValues || {
+            title: '',
+            message: '',
+            typePrompt: TypePromptAi.TRAINING,
+        },
+    })
 
     return (
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -41,72 +46,87 @@ export const AiCreatePrompt = ({
                 <Button
                     className="font-bold uppercase"
                     onClick={() => {
-                        setEditingId(null);
-                        setTitle("");
-                        setMessage("");
-                        setType(TypePromptAi.TRAINING) // Valor por defecto
+                        setEditingId(null)
+                        form.reset({
+                            title: '',
+                            message: '',
+                            typePrompt: TypePromptAi.TRAINING,
+                        })
                     }}
                 >
                     Agregar
                 </Button>
             </DialogTrigger>
 
-            <DialogContent
-                className="max-w-4xl h-[600px] flex flex-col"
-                onOpenAutoFocus={(e) => e.preventDefault()} // ← evita scroll al abrir
-            >
+            <DialogContent className="max-w-4xl h-[600px] flex flex-col" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
-                    <DialogTitle>{editingId ? "Editar Mensaje" : "Nuevo Mensaje"}</DialogTitle>
-                    <DialogDescription>
-                        Completa los campos para personalizar tu IA
-                    </DialogDescription>
+                    <DialogTitle>{editingId ? 'Editar Mensaje' : 'Nuevo Mensaje'}</DialogTitle>
+                    <DialogDescription>Completa los campos para personalizar tu IA</DialogDescription>
                 </DialogHeader>
 
-                <div className="flex flex-col gap-4 flex-1">
-                    <div className="flex flex-col gap-2">
-                        <Label htmlFor="title">Título</Label>
-                        <Input
-                            id="title"
-                            maxLength={100}
-                            placeholder="Ejemplo: Bienvenida"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4 flex-1">
+                        <FormField
+                            control={form.control}
+                            name="title"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Título</FormLabel>
+                                    <FormControl>
+                                        <Input maxLength={100} placeholder="Ejemplo: Bienvenida" {...field} />
+                                    </FormControl>
+                                </FormItem>
+                            )}
                         />
-                    </div>
-                    <div className="flex flex-col gap-2 flex-1">
-                        <Label htmlFor="message">Descripción</Label>
-                        <Textarea
-                            id="message"
-                            placeholder="Ejemplo: Saluda cordialmente al usuario y ofrece ayuda."
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            className="flex-1 resize-none overflow-y-auto"
+
+                        <FormField
+                            control={form.control}
+                            name="message"
+                            render={({ field }) => (
+                                <FormItem className="flex-1">
+                                    <FormLabel>Descripción</FormLabel>
+                                    <FormControl>
+                                        <Textarea
+                                            placeholder="Ejemplo: Saluda cordialmente al usuario y ofrece ayuda."
+                                            className="flex-1 resize-none overflow-y-auto"
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                </FormItem>
+                            )}
                         />
-                    </div>
 
+                        <FormField
+                            control={form.control}
+                            name="typePrompt"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Categoría</FormLabel>
+                                    <FormControl>
+                                        <Select value={field.value} onValueChange={field.onChange}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Seleccionar categoría" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {Object.values(TypePromptAi).map((cat) => (
+                                                    <SelectItem key={cat} value={cat}>
+                                                        {TYPE_AI_LABELS[cat]}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
 
-                    <div className="flex flex-col gap-2">
-                        <Label>Categoría</Label>
-                        <Select value={type} onValueChange={(val: TypePromptAi) => setType(val)}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar categoría" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {Object.values(TypePromptAi).map((cat) => (
-                                    <SelectItem key={cat} value={cat}>
-                                        {TYPE_LABELS[cat]}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-
-                <DialogFooter className="mt-4">
-                    <Button onClick={handleSubmit} disabled={loading}>
-                        {loading ? "Guardando..." : editingId ? "Actualizar" : "Guardar"}
-                    </Button>
-                </DialogFooter>
+                        <DialogFooter className="mt-4">
+                            <Button type="submit" disabled={loading}>
+                                {loading ? 'Guardando...' : editingId ? 'Actualizar' : 'Guardar'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
             </DialogContent>
         </Dialog>
     )

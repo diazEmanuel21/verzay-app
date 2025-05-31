@@ -34,7 +34,6 @@ export function MessageTabs({
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
     const [toDeleteId, setToDeleteId] = useState<string | null>(null)
 
-    //TODO: APLICAR
     const TYPE_LABELS: Record<TypePromptAi, string> = {
         [TypePromptAi.TRAINING]: 'Entrenamiento',
         [TypePromptAi.FAQs]: 'Preguntas frecuentes',

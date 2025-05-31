@@ -5,7 +5,6 @@ import { useEffect, useState, useTransition } from 'react';
 import { ModuleCreator } from './ModuleCreator';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
-import { ModuleCard } from './ModuleCard';
 import { ModuleCardSkeleton } from './ModuleCardSkeleton';
 import { useModuleStore } from '@/stores/modules/useModuleStore';
 import { toast } from 'sonner';

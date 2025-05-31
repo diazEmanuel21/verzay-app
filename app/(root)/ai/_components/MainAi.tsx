@@ -1,22 +1,19 @@
 "use client";
 
+import { useState } from "react";
+import { FormPromptAiProps, PromptAiFormValues } from '@/schema/ai';
+import { SystemMessage } from '@prisma/client';
+import { useDebounce } from '@/hooks/useDebounce';
+import {
+    createPromptAi,
+    updatePromptAi,
+    deletePromptAi,
+} from "@/actions/ai-actions";
 import Header from '@/components/shared/header';
-import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-
-import {
-    agregarMensaje,
-    getPromptAi,
-    editarMensaje,
-    eliminarMensaje,
-} from "@/actions/api-action";
-
 import { Skeleton } from '../../../../components/ui/skeleton';
-import { useDebounce } from '@/hooks/useDebounce';
 import { AiCreatePrompt, MessageTabs } from './';
-import { FormPromptAiProps, PromptAi } from '@/schema/ai';
-import { TypePromptAi } from '@prisma/client';
 
 function MessagesSkeleton() {
     return (
@@ -28,14 +25,10 @@ function MessagesSkeleton() {
     );
 };
 
-export const MainAi = ({ userId }: FormPromptAiProps) => {
-    const [messages, setMessages] = useState<PromptAi[]>([]);
+export const MainAi = ({ userId, promptAi }: FormPromptAiProps) => {
     const [loading, setLoading] = useState<boolean>(false);
 
     const [editingId, setEditingId] = useState<string | null>(null);
-    const [title, setTitle] = useState<string>("");
-    const [message, setMessage] = useState<string>("");
-    const [typeAiPrompt, setTypeAiPrompt] = useState<TypePromptAi>("TRAINING");
 
     const [dialogOpen, setDialogOpen] = useState<boolean>(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
@@ -44,52 +37,26 @@ export const MainAi = ({ userId }: FormPromptAiProps) => {
     const [searchTerm, setSearchTerm] = useState<string>("");
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-    useEffect(() => {
-        loadMessages();
-    }, [userId]);
 
-    const loadMessages = async () => {
+    const handleSubmit = async (data: PromptAiFormValues) => {
+        debugger;
+        if (!promptAi) return;
         setLoading(true);
-        try {
-            const userMessages = await getPromptAi(userId);
-            setMessages(userMessages);
-        } catch (error) {
-            toast.error("Error al cargar los mensajes.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSubmit = async () => {
-        if (!title.trim() || !message.trim()) {
-            toast.error("Todos los campos son obligatorios");
-            return;
-        }
-
-        setLoading(true);
-        const formData = new FormData();
-        formData.append("title", title.toUpperCase());
-        formData.append("message", message);
-        formData.append("typePrompt", typeAiPrompt);
-        formData.append("userId", userId);
+        const isEditing = promptAi.some((p) => p.id === data.id);
 
         try {
             let result;
 
-            if (editingId) {
-                formData.append("id", editingId);
-                result = await editarMensaje(formData);
+            if (isEditing) {
+                result = await updatePromptAi(data);
             } else {
-                result = await agregarMensaje(formData);
+                result = await createPromptAi(data);
             }
 
             if (result.success) {
                 toast.success(result.message);
-                setTitle("");
-                setMessage("");
-                setEditingId(null);
                 setDialogOpen(false);
-                loadMessages();
+                setEditingId(null);
             } else {
                 toast.error(result.message);
             }
@@ -100,9 +67,7 @@ export const MainAi = ({ userId }: FormPromptAiProps) => {
         }
     };
 
-    const openEditDialog = (msg: PromptAi) => {
-        setTitle((msg.title)?.toUpperCase() ?? '');
-        setMessage(msg.message ?? '');
+    const openEditDialog = (msg: SystemMessage) => {
         setEditingId(msg.id);
         setDialogOpen(true);
     };
@@ -118,10 +83,9 @@ export const MainAi = ({ userId }: FormPromptAiProps) => {
         setLoading(true);
 
         try {
-            const result = await eliminarMensaje(deleteId);
+            const result = await deletePromptAi(deleteId);
             if (result.success) {
                 toast.success(result.message);
-                loadMessages();
             } else {
                 toast.error(result.message);
             }
@@ -133,7 +97,7 @@ export const MainAi = ({ userId }: FormPromptAiProps) => {
         }
     };
 
-    const filteredMessages = messages.filter((msg) => {
+    const filteredMessages = (promptAi ?? []).filter((msg) => {
         const lowerSearch = debouncedSearchTerm.toLowerCase();
         return (
             (msg.title?.toLowerCase().includes(lowerSearch) ?? false) ||
@@ -172,15 +136,9 @@ export const MainAi = ({ userId }: FormPromptAiProps) => {
                         loading={loading}
                         dialogOpen={dialogOpen}
                         editingId={editingId}
-                        title={title}
-                        type={typeAiPrompt}
-                        message={message}
                         setDialogOpen={() => setDialogOpen(!dialogOpen)}
                         setEditingId={() => setEditingId(null)}
-                        setTitle={(value: string) => setTitle(value)}
-                        setMessage={(value: string) => setMessage(value)}
-                        setType={setTypeAiPrompt}
-                        handleSubmit={handleSubmit}
+                        onSubmit={handleSubmit}
                     />
                 </div>
                 <Input
@@ -196,7 +154,7 @@ export const MainAi = ({ userId }: FormPromptAiProps) => {
                 <div className="grid grid-cols-1 gap-4">
                     {loading ? (
                         <MessagesSkeleton />
-                    ) : messages.length === 0 ? (
+                    ) : !promptAi ? (
                         <p className="text-sm text-muted-foreground">Aún no hay mensajes configurados.</p>
                     ) : (
                         <div className="flex flex-col gap-2">
