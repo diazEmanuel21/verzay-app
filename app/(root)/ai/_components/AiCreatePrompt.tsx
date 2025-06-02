@@ -66,6 +66,10 @@ export const AiCreatePrompt = ({
         mutation.mutate(data)
     };
 
+    const onSubmit2 = () => {
+        debugger;
+    };
+
     return (
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
@@ -135,14 +139,22 @@ export const AiCreatePrompt = ({
                                 </FormItem>
                             )}
                         />
-
-                        <DialogFooter className="mt-4">
-                            <Button type="submit" disabled={mutation.isPending} form="ai-prompt-form">
-                                {mutation.isPending ? 'Guardando...' : editingId ? 'Actualizar' : 'Guardar'}
-                            </Button>
-                        </DialogFooter>
+                        <Button
+                            type="submit"
+                            disabled={mutation.isPending}
+                            form="ai-prompt-form"
+                        >
+                            {mutation.isPending ? 'Guardando...' : editingId ? 'Actualizar' : 'Guardar'}
+                        </Button>
                     </form>
                 </Form>
+
+                <DialogFooter className="mt-4">
+                    <Button onClick={onSubmit2}>
+                        send
+                    </Button>
+
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     )

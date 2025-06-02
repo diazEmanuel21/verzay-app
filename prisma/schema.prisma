@@ -149,7 +149,7 @@ model SystemMessage {
   id         String       @id @default(cuid())
   title      String       @default("Sin título")
   message    String
-  typePrompt TypePromptAi @default(TRAINING)
+  typePrompt TypePromptAi? @default(TRAINING)
   userId     String
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
