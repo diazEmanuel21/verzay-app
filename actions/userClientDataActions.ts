@@ -342,10 +342,16 @@ export const updateClientData = async (
 
     const dataToUpdate: Record<string, any> = {}
 
+    const booleanFields = ['muteAgentResponses']
+
     formData.forEach((value, key) => {
       if (restrictedFields.includes(key)) return
 
-      dataToUpdate[key] = value
+      if (booleanFields.includes(key)) {
+        dataToUpdate[key] = value === 'true'
+      } else {
+        dataToUpdate[key] = value
+      }
     })
 
     if (Object.keys(dataToUpdate).length === 0) {

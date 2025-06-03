@@ -43,6 +43,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             openingPhrase: 'Fue un gusto ayudarle.',
             role: 'user',
             plan: 'pymes',
+            muteAgentResponses: false,
             del_seguimiento: 'Estamos para servirle.',
             apiUrl: 'https://api.openAI.co',
             company: 'Nombre empresa',
@@ -86,15 +87,13 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
                 }
             }
         }
-
-        // === Eliminar campo derivado ===
         formData.delete('openMsg');
 
         // === Actualización del cliente ===
-        const result = await updateClientData(userId, formData);
+        const result = await updateClientData(userId, formData)
 
         if (result.success) {
-            toast.success('Cliente actualizado', { id: toastId });
+            toast.success(result.message, { id: toastId });
             router.refresh();
             setOpenEditDialog(false);
         } else {

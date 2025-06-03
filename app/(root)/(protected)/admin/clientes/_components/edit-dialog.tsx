@@ -19,6 +19,8 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { VolumeX, Volume2 } from 'lucide-react'
 
 interface Props {
   openEditDialog: boolean
@@ -54,6 +56,12 @@ export const EditDialog = ({
   };
 
   let fields = [
+    {
+      id: "muteAgentResponses",
+      label: "Silenciar agente",
+      defaultValue: user.muteAgentResponses,
+      readOnly: false,
+    },
     { id: "name", label: "Nombre", defaultValue: user.name, readOnly: false },
     { id: "email", label: "Email", defaultValue: user.email, readOnly: false },
     { id: "password", label: "Contraseña", defaultValue: user.password, readOnly: false },
@@ -70,6 +78,7 @@ export const EditDialog = ({
     { id: "apiKeyId", label: "Evo - API Key", defaultValue: user.apiKeyId, readOnly: false },
   ];
 
+  /* Ocultar/mostrar fields para reseller */
   if (currentUserRol === 'reseller') {
     const idsToRemove = ["apiKeyId"]
     fields = fields.filter(field => !idsToRemove.includes(field.id))
@@ -87,7 +96,7 @@ export const EditDialog = ({
 
   const handleRenderField = (
     id: string,
-    defaultValue: string | number | null | undefined,
+    defaultValue: string | number | boolean | null | undefined,
     readOnly?: boolean
   ) => {
     switch (id) {
@@ -143,7 +152,49 @@ export const EditDialog = ({
             </SelectContent>
           </Select>
         )
+      case 'muteAgentResponses':
+        return (
+          <Select name={id} defaultValue={defaultValue ? 'true' : 'false'} disabled={readOnly}>
+            <SelectTrigger className="col-span-3">
+              <SelectValue
+                placeholder="Silenciar respuestas"
+                className="flex gap-2 items-center"
+              />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="true">
+                  <div className="flex items-center gap-2">
+                    <VolumeX className="w-4 h-4 text-destructive" />
+                    <span>Activado</span>
+                    <Badge variant="destructive" className="ml-auto">Silenciado</Badge>
+                  </div>
+                </SelectItem>
+                <SelectItem value="false">
+                  <div className="flex items-center gap-2">
+                    <Volume2 className="w-4 h-4 text-green-500 dark:text-green-400" />
+                    <span>Desactivado</span>
+                    <Badge variant="outline" className="ml-auto text-green-600 border-green-600 dark:text-green-400 dark:border-green-400">
+                      Responde
+                    </Badge>
+                  </div>
+                </SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
 
+          // <Select name={id} defaultValue={defaultValue ? "true" : "false"} disabled={readOnly}>
+          //   <SelectTrigger className="col-span-3">
+          //     <SelectValue placeholder="Silenciar respuestas" />
+          //   </SelectTrigger>
+          //   <SelectContent>
+          //     <SelectGroup>
+          //       <SelectItem value="true">Activado (Silenciado)</SelectItem>
+          //       <SelectItem value="false">Desactivado (Responde)</SelectItem>
+          //     </SelectGroup>
+          //   </SelectContent>
+          // </Select>
+        )
       default:
         return (
           <Input
