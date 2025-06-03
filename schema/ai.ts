@@ -7,7 +7,8 @@ export const TYPE_AI_LABELS: Record<TypePromptAi, string> = {
     [TypePromptAi.TRAINING]: 'Entrenamiento',
     [TypePromptAi.FAQs]: 'Preguntas frecuentes',
     [TypePromptAi.ACTIONS]: 'Acciones',
-}
+};
+
 export const PromptAiSchema = z.object({
     id: z.string().optional(),
     title: z.string().min(1, 'El título es obligatorio'),
@@ -17,17 +18,19 @@ export const PromptAiSchema = z.object({
 });
 export interface FormPromptAiProps {
     promptAi: SystemMessage[] | null
+    userId: string
 };
 export interface AiCreatePromptProps {
+    userId: string
     dialogOpen: boolean
     editingId: string | null
     setDialogOpen: (open: boolean) => void
-    setEditingId: (id: string | null) => void
-    defaultValues?: PromptAiFormValues
+    defaultValues?: Partial<PromptAiFormValues>;
+    openCreateDialog: () => void
 };
 export interface AiFormInterface {
     onSubmit: SubmitHandler<PromptAiFormValues>;
-    defaultValues?: PromptAiFormValues
+    defaultValues?: Partial<PromptAiFormValues>;
 }
 export interface PromptTabsProps {
     messages: SystemMessage[]

@@ -1,9 +1,10 @@
 import { currentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
 import { MainAi } from './_components';
 import { SystemMessage } from '@prisma/client';
 import { getPromptAiByUserId } from '@/actions/ai-actions';
-import FormSystemMessage from './_components/FormSystemMessage';
+import { MessagesSkeleton } from './_components';
 
 interface PageProps {
     params: { id?: string };
@@ -22,10 +23,13 @@ const AiPage = async ({ params, searchParams }: PageProps) => {
     };
 
     const resPromptAi = await getPromptAiByUserId(user.id);
-    const promptAi = hasAiPrompt(resPromptAi) ? resPromptAi.data : null
+    const promptAi = hasAiPrompt(resPromptAi) ? resPromptAi.data : null;
 
-    // return <MainAi promptAi={promptAi} />
-    return <FormSystemMessage userId={user.id} />
+    return (
+        <Suspense fallback={<MessagesSkeleton />}>
+            <MainAi promptAi={promptAi} userId={user.id} />
+        </Suspense>
+    );
 };
 
 export default AiPage;
