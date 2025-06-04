@@ -347,7 +347,9 @@ enum Plan {
 }
 
 enum TypePromptAi {
-  TRAINING
-  FAQs
-  ACTIONS
+  TRAINING //Entrenamiento
+  FAQs //Preguntas frecuentes
+  ACTIONS //Acciones
+  DATA_CAPTURE // Captura de datos
+  DATA_QUERY // Consulta de datos
 }

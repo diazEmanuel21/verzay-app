@@ -7,6 +7,8 @@ export const TYPE_AI_LABELS: Record<TypePromptAi, string> = {
     [TypePromptAi.TRAINING]: 'Entrenamiento',
     [TypePromptAi.FAQs]: 'Preguntas frecuentes',
     [TypePromptAi.ACTIONS]: 'Acciones',
+    [TypePromptAi.DATA_CAPTURE]: 'Captura de datos',
+    [TypePromptAi.DATA_QUERY]: 'Consulta de Datos',
 };
 
 export const PromptAiSchema = z.object({

@@ -7,11 +7,15 @@ import { useDebounce } from '@/hooks/useDebounce';
 import Header from '@/components/shared/header';
 import { Input } from '@/components/ui/input';
 import { MessageTabs, PromptDialog } from "./";
+import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog";
+import { deletePromptAi } from "@/actions/ai-actions";
 
 export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
     const [editingData, setEditingData] = useState<PromptAiFormValues | null>(null);
+    const [dataDelete, setDataDelete] = useState<PromptAiFormValues | null>(null);
     const [activeTab, setActiveTab] = useState<TypePromptAi>(TypePromptAi.TRAINING);
 
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -107,6 +111,8 @@ export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
                     truncateMessage={truncateMessage}
                     openEditDialog={openEditDialog}
                     activeTab={activeTab}
+                    setDeleteDialogOpen={setDeleteDialogOpen}
+                    setDataDelete={setDataDelete}
                 />
             </div>
             {/* Modal reutilizable */}
@@ -116,6 +122,16 @@ export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
                 defaultValues={editingData}
                 userId={userId}
             />
+            {
+                dataDelete &&
+                <GenericDeleteDialog
+                    open={deleteDialogOpen}
+                    setOpen={setDeleteDialogOpen}
+                    itemId={dataDelete.id ?? ''}
+                    mutationFn={() => deletePromptAi(dataDelete.id ?? '')}
+                    entityLabel={dataDelete.title}
+                />
+            }
         </div>
     );
 };
