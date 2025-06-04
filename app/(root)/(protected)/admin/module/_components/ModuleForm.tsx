@@ -115,7 +115,7 @@ export const ModuleForm = ({
                 />
 
 
-                {['showInSidebar', 'hiddenModuleToSelector', 'adminOnly', 'requiresPremium', 'showOnlySelectedPlans'].map((key) => (
+                {['showInSidebar', 'hiddenModuleToSelector', 'adminOnly', 'requiresPremium'].map((key) => (
                     <FormField
                         key={key}
                         control={form.control}

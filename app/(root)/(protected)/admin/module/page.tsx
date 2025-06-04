@@ -21,4 +21,3 @@ const ModulePage = async ({ searchParams }: Props) => {
 };
 
 export default ModulePage;
-
