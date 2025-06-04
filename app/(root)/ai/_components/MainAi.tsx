@@ -6,7 +6,7 @@ import { SystemMessage, TypePromptAi } from '@prisma/client';
 import { useDebounce } from '@/hooks/useDebounce';
 import Header from '@/components/shared/header';
 import { Input } from '@/components/ui/input';
-import { MessageTabs, PromptDialog } from "./";
+import { AiTabs, MessageTabs, PromptDialog } from "./";
 import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog";
 import { deletePromptAi } from "@/actions/ai-actions";
 
@@ -66,11 +66,15 @@ export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
         return text.slice(0, maxLength) + "… Ver más";
     };
 
+    const onTabChange = (tab: string) => {
+        setActiveTab(tab as TypePromptAi)
+    };
+
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
             <div className="sticky top-0 z-1 mb-4">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center pb-2">
                     <Header title={'Entrena tu IA'} />
                     <button
                         onClick={openCreateDialog}
@@ -84,22 +88,12 @@ export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
                     placeholder="Buscar mensaje por título..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="max-w-sm"
+                    className="max-w-sm mb-2"
                 />
                 {/* TABS */}
-                <div className="flex gap-2 border-b border-border pt-2">
-                    {Object.entries(TYPE_AI_LABELS).map(([key, label]) => (
-                        <button
-                            key={key}
-                            onClick={() => setActiveTab(key as TypePromptAi)}
-                            className={`px-4 py-2 rounded-t-md font-medium text-sm border-b-2 transition-colors duration-150 ${activeTab === key ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'
-                                }`}
-                        >
-                            {label}
-                        </button>
-                    ))}
-                </div>
-
+                <AiTabs
+                    onTabChange={onTabChange}
+                />
             </div>
 
             {/* Scroll interno para el contenido */}
