@@ -1,26 +1,26 @@
 "use client"
 
 import { SubmitHandler, useFieldArray, useForm } from "react-hook-form"
-import { Plan } from "@prisma/client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form"
-import { toast } from "sonner"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import type { CheckedState } from "@radix-ui/react-checkbox"
 import { FormModuleSchema, FormModuleValues, iconMap } from "@/schema/module"
-import { Trash2 } from "lucide-react"
+import { ChevronsUpDown, Trash2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { navigationRoutes } from "@/lib/navigation-routes"
+import { PLAN_LABELS, PLANS } from "@/types/plans"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Command, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
+import { useState } from "react"
 
 const labelMap: Record<string, string> = {
     showInSidebar: 'Mostrar en Sidebar',
-    hiddenModuleToSelector: 'Ocultar módulo para reseller',
     adminOnly: 'Solo Admin',
     requiresPremium: 'Requiere Premium',
-    showOnlySelectedPlans: 'Mostrar solo para planes seleccionados',
 }
 
 export const ModuleForm = ({
@@ -30,11 +30,11 @@ export const ModuleForm = ({
     onSubmit: SubmitHandler<FormModuleValues>;
     defaultValues?: Partial<FormModuleValues>;
 }) => {
-    const plans: Plan[] = ["pymes", "empresarial", "business"];
 
     const form = useForm<FormModuleValues>({
         resolver: zodResolver(FormModuleSchema),
         defaultValues: {
+            showInSidebar: true,
             ...defaultValues,
         },
     });
@@ -43,6 +43,8 @@ export const ModuleForm = ({
         control: form.control,
         name: "items",
     });
+
+    const [openPlans, setOpenPlans] = useState(false);
 
     return (
         <Form {...form}>
@@ -114,8 +116,7 @@ export const ModuleForm = ({
                     )}
                 />
 
-
-                {['showInSidebar', 'hiddenModuleToSelector', 'adminOnly', 'requiresPremium'].map((key) => (
+                {['showInSidebar', 'adminOnly', 'requiresPremium'].map((key) => (
                     <FormField
                         key={key}
                         control={form.control}
@@ -137,28 +138,59 @@ export const ModuleForm = ({
                 <FormField
                     control={form.control}
                     name="allowedPlans"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Planes permitidos:</FormLabel>
-                            <div className="flex gap-4">
-                                {plans.map((plan) => (
-                                    <div key={plan} className="flex items-center gap-2">
-                                        <Checkbox
-                                            checked={field.value?.includes(plan)}
-                                            onCheckedChange={(checked: CheckedState) => {
-                                                const current: Plan[] = field.value || [];
-                                                const newPlans = current.includes(plan)
-                                                    ? current.filter((p) => p !== plan)
-                                                    : [...current, plan];
-                                                field.onChange(newPlans);
-                                            }}
-                                        />
-                                        <span className="text-sm capitalize">{plan}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </FormItem>
-                    )}
+                    render={({ field }) => {
+                        const selected = field.value || [];
+
+                        return (
+                            <FormItem className="flex flex-col gap-2">
+                                <FormLabel>Planes permitidos</FormLabel>
+                                <Popover open={openPlans} onOpenChange={setOpenPlans}>
+                                    <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button
+                                                variant="outline"
+                                                role="combobox"
+                                                className="w-full justify-between"
+                                            >
+                                                {selected.length > 0
+                                                    ? `${selected.length} seleccionado(s)`
+                                                    : 'Selecciona uno o más planes'}
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-full p-0">
+                                        <Command>
+                                            <CommandInput placeholder="Buscar plan..." />
+                                            <CommandGroup>
+                                                {PLANS.map((plan) => (
+                                                    <CommandItem
+                                                        key={plan}
+                                                        onSelect={() => {
+                                                            const updated = selected.includes(plan)
+                                                                ? selected.filter((p) => p !== plan)
+                                                                : [...selected, plan];
+                                                            field.onChange(updated);
+                                                        }}
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <Checkbox
+                                                                checked={selected.includes(plan)}
+                                                                onCheckedChange={() => { }}
+                                                            />
+                                                            <span className="capitalize">
+                                                                {PLAN_LABELS[plan]}
+                                                            </span>
+                                                        </div>
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                            </FormItem>
+                        );
+                    }}
                 />
 
                 <div className="flex flex-col flex-1 gap-2">

@@ -1,10 +1,9 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 import { ChevronRight } from 'lucide-react';
 
-import { canAccessRoute, getRouteAccess } from '@/utils/access';
+import { canAccessRoute } from '@/utils/access';
 import { PremiumModule } from './shared/PremiumModule';
 
 import {
@@ -34,33 +33,20 @@ export function NavMain({ user }: { user: User }) {
     const pathname = usePathname();
     const router = useRouter();
 
-    const navItemsOriginal = modules
-        .filter(link => link.showInSidebar)
-        .filter(link => {
-            const access = getRouteAccess(link.route, modules);
-            return !access?.adminOnly || user.role === 'admin' || user.role === 'reseller';
-        })
-        .map(link => {
-            const isActive = pathname === link.route || pathname.startsWith(link.route);
-            return { ...link, isActive };
-        });
-
-
+    /* Se ocupa de ocultar/mostrar basado en los permisos del modulo */
     const navItems = modules
         .filter(link => link.showInSidebar)
         .filter(link => {
-            const access = getRouteAccess(link.route, modules);
+            const access = canAccessRoute({
+                route: link.route,
+                userRole: user.role,
+                userPlan: user.plan,
+                modules,
+            });
 
             // Control de acceso por rol
-            if (access?.adminOnly && user.role !== 'admin' && user.role !== 'reseller') {
+            if (!access.allowed) {
                 return false;
-            }
-
-            // 🔐 Control por plan específico
-            if (link.showOnlySelectedPlans) {
-                if (!link.allowedPlans || !link.allowedPlans.includes(user.plan)) {
-                    return false;
-                }
             }
 
             return true;
@@ -78,23 +64,6 @@ export function NavMain({ user }: { user: User }) {
                 {navItems.map((item) => {
                     const { route, icon, label, requiresPremium, isActive, items } = item;
                     const Icon = iconMap[icon as keyof typeof iconMap];
-
-                    const handleClick = (e: React.MouseEvent) => {
-                        const access = getRouteAccess(route, modules);
-                        const canIget = canAccessRoute({
-                            route,
-                            userRole: user.role,
-                            userPlan: user.plan,
-                            modules
-                        });
-
-                        if (access && !canIget.allowed) {
-                            e.preventDefault();
-                            toast.info('Acceso limitado. Actualiza tu plan para desbloquear esta función premium.');
-                            router.push('/credits');
-                        }
-                    };
-
                     const linkClasses = clsx(
                         'flex items-center justify-between py-2 rounded-md text-sm font-medium transition',
                         isActive
@@ -150,7 +119,6 @@ export function NavMain({ user }: { user: User }) {
                                                 <SidebarMenuSubButton asChild>
                                                     <Link
                                                         href={subItem.url}
-                                                        onClick={handleClick}
                                                         className='text-sm
                                                         text-muted-foreground
                                                         flex

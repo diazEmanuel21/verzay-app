@@ -34,6 +34,7 @@ import {
     DevicePhoneMobileIcon,         // Versión móvil
     LifebuoyIcon                   // Soporte / Ayuda
 } from "@heroicons/react/24/solid";
+import { PLAN_VALUES } from "@/types/plans";
 
 export const iconMap = {
     ShieldCheckIcon,
@@ -69,8 +70,6 @@ export const iconMap = {
     LifebuoyIcon
 };
 
-const PlanValues = Object.values(Plan) as [Plan, ...Plan[]];
-
 export const ItemModuleSchema = z.object({
     url: z.string().min(1),
     title: z.string().min(1),
@@ -81,12 +80,12 @@ export const FormModuleSchema = z.object({
     label: z.string().min(1, "Campo requerido"),
     route: z.string().min(1, "Campo requerido"),
     icon: z.string().min(1, "Campo requerido"),
-    showInSidebar: z.boolean().default(true),
-    hiddenModuleToSelector: z.boolean().default(false),
     adminOnly: z.boolean().default(false),
     requiresPremium: z.boolean().default(false),
-    showOnlySelectedPlans: z.boolean().default(false),
-    allowedPlans: z.array(z.enum(PlanValues)),
+
+    showInSidebar: z.boolean().optional().default(true),
+
+    allowedPlans: z.array(z.enum(PLAN_VALUES)),
     items: z.array(ItemModuleSchema).optional(),
 })
 

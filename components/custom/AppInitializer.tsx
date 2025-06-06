@@ -9,6 +9,7 @@ import { useThemeStore } from '@/stores'
 import { useResellerStore } from '@/stores/resellers/resellerStore';
 import { usePathname, useRouter } from 'next/navigation';
 import { canAccessRoute } from '@/utils/access';
+import { toast } from 'sonner';
 
 interface AppInitializerInterface {
     onReseller: ResellerInfoResponse
@@ -37,7 +38,7 @@ export default function AppInitializer({ onReseller, modules, user }: AppInitial
         });
 
         if (!access.allowed) {
-            console.warn("Acceso denegado por:", access.reason);
+            toast.info(`Acceso denegado por:", ${access.reason ?? 'Desconocido'}`);
             router.push("/credits"); // 👈 redirección en cliente
         }
     }, [pathname, user, modules, router]);

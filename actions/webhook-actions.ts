@@ -34,7 +34,6 @@ export async function toggleWebhook({
         };
 
         const evoAPI = `https://${serverUrl}/webhook/set/${instanceName}`;
-        // debugger;
 
         const response = await fetch(evoAPI,
             {

@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ClientInterface } from "@/lib/types"
-import { ApiKey, Plan, Role } from "@prisma/client"
+import { ApiKey, Role } from "@prisma/client"
 import {
   Select,
   SelectContent,
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { VolumeX, Volume2 } from 'lucide-react'
+import { PLAN_LABELS, PLANS } from "@/types/plans"
 
 interface Props {
   openEditDialog: boolean
@@ -46,13 +47,6 @@ export const EditDialog = ({
     user: 'Usuario',
     admin: 'Administrador',
     reseller: 'Reseller',
-  };
-
-  const PLANS = Object.values(Plan);
-  const PLAN_LABELS: Record<Plan, string> = {
-    business: 'Business',
-    empresarial: 'Empresarial',
-    pymes: 'Pymes'
   };
 
   let fields = [

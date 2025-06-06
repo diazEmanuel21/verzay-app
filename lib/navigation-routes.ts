@@ -26,4 +26,5 @@ export const navigationRoutes: NavigationRoutesInterface[] = [
     { route: "/tools/sheets" },
     { route: "/tools/docs" },
     { route: "/evo" },
+    { route: "/with-out-route" },
 ];

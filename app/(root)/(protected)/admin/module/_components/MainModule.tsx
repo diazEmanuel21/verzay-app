@@ -1,21 +1,20 @@
 'use client'
 
 import { useRouter } from 'next/navigation';
+import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useState, useTransition } from 'react';
-import { ModuleCreator } from './ModuleCreator';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { ModuleCardSkeleton } from './ModuleCardSkeleton';
 import { useModuleStore } from '@/stores/modules/useModuleStore';
 import { toast } from 'sonner';
 import { FormModuleValues, ModuleWithItems } from '@/schema/module'
-import { Dialog, DialogContent, DialogFooter, DialogHeader } from "@/components/ui/dialog"
-import { DialogTitle } from "@radix-ui/react-dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { ModuleForm } from "./ModuleForm"
+import { ModuleForm } from "./"
 import { Button } from '@/components/ui/button';
 import { createModule, updateModule } from '@/actions/module-actions';
 import { SortableModuleList } from './SortableModuleList';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 
 export const MainModule = () => {
     const router = useRouter();
@@ -23,14 +22,21 @@ export const MainModule = () => {
 
     const [search, setSearch] = useState('');
     const [filteredModules, setFilteredModules] = useState<ModuleWithItems[]>([]);
-
     const [isPending, startTransition] = useTransition();
 
-    /* Dialgos state */
-    const [openModuleCreator, setOpenModuleCreator] = useState(false);
-    const [editData, setEditData] = useState<{ state: boolean, module?: ModuleWithItems }>({
-        state: false,
-        module: undefined
+    const [modalOpen, setModalOpen] = useState(false);
+    const [editModule, setEditModule] = useState<ModuleWithItems | undefined>();
+
+    const normalizeModule = (module: ModuleWithItems): FormModuleValues => ({
+        id: module.id,
+        label: module.label,
+        route: module.route,
+        icon: module.icon,
+        adminOnly: module.adminOnly,
+        requiresPremium: module.requiresPremium,
+        showInSidebar: module.showInSidebar ?? true,
+        allowedPlans: module.allowedPlans,
+        items: [] // puedes mapear aquí si `module.items` existe
     });
 
     useEffect(() => {
@@ -40,39 +46,33 @@ export const MainModule = () => {
         setFilteredModules(filtered);
     }, [search, modules]);
 
-    const setEditModule = (state: boolean = true, module: ModuleWithItems) => {
-        setEditData({ state, module });
+    const handleOpenModal = (module?: ModuleWithItems) => {
+        setEditModule(module);
+        setModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setEditModule(undefined);
+        setModalOpen(false);
     };
 
     const onSubmit = (data: FormModuleValues) => {
-        const isEditing = modules.some((mod) => mod.id === data.id);
+        const isEditing = !!editModule;
 
         startTransition(async () => {
             try {
-                if (isEditing) {
-                    if (!data.id) {
-                        toast.error("Se necesita el id para actualizar el modulo.");
-                        return;
-                    }
-                    const res = await updateModule(data.id, data);
-                    if (res.success) {
-                        toast.success(res.message);
-                    } else {
-                        toast.error(res.message);
-                    }
+                const res = isEditing
+                    ? await updateModule(data.id!, data)
+                    : await createModule(data);
+
+                if (res.success) {
+                    toast.success(res.message);
                 } else {
-                    const res = await createModule(data);
-                    if (res.success) {
-                        toast.success(res.message);
-                    } else {
-                        toast.error(res.message);
-                    }
+                    toast.error(res.message);
                 }
 
-                // Refrescar la vista y cerrar modal
                 router.refresh();
-                setOpenModuleCreator(false);
-                setEditData({ state: false });
+                handleCloseModal();
             } catch (error) {
                 console.error("onSubmit error", error);
                 toast.error("Ocurrió un error al guardar el módulo");
@@ -82,7 +82,6 @@ export const MainModule = () => {
 
     return (
         <div className="flex flex-col h-full">
-            {/* Header y Filtro */}
             <div className="sticky top-0 z-1 mb-6">
                 <div className="flex justify-between items-center gap-2">
                     <div className="relative flex-1">
@@ -94,40 +93,66 @@ export const MainModule = () => {
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
-                    <ModuleCreator
-                        onSave={onSubmit}
-                        openModule={openModuleCreator}
-                        setOpenModule={setOpenModuleCreator}
-
-                    />
+                    <Button onClick={() => handleOpenModal()}>
+                        Crear módulo
+                    </Button>
                 </div>
             </div>
-            {/* Scroll interno para el contenido */}
+
             <div className="flex-1 overflow-y-auto">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {isPending ? (
                         <ModuleCardSkeleton />
                     ) : (
                         <SortableModuleList
-                            modules={modules}
-                            setOpenModule={setEditModule}
+                            modules={filteredModules}
+                            setOpenModule={(_, module) => handleOpenModal(module)}
                         />
                     )}
                 </div>
             </div>
-            <Dialog open={editData.state} onOpenChange={() => setEditData({ state: false })}>
-                <DialogContent className="border-border">
-                    <DialogHeader>
-                        <DialogTitle>Edición de módulos</DialogTitle>
-                    </DialogHeader>
-                    <ScrollArea className="max-h-[70vh] overflow-hidden">
-                        <ModuleForm onSubmit={onSubmit} defaultValues={editData.module} />
-                    </ScrollArea>
-                    <DialogFooter>
-                        <Button form="module-form" type="submit">Editar módulo</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+
+            <AnimatePresence>
+                {modalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                            className="w-full max-w-md p-2"
+                        >
+                            <Card className="relative shadow-2xl border-border rounded-md bg-background">
+                                <CardHeader className="flex items-center justify-between flex-row">
+                                    <CardTitle>
+                                        {editModule ? "Editar módulo" : "Crear módulo"}
+                                    </CardTitle>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={handleCloseModal}
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </Button>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <ScrollArea className="max-h-[70vh] overflow-y-auto">
+                                        <ModuleForm
+                                            onSubmit={onSubmit}
+                                            defaultValues={editModule ? normalizeModule(editModule) : undefined}
+                                        />
+                                    </ScrollArea>
+                                </CardContent>
+                                <CardFooter>
+                                    <Button form="module-form" type="submit" className="w-full">
+                                        {editModule ? "Guardar cambios" : "Crear módulo"}
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
-    )
-}
+    );
+};

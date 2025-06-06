@@ -1,4 +1,3 @@
-// app/admin/credits/page.tsx (Server Component)
 import { CreditMain } from "./_components";
 
 interface Props {

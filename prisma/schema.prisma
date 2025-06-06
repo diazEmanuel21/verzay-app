@@ -46,17 +46,17 @@ model User {
 }
 
 model Module {
-  id                     String  @id @default(cuid())
+  id                     String   @id @default(cuid())
   label                  String
-  route                  String  @unique
+  route                  String   @unique
   icon                   String
-  showInSidebar          Boolean @default(true)
-  hiddenModuleToSelector Boolean @default(false)
-  adminOnly              Boolean @default(false)
-  requiresPremium        Boolean @default(false)
-  showOnlySelectedPlans  Boolean @default(false)
+  adminOnly              Boolean  @default(false)
+  requiresPremium        Boolean  @default(false)
+  showInSidebar          Boolean? @default(true)
+  showOnlySelectedPlans  Boolean? @default(false) //TODO: Deprecated 
+  hiddenModuleToSelector Boolean? @default(false) //TODO: Deprecated 
   allowedPlans           Plan[]
-  order                  Int     @default(0) // ORDEN 
+  order                  Int      @default(0) // ORDEN 
 
   users     User[]       @relation("UserModules")
   items     ModuleItem[] @relation("ParentModule")
@@ -341,9 +341,12 @@ enum Role {
 }
 
 enum Plan {
-  empresarial
-  business
-  pymes
+  empresarial  @map("empresarial") // Empresa – grandes corporaciones
+  business     @map("business") // Negocios
+  pymes        @map("pymes") // PYMES – Small & Medium Business
+  standard     @map("standard") // Estándar
+  intermediate @map("intermediate") // Intermedio
+  advanced     @map("advanced") // Avanzado
 }
 
 enum TypePromptAi {
