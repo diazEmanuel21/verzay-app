@@ -16,6 +16,7 @@ import { PLAN_LABELS, PLANS } from "@/types/plans"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
 import { useState } from "react"
+import { Label } from "@/components/ui/label"
 
 const labelMap: Record<string, string> = {
     showInSidebar: 'Mostrar en Sidebar',
@@ -196,36 +197,38 @@ export const ModuleForm = ({
                 <div className="flex flex-col flex-1 gap-2">
                     <FormLabel>Submódulos</FormLabel>
                     {fields.map((field, index) => (
-                        <div key={field.id} className="flex flex-row flex-1 justify-between gap-2">
-                            {/* SELECT para URL */}
-                            <Select
-                                onValueChange={(value) => form.setValue(`items.${index}.url`, value)}
-                                defaultValue={form.watch(`items.${index}.url`)}
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Selecciona URL" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {navigationRoutes.map((route) => (
-                                        <SelectItem key={route.route} value={route.route}>
-                                            {route.route}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                        <div key={field.id} className="flex flex-col flex-1 justify-between gap-2">
+                            <div className="flex w-full justify-between items-center">
+                                <Label className="text-xs text-muted-foreground">Submodulo #{index + 1}</Label>
+                                <Button type="button" variant="destructive" onClick={() => remove(index)}>
+                                    <Trash2 />
+                                </Button>
+                            </div>
 
-                            {/* <Input placeholder="URL" {...form.register(`items.${index}.url`)} /> */}
-
-                            {/* INPUT para título */}
-                            <Input
-                                placeholder="Título"
-                                {...form.register(`items.${index}.title`)}
-                                className="w-full"
-                            />
-                            {/* <Input placeholder="Título" {...form.register(`items.${index}.title`)} /> */}
-                            <Button type="button" variant="destructive" onClick={() => remove(index)}>
-                                <Trash2 />
-                            </Button>
+                            <div className="flex gap-2 flex-col">
+                                {/* SELECT para URL */}
+                                <Select
+                                    onValueChange={(value) => form.setValue(`items.${index}.url`, value)}
+                                    defaultValue={form.watch(`items.${index}.url`)}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Selecciona URL" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {navigationRoutes.map((route) => (
+                                            <SelectItem key={route.route} value={route.route}>
+                                                {route.route}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {/* INPUT para título */}
+                                <Input
+                                    placeholder="Título"
+                                    {...form.register(`items.${index}.title`)}
+                                    className="w-full"
+                                />
+                            </div>
                         </div>
                     ))}
                     <Button type="button" variant={"outline"} onClick={() => append({ url: "", title: "" })}>

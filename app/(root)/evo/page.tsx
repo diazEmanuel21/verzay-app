@@ -1,3 +1,4 @@
+import AccessDenied from "@/app/AccessDenied";
 import IframeRenderer from "@/components/custom/IframeRenderer";
 import { currentUser } from "@/lib/auth";
 
@@ -6,7 +7,7 @@ const MultiagentePage = async () => {
     const url = "https://conexion-1.verzay.co/manager/";
 
     if (!user || user?.role !== "admin") {
-        return <div>Lo sentimos este portal solo esta hecho para distruibudores.</div>;
+        return <AccessDenied />;
     };
 
     return <IframeRenderer url={url} />;

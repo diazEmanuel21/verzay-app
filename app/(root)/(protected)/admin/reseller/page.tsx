@@ -3,6 +3,7 @@
 import { currentUser } from "@/lib/auth"
 import { MainReseller } from "./_components"
 import { db } from "@/lib/db"
+import AccessDenied from "@/app/AccessDenied"
 
 interface Props {
     searchParams: { [key: string]: string | undefined }
@@ -13,7 +14,7 @@ const ResellerPage = async ({ searchParams }: Props) => {
 
     // Verificación de permisos
     if (!user || user?.role !== "admin") {
-        return <div>Lo sentimos, este portal solo está hecho para distribuidores.</div>
+        return <AccessDenied />;
     }
 
     // Obtener revendedores

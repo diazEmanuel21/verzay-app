@@ -36,7 +36,7 @@ export const MainModule = () => {
         requiresPremium: module.requiresPremium,
         showInSidebar: module.showInSidebar ?? true,
         allowedPlans: module.allowedPlans,
-        items: [] // puedes mapear aquí si `module.items` existe
+        items: module.items
     });
 
     useEffect(() => {
@@ -57,6 +57,7 @@ export const MainModule = () => {
     };
 
     const onSubmit = (data: FormModuleValues) => {
+        toast.loading('Un momento por favor...', { id: 'submit-toast' })
         const isEditing = !!editModule;
 
         startTransition(async () => {
@@ -66,9 +67,9 @@ export const MainModule = () => {
                     : await createModule(data);
 
                 if (res.success) {
-                    toast.success(res.message);
+                    toast.success(res.message, { id: 'submit-toast' });
                 } else {
-                    toast.error(res.message);
+                    toast.error(res.message, { id: 'submit-toast' });
                 }
 
                 router.refresh();

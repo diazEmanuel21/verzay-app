@@ -2,7 +2,7 @@
 
 import { signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { User } from '@prisma/client'
+import { Plan, User } from '@prisma/client'
 
 import {
   DropdownMenu,
@@ -15,7 +15,7 @@ import {
 import { ChevronsUpDown, LogOut } from 'lucide-react'
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from './ui/sidebar'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-import { PLAN_COLORS } from '@/types/plans'
+// import { PLAN_COLORS } from '@/types/plans'
 
 type LogoutButtonProps = {
   user: User | null
@@ -36,7 +36,17 @@ const LogoutButton = ({ user }: LogoutButtonProps) => {
 
   const userInitial = user?.name?.charAt(0).toUpperCase() ?? '?'
 
+  const PLAN_COLORS: Record<Plan, string> = {
+    standard: 'bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-300',       // Básico → neutral
+    intermediate: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300', // Nivel medio → más cálido
+    advanced: 'bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-300', // Alto nivel → sofisticado
+    pymes: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',   // Comercial → accesible
+    business: 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300',           // Corporativo → estable
+    empresarial: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300', // Élite → confianza y prestigio
+  };
 
+  const customStyles = PLAN_COLORS[user?.plan ?? 'pymes'];
+  
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -54,7 +64,7 @@ const LogoutButton = ({ user }: LogoutButtonProps) => {
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{user?.name}</span>
-                <span className={`truncate text-xs capitalize p-1 rounded-sm ${PLAN_COLORS[user?.plan ?? 'pymes']}`}>
+                <span className={`truncate text-xs capitalize p-1 rounded-sm  ${customStyles}`}>
                   {user?.plan}
                 </span>
               </div>
