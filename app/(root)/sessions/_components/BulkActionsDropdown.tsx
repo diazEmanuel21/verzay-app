@@ -198,35 +198,65 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
             </DropdownMenu>
 
             <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>
-                            ¿Estás seguro de que quieres ejecutar esta acción masiva?
+                <AlertDialogContent className="text-center space-y-4">
+                    <AlertDialogHeader className="space-y-2">
+                        <AlertDialogTitle className="text-destructive text-xl font-bold">
+                            ¿Estás completamente seguro?
                         </AlertDialogTitle>
-                        <AlertDialogDescription className="space-y-2">
-                            Esta acción <strong className="text-red-600">NO</strong> se puede deshacer.
-                            Para confirmar, escribe exactamente:
-                            <span className="block font-semibold text-foreground">
-                                {actionType ? `"${actionMap[actionType].confirmPhrase}"` : ''}
+
+                        <AlertDialogDescription className="text-sm text-muted-foreground">
+                            Vas a ejecutar:
+                            <span className="block text-base font-semibold mt-1 text-foreground">
+                                {actionType ? actionMap[actionType].label : ''}
                             </span>
-                            <Input
-                                placeholder="Escribe aquí..."
-                                value={confirmationText}
-                                onChange={(e) => setConfirmationText(e.target.value)}
-                            />
+
+                            <span className="block mt-3 text-destructive font-semibold">
+                                Esta acción no se puede deshacer.
+                            </span>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+
+                    <AlertDialogFooter className="flex justify-center gap-4 pt-2">
+                        <AlertDialogCancel className="font-medium">Cancelar</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={confirmAction}
-                            disabled={!isConfirmValid}
+                            // disabled={!isConfirmValid}
+                            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6"
                         >
                             Confirmar
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* 
+            <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            ¿Estás seguro de que quieres ejecutar esta acción masiva?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="space-y-2">
+                            Esta acción : "{actionType ? `"${actionMap[actionType].label}"` : ''}" <strong className="text-red-600">NO</strong> se puede deshacer.
+                            ¿Estás seguro?
+                            <Input
+                                placeholder="Escribe aquí..."
+                                value={confirmationText}
+                                onChange={(e) => setConfirmationText(e.target.value)}
+                            /> 
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmAction}
+                        // disabled={!isConfirmValid}
+                        >
+                            Confirmar
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog> */}
         </>
     )
 }

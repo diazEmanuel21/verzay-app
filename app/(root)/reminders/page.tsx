@@ -70,8 +70,12 @@ const RemindersPage = async () => {
         return <strong className="text-red-500">No se encontró una API Key válida.</strong>
     }
 
+    /* Flag para comportamiento especifico del módulo de campañas */
+    const isCampaignPage = false;
+
     return (
         <MainReminders
+            isCampaignPage={isCampaignPage}
             user={user}
             apiKey={resApikey.data}
             reminders={reminders}

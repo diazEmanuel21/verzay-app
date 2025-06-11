@@ -17,6 +17,7 @@ import { createReminder, updateReminder } from "@/actions/reminders-actions"
 import { useReminderDialogStore } from "@/stores"
 import { LeadCreateForm } from "../../sessions/_components"
 import { Card } from "@/components/ui/card"
+import { SelectMultipleComboBox } from "../../campaigns/_components"
 
 export const ReminderForm = ({
     userId,
@@ -29,7 +30,7 @@ export const ReminderForm = ({
     initialData
 }: reminderInterface) => {
     const router = useRouter();
-    const { selectedReminderId: reminderId } = useReminderDialogStore();
+    const { selectedReminderId: reminderId, isCampaignPage } = useReminderDialogStore();
     const [createLead, setCreateLead] = useState(false);
 
     const reminderForm = useForm<formValuesReminderSchema>({
@@ -50,7 +51,7 @@ export const ReminderForm = ({
         }
     });
 
-    const isEdit = !!initialData
+    const isEdit = !!initialData;
 
     const { register, handleSubmit, setValue, watch, formState: { errors } } = reminderForm;
     const initialLeadValue = initialData
@@ -78,7 +79,9 @@ export const ReminderForm = ({
     useEffect(() => {
         setValue("apikey", apikey)
         setValue("serverUrl", serverUrl)
-    }, [apikey, serverUrl])
+    }, [apikey, serverUrl]);
+
+    const modalTitle = isCampaignPage ? 'campaña' : 'recordatorio';
 
     const onSubmit = (payload: formValuesReminderSchema) => mutation.mutate(payload)
 
@@ -135,18 +138,33 @@ export const ReminderForm = ({
 
                 <Input type="number" placeholder="Cada cuántos (días/meses...)" {...register("repeatEvery")} />
 
-                <SelectComboBox
-                    leads={leads}
-                    onSelect={(lead) => {
-                        setValue("userId", lead.userId, { shouldValidate: true })
-                        setValue("remoteJid", lead.remoteJid, { shouldValidate: true })
-                        setValue("instanceName", lead.instanceId, { shouldValidate: true })
-                        setValue("pushName", lead.pushName, { shouldValidate: true })
-                    }}
-                    onLeadCreated={() => setCreateLead(true)}
-                    initialValue={initialLeadValue}
-                />
+                {isCampaignPage
+                    ?
+                    <h1>campañas</h1>
+                    // <SelectMultipleComboBox
+                    //     leads={leads}
+                    //     onSelect={(lead) => {
+                    //         setValue("userId", lead.userId, { shouldValidate: true })
+                    //         setValue("remoteJid", lead.remoteJid, { shouldValidate: true })
+                    //         setValue("instanceName", lead.instanceId, { shouldValidate: true })
+                    //         setValue("pushName", lead.pushName, { shouldValidate: true })
+                    //     }}
+                    //     onLeadCreated={() => setCreateLead(true)}
+                    //     initialValue={initialLeadValue}
+                    // />
+                    : <SelectComboBox
+                        leads={leads}
+                        onSelect={(lead) => {
+                            setValue("userId", lead.userId, { shouldValidate: true })
+                            setValue("remoteJid", lead.remoteJid, { shouldValidate: true })
+                            setValue("instanceName", lead.instanceId, { shouldValidate: true })
+                            setValue("pushName", lead.pushName, { shouldValidate: true })
+                        }}
+                        onLeadCreated={() => setCreateLead(true)}
+                        initialValue={initialLeadValue}
+                    />
 
+                }
 
                 <SelectWorkflowBox
                     workflows={workflows}
@@ -155,7 +173,7 @@ export const ReminderForm = ({
                 />
 
                 <Button type="submit" disabled={mutation.isPending} className="w-full">
-                    {mutation.isPending ? "Guardando..." : isEdit ? "Actualizar" : "Crear Recordatorio"}
+                    {mutation.isPending ? "Guardando..." : isEdit ? `Actualizar ${modalTitle}` : `Crear ${modalTitle}`}
                 </Button>
             </form>
             {createLead && (

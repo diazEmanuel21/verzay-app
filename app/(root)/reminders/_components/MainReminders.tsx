@@ -11,8 +11,12 @@ import { closeDialog, openCreateDialog, useReminderDialogStore } from '@/stores'
 import { GenericDeleteDialog } from '@/components/shared/GenericDeleteDialog';
 import { deleteReminder } from '@/actions/reminders-actions';
 
-export const MainReminders = ({ user, apiKey, reminders, leads, workflows, instancia }: mainReminderInterface) => {
-  const { openDialog, selectedReminderId } = useReminderDialogStore();
+export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, workflows, instancia, }: mainReminderInterface) => {
+  const { openDialog, selectedReminderId, setCampaignPage } = useReminderDialogStore();
+
+  useEffect(() => {
+    setCampaignPage(isCampaignPage);
+  }, [isCampaignPage]);
 
   const [search, setSearch] = useState("");
   const [sortAsc, setSortAsc] = useState(true);
@@ -37,7 +41,7 @@ export const MainReminders = ({ user, apiKey, reminders, leads, workflows, insta
         <div className="flex flex-col overflow-hidden justify-between flex-1 gap-4 p-2">
           <div className="flex justify-between items-center">
             <Header
-              title={'Recordatorios'}
+              title={isCampaignPage ? 'Campañas' : 'Recordatorios'}
             />
             <Button onClick={() => openCreateDialog()}>
               <PlusIcon className="h-4 w-4 mr-2" />
@@ -97,7 +101,7 @@ export const MainReminders = ({ user, apiKey, reminders, leads, workflows, insta
           itemName="Si"
           itemId={selectedReminderId}
           mutationFn={() => deleteReminder(selectedReminderId)}
-          entityLabel="recordatorio"
+          entityLabel={`${isCampaignPage ? 'la campaña' : 'recordatorio'}`}
         />
       }
     </div>

@@ -19,7 +19,9 @@ interface ReminderModalProps {
 }
 
 export const ReminderModal = ({ user, apiKey, leads, workflows, instancia }: ReminderModalProps) => {
-    const { openDialog, reminderData } = useReminderDialogStore()
+    const { openDialog, reminderData, isCampaignPage } = useReminderDialogStore();
+
+    const modalTitle = isCampaignPage ? 'campaña' : 'recordatorio';
 
     const transformedReminder = reminderData
         ? {
@@ -52,7 +54,7 @@ export const ReminderModal = ({ user, apiKey, leads, workflows, instancia }: Rem
                         <Card className="relative shadow-2xl border-border rounded-md bg-background">
                             <CardHeader className="flex items-center justify-between flex-row">
                                 <CardTitle>
-                                    {openDialog === 'edit' ? "Editar Recordatorio" : "Crear Recordatorio"}
+                                    {openDialog === 'edit' ? `Editar ${modalTitle}` : `Crear ${modalTitle}`}
                                 </CardTitle>
                                 <Button
                                     variant="ghost"

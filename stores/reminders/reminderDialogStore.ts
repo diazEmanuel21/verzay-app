@@ -5,6 +5,8 @@ import { create } from 'zustand';
 type DialogType = 'edit' | 'delete' | 'create' | null;
 
 interface ReminderDialogState {
+  isCampaignPage: boolean,
+  setCampaignPage: (state: boolean) => void;
   openDialog: DialogType;
   selectedReminderId: string | null;
   reminderData: Reminders | null;
@@ -13,6 +15,8 @@ interface ReminderDialogState {
 }
 
 export const useReminderDialogStore = create<ReminderDialogState>((set) => ({
+  isCampaignPage: false,
+  setCampaignPage: (state) => set({ isCampaignPage: state }),
   openDialog: null,
   selectedReminderId: null,
   reminderData: null,

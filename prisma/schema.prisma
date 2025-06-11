@@ -297,6 +297,25 @@ model Reminders {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
+// model Campaigns {
+//   id           String     @id @default(cuid())
+//   title        String
+//   description  String? //NO
+
+//   time         String 
+//   repeatType   RepeatType @default(NONE)
+//   repeatEvery  Int? 
+//   endsAt       DateTime?
+//   instanceName String
+//   pushName     String
+//   serverUrl    String
+//   apikey       String
+//   userId       String
+//   workflowId   String?
+//   remoteJid    String
+//   createdAt    DateTime   @default(now())
+//   updatedAt    DateTime   @updatedAt
+// }
 
 model SessionTrigger {
   id        Int      @id @default(autoincrement())

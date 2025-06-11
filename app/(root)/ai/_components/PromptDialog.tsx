@@ -83,7 +83,7 @@ export const PromptDialog = ({ open, setOpen, defaultValues, userId }: PromptDia
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="max-w-4xl h-[600px] flex flex-col">
+            <DialogContent className="max-w-4xl h-[600px] flex flex-col border-border">
                 <DialogHeader>
                     <DialogTitle>{isEditing ? 'Editar mensaje' : 'Nuevo mensaje'}</DialogTitle>
                     <DialogDescription>Completa los campos para personalizar tu IA</DialogDescription>

@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { z } from 'zod';
 import { Camera, ExternalLinkIcon } from "lucide-react";
 import { UserWithPausar } from "@/lib/types";
-import { BrandSelector, ModulesSelector } from "./custom";
+import { BrandSelector } from "./custom";
 import { useResellerStore } from "@/stores/resellers/resellerStore";
 import { Role } from "@prisma/client";
 import { Country } from "@/actions/get-country-action";
@@ -347,11 +347,11 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                                 </div>
                             }
                             {/* Selector de modulos */}
-                            {user.role === Role.reseller &&
+                            {/* {user.role === Role.reseller &&
                                 <div className="space-y-2">
                                     <ModulesSelector />
                                 </div>
-                            }
+                            } */}
 
                             {/* URL Google Maps */}
                             <div className="space-y-2 md:col-span-2">

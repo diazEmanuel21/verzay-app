@@ -74,6 +74,7 @@ export interface reminderInterface {
 };
 
 export interface mainReminderInterface {
+    isCampaignPage: boolean,
     user: User,
     apiKey: ApiKey,
     reminders: Reminders[],
