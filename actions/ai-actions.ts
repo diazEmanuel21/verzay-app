@@ -133,3 +133,37 @@ export async function deletePromptAi(id: string): Promise<PromptAiResponse> {
         }
     }
 }
+
+export async function deletePromptAiByUserId(userId: string): Promise<PromptAiResponse> {
+    try {
+        // Verificar si el usuario tiene mensajes antes de intentar eliminarlos
+        const messages = await db.systemMessage.findMany({ where: { userId } });
+
+        if (messages.length === 0) {
+            return {
+                success: false,
+                message: 'No se encontraron registros para este usuario.',
+            };
+        }
+
+        // Eliminar los mensajes asociados al usuario
+        await db.systemMessage.deleteMany({ where: { userId } });
+
+        return {
+            success: true,
+            message: 'Mensaje(s) eliminado(s) exitosamente.',
+            // data: messages,
+        };
+    } catch (error) {
+        let errorMessage = 'Error desconocido al eliminar los mensajes.';
+
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+
+        return {
+            success: false,
+            message: `Error al eliminar los mensajes, ${errorMessage}`,
+        };
+    }
+}

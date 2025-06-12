@@ -8,12 +8,23 @@ import Header from '@/components/shared/header';
 import { Input } from '@/components/ui/input';
 import { AiTabs, MessageTabs, PromptDialog } from "./";
 import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog";
-import { deletePromptAi } from "@/actions/ai-actions";
+import { deletePromptAi, deletePromptAiByUserId } from "@/actions/ai-actions";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Button } from "@/components/ui/button";
+import { ChevronDown, MoreVertical } from "lucide-react";
 
 export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [dialogOpen, setDialogOpen] = useState<boolean>(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+    const [delTraining, setDelTraining] = useState<boolean>(false);
     const [editingData, setEditingData] = useState<PromptAiFormValues | null>(null);
     const [dataDelete, setDataDelete] = useState<PromptAiFormValues | null>(null);
     const [activeTab, setActiveTab] = useState<TypePromptAi>(TypePromptAi.TRAINING);
@@ -76,12 +87,29 @@ export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
             <div className="sticky top-0 z-1 mb-4">
                 <div className="flex justify-between items-center pb-2">
                     <Header title={'Entrena tu IA'} />
-                    <button
-                        onClick={openCreateDialog}
-                        className="bg-primary text-white px-4 py-2 rounded-md"
-                    >
-                        Crear
-                    </button>
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button>
+                                Entrenamiento
+                                <ChevronDown />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                onClick={openCreateDialog}
+                            >
+                                Crear
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => setDelTraining(true)}
+                            >
+                                Eliminar entrenamiento
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
                 {/* SEARCH */}
                 <Input
@@ -126,6 +154,16 @@ export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
                     entityLabel={dataDelete.title}
                 />
             }
+
+            {/* Dialog to delete all trainig */}
+            <GenericDeleteDialog
+                open={delTraining}
+                setOpen={setDelTraining}
+                itemName="Entrenamiento IA"
+                itemId={module.id}
+                mutationFn={() => deletePromptAiByUserId(userId)}
+                entityLabel="Todo el entrenamiento IA"
+            />
         </div>
     );
 };
