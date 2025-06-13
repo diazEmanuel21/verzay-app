@@ -18,7 +18,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from "@/components/ui/button";
-import { ChevronDown, MoreVertical } from "lucide-react";
+import { ChevronDown, Ellipsis, MoreVertical } from "lucide-react";
 
 export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
     const [searchTerm, setSearchTerm] = useState<string>("");
@@ -88,28 +88,12 @@ export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
                 <div className="flex justify-between items-center pb-2">
                     <Header title={'Entrena tu IA'} />
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button>
-                                Entrenamiento
-                                <ChevronDown />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                onClick={openCreateDialog}
-                            >
-                                Crear
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => setDelTraining(true)}
-                            >
-                                Eliminar entrenamiento
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <button
+                        onClick={openCreateDialog}
+                        className="bg-primary text-white px-4 py-2 rounded-md"
+                    >
+                        Crear
+                    </button>
                 </div>
                 {/* SEARCH */}
                 <Input
@@ -119,9 +103,27 @@ export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
                     className="max-w-sm mb-2"
                 />
                 {/* TABS */}
-                <AiTabs
-                    onTabChange={onTabChange}
-                />
+                <div className="flex flex-1 ">
+                    <AiTabs
+                        onTabChange={onTabChange}
+                    />
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost">
+                                <Ellipsis />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                onClick={() => setDelTraining(true)}
+                            >
+                                Eliminar entrenamiento
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
 
             {/* Scroll interno para el contenido */}
