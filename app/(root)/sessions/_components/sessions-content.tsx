@@ -15,6 +15,7 @@ import { UserSessionsSkeleton } from "./user-sessions-skeleton";
 import { columns } from "./Columns";
 import { DataTable } from "./data-table";
 import { BulkActionsDropdown } from "./BulkActionsDropdown";
+import { cn } from "@/lib/utils";
 
 interface SessionsContentProps {
   userId: string;
@@ -40,18 +41,22 @@ export function SessionsContent({ userId }: SessionsContentProps) {
   const [searchResults, setSearchResults] = useState<Session[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const observerRef = useRef<HTMLDivElement>(null);
+  const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
 
   const getKey = (pageIndex: number, previousPageData: Session[] | null) => {
     if (previousPageData && previousPageData.length < PAGE_SIZE) return null;
-    return `${userId}-${pageIndex}`;
+    return `${userId}-${pageIndex}-${filter}`;
   };
 
   const { data, size, setSize, mutate, isLoading, isValidating, error } = useSWRInfinite<Session[]>(
     getKey,
     async (key: string) => {
-      const [userId, pageIndex] = key.split("-");
+      const [userId, pageIndex, filter] = key.split("-");
       const page = parseInt(pageIndex, 10);
-      const response = await getSessionsByUserId(userId, page * PAGE_SIZE, PAGE_SIZE);
+      const status = filter === "active" ? true : filter === "inactive" ? false : undefined;
+
+
+      const response = await getSessionsByUserId(userId, page * PAGE_SIZE, PAGE_SIZE, status);
       if (!response.success) throw new Error(response.message);
       return response.data || [];
     },
@@ -165,6 +170,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
 
   const cardStats = [
     {
+      key: "all",
       title: "Total de Leads",
       icon: <Database className="h-4 w-4 text-gray-500" />,
       value: stats?.total,
@@ -173,6 +179,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
       progress: null,
     },
     {
+      key: "active",
       title: "Leads Activos",
       icon: <CheckCircle2 className="h-4 w-4 text-green-500" />,
       value: stats?.active,
@@ -181,6 +188,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
       progress: stats?.total ? (stats.active / stats.total) * 100 : 0,
     },
     {
+      key: "inactive",
       title: "Leads Inactivos",
       icon: <XCircle className="h-4 w-4 text-red-500" />,
       value: stats?.inactive,
@@ -188,47 +196,59 @@ export function SessionsContent({ userId }: SessionsContentProps) {
       color: "text-red-600",
       progress: stats?.total ? 100 - (stats.active / stats.total) * 100 : 0,
     },
-  ];
+  ] as const;
 
   return (
     <div className="flex flex-col h-full">
       {/* Header fijo */}
-      <div className="sticky top-0 z-1 mb-6">
+      <div className="sticky top-0 z-1">
         <div className="flex justify-between items-center">
-          <div className="container-stats flex flex-1 gap-4 overflow-x-auto mb-2 px-2 sm:px-0">
-            {cardStats.map((card, idx) => (
-              <Card
-                key={idx}
-                className="flex-1 flex flex-col overflow-hidden border-border"
-              >
-                <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
-                  <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                    {card.title}
-                  </CardTitle>
-                  {card.icon}
-                </CardHeader>
-                <CardContent>
-                  {stats ? (
-                    <>
-                      <div className={`text-lg sm:text-2xl font-bold ${card.color}`}>
-                        {card.value}
-                      </div>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground">
-                        {card.description}
-                      </p>
-                      {card.progress !== null && (
-                        <Progress value={card.progress} className="h-2 mt-2" />
-                      )}
-                    </>
-                  ) : (
-                    <Skeleton className="h-8 w-24" />
+          <div className="container-stats flex flex-1 gap-4 overflow-x-auto mb-2 p-2">
+            {cardStats.map((card, idx) => {
+              const isActive = filter === card.key;
+              return (
+                <Card
+                  key={idx}
+                  onClick={() => {
+                    setFilter(card.key);
+                    setSize(1); // Reinicia desde primera página
+                  }}
+                  className={cn(
+                    "flex-1 flex flex-col overflow-hidden cursor-pointer transition-all duration-300 ease-in-out border rounded-xl hover:shadow-md hover:-translate-y-[2px]",
+                    isActive
+                      ? "border-primary ring-primary bg-muted/20"
+                      : "border-border"
                   )}
-                </CardContent>
-              </Card>
-            ))}
+                >
+                  <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
+                    <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+                      {card.title}
+                    </CardTitle>
+                    {card.icon}
+                  </CardHeader>
+                  <CardContent>
+                    {stats ? (
+                      <>
+                        <div className={cn("text-lg sm:text-2xl font-bold", card.color)}>
+                          {card.value}
+                        </div>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">
+                          {card.description}
+                        </p>
+                        {card.progress !== null && (
+                          <Progress value={card.progress} className="h-2 mt-2 transition-all duration-500" />
+                        )}
+                      </>
+                    ) : (
+                      <Skeleton className="h-8 w-24" />
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
-        <div className="flex flex-1 justify-between">
+        <div className="flex flex-1 justify-between p-2">
           <Input
             placeholder="Buscar por nombre o número..."
             value={search}
@@ -247,7 +267,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
       </div>
 
       {/* Scroll interno para el contenido */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto p-2">
         <div className="grid grid-cols-1 gap-4">
           <Card className="border-border">
             <DataTable columns={columns({ onDeleteSuccess: handleDeleteFromTable, mutateSessions: mutate })} data={sessions} />

@@ -167,17 +167,7 @@ export const columns = ({ onDeleteSuccess, mutateSessions }: { onDeleteSuccess: 
   },
   {
     accessorKey: "status",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Estado
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
+    header: "Estado",
     cell: ({ row }) => {
       const status = row.getValue("status") as boolean;
       const sessionId = row.original.id;

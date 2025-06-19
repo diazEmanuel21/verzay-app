@@ -48,10 +48,10 @@ export async function createTemplate(input: z.infer<typeof createTemplateSchema>
             success: true,
             message: 'Plantilla creada correctamente.',
         }
-    } catch (error: any) {
+    } catch (error) {
         return {
             success: false,
-            message: error.message || 'Error al crear plantilla.',
+            message: `Error al eliminar plantilla, ${error}`,
         }
     }
 };
@@ -80,10 +80,10 @@ export async function updateTemplate(input: z.infer<typeof updateTemplateSchema>
             success: true,
             message: 'Plantilla actualizada exitosamente.',
         }
-    } catch (error: any) {
+    } catch (error) {
         return {
             success: false,
-            message: error.message || 'Error al actualizar plantilla.',
+            message: `Error al eliminar plantilla, ${error}`,
         }
     }
 };
@@ -105,10 +105,10 @@ export async function deleteTemplate(id: string): Promise<ModuleResponse> {
             success: true,
             message: 'Plantilla eliminada correctamente.',
         }
-    } catch (error: any) {
+    } catch (error) {
         return {
             success: false,
-            message: error.message || 'Error al eliminar plantilla.',
+            message: `Error al eliminar plantilla, ${error}`,
         }
     }
 };
@@ -124,10 +124,10 @@ export async function getAllTemplates(): Promise<ModuleResponse> {
             message: 'Plantillas obtenidas correctamente.',
             data,
         }
-    } catch (error: any) {
+    } catch (error) {
         return {
             success: false,
-            message: error.message || 'Error al obtener plantillas.',
+            message: `Error al eliminar plantilla, ${error}`,
         }
     }
 };

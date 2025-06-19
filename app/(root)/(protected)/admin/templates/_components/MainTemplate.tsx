@@ -157,6 +157,7 @@ export const MainTemplate = () => {
             {templateId &&
                 <GenericDeleteDialog
                     open={showDeleteDialog}
+                    itemName="Plantilla"
                     entityLabel="Plantilla"
                     setOpen={setShowDeleteDialog}
                     itemId={templateId}

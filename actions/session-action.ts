@@ -43,7 +43,8 @@ export async function getSessionsCountByUserId(userId: string) {
 export async function getSessionsByUserId(
   userId: string,
   skip: number = 0,
-  take: number = 20
+  take: number = 20,
+  status?: boolean // true: activos, false: inactivos, undefined: todos
 ): Promise<SessionResponse> {
   try {
     if (!userId) return {
@@ -53,7 +54,10 @@ export async function getSessionsByUserId(
     };
 
     const sessions = await db.session.findMany({
-      where: { userId },
+      where: {
+        userId,
+        ...(status !== undefined && { status }), // Aplica solo si viene definido
+      },
       orderBy: { createdAt: "desc" },
       skip,
       take
