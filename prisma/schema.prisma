@@ -293,6 +293,17 @@ model Reminders {
   pushName     String
 }
 
+model PromptTemplate {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  content     String // Aquí se almacena el texto del prompt
+  category    String? // Opcional: ventas, soporte, onboarding, etc.
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model SessionTrigger {
   id        Int      @id @default(autoincrement())
   time      String

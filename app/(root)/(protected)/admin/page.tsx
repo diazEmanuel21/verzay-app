@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import Header from '@/components/shared/header'
 import { currentUser } from '@/lib/auth'
 import Link from 'next/link'
-import { BookOpenCheck, Settings, ShieldCheck, Users, Zap, } from 'lucide-react'
+import { BookOpenCheck, FileCog, FileText, Handshake, LayoutGrid, PlugZap, Settings, ShieldCheck, UserCog, Users, Zap, } from 'lucide-react'
 
 const AdminPage = async () => {
   const user = await currentUser()
@@ -14,41 +14,50 @@ const AdminPage = async () => {
 
   const allCards = [
     {
-      title: "Administrador API",
-      description: "Configura la API de tus clientes. Puedes crear, eliminar y cambiar la configuración.",
-      icon: <Settings className="text-blue-600" />,
+      title: "Conexiones API",
+      description: "Administra accesos, claves para tus clientes.",
+      icon: <PlugZap className="text-blue-600" />,
       href: "/admin/conexion",
-      buttonLabel: "Ir a Conexión",
+      buttonLabel: "Ir a Conexiones",
     },
     {
-      title: "Administrador Clientes",
-      description: "Configura cada cliente. Puedes agregar, editar, eliminar y cambiar su información.",
-      icon: <Users className="text-green-600" />,
+      title: "Gestión de Clientes",
+      description: "Agrega, edita o elimina clientes fácilmente desde un solo lugar.",
+      icon: <UserCog className="text-green-600" />,
       href: "/admin/clientes",
       buttonLabel: "Ir a Clientes",
     },
     {
-      title: "Administrador Resellers",
-      description: "Gestiona a tus revendedores y su acceso a clientes o configuraciones.",
-      icon: <ShieldCheck className="text-purple-600" />,
+      title: "Control de Revendedores",
+      description: "Asigna y gestiona revendedores y sus permisos sobre clientes.",
+      icon: <Handshake className="text-purple-600" />,
       href: "/admin/reseller",
       buttonLabel: "Ir a Resellers",
     },
     {
-      title: "Administrador Guías",
-      description: "Gestiona las guías para cada modulo.",
-      icon: <BookOpenCheck className="text-yellow-600" />,
+      title: "Documentación",
+      description: "Organiza y actualiza la documentación técnica del sistema.",
+      icon: <FileText className="text-yellow-600" />,
       href: "/admin/documentation",
-      buttonLabel: "Ir a Guías",
+      buttonLabel: "Ir a Documentación",
     },
-    // {
-    //   title: "Administrador Créditos",
-    //   description: "Gestiona los créditos de tu agente IA.",
-    //   icon: <Zap className="text-purple-700" />,
-    //   href: "/admin/credits",
-    //   buttonLabel: "Ir a Créditos",
-    // },
+    {
+      title: "Gestión de Módulos",
+      description: "Activa, desactiva o configura módulos disponibles.",
+      icon: <LayoutGrid className="text-red-600" />,
+      href: "/admin/module",
+      buttonLabel: "Ir a Módulos",
+    },
+    {
+      title: "Plantillas IA",
+      description: "Crea y gestiona plantillas para prompts personalizados.",
+      icon: <FileCog className="text-teal-600" />,
+      href: "/admin/templates",
+      buttonLabel: "Ir a Plantillas",
+    },
+
   ]
+
 
   // 🔐 Filtrar según rol del usuario
   const visibleCards =
