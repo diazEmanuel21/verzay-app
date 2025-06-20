@@ -163,7 +163,7 @@ export const columns = ({ onDeleteSuccess, mutateSessions }: { onDeleteSuccess: 
   {
     accessorKey: "pushName",
     header: "Nombre",
-    cell: ({ row }) => <div className="truncate max-w-[150px]">{row.getValue("pushName") || "Sin nombre"}</div>,
+    cell: ({ row }) => <div>{row.getValue("pushName") || "Sin nombre"}</div>,
   },
   {
     accessorKey: "status",
@@ -178,6 +178,16 @@ export const columns = ({ onDeleteSuccess, mutateSessions }: { onDeleteSuccess: 
     accessorKey: "createdAt",
     header: "Creado",
     cell: ({ row }) => new Date(row.getValue("createdAt")).toLocaleString(),
+  },
+  {
+    accessorKey: "seguimientos",
+    header: "Seguimientos",
+    cell: ({ row }) => <div>{row.getValue("seguimientos") || "-"}</div>,
+  },
+  {
+    accessorKey: "flujos",
+    header: "Flujos",
+    cell: ({ row }) => <div>{row.getValue("flujos") || "-"}</div>,
   },
   {
     accessorKey: "acciones",

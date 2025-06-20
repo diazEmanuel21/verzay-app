@@ -156,17 +156,17 @@ export function SessionsContent({ userId }: SessionsContentProps) {
 
   const hasResults = sessions.length > 0;
 
-  if (!isLoading && !isSearching && !hasResults) {
-    return (
-      <div className="flex flex-col items-center justify-center mt-10 space-y-4">
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>No se encontraron resultados</AlertTitle>
-          <AlertDescription>Intenta buscar otro nombre o número.</AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
+  // if (!isLoading && !isSearching && !hasResults) {
+  //   return (
+  //     <div className="flex flex-col items-center justify-center mt-10 space-y-4">
+  //       <Alert>
+  //         <AlertCircle className="h-4 w-4" />
+  //         <AlertTitle>No se encontraron resultados</AlertTitle>
+  //         <AlertDescription>Intenta buscar otro nombre o número.</AlertDescription>
+  //       </Alert>
+  //     </div>
+  //   );
+  // }
 
   const cardStats = [
     {
