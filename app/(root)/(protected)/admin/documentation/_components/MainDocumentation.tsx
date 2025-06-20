@@ -3,7 +3,7 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { BookOpen, Play, ShieldCheck, Users, } from 'lucide-react'
+import { BookOpen, FileCog, Play } from 'lucide-react'
 
 export const MainDocumentation = () => {
 
@@ -21,6 +21,13 @@ export const MainDocumentation = () => {
             icon: <BookOpen className="text-blue-600" />,
             href: "/admin/documentation/guide",
             buttonLabel: "Ir a Guías",
+        },
+        {
+            title: "Plantillas IA",
+            description: "Crea y gestiona plantillas para prompts personalizados.",
+            icon: <FileCog className="text-teal-600" />,
+            href: "/admin/templates",
+            buttonLabel: "Ir a Plantillas",
         },
     ]
 

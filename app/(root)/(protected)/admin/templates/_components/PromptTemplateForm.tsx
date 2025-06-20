@@ -67,7 +67,7 @@ export function PromptTemplateForm({
                     )}
                 />
 
-                <FormField
+                {/* <FormField
                     control={form.control}
                     name="description"
                     render={({ field }) => (
@@ -78,18 +78,17 @@ export function PromptTemplateForm({
                             </FormControl>
                         </FormItem>
                     )}
-                />
+                /> */}
 
                 <FormField
                     control={form.control}
                     name="content"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Contenido del Prompt</FormLabel>
+                            <FormLabel>URL Prompt</FormLabel>
                             <FormControl>
                                 <Textarea
                                     rows={6}
-                                    placeholder='Ej: Hola {{nombre}}, gracias por tu interés en {{producto}}...'
                                     {...field}
                                 />
                             </FormControl>

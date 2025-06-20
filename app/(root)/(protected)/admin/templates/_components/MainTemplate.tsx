@@ -17,11 +17,11 @@ import { toast } from 'sonner'
 
 import { PromptTemplateForm, PromptTemplateFormValues } from './PromptTemplateForm'
 import { TemplateCardSkeleton, TemplateList } from './'
-import { PromptTemplate } from '@prisma/client'
+import { PromptTemplate, Role } from '@prisma/client'
 import { createTemplate, deleteTemplate, getAllTemplates, updateTemplate } from '@/actions/template-actions'
 import { GenericDeleteDialog } from '@/components/shared/GenericDeleteDialog'
 
-export const MainTemplate = () => {
+export const MainTemplate = ({ userRole }: { userRole: Role }) => {
     const router = useRouter()
     const [templates, setTemplates] = useState<PromptTemplate[]>([])
     const [templateId, setTemplateId] = useState<string>()
@@ -117,7 +117,7 @@ export const MainTemplate = () => {
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
-                    <Button onClick={() => handleOpenModal()}>Crear plantilla</Button>
+                    {userRole === 'admin' && <Button onClick={() => handleOpenModal()}>Crear plantilla</Button>}
                 </div>
             </div>
 
@@ -126,7 +126,12 @@ export const MainTemplate = () => {
                     {isPending ? (
                         <TemplateCardSkeleton />
                     ) : (
-                        <TemplateList templates={filteredTemplates} onEdit={handleOpenModal} onDelete={handleOpenDeleteModal} />
+                        <TemplateList
+                            templates={filteredTemplates}
+                            onEdit={handleOpenModal}
+                            onDelete={handleOpenDeleteModal}
+                            userRole={userRole}
+                        />
                     )}
                 </div>
             </div>

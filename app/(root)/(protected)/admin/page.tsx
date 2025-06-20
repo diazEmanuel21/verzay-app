@@ -48,13 +48,13 @@ const AdminPage = async () => {
       href: "/admin/module",
       buttonLabel: "Ir a Módulos",
     },
-    {
-      title: "Plantillas IA",
-      description: "Crea y gestiona plantillas para prompts personalizados.",
-      icon: <FileCog className="text-teal-600" />,
-      href: "/admin/templates",
-      buttonLabel: "Ir a Plantillas",
-    },
+    // {
+    //   title: "Plantillas IA",
+    //   description: "Crea y gestiona plantillas para prompts personalizados.",
+    //   icon: <FileCog className="text-teal-600" />,
+    //   href: "/admin/templates",
+    //   buttonLabel: "Ir a Plantillas",
+    // },
 
   ]
 

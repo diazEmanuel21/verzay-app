@@ -23,6 +23,7 @@ export const navigationRoutes: NavigationRoutesInterface[] = [
     { route: "/reminders" },
     { route: "/auto-replies" },
     { route: "/profile" },
+    { route: "/templates" },
     { route: "/tools/sheets" },
     { route: "/tools/docs" },
     { route: "/evo" },
