@@ -466,7 +466,7 @@ export const createUserWithPausar = async (
 // ==============================
 // DELETE USER
 // ==============================
-export async function deleteUser(id: string): Promise<ClientResponse> {
+export async function deleteUserOld(id: string): Promise<ClientResponse> {
   if (!id) {
     return {
       success: false,
@@ -491,6 +491,93 @@ export async function deleteUser(id: string): Promise<ClientResponse> {
     return {
       success: false,
       message: 'Failed to delete user.',
+    };
+  }
+}
+
+export async function deleteUser(id: string) {
+  if (!id) {
+    return {
+      success: false,
+      message: 'User ID is required.',
+    };
+  }
+
+  try {
+    await db.$transaction(async (tx) => {
+      // 1. Borrar relaciones explícitas no cubiertas por onDelete: Cascade
+
+      await tx.reseller.deleteMany({ where: { userId: id } });       // cliente
+      await tx.reseller.deleteMany({ where: { resellerid: id } });   // revendedor
+
+      // 2. Desvincular al usuario de los módulos (UserModules es una relación N:N)
+      // await tx.module.updateMany({
+      //   where: {
+      //     users: {
+      //       some: { id },
+      //     },
+      //   },
+      //   data: {
+      //     users: {
+      //       disconnect: { id },
+      //     },
+      //   },
+      // });
+
+      // 3. Borrar workflows y nodos relacionados (por userId)
+      const workflows = await tx.workflow.findMany({ where: { userId: id } });
+      const workflowIds = workflows.map(w => w.id);
+
+      if (workflowIds.length > 0) {
+        await tx.workflowNode.deleteMany({
+          where: {
+            workflowId: { in: workflowIds }
+          }
+        });
+        await tx.rr.deleteMany({ where: { workflowId: { in: workflowIds } } });
+      }
+
+      await tx.workflow.deleteMany({ where: { userId: id } });
+
+      // 4. Eliminar Reminders, SessionTrigger, n8n_chat_histories, seguimientos
+      await tx.reminders.deleteMany({ where: { userId: id } });
+      await tx.sessionTrigger.deleteMany({
+        where: {
+          sessionId: {
+            in: (await tx.session.findMany({ where: { userId: id }, select: { instanceId: true } }))
+              .map(s => s.instanceId)
+          }
+        }
+      });
+      await tx.n8n_chat_histories.deleteMany({
+        where: {
+          session_id: {
+            in: (await tx.session.findMany({ where: { userId: id }, select: { instanceId: true } }))
+              .map(s => s.instanceId)
+          }
+        }
+      });
+      await tx.seguimientos.deleteMany({
+        where: {
+          apikey: id // o usar campo relacionado, según tu implementación real
+        }
+      });
+
+      // 5. Finalmente, eliminar al usuario (esto también borra onDelete: Cascade)
+      await tx.user.delete({ where: { id } });
+    });
+
+    revalidatePath("/admin/clientes");
+
+    return {
+      success: true,
+      message: 'User and all related data deleted successfully.',
+    };
+  } catch (error) {
+    console.error('❌ Error deleting user and related data:', error);
+    return {
+      success: false,
+      message: 'Failed to delete user and related data.',
     };
   }
 }
