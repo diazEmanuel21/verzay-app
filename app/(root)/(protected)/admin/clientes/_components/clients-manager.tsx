@@ -14,6 +14,8 @@ import {
 } from '@/actions/userClientDataActions';
 import { CreateDialog, DeleteDialog, ToolsDialog, EditDialog } from './';
 import { ApiKey } from '@prisma/client';
+import { UserFormValues } from '@/schema/user';
+import { Country } from '@/components/custom/CountryCodeSelect';
 
 export type DialogType = 'editar' | 'tools' | 'delete'
 
@@ -22,9 +24,10 @@ interface Props {
     apikeys: ApiKey[],
     availableApikeys: ApiKey[],
     currentUserRol: string,
+    countries: Country[]
 };
 
-export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRol }: Props) => {
+export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRol, countries }: Props) => {
     const router = useRouter();
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [openCreateDialog, setOpenCreateDialog] = useState(false);
@@ -32,31 +35,45 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
     const [openEditDialog, setOpenEditDialog] = useState(false);
     const [user, setCurrentUser] = useState<ClientInterface>();
 
-    const handleCreate = async (formData: FormData) => {
+    const handleCreate = async (formData: UserFormValues) => {
         const toastId = 'create-client';
         toast.loading('Creando cliente...', { id: toastId });
 
+        const {
+            name,
+            email,
+            password,
+            company,
+            notificationNumber,
+            role,
+            plan,
+            apiKeyId,
+            del_seguimiento,
+            webhookUrl,
+            apiUrl,
+        } = formData;
+
         const result = await createUserWithPausar({
-            name: formData.get('name') as string,
-            email: formData.get('email') as string,
-            password: formData.get('password') as string,
-            openingPhrase: 'Fue un gusto ayudarle.',
-            role: 'user',
-            plan: 'pymes',
+            name,
+            email,
+            password,
+            company,
+            notificationNumber,
+            role,
+            plan,
+            apiKeyId,
+            del_seguimiento,
+            webhookUrl,
+            apiUrl,
             muteAgentResponses: false,
-            del_seguimiento: 'Estamos para servirle.',
-            apiUrl: 'https://api.openAI.co',
-            company: 'Nombre empresa',
-            notificationNumber: '0000000000',
-            apiKeyId: formData.get('apiKeyId') as string,
             lat: '0.0000',
             lng: '0.0000',
             mapsUrl: 'https://maps.google.com/?q=0,0',
+            openingPhrase: 'Fue un gusto ayudarle.',
             theme: 'Default',
             image: null,
             emailVerified: null,
             autoReactivate: '30',
-            webhookUrl: 'https://n8npro.verzay.co/webhook',
         });
 
         if (result.success) {
@@ -144,6 +161,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             {/* Dialog create */}
             {availableApikeys && (
                 <CreateDialog
+                    countries={countries}
                     handleCreate={handleCreate}
                     setOpenCreateDialog={setOpenCreateDialog}
                     openCreateDialog={openCreateDialog}

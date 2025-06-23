@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { UserInformation } from '@/components/UserInformation';
+import { UserInformation } from '@/app/(root)/profile/_components/UserInformation';
 import { currentUser } from '@/lib/auth';
 import { getCountryCodes } from '@/actions/get-country-action';
 
@@ -10,7 +10,7 @@ const ProfilePage = async () => {
     redirect('/login');
   };
 
-  const countries = await getCountryCodes()
+  const countries = await getCountryCodes();
 
   return (
     <>

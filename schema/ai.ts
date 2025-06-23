@@ -2,7 +2,6 @@ import { SystemMessage, TypePromptAi } from "@prisma/client";
 import { SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 
-
 export const TYPE_AI_LABELS: Record<TypePromptAi, string> = {
     [TypePromptAi.TRAINING]: 'Entrenamiento',
     [TypePromptAi.FAQs]: 'Preguntas frecuentes',
@@ -14,7 +13,7 @@ export const TYPE_AI_LABELS: Record<TypePromptAi, string> = {
 export const PromptAiSchema = z.object({
     id: z.string().optional(),
     title: z.string().min(1, 'El título es obligatorio'),
-    message: z.string().min(1, 'La descripción es obligatoria'),
+    message: z.string().min(1, 'La descripción es obligatoria').max(6000),
     userId: z.string().min(1, 'El usuario es obligatorio'),
     typePrompt: z.nativeEnum(TypePromptAi),
 });

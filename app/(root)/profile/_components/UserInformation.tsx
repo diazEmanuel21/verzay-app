@@ -4,17 +4,17 @@ import { useState, useEffect, useRef } from "react";
 import Header from '@/components/shared/header';
 import { toast } from "sonner";
 import { getClientDataByUserId, updateClientDataByField, updateAbrirPhrase } from "@/actions/userClientDataActions";
-import { optimizeFile } from "../app/(root)/flow/[workflowId]/helpers";
+import { optimizeFile } from "../../flow/[workflowId]/helpers";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { z } from 'zod';
 import { Camera, ExternalLinkIcon } from "lucide-react";
 import { UserWithPausar } from "@/lib/types";
-import { BrandSelector } from "./custom";
+import { BrandSelector } from "../../../../components/custom";
 import { useResellerStore } from "@/stores/resellers/resellerStore";
 import { Role } from "@prisma/client";
-import { Country } from "@/actions/get-country-action";
-import { CountryCodeSelect } from './custom/CountryCodeSelect';
+import { NotificationPhoneInput } from "./";
+import { Country } from "@/components/custom/CountryCodeSelect";
 
 // ============================
 // Tipado
@@ -52,7 +52,7 @@ const defaultImgUrl = 'https://images.pexels.com/photos/133356/pexels-photo-1333
 // ============================
 // Componente Principal
 // ============================
-export const UserInformation = ({ userId, countries }: { userId: string, countries: { name: string; code: string; flag: string }[] }) => {
+export const UserInformation = ({ userId, countries }: { userId: string, countries: Country[] }) => {
     const reseller = useResellerStore((state) => state.reseller);
 
     /* Se extiende el user para poder utilizar openMsg from Pausar cómo un field nativo del User */
@@ -315,7 +315,6 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
 
                         </div>
 
-                        {/* <CountryCodeSelect countries={countries} /> */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {[
                                 { key: 'apiUrl', label: 'API key OpenAI', type: 'password' },
@@ -325,20 +324,47 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                                 { key: 'openMsg', label: 'Frase de reactivación' },
                                 { key: 'del_seguimiento', label: 'Eliminar seguimiento' },
                             ].map(({ key, label, type }) => (
-                                <div key={key} className="space-y-2">
-                                    <Label htmlFor={key} className="text-muted-foreground">{label}</Label>
-                                    <Input
-                                        id={key}
-                                        name={key}
-                                        type={type || 'text'}
-                                        value={user[key as keyof EditableFields] as string}
-                                        disabled={loadingField === key}
-                                        onChange={(e) => handleChange(key as keyof UserWithPausar, e.target.value)}
-                                        onBlur={() => handleBlur(key as keyof UserWithPausar)}
-                                        className="bg-background border-border focus-visible:ring-2 focus-visible:ring-primary"
+                                key === 'notificationNumber' ? (
+                                    <NotificationPhoneInput
+                                        key={key}
+                                        countries={countries}
+                                        value={user.notificationNumber || ''}
+                                        onChange={(val) => handleChange('notificationNumber', val)}
+                                        onBlur={() => handleBlur('notificationNumber')}
+                                        disabled={loadingField === 'notificationNumber'}
                                     />
-                                </div>
+                                ) : (
+                                    <div key={key} className="space-y-2">
+                                        <Label htmlFor={key} className="text-muted-foreground">{label}</Label>
+                                        <Input
+                                            id={key}
+                                            name={key}
+                                            type={type || 'text'}
+                                            value={user[key as keyof EditableFields] as string}
+                                            disabled={loadingField === key}
+                                            onChange={(e) => handleChange(key as keyof UserWithPausar, e.target.value)}
+                                            onBlur={() => handleBlur(key as keyof UserWithPausar)}
+                                            className="bg-background border-border focus-visible:ring-2 focus-visible:ring-primary"
+                                        />
+                                    </div>
+                                )
                             ))}
+                            {/* 
+                            ].map(({key, label, type}) => (
+                            <div key={key} className="space-y-2">
+                                <Label htmlFor={key} className="text-muted-foreground">{label}</Label>
+                                <Input
+                                    id={key}
+                                    name={key}
+                                    type={type || 'text'}
+                                    value={user[key as keyof EditableFields] as string}
+                                    disabled={loadingField === key}
+                                    onChange={(e) => handleChange(key as keyof UserWithPausar, e.target.value)}
+                                    onBlur={() => handleBlur(key as keyof UserWithPausar)}
+                                    className="bg-background border-border focus-visible:ring-2 focus-visible:ring-primary"
+                                />
+                            </div>
+                            ))} */}
 
                             {/* Selector de color(theme) */}
                             {user.role === Role.reseller &&
@@ -346,6 +372,7 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                                     <BrandSelector />
                                 </div>
                             }
+
                             {/* Selector de modulos */}
                             {/* {user.role === Role.reseller &&
                                 <div className="space-y-2">

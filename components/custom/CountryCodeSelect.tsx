@@ -9,19 +9,27 @@ import {
 } from '@/components/ui/select'
 import Image from 'next/image'
 
+export type Country = {
+    name: string;
+    code: string;
+    flag: string;
+};
+
 interface CountryCodeSelectProps {
-    countries: { name: string; code: string; flag: string }[]
+    countries: Country[]
     onChange?: (value: string) => void
     defaultValue?: string
+    disabled?: boolean
 }
 
 export const CountryCodeSelect: React.FC<CountryCodeSelectProps> = ({
     countries,
     onChange,
-    defaultValue
+    defaultValue,
+    disabled
 }) => {
     return (
-        <Select onValueChange={onChange} defaultValue={defaultValue}>
+        <Select onValueChange={onChange} defaultValue={defaultValue} disabled={disabled}>
             <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecciona un país" />
             </SelectTrigger>

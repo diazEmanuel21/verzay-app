@@ -4,6 +4,7 @@ import { getEnrichedClients } from "@/actions/userClientDataActions"
 import { obtenerApiKeys } from "@/actions/api-action"
 import { ApiKey } from "@prisma/client"
 import { currentUser } from "@/lib/auth"
+import { getCountryCodes } from "@/actions/get-country-action"
 
 function hasUsers(result: { data?: ClientInterface[] }): result is { data: ClientInterface[] } {
   return !!result.data
@@ -58,5 +59,7 @@ export default async function ClientesPage() {
     return usage < 100
   })
 
-  return <ClientsManager users={users} apikeys={allApikeys} availableApikeys={availableApikeys} currentUserRol={user.role} />
+  const countries = await getCountryCodes();
+
+  return <ClientsManager users={users} apikeys={allApikeys} availableApikeys={availableApikeys} currentUserRol={user.role} countries={countries} />
 }
