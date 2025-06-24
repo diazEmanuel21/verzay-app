@@ -21,8 +21,11 @@ export default auth((req) => {
   if (isLoggedIn && authRoutes.includes(currentPath)) {
     return NextResponse.redirect(new URL("/connection", nextUrl));
   }
+  const isPublicRoute =
+    publicRoutes.includes(currentPath) || currentPath.startsWith("/schedule/");
 
-  if (!isLoggedIn && !authRoutes.includes(currentPath) && !publicRoutes.includes(currentPath)) {
+  if (!isLoggedIn && !authRoutes.includes(currentPath) && !isPublicRoute) {
+    // if (!isLoggedIn && !authRoutes.includes(currentPath) && !publicRoutes.includes(currentPath)) {
     const loginUrl = new URL("/login", nextUrl);
     loginUrl.searchParams.set("callbackUrl", currentPath);
     return NextResponse.redirect(loginUrl);
