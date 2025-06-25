@@ -13,7 +13,7 @@ export const TYPE_AI_LABELS: Record<TypePromptAi, string> = {
 export const PromptAiSchema = z.object({
     id: z.string().optional(),
     title: z.string().min(1, 'El título es obligatorio'),
-    message: z.string().min(1, 'La descripción es obligatoria').max(6000),
+    message: z.string().min(1, 'La descripción es obligatoria'),
     userId: z.string().min(1, 'El usuario es obligatorio'),
     typePrompt: z.nativeEnum(TypePromptAi),
 });
