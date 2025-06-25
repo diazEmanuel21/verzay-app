@@ -1,6 +1,7 @@
 import { currentUser } from '@/lib/auth';
 import { UserAvailabilityForm } from './';
 import AppointmentDashboard from './AppointmentDashboard';
+import { ShareScheduleLinkButton } from './ShareScheduleLinkButton';
 
 export const MainSchedule = ({ userId }: { userId: string }) => {
 
@@ -8,6 +9,7 @@ export const MainSchedule = ({ userId }: { userId: string }) => {
         <>
             <div className="p-6 max-w-3xl mx-auto">
                 <UserAvailabilityForm userId={userId} />
+                <ShareScheduleLinkButton userId={userId}/>
             </div>
             <div className="p-6">
                 <AppointmentDashboard userId={userId} />
