@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { createAppointment } from "@/actions/appointments-actions";
 import { getAvailableSlots } from "@/actions/getAvailableSlots-actions";
 
-export const SchedulePageClient = ({ userId }: { userId: string }) => {
+export const SchedulePageClient = ({ userId, instanceName }: { userId: string, instanceName: string }) => {
     const [selectedDate, setSelectedDate] = useState<Date | undefined>();
     const [slots, setSlots] = useState<{ startTime: string; endTime: string }[]>([]);
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -40,21 +40,32 @@ export const SchedulePageClient = ({ userId }: { userId: string }) => {
         }
 
         const [startTime, endTime] = selectedSlot.split("|");
-        setLoading(true);
-        const res = await createAppointment({
-            userId: userId as string,
-            sessionId: 1, // Reemplazar con lógica real (crear o vincular Session)
-            startTime,
-            endTime,
-            timezone,
-        });
-        setLoading(false);
 
-        if (res.success) {
-            toast.success("Cita agendada correctamente.");
-        } else {
-            toast.error(res.message);
+        setLoading(true);
+
+        try {
+            const res = await createAppointment({
+                userId,
+                pushName: name,
+                phone,
+                instanceName,
+                startTime,
+                endTime,
+                timezone,
+            });
+
+
+            if (res.success) {
+                toast.success("Cita agendada correctamente.");
+            } else {
+                toast.error(res.message);
+            }
+        } catch (error: any) {
+            console.error("Error en agendamiento:", error);
+            toast.error("Ocurrió un error al intentar agendar la cita.");
         }
+
+        setLoading(false);
     };
 
     return (
@@ -69,7 +80,7 @@ export const SchedulePageClient = ({ userId }: { userId: string }) => {
                         <button
                             key={slot.startTime}
                             onClick={() => setSelectedSlot(`${slot.startTime}|${slot.endTime}`)}
-                            className={`border p-2 rounded text-sm ${selectedSlot?.startsWith(slot.startTime) ? "bg-primary text-white" : "hover:bg-muted"}`}
+                            className={`border p-2 rounded text-sm ${selectedSlot?.startsWith(slot.startTime) ? "bg-primary" : "hover:bg-muted"}`}
                         >
                             {format(new Date(slot.startTime), "HH:mm")} - {format(new Date(slot.endTime), "HH:mm")}
                         </button>

@@ -3,11 +3,22 @@
 import { db } from '@/lib/db';
 import { Appointment, AppointmentStatus } from '@prisma/client';
 import { parseISO, isBefore } from 'date-fns';
+import { registerSession } from './session-action';
 
 interface AppointmentOperationResponse {
     success: boolean;
     message: string;
     data?: Appointment | Appointment[];
+}
+
+interface CreateAppointmentInput {
+    userId: string;
+    pushName: string;
+    phone: string;
+    instanceName: string;
+    startTime: string;
+    endTime: string;
+    timezone: string;
 }
 
 // ✅ Obtener citas por usuario (Asesor)
@@ -34,16 +45,13 @@ export async function getAppointmentsByUser(userId: string): Promise<Appointment
 }
 
 // ✅ Crear una cita
-export async function createAppointment(data: {
-    userId: string;
-    sessionId: number;
-    startTime: string;
-    endTime: string;
-    timezone: string;
-}): Promise<AppointmentOperationResponse> {
-    const { userId, sessionId, startTime, endTime, timezone } = data;
 
-    if (!userId || !sessionId || !startTime || !endTime || !timezone) {
+
+
+export async function createAppointment(input: CreateAppointmentInput): Promise<AppointmentOperationResponse> {
+    const { userId, pushName, phone, instanceName, startTime, endTime, timezone } = input;
+
+    if (!userId || !pushName || !phone || !instanceName || !startTime || !endTime || !timezone) {
         return {
             success: false,
             message: 'Faltan campos requeridos.',
@@ -52,7 +60,6 @@ export async function createAppointment(data: {
 
     const start = parseISO(startTime);
     const end = parseISO(endTime);
-
     if (isBefore(end, start)) {
         return {
             success: false,
@@ -60,11 +67,44 @@ export async function createAppointment(data: {
         };
     }
 
+    const remoteJid = `${phone}@s.whatsapp.net`;
+
     try {
+        // Buscar o registrar sesión
+        let session = await db.session.findFirst({ where: { userId, remoteJid } });
+
+        if (!session) {
+            const register = await registerSession({
+                userId,
+                remoteJid,
+                pushName,
+                instanceId: instanceName,
+            });
+
+            if (!register.success || !register.data) {
+                return {
+                    success: false,
+                    message: register.message || 'Error al registrar sesión.',
+                };
+            }
+
+            session = register.data;
+        }
+
         const overlap = await db.appointment.findFirst({
             where: {
                 userId,
-                startTime: start,
+                status: { in: ["PENDIENTE", "CONFIRMADA"] },
+                OR: [
+                    {
+                        startTime: {
+                            lt: end,
+                        },
+                        endTime: {
+                            gt: start,
+                        },
+                    },
+                ],
             },
         });
 
@@ -78,7 +118,7 @@ export async function createAppointment(data: {
         const created = await db.appointment.create({
             data: {
                 userId,
-                sessionId,
+                sessionId: session.id,
                 startTime: start,
                 endTime: end,
                 timezone,
@@ -99,6 +139,7 @@ export async function createAppointment(data: {
         };
     }
 }
+
 
 // ✅ Actualizar estado de cita
 export async function updateAppointmentStatus(id: string, status: AppointmentStatus): Promise<AppointmentOperationResponse> {

@@ -15,10 +15,12 @@ const SchedulePage = async ({ params }: { params: { userId: string } }) => {
             lat: true,
             lng: true,
             notificationNumber: true,
+            instancias: true
         },
     });
 
     if (!user) return notFound();
+    const instanceName = user.instancias[0].instanceName;
 
     return (
         <div className="min-h-screen p-4 max-w-3xl mx-auto space-y-6">
@@ -27,7 +29,7 @@ const SchedulePage = async ({ params }: { params: { userId: string } }) => {
                 <p className="text-muted-foreground">{user.company}</p>
             </div>
 
-            <SchedulePageClient userId={user.id} />
+            <SchedulePageClient userId={user.id} instanceName={instanceName}/>
         </div>
     );
 };

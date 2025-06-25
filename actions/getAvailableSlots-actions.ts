@@ -1,3 +1,5 @@
+'use server'
+
 import { db } from '@/lib/db';
 import { format, addMinutes, isBefore, parseISO, isValid } from 'date-fns';
 
@@ -54,6 +56,7 @@ export async function getAvailableSlots(
             where: {
                 userId,
                 startTime: { gte: startOfDay, lte: endOfDay },
+                status: { in: ["PENDIENTE", "CONFIRMADA"] },
             },
         });
 
@@ -86,17 +89,21 @@ export async function getAvailableSlots(
                 const slotStart = new Date(cursor);
                 const slotEnd = addMinutes(slotStart, slotDuration);
 
-                const slotTaken = takenRanges.some(
-                    (r) =>
-                        (slotStart >= r.start && slotStart < r.end) ||
-                        (slotEnd > r.start && slotEnd <= r.end)
-                );
+                // Verifica que el slot esté completamente dentro del rango disponible
+                if (isBefore(slotEnd, endLimit) || slotEnd.getTime() === endLimit.getTime()) {
+                    // Validar que no haya conflicto con citas existentes
+                    const slotTaken = takenRanges.some(
+                        (r) =>
+                            slotStart < new Date(r.end) &&
+                            slotEnd > new Date(r.start)
+                    );
 
-                if (!slotTaken && isBefore(slotEnd, endLimit)) {
-                    availableSlots.push({
-                        startTime: slotStart.toISOString(),
-                        endTime: slotEnd.toISOString(),
-                    });
+                    if (!slotTaken) {
+                        availableSlots.push({
+                            startTime: slotStart.toISOString(),
+                            endTime: slotEnd.toISOString(),
+                        });
+                    }
                 }
 
                 cursor = addMinutes(cursor, slotDuration);

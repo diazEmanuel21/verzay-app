@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getAppointmentsByUser } from "@/actions/appointments-actions";
-import { Appointment, Session } from "@prisma/client";
+import { getAppointmentsByUser, updateAppointmentStatus } from "@/actions/appointments-actions";
+import { Appointment, Session, AppointmentStatus } from "@prisma/client";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface AppointmentWithSession extends Appointment {
@@ -16,6 +17,7 @@ interface AppointmentWithSession extends Appointment {
 export default function AppointmentDashboard({ userId }: { userId: string }) {
     const [appointments, setAppointments] = useState<AppointmentWithSession[]>([]);
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+    const [loading, setLoading] = useState<string | null>(null);
 
     const loadAppointments = async () => {
         const res = await getAppointmentsByUser(userId);
@@ -26,6 +28,18 @@ export default function AppointmentDashboard({ userId }: { userId: string }) {
     useEffect(() => {
         loadAppointments();
     }, [userId]);
+
+    const handleStatusChange = async (id: string, status: AppointmentStatus) => {
+        setLoading(id);
+        const res = await updateAppointmentStatus(id, status);
+        if (res.success) {
+            toast.success("Estado actualizado");
+            await loadAppointments();
+        } else {
+            toast.error(res.message);
+        }
+        setLoading(null);
+    };
 
     const filtered = selectedDate
         ? appointments.filter((a) => format(new Date(a.startTime), "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd"))
@@ -59,15 +73,38 @@ export default function AppointmentDashboard({ userId }: { userId: string }) {
                             </div>
                         </div>
 
-                        <Badge
-                            className={cn("capitalize", {
-                                "bg-yellow-200 text-yellow-900": a.status === "PENDIENTE",
-                                "bg-green-200 text-green-900": a.status === "CONFIRMADA",
-                                "bg-red-200 text-red-900": a.status === "CANCELADA",
-                            })}
-                        >
-                            {a.status.toLowerCase()}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                            <Badge
+                                className={cn("capitalize", {
+                                    "bg-yellow-200 text-yellow-900": a.status === "PENDIENTE",
+                                    "bg-green-200 text-green-900": a.status === "CONFIRMADA",
+                                    "bg-red-200 text-red-900": a.status === "CANCELADA",
+                                })}
+                            >
+                                {a.status.toLowerCase()}
+                            </Badge>
+
+                            {a.status !== "CONFIRMADA" && (
+                                <Button
+                                    size="sm"
+                                    disabled={loading === a.id}
+                                    onClick={() => handleStatusChange(a.id, "CONFIRMADA")}
+                                >
+                                    Confirmar
+                                </Button>
+                            )}
+
+                            {a.status !== "CANCELADA" && (
+                                <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    disabled={loading === a.id}
+                                    onClick={() => handleStatusChange(a.id, "CANCELADA")}
+                                >
+                                    Cancelar
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 ))}
             </div>
