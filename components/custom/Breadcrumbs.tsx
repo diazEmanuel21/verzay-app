@@ -45,7 +45,8 @@ const breadcrumbLabels: Record<string, string> = {
   guide: 'guías',
   documentation: 'documentación',
   module: 'módulos',
-  templates: 'Plantillas'
+  templates: 'plantillas',
+  schedule: 'agendamiento'
 };
 
 export const Breadcrumbs = () => {

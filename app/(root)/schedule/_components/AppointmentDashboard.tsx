@@ -3,12 +3,15 @@
 import { useEffect, useState } from "react";
 import { getAppointmentsByUser, updateAppointmentStatus } from "@/actions/appointments-actions";
 import { Appointment, Session, AppointmentStatus } from "@prisma/client";
-import { format } from "date-fns";
+import { format, getHours } from "date-fns";
 import { toast } from "sonner";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
+import { ScheduleSkeleton } from "./";
+import { CheckCircle, XCircle } from "lucide-react";
 
 interface AppointmentWithSession extends Appointment {
     session: Session;
@@ -21,6 +24,7 @@ export default function AppointmentDashboard({ userId }: { userId: string }) {
 
     const loadAppointments = async () => {
         const res = await getAppointmentsByUser(userId);
+        debugger;
         if (res.success) setAppointments((res.data || []) as AppointmentWithSession[]);
         else toast.error(res.message);
     };
@@ -46,27 +50,52 @@ export default function AppointmentDashboard({ userId }: { userId: string }) {
         : appointments;
 
     return (
-        <div className="max-w-5xl mx-auto p-4 space-y-6">
-            <h1 className="text-2xl font-bold">Citas agendadas</h1>
-
-            <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className="border rounded-md"
-            />
-
+        <>
+            <Card className="border-border">
+                <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    className="border-border rounded-md"
+                />
+            </Card>
             <div className="space-y-3">
-                {filtered.length === 0 && <p className="text-muted-foreground">No hay citas para esta fecha.</p>}
+                {filtered.length === 0 && <ScheduleSkeleton />}
 
                 {filtered.map((a) => (
-                    <div
+                    <Card
                         key={a.id}
-                        className="border rounded-md p-4 flex justify-between items-center hover:shadow-sm transition"
+                        className="border-border rounded-md p-4 flex justify-between items-center hover:shadow-sm transition"
                     >
                         <div>
-                            <div className="font-semibold">
-                                {format(new Date(a.startTime), "HH:mm")} - {format(new Date(a.endTime), "HH:mm")}
+                            {/* Badge flotante arriba a la izquierda */}
+                            <Badge
+                                className={cn(
+                                    "capitalize px-2 py-0.5 text-xs rounded-full transition-colors mb-1",
+                                    {
+                                        "bg-yellow-200 text-yellow-900 hover:bg-yellow-300": a.status === "PENDIENTE",
+                                        "bg-green-200 text-green-900 hover:bg-green-300": a.status === "CONFIRMADA",
+                                        "bg-red-200 text-red-900 hover:bg-red-300": a.status === "CANCELADA",
+                                    }
+                                )}
+                            >
+                                {a.status.toLowerCase()}
+                            </Badge>
+                            <div className="font-semibold flex items-center gap-2">
+                                {/* Icono dinámico según la hora */}
+                                <span>
+                                    {getHours(new Date(a.startTime)) < 12 ? "🌞" : "🌙"}
+                                </span>
+
+                                {/* Horario en formato HH:mm */}
+                                <span>
+                                    {format(new Date(a.startTime), "HH:mm")} - {format(new Date(a.endTime), "HH:mm")}
+                                </span>
+
+                                {/* Fecha en formato corto */}
+                                <span className="text-muted-foreground text-sm">
+                                    ({format(new Date(a.startTime), "dd/MM/yyyy")})
+                                </span>
                             </div>
                             <div className="text-sm text-muted-foreground">
                                 {a.session?.pushName || "Sin nombre"} ({a.session?.remoteJid})
@@ -74,40 +103,34 @@ export default function AppointmentDashboard({ userId }: { userId: string }) {
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <Badge
-                                className={cn("capitalize", {
-                                    "bg-yellow-200 text-yellow-900": a.status === "PENDIENTE",
-                                    "bg-green-200 text-green-900": a.status === "CONFIRMADA",
-                                    "bg-red-200 text-red-900": a.status === "CANCELADA",
-                                })}
-                            >
-                                {a.status.toLowerCase()}
-                            </Badge>
+                            {/* Botones en stack con íconos */}
+                            <div className="flex items-center gap-1">
+                                {a.status !== "CONFIRMADA" && (
+                                    <Button
+                                        size="icon"
+                                        variant="secondary"
+                                        disabled={loading === a.id}
+                                        onClick={() => handleStatusChange(a.id, "CONFIRMADA")}
+                                    >
+                                        <CheckCircle className="h-4 w-4" />
+                                    </Button>
+                                )}
 
-                            {a.status !== "CONFIRMADA" && (
-                                <Button
-                                    size="sm"
-                                    disabled={loading === a.id}
-                                    onClick={() => handleStatusChange(a.id, "CONFIRMADA")}
-                                >
-                                    Confirmar
-                                </Button>
-                            )}
-
-                            {a.status !== "CANCELADA" && (
-                                <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    disabled={loading === a.id}
-                                    onClick={() => handleStatusChange(a.id, "CANCELADA")}
-                                >
-                                    Cancelar
-                                </Button>
-                            )}
+                                {a.status !== "CANCELADA" && (
+                                    <Button
+                                        size="icon"
+                                        variant="destructive"
+                                        disabled={loading === a.id}
+                                        onClick={() => handleStatusChange(a.id, "CANCELADA")}
+                                    >
+                                        <XCircle className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    </Card>
                 ))}
             </div>
-        </div>
+        </>
     );
 }

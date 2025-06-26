@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Trash2 } from 'lucide-react';
+import { Card } from "@/components/ui/card";
+import { ScheduleAvailabilitySkeleton } from "./ScheduleAvailabilitySkeleton";
 
 const daysOfWeek = [
     { label: "Lunes", value: "1" },
@@ -32,9 +35,11 @@ export const UserAvailabilityForm = ({ userId }: { userId: string }) => {
         } else {
             toast.error(res.message);
         }
+        setLoading(false);
     }
 
     useEffect(() => {
+        setLoading(true);
         loadAvailability();
     }, [userId]);
 
@@ -74,9 +79,7 @@ export const UserAvailabilityForm = ({ userId }: { userId: string }) => {
     };
 
     return (
-        <div className="space-y-4">
-            <h2 className="text-lg font-bold">Configurar disponibilidad</h2>
-
+        <div className="space-y-2">
             <div className="flex gap-2">
                 <Select value={day} onValueChange={setDay}>
                     <SelectTrigger className="w-40">
@@ -107,18 +110,18 @@ export const UserAvailabilityForm = ({ userId }: { userId: string }) => {
                 </Button>
             </div>
 
-            <ul className="space-y-1">
-                {entries.map((entry) => (
-                    <li key={entry.id} className="flex justify-between items-center border rounded px-3 py-1 text-sm">
-                        <span>
-                            {daysOfWeek.find((d) => d.value === String(entry.dayOfWeek))?.label} - {entry.startTime} a {entry.endTime}
-                        </span>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(entry.id)}>
-                            Eliminar
-                        </Button>
-                    </li>
-                ))}
-            </ul>
+            {loading && <ScheduleAvailabilitySkeleton />}
+
+            {entries.map((entry) => (
+                <Card key={entry.id} className="flex justify-between items-center border-border rounded px-3 py-1 text-sm">
+                    <span>
+                        {daysOfWeek.find((d) => d.value === String(entry.dayOfWeek))?.label} - {entry.startTime} a {entry.endTime}
+                    </span>
+                    <Button variant="destructive" size="icon" onClick={() => handleDelete(entry.id)}>
+                        <Trash2 />
+                    </Button>
+                </Card>
+            ))}
         </div>
     );
 }
