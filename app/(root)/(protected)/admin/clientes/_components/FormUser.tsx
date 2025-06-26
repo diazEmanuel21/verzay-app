@@ -107,7 +107,19 @@ export const FormUser = ({ onSubmit, apikeys, countries }: { onSubmit: (values: 
                     )}
                 />
 
-                <NotificationPhoneInput
+                <FormField
+                    control={form.control}
+                    name="notificationNumber"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Teléfono</FormLabel>
+                            <FormControl><Input {...field} placeholder="573005214574" /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                {/* <NotificationPhoneInput
                     countries={countries}
                     value={form.watch('notificationNumber')}
                     onChange={(val) => {
@@ -121,7 +133,7 @@ export const FormUser = ({ onSubmit, apikeys, countries }: { onSubmit: (values: 
                     <p className="text-sm text-red-500">
                         {form.formState.errors.notificationNumber.message}
                     </p>
-                )}
+                )} */}
 
                 <FormField
                     control={form.control}
