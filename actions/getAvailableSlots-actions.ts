@@ -17,7 +17,7 @@ interface AvailableSlotsResponse {
 export async function getAvailableSlots(
     userId: string,
     date: string,
-    slotDuration = 30
+    slotDuration = 60
 ): Promise<AvailableSlotsResponse> {
     if (!userId || !date) {
         return {
