@@ -324,16 +324,16 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                                 { key: 'openMsg', label: 'Frase de reactivación' },
                                 { key: 'del_seguimiento', label: 'Eliminar seguimiento' },
                             ].map(({ key, label, type }) => (
-                                key === 'notificationNumber' ? (
-                                    <NotificationPhoneInput
-                                        key={key}
-                                        countries={countries}
-                                        value={user.notificationNumber || ''}
-                                        onChange={(val) => handleChange('notificationNumber', val)}
-                                        onBlur={() => handleBlur('notificationNumber')}
-                                        disabled={loadingField === 'notificationNumber'}
-                                    />
-                                ) : (
+                                // key === 'notificationNumber' ? (
+                                //     <NotificationPhoneInput
+                                //         key={key}
+                                //         countries={countries}
+                                //         value={user.notificationNumber || ''}
+                                //         onChange={(val) => handleChange('notificationNumber', val)}
+                                //         onBlur={() => handleBlur('notificationNumber')}
+                                //         disabled={loadingField === 'notificationNumber'}
+                                //     />
+                                // ) : (
                                     <div key={key} className="space-y-2">
                                         <Label htmlFor={key} className="text-muted-foreground">{label}</Label>
                                         <Input
@@ -347,7 +347,7 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                                             className="bg-background border-border focus-visible:ring-2 focus-visible:ring-primary"
                                         />
                                     </div>
-                                )
+                                // )
                             ))}
                             {/* 
                             ].map(({key, label, type}) => (
