@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 export const SchedulePageClient = ({ user }: ScheduleInterface) => {
     const router = useRouter();
     const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+    console.log({ selectedDate })
     const [slots, setSlots] = useState<{ startTime: string; endTime: string }[]>([]);
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
     const [openDialog, setOpenDialog] = useState(false);
@@ -35,7 +36,8 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
     useEffect(() => {
         if (user.id && selectedDate) {
             const fetchSlots = async () => {
-                const res = await getAvailableSlots(user.id as string, format(selectedDate, "yyyy-MM-dd"));
+                const dateFormated = format(selectedDate, "yyyy-MM-dd");
+                const res = await getAvailableSlots(user.id as string, dateFormated);
                 if (res.success) setSlots(res.data || []);
                 else toast.error(res.message);
             };
@@ -135,15 +137,17 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
 
                     {slots.length > 0 && (
                         <div className="grid grid-cols-2 gap-2">
-                            {slots.map((slot) => (
-                                <Button
-                                    variant={`${selectedSlot?.startsWith(slot.startTime) ? "default" : "outline"}`}
-                                    key={slot.startTime}
-                                    onClick={() => setSelectedSlot(`${slot.startTime}|${slot.endTime}`)}
-                                >
-                                    {format(new Date(slot.startTime), "HH:mm")} - {format(new Date(slot.endTime), "HH:mm")}
-                                </Button>
-                            ))}
+                            {slots.map((slot) => {
+                                return (
+                                    <Button
+                                        variant={`${selectedSlot?.startsWith(slot.startTime) ? "default" : "outline"}`}
+                                        key={slot.startTime}
+                                        onClick={() => setSelectedSlot(`${slot.startTime}|${slot.endTime}`)}
+                                    >
+                                        {format(new Date(slot.startTime), "HH:mm")} - {format(new Date(slot.endTime), "HH:mm")}
+                                    </Button>
+                                )
+                            })}
                         </div>
                     )}
 

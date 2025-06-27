@@ -75,3 +75,41 @@
   font-weight: 700;
   line-height: 140%;
 }
+
+/* Elimina los bordes de celdas del calendario */
+/* .fc td,
+  .fc th {
+    border: none !important;
+  } */
+
+.fc td,
+.fc th {
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+.fc-theme-standard .fc-scrollgrid {
+  border: none !important
+}
+
+
+/* Elimina bordes entre ranuras horarias en vista timeGrid */
+/* .fc .fc-timegrid-slot {
+  border-top: none !important;
+} */
+
+/* Elimina los bordes de días en la vista de mes */
+/* .fc .fc-daygrid-day {
+  border: none !important;
+} */
+
+/* Elimina el borde de la columna de horas en vista timeGrid */
+/* .fc .fc-timegrid-axis {
+  border: none !important;
+} */
+
+/* Asegura fondo limpio para que no se vean líneas fantasma */
+.fc,
+.fc-theme-standard td,
+.fc-theme-standard th {
+  background-color: transparent !important;
+}

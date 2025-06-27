@@ -1,6 +1,8 @@
 'use server'
 
 import { db } from '@/lib/db';
+import { toZonedTime } from 'date-fns-tz';
+
 import { format, addMinutes, isBefore, parseISO, isValid } from 'date-fns';
 
 interface Slot {
@@ -25,8 +27,8 @@ export async function getAvailableSlots(
             message: 'Parámetros requeridos faltantes (userId o date).',
         };
     }
+    const parsedDate = toZonedTime(new Date(`${date}T00:00:00`), 'America/Bogota');
 
-    const parsedDate = new Date(date);
     if (!isValid(parsedDate)) {
         return {
             success: false,

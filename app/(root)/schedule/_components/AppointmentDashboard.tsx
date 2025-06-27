@@ -24,7 +24,6 @@ export default function AppointmentDashboard({ userId }: { userId: string }) {
 
     const loadAppointments = async () => {
         const res = await getAppointmentsByUser(userId);
-        debugger;
         if (res.success) setAppointments((res.data || []) as AppointmentWithSession[]);
         else toast.error(res.message);
     };
