@@ -1,10 +1,7 @@
 'use server'
 
 import { db } from '@/lib/db';
-import { toZonedTime } from 'date-fns-tz';
-
-import { format, addMinutes, isBefore, parseISO, isValid } from 'date-fns';
-
+import { addMinutes, endOfDay, isBefore, isValid, startOfDay } from 'date-fns';
 interface Slot {
     startTime: string; // formato ISO
     endTime: string;
@@ -18,7 +15,7 @@ interface AvailableSlotsResponse {
 
 export async function getAvailableSlots(
     userId: string,
-    date: string,
+    date: Date,
     slotDuration = 60
 ): Promise<AvailableSlotsResponse> {
     if (!userId || !date) {
@@ -27,7 +24,7 @@ export async function getAvailableSlots(
             message: 'Parámetros requeridos faltantes (userId o date).',
         };
     }
-    const parsedDate = toZonedTime(new Date(`${date}T00:00:00`), 'America/Bogota');
+    const parsedDate = date;
 
     if (!isValid(parsedDate)) {
         return {
@@ -51,13 +48,13 @@ export async function getAvailableSlots(
             };
         }
 
-        const startOfDay = new Date(`${date}T00:00:00`);
-        const endOfDay = new Date(`${date}T23:59:59`);
+        const startOfTargetDay = startOfDay(parsedDate);
+        const endOfTargetDay = endOfDay(parsedDate);
 
         const appointments = await db.appointment.findMany({
             where: {
                 userId,
-                startTime: { gte: startOfDay, lte: endOfDay },
+                startTime: { gte: startOfTargetDay, lte: endOfTargetDay },
                 status: { in: ["PENDIENTE", "CONFIRMADA"] },
             },
         });

@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogHeader, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
-import { useParams } from "next/navigation";
+import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogHeader, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { format, isBefore, startOfDay } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,12 +12,9 @@ import { getAvailableSlots } from "@/actions/getAvailableSlots-actions";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { ScheduleInterface } from "@/schema/schema";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 
 export const SchedulePageClient = ({ user }: ScheduleInterface) => {
-    const router = useRouter();
     const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-    console.log({ selectedDate })
     const [slots, setSlots] = useState<{ startTime: string; endTime: string }[]>([]);
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
     const [openDialog, setOpenDialog] = useState(false);
@@ -36,8 +32,7 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
     useEffect(() => {
         if (user.id && selectedDate) {
             const fetchSlots = async () => {
-                const dateFormated = format(selectedDate, "yyyy-MM-dd");
-                const res = await getAvailableSlots(user.id as string, dateFormated);
+                const res = await getAvailableSlots(user.id as string, selectedDate);
                 if (res.success) setSlots(res.data || []);
                 else toast.error(res.message);
             };
