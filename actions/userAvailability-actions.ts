@@ -99,3 +99,17 @@ export async function deleteAvailability(id: string): Promise<AvailabilityOperat
         }
     }
 }
+
+export async function updateAvailability(id: string, startTime: string, endTime: string) {
+    try {
+        const updated = await db.userAvailability.update({
+            where: { id },
+            data: { startTime, endTime },
+        });
+
+        return { success: true, data: updated };
+    } catch (error) {
+        console.error("Error al actualizar disponibilidad:", error);
+        return { success: false, message: "No se pudo actualizar la disponibilidad." };
+    }
+}

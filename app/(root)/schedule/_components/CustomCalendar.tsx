@@ -11,6 +11,8 @@ import { getAppointmentsByUser, updateAppointmentStatus } from "@/actions/appoin
 import { Appointment, AppointmentStatus, Session } from "@prisma/client";
 import { normalizeAppointmentsToEvents } from "../helpers";
 import { CalendarSkeleton } from './CalendarSkeleton';
+import esLocale from '@fullcalendar/core/locales/es';
+
 
 import {
     AlertDialog,
@@ -95,8 +97,9 @@ export const CustomCalendar = ({ userId }: { userId: string }) => {
                     setNewStatus(currentStatus || "PENDIENTE");
                     setOpenDialog(true);
                 }}
+                locale={esLocale}
             />
-            
+
             <AlertDialog
                 open={openDialog}
                 onOpenChange={(open) => {
