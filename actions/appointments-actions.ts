@@ -19,6 +19,7 @@ interface CreateAppointmentInput {
     startTime: string;
     endTime: string;
     timezone: string;
+    serviceId: string;
 }
 
 // ✅ Obtener citas por usuario (Asesor)
@@ -26,7 +27,10 @@ export async function getAppointmentsByUser(userId: string): Promise<Appointment
     try {
         const list = await db.appointment.findMany({
             where: { userId },
-            include: { session: true },
+            include: {
+                session: true,
+                service: true,
+            },
             orderBy: { startTime: 'asc' },
         });
 
@@ -45,13 +49,10 @@ export async function getAppointmentsByUser(userId: string): Promise<Appointment
 }
 
 // ✅ Crear una cita
-
-
-
 export async function createAppointment(input: CreateAppointmentInput): Promise<AppointmentOperationResponse> {
-    const { userId, pushName, phone, instanceName, startTime, endTime, timezone } = input;
+    const { userId, pushName, phone, instanceName, startTime, endTime, timezone, serviceId } = input;
 
-    if (!userId || !pushName || !phone || !instanceName || !startTime || !endTime || !timezone) {
+    if (!userId || !pushName || !phone || !instanceName || !startTime || !endTime || !timezone || !serviceId) {
         return {
             success: false,
             message: 'Faltan campos requeridos.',
@@ -123,6 +124,7 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
                 endTime: end,
                 timezone,
                 status: AppointmentStatus.PENDIENTE,
+                serviceId
             },
         });
 

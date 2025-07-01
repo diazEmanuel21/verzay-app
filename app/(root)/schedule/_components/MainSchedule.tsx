@@ -8,8 +8,7 @@ import {
     TabsList,
     TabsTrigger,
 } from "@/components/ui/tabs"
-import { CustomCalendar, UserAvailabilityForm } from './';
-import { ShareScheduleLinkButton } from './ShareScheduleLinkButton';
+import { CustomCalendar, UserAvailabilityForm, ServiceForm, ShareScheduleLinkButton, ServiceList } from './';
 
 export const MainSchedule = ({ userId }: { userId: string }) => {
 
@@ -20,6 +19,7 @@ export const MainSchedule = ({ userId }: { userId: string }) => {
                     <TabsList>
                         <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                         <TabsTrigger value="availability">Disponibilidad</TabsTrigger>
+                        <TabsTrigger value="services">Servicios</TabsTrigger>
                     </TabsList>
                     <TabsContent value="dashboard">
                         <Card className="border-none pt-6">
@@ -33,6 +33,14 @@ export const MainSchedule = ({ userId }: { userId: string }) => {
                             <CardContent className="flex flex-col pt-6 gap-2">
                                 <UserAvailabilityForm userId={userId} />
                                 <ShareScheduleLinkButton userId={userId} />
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                    <TabsContent value="services">
+                        <Card className="border-none">
+                            <CardContent className="flex flex-col gap-2 ">
+                                <ServiceForm userId={userId} />
+                                <ServiceList userId={userId} />
                             </CardContent>
                         </Card>
                     </TabsContent>

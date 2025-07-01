@@ -7,7 +7,8 @@ const SchedulePage = async ({ params }: { params: { userId: string } }) => {
     const user = await db.user.findUnique({
         where: { id: params.userId },
         include: {
-            instancias: true
+            instancias: true,
+            Service: true 
         },
     });
 

@@ -5,6 +5,13 @@ import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescripti
 import { format, isBefore, startOfDay } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { createAppointment } from "@/actions/appointments-actions";
@@ -17,6 +24,7 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
     const [selectedDate, setSelectedDate] = useState<Date | undefined>();
     const [slots, setSlots] = useState<{ startTime: string; endTime: string }[]>([]);
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+    const [selectedService, setSelectedService] = useState("");
     const [openDialog, setOpenDialog] = useState(false);
 
     const [name, setName] = useState("");
@@ -27,7 +35,6 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
 
     const appointmentHour = 1;
     const instanceName = user.instancias[0]?.instanceName ?? "";
-
 
     useEffect(() => {
         if (user.id && selectedDate) {
@@ -41,7 +48,7 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
     }, [user.id, selectedDate]);
 
     const handleConfirmAppointment = async () => {
-        if (!name || !phone || !selectedSlot || !selectedDate) {
+        if (!name || !phone || !selectedSlot || !selectedDate || !selectedService) {
             toast.error("Todos los campos son obligatorios.");
             return;
         }
@@ -59,6 +66,7 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
                 startTime,
                 endTime,
                 timezone,
+                serviceId: selectedService, // Se envía el servicio seleccionado
             });
 
 
@@ -81,6 +89,7 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
         setSlots([]);
         setSelectedSlot(null);
         setOpenDialog(false);
+        setSelectedService("")
         setName("");
         setPhone("");
         setLoading(false);
@@ -108,7 +117,18 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
                         className="mx-auto rounded-full border border-border shadow object-cover"
                     />
                     <div className="flex flex-1 justify-between flex-col">
-                        <h1 className="text-2xl font-bold tracking-tight">Cita asesoria</h1>
+                        <Select value={selectedService} onValueChange={setSelectedService}>
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Selecciona un servicio" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {user.Service.map((service) => (
+                                    <SelectItem key={service.id} value={service.id}>
+                                        {service.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
 
                         <p className="text-sm text-muted-foreground">
                             Agendar con <span className="font-bold">{user.name || "nuestro asesor"}</span>
@@ -173,6 +193,7 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
                             <AlertDialogDescription>
                                 Estás a punto de agendar una cita con los siguientes datos:
                                 <ul className="mt-4 text-sm space-y-1">
+                                    <li><strong>Motivo:</strong> {user.Service.find(s => s.id === selectedService)?.name}</li>
                                     <li><strong>Nombre:</strong> {name}</li>
                                     <li><strong>Teléfono:</strong> {phone}</li>
                                     <li><strong>Fecha:</strong> {format(selectedDate, "PPP")}</li>

@@ -1,23 +1,18 @@
-import { Appointment, Session } from "@prisma/client";
+import { Appointment, Service, Session } from "@prisma/client";
 
-interface AppointmentWithSession extends Appointment {
+export interface AppointmentWithSession extends Appointment {
     session: Session;
-}
-
-interface Event {
-    title: string;
-    start: string;
-    end?: string;
-    allDay?: boolean;
-}
+    service: Service | null; // ← Aquí
+};
 
 export function normalizeAppointmentsToEvents(appointments: AppointmentWithSession[]) {
     return appointments.map((a) => ({
         id: a.id,
-        title: `${a.session?.pushName || "Sin nombre"}`,
+        title: `${a.session?.pushName || "Sin nombre"} - ${a.service?.name || "Sin servicio"}`,
         start: a.startTime,
         end: a.endTime,
         allDay: false,
+
         className:
             a.status === "CONFIRMADA"
                 ? "bg-green-400 hover:bg-green-300 border-none transition-all"

@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { Trash2, PlusCircle, Ban, Copy } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { ScheduleAvailabilitySkeleton } from "./ScheduleAvailabilitySkeleton";
+import { useRouter } from "next/navigation";
 
 const defaultTime = { startTime: "09:00", endTime: "17:00" };
 
@@ -38,6 +39,8 @@ function generateHourOptions(): string[] {
 }
 
 export const UserAvailabilityForm = ({ userId }: { userId: string }) => {
+    const router = useRouter();
+
     const [loading, setLoading] = useState(false);
     const [entriesByDay, setEntriesByDay] = useState<Record<number, any[]>>({});
 
@@ -106,6 +109,8 @@ export const UserAvailabilityForm = ({ userId }: { userId: string }) => {
         } else {
             toast.error(res.message);
         }
+
+        router.refresh();
     };
 
     return (
@@ -133,7 +138,7 @@ export const UserAvailabilityForm = ({ userId }: { userId: string }) => {
                                                 </SelectContent>
                                             </Select>
                                             <span>–</span>
-                                            <Select defaultValue={entry.endTime} onValueChange={(val) => handleUpdate(entry.id, "startTime", val)}>
+                                            <Select defaultValue={entry.endTime} onValueChange={(val) => handleUpdate(entry.id, "endTime", val)}>
                                                 <SelectTrigger className="w-24">
                                                     <SelectValue placeholder="Fin" />
                                                 </SelectTrigger>
@@ -150,21 +155,6 @@ export const UserAvailabilityForm = ({ userId }: { userId: string }) => {
                                             <Trash2 />
                                         </Button>
                                     </Card>
-                                    // <div
-                                    //     key={entry.id}
-                                    //     className="flex items-center gap-2 text-sm bg-muted px-2 py-1 rounded"
-                                    // >
-                                    //     <span>
-                                    //         {entry.startTime} – {entry.endTime}
-                                    //     </span>
-                                    //     <Button
-                                    //         variant="ghost"
-                                    //         size="icon"
-                                    //         onClick={() => handleDelete(entry.id)}
-                                    //     >
-                                    //         <Trash2 className="w-4 h-4" />
-                                    //     </Button>
-                                    // </div>
                                 ))}
                             </div>
                         ) : (

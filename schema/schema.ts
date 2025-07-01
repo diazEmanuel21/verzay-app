@@ -1,8 +1,12 @@
-import { Instancias, User } from "@prisma/client";
+import { Instancias, User, Service } from '@prisma/client';
 
 export interface UserWithIntance extends User {
     instancias: Instancias[]; // Array de registros Pausar
 };
+
+export interface UserWithService extends UserWithIntance {
+    Service: Service[];
+}
 export interface ScheduleInterface {
-    user: UserWithIntance; // Array de registros Pausar
+    user: UserWithService; // Array de registros Pausar
 };

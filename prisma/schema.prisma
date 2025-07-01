@@ -44,6 +44,7 @@ model User {
   modules            Module[]           @relation("UserModules")
   UserAvailability   UserAvailability[]
   Appointment        Appointment[]
+  Service            Service[]
 }
 
 model Module {
@@ -329,9 +330,23 @@ model Appointment {
   status    AppointmentStatus @default(PENDIENTE)
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
+  serviceId String? // <- NUEVO CAMPO: Motivo de la cita
 
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  service Service? @relation(fields: [serviceId], references: [id])
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  userId      String // para que cada asesor tenga sus propios motivos
+  name        String // Nombre visible: "Asesoría", "Reunión de ventas"
+  description String? // Opcional para mostrar más info en frontend
+  messageText String // Mensaje que se enviará automáticamente por WhatsApp
+  createdAt   DateTime @default(now())
+
+  user         User          @relation(fields: [userId], references: [id])
+  appointments Appointment[]
 }
 
 model SessionTrigger {

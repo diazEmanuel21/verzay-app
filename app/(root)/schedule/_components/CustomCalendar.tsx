@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 import { getAppointmentsByUser, updateAppointmentStatus } from "@/actions/appointments-actions";
 import { Appointment, AppointmentStatus, Session } from "@prisma/client";
-import { normalizeAppointmentsToEvents } from "../helpers";
+import { AppointmentWithSession, normalizeAppointmentsToEvents } from "../helpers";
 import { CalendarSkeleton } from './CalendarSkeleton';
 import esLocale from '@fullcalendar/core/locales/es';
 
@@ -33,10 +33,6 @@ import {
     SelectItem,
 } from "@/components/ui/select";
 
-interface AppointmentWithSession extends Appointment {
-    session: Session;
-}
-
 export const CustomCalendar = ({ userId }: { userId: string }) => {
     const toastId = "progress-calendar";
 
@@ -49,21 +45,21 @@ export const CustomCalendar = ({ userId }: { userId: string }) => {
         const res = await getAppointmentsByUser(userId);
         if (res.success) {
             setAppointments((res.data || []) as AppointmentWithSession[]);
-            toast.success("Agenda cargada con éxito ✅", { id: toastId });
+            toast.success("Agenda cargada con éxito", { id: toastId });
         } else {
             toast.error(res.message, { id: toastId });
         }
     };
 
     useEffect(() => {
-        toast.loading("🔄 Cargando su agenda, un momento por favor...", {
+        toast.loading("Cargando su agenda, un momento por favor...", {
             id: toastId,
         });
         loadAppointments();
     }, [userId]);
 
     const handleStatusChange = async (id: string, status: AppointmentStatus) => {
-        toast.loading("🔃 Actualizando el estado de la cita...", { id: toastId });
+        toast.loading("Actualizando el estado de la cita...", { id: toastId });
 
         const res = await updateAppointmentStatus(id, status);
         if (res.success) {
