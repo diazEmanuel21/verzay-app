@@ -39,7 +39,12 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
     useEffect(() => {
         if (user.id && selectedDate) {
             const fetchSlots = async () => {
-                const res = await getAvailableSlots(user.id as string, selectedDate);
+
+                const selectedDateOnly = format(selectedDate, 'yyyy-MM-dd'); // "2025-07-02"
+                const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                // const res = await getAvailableSlots(user.id, selectedDate);
+                const res = await getAvailableSlots(user.id, selectedDateOnly, timezone);
+
                 if (res.success) setSlots(res.data || []);
                 else toast.error(res.message);
             };
