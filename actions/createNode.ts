@@ -222,7 +222,6 @@ export async function deleteFileNode(minIoUrl: string, nodeId: string) {
     const bucket = parts[0]
     const objectName = decodeURIComponent(parts.slice(1).join('/'))
 
-    console.log("Eliminando archivo de MinIO:", { bucket, objectName })
     await minioClient.removeObject(bucket, objectName)
 
     // ✅ Limpiar la URL del nodo en la base de datos

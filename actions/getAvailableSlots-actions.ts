@@ -2,8 +2,6 @@
 
 import { db } from '@/lib/db';
 import { addMinutes, endOfDay, isBefore, isValid, startOfDay } from 'date-fns';
-import { fromZonedTime } from 'date-fns-tz';
-
 interface Slot {
     startTime: string; // formato ISO
     endTime: string;
@@ -17,23 +15,27 @@ interface AvailableSlotsResponse {
 
 export async function getAvailableSlots(
     userId: string,
-    selectedDateStr: string,
-    clientTimezone: string,
-    userTimeZone: string = "America/Bogota",     // zona del asesor TODO: REEMPLAZAR POR CAMPO TIMEZONE DEL USER
+    date: Date,
     slotDuration = 60
 ): Promise<AvailableSlotsResponse> {
-    if (!userId || !selectedDateStr || !clientTimezone) {
+    if (!userId || !date) {
         return {
             success: false,
-            message: "Parámetros requeridos faltantes (userId o date).",
+            message: 'Parámetros requeridos faltantes (userId o date).',
+        };
+    }
+    const parsedDate = date;
+
+    if (!isValid(parsedDate)) {
+        return {
+            success: false,
+            message: 'La fecha proporcionada no es válida.',
         };
     }
 
-    // Parseamos la fecha seleccionada sin hora como base
-    const parsedDate = fromZonedTime(`${selectedDateStr}T00:00:00`, userTimeZone);
-    const dayOfWeek = new Date(parsedDate).getDay();
-
     try {
+        const dayOfWeek = parsedDate.getDay();
+
         const availability = await db.userAvailability.findMany({
             where: { userId, dayOfWeek },
         });
@@ -41,13 +43,13 @@ export async function getAvailableSlots(
         if (!availability.length) {
             return {
                 success: true,
-                message: "No hay horarios disponibles para este día.",
+                message: 'No hay horarios disponibles para este día.',
                 data: [],
             };
         }
 
-        const startOfTargetDay = fromZonedTime(`${selectedDateStr}T00:00:00`, userTimeZone);
-        const endOfTargetDay = fromZonedTime(`${selectedDateStr}T23:59:59`, userTimeZone);
+        const startOfTargetDay = startOfDay(parsedDate);
+        const endOfTargetDay = endOfDay(parsedDate);
 
         const appointments = await db.appointment.findMany({
             where: {
@@ -58,44 +60,41 @@ export async function getAvailableSlots(
         });
 
         const takenRanges = appointments.map((appt) => ({
-            start: new Date(appt.startTime),
-            end: new Date(appt.endTime),
+            start: appt.startTime,
+            end: appt.endTime,
         }));
 
         const availableSlots: Slot[] = [];
 
         for (const range of availability) {
-            const [startHour, startMin] = range.startTime.split(":").map(Number);
-            const [endHour, endMin] = range.endTime.split(":").map(Number);
+            const [startHour, startMin] = range.startTime.split(':').map(Number);
+            const [endHour, endMin] = range.endTime.split(':').map(Number);
 
             if (
-                isNaN(startHour) ||
-                isNaN(startMin) ||
-                isNaN(endHour) ||
-                isNaN(endMin)
+                isNaN(startHour) || isNaN(startMin) ||
+                isNaN(endHour) || isNaN(endMin)
             ) {
-                console.warn("Rango de disponibilidad inválido:", range);
+                console.warn('Rango de disponibilidad inválido:', range);
                 continue;
             }
 
-            // Crear slotStart en zona del asesor
-            let localSlot = new Date(`${selectedDateStr}T00:00:00`);
-            localSlot.setHours(startHour, startMin, 0, 0);
+            let cursor = new Date(parsedDate);
+            cursor.setHours(startHour, startMin, 0, 0);
 
-            let slotStart = fromZonedTime(localSlot, userTimeZone);
-            const localEnd = new Date(`${selectedDateStr}T00:00:00`);
-            localEnd.setHours(endHour, endMin, 0, 0);
-            const slotEndLimit = fromZonedTime(localEnd, userTimeZone);
+            const endLimit = new Date(parsedDate);
+            endLimit.setHours(endHour, endMin, 0, 0);
 
-            while (isBefore(slotStart, slotEndLimit)) {
+            while (isBefore(cursor, endLimit)) {
+                const slotStart = new Date(cursor);
                 const slotEnd = addMinutes(slotStart, slotDuration);
 
-                if (
-                    isBefore(slotEnd, slotEndLimit) ||
-                    slotEnd.getTime() === slotEndLimit.getTime()
-                ) {
+                // Verifica que el slot esté completamente dentro del rango disponible
+                if (isBefore(slotEnd, endLimit) || slotEnd.getTime() === endLimit.getTime()) {
+                    // Validar que no haya conflicto con citas existentes
                     const slotTaken = takenRanges.some(
-                        (r) => slotStart < r.end && slotEnd > r.start
+                        (r) =>
+                            slotStart < new Date(r.end) &&
+                            slotEnd > new Date(r.start)
                     );
 
                     if (!slotTaken) {
@@ -106,20 +105,20 @@ export async function getAvailableSlots(
                     }
                 }
 
-                slotStart = addMinutes(slotStart, slotDuration);
+                cursor = addMinutes(cursor, slotDuration);
             }
         }
 
         return {
             success: true,
-            message: "Horarios disponibles obtenidos correctamente.",
+            message: 'Horarios disponibles obtenidos correctamente.',
             data: availableSlots,
         };
     } catch (error: any) {
-        console.error("Error en getAvailableSlots:", error);
+        console.error('Error en getAvailableSlots:', error);
         return {
             success: false,
-            message: "Ocurrió un error al obtener los horarios disponibles.",
+            message: 'Ocurrió un error al obtener los horarios disponibles.',
         };
     }
 }
