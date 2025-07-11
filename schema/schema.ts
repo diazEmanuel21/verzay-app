@@ -1,12 +1,17 @@
-import { Instancias, User, Service } from '@prisma/client';
+import { Instancias, User, Service, ApiKey } from '@prisma/client';
 
-export interface UserWithIntance extends User {
+interface UserWithIntance extends User {
     instancias: Instancias[]; // Array de registros Pausar
 };
 
-export interface UserWithService extends UserWithIntance {
+interface UserWithService extends UserWithIntance {
     Service: Service[];
-}
+};
+
+interface UserWithApiKeys extends UserWithService {
+    apiKey: ApiKey | null; // ✅ Esto es lo que tienes
+};
+
 export interface ScheduleInterface {
-    user: UserWithService; // Array de registros Pausar
+    user: UserWithApiKeys; // Array de registros Pausar
 };

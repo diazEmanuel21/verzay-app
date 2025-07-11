@@ -20,7 +20,7 @@ import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { ScheduleInterface } from "@/schema/schema";
 import Image from "next/image";
 import { toZonedTime } from "date-fns-tz";
-import { useReactTable } from "@tanstack/react-table";
+import { sendingMessages } from "@/actions/sending-messages-actions";
 
 export const SchedulePageClient = ({ user }: ScheduleInterface) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -71,16 +71,13 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
         serviceId: selectedService,
       });
 
-      //Crear funcionar para notificar y guardar recordatorios.
-      const serverUrl = user.apiUrl;
-
       if (res.success) {
         toast.success("Cita agendada correctamente.");
         resetForm();
       } else {
         toast.error(res.message);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error en agendamiento:", error);
       toast.error("Ocurrió un error al intentar agendar la cita.");
     }
@@ -98,6 +95,35 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
     setPhone("");
     setLoading(false);
   };
+
+
+  const scheduleAndNotify = async () => {
+    if (!user.apiKey && !user.instancias && !selectedService) return;
+
+    const urlevo = user.apiKey?.url;
+    const apikey = user.instancias[0].instanceId;
+    const url = `${urlevo}/message/sendText/${instanceName}`;
+    const currentService = user.Service.filter(s => s.id === selectedService)[0];
+    const msgFromService = currentService.messageText;
+    const text = msgFromService ?? "This is a default notification from Verzay APP. You has a appointment, rigth?";
+    const remoteJid = `${phone}@s.whatsapp.net`;
+
+    try {
+      await handleConfirmAppointment();
+      const result = await sendingMessages({ url, apikey, remoteJid, text });
+
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.warning(`No se pudo enviar el mensaje: ${result.message}`);
+      }
+
+    } catch (error) {
+      console.error("Error en notificación:", error);
+      toast.error("currió un error al intentar notificar la cita.");
+    }
+  };
+
 
   const handlePreview = () => {
     if (!name || !phone || !selectedSlot || !selectedDate) {
@@ -211,7 +237,7 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmAppointment} disabled={loading}>
+              <AlertDialogAction onClick={scheduleAndNotify} disabled={loading}>
                 {loading ? "Agendando..." : "Confirmar"}
               </AlertDialogAction>
             </AlertDialogFooter>
