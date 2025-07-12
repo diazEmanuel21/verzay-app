@@ -30,6 +30,7 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
   const [openDialog, setOpenDialog] = useState(false);
 
   const [name, setName] = useState("");
+  const [areaCode, setAreaCode] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -50,7 +51,7 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
   }, [user.id, selectedDate]);
 
   const handleConfirmAppointment = async () => {
-    if (!name || !phone || !selectedSlot || !selectedDate || !selectedService) {
+    if (!name || !phone || !selectedSlot || !selectedDate || !selectedService || !areaCode) {
       toast.error("Todos los campos son obligatorios.");
       return;
     }
@@ -91,6 +92,7 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
     setSelectedSlot(null);
     setOpenDialog(false);
     setSelectedService("");
+    setAreaCode("");
     setName("");
     setPhone("");
     setLoading(false);
@@ -98,23 +100,20 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
 
 
   const scheduleAndNotify = async () => {
-    if (!user.apiKey && !user.instancias) return toast.info('Campos incompletos o vacios');
+    if (!user.apiKey || !user.instancias) return toast.info('Campos incompletos o vacios');
     if (selectedService === '' || !selectedService) return toast.info('Debes seleccionar un servicio');
-
 
     const urlevo = user.apiKey?.url;
     const apikey = user.instancias[0].instanceId;
-    debugger;
     const url = `https://${urlevo}/message/sendText/${instanceName}`;
     const currentService = user.Service.filter(s => s.id === selectedService)[0];
     const msgFromService = currentService.messageText;
     const text = msgFromService ?? "This is a default notification from Verzay APP. You has a appointment, rigth?";
-    const remoteJid = `57${phone}@s.whatsapp.net`; //TODO: se debe poner el pais por ej +57 debe de ir sin el signo de '+'
+    const remoteJid = `${areaCode}${phone}@s.whatsapp.net`; //TODO: se debe poner el pais por ej +57 debe de ir sin el signo de '+'
 
     try {
       await handleConfirmAppointment();
       const result = await sendingMessages({ url, apikey, remoteJid, text });
-      debugger;
 
       if (result.success) {
         toast.success(result.message);
@@ -206,7 +205,30 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
           <div className="flex flex-col gap-2 w-full">
             <div className="space-y-2">
               <Input placeholder="Nombre completo" value={name} onChange={(e) => setName(e.target.value)} />
-              <Input placeholder="Número de WhatsApp" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground text-sm">+</span>
+
+                <Input
+                  placeholder="57"
+                  className="w-20"
+                  value={areaCode}
+                  onChange={(e) => setAreaCode(e.target.value)}
+                  inputMode="numeric"
+                  maxLength={4}
+                  aria-label="Código de país"
+                />
+
+                <Input
+                  placeholder=" WhatsApp"
+                  className="flex-1"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  inputMode="tel"
+                  aria-label="Número de WhatsApp"
+                />
+              </div>
+
+
             </div>
 
             <Button onClick={handlePreview} disabled={loading} className="w-full">
