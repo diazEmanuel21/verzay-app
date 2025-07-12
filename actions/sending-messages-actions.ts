@@ -51,7 +51,7 @@ export const sendingMessages = async ({
 
         const data = await response.json();
         console.log(`Respuesta ${remoteJid}: ${JSON.stringify(data)}`, 'NodeSenderService');
-        return { success: true, message: 'Mensaje enviado correctamente.' };
+        return { success: true, message: 'Se notificó correctamente.' };
 
     } catch (error: any) {
         const errMsg = `Error enviando texto a ${remoteJid}: ${error.message || error}`;

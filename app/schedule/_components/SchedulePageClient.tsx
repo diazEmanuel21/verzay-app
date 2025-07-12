@@ -98,19 +98,23 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
 
 
   const scheduleAndNotify = async () => {
-    if (!user.apiKey && !user.instancias && !selectedService) return;
+    if (!user.apiKey && !user.instancias) return toast.info('Campos incompletos o vacios');
+    if (selectedService === '' || !selectedService) return toast.info('Debes seleccionar un servicio');
+
 
     const urlevo = user.apiKey?.url;
     const apikey = user.instancias[0].instanceId;
-    const url = `${urlevo}/message/sendText/${instanceName}`;
+    debugger;
+    const url = `https://${urlevo}/message/sendText/${instanceName}`;
     const currentService = user.Service.filter(s => s.id === selectedService)[0];
     const msgFromService = currentService.messageText;
     const text = msgFromService ?? "This is a default notification from Verzay APP. You has a appointment, rigth?";
-    const remoteJid = `${phone}@s.whatsapp.net`;
+    const remoteJid = `57${phone}@s.whatsapp.net`; //TODO: se debe poner el pais por ej +57 debe de ir sin el signo de '+'
 
     try {
       await handleConfirmAppointment();
       const result = await sendingMessages({ url, apikey, remoteJid, text });
+      debugger;
 
       if (result.success) {
         toast.success(result.message);
