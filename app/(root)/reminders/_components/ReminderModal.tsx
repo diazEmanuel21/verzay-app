@@ -16,9 +16,10 @@ interface ReminderModalProps {
     leads: Session[]
     workflows: Workflow[]
     instancia: Instancias
+    isSchedule?: boolean
 }
 
-export const ReminderModal = ({ user, apiKey, leads, workflows, instancia }: ReminderModalProps) => {
+export const ReminderModal = ({ user, apiKey, leads, workflows, instancia, isSchedule }: ReminderModalProps) => {
     const { openDialog, reminderData, isCampaignPage } = useReminderDialogStore();
 
     const modalTitle = isCampaignPage ? 'campaña' : 'recordatorio';
@@ -75,6 +76,7 @@ export const ReminderModal = ({ user, apiKey, leads, workflows, instancia }: Rem
                                         workflows={workflows}
                                         initialData={transformedReminder}
                                         onSuccess={() => closeDialog()}
+                                        isSchedule={isSchedule}
                                     />
                                 </Suspense>
                             </CardContent>

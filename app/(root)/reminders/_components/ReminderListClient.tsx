@@ -1,9 +1,9 @@
 'use client'
 
-import { reminderListClientInterface } from "@/schema/reminder";
+import { ReminderListClientInterface } from "@/schema/reminder";
 import { ReminderList } from "./";
 
-export const ReminderListClient = ({ workflows, filteredReminders }: reminderListClientInterface) => {
+export const ReminderListClient = ({ workflows, filteredReminders, isScheduleView }: ReminderListClientInterface) => {
     return (
         <>
             {filteredReminders.length === 0 ? (
@@ -16,11 +16,23 @@ export const ReminderListClient = ({ workflows, filteredReminders }: reminderLis
                         const workflow = workflows.find(w => w.id === reminder.workflowId);
 
                         return (
-                            <ReminderList
-                                key={reminder.id}
-                                reminder={reminder}
-                                workflow={workflow}
-                            />
+                            <>
+                                {
+                                    isScheduleView ?
+                                        reminder.isSchedule &&
+                                        <ReminderList
+                                            key={reminder.id}
+                                            reminder={reminder}
+                                            workflow={workflow}
+                                        /> :
+                                        !reminder.isSchedule &&
+                                        <ReminderList
+                                            key={reminder.id}
+                                            reminder={reminder}
+                                            workflow={workflow}
+                                        />
+                                }
+                            </>
                         );
                     })}
                 </>

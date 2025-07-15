@@ -58,11 +58,13 @@ export const reminderSchema = z.object({
     apikey: z.string({
         required_error: "apikey es obligatorio.",
     }).min(1, "apikey es obligatorio."),
+
+    isSchedule: z.boolean().optional()
 })
 
 export type formValuesReminderSchema = z.infer<typeof reminderSchema>
 
-export interface reminderInterface {
+export interface ReminderInterface {
     userId: string,
     serverUrl: string,
     apikey: string,
@@ -70,10 +72,11 @@ export interface reminderInterface {
     instanceNameReminder: string,
     leads: Session[],
     initialData?: formValuesReminderSchema | null;
+    isSchedule?: boolean
     onSuccess?: () => void,
 };
 
-export interface mainReminderInterface {
+export interface MainReminderInterface {
     isCampaignPage: boolean,
     user: User,
     apiKey: ApiKey,
@@ -81,13 +84,16 @@ export interface mainReminderInterface {
     leads: Session[],
     workflows: Workflow[]
     instancia: Instancias
+    isScheduleView?: boolean,
+    isSchedule?: boolean,
 }
 
-export interface reminderListInterface {
+export interface ReminderListInterface {
     reminder: Reminders
     workflow?: Workflow
 }
-export interface reminderListClientInterface {
+export interface ReminderListClientInterface {
     filteredReminders: Reminders[]
     workflows: Workflow[]
+    isScheduleView?: boolean
 }

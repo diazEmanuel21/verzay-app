@@ -296,6 +296,7 @@ model Reminders {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   pushName     String
+  isSchedule   Boolean?   @default(false)
 }
 
 model PromptTemplate {

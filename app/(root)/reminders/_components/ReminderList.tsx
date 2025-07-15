@@ -2,16 +2,16 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { CalendarDaysIcon, ClockIcon } from "lucide-react"
-import { reminderListInterface, repeatTypes } from "@/schema/reminder"
+import { ReminderListInterface, repeatTypes } from "@/schema/reminder"
 import { ReminderActions } from "./"
 
-export const ReminderList = ({ reminder, workflow }: reminderListInterface) => {
+export const ReminderList = ({ reminder, workflow }: ReminderListInterface) => {
     const repeatLabel = reminder.repeatType === "NONE"
         ? "Único"
         : `${repeatTypes.find(rt => rt.value === reminder.repeatType)?.label} - ${reminder.repeatEvery} ${reminder.repeatEvery === 1 ? "vez" : "veces"}`;
 
     return (
-        <Card key={reminder.id} className="border-border">
+        <Card key={reminder.id} className="border-border w-full">
             <CardContent className="p-4 space-y-2">
                 <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-base text-primary">

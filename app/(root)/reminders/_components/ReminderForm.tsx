@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 
-import { formValuesReminderSchema, reminderInterface, reminderSchema, repeatTypes } from "@/schema/reminder"
+import { formValuesReminderSchema, ReminderInterface, reminderSchema, repeatTypes } from "@/schema/reminder"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
@@ -17,7 +17,6 @@ import { createReminder, updateReminder } from "@/actions/reminders-actions"
 import { useReminderDialogStore } from "@/stores"
 import { LeadCreateForm } from "../../sessions/_components"
 import { Card } from "@/components/ui/card"
-import { SelectMultipleComboBox } from "../../campaigns/_components"
 
 export const ReminderForm = ({
     userId,
@@ -27,8 +26,9 @@ export const ReminderForm = ({
     workflows,
     instanceNameReminder,
     onSuccess,
-    initialData
-}: reminderInterface) => {
+    initialData,
+    isSchedule
+}: ReminderInterface) => {
     const router = useRouter();
     const { selectedReminderId: reminderId, isCampaignPage } = useReminderDialogStore();
     const [createLead, setCreateLead] = useState(false);
@@ -48,6 +48,7 @@ export const ReminderForm = ({
             workflowId: "",
             apikey: "",
             serverUrl: "",
+            isSchedule: isSchedule ?? false,
         }
     });
 
@@ -140,7 +141,7 @@ export const ReminderForm = ({
 
                 {isCampaignPage
                     ?
-                    <h1>campañas</h1>
+                    <></>
                     // <SelectMultipleComboBox
                     //     leads={leads}
                     //     onSelect={(lead) => {
@@ -166,11 +167,14 @@ export const ReminderForm = ({
 
                 }
 
-                <SelectWorkflowBox
-                    workflows={workflows}
-                    onSelect={(workflow) => setValue("workflowId", workflow.id, { shouldValidate: true })}
-                    initialValue={initialWorkflowId}
-                />
+                {!isSchedule &&
+
+                    <SelectWorkflowBox
+                        workflows={workflows}
+                        onSelect={(workflow) => setValue("workflowId", workflow.id, { shouldValidate: true })}
+                        initialValue={initialWorkflowId}
+                    />
+                }
 
                 <Button type="submit" disabled={mutation.isPending} className="w-full">
                     {mutation.isPending ? "Guardando..." : isEdit ? `Actualizar ${modalTitle}` : `Crear ${modalTitle}`}

@@ -5,13 +5,14 @@ import Header from '@/components/shared/header';
 import { ReminderListClient, ReminderSkeleton, ReminderModal } from './';
 import { Button } from '@/components/ui/button';
 import { ArrowDownUp, PlusIcon, X } from 'lucide-react';
-import { mainReminderInterface } from '@/schema/reminder';
+import { MainReminderInterface } from '@/schema/reminder';
 import { Input } from '@/components/ui/input';
 import { closeDialog, openCreateDialog, useReminderDialogStore } from '@/stores';
 import { GenericDeleteDialog } from '@/components/shared/GenericDeleteDialog';
 import { deleteReminder } from '@/actions/reminders-actions';
+import { toast } from 'sonner';
 
-export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, workflows, instancia, }: mainReminderInterface) => {
+export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, workflows, instancia, isScheduleView, isSchedule }: MainReminderInterface) => {
   const { openDialog, selectedReminderId, setCampaignPage } = useReminderDialogStore();
 
   useEffect(() => {
@@ -34,6 +35,13 @@ export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, 
     })
   }, [reminders, search, sortAsc]);
 
+  const handleCreateReminder = () => {
+    const countScheduleReminders = reminders.filter(r => r.isSchedule === true);
+
+    if (isScheduleView && countScheduleReminders.length === 5) return toast.info('No se pueden crear más de 5 recordatorios en el módulo de agendamiento.')
+    openCreateDialog()
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header fijo */}
@@ -43,7 +51,7 @@ export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, 
             <Header
               title={isCampaignPage ? 'Campañas' : 'Recordatorios'}
             />
-            <Button onClick={() => openCreateDialog()}>
+            <Button onClick={handleCreateReminder}>
               <PlusIcon className="h-4 w-4 mr-2" />
               Crear
             </Button>
@@ -74,11 +82,13 @@ export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, 
 
       {/* Scroll interno para el contenido */}
       <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-1 gap-2 p-2 md:grid-cols-2 xl:grid-cols-3">
+
+        <div className={isScheduleView ? 'flex gap-2 flex-col' : 'grid grid-cols-1 gap-2 p-2 md:grid-cols-2 xl:grid-cols-3'}>
           <Suspense fallback={<ReminderSkeleton />}>
             <ReminderListClient
               filteredReminders={filteredReminders}
               workflows={workflows}
+              isScheduleView={isSchedule}
             />
           </Suspense>
         </div>
@@ -90,6 +100,7 @@ export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, 
         apiKey={apiKey}
         leads={leads}
         workflows={workflows}
+        isSchedule={isSchedule}
       />
 
       {openDialog && selectedReminderId &&

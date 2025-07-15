@@ -9,8 +9,12 @@ import {
     TabsTrigger,
 } from "@/components/ui/tabs"
 import { CustomCalendar, UserAvailabilityForm, ServiceForm, ShareScheduleLinkButton, ServiceList } from './';
+import { MainReminders } from "../../reminders/_components";
+import { MainReminderInterface } from "@/schema/reminder";
 
-export const MainSchedule = ({ userId }: { userId: string }) => {
+export const MainSchedule = ({ isCampaignPage, user, apiKey, reminders, leads, workflows, instancia, }: MainReminderInterface) => {
+
+    const userId = user.id;
 
     return (
         <>
@@ -20,6 +24,7 @@ export const MainSchedule = ({ userId }: { userId: string }) => {
                         <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                         <TabsTrigger value="availability">Disponibilidad</TabsTrigger>
                         <TabsTrigger value="services">Servicios</TabsTrigger>
+                        <TabsTrigger value="reminders">Recordatorios</TabsTrigger>
                     </TabsList>
                     <TabsContent value="dashboard">
                         <Card className="border-none pt-6">
@@ -41,6 +46,23 @@ export const MainSchedule = ({ userId }: { userId: string }) => {
                             <CardContent className="flex flex-col gap-2 ">
                                 <ServiceForm userId={userId} />
                                 <ServiceList userId={userId} />
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                    <TabsContent value="reminders">
+                        <Card className="border-none">
+                            <CardContent className="flex flex-col gap-2 ">
+                                <MainReminders
+                                    isCampaignPage={isCampaignPage}
+                                    user={user}
+                                    apiKey={apiKey}
+                                    reminders={reminders}
+                                    leads={leads}
+                                    workflows={workflows}
+                                    instancia={instancia}
+                                    isScheduleView={true}
+                                    isSchedule={true}
+                                />
                             </CardContent>
                         </Card>
                     </TabsContent>
