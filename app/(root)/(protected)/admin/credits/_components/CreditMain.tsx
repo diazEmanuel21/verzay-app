@@ -10,7 +10,7 @@ import {
     getIaCreditByUser,
     rechargeIaCredit,
 } from '@/actions/actions-ia-credits';
-import { onTokensToCredits } from '@/utils/onTokensToCredits';
+import { onCreditsToTokens, onTokensToCredits } from '@/utils/onTokensToCredits';
 
 interface Props {
     userId: string;
@@ -56,10 +56,11 @@ export const CreditMain = ({ userId }: Props) => {
         setSaving(true);
         try {
             const renewalDate = new Date();
+            const tokensUsed = onCreditsToTokens(used);
 
             const res = hasCredits
-                ? await rechargeIaCredit(userId, total, renewalDate)
-                : await createIaCreditForUser(userId, total, renewalDate);
+                ? await rechargeIaCredit(userId, total, renewalDate, tokensUsed)
+                : await createIaCreditForUser(userId, total, renewalDate, tokensUsed);
 
             if (res.success) {
                 toast.success(
@@ -92,14 +93,17 @@ export const CreditMain = ({ userId }: Props) => {
                             <Input
                                 type="number"
                                 value={total}
-                                min={1}
                                 onChange={(e) => setTotal(parseInt(e.target.value))}
                             />
                         </div>
 
                         <div className="space-y-1">
                             <label className="text-sm font-medium">Créditos consumidos</label>
-                            <Input value={used} disabled className="bg-muted cursor-not-allowed" />
+                            <Input
+                                type="number"
+                                value={used}
+                                onChange={(e) => setUsed(parseInt(e.target.value))}
+                            />
                         </div>
 
                         <div className="pt-2">

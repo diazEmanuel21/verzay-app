@@ -36,7 +36,8 @@ export async function getIaCreditByUser(userId: string): Promise<IaCreditRespons
 export async function createIaCreditForUser(
   userId: string,
   total: number,
-  renewalDate: Date
+  renewalDate: Date,
+  used?: number
 ): Promise<IaCreditResponse> {
   try {
     if (!userId || total == null || !renewalDate) {
@@ -52,7 +53,7 @@ export async function createIaCreditForUser(
       data: {
         userId,
         total,
-        used: 0,
+        used,
         renewalDate,
       },
     });
@@ -68,17 +69,19 @@ export async function createIaCreditForUser(
 export async function rechargeIaCredit(
   userId: string,
   newTotal: number,
-  newRenewalDate?: Date
+  newRenewalDate?: Date,
+  used?: number
 ): Promise<IaCreditResponse> {
   try {
-    if (!userId || newTotal <= 0) {
-      return { success: false, message: 'Parámetros inválidos para recarga' };
+    if (!userId) {
+      return { success: false, message: 'Usuario desconocido.' };
     }
 
     const updated = await db.iaCredit.update({
       where: { userId },
       data: {
         total: newTotal,
+        used,
         ...(newRenewalDate && { renewalDate: newRenewalDate }),
       },
     });
