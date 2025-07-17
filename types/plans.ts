@@ -2,7 +2,7 @@ import { Plan } from "@prisma/client";
 
 export const PLANS = Object.values(Plan);
 export const PLAN_LABELS: Record<Plan, string> = {
-    empresarial: 'Business',
+    empresarial: 'Empresarial',
     lite: 'Lite',
     unico: 'Único',
     basico: 'Básico',
