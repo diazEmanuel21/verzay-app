@@ -205,7 +205,7 @@ model n8n_chat_histories {
 
 model seguimientos {
   id          Int     @id @default(autoincrement())
-  idNodo      String
+  idNodo      String?
   serverurl   String?
   instancia   String?
   apikey      String?
