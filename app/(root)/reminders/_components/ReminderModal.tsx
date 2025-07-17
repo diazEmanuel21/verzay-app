@@ -26,16 +26,16 @@ export const ReminderModal = ({ user, apiKey, leads, workflows, instancia, isSch
 
     const transformedReminder = reminderData
         ? {
-            title: reminderData.title,
-            time: reminderData.time,
-            repeatType: reminderData.repeatType,
-            instanceName: reminderData.instanceName,
-            pushName: reminderData.pushName,
-            serverUrl: apiKey.url,
-            apikey: apiKey.key,
-            userId: reminderData.userId,
+            title: reminderData.title || '',
+            time: reminderData.time || '',
+            repeatType: reminderData.repeatType || '',
+            instanceName: reminderData.instanceName || '',
+            pushName: reminderData.pushName || '',
+            serverUrl: apiKey.url || '',
+            apikey: apiKey.key || '',
+            userId: reminderData.userId || '',
             workflowId: reminderData?.workflowId || '',
-            remoteJid: reminderData.remoteJid,
+            remoteJid: reminderData.remoteJid || '',
             description: reminderData.description || '',
             repeatEvery: reminderData.repeatEvery || undefined,
         }

@@ -280,23 +280,23 @@ model IaCredit {
 }
 
 model Reminders {
-  id           String     @id @default(cuid())
+  id           String      @id @default(cuid())
   title        String
   description  String?
-  time         String
-  repeatType   RepeatType @default(NONE)
+  time         String?
+  repeatType   RepeatType? @default(NONE)
   repeatEvery  Int?
   endsAt       DateTime?
-  instanceName String
-  serverUrl    String
-  apikey       String
-  userId       String
+  instanceName String?
+  serverUrl    String?
+  apikey       String?
+  userId       String?
   workflowId   String?
-  remoteJid    String
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  pushName     String
-  isSchedule   Boolean?   @default(false)
+  remoteJid    String?
+  pushName     String?
+  isSchedule   Boolean?    @default(false)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 }
 
 model PromptTemplate {

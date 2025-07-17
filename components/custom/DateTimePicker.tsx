@@ -10,9 +10,11 @@ import { cn } from "@/lib/utils"
 
 export function DateTimePicker({
     value,
+    isSchedule,
     onChange
 }: {
     value: string | undefined
+    isSchedule: boolean
     onChange: (val: string) => void
 }) {
     const parsedInitial = value
@@ -49,11 +51,13 @@ export function DateTimePicker({
             <Popover>
                 <div className="flex flex-1 flex-row justify-between items-center gap-2">
                     {/* Field date */}
-                    <PopoverTrigger asChild>
-                        <Button variant="outline" className="justify-start text-left flex-1">
-                            {date ? format(date, "dd/MM/yyyy HH:mm") : "Seleccionar fecha y hora"}
-                        </Button>
-                    </PopoverTrigger>
+                    {!isSchedule &&
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="justify-start text-left flex-1">
+                                {date ? format(date, "dd/MM/yyyy HH:mm") : "Seleccionar fecha y hora"}
+                            </Button>
+                        </PopoverTrigger>
+                    }
 
                     {/* Fields HH:MM */}
                     <div className="flex gap-2 justify-between">
@@ -88,13 +92,16 @@ export function DateTimePicker({
                         </div>
                     </div>
                 </div>
-                <PopoverContent side="top" align="start" className="w-auto p-0" >
-                    <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={(d) => d && updateDateTime(d)}
-                    />
-                </PopoverContent>
+
+                {!isSchedule &&
+                    <PopoverContent side="top" align="start" className="w-auto p-0" >
+                        <Calendar
+                            mode="single"
+                            selected={date}
+                            onSelect={(d) => d && updateDateTime(d)}
+                        />
+                    </PopoverContent>
+                }
             </Popover>
         </div>
     )

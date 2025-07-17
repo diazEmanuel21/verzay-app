@@ -8,7 +8,7 @@ interface UserWithService extends UserWithIntance {
     Service: Service[];
 };
 
-interface UserWithApiKeys extends UserWithService {
+export interface UserWithApiKeys extends UserWithService {
     apiKey: ApiKey | null; // ✅ Esto es lo que tienes
 };
 

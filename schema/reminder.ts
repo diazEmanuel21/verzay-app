@@ -1,5 +1,6 @@
 import { ApiKey, Instancias, Reminders, Session, User, Workflow } from "@prisma/client";
 import { z } from "zod";
+import { UserWithApiKeys } from "./schema";
 
 export const repeatTypes = [
     { value: "NONE", label: "No se repite" },
@@ -24,10 +25,7 @@ export const reminderSchema = z.object({
         invalid_type_error: "Selecciona una fecha y hora válidas.",
     }),
 
-    repeatType: z.enum(
-        repeatTypes.map(r => r.value) as [string, ...string[]],
-        { errorMap: () => ({ message: "Selecciona un tipo de repetición válido." }) }
-    ),
+    repeatType: z.enum(repeatTypes.map(r => r.value) as [string, ...string[]], { errorMap: () => ({ message: "Selecciona un tipo de repetición válido." }) }).optional(),
 
     repeatEvery: z.coerce.number()
         .min(1, { message: "Debe ser un número mayor a 0." })
@@ -68,17 +66,19 @@ export interface ReminderInterface {
     userId: string,
     serverUrl: string,
     apikey: string,
-    workflows: Workflow[],
+    workflows?: Workflow[],
     instanceNameReminder: string,
-    leads: Session[],
+    leads?: Session[],
     initialData?: formValuesReminderSchema | null;
     isSchedule?: boolean
     onSuccess?: () => void,
+    dateSchedule?: string,
+    instanceId?: string,
 };
 
 export interface MainReminderInterface {
     isCampaignPage: boolean,
-    user: User,
+    user: UserWithApiKeys,
     apiKey: ApiKey,
     reminders: Reminders[],
     leads: Session[],

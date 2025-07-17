@@ -13,10 +13,15 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DateTimePicker, SelectComboBox, SelectWorkflowBox } from "@/components/custom"
-import { createReminder, updateReminder } from "@/actions/reminders-actions"
+import { createReminder, getRemindersByUserId, updateReminder } from "@/actions/reminders-actions"
 import { useReminderDialogStore } from "@/stores"
 import { LeadCreateForm } from "../../sessions/_components"
 import { Card } from "@/components/ui/card"
+import { sumTimeSchedule } from "../helpers"
+
+import { Reminders } from '@prisma/client';
+import { SeguimientoInput } from "@/schema/seguimientos"
+import { createSeguimiento } from "@/actions/seguimientos-actions"
 
 export const ReminderForm = ({
     userId,
@@ -27,11 +32,14 @@ export const ReminderForm = ({
     instanceNameReminder,
     onSuccess,
     initialData,
-    isSchedule
+    isSchedule,
+    dateSchedule, //only for schedule view
+    instanceId
 }: ReminderInterface) => {
     const router = useRouter();
     const { selectedReminderId: reminderId, isCampaignPage } = useReminderDialogStore();
     const [createLead, setCreateLead] = useState(false);
+    const [countScheduleReminders, setCountScheduleReminders] = useState(0);
 
     const reminderForm = useForm<formValuesReminderSchema>({
         resolver: zodResolver(reminderSchema),
@@ -52,7 +60,24 @@ export const ReminderForm = ({
         }
     });
 
-    const isEdit = !!initialData;
+    const isEdit = !!initialData && !isSchedule;
+
+    useEffect(() => {
+        const fetchReminders = async () => {
+            try {
+                const reminders = await getRemindersByUserId(userId)
+
+                if (!reminders.success) return;
+                const dataReminder = reminders.data as Reminders[];
+
+                const filtered = dataReminder.filter((r) => r.isSchedule === true)
+                setCountScheduleReminders(filtered.length)
+            } catch (error) {
+                console.error("Error al obtener recordatorios:", error)
+            }
+        }
+        fetchReminders()
+    }, [userId]);
 
     const { register, handleSubmit, setValue, watch, formState: { errors } } = reminderForm;
     const initialLeadValue = initialData
@@ -63,19 +88,31 @@ export const ReminderForm = ({
 
     const mutation = useMutation({
         mutationFn: async (data: formValuesReminderSchema) => {
-            return isEdit ? updateReminder(reminderId?.toString() ?? '', data) : createReminder(data)
+            return isEdit ? updateReminder(reminderId?.toString() ?? '', data) : createReminder(data);
         },
         onSuccess: (res) => {
             reminderForm.reset()
             if (!res.success) return toast.error(res.message)
             toast.success(res.message)
             router.refresh()
+            setCountScheduleReminders(countScheduleReminders + 1)
             if (onSuccess) onSuccess()
         },
         onError: () => {
             toast.error("Error inesperado al guardar recordatorio")
         }
-    })
+    });
+
+    const mutationSeguimiento = useMutation({
+        mutationFn: async (data: SeguimientoInput) => await createSeguimiento(data),
+        onSuccess: (res) => {
+            if (!res.success) return toast.error(res.message)
+            toast.success(res.message)
+        },
+        onError: () => {
+            toast.error("Error inesperado al crear seguimiento")
+        },
+    });
 
     useEffect(() => {
         setValue("apikey", apikey)
@@ -84,7 +121,36 @@ export const ReminderForm = ({
 
     const modalTitle = isCampaignPage ? 'campaña' : 'recordatorio';
 
-    const onSubmit = (payload: formValuesReminderSchema) => mutation.mutate(payload)
+    const onSubmit = (payload: formValuesReminderSchema) => {
+        if (countScheduleReminders >= 5) return toast.info('No se pueden crear más de 5 recordatorios en el módulo de agendamiento.');
+
+        const newDate = sumTimeSchedule(dateSchedule ?? '', payload.time)
+
+        if (!newDate) return toast.error("Fecha inválida. No se pudo calcular el nuevo horario.");
+
+        const newData = {
+            ...payload,
+            time: !newDate ? payload.time : newDate,
+        };
+
+        mutation.mutate(isSchedule ? newData : payload);
+
+        /* guardar seguimientos */
+        const dataSeguimiento = {
+            idNodo: "cm9dhy5sb00154klj4t25l5k5",
+            serverurl: `https://${payload.serverUrl}`,
+            instancia: payload.instanceName,
+            apikey: instanceId,
+            remoteJid: payload.remoteJid,
+            mensaje: "",
+            tipo: "text",
+            time: payload.time,
+            name_file: undefined,
+            consecutivo: undefined,
+            media: undefined,
+        }
+        mutationSeguimiento.mutate(dataSeguimiento);
+    }
 
     const onError = (errors: typeof reminderForm.formState.errors) => {
         const messages = Object.values(errors).map(err => err?.message).filter(Boolean)
@@ -101,9 +167,13 @@ export const ReminderForm = ({
         <>
             <form onSubmit={handleSubmit(onSubmit, onError)} className="flex flex-col gap-4">
                 {/* Campos ocultos */}
-                {["userId", "remoteJid", "instanceName", "pushName", "workflowId", "apikey", "serverUrl"].map((name) => (
-                    <input key={name} type="hidden" {...register(name as keyof formValuesReminderSchema)} />
-                ))}
+                {!isSchedule &&
+                    <>
+                        {["userId", "remoteJid", "instanceName", "pushName", "workflowId", "apikey", "serverUrl"].map((name) => (
+                            <input key={name} type="hidden" {...register(name as keyof formValuesReminderSchema)} />
+                        ))}
+                    </>
+                }
 
                 <Input placeholder="Título" {...register("title")} />
                 {errors.title && <p className="text-sm text-red-500">{errors.title.message}</p>}
@@ -111,75 +181,65 @@ export const ReminderForm = ({
                 <Textarea placeholder="Descripción" {...register("description")} />
 
                 <DateTimePicker
+                    isSchedule={isSchedule ?? false}
                     value={watch("time")}
                     onChange={(val) => setValue("time", val)}
                 />
 
-                <div>
-                    {/* <label className="block mb-1 font-medium">Tipo de Repetición</label> */}
-                    <Controller
-                        control={reminderForm.control}
-                        name="repeatType"
-                        render={({ field }) => (
-                            <Select onValueChange={field.onChange} value={field.value}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccionar" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {repeatTypes.map((rt) => (
-                                        <SelectItem key={rt.value} value={rt.value}>
-                                            {rt.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        )}
-                    />
-                </div>
-
-                <Input type="number" placeholder="Cada cuántos (días/meses...)" {...register("repeatEvery")} />
-
-                {isCampaignPage
-                    ?
-                    <></>
-                    // <SelectMultipleComboBox
-                    //     leads={leads}
-                    //     onSelect={(lead) => {
-                    //         setValue("userId", lead.userId, { shouldValidate: true })
-                    //         setValue("remoteJid", lead.remoteJid, { shouldValidate: true })
-                    //         setValue("instanceName", lead.instanceId, { shouldValidate: true })
-                    //         setValue("pushName", lead.pushName, { shouldValidate: true })
-                    //     }}
-                    //     onLeadCreated={() => setCreateLead(true)}
-                    //     initialValue={initialLeadValue}
-                    // />
-                    : <SelectComboBox
-                        leads={leads}
-                        onSelect={(lead) => {
-                            setValue("userId", lead.userId, { shouldValidate: true })
-                            setValue("remoteJid", lead.remoteJid, { shouldValidate: true })
-                            setValue("instanceName", lead.instanceId, { shouldValidate: true })
-                            setValue("pushName", lead.pushName, { shouldValidate: true })
-                        }}
-                        onLeadCreated={() => setCreateLead(true)}
-                        initialValue={initialLeadValue}
-                    />
-
+                {!isSchedule &&
+                    <div>
+                        {/* <label className="block mb-1 font-medium">Tipo de Repetición</label> */}
+                        <Controller
+                            control={reminderForm.control}
+                            name="repeatType"
+                            render={({ field }) => (
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Seleccionar" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {repeatTypes.map((rt) => (
+                                            <SelectItem key={rt.value} value={rt.value}>
+                                                {rt.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        />
+                    </div>
                 }
 
                 {!isSchedule &&
+                    <>
+                        <Input type="number" placeholder="Cada cuántos (días/meses...)" {...register("repeatEvery")} />
 
-                    <SelectWorkflowBox
-                        workflows={workflows}
-                        onSelect={(workflow) => setValue("workflowId", workflow.id, { shouldValidate: true })}
-                        initialValue={initialWorkflowId}
-                    />
+                        {leads && <SelectComboBox
+                            leads={leads}
+                            onSelect={(lead) => {
+                                setValue("userId", lead.userId, { shouldValidate: true })
+                                setValue("remoteJid", lead.remoteJid, { shouldValidate: true })
+                                setValue("instanceName", lead.instanceId, { shouldValidate: true })
+                                setValue("pushName", lead.pushName, { shouldValidate: true })
+                            }}
+                            onLeadCreated={() => setCreateLead(true)}
+                            initialValue={initialLeadValue}
+                        />}
+
+                        {workflows &&
+                            <SelectWorkflowBox
+                                workflows={workflows}
+                                onSelect={(workflow) => setValue("workflowId", workflow.id, { shouldValidate: true })}
+                                initialValue={initialWorkflowId}
+                            />}
+                    </>
                 }
 
                 <Button type="submit" disabled={mutation.isPending} className="w-full">
                     {mutation.isPending ? "Guardando..." : isEdit ? `Actualizar ${modalTitle}` : `Crear ${modalTitle}`}
                 </Button>
             </form>
+
             {createLead && (
                 <Card className="p-4 border-border">
                     <LeadCreateForm
