@@ -40,7 +40,7 @@ export const FormUser = ({ onSubmit, apikeys, countries }: { onSubmit: (values: 
             company: "",
             notificationNumber: "",
             role: "user",
-            plan: "standard",
+            plan: "basico",
             apiKeyId: "",
         },
     });
