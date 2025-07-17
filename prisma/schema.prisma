@@ -26,7 +26,7 @@ model User {
   openingPhrase      String?            @default("DEPRECATED")
   apiKeyId           String?
   del_seguimiento    String?            @default("Estamos para servirle.")
-  plan               Plan               @default(pymes)
+  plan               Plan               @default(basico)
   autoReactivate     String?
   webhookUrl         String?            @default("https://n8npro.verzay.co/webhook")
   theme              ThemeApp?          @default(Default)
@@ -393,12 +393,13 @@ enum Role {
 }
 
 enum Plan {
-  empresarial  @map("empresarial")
-  business     @map("business")
-  pymes        @map("pymes")
-  standard     @map("standard")
-  intermediate @map("intermediate")
-  advanced     @map("advanced")
+  empresarial   @map("empresarial")
+  lite        
+  unico
+  basico
+  intermedio
+  avanzado
+  personalizado
 }
 
 enum TypePromptAi {
