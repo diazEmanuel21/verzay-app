@@ -9,7 +9,7 @@ export default auth((req) => {
   const currentPath = nextUrl.pathname;
   const isLoggedIn = !!req.auth;
   const userRole = req.auth?.user?.role ?? 'user';
-  const userPlan = req.auth?.user?.plan ?? 'pymes';
+  const userPlan = req.auth?.user?.plan ?? 'basico';
 
   if (process.env.NODE_ENV !== 'production') {
     console.log({ isLoggedIn, currentPath, userRole, userPlan });
