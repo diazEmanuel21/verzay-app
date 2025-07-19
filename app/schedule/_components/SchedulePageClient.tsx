@@ -21,8 +21,12 @@ import { ScheduleInterface } from "@/schema/schema";
 import Image from "next/image";
 import { toZonedTime } from "date-fns-tz";
 import { sendingMessages } from "@/actions/sending-messages-actions";
+import { normalizeTimeToSeconds, subtractSecondsFromTime } from "../helpers";
+import { useMutation } from "@tanstack/react-query";
+import { SeguimientoInput } from "@/schema/seguimientos";
+import { createSeguimiento } from "@/actions/seguimientos-actions";
 
-export const SchedulePageClient = ({ user }: ScheduleInterface) => {
+export const SchedulePageClient = ({ user, reminders }: ScheduleInterface) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [slots, setSlots] = useState<{ startTime: string; endTime: string }[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -38,6 +42,17 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
 
   const appointmentHour = 1;
   const instanceName = user.instancias[0]?.instanceName ?? "";
+
+  const mutationSeguimiento = useMutation({
+    mutationFn: async (data: SeguimientoInput) => await createSeguimiento(data),
+    onSuccess: (res) => {
+      if (!res.success) return toast.error(res.message)
+      // toast.success(res.message)
+    },
+    onError: () => {
+      toast.error("Error inesperado al crear seguimiento")
+    },
+  });
 
   useEffect(() => {
     if (user.id && selectedDate) {
@@ -55,6 +70,8 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
       toast.error("Todos los campos son obligatorios.");
       return;
     }
+
+    if (!reminders) return toast.error('missing reminders');
 
     const [startTime, endTime] = selectedSlot.split("|");
 
@@ -75,6 +92,36 @@ export const SchedulePageClient = ({ user }: ScheduleInterface) => {
       if (res.success) {
         toast.success("Cita agendada correctamente.");
         resetForm();
+
+        const secondsReminders = reminders.map(reminder => ({
+          ...reminder,
+          normalizedSeconds: isNaN(normalizeTimeToSeconds(reminder?.time ?? ''))
+            ? 0
+            : normalizeTimeToSeconds(reminder?.time ?? ''),
+        }));
+
+        secondsReminders.forEach(reminder => {
+          if (!reminder.normalizedSeconds) return; // skip si no es válido
+
+          const seguimientoTime = subtractSecondsFromTime(startTime, reminder.normalizedSeconds);
+
+          const dataSeguimiento = {
+            idNodo: reminder.id,
+            serverurl: reminder.serverUrl ? `https://${reminder.serverUrl}` : undefined,
+            instancia: reminder.instanceName ?? undefined,
+            apikey: reminder.apikey ?? undefined,
+            remoteJid: reminder.remoteJid ?? undefined,
+            mensaje: reminder.description ?? "",
+            tipo: "text",
+            time: seguimientoTime,
+            name_file: undefined,
+            consecutivo: undefined,
+            media: undefined,
+          };
+
+          mutationSeguimiento.mutate(dataSeguimiento);
+        });
+
       } else {
         toast.error(res.message);
       }

@@ -31,17 +31,17 @@ export const ReminderList = ({ reminder, workflow }: ReminderListInterface) => {
                     {reminder.time}
                 </div>
 
-                <div className="flex items-center gap-2 text-sm">
+                {/* <div className="flex items-center gap-2 text-sm">
                     <ClockIcon className="h-4 w-4 text-muted-foreground" />
-                    Enviar a <strong className="ml-1">+{reminder.remoteJid?.split("@")[0]}</strong>
-                </div>
+                    {/* Enviar a <strong className="ml-1">+{reminder.remoteJid?.split("@")[0]}</strong> 
+                </div> */}
 
-                <div className="flex items-center justify-between">
+                {/* <div className="flex items-center justify-between">
                     <div className="text-xs text-muted-foreground">
                         Flujo | {workflow?.name ?? 'No asignado'}
                     </div>
                     <span className="text-xs text-muted-foreground">{repeatLabel}</span>
-                </div>
+                </div> */}
             </CardContent>
         </Card>
     )

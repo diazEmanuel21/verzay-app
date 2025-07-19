@@ -61,7 +61,7 @@ export const ReminderForm = ({
         }
     });
 
-    const isEdit = !!initialData && !isSchedule;
+    const isEdit = !!initialData;
 
     useEffect(() => {
         const fetchReminders = async () => {
