@@ -23,7 +23,7 @@ export const reminderSchema = z.object({
     time: z.string({
         required_error: "La fecha y hora son obligatorias.",
         invalid_type_error: "Selecciona una fecha y hora válidas.",
-    }),
+    }).min(1),
 
     repeatType: z.enum(repeatTypes.map(r => r.value) as [string, ...string[]], { errorMap: () => ({ message: "Selecciona un tipo de repetición válido." }) }).optional(),
 
@@ -35,27 +35,17 @@ export const reminderSchema = z.object({
         required_error: "El ID de usuario es obligatorio.",
     }).min(1, "El ID de usuario es obligatorio."),
 
-    remoteJid: z.string({
-        required_error: "El número del lead es obligatorio.",
-    }).min(1, "El número del lead es obligatorio."),
+    remoteJid: z.string().optional(),
 
-    instanceName: z.string({
-        required_error: "El nombre de la instancia es obligatorio.",
-    }).min(1, "El nombre de la instancia es obligatorio."),
+    instanceName: z.string().optional(),
 
-    pushName: z.string({
-        required_error: "El nombre del lead es obligatorio.",
-    }).min(1, "El nombre del lead es obligatorio."),
+    pushName: z.string().optional(),
 
     workflowId: z.string().optional(),
 
-    serverUrl: z.string({
-        required_error: "serverUrl es obligatorio.",
-    }).min(1, "serverUrl es obligatorio."),
+    serverUrl: z.string().optional(),
 
-    apikey: z.string({
-        required_error: "apikey es obligatorio.",
-    }).min(1, "apikey es obligatorio."),
+    apikey: z.string().optional(),
 
     isSchedule: z.boolean().optional()
 })

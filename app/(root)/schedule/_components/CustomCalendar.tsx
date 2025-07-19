@@ -140,12 +140,12 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                     <AlertDialogHeader className="flex items-end">
                         <Button variant={"ghost"} onClick={() => setOpenDialog(false)}><XCircleIcon /></Button>
                     </AlertDialogHeader>
-                    <Tabs defaultValue="reminder">
+                    <Tabs defaultValue="status">
                         <TabsList>
-                            <TabsTrigger value="reminder">Recordatorios</TabsTrigger>
+                            {/* <TabsTrigger value="reminder">Recordatorios</TabsTrigger> */}
                             <TabsTrigger value="status">Estado</TabsTrigger>
                         </TabsList>
-                        <TabsContent value="reminder">
+                        {/* <TabsContent value="reminder">
                             <Card className="border-border pt-3">
                                 <CardContent>
                                     <ReminderForm
@@ -160,11 +160,11 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                                     />
                                 </CardContent>
                             </Card>
-                        </TabsContent>
+                        </TabsContent> */}
                         <TabsContent value="status">
                             <Card className="border-border">
                                 <CardHeader>
-                                    <CardTitle>Estado</CardTitle>
+                                    {/* <CardTitle>Estado</CardTitle> */}
                                     <CardDescription>
                                         Estás por modificar el estado de la cita:
                                         <br />

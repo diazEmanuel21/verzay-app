@@ -22,6 +22,7 @@ import { sumTimeSchedule } from "../helpers"
 import { Reminders } from '@prisma/client';
 import { SeguimientoInput } from "@/schema/seguimientos"
 import { createSeguimiento } from "@/actions/seguimientos-actions"
+import { TimeInput } from "@/components/shared/TimeInput"
 
 export const ReminderForm = ({
     userId,
@@ -49,7 +50,7 @@ export const ReminderForm = ({
             time: "",
             repeatType: "NONE",
             repeatEvery: undefined,
-            userId: "",
+            userId: userId,
             remoteJid: "",
             instanceName: "",
             pushName: "",
@@ -80,8 +81,8 @@ export const ReminderForm = ({
     }, [userId]);
 
     const { register, handleSubmit, setValue, watch, formState: { errors } } = reminderForm;
-    const initialLeadValue = initialData
-        ? `${initialData.pushName || 'Sin nombre'} ${initialData.remoteJid.split('@')[0]}`
+    const initialLeadValue = initialData && initialData?.remoteJid
+        ? `${initialData.pushName || 'Sin nombre'} ${initialData?.remoteJid.split('@')[0]}`
         : undefined;
 
     const initialWorkflowId = initialData?.workflowId;
@@ -124,32 +125,33 @@ export const ReminderForm = ({
     const onSubmit = (payload: formValuesReminderSchema) => {
         if (countScheduleReminders >= 5) return toast.info('No se pueden crear más de 5 recordatorios en el módulo de agendamiento.');
 
-        const newDate = sumTimeSchedule(dateSchedule ?? '', payload.time)
+        // const newDate = sumTimeSchedule(dateSchedule ?? '', payload.time)
 
-        if (!newDate) return toast.error("Fecha inválida. No se pudo calcular el nuevo horario.");
+        // if (!newDate) return toast.error("Fecha inválida. No se pudo calcular el nuevo horario.");
 
-        const newData = {
-            ...payload,
-            time: !newDate ? payload.time : newDate,
-        };
+        // const newData = {
+        //     ...payload,
+        //     time: !newDate ? payload.time : newDate,
+        // };
 
-        mutation.mutate(isSchedule ? newData : payload);
+        mutation.mutate(payload);
 
         /* guardar seguimientos */
-        const dataSeguimiento = {
-            idNodo: "cm9dhy5sb00154klj4t25l5k5",
-            serverurl: `https://${payload.serverUrl}`,
-            instancia: payload.instanceName,
-            apikey: instanceId,
-            remoteJid: payload.remoteJid,
-            mensaje: "",
-            tipo: "text",
-            time: payload.time,
-            name_file: undefined,
-            consecutivo: undefined,
-            media: undefined,
-        }
-        mutationSeguimiento.mutate(dataSeguimiento);
+        //TODO: almacenamiento de seguimientos 
+        // const dataSeguimiento = {
+        //     idNodo: "cm9dhy5sb00154klj4t25l5k5",
+        //     serverurl: `https://${payload.serverUrl}`,
+        //     instancia: payload.instanceName,
+        //     apikey: instanceId,
+        //     remoteJid: payload.remoteJid,
+        //     mensaje: "",
+        //     tipo: "text",
+        //     time: payload.time,
+        //     name_file: undefined,
+        //     consecutivo: undefined,
+        //     media: undefined,
+        // }
+        // mutationSeguimiento.mutate(dataSeguimiento);
     }
 
     const onError = (errors: typeof reminderForm.formState.errors) => {
@@ -180,11 +182,21 @@ export const ReminderForm = ({
 
                 <Textarea placeholder="Descripción" {...register("description")} />
 
-                <DateTimePicker
-                    isSchedule={isSchedule ?? false}
-                    value={watch("time")}
+                {!isSchedule &&
+                    <DateTimePicker
+                        isSchedule={isSchedule ?? false}
+                        value={watch("time")}
+                        onChange={(val) => setValue("time", val)}
+                    />
+                }
+
+                <TimeInput
+                    className="text-xs text-muted-foreground"
                     onChange={(val) => setValue("time", val)}
+                    currentValue={'minutes-0'}
                 />
+
+                {errors.time && <p className="text-sm text-red-500">{errors.time.message}</p>}
 
                 {!isSchedule &&
                     <div>

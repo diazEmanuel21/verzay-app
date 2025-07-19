@@ -51,12 +51,10 @@ export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, 
             <Header
               title={isCampaignPage ? 'Campañas' : 'Recordatorios'}
             />
-            {!isSchedule &&
-              <Button onClick={handleCreateReminder}>
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Crear
-              </Button>
-            }
+            <Button onClick={handleCreateReminder}>
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Crear
+            </Button>
           </div>
 
           <div className="flex flex-row gap-2 items-center justify-start">
