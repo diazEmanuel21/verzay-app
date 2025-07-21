@@ -150,7 +150,7 @@ export const ReminderForm = ({
                 <TimeInput
                     className="text-xs text-muted-foreground"
                     onChange={(val) => setValue("time", val)}
-                    currentValue={'minutes-0'}
+                    currentValue={initialData?.time ?? 'minutes-0'}
                 />
 
                 {errors.time && <p className="text-sm text-red-500">{errors.time.message}</p>}
