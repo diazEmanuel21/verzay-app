@@ -41,7 +41,6 @@ import {
     SelectContent,
     SelectItem,
 } from "@/components/ui/select";
-import { ReminderForm } from "../../reminders/_components";
 import { ScheduleInterface } from "@/schema/schema";
 import { useReminderDialogStore } from "@/stores";
 import { XCircleIcon } from 'lucide-react';
@@ -145,22 +144,6 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                             {/* <TabsTrigger value="reminder">Recordatorios</TabsTrigger> */}
                             <TabsTrigger value="status">Estado</TabsTrigger>
                         </TabsList>
-                        {/* <TabsContent value="reminder">
-                            <Card className="border-border pt-3">
-                                <CardContent>
-                                    <ReminderForm
-                                        isSchedule={true}
-                                        apikey={user?.apiKeyId ?? ""}
-                                        instanceNameReminder={user.instancias[0].instanceName}
-                                        serverUrl={user.apiKey?.url ?? ''}
-                                        userId={user.id}
-                                        initialData={transformedReminder}
-                                        dateSchedule={currentAppointment?.startTime.toString()}
-                                        instanceId={user.instancias[0].instanceId}
-                                    />
-                                </CardContent>
-                            </Card>
-                        </TabsContent> */}
                         <TabsContent value="status">
                             <Card className="border-border">
                                 <CardHeader>

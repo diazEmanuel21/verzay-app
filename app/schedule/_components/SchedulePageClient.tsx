@@ -100,17 +100,20 @@ export const SchedulePageClient = ({ user, reminders }: ScheduleInterface) => {
             : normalizeTimeToSeconds(reminder?.time ?? ''),
         }));
 
+
         secondsReminders.forEach(reminder => {
           if (!reminder.normalizedSeconds) return; // skip si no es válido
 
           const seguimientoTime = subtractSecondsFromTime(startTime, reminder.normalizedSeconds);
+          const remoteJid = `${areaCode}${phone}@s.whatsapp.net`; //TODO: se debe poner el pais por ej +57 debe de ir sin el signo de '+'
+
 
           const dataSeguimiento = {
-            idNodo: reminder.id,
+            idNodo: '',
             serverurl: reminder.serverUrl ? `https://${reminder.serverUrl}` : undefined,
             instancia: reminder.instanceName ?? undefined,
             apikey: reminder.apikey ?? undefined,
-            remoteJid: reminder.remoteJid ?? undefined,
+            remoteJid: remoteJid ?? undefined,
             mensaje: reminder.description ?? "",
             tipo: "text",
             time: seguimientoTime,
@@ -118,6 +121,7 @@ export const SchedulePageClient = ({ user, reminders }: ScheduleInterface) => {
             consecutivo: undefined,
             media: undefined,
           };
+
 
           mutationSeguimiento.mutate(dataSeguimiento);
         });

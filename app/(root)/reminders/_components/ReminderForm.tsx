@@ -17,11 +17,8 @@ import { createReminder, getRemindersByUserId, updateReminder } from "@/actions/
 import { useReminderDialogStore } from "@/stores"
 import { LeadCreateForm } from "../../sessions/_components"
 import { Card } from "@/components/ui/card"
-import { sumTimeSchedule } from "../helpers"
 
 import { Reminders } from '@prisma/client';
-import { SeguimientoInput } from "@/schema/seguimientos"
-import { createSeguimiento } from "@/actions/seguimientos-actions"
 import { TimeInput } from "@/components/shared/TimeInput"
 
 export const ReminderForm = ({
@@ -34,8 +31,6 @@ export const ReminderForm = ({
     onSuccess,
     initialData,
     isSchedule,
-    dateSchedule, //only for schedule view
-    instanceId
 }: ReminderInterface) => {
     const router = useRouter();
     const { selectedReminderId: reminderId, isCampaignPage } = useReminderDialogStore();
@@ -104,20 +99,10 @@ export const ReminderForm = ({
         }
     });
 
-    const mutationSeguimiento = useMutation({
-        mutationFn: async (data: SeguimientoInput) => await createSeguimiento(data),
-        onSuccess: (res) => {
-            if (!res.success) return toast.error(res.message)
-            toast.success(res.message)
-        },
-        onError: () => {
-            toast.error("Error inesperado al crear seguimiento")
-        },
-    });
-
     useEffect(() => {
         setValue("apikey", apikey)
         setValue("serverUrl", serverUrl)
+        setValue("instanceName", instanceNameReminder)
     }, [apikey, serverUrl]);
 
     const modalTitle = isCampaignPage ? 'campaña' : 'recordatorio';
@@ -125,33 +110,7 @@ export const ReminderForm = ({
     const onSubmit = (payload: formValuesReminderSchema) => {
         if (countScheduleReminders >= 5) return toast.info('No se pueden crear más de 5 recordatorios en el módulo de agendamiento.');
 
-        // const newDate = sumTimeSchedule(dateSchedule ?? '', payload.time)
-
-        // if (!newDate) return toast.error("Fecha inválida. No se pudo calcular el nuevo horario.");
-
-        // const newData = {
-        //     ...payload,
-        //     time: !newDate ? payload.time : newDate,
-        // };
-
         mutation.mutate(payload);
-
-        /* guardar seguimientos */
-        //TODO: almacenamiento de seguimientos 
-        // const dataSeguimiento = {
-        //     idNodo: "cm9dhy5sb00154klj4t25l5k5",
-        //     serverurl: `https://${payload.serverUrl}`,
-        //     instancia: payload.instanceName,
-        //     apikey: instanceId,
-        //     remoteJid: payload.remoteJid,
-        //     mensaje: "",
-        //     tipo: "text",
-        //     time: payload.time,
-        //     name_file: undefined,
-        //     consecutivo: undefined,
-        //     media: undefined,
-        // }
-        // mutationSeguimiento.mutate(dataSeguimiento);
     }
 
     const onError = (errors: typeof reminderForm.formState.errors) => {
@@ -169,13 +128,11 @@ export const ReminderForm = ({
         <>
             <form onSubmit={handleSubmit(onSubmit, onError)} className="flex flex-col gap-4">
                 {/* Campos ocultos */}
-                {!isSchedule &&
-                    <>
-                        {["userId", "remoteJid", "instanceName", "pushName", "workflowId", "apikey", "serverUrl"].map((name) => (
-                            <input key={name} type="hidden" {...register(name as keyof formValuesReminderSchema)} />
-                        ))}
-                    </>
-                }
+                <>
+                    {["userId", "remoteJid", "instanceName", "pushName", "workflowId", "apikey", "serverUrl"].map((name) => (
+                        <input key={name} type="hidden" {...register(name as keyof formValuesReminderSchema)} />
+                    ))}
+                </>
 
                 <Input placeholder="Título" {...register("title")} />
                 {errors.title && <p className="text-sm text-red-500">{errors.title.message}</p>}
