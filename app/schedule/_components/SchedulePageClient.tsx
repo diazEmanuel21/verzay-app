@@ -32,7 +32,6 @@ export const SchedulePageClient = ({ user, reminders }: ScheduleInterface) => {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
-
   const [name, setName] = useState("");
   const [areaCode, setAreaCode] = useState("");
   const [phone, setPhone] = useState("");
@@ -103,11 +102,10 @@ export const SchedulePageClient = ({ user, reminders }: ScheduleInterface) => {
 
         secondsReminders.forEach(reminder => {
           if (!reminder.normalizedSeconds) return; // skip si no es válido
-
-          const seguimientoTime = subtractSecondsFromTime(startTime, reminder.normalizedSeconds);
+          const startLocal = toZonedTime(new Date(startTime), timezone);
+          const seguimientoTime = subtractSecondsFromTime(startLocal, reminder.normalizedSeconds); // esto retorna '21/07/2025 12:55'
           const remoteJid = `${areaCode}${phone}@s.whatsapp.net`; //TODO: se debe poner el pais por ej +57 debe de ir sin el signo de '+'
-
-
+          
           const dataSeguimiento = {
             idNodo: '',
             serverurl: reminder.serverUrl ? `https://${reminder.serverUrl}` : undefined,
@@ -238,6 +236,7 @@ export const SchedulePageClient = ({ user, reminders }: ScheduleInterface) => {
                 .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
                 .map((slot) => {
                   const startLocal = toZonedTime(new Date(slot.startTime), timezone);
+
                   return (
                     <Button
                       variant={`${selectedSlot?.startsWith(slot.startTime) ? "default" : "outline"}`}
