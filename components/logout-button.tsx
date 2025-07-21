@@ -38,15 +38,15 @@ const LogoutButton = ({ user }: LogoutButtonProps) => {
 
   const PLAN_COLORS: Record<Plan, string> = {
     empresarial: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300',
-    advanced: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',              // Básico reducido
-    business: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300',             // Singular / especial
-    intermediate: 'bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-300',            // Igual que "standard"
-    pymes: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',// Similar a "intermediate"
-    standard: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',  // Similar a "advanced"
-    // personalizado: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300',
+    lite: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',              // Básico reducido
+    unico: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300',             // Singular / especial
+    basico: 'bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-300',            // Igual que "standard"
+    intermedio: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',// Similar a "intermediate"
+    avanzado: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',  // Similar a "advanced"
+    personalizado: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300',
   };
 
-  const customStyles = PLAN_COLORS[user?.plan ?? 'standard'];
+  const customStyles = PLAN_COLORS[user?.plan ?? 'basico'];
   
   return (
     <SidebarMenu>
