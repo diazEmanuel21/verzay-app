@@ -12,7 +12,7 @@ import {
     updateAbrirPhrase,
     updateClientData
 } from '@/actions/userClientDataActions';
-import { CreateDialog, DeleteDialog, ToolsDialog, EditDialog } from './';
+import { CreateDialog, DeleteDialog, ToolsDialog, EditDialog, ClientStatusPanel } from './';
 import { ApiKey } from '@prisma/client';
 import { UserFormValues } from '@/schema/user';
 import { Country } from '@/components/custom/CountryCodeSelect';
@@ -150,6 +150,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
 
     return (
         <>
+
             {/* Gestión de clients */}
             <DataTable
                 columns={columns}
@@ -157,6 +158,8 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
                 currentUserRol={currentUserRol}
                 openCreateDialogUser={openCreateDialogUser}
             />
+
+
 
             {/* Dialog create */}
             {availableApikeys && (

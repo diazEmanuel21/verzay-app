@@ -28,9 +28,9 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
     const [connectionStatus, setConnectionStatus] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-    const fetchQRCode = async (instanceName: string, apiKey: string) => {
+    const fetchQRCode = async (instanceName: string) => {
         setLoading(true);
-        const response = await generateQRCode({ instanceName, apiKey, userId });
+        const response = await generateQRCode({ instanceName, userId });
         if (response.success) {
             setQrCode(response.qr?.code || null);
             setConnectionStatus(response.connectionState?.instance.state || null);
@@ -47,10 +47,10 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
                 if (Array.isArray(instances) && instances.length > 0) {
                     const { instanceName, instanceId } = instances[0];
                     setInstanceData({ instanceName, instanceId });
-                    fetchQRCode(instanceName, instanceId);
+                    fetchQRCode(instanceName);
 
                     const intervalId = setInterval(() => {
-                        fetchQRCode(instanceName, instanceId);
+                        fetchQRCode(instanceName);
                     }, 10000);
 
                     return () => clearInterval(intervalId);
@@ -82,8 +82,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
             ) : (
                 <Button
                     className={`w-full transition-all duration-300 ${!connectionStatus
-                            ? "shadow-[0_0_12px_#22c55e] hover:shadow-[0_0_18px_#22c55e] ring-1 ring-green-400"
-                            : ""
+                        ? "shadow-[0_0_12px_#22c55e] hover:shadow-[0_0_18px_#22c55e] ring-1 ring-green-400"
+                        : ""
                         }`}
                     onClick={handleOpenModal}
                     variant={connectionStatus ? "default" : "secondary"}

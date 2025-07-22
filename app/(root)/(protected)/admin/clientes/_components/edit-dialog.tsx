@@ -74,7 +74,7 @@ export const EditDialog = ({
 
   /* Ocultar/mostrar fields para reseller */
   if (currentUserRol === 'reseller') {
-    const idsToRemove = ["apiKeyId"]
+    const idsToRemove = ["apiKeyId", "webhookUrl", "apiUrl"]
     fields = fields.filter(field => !idsToRemove.includes(field.id))
 
     const idsReadOnly = ["name",

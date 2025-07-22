@@ -6,6 +6,7 @@ export interface UserWithPausar extends User {
 export interface ClientInterface extends User {
     pausar: Pausar[];
     isEvoEnabled: boolean;
+    qrStatus: boolean;
     reseller: User | null;
     credits: IaCredit | null;
 };

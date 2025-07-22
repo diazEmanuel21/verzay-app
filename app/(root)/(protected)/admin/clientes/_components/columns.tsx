@@ -31,15 +31,42 @@ export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogT
   },
   {
     accessorKey: 'name',
-    header: 'Nombre',
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        className="text-sm"
+      >
+        Nombre
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
   },
   {
     accessorKey: 'email',
-    header: 'Correo',
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        className="text-sm"
+      >
+        Correo
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
   },
   {
     accessorKey: 'company',
-    header: 'Empresa',
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        className="text-sm"
+      >
+        Empresa
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
   },
   {
     accessorKey: 'reseller',
@@ -71,7 +98,7 @@ export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogT
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    cell: ({ row }) => <StatusCell isEvoEnabled={row.original.isEvoEnabled} />,
+    cell: ({ row }) => <StatusCell isEvoEnabled={row.original.isEvoEnabled} qrStatus={row.original.qrStatus}/>,
   },
   // {
   //   accessorKey: 'messagePause',
@@ -97,7 +124,7 @@ export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogT
     cell: ({ row }) => {
       const url = row.original.webhookUrl;
 
-      if (url?.startsWith("https://n8npro.verzay.co/webhook/")) {
+      if (/https:\/\/n8n-?pro\.verzay\.co\/webhook\//.test(url ?? "")) {
         return <Badge className="bg-green-600 text-white">Avanzado</Badge>;
       }
 

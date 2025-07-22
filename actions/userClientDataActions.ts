@@ -3,7 +3,7 @@
 import { db } from '@/lib/db';
 import { UserWithPausar } from '@/lib/types';
 import { IaCredit, Pausar, User } from '@prisma/client';
-import { getDataApi } from "@/actions/api-action";
+import { generateQRCode, getDataApi } from "@/actions/api-action";
 import { ClientInterface } from "@/lib/types";
 import { revalidatePath } from 'next/cache';
 import { getIaCreditByUser } from './actions-ia-credits';
@@ -47,6 +47,7 @@ export async function getEnrichedClients(filter?: FilterOptions): Promise<Client
 
     const enrichedUsers: ClientInterface[] = await Promise.all(
       users.map(async (user): Promise<ClientInterface> => {
+        let qrStatus = false;
         let isEvoEnabled = false;
         let reseller: User | null = null;
         let credits: IaCredit | null = null;
@@ -57,19 +58,32 @@ export async function getEnrichedClients(filter?: FilterOptions): Promise<Client
             const resDataApi = dataApi?.data;
 
             if (resDataApi?.url && resDataApi?.instanceName && resDataApi?.key) {
-              const response = await fetch(`https://${resDataApi.url}/webhook/find/${resDataApi.instanceName}`, {
+              const responseInstanceStatus = await fetch(`https://${resDataApi.url}/webhook/find/${resDataApi.instanceName}`, {
                 method: "GET",
                 headers: {
                   apikey: resDataApi.key,
                 },
               });
 
-              const result = await response.json();
+
+              /* instance status */
+              const result = await responseInstanceStatus.json();
               isEvoEnabled = result?.enabled ?? false;
+
+              if (!isEvoEnabled) {
+                const responseQrStatus = await generateQRCode({ instanceName: resDataApi?.instanceName, userId: user.id });
+
+                /* qr status */
+                const resQrStatus = !!responseQrStatus.qr; //si genera QR significa que el usuario se desconectó de whatsapp
+                qrStatus = resQrStatus;
+              }
             }
+
+
           } catch (error) {
             console.warn(`No se pudo obtener isEvoEnabled para el usuario ${user.id}`, error);
           }
+
         }
 
         // Buscar reseller asociado
@@ -95,6 +109,7 @@ export async function getEnrichedClients(filter?: FilterOptions): Promise<Client
           ...user,
           pausar: user.pausar as Pausar[],
           isEvoEnabled,
+          qrStatus,
           reseller,
           credits
         };
@@ -115,148 +130,6 @@ export async function getEnrichedClients(filter?: FilterOptions): Promise<Client
   }
 }
 
-// ==============================
-// GET CLIENT DATA
-// ==============================
-// export async function getAllClients(): Promise<ClientResponse<ClientInterface[]>> {
-//   try {
-//     const users = await db.user.findMany({
-//       include: {
-//         pausar: true,
-//       },
-//       orderBy: { createdAt: 'desc' },
-//     });
-
-//     if (!users || users.length === 0) {
-//       return {
-//         success: false,
-//         message: 'No se encontraron registros.',
-//       };
-//     }
-
-//     const clientData: ClientInterface[] = await Promise.all(
-//       users.map(async (user): Promise<ClientInterface> => {
-//         let isEvoEnabled = false;
-
-//         if (user.apiKeyId) {
-//           try {
-//             const dataApi = await getDataApi(user.id, user.apiKeyId);
-//             const resDataApi = dataApi?.data;
-
-//             if (resDataApi?.url && resDataApi?.instanceName && resDataApi?.key) {
-//               const response = await fetch(`https://${resDataApi.url}/webhook/find/${resDataApi.instanceName}`, {
-//                 method: "GET",
-//                 headers: {
-//                   apikey: resDataApi.key,
-//                 },
-//               });
-
-//               const result = await response.json();
-//               isEvoEnabled = result?.enabled ?? false;
-//             }
-//           } catch (error) {
-//             console.warn(`No se pudo obtener isEvoEnabled para el usuario ${user.id}`, error);
-//           }
-//         }
-
-//         return {
-//           ...user,
-//           pausar: user.pausar as Pausar[],
-//           isEvoEnabled,
-//         };
-//       })
-//     );
-
-//     return {
-//       success: true,
-//       message: 'User and Pausar data fetched successfully.',
-//       data: clientData,
-//     };
-
-//   } catch (error) {
-//     console.error('Error fetching client data:', error);
-//     return {
-//       success: false,
-//       message: 'Error fetching client data.',
-//     };
-//   }
-// }
-// ==============================
-// GET CLIENT DATA BY ROL
-// ==============================
-// export async function getClientsByResellerId(resellerId: string): Promise<ClientResponse<ClientInterface[]>> {
-//   try {
-//     // Buscar usuarios asignados al reseller
-//     const assignments = await db.reseller.findMany({
-//       where: { resellerid: resellerId },
-//       select: { userId: true },
-//     });
-
-//     const userIds = assignments.map(a => a.userId).filter(Boolean) as string[];
-
-//     if (!userIds.length) {
-//       return {
-//         success: true,
-//         message: "No hay usuarios asignados.",
-//         data: [],
-//       };
-//     }
-
-//     // Buscar usuarios con relación a Pausar
-//     const users = await db.user.findMany({
-//       where: { id: { in: userIds } },
-//       include: {
-//         pausar: true,
-//       },
-//       orderBy: { createdAt: "desc" },
-//     });
-
-//     const enrichedUsers: ClientInterface[] = await Promise.all(
-//       users.map(async (user): Promise<ClientInterface> => {
-//         let isEvoEnabled = false;
-
-//         if (user.apiKeyId) {
-//           try {
-//             const dataApi = await getDataApi(user.id, user.apiKeyId);
-//             const resDataApi = dataApi?.data;
-
-//             if (resDataApi?.url && resDataApi?.instanceName && resDataApi?.key) {
-//               const response = await fetch(`https://${resDataApi.url}/webhook/find/${resDataApi.instanceName}`, {
-//                 method: "GET",
-//                 headers: {
-//                   apikey: resDataApi.key,
-//                 },
-//               });
-
-//               const result = await response.json();
-//               isEvoEnabled = result?.enabled ?? false;
-//             }
-//           } catch (error) {
-//             console.warn(`No se pudo obtener isEvoEnabled para el usuario ${user.id}`, error);
-//           }
-//         }
-
-//         return {
-//           ...user,
-//           pausar: user.pausar as Pausar[],
-//           isEvoEnabled,
-//         };
-//       })
-//     );
-
-//     return {
-//       success: true,
-//       message: "Usuarios del reseller cargados correctamente.",
-//       data: enrichedUsers,
-//     };
-//   } catch (error) {
-//     console.error("Error al obtener usuarios del reseller:", error);
-//     return {
-//       success: false,
-//       message: "Error al obtener usuarios del reseller.",
-//     };
-//   }
-// }
 // ==============================
 // GET CLIENT DATA BY USER ID
 // ==============================

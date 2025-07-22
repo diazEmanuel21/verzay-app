@@ -1,27 +1,40 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2Icon, XCircleIcon } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { CheckCircle2Icon, XCircleIcon, AlertCircleIcon, AlertTriangleIcon, PowerOffIcon } from "lucide-react"
 
-export const StatusCell = ({ isEvoEnabled }: { isEvoEnabled: boolean }) => {
+interface StatusCellProps {
+  isEvoEnabled: boolean
+  qrStatus: boolean
+}
+
+export const StatusCell = ({ isEvoEnabled, qrStatus }: StatusCellProps) => {
+  let statusLabel = "Apagado"
+  let statusIcon = <AlertTriangleIcon className="text-yellow-500 size-4 text-muted-foreground" />
+  let tooltipText = "El robot está apagado o el QR está desconectado"
+
+  if (!isEvoEnabled && qrStatus) {
+    statusLabel = "Desconectado"
+    statusIcon = <PowerOffIcon className="text-red-600 size-4 text-muted-foreground" />
+    tooltipText = "El cliente no ha escaneado el código QR"
+  } else if (isEvoEnabled && !qrStatus) {
+    statusLabel = "Encendido"
+    statusIcon = <CheckCircle2Icon className="text-green-600 dark:text-green-500 size-4 text-muted-foreground" />
+    tooltipText = "Robot activo y QR escaneado correctamente"
+  }
+
   return (
-    <Badge
-      variant="outline"
-      className="flex gap-1 px-1.5 [&_svg]:size-3"
-    >
-      {isEvoEnabled ?
-        <>
-          <CheckCircle2Icon className="text-green-600 dark:text-green-500" />
-          Activo
-        </> :
-        <>
-          <XCircleIcon className="text-red-600" />
-          Inactivo
-        </>
-        // <>
-        //   <Loader2Icon className="animate-spin text-yellow-500" />
-        //   Cargando...
-      }
-    </Badge>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant="outline" className="border-border gap-1 text-sm px-2 py-1">
+            {statusIcon}
+            {statusLabel}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>{tooltipText}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }

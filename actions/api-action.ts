@@ -7,7 +7,6 @@ import { revalidatePath } from "next/cache";
 interface GenerateQrInterface {
   instanceName: string
   userId: string
-  apiKey?: string
 }
 interface ClientResponse<T = undefined> {
   success: boolean
@@ -42,7 +41,7 @@ interface QRCodeResponse {
 }
 
 //Server-Action Para generar el QR
-export async function generateQRCode({ instanceName, userId, apiKey }: GenerateQrInterface): Promise<QRCodeResponse> {
+export async function generateQRCode({ instanceName, userId }: GenerateQrInterface): Promise<QRCodeResponse> {
   try {
     // 🔥 Buscar el usuario y su ApiKey asignada
     const user = await db.user.findUnique({
@@ -50,7 +49,11 @@ export async function generateQRCode({ instanceName, userId, apiKey }: GenerateQ
       include: { apiKey: true },
     });
 
-    if (!user || !user.apiKey) {
+
+    if (!user) {
+      throw new Error("El userId no existe.");
+    }
+    if (!user.apiKey) {
       throw new Error("El usuario no tiene una ApiKey asignada.");
     }
 
@@ -467,7 +470,7 @@ export async function getDataApi(userId: string, apiKeyId: string) {
     const apiKey = await db.apiKey.findFirst({
       where: {
         id: apiKeyId
-      },  
+      },
       select: {
         id: true,
         url: true,

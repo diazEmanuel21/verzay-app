@@ -14,7 +14,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { ColumnFilterInput } from './'
+import { ClientStatusPanel, ColumnFilterInput } from './'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { ChevronDown, Ellipsis, PlusCircle } from 'lucide-react'
 import { Card } from '@/components/ui/card'
+import { ClientInterface } from '@/lib/types'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -78,13 +79,18 @@ export function DataTable<TData, TValue>({ columns, data, currentUserRol, openCr
         <div className="flex justify-between items-center gap-2">
           <ColumnFilterInput table={table} />
 
-          <div className="flex flex-1 flex-row justify-end gap-2">
+
+          <div className="flex flex-col sm:flex-row flex-1 justify-end gap-2">
             {/* button-create-client */}
             {currentUserRol === 'admin' &&
               <Button onClick={openCreateDialogUser} className="m-0">
                 Nuevo
               </Button>
             }
+
+            <div className="flex flex-1 items-center justify-center">
+              <ClientStatusPanel users={data as ClientInterface[]} />
+            </div>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -114,6 +120,7 @@ export function DataTable<TData, TValue>({ columns, data, currentUserRol, openCr
           </div>
         </div>
       </div>
+
 
       {/* Scroll interno para el contenido */}
       <div className="flex-1 overflow-y-auto">
