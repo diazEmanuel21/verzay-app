@@ -78,9 +78,7 @@ export function DataTable<TData, TValue>({ columns, data, currentUserRol, openCr
       <div className="sticky top-0 z-1">
         <div className="flex justify-between items-center gap-2">
           <ColumnFilterInput table={table} />
-
-
-          <div className="flex flex-col sm:flex-row flex-1 justify-end gap-2">
+          <div className="flex flex-col sm:flex-row justify-end gap-2 flex-1">
             {/* button-create-client */}
             {currentUserRol === 'admin' &&
               <Button onClick={openCreateDialogUser} className="m-0">
@@ -95,7 +93,8 @@ export function DataTable<TData, TValue>({ columns, data, currentUserRol, openCr
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="ml-auto">
-                  <Ellipsis className="h-4 w-4" />
+                  Columnas
+                  {/* <Ellipsis className="h-4 w-4" /> */}
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
