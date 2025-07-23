@@ -184,11 +184,11 @@ export const columns = ({ onDeleteSuccess, mutateSessions }: { onDeleteSuccess: 
     header: "Flujos",
     cell: ({ row }) => <div>{row.getValue("seguimientos") || "-"}</div>,
   },
-  {
-    accessorKey: "flujos",
-    header: "Seguimientos",
-    cell: ({ row }) => <div>{row.getValue("flujos") || "-"}</div>,
-  },
+  // {
+  //   accessorKey: "flujos",
+  //   header: "Seguimientos",
+  //   cell: ({ row }) => <div>{row.getValue("flujos") || "-"}</div>,
+  // },
   {
     accessorKey: "acciones",
     header: "Acciones",

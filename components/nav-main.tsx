@@ -29,6 +29,7 @@ import { iconMap } from '@/schema/module';
 import { useModuleStore } from '@/stores/modules/useModuleStore';
 
 export function NavMain({ user }: { user: User }) {
+    debugger;
     const { modules } = useModuleStore();
     const pathname = usePathname();
     const router = useRouter();
@@ -76,10 +77,12 @@ export function NavMain({ user }: { user: User }) {
                         isActive && 'invert brightness-200'
                     );
 
-                    const targetRoute = user.role === 'reseller' && route === '/admin' ? '/admin/clientes' : route;
+                    const validateRouteAndRole = user.role === 'reseller' && route === '/admin';
+                    const targetRoute = validateRouteAndRole ? '/admin/clientes' : route;
 
+                    debugger;
                     // Si NO hay subitems, renderizar directamente como link
-                    if (!items || items.length === 0) {
+                    if (!items || items.length === 0 || validateRouteAndRole) {
                         return (
                             <SidebarMenuItem key={route}>
                                 <SidebarMenuButton className={linkClasses} tooltip={label} onClick={() => router.push(targetRoute)}>

@@ -87,6 +87,20 @@ export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogT
     ),
   },
   {
+    accessorKey: 'qrStatus',
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        className="text-sm"
+      >
+        QR
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => <StatusCell qrStatus={row.original.qrStatus} />,
+  },
+  {
     accessorKey: 'isEvoEnabled',
     header: ({ column }) => (
       <Button
@@ -94,11 +108,11 @@ export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogT
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         className="text-sm"
       >
-        Status
+        Agente
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    cell: ({ row }) => <StatusCell isEvoEnabled={row.original.isEvoEnabled} qrStatus={row.original.qrStatus}/>,
+    cell: ({ row }) => <StatusCell isEvoEnabled={row.original.isEvoEnabled} />,
   },
   // {
   //   accessorKey: 'messagePause',

@@ -4,14 +4,15 @@ import Header from '@/components/shared/header'
 import { currentUser } from '@/lib/auth'
 import Link from 'next/link'
 import { BookOpenCheck, FileCog, FileText, Handshake, LayoutGrid, PlugZap, Settings, ShieldCheck, UserCog, Users, Zap, } from 'lucide-react'
+import AccessDenied from '@/app/AccessDenied'
 
 const AdminPage = async () => {
   const user = await currentUser()
 
-  if (!user) {
-    return <div className="text-center py-10">No autorizado.</div>
-  }
-
+  if (!user || user?.role !== "admin") {
+    return <AccessDenied />;
+  };
+ 
   const allCards = [
     {
       title: "Conexiones API",

@@ -1,87 +1,101 @@
 "use client"
 
+import { useCallback } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { ClientInterface } from "@/lib/types"
-import {
-    CheckCircle2Icon,
-    AlertTriangleIcon,
-    PowerOffIcon,
-    PlugZapIcon,
-    UsersIcon
-} from "lucide-react"
+import { QrCodeIcon, PowerIcon, UsersIcon } from "lucide-react"
+import { LucideIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface ClientStatusSummaryProps {
     users: ClientInterface[]
 }
 
-export const ClientStatusPanel = ({ users }: ClientStatusSummaryProps) => {
-    const total = users.length
+type StatusKey = "total" | "qrDisconnected" | "qrConnected" | "evoOn" | "evoOff"
 
-    const desconectadoApagado = users.filter(u => u.qrStatus && !u.isEvoEnabled).length
-    const desconectadoEncendido = users.filter(u => u.qrStatus && u.isEvoEnabled).length
-    const conectadoApagado = users.filter(u => !u.qrStatus && !u.isEvoEnabled).length
-    const encendido = users.filter(u => !u.qrStatus && u.isEvoEnabled).length
+interface StatusConfig {
+    icon: LucideIcon
+    colorClass: string
+    tooltip: string
+}
+
+const statusMap: Record<StatusKey, StatusConfig> = {
+    total: {
+        icon: UsersIcon,
+        colorClass: "text-muted-foreground",
+        tooltip: "Total de usuarios",
+    },
+    qrDisconnected: {
+        icon: QrCodeIcon,
+        colorClass: "text-red-600",
+        tooltip: "QR desconectado",
+    },
+    qrConnected: {
+        icon: QrCodeIcon,
+        colorClass: "text-green-600",
+        tooltip: "QR conectado",
+    },
+    evoOn: {
+        icon: PowerIcon,
+        colorClass: "text-green-600",
+        tooltip: "Robot encendido",
+    },
+    evoOff: {
+        icon: PowerIcon,
+        colorClass: "text-red-600",
+        tooltip: "Robot apagado",
+    },
+}
+
+export const ClientStatusPanel = ({ users }: ClientStatusSummaryProps) => {
+    // Conteo de usuarios por estado
+    const counts = users.reduce<Record<StatusKey, number>>((acc, user) => {
+        acc.total += 1
+        if (user.qrStatus === true) acc.qrDisconnected += 1
+        if (user.qrStatus === false) acc.qrConnected += 1
+        if (user.isEvoEnabled === true) acc.evoOn += 1
+        if (user.isEvoEnabled === false) acc.evoOff += 1
+        return acc
+    }, {
+        total: 0,
+        qrDisconnected: 0,
+        qrConnected: 0,
+        evoOn: 0,
+        evoOff: 0,
+    })
+
+    // Función futura para ejecutar filtro
+    const handleFilter = useCallback((status: StatusKey) => {
+        console.log(`Filtrar por: ${status}`)
+        // Aquí podrás aplicar lógica real de filtrado
+    }, [])
 
     return (
-        <TooltipProvider>
-            <div className="flex items-center gap-3">
+        <div>
+            {(
+                ["total", "qrDisconnected", "qrConnected", "evoOn", "evoOff"] as StatusKey[]
+            ).map((key) => {
+                const { icon: Icon, colorClass, tooltip } = statusMap[key]
+                const value = counts[key]
 
-                {/* Total */}
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Badge className="bg-muted text-foreground gap-1 text-sm px-2 py-1">
-                            <UsersIcon className="size-4 text-muted-foreground" />
-                            {total}
-                        </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>Total de usuarios</TooltipContent>
-                </Tooltip>
-
-                {/* Desconectado - Apagado */}
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Badge className="bg-red-600 text-white gap-1 text-sm px-2 py-1">
-                            <PowerOffIcon className="size-4" />
-                            {desconectadoApagado}
-                        </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>Desconectado - Apagado</TooltipContent>
-                </Tooltip>
-
-                {/* Desconectado - Encendido */}
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Badge className="bg-yellow-500 text-white gap-1 text-sm px-2 py-1">
-                            <AlertTriangleIcon className="size-4" />
-                            {desconectadoEncendido}
-                        </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>Desconectado - Encendido</TooltipContent>
-                </Tooltip>
-
-                {/* Conectado - Apagado */}
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Badge className="bg-blue-500 text-white gap-1 text-sm px-2 py-1">
-                            <PlugZapIcon className="size-4" />
-                            {conectadoApagado}
-                        </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>Conectado - Apagado</TooltipContent>
-                </Tooltip>
-
-                {/* Encendido */}
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Badge className="bg-green-600 text-white gap-1 text-sm px-2 py-1">
-                            <CheckCircle2Icon className="size-4" />
-                            {encendido}
-                        </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>Encendido</TooltipContent>
-                </Tooltip>
-            </div>
-        </TooltipProvider>
+                return (
+                    <Tooltip key={key}>
+                        <TooltipTrigger asChild>
+                            <Button
+                                onClick={() => handleFilter(key)}
+                                variant={"outline"}
+                            >
+                                <Icon className={`${colorClass} size-5`} />
+                                <span className="text-md">
+                                    {value}
+                                </span>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{tooltip}</TooltipContent>
+                    </Tooltip>
+                )
+            })}
+        </div>
     )
 }

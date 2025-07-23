@@ -133,7 +133,9 @@ export function DataTable<TData, TValue>({ columns, data, currentUserRol, openCr
                   >
                     {headerGroup.headers.map((header) => {
                       return (
-                        <TableHead key={header.id}>
+                        <TableHead key={header.id}
+                          className="w-[150px] truncate"
+                        >
                           {header.isPlaceholder
                             ? null
                             : flexRender(
