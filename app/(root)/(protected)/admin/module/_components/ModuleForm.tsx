@@ -47,6 +47,8 @@ export const ModuleForm = ({
 
     const [openPlans, setOpenPlans] = useState(false);
 
+    const selectedRoute = form.watch("route");
+
     return (
         <Form {...form}>
             <form id="module-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-2">
@@ -89,6 +91,22 @@ export const ModuleForm = ({
                         </FormItem>
                     )}
                 />
+
+                {selectedRoute === "/canva" && (
+                    <FormField
+                        control={form.control}
+                        name="customUrl"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Ruta personalizada</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="https://bot.verzay.co/es/typebots" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
 
                 <FormField
                     control={form.control}

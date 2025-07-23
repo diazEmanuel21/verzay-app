@@ -29,8 +29,7 @@ import { iconMap } from '@/schema/module';
 import { useModuleStore } from '@/stores/modules/useModuleStore';
 
 export function NavMain({ user }: { user: User }) {
-    debugger;
-    const { modules } = useModuleStore();
+    const { modules, setLabelModule, labelModule } = useModuleStore();
     const pathname = usePathname();
     const router = useRouter();
 
@@ -53,10 +52,21 @@ export function NavMain({ user }: { user: User }) {
             return true;
         })
         .map(link => {
-            const isActive = pathname === link.route || pathname.startsWith(link.route);
+            let isActive = false;
+
+            if (pathname === '/canva') {
+                isActive = labelModule === link.label
+            } else {
+                isActive = pathname === link.route;
+            }
+
             return { ...link, isActive };
         });
 
+    const handleRoute = (label: string, targetRoute: string) => {
+        setLabelModule(label)
+        router.push(targetRoute)
+    }
 
     return (
         <SidebarGroup>
@@ -80,12 +90,11 @@ export function NavMain({ user }: { user: User }) {
                     const validateRouteAndRole = user.role === 'reseller' && route === '/admin';
                     const targetRoute = validateRouteAndRole ? '/admin/clientes' : route;
 
-                    debugger;
                     // Si NO hay subitems, renderizar directamente como link
                     if (!items || items.length === 0 || validateRouteAndRole) {
                         return (
                             <SidebarMenuItem key={route}>
-                                <SidebarMenuButton className={linkClasses} tooltip={label} onClick={() => router.push(targetRoute)}>
+                                <SidebarMenuButton className={linkClasses} tooltip={label} onClick={() => handleRoute(label, targetRoute)}>
                                     {Icon && <Icon className={iconClasses} />}
                                     <span>{label}</span>
                                     <ChevronRight className="invisible ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
