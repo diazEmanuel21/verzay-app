@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button"
 
 interface ClientStatusSummaryProps {
     users: ClientInterface[]
+    onFilterChange: (status: StatusKey | null) => void
 }
 
-type StatusKey = "total" | "qrDisconnected" | "qrConnected" | "evoOn" | "evoOff"
+export type StatusKey = "total" | "qrDisconnected" | "qrConnected" | "evoOn" | "evoOff"
 
 interface StatusConfig {
     icon: LucideIcon
@@ -48,7 +49,7 @@ const statusMap: Record<StatusKey, StatusConfig> = {
     },
 }
 
-export const ClientStatusPanel = ({ users }: ClientStatusSummaryProps) => {
+export const ClientStatusPanel = ({ users, onFilterChange }: ClientStatusSummaryProps) => {
     // Conteo de usuarios por estado
     const counts = users.reduce<Record<StatusKey, number>>((acc, user) => {
         acc.total += 1
@@ -66,10 +67,14 @@ export const ClientStatusPanel = ({ users }: ClientStatusSummaryProps) => {
     })
 
     // Función futura para ejecutar filtro
+
     const handleFilter = useCallback((status: StatusKey) => {
-        console.log(`Filtrar por: ${status}`)
-        // Aquí podrás aplicar lógica real de filtrado
-    }, [])
+        if (status === "total") {
+            onFilterChange(null); // Mostrar todos
+        } else {
+            onFilterChange(status);
+        }
+    }, [onFilterChange]);
 
     return (
         <div>

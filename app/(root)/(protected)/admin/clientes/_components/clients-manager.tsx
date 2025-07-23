@@ -12,7 +12,7 @@ import {
     updateAbrirPhrase,
     updateClientData
 } from '@/actions/userClientDataActions';
-import { CreateDialog, DeleteDialog, ToolsDialog, EditDialog, ClientStatusPanel } from './';
+import { CreateDialog, DeleteDialog, ToolsDialog, EditDialog, ClientStatusPanel, StatusKey } from './';
 import { ApiKey } from '@prisma/client';
 import { UserFormValues } from '@/schema/user';
 import { Country } from '@/components/custom/CountryCodeSelect';
@@ -34,6 +34,8 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
     const [openToolsDialog, setOpenToolsDialog] = useState(false);
     const [openEditDialog, setOpenEditDialog] = useState(false);
     const [user, setCurrentUser] = useState<ClientInterface>();
+    const [statusFilter, setStatusFilter] = useState<StatusKey | null>(null);
+
 
     const handleCreate = async (formData: UserFormValues) => {
         const toastId = 'create-client';
@@ -146,6 +148,16 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
         setOpenCreateDialog(true);
     };
 
+    const filteredUsers = statusFilter
+        ? users.filter((user) => {
+            if (statusFilter === "qrDisconnected") return user.qrStatus === true;
+            if (statusFilter === "qrConnected") return user.qrStatus === false;
+            if (statusFilter === "evoOn") return user.isEvoEnabled === true;
+            if (statusFilter === "evoOff") return user.isEvoEnabled === false;
+            return true;
+        })
+        : users;
+
     const columns = getColumns(openDialogGetUserId, currentUserRol);
 
     return (
@@ -154,9 +166,10 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             {/* Gestión de clients */}
             <DataTable
                 columns={columns}
-                data={users}
+                data={filteredUsers}
                 currentUserRol={currentUserRol}
                 openCreateDialogUser={openCreateDialogUser}
+                setStatusFilter={setStatusFilter}
             />
 
 

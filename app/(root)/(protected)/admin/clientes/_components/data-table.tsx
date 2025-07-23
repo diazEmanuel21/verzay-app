@@ -14,7 +14,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { ClientStatusPanel, ColumnFilterInput } from './'
+import { ClientStatusPanel, ColumnFilterInput, StatusKey } from './'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -39,9 +39,10 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
   currentUserRol: string
   openCreateDialogUser: () => void
+  setStatusFilter: (status: StatusKey | null) => void
 }
 
-export function DataTable<TData, TValue>({ columns, data, currentUserRol, openCreateDialogUser }: DataTableProps<TData, TValue>) {
+export function DataTable<TData, TValue>({ columns, data, currentUserRol, openCreateDialogUser, setStatusFilter }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -87,7 +88,10 @@ export function DataTable<TData, TValue>({ columns, data, currentUserRol, openCr
             }
 
             <div className="flex flex-1 items-center justify-center">
-              <ClientStatusPanel users={data as ClientInterface[]} />
+              <ClientStatusPanel
+                users={data as ClientInterface[]}
+                onFilterChange={setStatusFilter}
+              />
             </div>
 
             <DropdownMenu>
