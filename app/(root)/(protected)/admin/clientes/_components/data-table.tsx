@@ -78,48 +78,52 @@ export function DataTable<TData, TValue>({ columns, data, currentUserRol, openCr
       {/* Header fijo */}
       <div className="sticky top-0 z-1">
         <div className="flex justify-between items-center gap-2">
-          <ColumnFilterInput table={table} />
-          <div className="flex flex-col sm:flex-row justify-end gap-2 flex-1">
-            {/* button-create-client */}
-            {currentUserRol === 'admin' &&
-              <Button onClick={openCreateDialogUser} className="m-0">
-                Nuevo
-              </Button>
-            }
+          <div className="flex flex-row flex-1 gap-2">
 
-            <div className="flex flex-1 items-center justify-center">
-              <ClientStatusPanel
-                users={data as ClientInterface[]}
-                onFilterChange={setStatusFilter}
-              />
+            <div className="flex flex-col sm:flex-row items-centerem gap-2 flex-1">
+              <ColumnFilterInput table={table} />
+
+              {/* button-create-client */}
+              {currentUserRol === 'admin' &&
+                <Button onClick={openCreateDialogUser} className="m-0">
+                  Nuevo
+                </Button>
+              }
             </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="ml-auto">
-                  Columnas
-                  {/* <Ellipsis className="h-4 w-4" /> */}
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {table
-                  .getAllColumns()
-                  .filter((column) => column.getCanHide())
-                  .map((column) => {
-                    return (
-                      <DropdownMenuCheckboxItem
-                        key={column.id}
-                        className="capitalize"
-                        checked={column.getIsVisible()}
-                        onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                      >
-                        {column.id}
-                      </DropdownMenuCheckboxItem>
-                    )
-                  })}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex flex-1 items-center">
+                <ClientStatusPanel
+                  users={data as ClientInterface[]}
+                  onFilterChange={setStatusFilter}
+                />
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="ml-auto">
+                    Columnas
+                    {/* <Ellipsis className="h-4 w-4" /> */}
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {table
+                    .getAllColumns()
+                    .filter((column) => column.getCanHide())
+                    .map((column) => {
+                      return (
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          className="capitalize"
+                          checked={column.getIsVisible()}
+                          onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                        >
+                          {column.id}
+                        </DropdownMenuCheckboxItem>
+                      )
+                    })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </div>

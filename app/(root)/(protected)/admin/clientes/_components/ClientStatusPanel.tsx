@@ -77,7 +77,7 @@ export const ClientStatusPanel = ({ users, onFilterChange }: ClientStatusSummary
     }, [onFilterChange]);
 
     return (
-        <div>
+        <div className="flex flex-col sm:flex-row">
             {(
                 ["total", "qrDisconnected", "qrConnected", "evoOn", "evoOff"] as StatusKey[]
             ).map((key) => {
@@ -90,6 +90,7 @@ export const ClientStatusPanel = ({ users, onFilterChange }: ClientStatusSummary
                             <Button
                                 onClick={() => handleFilter(key)}
                                 variant={"outline"}
+                                className="w-full"
                             >
                                 <Icon className={`${colorClass} size-5`} />
                                 <span className="text-md">
