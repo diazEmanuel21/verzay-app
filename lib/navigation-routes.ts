@@ -27,6 +27,7 @@ export const navigationRoutes: NavigationRoutesInterface[] = [
     { route: "/templates" },
     { route: "/tools/sheets" },
     { route: "/tools/docs" },
+    { route: "/tools/drive" },
     { route: "/evo" },
-    { route: "/with-out-route" },
+    // { route: "/with-out-route" },
 ];

@@ -151,9 +151,7 @@ export function DataTable<TData, TValue>({ columns, data, currentUserRol, openCr
                   >
                     {headerGroup.headers.map((header) => {
                       return (
-                        <TableHead key={header.id}
-                          className="w-[150px] truncate"
-                        >
+                        <TableHead key={header.id} className="w-[150px] text-center">
                           {header.isPlaceholder
                             ? null
                             : flexRender(
@@ -173,7 +171,8 @@ export function DataTable<TData, TValue>({ columns, data, currentUserRol, openCr
                       className="border-border"
                     >
                       {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
+                        <TableCell key={cell.id} className="text-center align-middle truncate overflow-hidden whitespace-nowrap">
+                          {/* <TableCell key={cell.id}> */}
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </TableCell>
                       ))}

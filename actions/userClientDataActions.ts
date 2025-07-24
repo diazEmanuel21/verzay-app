@@ -42,7 +42,7 @@ export async function getEnrichedClients(filter?: FilterOptions): Promise<Client
       include: {
         pausar: true,
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { name: "asc" },
     });
 
     const enrichedUsers: ClientInterface[] = await Promise.all(
