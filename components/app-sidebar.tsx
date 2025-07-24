@@ -43,12 +43,14 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                     </div>
                 }
                 <div className="flex flex-row w-full justify-center items-center">
-                    <NavProjects user={user} />
+                    {/* <NavProjects user={user} /> */}
+                    <LogoutButton user={user} />
+
                     <div>
                         <ThemeSwitcher />
                     </div>
                 </div>
-                <LogoutButton user={user} />
+                {/* <LogoutButton user={user} /> */}
             </SidebarFooter>
             <SidebarRail />
         </Sidebar>
