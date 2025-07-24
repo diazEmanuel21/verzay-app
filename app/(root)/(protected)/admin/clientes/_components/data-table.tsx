@@ -30,7 +30,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ChevronDown, Ellipsis, PlusCircle } from 'lucide-react'
+import { ChevronDown, Ellipsis, Plus, PlusCircle } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { ClientInterface } from '@/lib/types'
 
@@ -85,24 +85,34 @@ export function DataTable<TData, TValue>({ columns, data, currentUserRol, openCr
 
               {/* button-create-client */}
               {currentUserRol === 'admin' &&
-                <Button onClick={openCreateDialogUser} className="m-0">
-                  Nuevo
+
+                <Button onClick={openCreateDialogUser} className="m-0 flex items-center gap-2">
+                  {/* Icono + para móviles */}
+                  <Plus className="h-4 w-4 md:hidden" />
+
+                  {/* Texto para pantallas mayores a md */}
+                  <span className="hidden md:inline">Nuevo</span>
                 </Button>
               }
             </div>
 
             <div className="flex flex-1 items-center">
-                <ClientStatusPanel
-                  users={data as ClientInterface[]}
-                  onFilterChange={setStatusFilter}
-                />
+              <ClientStatusPanel
+                users={data as ClientInterface[]}
+                onFilterChange={setStatusFilter}
+              />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="ml-auto">
-                    Columnas
-                    {/* <Ellipsis className="h-4 w-4" /> */}
-                    <ChevronDown className="ml-2 h-4 w-4" />
+                    {/* Icono para móviles */}
+                    <Ellipsis className="h-4 w-4 md:hidden" />
+
+                    {/* Texto para pantallas medianas en adelante */}
+                    <span className="hidden md:inline">Columnas</span>
+
+                    {/* Icono Chevron solo para pantallas grandes */}
+                    <ChevronDown className="ml-2 h-4 w-4 hidden md:inline" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
