@@ -171,7 +171,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
   const cardStats = [
     {
       key: "all",
-      title: "Total de Leads",
+      title: "Total",
       icon: <Database className="h-4 w-4 text-gray-500" />,
       value: stats?.total,
       description: "Leads en total",
@@ -180,7 +180,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
     },
     {
       key: "active",
-      title: "Leads Activos",
+      title: "Activos",
       icon: <CheckCircle2 className="h-4 w-4 text-green-500" />,
       value: stats?.active,
       description: stats?.total ? `${Math.round((stats.active / stats.total) * 100)}% del total` : "0% del total",
@@ -189,7 +189,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
     },
     {
       key: "inactive",
-      title: "Leads Inactivos",
+      title: "Inactivos",
       icon: <XCircle className="h-4 w-4 text-red-500" />,
       value: stats?.inactive,
       description: stats?.total ? `${100 - Math.round((stats.active / stats.total) * 100)}% del total` : "0% del total",
@@ -206,47 +206,53 @@ export function SessionsContent({ userId }: SessionsContentProps) {
           <div className="container-stats flex flex-1 gap-4 overflow-x-auto mb-2 p-2">
             {cardStats.map((card, idx) => {
               const isActive = filter === card.key;
+
+              const bgColor =
+                card.key === "all"
+                  ? "bg-blue-600"
+                  : card.key === "active"
+                    ? "bg-green-600"
+                    : "bg-red-600";
+
               return (
                 <Card
                   key={idx}
                   onClick={() => {
                     setFilter(card.key);
-                    setSize(1); // Reinicia desde primera página
+                    setSize(1);
                   }}
                   className={cn(
-                    "flex-1 flex flex-col overflow-hidden cursor-pointer transition-all duration-300 ease-in-out border rounded-xl hover:shadow-md hover:-translate-y-[2px]",
-                    isActive
-                      ? "border-primary ring-primary bg-muted/20"
-                      : "border-border"
+                    "flex-1 min-w-[160px] cursor-pointer transition-all duration-300 ease-in-out rounded-xl border-none hover:shadow-lg hover:scale-[1.01]",
+                    bgColor,
+                    isActive ? "ring-2 ring-white" : "",
+                    "text-white"
                   )}
                 >
-                  <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
-                    <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                      {card.title}
-                    </CardTitle>
-                    {card.icon}
-                  </CardHeader>
-                  <CardContent>
-                    {stats ? (
-                      <>
-                        <div className={cn("text-lg sm:text-2xl font-bold", card.color)}>
-                          {card.value}
-                        </div>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">
-                          {card.description}
-                        </p>
-                        {card.progress !== null && (
-                          <Progress value={card.progress} className="h-2 mt-2 transition-all duration-500" />
-                        )}
-                      </>
-                    ) : (
-                      <Skeleton className="h-8 w-24" />
+                  <CardContent className="py-3 px-4 flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm sm:text-base font-semibold truncate">
+                        {card.title}: {card.value}
+                      </div>
+                      <div className="text-white">
+                        {card.key === "all" && <Database className="w-5 h-5" />}
+                        {card.key === "active" && <CheckCircle2 className="w-5 h-5" />}
+                        {card.key === "inactive" && <XCircle className="w-5 h-5" />}
+                      </div>
+                    </div>
+
+                    {card.progress !== null && (
+                      <Progress
+                        value={card.progress}
+                        className="h-2 bg-white/30"
+                      />
                     )}
                   </CardContent>
                 </Card>
               );
             })}
           </div>
+
+
         </div>
         <div className="flex flex-1 justify-between p-2">
           <Input
