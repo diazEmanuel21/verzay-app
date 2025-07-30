@@ -38,59 +38,54 @@ export function TeamSwitcher({ user }: TeamSwitcherProps) {
             <SidebarMenuItem className="flex">
                 {resellerInfo ? (
                     <>
-                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground mr-2">
+                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg mr-2 overflow-hidden">
                             <Link href="/" aria-label="Volver al inicio">
-                                {!resellerInfo.image
-                                    ? <BotMessageSquare
+                                {!resellerInfo.image ? (
+                                    <BotMessageSquare
                                         className="text-blue-500 w-6 h-6 animate-bounce"
                                         aria-label="Agente activo"
                                     />
-                                    :
-                                    <Avatar className="h-8 w-8 rounded-lg">
-                                        <AvatarImage src={resellerInfo?.image} alt={resellerInfo?.name ?? ''} />
-                                    </Avatar>
-                                }
+                                ) : (
+                                    <Image
+                                        src={resellerInfo.image}
+                                        alt={resellerInfo.name ?? ''}
+                                        width={32}
+                                        height={32}
+                                        className="rounded-lg object-cover"
+                                    />
+                                )}
                             </Link>
                         </div>
 
-                        <div className="grid flex-1 text-left text-sm leading-tight">
-                            <span className="truncate font-semibold">
-                                <Label
-                                    className={clsx(
-                                        'text-2xl font-extrabold tracking-wide uppercase font-mono',
-                                        'text-blue-600 drop-shadow-sm'
-                                    )}
-                                >
-                                    {/* AGENTE IA */}
-                                    {resellerInfo.company}
-                                </Label>
+                        <div className="grid flex-1 text-left leading-tight">
+                            <span className="truncate font-semibold text-2xl">
+                                {resellerInfo.company}
                             </span>
-                            {/* <span className="truncate text-xs ">{user?.plan}</span> */}
                         </div>
                     </>
                 ) : (
                     <>
-                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg mr-2">
+                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg mr-2 overflow-hidden">
                             <Link href="/" aria-label="Volver al inicio">
                                 <Image
                                     src="/assets/image/logo_app.png"
                                     alt="Logo Verzay"
-                                    width={140}
-                                    height={28}
-                                    className="cursor-pointer"
+                                    width={32}
+                                    height={32}
+                                    className="rounded-lg object-cover"
                                     priority
                                 />
                             </Link>
                         </div>
-                        <div className="grid flex-1 text-left text-lg leading-tight">
+
+                        <div className="grid flex-1 text-left leading-tight">
                             <span className="truncate font-semibold text-2xl">
-                                {/* {user.company} */}
                                 Verzay
                             </span>
-                            {/* <span className="truncate text-xs">{user?.plan}</span> */}
                         </div>
                     </>
                 )}
+
             </SidebarMenuItem>
         </SidebarMenu>
     );
