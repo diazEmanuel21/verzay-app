@@ -206,45 +206,45 @@ export function SessionsContent({ userId }: SessionsContentProps) {
           <div className="container-stats flex flex-1 gap-4 overflow-x-auto mb-2 p-2">
             {cardStats.map((card, idx) => {
               const isActive = filter === card.key;
-
-              const bgColor =
-                card.key === "all"
-                  ? "bg-blue-600"
-                  : card.key === "active"
-                    ? "bg-green-600"
-                    : "bg-red-600";
-
               return (
                 <Card
                   key={idx}
                   onClick={() => {
                     setFilter(card.key);
-                    setSize(1);
+                    setSize(1); // Reinicia desde primera página
                   }}
                   className={cn(
-                    "flex-1 min-w-[160px] cursor-pointer transition-all duration-300 ease-in-out rounded-xl border-none hover:shadow-lg hover:scale-[1.01]",
-                    bgColor,
-                    isActive ? "ring-2 ring-white" : "",
-                    "text-white"
+                    "flex-1 flex flex-col overflow-hidden cursor-pointer transition-all duration-300 ease-in-out border rounded-xl hover:shadow-md hover:-translate-y-[2px]",
+                    isActive
+                      ? "border-primary ring-primary bg-muted/20"
+                      : "border-border"
                   )}
                 >
-                  <CardContent className="py-3 px-4 flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm sm:text-base font-semibold truncate">
-                        {card.title}: {card.value}
+                  <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
+                    <CardTitle className="flex items-center  gap-2 text-xs flex-row sm:text-sm font-medium text-muted-foreground">
+                      <div className={cn("text-lg font-bold", card.color)}>
+                        {card.value}
                       </div>
-                      <div className="text-white">
-                        {card.key === "all" && <Database className="w-5 h-5" />}
-                        {card.key === "active" && <CheckCircle2 className="w-5 h-5" />}
-                        {card.key === "inactive" && <XCircle className="w-5 h-5" />}
-                      </div>
+                      {card.title}
+                    </CardTitle>
+                    <div className="hidden sm:block">
+                      {card.icon}
                     </div>
-
-                    {card.progress !== null && (
-                      <Progress
-                        value={card.progress}
-                        className="h-2 bg-white/30"
-                      />
+                  </CardHeader>
+                  <CardContent>
+                    {stats ? (
+                      <>
+                        {card.progress !== null && (
+                          <div className="relative mt-2">
+                            <Progress value={card.progress} className="flex items-center justify-center h-4 transition-all duration-500" />
+                            <span className="absolute inset-0 flex items-center justify-center text-[10px] sm:text-xs">
+                              {card.description}
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <Skeleton className="h-8 w-24" />
                     )}
                   </CardContent>
                 </Card>
