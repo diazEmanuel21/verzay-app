@@ -33,28 +33,39 @@ interface Props {
   setOpenToolsDialog: (open: boolean) => void
 }
 
+import { Wrench } from 'lucide-react'
+
 const toolConfig = [
   {
-    id: 'drive',
-    label: 'Google Drive',
-    description: 'Introduce el enlace de la carpeta de Google Drive.',
-    placeholder: 'https://drive.google.com/drive/folders/...',
-    icon: <Folder className="w-5 h-5 text-blue-600" />
+    id: 'tool1',
+    label: 'Tool 1',
+    placeholder: 'https://mytool.com',
+    icon: <Wrench className="w-5 h-5 text-blue-500" />
   },
   {
-    id: 'docs',
-    label: 'Google Docs',
-    description: 'Introduce el enlace de Google Docs.',
-    placeholder: 'https://docs.google.com/document/...',
-    icon: <FileText className="w-5 h-5 text-blue-500" />
+    id: 'tool2',
+    label: 'Tool 2',
+    placeholder: 'https://mytool.com',
+    icon: <Wrench className="w-5 h-5 text-blue-500" />
   },
   {
-    id: 'sheets',
-    label: 'Google Sheets',
-    description: 'Introduce el enlace de Google Sheets.',
-    placeholder: 'https://docs.google.com/spreadsheets/...',
-    icon: <FileSpreadsheet className="w-5 h-5 text-green-600" />
-  }
+    id: 'tool3',
+    label: 'Tool 3',
+    placeholder: 'https://mytool.com',
+    icon: <Wrench className="w-5 h-5 text-blue-500" />
+  },
+  {
+    id: 'tool4',
+    label: 'Tool 4',
+    placeholder: 'https://mytool.com',
+    icon: <Wrench className="w-5 h-5 text-blue-500" />
+  },
+  {
+    id: 'tool5',
+    label: 'Tool 5',
+    placeholder: 'https://mytool.com',
+    icon: <Wrench className="w-5 h-5 text-blue-500" />
+  },
 ] as const
 
 export const ToolsDialog = ({
@@ -132,13 +143,13 @@ export const ToolsDialog = ({
   const handleCreate = async (toolId: Tools) => {
     const value = formValues[toolId]
     if (!value) return
-  
+
     toast.loading('Creando herramienta...', { id: 'create-tool' })
     const result = await createTool(user.id, toolId, value)
-  
+
     if (result.success && result.data) {
       toast.success('Herramienta creada', { id: 'create-tool' })
-      
+
       // Actualizar estado local inmediatamente
       setUserTools(prev => ({
         ...prev,
@@ -147,7 +158,7 @@ export const ToolsDialog = ({
           description: result.data.description || ''
         }
       }))
-      
+
       router.refresh()
     } else {
       toast.error(result.message || 'Error al crear herramienta', { id: 'create-tool' })
@@ -162,7 +173,7 @@ export const ToolsDialog = ({
         </DialogHeader>
 
         <form className="space-y-6 mt-4 px-2 pb-4">
-          {toolConfig.map(({ id, label, description, placeholder, icon }) => {
+          {toolConfig.map(({ id, label, placeholder, icon }) => {
             const isNewValue = !userTools[id]
             return (
               <div key={id}>
@@ -193,7 +204,7 @@ export const ToolsDialog = ({
                     </Button>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">{description}</p>
+                {/* <p className="text-sm text-muted-foreground mt-1">{description}</p> */}
               </div>
             )
           })}

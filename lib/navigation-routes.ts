@@ -25,9 +25,12 @@ export const navigationRoutes: NavigationRoutesInterface[] = [
     { route: "/auto-replies" },
     { route: "/profile" },
     { route: "/templates" },
-    { route: "/tools/sheets" },
-    { route: "/tools/docs" },
-    { route: "/tools/drive" },
     { route: "/evo" },
+    //TOOLS
+    { route: "/tools/tool-1" },
+    { route: "/tools/tool-2" },
+    { route: "/tools/tool-3" },
+    { route: "/tools/tool-4" },
+    { route: "/tools/tool-5" },
     // { route: "/with-out-route" },
 ];
