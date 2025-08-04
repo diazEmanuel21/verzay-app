@@ -23,27 +23,27 @@ export const baseActions: Action[] = [
 
 // Acciones de seguimiento (sub-tipos)
 export const seguimientoActions: Action[] = [
-    { type: "seguimiento-text", label: "Texto", icon: <FileText className={`${iconSize} ${stylesSeguimiento}`} /> },
-    { type: "seguimiento-image", label: "Imagen", icon: <ImageIcon className={`${iconSize} ${stylesSeguimiento}`} /> },
-    { type: "seguimiento-video", label: "Video", icon: <Video className={`${iconSize} ${stylesSeguimiento}`} /> },
-    { type: "seguimiento-document", label: "Documento", icon: <File className={`${iconSize} ${stylesSeguimiento}`} /> },
-    { type: "seguimiento-audio", label: "Audio", icon: <Music className={`${iconSize} ${stylesSeguimiento}`} /> },
+    { type: "seguimiento-text", label: "Texto", icon: <FileText className={`${iconSize} text-purple-600`} /> },
+    { type: "seguimiento-image", label: "Imagen", icon: <ImageIcon className={`${iconSize} text-blue-500`} /> },
+    { type: "seguimiento-video", label: "Video", icon: <Video className={`${iconSize} text-red-500`} /> },
+    { type: "seguimiento-document", label: "Documento", icon: <File className={`${iconSize} text-gray-500`} /> },
+    { type: "seguimiento-audio", label: "Audio", icon: <Music className={`${iconSize} text-green-500`} /> },
 ];
 
 export const cardBaseActions: Action[] = [
     { type: "text", label: "Texto", icon: <FileText className={`text-white`} />, bg: "bg-gray-500" },
     { type: "image", label: "Imagen", icon: <ImageIcon className={`text-white`} />, bg: "bg-blue-500" },
     { type: "video", label: "Video", icon: <Video className={` text-white`} />, bg: "bg-red-500" },
-    { type: "document", label: "Documento", icon: <File className={` text-white`} />, bg: "bg-yellow-500"},
+    { type: "document", label: "Documento", icon: <File className={` text-white`} />, bg: "bg-yellow-500" },
     { type: "audio", label: "Audio", icon: <Music className={`text-white`} />, bg: "bg-green-500" },
-    { type: "seguimiento", label: "Seguimiento", icon: <AlarmClock className={`text-white ${stylesSeguimiento}`} />, bg: "bg-purple-600"}, // Categoría padre
+    { type: "seguimiento", label: "Seguimiento", icon: <AlarmClock className={`text-white ${stylesSeguimiento}`} />, bg: "bg-purple-600" }, // Categoría padre
 ];
 
 // Acciones de seguimiento (sub-tipos)
 export const cardSeguimientoActions: Action[] = [
-    { type: "seguimiento-text", label: "Texto", icon: <FileText className={` text-white ${stylesSeguimiento}`} />, bg: "bg-gray-500"},
-    { type: "seguimiento-image", label: "Imagen", icon: <ImageIcon className={` text-white${stylesSeguimiento}`} />, bg: "bg-blue-500"  },
-    { type: "seguimiento-video", label: "Video", icon: <Video className={` text-white  ${stylesSeguimiento}`} />, bg: "bg-red-500"  },
+    { type: "seguimiento-text", label: "Texto", icon: <FileText className={` text-white ${stylesSeguimiento}`} />, bg: "bg-gray-500" },
+    { type: "seguimiento-image", label: "Imagen", icon: <ImageIcon className={` text-white${stylesSeguimiento}`} />, bg: "bg-blue-500" },
+    { type: "seguimiento-video", label: "Video", icon: <Video className={` text-white  ${stylesSeguimiento}`} />, bg: "bg-red-500" },
     { type: "seguimiento-document", label: "Documento", icon: <File className={`text-white ${stylesSeguimiento}`} />, bg: "bg-gray-500" },
     { type: "seguimiento-audio", label: "Audio", icon: <Music className={`text-white ${stylesSeguimiento}`} />, bg: "bg-green-500" },
 ];

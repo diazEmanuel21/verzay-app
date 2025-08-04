@@ -19,10 +19,10 @@ export const ActionPopoverButton = ({
 }: actionpopover) => {
     const router = useRouter();
     const isSeguimiento = action.type === 'seguimiento' || action.type.startsWith('seguimiento-');
-    const isPremium = plan === 'empresarial';
+    // const isPremium = plan === 'empresarial';
 
     const handleSeguimiento = () => {
-        if (isSeguimiento && !isPremium) return router.push('/credits');
+        // if (isSeguimiento) return router.push('/credits');
         onClick();
     };
 
