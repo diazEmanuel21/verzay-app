@@ -394,7 +394,7 @@ enum Role {
 }
 
 enum Plan {
-  empresarial   @map("empresarial")
+  admin   @map("empresarial")
   lite
   unico
   basico

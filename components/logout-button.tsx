@@ -37,7 +37,7 @@ const LogoutButton = ({ user }: LogoutButtonProps) => {
   const userInitial = user?.name?.charAt(0).toUpperCase() ?? '?'
 
   const PLAN_COLORS: Record<Plan, string> = {
-    empresarial: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300',
+    admin: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300',
     lite: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',              // Básico reducido
     unico: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300',             // Singular / especial
     basico: 'bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-300',            // Igual que "standard"

@@ -45,7 +45,7 @@ const plans = [
         href: (num: string) => `https://wa.me/+${num}?text=Hola%2C%20quiero%20actualizar%20mi%20plan%20a%20BUSINESS`,
     },
     {
-        name: 'EMPRESARIAL',
+        name: 'ADMIN',
         features: [
             'Interpretación audios',
             'Lee imágenes en png y jpeg',
@@ -56,7 +56,7 @@ const plans = [
             'Seguimientos, recordatorios, inactividad',
         ],
         featured: false,
-        href: (num: string) => `https://wa.me/+${num}?text=Hola%2C%20quiero%20actualizar%20mi%20plan%20a%20EMPRESARIAL`,
+        href: (num: string) => `https://wa.me/+${num}?text=Hola%2C%20quiero%20actualizar%20mi%20plan%20a%ADMIN`,
     },
 ]
 

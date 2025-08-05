@@ -53,6 +53,9 @@ export const Breadcrumbs = () => {
   const pathname = usePathname();
   const [guides, setGuides] = useState<GuidesUrl[]>([]);
 
+  const isToolRoute = pathname.startsWith('/tools');
+  const isMultiAgentRoute = pathname === '/multiagente';
+
   useEffect(() => {
     const fetchGuides = async () => {
       const currentPath = pathname;
@@ -82,7 +85,7 @@ export const Breadcrumbs = () => {
 
   return (
     <>
-      {pathname !== "/multiagente" ?
+      {!isToolRoute && !isMultiAgentRoute ?
         <div className="h-18 shrink-0">
           <header className={`sticky top-0 h-12 w-full border-border flex items-center px-4 dark:bg-gray-900 dark:text-white py-4`}>
             {/* <Breadcrumb className='py-4 flex flex-row flex-1 overflow-hidden bg-slate-100 text-black dark:bg-gray-900 dark:text-white border-border'> */}

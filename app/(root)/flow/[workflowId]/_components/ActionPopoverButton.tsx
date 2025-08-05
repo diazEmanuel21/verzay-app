@@ -19,7 +19,7 @@ export const ActionPopoverButton = ({
 }: actionpopover) => {
     const router = useRouter();
     const isSeguimiento = action.type === 'seguimiento' || action.type.startsWith('seguimiento-');
-    // const isPremium = plan === 'empresarial';
+    // const isPremium = plan === 'admin';
 
     const handleSeguimiento = () => {
         // if (isSeguimiento) return router.push('/credits');
@@ -31,7 +31,7 @@ export const ActionPopoverButton = ({
             <Button
                 variant="outline"
                 onClick={handleSeguimiento}
-                className="flex items-center justify-between gap-2 text-sm w-full"
+                className={`flex items-center justify-between gap-2 text-sm w-full ${isSeguimiento ? 'bg-blue-100 hover:bg-blue-200' : ''}`}
                 disabled={disabled}
             >
                 <span className="flex flex-row gap-2">

@@ -45,8 +45,8 @@ const plans = [
         href: "https://wa.me/+573115616975?text=Hola%2C%20quiero%20actualizar%20mi%20plan",
     },
     {
-        name: "EMPRESARIAL",
-        id: "plan-empresarial",
+        name: "ADMIN",
+        id: "plan-admin",
         priceMonthly: 149.5,
         priceYearly: 104.6,
         description: "",
