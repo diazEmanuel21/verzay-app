@@ -57,7 +57,6 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
           <CreateNodeComponent workflowId={workflowId} plan={user?.plan} />
         </div>
       )}
-
     </div>
   );
 }

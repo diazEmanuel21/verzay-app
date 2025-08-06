@@ -212,7 +212,7 @@ export const SchedulePageClient = ({ user, reminders }: ScheduleInterface) => {
             </Select>
 
             <p className="text-sm text-muted-foreground">
-              Agendar con <span className="font-bold">{user.name || "nuestro asesor"}</span>
+              Agendar con <span className="font-bold">{user.company || "nuestro asesor"}</span>
             </p>
 
             <p className="text-sm text-muted-foreground">

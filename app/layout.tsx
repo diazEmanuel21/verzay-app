@@ -12,7 +12,6 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-import { Breadcrumbs } from '@/components/custom';
 import { AppSidebar } from "@/components/app-sidebar"
 import AppInitializer from '@/components/custom/AppInitializer';
 import { getResellerProfileForUser } from '@/actions/reseller-action';
@@ -74,13 +73,9 @@ export default async function RootLayout({
               <SidebarProvider defaultOpen={defaultOpen}>
                 <AppSidebar user={user} />
                 <SidebarInset className="h-screen flex flex-col">
-                  <Breadcrumbs position="top" />
-
                   <main className={`flex-1 overflow-auto p-4 ${themeClass}`}>
                     {children}
                   </main>
-
-                  <Breadcrumbs position="bottom" />
                 </SidebarInset>
               </SidebarProvider>
             ) : (

@@ -36,12 +36,9 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                 <NavMain user={user} />
             </SidebarContent>
             <SidebarFooter>
-                {
-                    pathname === '/multiagente' &&
-                    <div className="flex items-center justify-end">
-                        <SidebarTrigger />
-                    </div>
-                }
+                <div className="flex items-center justify-end">
+                    <SidebarTrigger />
+                </div>
                 <div className="flex flex-row w-full justify-center items-center">
                     {/* <NavProjects user={user} /> */}
                     <LogoutButton user={user} />
