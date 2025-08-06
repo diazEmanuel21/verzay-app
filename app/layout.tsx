@@ -74,15 +74,13 @@ export default async function RootLayout({
               <SidebarProvider defaultOpen={defaultOpen}>
                 <AppSidebar user={user} />
                 <SidebarInset className="h-screen flex flex-col">
+                  <Breadcrumbs position="top" />
 
-                  {/* Header fijo, pero ocupa espacio */}
-                  <Breadcrumbs />
-
-                  {/* Main con scroll interno */}
                   <main className={`flex-1 overflow-auto p-4 ${themeClass}`}>
                     {children}
                   </main>
 
+                  <Breadcrumbs position="bottom" />
                 </SidebarInset>
               </SidebarProvider>
             ) : (
