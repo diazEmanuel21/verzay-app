@@ -42,7 +42,7 @@ const ConnectionPage = async () => {
     }
 
     return (
-        <div className="flex flex-1 flex-wrap gap-4 items-center justify-center">
+        <div className="flex flex-1 flex-wrap gap-4 items-center justify-center pt-5">
             <ConnectionMain user={user} instance={instance} instanceInfo={instanceInfo?.data} />
             {/* <UnderConstruction /> */}
             {/* <SeedModules /> */}

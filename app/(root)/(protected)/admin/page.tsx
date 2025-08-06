@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import Header from '@/components/shared/header'
 import { currentUser } from '@/lib/auth'
 import Link from 'next/link'
-import { BookOpenCheck, FileCog, FileText, Handshake, LayoutGrid, PlugZap, Settings, ShieldCheck, UserCog, Users, Zap, } from 'lucide-react'
+import { FileText, Handshake, LayoutGrid, PlugZap, UserCog } from 'lucide-react'
 import AccessDenied from '@/app/AccessDenied'
 
 const AdminPage = async () => {
@@ -12,7 +12,7 @@ const AdminPage = async () => {
   if (!user || user?.role !== "admin") {
     return <AccessDenied />;
   };
- 
+
   const allCards = [
     {
       title: "Conexiones API",
@@ -57,8 +57,7 @@ const AdminPage = async () => {
     //   buttonLabel: "Ir a Plantillas",
     // },
 
-  ]
-
+  ];
 
   // 🔐 Filtrar según rol del usuario
   const visibleCards =
