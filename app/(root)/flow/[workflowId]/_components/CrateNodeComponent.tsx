@@ -85,17 +85,14 @@ export const CreateNodeComponent = ({ workflowId, plan }: PropsCreateNodeCompone
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button
-                    variant="default"
-                    className="bg-blue-600 hover:bg-blue-700 uppercase font-bold text-white shadow-sm transition-all"
-                >
+                <Button>
                     Agregar acción
                     <FilePlus2 />
                 </Button>
             </PopoverTrigger>
 
             <PopoverContent className="w-64 p-4 space-y-4 bg-background border rounded-lg shadow-lg">
-                <div className="text-sm font-semibold text-muted-foreground">Selecciona una acción</div>
+                <div className="text-sm text-muted-foreground">Selecciona una acción</div>
 
                 <div className="flex flex-col gap-2">
                     {baseActions.map((action) => (

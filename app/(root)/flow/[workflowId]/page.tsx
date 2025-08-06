@@ -6,6 +6,7 @@ import { NodeCard } from './_components/NodeCard';
 import { CreateNodeComponent } from './_components/CrateNodeComponent';
 import { currentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import { InboxIcon } from 'lucide-react';
 
 const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) => {
   const user = await currentUser();
@@ -30,9 +31,9 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
 
   return (
     <div className='flex flex-col items-center min-h-screen'>
-      <div className='flex justify-end w-full'>
+      {/* <div className='flex justify-end w-full'>
         <CreateNodeComponent workflowId={workflowId} plan={user?.plan} />
-      </div>
+      </div> */}
 
       {nodes.length > 0 ? (
         <div className='flex flex-col h-full w-full gap-5 px-4 text-center pt-6' >
@@ -45,13 +46,15 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
         </div>
 
       ) : (
-        <div className="flex flex-col items-center w-full">
-          <div className="flex max-w-[300px]">
-            <Alert>
-              <AlertTitle>No tienes ningun nodo creado</AlertTitle>
-              <AlertDescription>Crea un nuevo nodo ahora mismo!</AlertDescription>
-            </Alert>
+        <div className="flex flex-col gap-4 h-full items-center justify-center">
+          <div className='rounded-full bg-accent w-20 h-20 flex items-center justify-center'>
+            <InboxIcon size={40} className='stroke-primary' />
           </div>
+          <div className='flex flex-col gap-1 text-center'>
+            <p className="font-bold">No tienes ningun nodo creado</p>
+            <p className="text-sm text-muted-foreground">Crea un nuevo nodo ahora mismo!</p>
+          </div>
+          <CreateNodeComponent workflowId={workflowId} plan={user?.plan} />
         </div>
       )}
 
