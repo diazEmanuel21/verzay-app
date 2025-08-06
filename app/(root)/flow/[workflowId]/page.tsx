@@ -30,7 +30,7 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
   }
 
   return (
-    <div className='flex flex-col items-center min-h-screen'>
+    <div className='flex flex-col items-center min-h-full'>
       {/* <div className='flex justify-end w-full'>
         <CreateNodeComponent workflowId={workflowId} plan={user?.plan} />
       </div> */}
@@ -46,7 +46,7 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
         </div>
 
       ) : (
-        <div className="flex flex-col gap-4 h-full items-center justify-center">
+        <div className="flex flex-1 flex-col gap-4 h-full items-center justify-center">
           <div className='rounded-full bg-accent w-20 h-20 flex items-center justify-center'>
             <InboxIcon size={40} className='stroke-primary' />
           </div>

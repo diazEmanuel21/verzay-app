@@ -47,7 +47,7 @@ function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
       setOpen(open);
     }} >
       <DialogTrigger asChild>
-        <Button className='font-bold'>{triggerText ?? "CREAR FLUJO"}</Button>
+        <Button>{triggerText ?? "CREAR FLUJO"}</Button>
       </DialogTrigger>
       <DialogContent className='px-0'>
         <CustomDialogHeader
