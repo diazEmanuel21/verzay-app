@@ -39,7 +39,7 @@ const AdminPage = async () => {
       title: "Documentación",
       description: "Organiza y actualiza la documentación técnica del sistema.",
       icon: <FileText className="text-yellow-600" />,
-      href: "/admin/documentation",
+      href: "/documentation",
       buttonLabel: "Ir a Documentación",
     },
     {

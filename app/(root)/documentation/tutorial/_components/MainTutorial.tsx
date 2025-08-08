@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { GuidesUrl as Guide } from '@prisma/client';
+import { GuidesUrl as Guide, User } from '@prisma/client';
 import { getAllGuides, createGuide, updateGuide, deleteGuide } from '@/actions/guide-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 import { Pencil, Trash2, Plus, Search } from 'lucide-react';
 import { useModuleStore } from '@/stores/modules/useModuleStore';
 
-export const MainTutorial = () => {
+export const MainTutorial = ({ user }: { user: User }) => {
     const { modules } = useModuleStore();
 
     const [guides, setGuides] = useState<Guide[]>([]);
@@ -91,69 +91,70 @@ export const MainTutorial = () => {
 
     return (
         <div className="flex flex-col p-4 gap-6 overflow-hidden">
-
             {/* Header y Filtro */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between overflow-hidden">
                 <div className="flex flex-1 gap-2 items-center">
                     <div className="relative flex-1">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Search guides..."
+                            placeholder="Buscar tutorial..."
                             className="pl-8"
                             value={filter}
                             onChange={e => setFilter(e.target.value)}
                         />
                     </div>
-                    <Dialog open={open} onOpenChange={setOpen}>
-                        <DialogTrigger asChild>
-                            <Button
-                                onClick={() => {
-                                    setForm({});         // Limpia campos
-                                    setEditingId(null);  // Quita modo edición
-                                }}
-                            >
-                                <Plus className="mr-2 h-4 w-4" />
-                                New Guide
-                            </Button>
-                        </DialogTrigger>
+                    {user?.role === 'admin' &&
+                        <Dialog open={open} onOpenChange={setOpen}>
+                            <DialogTrigger asChild>
+                                <Button
+                                    onClick={() => {
+                                        setForm({});         // Limpia campos
+                                        setEditingId(null);  // Quita modo edición
+                                    }}
+                                >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Crear Tutorial
+                                </Button>
+                            </DialogTrigger>
 
-                        <DialogContent className="space-y-4">
-                            <DialogTitle>{form.id ? 'Edit Guide' : 'Crear tutorial'}</DialogTitle>
-                            <Input
-                                placeholder="Título de la guía (e.j., Cómo crear una cuenta)"
-                                value={form.title || ''}
-                                onChange={e => setForm({ ...form, title: e.target.value })}
-                            />
-                            <Input
-                                placeholder="URL (e.j., https://youtu.be/fP4DlWuwto0)"
-                                value={form.url || ''}
-                                onChange={e => setForm({ ...form, url: e.target.value })}
-                            />
-                            <Select
-                                value={form.path || ''}
-                                onValueChange={(value) => setForm({ ...form, path: value })}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Selecione un modulo/section" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {modules.map((link) => (
-                                        <SelectItem key={link.id} value={link.route}>
-                                            {link.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Textarea
-                                placeholder="Breve descripción del tutorial..."
-                                value={form.description || ''}
-                                onChange={e => setForm({ ...form, description: e.target.value })}
-                            />
-                            <Button onClick={handleSubmit} className="w-full">
-                                {form.id ? 'Actualizar tutorial' : 'Crear tutorial'}
-                            </Button>
-                        </DialogContent>
-                    </Dialog>
+                            <DialogContent className="space-y-4">
+                                <DialogTitle>{form.id ? 'Edit Guide' : 'Crear tutorial'}</DialogTitle>
+                                <Input
+                                    placeholder="Título de la guía (e.j., Cómo crear una cuenta)"
+                                    value={form.title || ''}
+                                    onChange={e => setForm({ ...form, title: e.target.value })}
+                                />
+                                <Input
+                                    placeholder="URL (e.j., https://youtu.be/fP4DlWuwto0)"
+                                    value={form.url || ''}
+                                    onChange={e => setForm({ ...form, url: e.target.value })}
+                                />
+                                <Select
+                                    value={form.path || ''}
+                                    onValueChange={(value) => setForm({ ...form, path: value })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione un modulo/section" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {modules.map((link) => (
+                                            <SelectItem key={link.id} value={link.route}>
+                                                {link.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Textarea
+                                    placeholder="Breve descripción del tutorial..."
+                                    value={form.description || ''}
+                                    onChange={e => setForm({ ...form, description: e.target.value })}
+                                />
+                                <Button onClick={handleSubmit} className="w-full">
+                                    {form.id ? 'Actualizar tutorial' : 'Crear tutorial'}
+                                </Button>
+                            </DialogContent>
+                        </Dialog>
+                    }
                 </div>
             </div>
 
@@ -164,7 +165,7 @@ export const MainTutorial = () => {
                 </div>
             ) : (
                 <div className="flex-1">
-                    <div className="max-h-[70vh] overflow-auto p-2">
+                    <div className="max-h-[85vh] overflow-auto p-2">
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 min-w-[400px] p-2">
                             {filteredGuides.length > 0 ? (
                                 filteredGuides.map(guide => (
@@ -189,14 +190,17 @@ export const MainTutorial = () => {
                                             >
                                                 View Guide
                                             </a>
-                                            <div className="absolute top-4 right-4 flex gap-2">
-                                                <Button size="icon" variant="outline" onClick={() => handleEdit(guide)}>
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                                <Button size="icon" variant="destructive" onClick={() => handleDelete(guide.id)}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
+                                            {
+                                                user?.role === 'admin' &&
+                                                <div className="absolute top-4 right-4 flex gap-2">
+                                                    <Button size="icon" variant="outline" onClick={() => handleEdit(guide)}>
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button size="icon" variant="destructive" onClick={() => handleDelete(guide.id)}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            }
                                         </CardContent>
                                     </Card>
                                 ))

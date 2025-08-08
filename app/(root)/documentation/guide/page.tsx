@@ -11,9 +11,9 @@ interface Props {
 const GuidePage = async ({ searchParams }: Props) => {
     const user = await currentUser();
 
-    if (!user || user?.role !== "admin") {
-        return <AccessDenied />;
-    };
+    // if (!user || user?.role !== "admin") {
+    //     return <AccessDenied />;
+    // };
 
     return (
         <MainGuide user={user} />

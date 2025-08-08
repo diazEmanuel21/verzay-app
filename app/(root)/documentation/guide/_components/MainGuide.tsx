@@ -113,14 +113,13 @@ export function MainGuide({ user }: MainGuideProps) {
 
   return (
     <div className="flex flex-col p-4 gap-6 overflow-hidden">
-
       {/* Header y Filtro */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between overflow-hidden">
         <div className="flex flex-1 gap-2 items-center">
           <div className="relative flex-1">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar manual..."
+              placeholder="Buscar guía..."
               className="pl-8"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -135,7 +134,7 @@ export function MainGuide({ user }: MainGuideProps) {
                     setFormData({ name: '', description: '', url: '' }) // ⬅️ limpio para crear
                   }}
                 >
-                  Nuevo manual
+                  Crear Guía
                 </Button>
               </DialogTrigger>
 
@@ -167,7 +166,7 @@ export function MainGuide({ user }: MainGuideProps) {
         </div>
       ) : (
         <div className="flex-1">
-          <div className="max-h-[70vh] overflow-auto">
+          <div className="max-h-[85vh] overflow-auto">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 min-w-[400px] p-2">
               {filtered.map((manual) => (
                 <Card key={manual.id} className="relative border-border      
@@ -180,7 +179,7 @@ export function MainGuide({ user }: MainGuideProps) {
                     <h3 className="text-lg font-semibold line-clamp-1">{manual.name}</h3>
                     <p className="text-sm text-muted-foreground line-clamp-2">{manual.description}</p>
                     <a href={manual.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 underline">
-                      Ver Manual
+                      Ver Guía
                     </a>
                     {user.role === Role.admin &&
                       <div className="absolute top-4 right-4 flex gap-2">

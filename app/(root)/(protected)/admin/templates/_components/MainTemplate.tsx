@@ -144,7 +144,7 @@ export const MainTemplate = ({ userRole }: { userRole: Role }) => {
                         </DialogTitle>
                     </DialogHeader>
 
-                    <ScrollArea className="max-h-[70vh] ">
+                    <ScrollArea className="max-h-[85vh] ">
                         <PromptTemplateForm
                             onSubmit={onSubmit}
                             defaultValues={editTemplate ? normalizeTemplate(editTemplate) : undefined}

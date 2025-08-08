@@ -9,7 +9,6 @@ export const navigationRoutes: NavigationRoutesInterface[] = [
     { route: '/admin/conexion' },
     { route: '/admin/clientes' },
     { route: '/admin/reseller' },
-    { route: '/admin/documentation' },
     { route: "/admin/templates" },
     { route: "/admin" },
     { route: "/documentation" },
