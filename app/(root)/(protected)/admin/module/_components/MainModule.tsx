@@ -31,6 +31,7 @@ export const MainModule = () => {
         id: module.id,
         label: module.label,
         route: module.route,
+        customUrl: module.customUrl ?? '',
         icon: module.icon,
         adminOnly: module.adminOnly,
         requiresPremium: module.requiresPremium,
