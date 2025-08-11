@@ -1,33 +1,15 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import Link from 'next/link';
-import { HomeIcon } from '@heroicons/react/24/solid';
 import {
   Breadcrumb,
   BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbSeparator,
-  BreadcrumbEllipsis,
 } from '@/components/ui/breadcrumb';
-import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from '../ui/sidebar';
 import { useEffect, useState } from 'react';
 import { getGuidesForPath } from '@/actions/guide-actions';
-import { Play } from 'lucide-react';
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogTitle,
-  DialogHeader,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-
 import { GuidesUrl } from '@prisma/client';
-import { Button } from '../ui/button';
 
 const breadcrumbLabels: Record<string, string> = {
   flow: 'flujos',

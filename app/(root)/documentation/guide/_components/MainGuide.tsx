@@ -11,13 +11,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { deleteManual, createManual, updateManual, getManuals } from '@/actions/manual-actions'
 import { z } from 'zod'
 import { Textarea } from '@/components/ui/textarea'
 import { User, Manual, Role } from '@prisma/client'
-import { Edit2Icon, Search, Trash2 } from 'lucide-react'
+import { Edit2Icon, Eye, Pencil, Search, Trash2 } from 'lucide-react'
 interface MainGuideProps {
   user: User
 }
@@ -166,32 +166,41 @@ export function MainGuide({ user }: MainGuideProps) {
         </div>
       ) : (
         <div className="flex-1">
-          <div className="max-h-[85vh] overflow-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 min-w-[400px] p-2">
+          <div className="max-h-[85vh] overflow-auto py-2">
+            <div className="flex flex-wrap flex-1 gap-2 justify-center">
               {filtered.map((manual) => (
-                <Card key={manual.id} className="relative border-border      
-                    transition-all 
-                    duration-300 
-                    hover:shadow-lg 
-                    hover:scale-[1.015] 
-                    hover:border-primary">
-                  <CardContent className="space-y-2 py-4">
-                    <h3 className="text-lg font-semibold line-clamp-1">{manual.name}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">{manual.description}</p>
-                    <a href={manual.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 underline">
-                      Ver Guía
-                    </a>
-                    {user.role === Role.admin &&
-                      <div className="absolute top-4 right-4 flex gap-2">
-                        <Button variant="outline" size="icon" onClick={() => openEdit(manual)}>
-                          <Edit2Icon />
-                        </Button>
-                        <Button variant="destructive" size="icon" onClick={() => handleDelete(manual.id)}>
-                          <Trash2 />
-                        </Button>
-                      </div>
-                    }
+                <Card key={manual.id} className="flex flex-col border-border transition-all duration-300 hover:shadow-lg hover:scale-[1.015] hover:border-primary w-64">
+                  <CardHeader>
+                    <CardTitle>{manual.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-1 justify-stretch items-center">
+                    <p className="text-sm text-muted-foreground">{manual.description}</p>
                   </CardContent>
+                  {user.role === Role.admin &&
+                    <CardFooter className="flex mt-auto gap-2 w-full">
+                      <Button
+                        className="w-full"
+                        onClick={() => window.open(manual.url, "_blank")}
+                        rel="noopener noreferrer"
+                      >
+                        <Eye />
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        className="w-full"
+                        onClick={() => openEdit(manual)}
+                      >
+                        <Pencil />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        className="w-full"
+                        onClick={() => handleDelete(manual.id)}
+                      >
+                        <Trash2 />
+                      </Button>
+                    </CardFooter>
+                  }
                 </Card>
               ))}
             </div>

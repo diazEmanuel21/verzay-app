@@ -5,7 +5,7 @@ import { GuidesUrl as Guide, User } from '@prisma/client';
 import { getAllGuides, createGuide, updateGuide, deleteGuide } from '@/actions/guide-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogTrigger, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -16,8 +16,9 @@ import {
     SelectItem,
 } from '@/components/ui/select'
 import { toast } from 'sonner';
-import { Pencil, Trash2, Plus, Search } from 'lucide-react';
+import { Pencil, Trash2, Plus, Search, Eye } from 'lucide-react';
 import { useModuleStore } from '@/stores/modules/useModuleStore';
+import { GenericDeleteDialog } from '@/components/shared/GenericDeleteDialog';
 
 export const MainTutorial = ({ user }: { user: User }) => {
     const { modules } = useModuleStore();
@@ -26,8 +27,10 @@ export const MainTutorial = ({ user }: { user: User }) => {
     const [loading, setLoading] = useState(false);
     const [form, setForm] = useState<Partial<Guide>>({});
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [itemDelete, setItemDelete] = useState<Guide | null>(null);
     const [open, setOpen] = useState(false);
     const [filter, setFilter] = useState('');
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
 
     const fetchGuides = async () => {
@@ -88,6 +91,10 @@ export const MainTutorial = ({ user }: { user: User }) => {
         // guide.description.toLowerCase().includes(filter.toLowerCase())
     );
 
+    const onDeleteTutorial = (guide: Guide, state: boolean) => {
+        setShowDeleteDialog(state);
+        setItemDelete(guide);
+    };
 
     return (
         <div className="flex flex-col p-4 gap-6 overflow-hidden">
@@ -118,7 +125,7 @@ export const MainTutorial = ({ user }: { user: User }) => {
                             </DialogTrigger>
 
                             <DialogContent className="space-y-4">
-                                <DialogTitle>{form.id ? 'Edit Guide' : 'Crear tutorial'}</DialogTitle>
+                                <DialogTitle>{form.id ? 'Editar tutorial' : 'Crear tutorial'}</DialogTitle>
                                 <Input
                                     placeholder="Título de la guía (e.j., Cómo crear una cuenta)"
                                     value={form.title || ''}
@@ -165,43 +172,56 @@ export const MainTutorial = ({ user }: { user: User }) => {
                 </div>
             ) : (
                 <div className="flex-1">
-                    <div className="max-h-[85vh] overflow-auto p-2">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 min-w-[400px] p-2">
+                    <div className="max-h-[85vh] overflow-auto py-2">
+                        <div className="flex flex-wrap flex-1 gap-2 justify-center">
                             {filteredGuides.length > 0 ? (
                                 filteredGuides.map(guide => (
-                                    <Card key={guide.id} className="relative border-border
+                                    <Card key={guide.id} className="
+                                        flex
+                                        flex-col
+                                        border-border
                                         transition-all 
                                         duration-300 
                                         hover:shadow-lg 
                                         hover:scale-[1.015] 
                                         hover:border-primary
+                                        w-64
                                         ">
                                         <CardHeader>
                                             <CardTitle>{guide.title}</CardTitle>
                                         </CardHeader>
-                                        <CardContent>
-                                            <p className="text-sm text-muted-foreground mb-2">{guide.description}</p>
-                                            <p className="text-xs text-muted-foreground mb-2">Module: {guide.path}</p>
-                                            <a
-                                                href={guide.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-blue-500 text-sm underline"
-                                            >
-                                                View Guide
-                                            </a>
-                                            {
-                                                user?.role === 'admin' &&
-                                                <div className="absolute top-4 right-4 flex gap-2">
-                                                    <Button size="icon" variant="outline" onClick={() => handleEdit(guide)}>
-                                                        <Pencil className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button size="icon" variant="destructive" onClick={() => handleDelete(guide.id)}>
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            }
+                                        <CardContent className="flex flex-1 justify-stretch items-center">
+                                            <p className="text-sm text-muted-foreground">{guide.description}</p>
+                                            {/* <p className="text-xs text-muted-foreground mb-2">Module: {guide.path}</p> */}
                                         </CardContent>
+                                        {
+                                            user?.role === 'admin' &&
+                                            <CardFooter className="flex mt-auto gap-2 w-full">
+                                                <Button
+                                                    className="w-full"
+                                                    onClick={() => window.open(guide.url, "_blank")}
+                                                    rel="noopener noreferrer"
+                                                >
+                                                    <Eye />
+                                                </Button>
+
+                                                <Button
+                                                    variant="secondary"
+                                                    className="w-full"
+                                                    onClick={() => handleEdit(guide)}
+                                                >
+                                                    <Pencil />
+                                                </Button>
+
+                                                <Button
+                                                    variant="destructive"
+                                                    className="w-full"
+                                                    onClick={() => onDeleteTutorial(guide, true)}
+                                                >
+                                                    <Trash2 />
+                                                </Button>
+                                            </CardFooter>
+                                        }
                                     </Card>
                                 ))
                             ) : (
@@ -213,6 +233,18 @@ export const MainTutorial = ({ user }: { user: User }) => {
                     </div>
                 </div>
             )}
+
+            {
+                itemDelete &&
+                <GenericDeleteDialog
+                    open={showDeleteDialog}
+                    setOpen={setShowDeleteDialog}
+                    itemName={itemDelete.title}
+                    itemId={itemDelete.id}
+                    mutationFn={() => handleDelete(itemDelete.id)}
+                    entityLabel={itemDelete.title}
+                />
+            }
         </div>
     );
 }

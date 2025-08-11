@@ -105,9 +105,10 @@ export const MainTemplate = ({ userRole }: { userRole: Role }) => {
     }
 
     return (
-        <div className="flex flex-col h-full">
-            <div className="sticky top-0 z-1 mb-6">
-                <div className="flex justify-between items-center gap-2">
+        <div className="flex flex-col p-4 gap-6 overflow-hidden">
+            {/* Header y Filtro */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between overflow-hidden">
+                <div className="flex flex-1 gap-2 items-center">
                     <div className="relative flex-1">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -121,18 +122,20 @@ export const MainTemplate = ({ userRole }: { userRole: Role }) => {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {isPending ? (
-                        <TemplateCardSkeleton />
-                    ) : (
-                        <TemplateList
-                            templates={filteredTemplates}
-                            onEdit={handleOpenModal}
-                            onDelete={handleOpenDeleteModal}
-                            userRole={userRole}
-                        />
-                    )}
+            <div className="flex-1">
+                <div className="max-h-[85vh] overflow-auto py-2">
+                    <div className="flex flex-wrap flex-1 gap-2 justify-center">
+                        {isPending ? (
+                            <TemplateCardSkeleton />
+                        ) : (
+                            <TemplateList
+                                templates={filteredTemplates}
+                                onEdit={handleOpenModal}
+                                onDelete={handleOpenDeleteModal}
+                                userRole={userRole}
+                            />
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -144,7 +147,7 @@ export const MainTemplate = ({ userRole }: { userRole: Role }) => {
                         </DialogTitle>
                     </DialogHeader>
 
-                    <ScrollArea className="max-h-[85vh] ">
+                    <ScrollArea className="max-h-[85vh]">
                         <PromptTemplateForm
                             onSubmit={onSubmit}
                             defaultValues={editTemplate ? normalizeTemplate(editTemplate) : undefined}
