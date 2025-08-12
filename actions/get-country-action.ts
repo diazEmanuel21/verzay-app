@@ -8,7 +8,7 @@ export interface Country {
 
 export const getCountryCodes = async () => {
     try {
-        const res = await fetch('https://restcountries.com/v3.1/all', {
+        const res = await fetch('https://restcountries.com/v3.1/region/americas?fields=name,idd,flags', {
             next: { revalidate: 60 * 60 } // caché por 1 hora (opcional)
         })
 

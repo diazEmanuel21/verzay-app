@@ -25,8 +25,9 @@ import { normalizeTimeToSeconds, subtractSecondsFromTime } from "../helpers";
 import { useMutation } from "@tanstack/react-query";
 import { SeguimientoInput } from "@/schema/seguimientos";
 import { createSeguimiento } from "@/actions/seguimientos-actions";
+import { CountryCodeSelect } from "@/components/custom/CountryCodeSelect";
 
-export const SchedulePageClient = ({ user, reminders }: ScheduleInterface) => {
+export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInterface) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [slots, setSlots] = useState<{ startTime: string; endTime: string }[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -75,12 +76,13 @@ export const SchedulePageClient = ({ user, reminders }: ScheduleInterface) => {
     const [startTime, endTime] = selectedSlot.split("|");
 
     setLoading(true);
+    const remoteJid = `${areaCode}${phone}@s.whatsapp.net`; //TODO: se debe poner el pais por ej +57 debe de ir sin el signo de '+'
 
     try {
       const res = await createAppointment({
         userId: user.id,
         pushName: name,
-        phone,
+        phone: remoteJid.split('+')[1],
         instanceName,
         startTime,
         endTime,
@@ -104,8 +106,7 @@ export const SchedulePageClient = ({ user, reminders }: ScheduleInterface) => {
           if (!reminder.normalizedSeconds) return; // skip si no es válido
           const startLocal = toZonedTime(new Date(startTime), timezone);
           const seguimientoTime = subtractSecondsFromTime(startLocal, reminder.normalizedSeconds); // esto retorna '21/07/2025 12:55'
-          const remoteJid = `${areaCode}${phone}@s.whatsapp.net`; //TODO: se debe poner el pais por ej +57 debe de ir sin el signo de '+'
-          
+
           const dataSeguimiento = {
             idNodo: '',
             serverurl: reminder.serverUrl ? `https://${reminder.serverUrl}` : undefined,
@@ -119,7 +120,6 @@ export const SchedulePageClient = ({ user, reminders }: ScheduleInterface) => {
             consecutivo: undefined,
             media: undefined,
           };
-
 
           mutationSeguimiento.mutate(dataSeguimiento);
         });
@@ -255,30 +255,25 @@ export const SchedulePageClient = ({ user, reminders }: ScheduleInterface) => {
           <div className="flex flex-col gap-2 w-full">
             <div className="space-y-2">
               <Input placeholder="Nombre completo" value={name} onChange={(e) => setName(e.target.value)} />
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground text-sm">+</span>
-
-                <Input
-                  placeholder="57"
-                  className="w-20"
-                  value={areaCode}
-                  onChange={(e) => setAreaCode(e.target.value)}
-                  inputMode="numeric"
-                  maxLength={4}
-                  aria-label="Código de país"
+              <div className="flex flex-1 items-center gap-2 flex-col">
+                <CountryCodeSelect
+                  countries={countries}
+                  defaultValue={areaCode}
+                  onChange={(code) => {
+                    setAreaCode(code);
+                    // handleChange(code, localNumber);
+                  }}
                 />
 
                 <Input
-                  placeholder=" WhatsApp"
-                  className="flex-1"
+                  placeholder="WhatsApp"
+                  className="flex w-full"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   inputMode="tel"
                   aria-label="Número de WhatsApp"
                 />
               </div>
-
-
             </div>
 
             <Button onClick={handlePreview} disabled={loading} className="w-full">

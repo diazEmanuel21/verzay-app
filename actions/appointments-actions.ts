@@ -68,16 +68,14 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
         };
     }
 
-    const remoteJid = `${phone}@s.whatsapp.net`;
-
     try {
         // Buscar o registrar sesión
-        let session = await db.session.findFirst({ where: { userId, remoteJid } });
+        let session = await db.session.findFirst({ where: { userId, remoteJid: phone } });
 
         if (!session) {
             const register = await registerSession({
                 userId,
-                remoteJid,
+                remoteJid: phone,
                 pushName,
                 instanceId: instanceName,
             });
