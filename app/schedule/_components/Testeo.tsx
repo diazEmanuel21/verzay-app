@@ -445,11 +445,12 @@ export const Testeo = ({ user, reminders, countries }: ScheduleInterface) => {
 
                                         <div className="space-y-2">
                                             <Label>País</Label>
-                                            <CountryCodeSelect
-                                                countries={countries}
-                                                defaultValue={areaCode}
-                                                onChange={(code) => setAreaCode(code)}
-                                            />
+                                            {countries &&
+                                                <CountryCodeSelect
+                                                    countries={countries}
+                                                    defaultValue={areaCode}
+                                                    onChange={(code) => setAreaCode(code)}
+                                                />}
                                         </div>
 
                                         <div className="sm:col-span-2 space-y-2">
