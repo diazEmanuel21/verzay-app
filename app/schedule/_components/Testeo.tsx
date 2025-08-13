@@ -226,7 +226,7 @@ export const Testeo = ({ user, reminders, countries }: ScheduleInterface) => {
         const apikey = user.instancias[0].instanceId;
         const url = `https://${urlevo}/message/sendText/${instanceName}`;
         const currentService = user.Service.find((s) => s.id === selectedService);
-        const text = currentService?.messageText ?? "This is a default notification from Verzay APP. You have an appointment, right?";
+        const text = currentService?.messageText ? `*${name}*${currentService?.messageText}` : "This is a default notification from Verzay APP. You have an appointment, right?";
 
         const areaDigits = areaCode.replace(/\D/g, "");
         const phoneDigits = phone.replace(/\D/g, "");
