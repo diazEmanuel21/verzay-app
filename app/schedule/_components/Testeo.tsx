@@ -260,8 +260,8 @@ export const Testeo = ({ user, reminders, countries }: ScheduleInterface) => {
     // ───────────────── UI ─────────────────
     return (
         <>
-            <div className="w-full min-h-[100vh] p-4 sm:p-8">
-                <div className="mx-auto max-w-5xl grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 max-h-98vh">
+            <div className="w-full min-h-[100vh] p-4 sm:p-8 ">
+                <div className="flex justify-center max-h-98vh">
                     {/* Columna izquierda: contenido por pasos */}
                     <div className="space-y-6">
                         {/* Stepper */}
@@ -513,41 +513,6 @@ export const Testeo = ({ user, reminders, countries }: ScheduleInterface) => {
                             </Card>
                         )}
                     </div>
-
-                    {/* Columna derecha: Resumen sticky */}
-                    <aside className="lg:sticky lg:top-6 h-max">
-                        <Card className="border-muted/50 shadow-sm">
-                            <CardHeader>
-                                <CardTitle className="text-base">Resumen</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <SummaryItem label="Servicio" value={user.Service.find((s) => s.id === selectedService)?.name ?? "—"} />
-                                <SummaryItem label="Duración" value={`${appointmentHour} hrs`} />
-                                <SummaryItem label="Fecha" value={formatDateLabel(selectedDate)} />
-                                <SummaryItem
-                                    label="Hora"
-                                    value={
-                                        selectedSlot
-                                            ? format(toZonedTime(new Date(selectedSlot.split("|")[0]), timezone), "hh:mm a")
-                                            : "—"
-                                    }
-                                />
-                                <SummaryItem label="Zona horaria" value={timezone} />
-                                <div className="pt-2">
-                                    <Button
-                                        className="w-full"
-                                        onClick={() => setStep(Math.min(step + 1, 3))}
-                                        disabled={step === 3}
-                                    >
-                                        Siguiente
-                                    </Button>
-                                    <p className="text-xs text-muted-foreground mt-2">
-                                        Puedes avanzar desde aquí y completar los pasos más tarde.
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </aside>
                 </div>
             </div>
 
@@ -559,25 +524,23 @@ export const Testeo = ({ user, reminders, countries }: ScheduleInterface) => {
                             <AlertDialogTitle>Confirmar cita</AlertDialogTitle>
                             <AlertDialogDescription>
                                 Estás a punto de agendar una cita con los siguientes datos:
-                                <ul className="mt-4 text-sm space-y-1">
-                                    <li>
-                                        <strong>Motivo:</strong> {user.Service.find((s) => s.id === selectedService)?.name}
-                                    </li>
-                                    <li>
-                                        <strong>Nombre:</strong> {name}
-                                    </li>
-                                    <li>
-                                        <strong>Teléfono:</strong> {areaCode} {phone}
-                                    </li>
-                                    <li>
-                                        <strong>Fecha:</strong> {format(selectedDate, "PPP")}
-                                    </li>
-                                    <li>
-                                        <strong>Horario:</strong>{" "}
-                                        {selectedSlot &&
-                                            format(toZonedTime(new Date(selectedSlot.split("|")[0]), timezone), "hh:mm a")}
-                                    </li>
-                                </ul>
+                                <Card className="border-none mt-2 ">
+                                    <CardContent className="space-y-4 p-0 m-0">
+                                        <SummaryItem label="Servicio" value={user.Service.find((s) => s.id === selectedService)?.name ?? "—"} />
+                                        <SummaryItem label="Duración" value={`${appointmentHour} hrs`} />
+                                        <SummaryItem label="Fecha" value={formatDateLabel(selectedDate)} />
+                                        <SummaryItem label="Contacto" value={`${areaCode} ${phone}`} />
+                                        <SummaryItem
+                                            label="Hora"
+                                            value={
+                                                selectedSlot
+                                                    ? format(toZonedTime(new Date(selectedSlot.split("|")[0]), timezone), "hh:mm a")
+                                                    : "—"
+                                            }
+                                        />
+                                        <SummaryItem label="Zona horaria" value={timezone} />
+                                    </CardContent>
+                                </Card>
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
