@@ -106,7 +106,7 @@ export const Testeo = ({ user, reminders, countries }: ScheduleInterface) => {
     const canContinueStep1 = Boolean(selectedDate && selectedSlot);
     const canContinueStep2 = Boolean(name.trim() && phone.trim() && areaCode && selectedService);
 
-    // ── Confirmación + notificación (tu lógica + leves mejoras de sanitización)
+    // ── Confirmación + notificación (con envío al owner)
     const handleConfirmAppointment = async () => {
         if (!name || !phone || !selectedSlot || !selectedDate || !selectedService || !areaCode) {
             toast.error("Todos los campos son obligatorios.");
@@ -126,7 +126,7 @@ export const Testeo = ({ user, reminders, countries }: ScheduleInterface) => {
             const res = await createAppointment({
                 userId: user.id,
                 pushName: name,
-                phone: remoteJid, // ← ya sin '+'
+                phone: remoteJid, // lo dejas como lo tienes
                 instanceName,
                 startTime,
                 endTime,
@@ -140,7 +140,7 @@ export const Testeo = ({ user, reminders, countries }: ScheduleInterface) => {
                 return;
             }
 
-            // Seguimientos
+            // Seguimientos (como ya lo tienes)
             const secondsReminders = reminders.map((rem) => ({
                 ...rem,
                 normalizedSeconds: isNaN(normalizeTimeToSeconds(rem?.time ?? "")) ? 0 : normalizeTimeToSeconds(rem?.time ?? ""),
@@ -166,6 +166,47 @@ export const Testeo = ({ user, reminders, countries }: ScheduleInterface) => {
                 mutationSeguimiento.mutate(dataSeguimiento);
             });
 
+            // ─────────────────────────────────────────────
+            // 📩 Enviar mensaje al owner (dueño de la app)
+            // ─────────────────────────────────────────────
+            if (user.apiKey && user.instancias?.[0] && user.notificationNumber) {
+                const urlevo = user.apiKey.url;
+                const apikey = user.instancias[0].instanceId;
+                const url = `https://${urlevo}/message/sendText/${instanceName}`;
+
+                // Asegura el sufijo del JID del owner
+                const ownerJid = user.notificationNumber.includes("@s.whatsapp.net")
+                    ? user.notificationNumber
+                    : `${user.notificationNumber}@s.whatsapp.net`;
+
+                // Datos de fecha/hora legibles en la TZ de la cita
+                const startLocal = toZonedTime(new Date(startTime), timezone);
+                const dateLabel = format(selectedDate!, "PPP");
+                const hourLabel = format(startLocal, "hh:mm a");
+
+                const serviceName = user.Service.find((s) => s.id === selectedService)?.name ?? "Asesoría";
+                const displayPhone = `+${fullPhone}`;
+
+                const ownerText =
+                    `Recordatorio para el dueño de la aplicación:\n` +
+                    `✅ Tienes Nueva Cita:\n` +
+                    `👤 Nombre: ${name}\n` +
+                    `📝 Descripción: ${serviceName}, para el día ${dateLabel} a las ${hourLabel}.\n` +
+                    `WhatsApp del usuario:\n` +
+                    `👉 ${displayPhone}`;
+
+                try {
+                    const ownerRes = await sendingMessages({ url, apikey, remoteJid: ownerJid, text: ownerText });
+                    if (!ownerRes.success) {
+                        toast.warning(`No se pudo notificar al dueño: ${ownerRes.message}`);
+                    }
+                } catch (e) {
+                    console.error("Error notificando al owner:", e);
+                    toast.warning("No se pudo enviar la notificación al dueño.");
+                }
+            }
+            // ─────────────────────────────────────────────
+
             toast.success("Cita agendada correctamente.");
             resetForm();
         } catch (err) {
@@ -175,6 +216,7 @@ export const Testeo = ({ user, reminders, countries }: ScheduleInterface) => {
 
         setLoading(false);
     };
+
 
     const scheduleAndNotify = async () => {
         if (!user.apiKey || !user.instancias) return toast.info("Campos incompletos o vacíos");
