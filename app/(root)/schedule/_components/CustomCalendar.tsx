@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 import { getAppointmentsByUser, updateAppointmentStatus } from "@/actions/appointments-actions";
 import { AppointmentStatus, User } from "@prisma/client";
-import { AppointmentWithSession, normalizeAppointmentsToEvents } from "../helpers";
+import { AppointmentWithSession, buildStatusOwnerMessage, normalizeAppointmentsToEvents } from "../helpers";
 import esLocale from '@fullcalendar/core/locales/es';
 
 import { Button } from "@/components/ui/button"
@@ -44,6 +44,7 @@ import {
 import { ScheduleInterface } from "@/schema/schema";
 import { useReminderDialogStore } from "@/stores";
 import { XCircleIcon } from 'lucide-react';
+import { sendingMessages } from "@/actions/sending-messages-actions";
 
 export const CustomCalendar = ({ user }: ScheduleInterface) => {
     const { reminderData } = useReminderDialogStore();
@@ -78,6 +79,8 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
         const res = await updateAppointmentStatus(id, status);
         if (res.success) {
             toast.success("📌 Estado actualizado correctamente", { id: toastId });
+
+            await notifyChangeStatus();
             await loadAppointments();
         } else {
             toast.error(res.message, { id: toastId });
@@ -102,6 +105,37 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
         repeatEvery: undefined,
         isSchedule: true,
     };
+
+    const notifyChangeStatus = async () => {
+        if (!user.apiKey || !user.instancias || !currentAppointment) return toast.info('Campos incompletos o vacios');
+
+        const urlevo = user.apiKey?.url;
+        const apikey = user.instancias[0].instanceId;
+        const instanceName = user.instancias[0]?.instanceName ?? "";
+
+        const url = `https://${urlevo}/message/sendText/${instanceName}`;
+        const text = buildStatusOwnerMessage({
+            appointment: currentAppointment,
+            newStatus /*, { reason: 'Cliente no puede asistir' }*/
+        });
+        
+        const remoteJid = user.notificationNumber;
+
+        try {
+            const result = await sendingMessages({ url, apikey, remoteJid, text });
+
+            if (result.success) {
+                toast.success(result.message);
+            } else {
+                toast.warning(`No se pudo enviar el mensaje: ${result.message}`);
+            }
+
+        } catch (error) {
+            console.error("Error en notificación:", error);
+            toast.error("currió un error al intentar notificar la cita.");
+        }
+    };
+
 
     return (
         <>
@@ -165,9 +199,9 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                                             <SelectValue placeholder="Seleccionar estado" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="PENDIENTE">🕒 Pendiente</SelectItem>
-                                            <SelectItem value="CONFIRMADA">✅ Confirmada</SelectItem>
-                                            <SelectItem value="CANCELADA">❌ Cancelada</SelectItem>
+                                            <SelectItem value="PENDIENTE">Pendiente</SelectItem>
+                                            <SelectItem value="CONFIRMADA">Confirmada</SelectItem>
+                                            <SelectItem value="CANCELADA">Cancelada</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </CardContent>
