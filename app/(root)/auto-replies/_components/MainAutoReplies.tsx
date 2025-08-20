@@ -40,7 +40,7 @@ export const MainAutoReplies = ({ user, Workflows, autoReplies = [] }: Props) =>
 
       {/* Scroll interno para el contenido */}
       <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-1 gap-4 min-h-full">
+        <div className="grid grid-cols-1 gap-4">
           {autoReplies.length === 0 ? (
             <div className="flex flex-col gap-4 h-full items-center justify-center">
               <div className='rounded-full bg-accent w-20 h-20 flex items-center justify-center'>
