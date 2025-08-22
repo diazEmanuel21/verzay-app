@@ -1,14 +1,13 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import EnableToggleButton from '@/components/button-bot'
 import QRCodeGenerator from '@/components/form-qr'
 import { GenericDeleteDialog } from '@/components/shared/GenericDeleteDialog'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { MessageCircle, Users } from 'lucide-react'
-import { useState } from 'react'
+import { MessageCircle, Settings, Users } from 'lucide-react'
 import { FaWhatsapp } from 'react-icons/fa'
-import { ConnectionActions } from './'
 import { deleteInstance } from '@/actions/api-action'
 import { ClientInstanceCardProps } from '@/schema/connection'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -19,6 +18,7 @@ export const ClientInstanceCard = ({
   currentInstanceInfo
 }: ClientInstanceCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [counter, setcounter] = useState(0);
 
   const instanceId = currentInstanceInfo?.id;
   const ownerJid = currentInstanceInfo?.ownerJid;
@@ -29,13 +29,29 @@ export const ClientInstanceCard = ({
   const messages = currentInstanceInfo?._count?.Message;
   const userInitial = intanceName.charAt(0).toUpperCase() ?? '?'
 
+  useEffect(() => {
+    if (showDeleteDialog) {
+      setcounter(0)
+    }
+  }, [showDeleteDialog])
+
+
+  const onSecretDelete = () => {
+    setcounter(counter + 1)
+
+    if (counter === 3) {
+      setShowDeleteDialog(true)
+    }
+  }
+
   return (
     <>
       <Card className="border-border max-w-96">
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>{intanceName}</CardTitle>
-            <ConnectionActions handleDelete={setShowDeleteDialog} />
+            {/* <ConnectionActions handleDelete={setShowDeleteDialog} /> */}
+            <Settings className="h-4 w-4 text-muted-foreground cursor-pointer" />
           </div>
         </CardHeader>
         <CardContent>
@@ -89,6 +105,7 @@ export const ClientInstanceCard = ({
           <div className="flex flex-1 flex-row items-center gap-1">
             <FaWhatsapp
               className="text-green-500 rounded-sm"
+              onClick={onSecretDelete}
             />
             <span className="text-sm font-bold">Whatsapp</span>
             <hr className="w-4 rotate-90" />

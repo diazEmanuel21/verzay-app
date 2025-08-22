@@ -1,3 +1,4 @@
+// components/forms/ReminderForm.tsx
 "use client"
 
 import { useEffect, useState } from "react"
@@ -18,8 +19,11 @@ import { useReminderDialogStore } from "@/stores"
 import { LeadCreateForm } from "../../sessions/_components"
 import { Card } from "@/components/ui/card"
 
+import { SelectMultipleComboBox } from "../../campaigns/_components"
+
 import { Reminders } from '@prisma/client';
 import { TimeInput } from "@/components/shared/TimeInput"
+import { Session } from "@prisma/client"
 
 export const ReminderForm = ({
     userId,
@@ -62,10 +66,8 @@ export const ReminderForm = ({
         const fetchReminders = async () => {
             try {
                 const reminders = await getRemindersByUserId(userId)
-
                 if (!reminders.success) return;
                 const dataReminder = reminders.data as Reminders[];
-
                 const filtered = dataReminder.filter((r) => r.isSchedule === true)
                 setCountScheduleReminders(filtered.length)
             } catch (error) {
@@ -76,9 +78,16 @@ export const ReminderForm = ({
     }, [userId]);
 
     const { register, handleSubmit, setValue, watch, formState: { errors } } = reminderForm;
+
     const initialLeadValue = initialData && initialData?.remoteJid
         ? `${initialData.pushName || 'Sin nombre'} ${initialData?.remoteJid.split('@')[0]}`
         : undefined;
+
+    // Lógica para inicializar con múltiples leads
+    const initialLeadsJids = initialData?.remoteJid
+        ? initialData.remoteJid.split(',')
+        : [];
+
 
     const initialWorkflowId = initialData?.workflowId;
 
@@ -91,7 +100,7 @@ export const ReminderForm = ({
             if (!res.success) return toast.error(res.message)
             toast.success(res.message)
             router.refresh()
-            setCountScheduleReminders(countScheduleReminders + 1)
+            setCountScheduleReminders((c) => c + 1)
             if (onSuccess) onSuccess()
         },
         onError: () => {
@@ -100,16 +109,18 @@ export const ReminderForm = ({
     });
 
     useEffect(() => {
-        setValue("apikey", apikey)
-        setValue("serverUrl", serverUrl)
-        setValue("instanceName", instanceNameReminder)
-    }, [apikey, serverUrl]);
+        const v = reminderForm.getValues();
+        if (apikey && v.apikey !== apikey) setValue("apikey", apikey);
+        if (serverUrl && v.serverUrl !== serverUrl) setValue("serverUrl", serverUrl);
+        if (instanceNameReminder && v.instanceName !== instanceNameReminder) {
+            setValue("instanceName", instanceNameReminder);
+        }
+    }, [apikey, serverUrl, instanceNameReminder, register, setValue]);
 
     const modalTitle = isCampaignPage ? 'campaña' : 'recordatorio';
 
     const onSubmit = (payload: formValuesReminderSchema) => {
         if (countScheduleReminders >= 5) return toast.info('No se pueden crear más de 5 recordatorios en el módulo de agendamiento.');
-
         mutation.mutate(payload);
     }
 
@@ -126,7 +137,7 @@ export const ReminderForm = ({
 
     return (
         <>
-            <form onSubmit={handleSubmit(onSubmit, onError)} className="flex flex-col gap-4">
+            <form onSubmit={handleSubmit(onSubmit, onError)} className="flex flex-col gap-4 pr-2 overflow-y-auto max-h-[80vh]">
                 {/* Campos ocultos */}
                 <>
                     {["userId", "remoteJid", "instanceName", "pushName", "workflowId", "apikey", "serverUrl"].map((name) => (
@@ -139,25 +150,24 @@ export const ReminderForm = ({
 
                 <Textarea placeholder="Descripción" {...register("description")} />
 
-                {!isSchedule &&
+                {!isSchedule ? (
                     <DateTimePicker
-                        isSchedule={isSchedule ?? false}
+                        isSchedule={false}
                         value={watch("time")}
                         onChange={(val) => setValue("time", val)}
                     />
-                }
-
-                <TimeInput
-                    className="text-xs text-muted-foreground"
-                    onChange={(val) => setValue("time", val)}
-                    currentValue={initialData?.time ?? 'minutes-0'}
-                />
+                ) : (
+                    <TimeInput
+                        className="text-xs text-muted-foreground"
+                        onChange={(val) => setValue("time", val)}
+                        currentValue={initialData?.time ?? 'minutes-0'}
+                    />
+                )}
 
                 {errors.time && <p className="text-sm text-red-500">{errors.time.message}</p>}
 
                 {!isSchedule &&
                     <div>
-                        {/* <label className="block mb-1 font-medium">Tipo de Repetición</label> */}
                         <Controller
                             control={reminderForm.control}
                             name="repeatType"
@@ -183,17 +193,42 @@ export const ReminderForm = ({
                     <>
                         <Input type="number" placeholder="Cada cuántos (días/meses...)" {...register("repeatEvery")} />
 
-                        {leads && <SelectComboBox
-                            leads={leads}
-                            onSelect={(lead) => {
-                                setValue("userId", lead.userId, { shouldValidate: true })
-                                setValue("remoteJid", lead.remoteJid, { shouldValidate: true })
-                                setValue("instanceName", lead.instanceId, { shouldValidate: true })
-                                setValue("pushName", lead.pushName, { shouldValidate: true })
-                            }}
-                            onLeadCreated={() => setCreateLead(true)}
-                            initialValue={initialLeadValue}
-                        />}
+                        {leads && (isCampaignPage ?
+                            <SelectMultipleComboBox
+                                leads={leads}
+                                onSelect={(leads) => {
+
+                                    console.log(leads)
+                                    const remoteJids = leads.map(lead => lead.remoteJid).join(',');
+                                    console.log(remoteJids)
+                                    const userIds = leads.map(lead => lead.userId).join(',');
+                                    console.log(userIds)
+                                    const instanceNames = leads.map(lead => lead.instanceId).join(',');
+                                    console.log(instanceNames)
+                                    const pushNames = leads.map(lead => lead.pushName).join(',');
+                                    console.log(pushNames)
+
+                                    // setValue("userId", userIds, { shouldValidate: true });
+                                    // setValue("remoteJid", remoteJids, { shouldValidate: true });
+                                    // setValue("instanceName", instanceNames, { shouldValidate: true });
+                                    // setValue("pushName", pushNames, { shouldValidate: true });
+
+                                }}
+                                onLeadCreated={() => setCreateLead(true)}
+                                initialValue={initialLeadsJids}
+                            />
+                            :
+                            <SelectComboBox
+                                leads={leads}
+                                onSelect={(lead) => {
+                                    setValue("userId", lead.userId, { shouldValidate: true })
+                                    setValue("remoteJid", lead.remoteJid, { shouldValidate: true })
+                                    setValue("instanceName", lead.instanceId, { shouldValidate: true })
+                                    setValue("pushName", lead.pushName, { shouldValidate: true })
+                                }}
+                                onLeadCreated={() => setCreateLead(true)}
+                                initialValue={initialLeadValue}
+                            />)}
 
                         {workflows &&
                             <SelectWorkflowBox
@@ -201,6 +236,7 @@ export const ReminderForm = ({
                                 onSelect={(workflow) => setValue("workflowId", workflow.id, { shouldValidate: true })}
                                 initialValue={initialWorkflowId}
                             />}
+
                     </>
                 }
 
@@ -214,14 +250,7 @@ export const ReminderForm = ({
                     <LeadCreateForm
                         userId={userId}
                         instanceId={instanceNameReminder}
-                        onCreated={(lead) => {
-                            // setLeads((prev) => [...prev, lead]);
-                            // setValue("userId", lead.userId);
-                            // setValue("remoteJid", lead.remoteJid);
-                            // setValue("instanceName", lead.instanceId);
-                            // setValue("pushName", lead.pushName);
-                            setCreateLead(false);
-                        }}
+                        onCreated={() => setCreateLead(false)}
                         onCancel={() => setCreateLead(false)}
                     />
                 </Card>
