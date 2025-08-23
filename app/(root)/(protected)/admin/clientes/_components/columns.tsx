@@ -142,7 +142,7 @@ export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogT
         return <Badge className="bg-green-600 text-white">Avanzado</Badge>;
       }
 
-      if (url?.startsWith("http://82.29.152.30:4001/webhook")) {
+      if (url?.startsWith("http://82.29.152.30:5001/webhook")) {
         return <Badge className="bg-blue-500 text-white">Estándar</Badge>;
       }
 

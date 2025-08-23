@@ -39,7 +39,7 @@ export const ClientInstanceCard = ({
   const onSecretDelete = () => {
     setcounter(counter + 1)
 
-    if (counter === 3) {
+    if (counter === 2) {
       setShowDeleteDialog(true)
     }
   }
@@ -96,7 +96,7 @@ export const ClientInstanceCard = ({
                 userName={user.name}
                 apiurl={user.apiUrl}
                 apikey={user.apiKeyId as string}
-                webhookUrl={user?.webhookUrl ?? 'http://82.29.152.30:4001/webhook'}
+                webhookUrl={user?.webhookUrl ?? 'http://82.29.152.30:5001/webhook'}
               />
             </div>
           </div>
