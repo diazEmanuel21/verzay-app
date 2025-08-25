@@ -67,6 +67,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             del_seguimiento,
             webhookUrl,
             apiUrl,
+            timezone: 'America/Bogota',
             muteAgentResponses: false,
             lat: '0.0000',
             lng: '0.0000',
