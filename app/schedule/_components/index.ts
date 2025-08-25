@@ -1,1 +1,1 @@
-export * from './Testeo';
+export * from './SchedulePageClient';

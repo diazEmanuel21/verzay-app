@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Reminders } from "@prisma/client";
 import { getRemindersByUserId } from "@/actions/reminders-actions";
 import { getCountryCodes } from "@/actions/get-country-action";
-import { Testeo } from "../_components/Testeo";
+import { SchedulePageClient } from "../_components/SchedulePageClient";
 
 function hasReminder(result: { data?: Reminders[] }): result is { data: Reminders[] } {
     return !!result.data
@@ -35,7 +35,7 @@ const SchedulePage = async ({ params }: { params: { userId: string } }) => {
 
     if (countries.length === 0) return ('Error al obtener los paises.')
 
-    return <Testeo
+    return <SchedulePageClient
         user={user}
         reminders={reminders}
         countries={countries}

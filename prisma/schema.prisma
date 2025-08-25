@@ -14,6 +14,7 @@ model User {
   password           String?
   emailVerified      DateTime?
   image              String?
+  timezone           String?
   role               Role               @default(user)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
@@ -51,7 +52,7 @@ model Module {
   id                     String       @id @default(cuid())
   label                  String
   customUrl              String?
-  route                  String       
+  route                  String
   icon                   String
   showInSidebar          Boolean?     @default(true)
   hiddenModuleToSelector Boolean?     @default(false)
@@ -394,7 +395,7 @@ enum Role {
 }
 
 enum Plan {
-  admin   @map("empresarial")
+  admin         @map("empresarial")
   lite
   unico
   basico

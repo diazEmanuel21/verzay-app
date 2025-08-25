@@ -27,7 +27,7 @@ import { normalizeTimeToSeconds, subtractSecondsFromTime } from "../helpers";
 
 import { CalendarIcon, CheckCircle2, Clock, User2 } from "lucide-react";
 
-export const Testeo = ({ user, reminders, countries }: ScheduleInterface) => {
+export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInterface) => {
     // ── UI State (4 pasos)
     const [step, setStep] = useState(0); // 0 Servicio, 1 Fecha/Hora, 2 Datos, 3 Revisión
     const stepLabel = [
