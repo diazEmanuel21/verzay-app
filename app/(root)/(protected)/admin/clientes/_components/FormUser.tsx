@@ -20,13 +20,11 @@ import {
 } from "@radix-ui/react-select";
 import { PLAN_LABELS, PLANS } from "@/types/plans";
 import { toast } from "sonner";
-import { Country, CountryCodeSelect } from "@/components/custom/CountryCodeSelect";
+import { Country } from "@/components/custom/CountryCodeSelect";
 import { useState } from "react";
 import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox";
-import { Label } from "recharts";
 
 export const FormUser = ({ onSubmit, apikeys, countries }: { onSubmit: (values: UserFormValues) => void, apikeys: ApiKey[], countries: Country[] }) => {
-    const [tz, setTz] = useState<string>("America/Bogota");
 
     const ROLES = Object.values(Role);
     const ROLE_LABELS: Record<Role, string> = {
@@ -35,6 +33,8 @@ export const FormUser = ({ onSubmit, apikeys, countries }: { onSubmit: (values: 
         reseller: 'Reseller',
     };
 
+    // const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone ?? "America/Bogota";
+
     const form = useForm<UserFormValues>({
         resolver: zodResolver(userSchema),
         defaultValues: {
@@ -42,7 +42,7 @@ export const FormUser = ({ onSubmit, apikeys, countries }: { onSubmit: (values: 
             email: "",
             password: "",
             company: "",
-            timezone: "America/Bogota",
+            timezone: "",
             notificationNumber: "",
             role: "user",
             plan: "basico",
@@ -130,10 +130,22 @@ export const FormUser = ({ onSubmit, apikeys, countries }: { onSubmit: (values: 
                     </p>
                 )}
 
-                <div className="w-full">
-                    <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Zona horaria</span>
-                    <TimezoneCombobox value={tz} onChange={setTz} />
-                </div>
+                <FormField
+                    control={form.control}
+                    name="timezone"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Zona horaria</FormLabel>
+                            <FormControl>
+                                <TimezoneCombobox
+                                    value={field.value}
+                                    onChange={(v) => field.onChange(v)}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
                 <FormField
                     control={form.control}

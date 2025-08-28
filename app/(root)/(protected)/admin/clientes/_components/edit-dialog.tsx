@@ -22,6 +22,8 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { VolumeX, Volume2 } from 'lucide-react'
 import { PLAN_LABELS, PLANS } from "@/types/plans"
+import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox"
+import { useEffect, useState } from "react"
 
 interface Props {
   openEditDialog: boolean
@@ -49,6 +51,14 @@ export const EditDialog = ({
     reseller: 'Reseller',
   };
 
+  // 1) Estado local para la zona horaria (para el TimezoneCombobox)
+  const [tz, setTz] = useState<string>(user.timezone ?? "");
+
+  // 2) Re-sincroniza cuando cambie el usuario o al abrir/cerrar
+  useEffect(() => {
+    setTz(user.timezone ?? "");
+  }, [user.id, openEditDialog, user.timezone]);
+
   let fields = [
     {
       id: "muteAgentResponses",
@@ -64,8 +74,8 @@ export const EditDialog = ({
     { id: "apiUrl", label: "Apikey OpenIA", defaultValue: user.apiUrl, readOnly: false },
     { id: "webhookUrl", label: "Webhook URL", defaultValue: user.webhookUrl, readOnly: false },
     { id: "company", label: "Empresa", defaultValue: user.company, readOnly: false },
-    {id: "timezone", label: "Zona horaria", defaultValue: user.timezone, readOnly: false},
     { id: "notificationNumber", label: "Teléfono Notificación", defaultValue: user.notificationNumber, readOnly: false },
+    { id: "timezone", label: "Zona horaria", defaultValue: user.timezone, readOnly: false },
     { id: "openMsg", label: "Frase de reactivación", defaultValue: openMsg, readOnly: false },
     { id: "mapsUrl", label: "Maps URL", defaultValue: user.mapsUrl, readOnly: false },
     { id: "lat", label: "Latitud", defaultValue: user.lat, readOnly: false },
@@ -177,19 +187,40 @@ export const EditDialog = ({
               </SelectGroup>
             </SelectContent>
           </Select>
-
-          // <Select name={id} defaultValue={defaultValue ? "true" : "false"} disabled={readOnly}>
-          //   <SelectTrigger className="col-span-3">
-          //     <SelectValue placeholder="Silenciar respuestas" />
-          //   </SelectTrigger>
-          //   <SelectContent>
-          //     <SelectGroup>
-          //       <SelectItem value="true">Activado (Silenciado)</SelectItem>
-          //       <SelectItem value="false">Desactivado (Responde)</SelectItem>
-          //     </SelectGroup>
-          //   </SelectContent>
-          // </Select>
         )
+      case 'timezone':
+        // Si es de solo lectura, muestra el valor fijo
+        if (readOnly) {
+          return (
+            <Input
+              id="timezone"
+              name="timezone"
+              defaultValue={defaultValue?.toString() ?? ""}
+              className="col-span-3"
+              readOnly
+              disabled
+            />
+          );
+        }
+        // Editable: combobox + input oculto para el formData
+        return (
+          <div className="col-span-3">
+            <TimezoneCombobox value={tz} onChange={setTz} />
+            <input type="hidden" name="timezone" value={tz} />
+          </div>
+        );
+      // <Select name={id} defaultValue={defaultValue ? "true" : "false"} disabled={readOnly}>
+      //   <SelectTrigger className="col-span-3">
+      //     <SelectValue placeholder="Silenciar respuestas" />
+      //   </SelectTrigger>
+      //   <SelectContent>
+      //     <SelectGroup>
+      //       <SelectItem value="true">Activado (Silenciado)</SelectItem>
+      //       <SelectItem value="false">Desactivado (Responde)</SelectItem>
+      //     </SelectGroup>
+      //   </SelectContent>
+      // </Select>
+
       default:
         return (
           <Input

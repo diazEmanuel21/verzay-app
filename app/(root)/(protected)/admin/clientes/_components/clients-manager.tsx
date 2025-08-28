@@ -53,6 +53,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             del_seguimiento,
             webhookUrl,
             apiUrl,
+            timezone
         } = formData;
 
         const result = await createUserWithPausar({
@@ -67,7 +68,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             del_seguimiento,
             webhookUrl,
             apiUrl,
-            timezone: 'America/Bogota',
+            timezone,
             muteAgentResponses: false,
             lat: '0.0000',
             lng: '0.0000',
