@@ -6,6 +6,7 @@ export const userSchema = z.object({
     email: z.string().email("Correo inválido"),
     password: z.string().min(6, "Debe tener al menos 6 caracteres"),
     company: z.string().min(2, "Nombre de empresa inválido"),
+    timezone: z.string().min(2, "Zona horaria obligatoria"),
     notificationNumber: z
         .string()
         .min(2, "Número inválido (mínimo 8 dígitos)"),

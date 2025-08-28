@@ -64,6 +64,7 @@ export const EditDialog = ({
     { id: "apiUrl", label: "Apikey OpenIA", defaultValue: user.apiUrl, readOnly: false },
     { id: "webhookUrl", label: "Webhook URL", defaultValue: user.webhookUrl, readOnly: false },
     { id: "company", label: "Empresa", defaultValue: user.company, readOnly: false },
+    {id: "timezone", label: "Zona horaria", defaultValue: user.timezone, readOnly: false},
     { id: "notificationNumber", label: "Teléfono Notificación", defaultValue: user.notificationNumber, readOnly: false },
     { id: "openMsg", label: "Frase de reactivación", defaultValue: openMsg, readOnly: false },
     { id: "mapsUrl", label: "Maps URL", defaultValue: user.mapsUrl, readOnly: false },

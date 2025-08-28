@@ -20,10 +20,14 @@ import {
 } from "@radix-ui/react-select";
 import { PLAN_LABELS, PLANS } from "@/types/plans";
 import { toast } from "sonner";
-import { NotificationPhoneInput } from "@/app/(root)/profile/_components";
-import { Country } from "@/components/custom/CountryCodeSelect";
+import { Country, CountryCodeSelect } from "@/components/custom/CountryCodeSelect";
+import { useState } from "react";
+import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox";
+import { Label } from "recharts";
 
 export const FormUser = ({ onSubmit, apikeys, countries }: { onSubmit: (values: UserFormValues) => void, apikeys: ApiKey[], countries: Country[] }) => {
+    const [tz, setTz] = useState<string>("America/Bogota");
+
     const ROLES = Object.values(Role);
     const ROLE_LABELS: Record<Role, string> = {
         user: 'Usuario',
@@ -38,6 +42,7 @@ export const FormUser = ({ onSubmit, apikeys, countries }: { onSubmit: (values: 
             email: "",
             password: "",
             company: "",
+            timezone: "America/Bogota",
             notificationNumber: "",
             role: "user",
             plan: "basico",
@@ -58,7 +63,7 @@ export const FormUser = ({ onSubmit, apikeys, countries }: { onSubmit: (values: 
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-6 w-full">
                 <FormField
                     control={form.control}
                     name="name"
@@ -119,20 +124,16 @@ export const FormUser = ({ onSubmit, apikeys, countries }: { onSubmit: (values: 
                     )}
                 />
 
-                {/* <NotificationPhoneInput
-                    countries={countries}
-                    value={form.watch('notificationNumber')}
-                    onChange={(val) => {
-                        form.setValue('notificationNumber', val);
-                        // form.trigger('notificationNumber'); // para que valide en tiempo real si usas Zod
-                    }}
-                // onBlur={() => form.trigger('notificationNumber')}
-                />
                 {form.formState.errors.notificationNumber && (
                     <p className="text-sm text-red-500">
                         {form.formState.errors.notificationNumber.message}
                     </p>
-                )} */}
+                )}
+
+                <div className="w-full">
+                    <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Zona horaria</span>
+                    <TimezoneCombobox value={tz} onChange={setTz} />
+                </div>
 
                 <FormField
                     control={form.control}

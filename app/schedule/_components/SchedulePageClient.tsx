@@ -260,8 +260,8 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
     // ───────────────── UI ─────────────────
     return (
         <>
-            <div className="w-full min-h-[100vh] p-4 sm:p-8 ">
-                <div className="flex justify-center max-h-98vh">
+            <div className="w-full min-h-[100vh] p-4 sm:p-8 overflow-auto">
+                <div className="flex justify-center max-h-[85vh] overflow-auto">
                     {/* Columna izquierda: contenido por pasos */}
                     <div className="space-y-6">
                         {/* Stepper */}
