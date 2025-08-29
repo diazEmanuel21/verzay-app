@@ -146,6 +146,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                 normalizedSeconds: isNaN(normalizeTimeToSeconds(rem?.time ?? "")) ? 0 : normalizeTimeToSeconds(rem?.time ?? ""),
             }));
 
+            /* Utiliza sendingMessages posterior a la generación de reminders */
             secondsReminders.forEach((rem) => {
                 if (!rem.normalizedSeconds) return;
                 const startLocal = toZonedTime(new Date(startTime), timezone);
@@ -156,9 +157,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                     instancia: rem.instanceName ?? undefined,
                     apikey: rem.apikey ?? undefined,
                     remoteJid,
-                    mensaje: `🔔 Recordatorio
-
-                        👋Hola, *${name}* ${rem.description}`,
+                    mensaje: `${rem.description?.replace(/@nombre\b/g, `*${name}*`)}`,
                     tipo: "text",
                     time: seguimientoTime,
                     name_file: undefined,
@@ -190,7 +189,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                 const displayPhone = `+${fullPhone}`;
 
                 //TODO: ARREGLAR MSJ
-                const ownerText =`👋Hola, *${user.name}*
+                const ownerText = `👋Hola, *${user.name}*
 
 ✅ Tienes Nueva Cita:
 
