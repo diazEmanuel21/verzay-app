@@ -189,16 +189,16 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                 const serviceName = user.Service.find((s) => s.id === selectedService)?.name ?? "Asesoría";
                 const displayPhone = `+${fullPhone}`;
 
-                const ownerText =
-                    `👋Hola, *${user.name}*
+                //TODO: ARREGLAR MSJ
+                const ownerText =`👋Hola, *${user.name}*
 
-                    ✅ Tienes Nueva Cita:
-                    
-                    👤 Nombre: ${name}
-                    📝 Descripción: ${serviceName}, para el día ${dateLabel} a las ${hourLabel}.
+✅ Tienes Nueva Cita:
 
-                    WhatsApp del usuario:
-                    👉 ${displayPhone}`;
+👤 Nombre: ${name}
+📝 Descripción ${serviceName}: Para el día ${dateLabel} a las ${hourLabel}.
+
+WhatsApp del usuario:
+👉 ${displayPhone}`;
 
                 try {
                     const ownerRes = await sendingMessages({ url, apikey, remoteJid: ownerJid, text: ownerText });
@@ -231,7 +231,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
         const apikey = user.instancias[0].instanceId;
         const url = `https://${urlevo}/message/sendText/${instanceName}`;
         const currentService = user.Service.find((s) => s.id === selectedService);
-        const text = currentService?.messageText ? `*${name}*${currentService?.messageText}` : "This is a default notification from Verzay APP. You have an appointment, right?";
+        const text = currentService?.messageText ? `${currentService?.messageText?.replace(/@nombre\b/g, `*${name}*`)}` : "Thanks fow scheduling with us.";
 
         const areaDigits = areaCode.replace(/\D/g, "");
         const phoneDigits = phone.replace(/\D/g, "");
