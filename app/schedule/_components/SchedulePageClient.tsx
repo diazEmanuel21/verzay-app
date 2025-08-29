@@ -188,7 +188,8 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                 const displayPhone = `+${fullPhone}`;
 
                 const ownerText =
-                    `Recordatorio para el dueño de la aplicación:\n` +
+                    `🔔 Recordatorio :\n` +
+                    `👋Hola, **${user.name}**` +
                     `✅ Tienes Nueva Cita:\n` +
                     `👤 Nombre: ${name}\n` +
                     `📝 Descripción: ${serviceName}, para el día ${dateLabel} a las ${hourLabel}.\n` +
