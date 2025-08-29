@@ -50,16 +50,15 @@ export const buildStatusOwnerMessage = ({
     const reasonBlock = opts?.reason ? `\n📝 Motivo: ${opts.reason}` : "";
 
     const text =
-        `*Su cita cambió de estado*:
-${headerByStatus[newStatus]}
-🔁 Cambio: ${metaPrev.label} → ${metaNew.label}
+        `🔔 Recordatorio
 
-👤 Nombre: ${clientName}
-📝 Servicio: ${serviceName}
-📅 Fecha: ${dateLabel} a las ${timeLabel} (${appointment.timezone})
+        *Su cita cambió de estado*:
+        ${headerByStatus[newStatus]}
+        🔁 Cambio: ${metaPrev.label} → ${metaNew.label}
 
-WhatsApp del usuario:
-👉 ${reasonBlock}`;
+        👤 Nombre: ${clientName}
+        📝 Servicio: ${serviceName}
+        📅 Fecha: ${dateLabel} a las ${timeLabel} (${appointment.timezone})`;
 
     return text;
 }

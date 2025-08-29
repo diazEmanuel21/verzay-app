@@ -156,9 +156,9 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                     instancia: rem.instanceName ?? undefined,
                     apikey: rem.apikey ?? undefined,
                     remoteJid,
-                    mensaje: `🔔 Recordatorio :\n` +
-                        `👋Hola, **${name}**` +
-                        `${rem.description}`,
+                    mensaje: `🔔 Recordatorio
+
+                        👋Hola, *${name}* ${rem.description}`,
                     tipo: "text",
                     time: seguimientoTime,
                     name_file: undefined,
@@ -190,13 +190,15 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                 const displayPhone = `+${fullPhone}`;
 
                 const ownerText =
-                    `🔔 Recordatorio :\n` +
-                    `👋Hola, **${user.name}**` +
-                    `✅ Tienes Nueva Cita:\n` +
-                    `👤 Nombre: ${name}\n` +
-                    `📝 Descripción: ${serviceName}, para el día ${dateLabel} a las ${hourLabel}.\n` +
-                    `WhatsApp del usuario:\n` +
-                    `👉 ${displayPhone}`;
+                    `🔔 Recordatorio
+
+                    👋Hola, *${user.name}*
+                    ✅ Tienes Nueva Cita
+                    👤 Nombre: ${name}
+                    📝 Descripción: ${serviceName}, para el día ${dateLabel} a las ${hourLabel}.
+
+                    WhatsApp del usuario:
+                    👉 ${displayPhone}`;
 
                 try {
                     const ownerRes = await sendingMessages({ url, apikey, remoteJid: ownerJid, text: ownerText });
