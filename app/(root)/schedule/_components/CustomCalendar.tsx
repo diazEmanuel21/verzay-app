@@ -42,12 +42,10 @@ import {
     SelectItem,
 } from "@/components/ui/select";
 import { ScheduleInterface } from "@/schema/schema";
-import { useReminderDialogStore } from "@/stores";
 import { XCircleIcon } from 'lucide-react';
 import { sendingMessages } from "@/actions/sending-messages-actions";
 
 export const CustomCalendar = ({ user }: ScheduleInterface) => {
-    const { reminderData } = useReminderDialogStore();
     const toastId = "progress-calendar";
 
     const [appointments, setAppointments] = useState<AppointmentWithSession[]>([]);
@@ -90,21 +88,6 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
     const events = normalizeAppointmentsToEvents(appointments);
     const selectedAppointment = appointments.find((a) => a.id === selectedEventId);
 
-    const transformedReminder = {
-        title: reminderData?.title || '',
-        time: reminderData?.time || '',
-        repeatType: "NONE",
-        instanceName: user.instancias[0].instanceName || '',
-        pushName: currentAppointment?.session.pushName || '',
-        remoteJid: currentAppointment?.session.remoteJid || '',
-        serverUrl: user.apiKey?.url || '',
-        apikey: user.apiKey?.key || '',
-        userId: user.id || '',
-        workflowId: reminderData?.workflowId || '',
-        description: reminderData?.description || '',
-        repeatEvery: undefined,
-        isSchedule: true,
-    };
 
     const notifyChangeStatus = async () => {
         if (!user.apiKey || !user.instancias || !currentAppointment) return toast.info('Campos incompletos o vacios');
@@ -119,7 +102,7 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
             newStatus /*, { reason: 'Cliente no puede asistir' }*/
         });
         
-        const remoteJid = user.notificationNumber;
+        const remoteJid = currentAppointment.session.remoteJid.split('@')[0]; 
 
         try {
             const result = await sendingMessages({ url, apikey, remoteJid, text });
@@ -175,7 +158,6 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                     </AlertDialogHeader>
                     <Tabs defaultValue="status">
                         <TabsList>
-                            {/* <TabsTrigger value="reminder">Recordatorios</TabsTrigger> */}
                             <TabsTrigger value="status">Estado</TabsTrigger>
                         </TabsList>
                         <TabsContent value="status">

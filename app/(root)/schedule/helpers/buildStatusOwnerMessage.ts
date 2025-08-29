@@ -59,7 +59,7 @@ ${headerByStatus[newStatus]}
 📅 Fecha: ${dateLabel} a las ${timeLabel} (${appointment.timezone})
 
 WhatsApp del usuario:
-👉 ${phonePretty}${reasonBlock}`;
+👉 ${reasonBlock}`;
 
     return text;
 }

@@ -156,7 +156,9 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                     instancia: rem.instanceName ?? undefined,
                     apikey: rem.apikey ?? undefined,
                     remoteJid,
-                    mensaje: `*${name}* ${rem.description}`,
+                    mensaje: `🔔 Recordatorio :\n` +
+                        `👋Hola, **${name}**` +
+                        `${rem.description}`,
                     tipo: "text",
                     time: seguimientoTime,
                     name_file: undefined,
