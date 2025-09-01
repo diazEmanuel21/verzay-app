@@ -10,6 +10,15 @@ interface ServiceOperationResponse {
     data?: Service[];
 }
 
+type Ok<T> = { success: true; message: string; data: T };
+type Err = { success: false; message: string };
+
+// Por acción:
+export type CreateServiceResp = Ok<Service> | Err;
+export type UpdateServiceResp = Ok<Service> | Err;
+export type ListServicesResp = Ok<Service[]> | Err;
+export type DeleteServiceResp = Ok<null> | Err;
+
 /**
  * Esquema de validación para crear o actualizar un servicio
  */
@@ -29,18 +38,17 @@ const updateSchema = baseSchema.extend({
 /**
  * Crea un nuevo servicio asociado a un usuario
  */
-export async function createService(values: z.infer<typeof baseSchema>): Promise<ServiceOperationResponse> {
+export async function createService(values: z.infer<typeof baseSchema>): Promise<CreateServiceResp> {
     const validated = baseSchema.safeParse(values)
     if (!validated.success) {
         return { success: false, message: validated.error.errors[0].message }
     }
 
     try {
-        await db.service.create({
-            data: validated.data,
-        })
+        const data = await db.service.create({ data: validated.data });
 
-        return { success: true, message: 'Servicio creado correctamente' }
+
+        return { success: true, message: 'Servicio creado correctamente', data }
     } catch (error) {
         console.error('Error al crear servicio:', error)
         return { success: false, message: 'Error al crear el servicio' }
@@ -50,7 +58,7 @@ export async function createService(values: z.infer<typeof baseSchema>): Promise
 /**
  * Obtiene todos los servicios asociados a un usuario específico
  */
-export async function getServicesByUser(userId: string): Promise<ServiceOperationResponse> {
+export async function getServicesByUser(userId: string): Promise<ListServicesResp> {
     if (!userId) return { success: false, message: 'Falta el userId' }
 
     try {
@@ -69,7 +77,7 @@ export async function getServicesByUser(userId: string): Promise<ServiceOperatio
 /**
  * Elimina un servicio por su ID
  */
-export async function deleteService(serviceId: string): Promise<ServiceOperationResponse> {
+export async function deleteService(serviceId: string): Promise<DeleteServiceResp> {
     if (!serviceId) return { success: false, message: 'Falta el ID del servicio' }
 
     try {
@@ -77,7 +85,7 @@ export async function deleteService(serviceId: string): Promise<ServiceOperation
             where: { id: serviceId },
         })
 
-        return { success: true, message: 'Servicio eliminado correctamente' }
+        return { success: true, message: 'Servicio eliminado correctamente', data: null }
     } catch (error) {
         console.error('Error al eliminar servicio:', error)
         return { success: false, message: 'Error al eliminar el servicio' }
@@ -87,21 +95,18 @@ export async function deleteService(serviceId: string): Promise<ServiceOperation
 /**
  * Actualiza un servicio existente usando su ID
  */
-export async function updateService(values: z.infer<typeof updateSchema>): Promise<ServiceOperationResponse> {
+export async function updateService(values: z.infer<typeof updateSchema>): Promise<UpdateServiceResp> {
     const validated = updateSchema.safeParse(values)
     if (!validated.success) {
         return { success: false, message: validated.error.errors[0].message }
     }
 
     try {
-        const { id, ...data } = validated.data
+        const { id, ...data } = validated.data;
+        const updated = await db.service.update({ where: { id }, data });
 
-        await db.service.update({
-            where: { id },
-            data,
-        })
+        return { success: true, message: "Servicio actualizado correctamente", data: updated };
 
-        return { success: true, message: 'Servicio actualizado correctamente' }
     } catch (error) {
         console.error('Error al actualizar servicio:', error)
         return { success: false, message: 'Error al actualizar el servicio' }

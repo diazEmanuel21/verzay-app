@@ -8,9 +8,10 @@ import {
     TabsList,
     TabsTrigger,
 } from "@/components/ui/tabs"
-import { CustomCalendar, UserAvailabilityForm, ServiceForm, ShareScheduleLinkButton, ServiceList } from './';
+import { CustomCalendar, UserAvailabilityForm, ShareScheduleLinkButton } from './';
 import { MainReminders } from "../../reminders/_components";
 import { MainReminderInterface } from "@/schema/reminder";
+import ServiceManager from './ServiceManager';
 
 export const MainSchedule = ({ isCampaignPage, user, apiKey, reminders, leads, workflows, instancia, }: MainReminderInterface) => {
     const userId = user.id;
@@ -42,8 +43,7 @@ export const MainSchedule = ({ isCampaignPage, user, apiKey, reminders, leads, w
                 <TabsContent value="services">
                     <Card className="border-none">
                         <CardContent className="flex flex-col gap-2 ">
-                            <ServiceForm userId={userId} />
-                            <ServiceList userId={userId} />
+                            <ServiceManager userId={userId} />
                         </CardContent>
                     </Card>
                 </TabsContent>
