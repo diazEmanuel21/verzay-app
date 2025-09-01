@@ -415,9 +415,9 @@ function EmptyState({ onCreate }: { onCreate: React.ReactNode }) {
 
 function LoadingState() {
     return (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="flex flex-col gap-2">
             {Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i} className="p-4">
+                <Card key={i} className="p-4 border-border">
                     <div className="flex items-start justify-between">
                         <Skeleton className="h-5 w-40" />
                         <div className="flex gap-2">
@@ -497,7 +497,7 @@ export default function ServiceManager({ userId }: { userId: string }) {
             )}
 
             {!loading && !error && services.length > 0 && (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="flex flex-col gap-2">
                     {filtered.map((service) => (
                         <ServiceListItem
                             key={service.id}
