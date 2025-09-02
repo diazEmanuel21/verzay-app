@@ -9,9 +9,7 @@ import {
     clearDayAvailability,
 } from "@/actions/userAvailability-actions";
 import { Button } from "@/components/ui/button";
-import {
-    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Trash2, PlusCircle, Ban, Copy } from "lucide-react";
 import { Card } from "@/components/ui/card";
