@@ -24,7 +24,10 @@ export const TemplateList = ({ templates, onEdit, userRole, onDelete }: Template
     return (
         <>
             {templates.map((template) => (
-                <Card key={template.id} className="flex flex-col border-border transition-all duration-300 hover:shadow-lg hover:scale-[1.015] hover:border-primary w-64">
+                <Card
+                    key={template.id}
+                    onClick={() => window.open(template.content, "_blank")}
+                    className="flex flex-col border-border transition-all duration-300 hover:shadow-lg hover:scale-[1.015] hover:border-primary w-64">
                     <CardHeader>
                         <CardTitle>{template.name}</CardTitle>
                     </CardHeader>

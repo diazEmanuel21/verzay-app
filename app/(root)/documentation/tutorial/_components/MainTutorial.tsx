@@ -176,7 +176,9 @@ export const MainTutorial = ({ user }: { user: User }) => {
                         <div className="flex flex-wrap flex-1 gap-2 justify-center">
                             {filteredGuides.length > 0 ? (
                                 filteredGuides.map(guide => (
-                                    <Card key={guide.id} className="
+                                    <Card key={guide.id}
+                                        onClick={() => window.open(guide.url, "_blank")}
+                                        className="
                                         flex
                                         flex-col
                                         border-border

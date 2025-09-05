@@ -169,7 +169,10 @@ export function MainGuide({ user }: MainGuideProps) {
           <div className="max-h-[85vh] overflow-auto py-2">
             <div className="flex flex-wrap flex-1 gap-2 justify-center">
               {filtered.map((manual) => (
-                <Card key={manual.id} className="flex flex-col border-border transition-all duration-300 hover:shadow-lg hover:scale-[1.015] hover:border-primary w-64">
+                <Card
+                  key={manual.id}
+                  onClick={() => window.open(manual.url, "_blank")}
+                  className="flex flex-col border-border transition-all duration-300 hover:shadow-lg hover:scale-[1.015] hover:border-primary w-64">
                   <CardHeader>
                     <CardTitle>{manual.name}</CardTitle>
                   </CardHeader>
