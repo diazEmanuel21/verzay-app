@@ -26,6 +26,7 @@ import { createSeguimiento } from "@/actions/seguimientos-actions";
 import { normalizeTimeToSeconds, normalizeToE164, subtractSecondsFromTime, toRemoteJid } from "../helpers";
 
 import { CalendarIcon, CheckCircle2, Clock, User2 } from "lucide-react";
+import { es } from "date-fns/locale";
 
 export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInterface) => {
     // ── UI State (4 pasos)
@@ -192,7 +193,9 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
 
                 // Datos de fecha/hora legibles en la TZ de la cita
                 const startLocal = toZonedTime(new Date(startTime), timezone);
-                const dateLabel = format(selectedDate!, "PPP");
+                // const dateLabel = format(selectedDate!, "PPP");
+                const dateLabel = format(selectedDate!, "d 'de' MMMM 'de' yyyy", { locale: es });
+
                 const hourLabel = format(startLocal, "hh:mm a");
 
                 const serviceName = user.Service.find((s) => s.id === selectedService)?.name ?? "Asesoría";
@@ -201,14 +204,14 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
 
 
                 //TODO: ARREGLAR MSJ
-                const ownerText = `👋Hola, *${user.name}*
-
-✅ Tienes Nueva Cita:
+                const ownerText = `✅ Tienes Nueva Cita:
 
 👤 Nombre: ${name}
 📝 Descripción ${serviceName}: Para el día ${dateLabel} a las ${hourLabel}.
 
 WhatsApp del usuario:
+
+
 👉 ${displayPhone}`;
 
                 try {
