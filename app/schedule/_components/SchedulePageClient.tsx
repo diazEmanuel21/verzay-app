@@ -23,7 +23,7 @@ import { createAppointment } from "@/actions/appointments-actions";
 import { getAvailableSlots } from "@/actions/getAvailableSlots-actions";
 import { sendingMessages } from "@/actions/sending-messages-actions";
 import { createSeguimiento } from "@/actions/seguimientos-actions";
-import { normalizeTimeToSeconds, subtractSecondsFromTime } from "../helpers";
+import { normalizeTimeToSeconds, normalizeToE164, subtractSecondsFromTime, toRemoteJid } from "../helpers";
 
 import { CalendarIcon, CheckCircle2, Clock, User2 } from "lucide-react";
 
@@ -115,10 +115,20 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
         if (!reminders) return toast.error("missing reminders");
 
         const [startTime, endTime] = selectedSlot.split("|");
-        const areaDigits = areaCode.replace(/\D/g, "");
-        const phoneDigits = phone.replace(/\D/g, "");
-        const fullPhone = `${areaDigits}${phoneDigits}`;
-        const remoteJid = `${fullPhone}@s.whatsapp.net`;
+
+
+        // const areaDigits = areaCode.replace(/\D/g, "");
+        // const phoneDigits = phone.replace(/\D/g, "");
+        // const fullPhone = `${areaDigits}${phoneDigits}`;
+        // const remoteJid = `${fullPhone}@s.whatsapp.net`;
+
+        const e164 = normalizeToE164(areaCode, phone);
+        if (!e164) {
+            toast.error("Número de WhatsApp inválido. Verifica el país y el número.");
+            setLoading(false);
+            return;
+        }
+        const remoteJid = toRemoteJid(e164);
 
         setLoading(true);
 
@@ -186,7 +196,9 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                 const hourLabel = format(startLocal, "hh:mm a");
 
                 const serviceName = user.Service.find((s) => s.id === selectedService)?.name ?? "Asesoría";
-                const displayPhone = `+${fullPhone}`;
+                // const displayPhone = `+${fullPhone}`;
+                const displayPhone = e164;
+
 
                 //TODO: ARREGLAR MSJ
                 const ownerText = `👋Hola, *${user.name}*
@@ -232,10 +244,17 @@ WhatsApp del usuario:
         const currentService = user.Service.find((s) => s.id === selectedService);
         const text = currentService?.messageText ? `${currentService?.messageText?.replace(/@nombre\b/g, `*${name}*`)}` : "Thanks fow scheduling with us.";
 
-        const areaDigits = areaCode.replace(/\D/g, "");
-        const phoneDigits = phone.replace(/\D/g, "");
-        const fullPhone = `${areaDigits}${phoneDigits}`;
-        const remoteJid = `${fullPhone}@s.whatsapp.net`;
+        // const areaDigits = areaCode.replace(/\D/g, "");
+        // const phoneDigits = phone.replace(/\D/g, "");
+        // const fullPhone = `${areaDigits}${phoneDigits}`;
+        // const remoteJid = `${fullPhone}@s.whatsapp.net`;
+
+        const e164 = normalizeToE164(areaCode, phone);
+        if (!e164) {
+            toast.error("Número de WhatsApp inválido. Verifica el país y el número.");
+            return;
+        }
+        const remoteJid = toRemoteJid(e164);
 
         try {
             await handleConfirmAppointment();
