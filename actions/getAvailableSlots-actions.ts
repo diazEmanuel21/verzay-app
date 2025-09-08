@@ -1,18 +1,28 @@
 'use server'
 
 import { db } from '@/lib/db';
-import { addDays, addMinutes, endOfDay, isBefore, isValid, startOfDay } from 'date-fns';
+import { addMinutes } from 'date-fns';
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 
 interface Slot {
-    startTime: string; // formato ISO
+    startTime: string; // ISO UTC
     endTime: string;
 }
-
 interface AvailableSlotsResponse {
     success: boolean;
     message: string;
     data?: Slot[];
+}
+
+// helper: avanza un día sobre un YYYY-MM-DD sin usar la TZ del sistema
+function nextLocalDateStr(ymd: string): string {
+    const [y, m, d] = ymd.split('-').map(Number);
+    const u = new Date(Date.UTC(y, m - 1, d));
+    u.setUTCDate(u.getUTCDate() + 1);
+    const yyyy = u.getUTCFullYear();
+    const mm = String(u.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(u.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
 }
 
 export async function getAvailableSlots(
@@ -29,21 +39,21 @@ export async function getAvailableSlots(
         const user = await db.user.findUnique({ where: { id: userId }, select: { timezone: true } });
         const ownerTz = user?.timezone || 'America/Bogota';
 
-        // 2) Día seleccionado / hoy en TZ del dueño (strings YYYY-MM-DD)
+        // 2) Fechas locales puras (YYYY-MM-DD) en la TZ del dueño
         const selectedDayLocal = formatInTimeZone(date, ownerTz, 'yyyy-MM-dd');
         const todayLocal = formatInTimeZone(new Date(), ownerTz, 'yyyy-MM-dd');
 
-        // ⬅️ corte temprano: si el día seleccionado ya pasó, no hay disponibilidad
+        // Si el día seleccionado ya pasó -> sin disponibilidad
         if (selectedDayLocal < todayLocal) {
             return { success: true, message: 'El día seleccionado ya pasó.', data: [] };
         }
 
-        // Límites del día (local dueño) → UTC
+        // 3) Límites del día (local dueño) → UTC (¡sin startOfDay/addDays!)
         const dayStartUtc = fromZonedTime(`${selectedDayLocal} 00:00:00`, ownerTz);
-        const nextDayLocal = formatInTimeZone(addDays(date, 1), ownerTz, 'yyyy-MM-dd');
+        const nextDayLocal = nextLocalDateStr(selectedDayLocal);
         const nextDayStartUtc = fromZonedTime(`${nextDayLocal} 00:00:00`, ownerTz);
 
-        // Weekday en TZ del dueño
+        // 4) Weekday en la TZ del dueño (para la tabla UserAvailability)
         const weekdayInOwnerTz = toZonedTime(dayStartUtc, ownerTz).getDay();
 
         const availability = await db.userAvailability.findMany({
@@ -54,7 +64,7 @@ export async function getAvailableSlots(
             return { success: true, message: 'No hay horarios disponibles para este día.', data: [] };
         }
 
-        // 3) Citas ocupadas (consulta en UTC)
+        // 5) Citas ocupadas (consulta en UTC)
         const appointments = await db.appointment.findMany({
             where: {
                 userId,
@@ -66,7 +76,7 @@ export async function getAvailableSlots(
         });
         const takenRanges = appointments.map(a => ({ start: a.startTime, end: a.endTime }));
 
-        // 4) Corte “ahora” (UTC) solo si es hoy
+        // 6) “Ahora” (UTC) solo si es hoy, para ocultar horas pasadas
         const isToday = selectedDayLocal === todayLocal;
         const nowUtcCutoff = isToday
             ? fromZonedTime(
@@ -75,12 +85,12 @@ export async function getAvailableSlots(
             )
             : dayStartUtc;
 
-        // 5) Construcción de slots HH:mm (local dueño) → UTC
+        // 7) Construcción de slots HH:mm (local dueño) → UTC
         const availableSlots: Slot[] = [];
         for (const range of availability) {
             const [sh, sm] = range.startTime.split(':').map(Number);
             const [eh, em] = range.endTime.split(':').map(Number);
-            if ([sh, sm, eh, em].some(n => Number.isNaN(n))) continue;
+            if ([sh, sm, eh, em].some(Number.isNaN)) continue;
 
             const rangeStartUtc = fromZonedTime(`${selectedDayLocal} ${range.startTime}:00`, ownerTz);
             const rangeEndUtc = fromZonedTime(`${selectedDayLocal} ${range.endTime}:00`, ownerTz);
@@ -88,11 +98,11 @@ export async function getAvailableSlots(
             let cursorUtc = new Date(rangeStartUtc);
             while (cursorUtc < rangeEndUtc) {
                 const slotStartUtc = new Date(cursorUtc);
-                const slotEndUtc = addMinutes(slotStartUtc, slotDuration);
+                const slotEndUtc = new Date(slotStartUtc.getTime() + slotDuration * 60 * 1000);
 
                 const insideRange = slotEndUtc <= rangeEndUtc;
                 const notTaken = !takenRanges.some(r => slotStartUtc < r.end && slotEndUtc > r.start);
-                const notPast = slotStartUtc >= nowUtcCutoff; // <- oculta pasado (mantén así)
+                const notPast = slotStartUtc >= nowUtcCutoff;
 
                 if (insideRange && notTaken && notPast) {
                     availableSlots.push({
@@ -100,7 +110,7 @@ export async function getAvailableSlots(
                         endTime: slotEndUtc.toISOString(),
                     });
                 }
-                cursorUtc = addMinutes(cursorUtc, slotDuration);
+                cursorUtc = new Date(cursorUtc.getTime() + slotDuration * 60 * 1000);
             }
         }
 
