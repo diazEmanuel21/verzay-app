@@ -204,13 +204,12 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
 
 
                 //TODO: ARREGLAR MSJ
-                const ownerText = `✅ Tienes Nueva Cita:
+                const ownerText = `✅ *Tienes Nueva Cita*:
 
-👤 Nombre: ${name}
-📝 Descripción ${serviceName}: Para el día ${dateLabel} a las ${hourLabel}.
+👤 *Nombre*: ${name}
+📝 *Descripción ${serviceName}*: Para el día ${dateLabel} a las ${hourLabel}.
 
-WhatsApp del usuario:
-
+*WhatsApp del usuario*:
 
 👉 ${displayPhone}`;
 
