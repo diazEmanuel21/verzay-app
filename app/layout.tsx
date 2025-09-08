@@ -17,7 +17,7 @@ import AppInitializer from '@/components/custom/AppInitializer';
 import { getResellerProfileForUser } from '@/actions/reseller-action';
 import { getAllModules } from '@/actions/module-actions';
 import AppSkeleton from '@/components/custom/AppSkeleton';
-import { CommunityBanner } from '@/components/shared/CommunityBanner';
+// import { CommunityBanner } from '@/components/shared/CommunityBanner';
 
 // Fuente
 const poppins = Poppins({ subsets: ['latin'], weight: ['400', '700'] });
@@ -68,7 +68,7 @@ export default async function RootLayout({
         <AppProviders>
           <ThemeProvider>
             <AppInitializer onReseller={onReseller} modules={modules} user={user} />
-            <CommunityBanner />
+            {/* <CommunityBanner /> */}
             {isAuthenticated ? (
               <SidebarProvider defaultOpen={defaultOpen}>
                 <AppSidebar user={user} />
