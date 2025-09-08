@@ -25,8 +25,6 @@ export async function getAvailableSlots(
     }
 
     try {
-        debugger;
-
         // 1) TZ del dueño
         const user = await db.user.findUnique({ where: { id: userId }, select: { timezone: true } });
         const ownerTz = user?.timezone || 'America/Bogota';
@@ -44,8 +42,6 @@ export async function getAvailableSlots(
         const dayStartUtc = fromZonedTime(`${selectedDayLocal} 00:00:00`, ownerTz);
         const nextDayLocal = formatInTimeZone(addDays(date, 1), ownerTz, 'yyyy-MM-dd');
         const nextDayStartUtc = fromZonedTime(`${nextDayLocal} 00:00:00`, ownerTz);
-
-        debugger;
 
         // Weekday en TZ del dueño
         const weekdayInOwnerTz = toZonedTime(dayStartUtc, ownerTz).getDay();
@@ -68,9 +64,6 @@ export async function getAvailableSlots(
             select: { startTime: true, endTime: true },
             orderBy: { startTime: 'asc' },
         });
-
-        debugger;
-
         const takenRanges = appointments.map(a => ({ start: a.startTime, end: a.endTime }));
 
         // 4) Corte “ahora” (UTC) solo si es hoy

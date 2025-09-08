@@ -40,6 +40,8 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
 
     // ── Datos existentes en tu flujo
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    console.log(`zona horaria para el usuario: ====> ${timezone}`)
+    // const timezone = 'America/Caracas';
     const appointmentHour = 1;
     const instanceName = user.instancias[0]?.instanceName ?? "";
 
