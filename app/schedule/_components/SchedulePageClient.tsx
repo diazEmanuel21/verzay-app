@@ -48,6 +48,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
     // ── Selecciones
     const [selectedService, setSelectedService] = useState("");
     const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+    const [selectedDateYmd, setSelectedDateYmd] = useState<string>("");
     const [slots, setSlots] = useState<{ startTime: string; endTime: string }[]>([]);
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
 
@@ -70,13 +71,13 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
 
     // ── Carga de slots al elegir fecha
     useEffect(() => {
-        if (!user.id || !selectedDate) return;
+        if (!user.id || !selectedDateYmd) return;
         (async () => {
-            const res = await getAvailableSlots(user.id as string, selectedDate);
+            const res = await getAvailableSlots(user.id as string, selectedDateYmd);
             if (res.success) setSlots(res.data || []);
             else toast.error(res.message);
         })();
-    }, [user.id, selectedDate]);
+    }, [user.id, selectedDateYmd]);
 
     // ── Helpers UI
     const formatDateLabel = (d?: Date) => {
@@ -375,12 +376,35 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                                             mode="single"
                                             selected={selectedDate}
                                             onSelect={(d) => {
+                                                setSelectedDate(d || undefined);
+                                                setSelectedSlot(null);
+                                                // ⚠️ enviamos el día de calendario exacto que el usuario clickeó
+                                                const ymd = d ? format(d, "yyyy-MM-dd") : "";
+                                                setSelectedDateYmd(ymd);
+                                                if (ymd) {
+                                                    getAvailableSlots(user.id as string, ymd).then((res) => {
+                                                        if (res.success) setSlots(res.data || []);
+                                                        else toast.error(res.message);
+                                                    });
+                                                } else {
+                                                    setSlots([]);
+                                                }
+                                            }}
+                                            className="rounded-md"
+                                            disabled={(date) => isBefore(startOfDay(date), startOfDay(new Date()))}
+                                        />
+
+{/* 
+                                        <Calendar
+                                            mode="single"
+                                            selected={selectedDate}
+                                            onSelect={(d) => {
                                                 setSelectedDate(d);
                                                 setSelectedSlot(null);
                                             }}
                                             className="rounded-md"
                                             disabled={(date) => isBefore(startOfDay(date), startOfDay(new Date()))}
-                                        />
+                                        /> */}
                                     </div>
 
                                     <div className="space-y-4">

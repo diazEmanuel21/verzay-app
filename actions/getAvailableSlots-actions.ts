@@ -27,10 +27,10 @@ function nextLocalDateStr(ymd: string): string {
 
 export async function getAvailableSlots(
     userId: string,
-    date: Date,
+    dateYmd: string,
     slotDuration = 60
 ): Promise<AvailableSlotsResponse> {
-    if (!userId || !date) {
+    if (!userId || !dateYmd) {
         return { success: false, message: 'Parámetros requeridos faltantes (userId o date).' };
     }
 
@@ -40,7 +40,7 @@ export async function getAvailableSlots(
         const ownerTz = user?.timezone || 'America/Bogota';
 
         // 2) Fechas locales puras (YYYY-MM-DD) en la TZ del dueño
-        const selectedDayLocal = formatInTimeZone(date, ownerTz, 'yyyy-MM-dd');
+        const selectedDayLocal = formatInTimeZone(dateYmd, ownerTz, 'yyyy-MM-dd');
         const todayLocal = formatInTimeZone(new Date(), ownerTz, 'yyyy-MM-dd');
 
         // Si el día seleccionado ya pasó -> sin disponibilidad
