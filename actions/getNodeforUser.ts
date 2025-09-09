@@ -11,7 +11,7 @@ export async function GetNodeforUser(workflowId?: string) {
             workflowId,
         },
         orderBy: {
-            createdAt: "asc"
+            order: "asc"
         }
     })
 }

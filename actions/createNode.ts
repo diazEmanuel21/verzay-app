@@ -26,9 +26,17 @@ export async function CreateNode(form: createNodeflowSchemaType) {
     throw new Error("Datos del formulario inválidos.");
   }
 
+  const maxOrder = await db.workflowNode.aggregate({
+    where: { workflowId: data.workflowId },
+    _max: { order: true },
+  });
+
+  const parseMaxOrder = (maxOrder._max.order ?? 0) as number;
+
   const result = await db.workflowNode.create({
     data: {
       ...data,
+      order: (parseMaxOrder + 1).toString(), // siguiente orden disponible
     },
   });
 
@@ -66,6 +74,35 @@ export async function updateNode(nodeId: string, newMessage?: string) {
     };
   }
 }
+
+export async function updateNodeOrder(nodeId: string, order: number) {
+  try {
+    if (!nodeId) {
+      return {
+        success: false,
+        message: 'Parámetro "nodeId" requerido.',
+      };
+    }
+
+    const updatedNode = await db.workflowNode.update({
+      where: { id: nodeId },
+      data: { order: order.toString() }, // 👈 solo se actualiza el orden
+    });
+
+    return {
+      success: true,
+      message: 'Orden del nodo actualizado con éxito.',
+      data: updatedNode,
+    };
+  } catch (error: any) {
+    console.error("Error updateNodeOrder:", error);
+    return {
+      success: false,
+      message: 'Error al actualizar el orden: ' + (error.message || error),
+    };
+  }
+}
+
 
 export async function updateUrlNode(nodeId: string, url: string) {
   try {

@@ -1,3 +1,5 @@
+'use client';
+
 import { Action } from '../types';
 import { Button } from "@/components/ui/button";
 import { PremiumModule } from "@/components/shared/PremiumModule";

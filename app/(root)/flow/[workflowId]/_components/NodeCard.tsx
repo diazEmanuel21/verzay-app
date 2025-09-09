@@ -1,6 +1,7 @@
 'use client';
 
-import React, { ChangeEvent, useState, useTransition } from "react";
+import { ChangeEvent, useState, useTransition } from "react";
+import { useSortable } from "@dnd-kit/sortable";
 import { useRouter } from 'next/navigation';
 import { User, WorkflowNode } from "@prisma/client";
 import { updateNode, deleteNode, updateUrlNode, updateDelayNode, deleteFileNode, updateInactivityNode } from "@/actions/createNode";
@@ -18,6 +19,7 @@ import {
 
 import { toast } from "sonner";
 import {
+  GripVertical,
   MessageSquareIcon,
   UploadIcon,
 } from "lucide-react";
@@ -35,6 +37,8 @@ import {
 import { GenericTextarea } from "@/components/shared/GenericTextarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { CSS } from '@dnd-kit/utilities'
+
 interface Props {
   workflowId: string;
   nodes: WorkflowNode;
@@ -45,6 +49,7 @@ const MAX_MESSAGE_LENGTH = 1000;
 
 export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const router = useRouter();
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging: isDraggingNode } = useSortable({ id: nodes.id })
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState(nodes.message);
   const [delay, setDelay] = useState<string>();
@@ -52,8 +57,15 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
+  const [isDraggingFile, setIsDragging] = useState(false);
   const [inactivity, setInactivity] = useState(nodes.inactividad ?? false);
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDraggingNode ? 0.5 : 1,
+    cursor: 'grab',
+  }
 
   const nodeType = nodes.tipo?.toLowerCase() as Action['type'];
   const baseType = nodeType.startsWith('seguimiento-')
@@ -347,7 +359,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
       <div className="flex flex-col gap-2 w-full">
         <div
           className={`flex items-center justify-center w-full h-32 border-2 rounded-lg cursor-pointer transition 
-          ${isDragging ? 'border-primary bg-primary/10' : 'border-dashed border-muted-foreground/50 bg-muted/50'}`}
+          ${isDraggingFile ? 'border-primary bg-primary/10' : 'border-dashed border-muted-foreground/50 bg-muted/50'}`}
           onDragEnter={handleDragEnter}
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}
@@ -357,7 +369,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
           <div className="flex flex-col items-center justify-center w-full px-2">
             <UploadIcon className="w-6 h-6 text-muted-foreground" />
             <p className="text-sm text-muted-foreground text-center mt-1">
-              {isDragging ? 'Suelta el archivo aquí' : 'Arrastra o haz click'}
+              {isDraggingFile ? 'Suelta el archivo aquí' : 'Arrastra o haz click'}
             </p>
             {file && (
               <Tooltip>
@@ -422,78 +434,85 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   };
 
   return (
-    <>
-      <div className="flex items-center justify-center p-1">
-        <Card className="shadow-md border-border rounded-2xl min-w-[300px] max-w-[300px] transition-all duration-300 hover:shadow-lg hover:scale-105">
-          <CardHeader className="relative flex items-center p-3">
-            {/* Badge tipo de mensaje */}
-            <div className={`absolute -top-4 flex items-center space-x-2 ${currentCardAction?.bg || 'bg-background'} rounded-md px-3 py-1 shadow-md`}>
-              {currentCardAction?.icon || (
-                <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />
-              )}
-              <span className="text-xs font-bold uppercase text-white">
-                {`${isSeguimiento ? labelSegumientoCategory : currentCardAction?.label}` || "Tipo desconocido"}
-              </span>
-            </div>
-            <div className="absolute top-0 right-1">
-              <NodeActions
+    <div className="flex items-center justify-center p-1" ref={setNodeRef} style={style}>
+      <Card className="shadow-md border-border rounded-2xl min-w-[300px] max-w-[300px] transition-all duration-300 hover:shadow-lg hover:scale-105">
+        <CardHeader className="relative flex items-center p-3">
+          <div className="absolute top-0 left-1">
+            <button
+              className="p-1 rounded hover:bg-muted cursor-grab active:cursor-grabbing"
+              {...attributes}
+              {...listeners}
+            >
+              <GripVertical className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
+          {/* Badge tipo de mensaje */}
+          <div className={`absolute -top-4 flex items-center space-x-2 ${currentCardAction?.bg || 'bg-background'} rounded-md px-3 py-1 shadow-md`}>
+            {currentCardAction?.icon || (
+              <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />
+            )}
+            <span className="text-xs font-bold uppercase text-white">
+              {`${isSeguimiento ? labelSegumientoCategory : currentCardAction?.label}` || "Tipo desconocido"}
+            </span>
+          </div>
+          <div className="absolute top-0 right-1">
+            <NodeActions
+              fileType={baseType}
+              onDeleteFile={() => handleDeleteFile()}
+              onDeleteNode={() => handleDeleteNode()}
+            />
+          </div>
+        </CardHeader>
+        <CardContent className="p-4">
+          {renderContent()}
+          {baseType !== 'text' && baseType !== 'document' && baseType !== 'audio' &&
+            <div className="flex w-full mt-2">
+              <GenericTextarea
                 fileType={baseType}
-                onDeleteFile={() => handleDeleteFile()}
-                onDeleteNode={() => handleDeleteNode()}
+                message={message}
+                handleSave={handleSave}
+                setIsEditing={setIsEditing}
+                setMessage={handleChangeMessages}
+                isPending={isPending}
+                isEditing={isEditing}
               />
             </div>
-          </CardHeader>
-          <CardContent className="p-4">
-            {renderContent()}
-            {baseType !== 'text' && baseType !== 'document' && baseType !== 'audio' &&
-              <div className="flex w-full mt-2">
-                <GenericTextarea
-                  fileType={baseType}
-                  message={message}
-                  handleSave={handleSave}
-                  setIsEditing={setIsEditing}
-                  setMessage={handleChangeMessages}
-                  isPending={isPending}
-                  isEditing={isEditing}
-                />
-              </div>
-            }
-            {isSeguimiento &&
-              <div className="flex items-center gap-1 pt-2 text-sm">
-                <Switch
-                  id="airplane-mode"
-                  checked={inactivity}
-                  onCheckedChange={handleInactivity}
-                  disabled={loading}
-                  className="scale-75"
-                />
-                <Label htmlFor="inactividad-state">Activar Inactividad  </Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger className="w-5 h-5 flex items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">?</TooltipTrigger>
-                    <TooltipContent>
-                      <p>Seguimiento solo si no responden</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            }
-          </CardContent>
-          {isSeguimiento &&
-            <>
-              <Separator />
-              <CardFooter className="pt-2">
-                <TimeInput
-                  className="text-xs text-muted-foreground"
-                  onChange={handleTimeChange}
-                  onBlur={handleOnBlurTime}
-                  currentValue={nodes.delay || 'minutes-0'}
-                />
-              </CardFooter>
-            </>
           }
-        </Card>
-      </div>
-    </>
+          {isSeguimiento &&
+            <div className="flex items-center gap-1 pt-2 text-sm">
+              <Switch
+                id="airplane-mode"
+                checked={inactivity}
+                onCheckedChange={handleInactivity}
+                disabled={loading}
+                className="scale-75"
+              />
+              <Label htmlFor="inactividad-state">Activar Inactividad  </Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger className="w-5 h-5 flex items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">?</TooltipTrigger>
+                  <TooltipContent>
+                    <p>Seguimiento solo si no responden</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          }
+        </CardContent>
+        {isSeguimiento &&
+          <>
+            <Separator />
+            <CardFooter className="pt-2">
+              <TimeInput
+                className="text-xs text-muted-foreground"
+                onChange={handleTimeChange}
+                onBlur={handleOnBlurTime}
+                currentValue={nodes.delay || 'minutes-0'}
+              />
+            </CardFooter>
+          </>
+        }
+      </Card>
+    </div>
   );
 };
