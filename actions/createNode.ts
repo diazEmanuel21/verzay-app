@@ -36,7 +36,7 @@ export async function CreateNode(form: createNodeflowSchemaType) {
   const result = await db.workflowNode.create({
     data: {
       ...data,
-      order: (parseMaxOrder + 1).toString(), // siguiente orden disponible
+      order: parseMaxOrder + 1, // siguiente orden disponible
     },
   });
 
@@ -86,7 +86,7 @@ export async function updateNodeOrder(nodeId: string, order: number) {
 
     const updatedNode = await db.workflowNode.update({
       where: { id: nodeId },
-      data: { order: order.toString() }, // 👈 solo se actualiza el orden
+      data: { order }, // 👈 solo se actualiza el orden
     });
 
     return {

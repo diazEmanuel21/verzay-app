@@ -232,7 +232,7 @@ model WorkflowNode {
     delay       String?
     inactividad Boolean?
     name_file   String?
-    order       String?
+    order       Int      @default(0)
 }
 
 model n8n_chat_histories {
