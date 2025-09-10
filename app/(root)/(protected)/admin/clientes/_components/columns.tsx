@@ -123,32 +123,32 @@ export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogT
   //     </span>
   //   ),
   // },
-  {
-    accessorKey: 'webhookUrl',
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        className="text-sm"
-      >
-        Webhook
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const url = row.original.webhookUrl;
+  // {
+  //   accessorKey: 'webhookUrl',
+  //   header: ({ column }) => (
+  //     <Button
+  //       variant="ghost"
+  //       onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+  //       className="text-sm"
+  //     >
+  //       Webhook
+  //       <ArrowUpDown className="ml-2 h-4 w-4" />
+  //     </Button>
+  //   ),
+  //   cell: ({ row }) => {
+  //     const url = row.original.webhookUrl;
 
-      if (/https:\/\/n8n-?pro\.verzay\.co\/webhook\//.test(url ?? "")) {
-        return <Badge className="bg-green-600 text-white">Avanzado</Badge>;
-      }
+  //     if (/https:\/\/n8n-?pro\.verzay\.co\/webhook\//.test(url ?? "")) {
+  //       return <Badge className="bg-green-600 text-white">Avanzado</Badge>;
+  //     }
 
-      if (url?.startsWith("http://82.29.152.30:5001/webhook")) {
-        return <Badge className="bg-blue-500 text-white">Estándar</Badge>;
-      }
+  //     if (url?.startsWith("http://82.29.152.30:5001/webhook")) {
+  //       return <Badge className="bg-blue-500 text-white">Estándar</Badge>;
+  //     }
 
-      return <Badge variant="outline">—</Badge>;
-    },
-  },
+  //     return <Badge variant="outline">—</Badge>;
+  //   },
+  // },
   // {
   //   accessorKey: 'credits',
   //   header: ({ column }) => (

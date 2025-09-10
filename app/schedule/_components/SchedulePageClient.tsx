@@ -214,16 +214,15 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
 
 👉 ${displayPhone}`;
 
-                debugger;
-                // try {
-                //     const ownerRes = await sendingMessages({ url, apikey, remoteJid: ownerJid, text: ownerText });
-                //     if (!ownerRes.success) {
-                //         toast.warning(`No se pudo notificar al dueño: ${ownerRes.message}`);
-                //     }
-                // } catch (e) {
-                //     console.error("Error notificando al owner:", e);
-                //     toast.warning("No se pudo enviar la notificación al dueño.");
-                // }
+                try {
+                    const ownerRes = await sendingMessages({ url, apikey, remoteJid: ownerJid, text: ownerText });
+                    if (!ownerRes.success) {
+                        toast.warning(`No se pudo notificar al dueño: ${ownerRes.message}`);
+                    }
+                } catch (e) {
+                    console.error("Error notificando al owner:", e);
+                    toast.warning("No se pudo enviar la notificación al dueño.");
+                }
             }
             // ─────────────────────────────────────────────
 
@@ -260,12 +259,11 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
         }
         const remoteJid = toRemoteJid(e164);
 
-        debugger;
         try {
             await handleConfirmAppointment();
-            // const result = await sendingMessages({ url, apikey, remoteJid, text });
-            // if (result.success) toast.success(result.message);
-            // else toast.warning(`No se pudo enviar el mensaje: ${result.message}`);
+            const result = await sendingMessages({ url, apikey, remoteJid, text });
+            if (result.success) toast.success(result.message);
+            else toast.warning(`No se pudo enviar el mensaje: ${result.message}`);
         } catch (error) {
             console.error("Error en notificación:", error);
             toast.error("Ocurrió un error al intentar notificar la cita.");
