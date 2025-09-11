@@ -60,7 +60,6 @@ export const UserAvailabilityForm = ({ userId }: { userId: string }) => {
             dayOfWeek: day,
             startTime: defaultTime.startTime,
             endTime: defaultTime.endTime,
-            meetingDuration,
         });
         if (res.success) {
             toast.success("Periodo añadido");
@@ -90,7 +89,6 @@ export const UserAvailabilityForm = ({ userId }: { userId: string }) => {
             dayOfWeek: e.dayOfWeek,
             startTime: e.startTime,
             endTime: e.endTime,
-            meetingDuration
         });
         if (res.success) {
             toast.success("Periodo duplicado");
@@ -105,7 +103,7 @@ export const UserAvailabilityForm = ({ userId }: { userId: string }) => {
         const newEnd = field === "endTime" ? value : entry.endTime;
 
 
-        const res = await updateAvailability(id, newStart, newEnd, meetingDuration);
+        const res = await updateAvailability(id, newStart, newEnd);
         if (res.success) {
             toast.success("Periodo actualizado");
             await loadAvailability();

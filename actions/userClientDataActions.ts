@@ -252,6 +252,38 @@ export const updateClientData = async (
   }
 }
 // ==============================
+// Función para actualizar la duración de la reunión de un usuario
+// ==============================
+// Función para actualizar la duración de la reunión de un usuario
+export async function updateUserMeetingDuration(userId: string, meetingDuration: number): Promise<ClientResponse> {
+  try {
+    // Validación para asegurarse de que la duración esté dentro del rango válido
+    if (meetingDuration < 1 || meetingDuration > 480) {
+      return {
+        success: false,
+        message: "La duración debe estar entre 1 y 480 minutos.",
+      };
+    }
+
+    // Actualiza la duración de la reunión del usuario en la base de datos
+    await db.user.update({
+      where: { id: userId }, // Busca al usuario por su ID
+      data: { meetingDuration }, // Actualiza el campo 'defaultMeetingDuration'
+    });
+
+    return {
+      success: true,
+      message: "Duración de reunión actualizada correctamente.",
+    };
+  } catch (error) {
+    console.error("Error al actualizar la duración de la reunión:", error);
+    return {
+      success: false,
+      message: "No se pudo actualizar la duración de la reunión.",
+    };
+  }
+}
+// ==============================
 // UPDATE PAUSA DATA
 // ==============================
 export const updateAbrirPhrase = async (userId: string, mensaje: string) => {

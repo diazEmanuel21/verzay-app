@@ -8,28 +8,29 @@ datasource db {
 }
 
 model User {
-    id                 String             @id @default(cuid())
+    id                 String    @id @default(cuid())
     name               String?
-    email              String             @unique
+    email              String    @unique
     password           String?
     emailVerified      DateTime?
     image              String?
     timezone           String?
-    role               Role               @default(user)
-    createdAt          DateTime           @default(now())
-    updatedAt          DateTime           @updatedAt
-    apiUrl             String             @default("https://api.openAI.co")
-    company            String             @default("Empresa Demo")
-    lat                String             @default("0.0000")
-    lng                String             @default("0.0000")
-    mapsUrl            String             @default("https://maps.google.com/?q=0,0")
-    notificationNumber String             @default("0000000000")
-    openingPhrase      String?            @default("DEPRECATED")
+    role               Role      @default(user)
+    createdAt          DateTime  @default(now())
+    updatedAt          DateTime  @updatedAt
+    apiUrl             String    @default("https://api.openAI.co")
+    company            String    @default("Empresa Demo")
+    lat                String    @default("0.0000")
+    lng                String    @default("0.0000")
+    mapsUrl            String    @default("https://maps.google.com/?q=0,0")
+    notificationNumber String    @default("0000000000")
+    openingPhrase      String?   @default("DEPRECATED")
     apiKeyId           String?
-    del_seguimiento    String?            @default("Estamos para servirle.")
-    plan               Plan               @default(basico)
+    del_seguimiento    String?   @default("Estamos para servirle.")
+    plan               Plan      @default(basico)
     autoReactivate     String?
-    webhookUrl         String?            @default("https://n8npro.verzay.co/webhook")
+    webhookUrl         String?   @default("https://n8npro.verzay.co/webhook")
+    meetingDuration    Int? //tiempo en minutos
     theme              ThemeApp?          @default(Default)
     muteAgentResponses Boolean            @default(false)
     accounts           Account[]
@@ -354,8 +355,7 @@ model UserAvailability {
     dayOfWeek       Int
     startTime       String
     endTime         String
-    meetingDuration Int? //tiempo en minutos
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user            User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@unique([userId, dayOfWeek, startTime, endTime])
 }

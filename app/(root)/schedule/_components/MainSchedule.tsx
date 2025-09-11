@@ -14,6 +14,7 @@ import { MainReminderInterface } from "@/schema/reminder";
 import ServiceManager from './services/ServiceManager';
 import { CustomCalendar } from "./dashboard"
 import { ShareScheduleLinkButton, UserAvailabilityForm } from "./availability"
+import { UpdateMeetingDuration } from "./settings";
 
 export const MainSchedule = ({ isCampaignPage, user, apiKey, reminders, leads, workflows, instancia, }: MainReminderInterface) => {
     const userId = user.id;
@@ -26,6 +27,7 @@ export const MainSchedule = ({ isCampaignPage, user, apiKey, reminders, leads, w
                     <TabsTrigger value="availability">Disponibilidad</TabsTrigger>
                     <TabsTrigger value="services">Servicios</TabsTrigger>
                     <TabsTrigger value="reminders">Recordatorios</TabsTrigger>
+                    <TabsTrigger value="settings">Ajustes</TabsTrigger>
                 </TabsList>
                 <TabsContent value="dashboard">
                     <Card className="border-none pt-6">
@@ -65,6 +67,9 @@ export const MainSchedule = ({ isCampaignPage, user, apiKey, reminders, leads, w
                             />
                         </CardContent>
                     </Card>
+                </TabsContent>
+                <TabsContent value="settings">
+                    <UpdateMeetingDuration userId={user.id} />
                 </TabsContent>
             </Tabs>
         </div>

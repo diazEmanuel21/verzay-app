@@ -40,7 +40,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
 
     // ── Datos existentes en tu flujo
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const slotDuration = 30;
+    const slotDuration = !user.meetingDuration ? 60 : user.meetingDuration;
     const instanceName = user.instancias[0]?.instanceName ?? "";
 
     // ── Selecciones
