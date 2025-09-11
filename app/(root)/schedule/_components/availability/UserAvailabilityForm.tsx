@@ -13,8 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Trash2, PlusCircle, Ban, Copy } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { ScheduleAvailabilitySkeleton } from "./ScheduleAvailabilitySkeleton";
 import { useRouter } from "next/navigation";
+import { ScheduleAvailabilitySkeleton } from "./ScheduleAvailabilitySkeleton";
 
 const defaultTime = { startTime: "14:00", endTime: "18:00" };
 const dayLabels = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -60,6 +60,7 @@ export const UserAvailabilityForm = ({ userId }: { userId: string }) => {
             dayOfWeek: day,
             startTime: defaultTime.startTime,
             endTime: defaultTime.endTime,
+            meetingDuration,
         });
         if (res.success) {
             toast.success("Periodo añadido");
@@ -89,6 +90,7 @@ export const UserAvailabilityForm = ({ userId }: { userId: string }) => {
             dayOfWeek: e.dayOfWeek,
             startTime: e.startTime,
             endTime: e.endTime,
+            meetingDuration
         });
         if (res.success) {
             toast.success("Periodo duplicado");
@@ -102,7 +104,8 @@ export const UserAvailabilityForm = ({ userId }: { userId: string }) => {
         const newStart = field === "startTime" ? value : entry.startTime;
         const newEnd = field === "endTime" ? value : entry.endTime;
 
-        const res = await updateAvailability(id, newStart, newEnd);
+
+        const res = await updateAvailability(id, newStart, newEnd, meetingDuration);
         if (res.success) {
             toast.success("Periodo actualizado");
             await loadAvailability();

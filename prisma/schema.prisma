@@ -349,12 +349,13 @@ model PromptTemplate {
 }
 
 model UserAvailability {
-    id        String @id @default(cuid())
-    userId    String
-    dayOfWeek Int
-    startTime String
-    endTime   String
-    user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id              String @id @default(cuid())
+    userId          String
+    dayOfWeek       Int
+    startTime       String
+    endTime         String
+    meetingDuration Int? //tiempo en minutos
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@unique([userId, dayOfWeek, startTime, endTime])
 }

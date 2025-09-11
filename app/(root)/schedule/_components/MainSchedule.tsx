@@ -8,10 +8,12 @@ import {
     TabsList,
     TabsTrigger,
 } from "@/components/ui/tabs"
-import { CustomCalendar, UserAvailabilityForm, ShareScheduleLinkButton } from './';
+
 import { MainReminders } from "../../reminders/_components";
 import { MainReminderInterface } from "@/schema/reminder";
-import ServiceManager from './ServiceManager';
+import ServiceManager from './services/ServiceManager';
+import { CustomCalendar } from "./dashboard"
+import { ShareScheduleLinkButton, UserAvailabilityForm } from "./availability"
 
 export const MainSchedule = ({ isCampaignPage, user, apiKey, reminders, leads, workflows, instancia, }: MainReminderInterface) => {
     const userId = user.id;

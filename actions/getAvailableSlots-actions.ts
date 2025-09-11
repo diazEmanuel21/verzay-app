@@ -28,10 +28,10 @@ function nextLocalDateStr(ymd: string): string {
 export async function getAvailableSlots(
     userId: string,
     dateYmd: string,
-    slotDuration = 60
+    slotDuration: number
 ): Promise<AvailableSlotsResponse> {
-    if (!userId || !dateYmd) {
-        return { success: false, message: 'Parámetros requeridos faltantes (userId o date).' };
+    if (!userId || !dateYmd || !slotDuration) {
+        return { success: false, message: 'Parámetros requeridos faltantes (userId, date o slotDuration).' };
     }
 
     try {

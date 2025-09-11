@@ -31,10 +31,11 @@ export async function createAvailability(data: {
     userId: string
     dayOfWeek: number
     startTime: string
-    endTime: string
+    endTime: string,
+    meetingDuration: number
 }): Promise<AvailabilityOperationResponse> {
-    const { userId, dayOfWeek, startTime, endTime } = data
-    if (!userId || dayOfWeek === undefined || !startTime || !endTime)
+    const { userId, dayOfWeek, startTime, endTime, meetingDuration } = data
+    if (!userId || dayOfWeek === undefined || !startTime || !endTime || !meetingDuration)
         return { success: false, message: 'Faltan campos requeridos.' }
     if (startTime >= endTime)
         return { success: false, message: 'La hora de inicio debe ser menor a la hora de fin.' }
@@ -57,7 +58,8 @@ export async function createAvailability(data: {
 export async function updateAvailability(
     id: string,
     startTime: string,
-    endTime: string
+    endTime: string,
+    meetingDuration: number // Nuevo campo para la duración de la reunión
 ): Promise<AvailabilityOperationResponse> {
     if (startTime >= endTime)
         return { success: false, message: 'La hora de inicio debe ser menor a la hora de fin.' }
@@ -74,7 +76,7 @@ export async function updateAvailability(
 
         const updated = await db.userAvailability.update({
             where: { id },
-            data: { startTime, endTime },
+            data: { startTime, endTime, meetingDuration },
         })
         return { success: true, data: updated }
     } catch (e) {

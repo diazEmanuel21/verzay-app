@@ -9,7 +9,9 @@ import { toast } from "sonner";
 
 import { getAppointmentsByUser, updateAppointmentStatus } from "@/actions/appointments-actions";
 import { AppointmentStatus, User } from "@prisma/client";
-import { AppointmentWithSession, buildStatusOwnerMessage, normalizeAppointmentsToEvents } from "../helpers";
+import { AppointmentWithSession, buildStatusOwnerMessage, normalizeAppointmentsToEvents } from "../../helpers";
+
+
 import esLocale from '@fullcalendar/core/locales/es';
 
 import { Button } from "@/components/ui/button"
@@ -101,8 +103,8 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
             appointment: currentAppointment,
             newStatus /*, { reason: 'Cliente no puede asistir' }*/
         });
-        
-        const remoteJid = currentAppointment.session.remoteJid.split('@')[0]; 
+
+        const remoteJid = currentAppointment.session.remoteJid.split('@')[0];
 
         try {
             const result = await sendingMessages({ url, apikey, remoteJid, text });

@@ -40,7 +40,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
 
     // ── Datos existentes en tu flujo
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const appointmentHour = 1;
+    const slotDuration = 30;
     const instanceName = user.instancias[0]?.instanceName ?? "";
 
     // ── Selecciones
@@ -71,7 +71,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
     useEffect(() => {
         if (!user.id || !selectedDateYmd) return;
         (async () => {
-            const res = await getAvailableSlots(user.id as string, selectedDateYmd);
+            const res = await getAvailableSlots(user.id as string, selectedDateYmd, slotDuration);
             if (res.success) setSlots(res.data || []);
             else toast.error(res.message);
         })();
@@ -286,10 +286,10 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
     // ───────────────── UI ─────────────────
     return (
         <>
-            <div className="w-full min-h-[100vh] p-4 sm:p-8 overflow-auto">
-                <div className="flex justify-center max-h-[85vh] overflow-auto">
+            <div className="w-full min-h-[100vh] p-4 overflow-auto">
+                <div className="flex justify-center max-h-[86vh] w-full overflow-auto">
                     {/* Columna izquierda: contenido por pasos */}
-                    <div className="space-y-6">
+                    <div className="space-y-2 w-full md:max-w-[700px]">
                         {/* Stepper */}
                         <Card className="border-muted/50">
                             <CardContent className="p-4 sm:p-6">
@@ -325,7 +325,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                                     <div className="text-sm text-muted-foreground">
                                         Agendar con <span className="font-semibold">{user.company || "nuestro asesor"}</span>
                                     </div>
-                                    <div className="text-xs text-muted-foreground">Duración: {appointmentHour} hrs</div>
+                                    <div className="text-xs text-muted-foreground">Duración: {slotDuration} min</div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -380,7 +380,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                                                 const ymd = d ? format(d, "yyyy-MM-dd") : "";
                                                 setSelectedDateYmd(ymd);
                                                 if (ymd) {
-                                                    getAvailableSlots(user.id as string, ymd).then((res) => {
+                                                    getAvailableSlots(user.id as string, ymd, slotDuration).then((res) => {
                                                         if (res.success) setSlots(res.data || []);
                                                         else toast.error(res.message);
                                                     });
@@ -576,7 +576,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                                 <Card className="border-none mt-2 ">
                                     <CardContent className="space-y-4 p-0 m-0">
                                         <SummaryItem label="Servicio" value={user.Service.find((s) => s.id === selectedService)?.name ?? "—"} />
-                                        <SummaryItem label="Duración" value={`${appointmentHour} hrs`} />
+                                        <SummaryItem label="Duración" value={`${slotDuration} min`} />
                                         <SummaryItem label="Fecha" value={formatDateLabel(selectedDate)} />
                                         <SummaryItem label="Contacto" value={`${areaCode} ${phone}`} />
                                         <SummaryItem
