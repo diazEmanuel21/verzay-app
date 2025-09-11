@@ -69,6 +69,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             webhookUrl,
             apiUrl,
             timezone,
+            meetingDuration: 60,//tiempo en minutos
             muteAgentResponses: false,
             lat: '0.0000',
             lng: '0.0000',
