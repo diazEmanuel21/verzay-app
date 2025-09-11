@@ -121,7 +121,6 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
         }
     };
 
-
     return (
         <>
             <FullCalendar plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -156,10 +155,11 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
             >
                 <AlertDialogContent className="border-border">
                     <AlertDialogHeader className="flex items-end">
-                        <Button variant={"ghost"} onClick={() => setOpenDialog(false)}><XCircleIcon /></Button>
+                        <Button onClick={() => setOpenDialog(false)}><XCircleIcon /></Button>
                     </AlertDialogHeader>
-                    <Tabs defaultValue="status">
+                    <Tabs defaultValue="details">
                         <TabsList>
+                            <TabsTrigger value="details">Detalles</TabsTrigger>
                             <TabsTrigger value="status">Estado</TabsTrigger>
                         </TabsList>
                         <TabsContent value="status">
@@ -168,7 +168,6 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                                     {/* <CardTitle>Estado</CardTitle> */}
                                     <CardDescription>
                                         Estás por modificar el estado de la cita:
-                                        <br />
                                         <span className="text-muted-foreground">
                                             {selectedAppointment?.session?.pushName || "Cliente desconocido"}
                                         </span>
@@ -205,9 +204,80 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                                 </CardFooter>
                             </Card>
                         </TabsContent>
+                        {/* Pestaña de Detalles */}
+                        <TabsContent value="details">
+                            <Card className="border-border">
+                                <CardHeader>
+                                    <CardTitle className="text-lg font-medium">Detalles de la Cita</CardTitle>
+                                </CardHeader>
+                                {currentAppointment &&
+                                    <CardContent>
+                                        {/* Información general de la cita */}
+                                        <div className="space-y-3">
+                                            <div className="flex text-sm gap-1 flex-row">
+                                                <strong className="uppercase font-medium">Cliente:</strong>
+                                                {currentAppointment.session.pushName || "Cliente desconocido"}
+                                            </div>
+                                            <div className="flex text-sm gap-1 flex-row">
+                                                <strong className="uppercase font-medium">Teléfono:</strong>
+                                                {currentAppointment.session.remoteJid.split('@')[0] || "No disponible"}
+                                            </div>
+                                            <div className="flex text-sm gap-1 flex-row">
+                                                {currentAppointment.service && (
+                                                    <>
+                                                        <strong className="uppercase font-medium">Servicio:</strong>
+                                                        {currentAppointment.service.name || "No disponible"}
+                                                    </>
+                                                )}
+                                            </div>
+                                            <div className="flex text-sm gap-1 flex-row">
+                                                <strong className="uppercase font-medium">Estado de la cita: </strong>
+                                                <span className={`font-normal ${currentAppointment.status === 'CANCELADA' ? 'text-red-600' : 'text-green-600'}`}>
+                                                    {currentAppointment.status}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Información de la cita */}
+                                        <div className="space-y-3 mt-4">
+                                            <div className="flex text-sm gap-1 flex-row">
+                                                <strong className="uppercase font-medium">Fecha:</strong>
+                                                {new Date(currentAppointment.startTime).toLocaleDateString("es-ES")}
+                                            </div>
+                                            <div className="flex text-sm gap-1 flex-row">
+                                                <strong className="uppercase font-medium">Hora:</strong>
+                                                {new Date(currentAppointment.startTime).toLocaleTimeString("es-ES")} -
+                                                {new Date(currentAppointment.endTime).toLocaleTimeString("es-ES")}
+                                            </div>
+                                            <div className="flex text-sm gap-1 flex-row">
+                                                <strong className="uppercase font-medium">Zona Horaria:</strong>
+                                                {currentAppointment.timezone || "No especificada"}
+                                            </div>
+                                        </div>
+
+                                        {/* Información adicional */}
+                                        <div className="space-y-3 mt-4">
+                                            <div className="flex text-sm gap-1 flex-col">
+                                                <strong className="uppercase font-medium">Mensaje del Servicio:</strong>
+                                                {currentAppointment.service && (
+                                                    <span className="text-gray-500">{currentAppointment?.service.messageText || "No hay mensaje disponible."}</span>
+                                                )}
+                                            </div>
+                                            <div className="flex text-sm gap-1 flex-col ">
+                                                <strong className="uppercase font-medium">Detalles del Cliente:</strong>
+                                                <span className="text-gray-500">{currentAppointment.session.seguimientos || "No hay detalles adicionales."}</span>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                }
+                            </Card>
+                        </TabsContent>
+
                     </Tabs>
                 </AlertDialogContent>
-            </AlertDialog>
+            </AlertDialog >
         </>
     );
 };
+
+
