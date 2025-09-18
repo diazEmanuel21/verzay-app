@@ -40,6 +40,6 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error('Error subiendo el archivo a MinIO:', error);
-    return NextResponse.json({ error: 'Error al subir el archivo.' }, { status: 500 });
+    return NextResponse.json({ error: 'API UPLOAD - error al subir el archivo.' }, { status: 500 });
   }
 }

@@ -236,7 +236,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
 
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Error al subir el archivo',
+        error instanceof Error ? error.message : 'Error al subir el archivo multimedia',
         { id: toastLoading }
       );
     } finally {
