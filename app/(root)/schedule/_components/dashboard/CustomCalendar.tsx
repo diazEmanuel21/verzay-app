@@ -132,6 +132,7 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
     return (
         <>
             <FullCalendar plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                timeZone={user.timezone || "local"} // 👈 aquí le pasas tu zona horaria
                 initialView="timeGridDay"
                 events={events}
                 headerToolbar={{
