@@ -12,4 +12,4 @@ const MultiagentePage = () => {
     );
 };
 
-export default MultiagentePage;
+export default MultiagentePage; 

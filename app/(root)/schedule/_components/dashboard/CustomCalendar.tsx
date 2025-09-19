@@ -137,6 +137,7 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                     setSelectedEventId(info.event.id);
                     const currentStatus = appointments.find((a) => a.id === info.event.id)?.status;
                     setCurrentAppointment(appointments.find((a) => a.id === info.event.id))
+                    debugger;
                     setNewStatus(currentStatus || "PENDIENTE");
                     setOpenDialog(true);
                 }}
@@ -262,10 +263,6 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                                                 {currentAppointment.service && (
                                                     <span className="text-gray-500">{currentAppointment?.service.messageText || "No hay mensaje disponible."}</span>
                                                 )}
-                                            </div>
-                                            <div className="flex text-sm gap-1 flex-col ">
-                                                <strong className="uppercase font-medium">Detalles del Cliente:</strong>
-                                                <span className="text-gray-500">{currentAppointment.session.seguimientos || "No hay detalles adicionales."}</span>
                                             </div>
                                         </div>
                                     </CardContent>
