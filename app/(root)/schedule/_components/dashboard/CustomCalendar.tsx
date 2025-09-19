@@ -124,12 +124,12 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
     return (
         <>
             <FullCalendar plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                initialView="timeGridWeek"
+                initialView="timeGridDay"
                 events={events}
                 headerToolbar={{
                     left: "prev,next today",
                     center: "title",
-                    right: "dayGridMonth,timeGridWeek,timeGridDay",
+                    right: "timeGridDay,timeGridWeek,dayGridMonth",
                 }}
                 editable={true}
                 height="auto"
@@ -255,16 +255,6 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                                                 {currentAppointment.timezone || "No especificada"}
                                             </div>
                                         </div>
-
-                                        {/* Información adicional */}
-                                        <div className="space-y-3 mt-4">
-                                            <div className="flex text-sm gap-1 flex-col">
-                                                <strong className="uppercase font-medium">Mensaje del Servicio:</strong>
-                                                {currentAppointment.service && (
-                                                    <span className="text-gray-500">{currentAppointment?.service.messageText || "No hay mensaje disponible."}</span>
-                                                )}
-                                            </div>
-                                        </div>
                                     </CardContent>
                                 }
                             </Card>
@@ -276,5 +266,3 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
         </>
     );
 };
-
-
