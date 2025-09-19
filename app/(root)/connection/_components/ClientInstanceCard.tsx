@@ -19,6 +19,17 @@ export const ClientInstanceCard = ({
   currentInstanceInfo
 }: ClientInstanceCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [clickCount,setClickCount] = useState(0)
+  const handleSecretClick = () => {
+    // Incrementa el contador de clicks
+    setClickCount(prevCount => prevCount + 1);
+
+    // Si el contador es 3, muestra el modal y resetea el contador
+    if (clickCount + 1 === 3) {
+      setShowDeleteDialog(true);
+      setClickCount(0); // Opcional: reiniciar el contador
+    }
+  };
 
   const instanceId = currentInstanceInfo?.id;
   const ownerJid = currentInstanceInfo?.ownerJid;
@@ -88,6 +99,8 @@ export const ClientInstanceCard = ({
         <CardFooter className="flex flex-row justify-start items-center">
           <div className="flex flex-1 flex-row items-center gap-1">
             <FaWhatsapp
+            onClick={handleSecretClick}
+
               className="text-green-500 rounded-sm"
             />
             <span className="text-sm font-bold">Whatsapp</span>
