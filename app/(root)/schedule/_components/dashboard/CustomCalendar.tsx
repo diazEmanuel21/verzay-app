@@ -121,6 +121,14 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
         }
     };
 
+    const minHour = events.length > 0
+        ? Math.min(...events.map(e => new Date(e.start).getHours()))
+        : 7;
+
+    const maxHour = events.length > 0
+        ? Math.max(...events.map(e => new Date(e.end).getHours()))
+        : 22;
+
     return (
         <>
             <FullCalendar plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -133,6 +141,9 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                 }}
                 editable={true}
                 height="auto"
+                allDaySlot={false}
+                slotMinTime={`${minHour}:00:00`}
+                slotMaxTime={`${maxHour + 1}:00:00`}
                 eventClick={(info) => {
                     setSelectedEventId(info.event.id);
                     const currentStatus = appointments.find((a) => a.id === info.event.id)?.status;
@@ -155,14 +166,14 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                 }}
             >
                 <AlertDialogContent className="border-border">
-                    <AlertDialogHeader className="flex items-end">
-                        <Button onClick={() => setOpenDialog(false)}><XCircleIcon /></Button>
-                    </AlertDialogHeader>
                     <Tabs defaultValue="details">
-                        <TabsList>
-                            <TabsTrigger value="details">Detalles</TabsTrigger>
-                            <TabsTrigger value="status">Estado</TabsTrigger>
-                        </TabsList>
+                        <div className="flex justify-between flex-row w-full">
+                            <TabsList>
+                                <TabsTrigger value="details">Detalles</TabsTrigger>
+                                <TabsTrigger value="status">Estado</TabsTrigger>
+                            </TabsList>
+                            <Button variant={"ghost"} onClick={() => setOpenDialog(false)}><XCircleIcon /></Button>
+                        </div>
                         <TabsContent value="status">
                             <Card className="border-border">
                                 <CardHeader>
