@@ -257,43 +257,46 @@ function ServiceListItem({ service, onEdited, onDeleted }: {
     };
 
     return (
-        <Card className="group hover:shadow-sm transition-shadow border-border">
-            <CardHeader className="pb-2">
-                <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-1">
-                        <CardTitle className="text-base leading-tight">
-                            {service.name}
-                        </CardTitle>
-                        <Badge variant="secondary" className="font-normal max-w-max">ID: {service.id.slice(0, 8)}…</Badge>
-                    </div>
-                    <div className="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        <ServiceFormDialog
-                            userId={service.userId}
-                            mode="edit"
-                            initialData={service}
-                            onSaved={(s) => onEdited(s)}
-                            trigger={
-                                <Button variant="outline" size="icon" title="Editar">
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
-                            }
-                        />
+        <>
+            <Card className="border-border w-full p-2">
+                <CardHeader className="p-0">
+                    <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-1">
+                            <CardTitle className="text-base leading-tight">
+                                {service.name}
+                            </CardTitle>
+                            <Badge variant="secondary" className="font-normal max-w-max">ID: {service.id.slice(0, 8)}…</Badge>
+                        </div>
+                        <div className="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                            <ServiceFormDialog
+                                userId={service.userId}
+                                mode="edit"
+                                initialData={service}
+                                onSaved={(s) => onEdited(s)}
+                                trigger={
+                                    <Button variant="outline" size="icon" title="Editar">
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                }
+                            />
 
-                        <Button
-                            variant="destructive"
-                            size="icon"
-                            title="Eliminar"
-                            onClick={() => setConfirmOpen(true)}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
+                            <Button
+                                variant="destructive"
+                                size="icon"
+                                title="Eliminar"
+                                onClick={() => setConfirmOpen(true)}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            </CardHeader>
+                </CardHeader>
 
-            <CardContent className="pt-0 text-sm text-muted-foreground">
-                {service.messageText}
-            </CardContent>
+                <CardContent className="text-sm p-0 text-muted-foreground">
+                    {service.messageText}
+                </CardContent>
+
+            </Card>
 
             {/* Confirmación de borrado */}
             <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
@@ -314,7 +317,8 @@ function ServiceListItem({ service, onEdited, onDeleted }: {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </Card>
+        </>
+
     );
 }
 

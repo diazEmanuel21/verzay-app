@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import Header from '@/components/shared/header';
 import { ReminderListClient, ReminderSkeleton, ReminderModal } from './';
 import { Button } from '@/components/ui/button';
-import { ArrowDownUp, PlusIcon, X } from 'lucide-react';
+import { ArrowDownUp, PlusIcon, Search, X } from 'lucide-react';
 import { MainReminderInterface } from '@/schema/reminder';
 import { Input } from '@/components/ui/input';
 import { closeDialog, openCreateDialog, useReminderDialogStore } from '@/stores';
@@ -46,7 +46,7 @@ export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, 
     <div className="flex flex-col h-full">
       {/* Header fijo */}
       <div className="sticky top-0 z-1 mb-2">
-        <div className="flex flex-col overflow-hidden justify-between flex-1 gap-4 p-2">
+        <div className="flex flex-col overflow-hidden justify-between flex-1 gap-4">
           <div className="flex justify-between items-center">
             <Header
               title={isCampaignPage ? 'Campañas' : 'Recordatorios'}
@@ -58,12 +58,15 @@ export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, 
           </div>
 
           <div className="flex flex-row gap-2 items-center justify-start">
-            <Input
-              placeholder="Buscar por título, número o nombre..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full md:max-w-sm"
-            />
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por título, número o nombre..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full md:max-w-sm pl-8"
+              />
+            </div>
 
             <Button
               variant="ghost"

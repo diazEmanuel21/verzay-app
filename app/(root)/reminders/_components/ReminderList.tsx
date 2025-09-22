@@ -12,7 +12,7 @@ export const ReminderList = ({ reminder, workflow }: ReminderListInterface) => {
 
     return (
         <Card key={reminder.id} className="border-border w-full">
-            <CardContent className="p-4 space-y-2">
+            <CardContent className="p-2">
                 <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-base text-primary">
                         {reminder.title}
