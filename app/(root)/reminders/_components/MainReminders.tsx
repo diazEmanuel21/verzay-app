@@ -38,7 +38,7 @@ export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, 
   const handleCreateReminder = () => {
     const countScheduleReminders = reminders.filter(r => r.isSchedule === true);
 
-    if (isScheduleView && countScheduleReminders.length >= 5) return toast.info('No se pueden crear más de 5 recordatorios en el módulo de agendamiento.')
+    if (isScheduleView && countScheduleReminders.length >= 10) return toast.info('No se pueden crear más de 10 recordatorios en el módulo de agendamiento.')
     openCreateDialog()
   };
 

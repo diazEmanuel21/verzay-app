@@ -120,7 +120,7 @@ export const ReminderForm = ({
     const modalTitle = isCampaignPage ? 'campaña' : 'recordatorio';
 
     const onSubmit = (payload: formValuesReminderSchema) => {
-        if (countScheduleReminders >= 5) return toast.info('No se pueden crear más de 5 recordatorios en el módulo de agendamiento.');
+        if (countScheduleReminders >= 10) return toast.info('No se pueden crear más de 10 recordatorios en el módulo de agendamiento.');
         mutation.mutate(payload);
     }
 
