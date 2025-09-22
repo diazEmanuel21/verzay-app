@@ -267,7 +267,7 @@ function ServiceListItem({ service, onEdited, onDeleted }: {
                             </CardTitle>
                             <Badge variant="secondary" className="font-normal max-w-max">ID: {service.id.slice(0, 8)}…</Badge>
                         </div>
-                        <div className="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-2">
                             <ServiceFormDialog
                                 userId={service.userId}
                                 mode="edit"
