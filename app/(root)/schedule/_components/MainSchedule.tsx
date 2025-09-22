@@ -30,14 +30,14 @@ export const MainSchedule = ({ isCampaignPage, user, apiKey, reminders, leads, w
                     <TabsTrigger value="settings">Ajustes</TabsTrigger>
                 </TabsList>
                 <TabsContent value="dashboard">
-                    <Card className="border-none pt-4">
+                    <Card className="border-none bg-transparent">
                         <CardContent>
                             <CustomCalendar user={user} />
                         </CardContent>
                     </Card>
                 </TabsContent>
                 <TabsContent value="availability">
-                    <Card className="border-none pt-4">
+                    <Card className="border-none bg-transparent">
                         <CardContent className="flex flex-col gap-2">
                             <UserAvailabilityForm userId={userId} />
                             <ShareScheduleLinkButton userId={userId} />
@@ -45,14 +45,14 @@ export const MainSchedule = ({ isCampaignPage, user, apiKey, reminders, leads, w
                     </Card>
                 </TabsContent>
                 <TabsContent value="services">
-                    <Card className="border-none pt-4">
+                    <Card className="border-none bg-transparent">
                         <CardContent className="flex flex-col gap-2 ">
                             <ServiceManager userId={userId} />
                         </CardContent>
                     </Card>
                 </TabsContent>
                 <TabsContent value="reminders">
-                    <Card className="border-none pt-4">
+                    <Card className="border-none bg-transparent">
                         <CardContent className="flex flex-col gap-2 ">
                             <MainReminders
                                 isCampaignPage={isCampaignPage}
@@ -69,7 +69,7 @@ export const MainSchedule = ({ isCampaignPage, user, apiKey, reminders, leads, w
                     </Card>
                 </TabsContent>
                 <TabsContent value="settings">
-                    <Card className="border-none pt-4">
+                    <Card className="border-none bg-transparent">
                         <CardContent className="flex flex-col gap-2 ">
                             <UpdateMeetingDuration userId={user.id} />
                         </CardContent>

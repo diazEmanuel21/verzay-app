@@ -58,6 +58,7 @@ import {
 
 // ✅ Types (Prisma)
 import type { Service } from "@prisma/client";
+import Header from "@/components/shared/header";
 
 // ------------------------------------------------------
 // Schema & Types
@@ -452,12 +453,9 @@ export default function ServiceManager({ userId }: { userId: string }) {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-xl font-semibold tracking-tight">Servicios</h2>
-                    <p className="text-sm text-muted-foreground">Crea, edita, elimina y filtra tus servicios.</p>
-                </div>
-            </div>
+            <Header
+                title="Servicios"
+            />
 
             <ServiceToolbar
                 query={query}
