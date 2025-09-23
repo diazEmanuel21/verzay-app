@@ -31,7 +31,7 @@ const AGENT_CONTENT = {
     messages: 'Eres un agente de Instagram especializado en responder mensajes privados.',
 };
 
-export const PromptInstanceDialog = ({ open, setOpen, defaultValues, userId,instanceType }: PromptDialogProps) => {
+export const PromptInstanceDialog = ({ open, setOpen, defaultValues, userId, instanceType }: PromptDialogProps) => {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<keyof typeof INSTAGRAM_TABS>('comments');
     const [agentContent, setAgentContent] = useState(AGENT_CONTENT);
@@ -74,12 +74,11 @@ export const PromptInstanceDialog = ({ open, setOpen, defaultValues, userId,inst
     });
 
     const onSubmit = () => {
-        // Enviar el contenido de la pestaña activa a la API
         const data: PromptAiFormValues = {
-            title: activeTab, // Usar la clave de la pestaña como título
+            title: activeTab,
             message: agentContent[activeTab],
             userId,
-            typePrompt: 'TRAINING', // O el valor que corresponda
+            typePrompt: 'TRAINING',
         };
         mutation.mutate(data);
     };
@@ -90,30 +89,35 @@ export const PromptInstanceDialog = ({ open, setOpen, defaultValues, userId,inst
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="max-w-md h-[400px] flex flex-col border-border">
-                <DialogHeader>
-                    <DialogTitle className="text-center">Configuración </DialogTitle>
-                </DialogHeader>
+            {/* Se ajustan las clases para una mejor distribución */}
+            <DialogContent className="max-w-md h-[400px] flex flex-col justify-between border-border">
+                {/* Contenedor principal del contenido, ocupa el espacio restante */}
+                <div className="flex flex-col flex-grow">
+                    {/* Ajuste de espaciado en el DialogHeader */}
+                    <DialogHeader className="mb-4">
+                        <DialogTitle className="text-center font-bold">Configuración</DialogTitle>
+                    </DialogHeader>
 
-                <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1">
-                    <TabsList className="w-full grid grid-cols-2">
-                        <TabsTrigger value="comments">
-                            {INSTAGRAM_TABS.comments}
-                        </TabsTrigger>
-                        <TabsTrigger value="messages">
-                            {INSTAGRAM_TABS.messages}
-                        </TabsTrigger>
-                    </TabsList>
-                    
-                    <div className="mt-4 flex flex-col h-full">
-                        <Textarea
-                            placeholder="Escribe el mensaje del agente..."
-                            className="flex-1 resize-none overflow-y-auto"
-                            value={agentContent[activeTab]}
-                            onChange={(e) => setAgentContent({ ...agentContent, [activeTab]: e.target.value })}
-                        />
-                    </div>
-                </Tabs>
+                    <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col">
+                        <TabsList className="w-full grid grid-cols-2">
+                            <TabsTrigger value="comments">
+                                {INSTAGRAM_TABS.comments}
+                            </TabsTrigger>
+                            <TabsTrigger value="messages">
+                                {INSTAGRAM_TABS.messages}
+                            </TabsTrigger>
+                        </TabsList>
+
+                        <div className="mt-4 flex-1">
+                            <Textarea
+                                placeholder="Escribe el mensaje del agente..."
+                                className="flex-1 resize-none overflow-y-auto min-h-[150px] h-full"
+                                value={agentContent[activeTab]}
+                                onChange={(e) => setAgentContent({ ...agentContent, [activeTab]: e.target.value })}
+                            />
+                        </div>
+                    </Tabs>
+                </div>
 
                 <DialogFooter className="mt-4">
                     <Button type="button" onClick={onSubmit} disabled={mutation.isPending}>
