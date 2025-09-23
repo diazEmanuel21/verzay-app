@@ -48,7 +48,8 @@ model User {
   clientesAsignados  reseller[]         @relation("RevendedorAsignador")
   esClienteDe        reseller[]         @relation("ClienteAsignado")
   modules            Module[]           @relation("UserModules")
-  defaultProvider  AiProvider?        @relation(fields: [defaultProviderId], references: [id])
+  defaultProvider    AiProvider?        @relation(fields: [defaultProviderId], references: [id])
+  InstanciasPrompts PromptInstancia[]
 }
 
 model AiProvider {
@@ -57,7 +58,7 @@ model AiProvider {
   description String?
   aiModel     String
   configs     UserAiConfig[]
-  users User[]
+  users       User[]
 
   @@map("ai_providers")
 }
@@ -170,12 +171,42 @@ model VerificationToken {
   expires    DateTime
 }
 
+// model Instancias {
+//   id           Int    @id @default(autoincrement())
+//   instanceName String
+//   userId       String
+//   instanceId   String
+//   user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+// }
+
+enum tipoInstancia {
+  WHATSAPP
+  WHATSAPP_OFICIAL
+  FACEBOOK_MESSAGE
+  FACEBOOK_COMMENTS
+  INSTAGRAM_MESSAGE
+  INSTAGRAM_COMMENTS
+}
+
 model Instancias {
-  id           Int    @id @default(autoincrement())
-  instanceName String
-  userId       String
-  instanceId   String
-  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            Int               @id @default(autoincrement())
+  instanceName  String
+  userId        String
+  instanceId    String
+  tipoInstancia String?
+  isActive      Boolean? 
+  user          User              @relation(fields: [userId], references: [id])
+}
+
+model PromptInstancia{
+  id          Int        @id @default(autoincrement())
+  tipoInstancia String?
+  description String?
+  contenido   String?
+  instanciaId Int?
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  //Tipo Instancia
 }
 
 model SystemMessage {
@@ -421,7 +452,7 @@ enum Role {
 }
 
 enum Plan {
-  admin         @map("empresarial")
+  empresarial   @map("empresarial")
   lite
   unico
   basico

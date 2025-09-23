@@ -7,19 +7,69 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { MessageCircle, Users } from 'lucide-react'
 import { useState } from 'react'
-import { FaWhatsapp } from 'react-icons/fa'
+import { FaWhatsapp, FaInstagram, FaFacebook } from 'react-icons/fa'
 import { ConnectionActions } from './'
 import { deleteInstance } from '@/actions/api-action'
 import { ClientInstanceCardProps } from '@/schema/connection'
 import { Skeleton } from '@/components/ui/skeleton'
+import { PromptInstanceDialog } from './PromptInstanceDialog'
+import { randomUUID } from 'crypto'
+
+
+interface SocialIconSelectorProps {
+  instanceType?: string
+  callback: () => void;
+}
+
+export const SocialIconSelector = ({ instanceType, callback }: SocialIconSelectorProps) => {
+
+  switch (instanceType) {
+    case 'Instagram':
+      return <>
+        <FaInstagram
+          onClick={callback}
+          className="text-pink-500 rounded-sm"
+        />
+        <span className="text-sm font-bold">Instagram</span>
+        <hr className="w-4 rotate-90" />
+            <span className="text-sm text-gray-400">Business</span>
+            <span className="text-sm text-pink-500">avanzado</span>
+      </>
+    case 'Facebook':
+      return <>
+        <FaFacebook
+          onClick={callback}
+          className="text-blue-500 rounded-sm"
+        />
+        <span className="text-sm font-bold">Facebook</span>
+        <hr className="w-4 rotate-90" />
+            <span className="text-sm text-gray-400">Business</span>
+            <span className="text-sm text-blue-500">avanzado</span>
+      </>
+    case 'Whatsapp':
+    default:
+      return <>
+        <FaWhatsapp
+          onClick={callback}
+          className="text-green-500 rounded-sm"
+        />
+        <span className="text-sm font-bold">Whatsapp</span>
+        <hr className="w-4 rotate-90" />
+            <span className="text-sm text-gray-400">Business</span>
+            <span className="text-sm text-green-500">avanzado</span>
+      </>
+  }
+};
 
 export const ClientInstanceCard = ({
   intanceName,
+  instanceType,
   user,
   currentInstanceInfo
 }: ClientInstanceCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [clickCount,setClickCount] = useState(0)
+  const [showPromptDialog, setShowPromptDialog] = useState(false);
+  const [clickCount, setClickCount] = useState(0)
   const handleSecretClick = () => {
     // Incrementa el contador de clicks
     setClickCount(prevCount => prevCount + 1);
@@ -46,7 +96,7 @@ export const ClientInstanceCard = ({
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>{intanceName}</CardTitle>
-            <ConnectionActions handleDelete={setShowDeleteDialog} />
+            <ConnectionActions handleDelete={setShowDeleteDialog} handlePrompt={setShowPromptDialog} />
           </div>
         </CardHeader>
         <CardContent>
@@ -98,15 +148,20 @@ export const ClientInstanceCard = ({
         </CardContent>
         <CardFooter className="flex flex-row justify-start items-center">
           <div className="flex flex-1 flex-row items-center gap-1">
-            <FaWhatsapp
-            onClick={handleSecretClick}
 
+            {/* <FaWhatsapp
+              onClick={handleSecretClick}
               className="text-green-500 rounded-sm"
             />
-            <span className="text-sm font-bold">Whatsapp</span>
-            <hr className="w-4 rotate-90" />
+            <span className="text-sm font-bold">Whatsapp</span> */}
+            <SocialIconSelector
+              instanceType={instanceType}
+              callback={handleSecretClick}
+            ></SocialIconSelector>
+
+            {/* <hr className="w-4 rotate-90" />
             <span className="text-sm text-gray-400">Business</span>
-            <span className="text-sm text-green-500">avanzado</span>
+            <span className="text-sm text-green-500">avanzado</span> */}
           </div>
         </CardFooter>
       </Card>
@@ -119,6 +174,14 @@ export const ClientInstanceCard = ({
         mutationFn={() => deleteInstance(user.id)}
         entityLabel="Agente IA"
       />
+      <PromptInstanceDialog
+      instanceType={instanceType}
+        open={showPromptDialog}
+        setOpen={setShowPromptDialog}
+        userId=''
+        key={''}
+        defaultValues={undefined}
+      ></PromptInstanceDialog>
     </>
   )
 }

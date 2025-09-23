@@ -5,8 +5,9 @@ import { createInstance, } from "@/actions/api-action"
 import { toast } from "sonner"
 import { ClientInstanceCard, ConnectionCard } from './';
 import { ConnectionMainInterface, FormInstanceConnectionValues } from "@/schema/connection";
+import { PromptAiFormValues } from "@/schema/ai";
 
-export const ConnectionMain = ({ user, instance, instanceInfo }: ConnectionMainInterface) => {
+export const ConnectionMain = ({ user, instance, instanceInfo, instanceType }: ConnectionMainInterface) => {
     const [loading, setLoading] = useState<boolean>(false);
     const instanceName = !instance ? '' : instance.instanceName;
     const currentInstanceInfo = instanceInfo?.find(i => i.name === instanceName);
@@ -45,10 +46,12 @@ export const ConnectionMain = ({ user, instance, instanceInfo }: ConnectionMainI
     return (
         <>
             {
-                instance 
+                instance
                     ?
                     <ClientInstanceCard
+                        
                         intanceName={instanceName}
+                        instanceType={instanceType ?? ''}
                         user={user}
                         currentInstanceInfo={currentInstanceInfo}
                     />
@@ -61,5 +64,5 @@ export const ConnectionMain = ({ user, instance, instanceInfo }: ConnectionMainI
                     />
             }
         </>
-    )
-}
+    );
+};

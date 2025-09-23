@@ -38,9 +38,18 @@ const Home = async ({ searchParams }: SearchParamProps) => {
     });
   }
 
+  const instanceFacebook = {}
+  const instanceFacebookInfo = {}
+
+  const instanceInstagram = {}
+  const instanceInstagramInfo = {}
+
   return (
     <div className="flex flex-1 flex-wrap gap-4 items-center justify-center">
-      <ConnectionMain user={user} instance={instance} instanceInfo={instanceInfo?.data} />
+      <ConnectionMain user={user} instance={instance} instanceInfo={instanceInfo?.data} instanceType={'Whatsapp'} />
+      <ConnectionMain user={user} instance={instance} instanceInfo={instanceInfo?.data} instanceType={'Instagram'}/>
+      <ConnectionMain user={user} instance={instance} instanceInfo={instanceInfo?.data} instanceType={'Facebook'}/>
+
       {/* <UnderConstruction /> */}
     </div>
   )
