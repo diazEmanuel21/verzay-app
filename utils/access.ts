@@ -46,7 +46,7 @@ export function canAccessRoute({
   const link = getRouteAccess(route, modules);
   if (!link) return { allowed: true };
 
-  if(link.label === 'AI ASSISTENCE') debugger;
+  // if(link.label === 'AI ASSISTENCE') debugger;
 
   // Restringe acceso si es solo para admins y el usuario no lo es
   if (link.adminOnly && !hasAdminRol) {

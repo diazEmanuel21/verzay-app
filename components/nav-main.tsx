@@ -37,7 +37,7 @@ export function NavMain({ user }: { user: User }) {
     const navItems = modules
         .filter(link => link.showInSidebar)
         .filter(link => {
-            if (link.label === 'AI ASSISTENCE') debugger;
+            // if (link.label === 'AI ASSISTENCE') debugger;
 
             const access = canAccessRoute({
                 route: link.route,
