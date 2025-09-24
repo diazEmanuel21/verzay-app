@@ -287,6 +287,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
     return (
         <>
             <div className="w-full min-h-[100vh] p-4 overflow-auto">
+                {/* <Button onClick={() => testAPISendMessages()}>Probar API</Button> */}
                 <div className="flex justify-center max-h-[86vh] w-full overflow-auto">
                     {/* Columna izquierda: contenido por pasos */}
                     <div className="space-y-2 w-full md:max-w-[700px]">

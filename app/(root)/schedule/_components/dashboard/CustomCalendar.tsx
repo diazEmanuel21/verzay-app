@@ -149,7 +149,6 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                     setSelectedEventId(info.event.id);
                     const currentStatus = appointments.find((a) => a.id === info.event.id)?.status;
                     setCurrentAppointment(appointments.find((a) => a.id === info.event.id))
-                    debugger;
                     setNewStatus(currentStatus || "PENDIENTE");
                     setOpenDialog(true);
                 }}

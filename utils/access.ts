@@ -37,12 +37,16 @@ export function canAccessRoute({
   userPlan: Plan;
   modules: ModuleWithItems[];
 }) {
+
+
   // Verifica si el usuario tiene rol administrativo
   const hasAdminRol = userRole === 'admin' || userRole === 'reseller';
 
   // Busca el módulo correspondiente a la ruta
   const link = getRouteAccess(route, modules);
   if (!link) return { allowed: true };
+
+  if(link.label === 'AI ASSISTENCE') debugger;
 
   // Restringe acceso si es solo para admins y el usuario no lo es
   if (link.adminOnly && !hasAdminRol) {
