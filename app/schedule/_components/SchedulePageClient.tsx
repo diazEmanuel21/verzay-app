@@ -117,13 +117,6 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
         if (!reminders) return toast.error("missing reminders");
 
         const [startTime, endTime] = selectedSlot.split("|");
-
-
-        // const areaDigits = areaCode.replace(/\D/g, "");
-        // const phoneDigits = phone.replace(/\D/g, "");
-        // const fullPhone = `${areaDigits}${phoneDigits}`;
-        // const remoteJid = `${fullPhone}@s.whatsapp.net`;
-
         const e164 = normalizeToE164(areaCode, phone);
         if (!e164) {
             toast.error("Número de WhatsApp inválido. Verifica el país y el número.");
@@ -246,12 +239,6 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
         const url = `https://${urlevo}/message/sendText/${instanceName}`;
         const currentService = user.Service.find((s) => s.id === selectedService);
         const text = currentService?.messageText ? `${currentService?.messageText?.replace(/@nombre\b/g, `*${name}*`)}` : "Thanks fow scheduling with us.";
-
-        // const areaDigits = areaCode.replace(/\D/g, "");
-        // const phoneDigits = phone.replace(/\D/g, "");
-        // const fullPhone = `${areaDigits}${phoneDigits}`;
-        // const remoteJid = `${fullPhone}@s.whatsapp.net`;
-
         const e164 = normalizeToE164(areaCode, phone);
         if (!e164) {
             toast.error("Número de WhatsApp inválido. Verifica el país y el número.");
