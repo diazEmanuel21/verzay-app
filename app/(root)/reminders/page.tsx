@@ -24,8 +24,10 @@ function hasWorkflow(result: { data?: Workflow[] }): result is { data: Workflow[
     return !!result.data
 }
 
-function hasInstancia(result: { data?: Instancias | null }): result is { data: Instancias } {
-    return !!result.data
+// CORRECCIÓN: Se actualizó la función para manejar un array de instancias.
+// Esto coincide con el tipo de dato que getInstancesByUserId devuelve.
+function hasInstancia(result: { data?: Instancias[] }): result is { data: Instancias[] } {
+    return !!result.data && result.data.length > 0;
 }
 
 const RemindersPage = async () => {
@@ -65,10 +67,15 @@ const RemindersPage = async () => {
 
 
     const resInstancia = await getInstancesByUserId(user.id)
+    // Ahora, la función hasInstancia funciona correctamente.
     if (!resInstancia.success || !hasInstancia(resInstancia)) {
-        console.error("[REMINDERS_PAGE] No se encontró una API Key válida para el usuario.")
-        return <strong className="text-red-500">No se encontró una API Key válida.</strong>
+        console.error("[REMINDERS_PAGE] No se encontró una instancia válida para el usuario.")
+        return <strong className="text-red-500">No se encontró una instancia válida.</strong>
     }
+
+    // Si `MainReminders` espera una sola instancia, seleccionas la primera del array
+    // Si espera el array, puedes pasar `resInstancia.data` directamente
+    const instancia = resInstancia.data[0];
 
     /* Flag para comportamiento especifico del módulo de campañas */
     const isCampaignPage = false;
@@ -81,10 +88,10 @@ const RemindersPage = async () => {
             reminders={reminders}
             leads={sessions}
             workflows={workflows}
-            instancia={resInstancia.data}
+            // CORRECCIÓN: Se pasa la primera instancia del array
+            instancia={instancia}
         />
     )
-
 }
 
 export default RemindersPage

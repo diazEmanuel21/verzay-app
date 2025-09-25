@@ -10,74 +10,84 @@ import { MainReminders } from "../reminders/_components"
 import { UnderConstruction } from "@/components/custom";
 
 function hasApiKey(result: { data?: ApiKey | null }): result is { data: ApiKey } {
-  return !!result.data
+    return !!result.data
 }
 
 function hasReminder(result: { data?: Reminders[] }): result is { data: Reminders[] } {
-  return !!result.data
+    return !!result.data
 }
 
 function hasSession(result: { data?: Session[] }): result is { data: Session[] } {
-  return !!result.data
+    return !!result.data
 }
 
 function hasWorkflow(result: { data?: Workflow[] }): result is { data: Workflow[] } {
-  return !!result.data
+    return !!result.data
 }
 
-function hasInstancia(result: { data?: Instancias | null }): result is { data: Instancias } {
-  return !!result.data
+// **CORRECCIÓN:**
+// Se actualizó la función para manejar un array de instancias.
+function hasInstancia(result: { data?: Instancias[] }): result is { data: Instancias[] } {
+    return !!result.data && result.data.length > 0
 }
 
 const CampaignsPage = async () => {
-  const user = await currentUser()
-  if (!user) redirect("/login")
+    const user = await currentUser()
+    if (!user) redirect("/login")
 
-  // Obtener API Key
-  const resApikey = await getApiKeyById(user.apiKeyId)
-  if (!resApikey.success || !hasApiKey(resApikey)) {
-    console.error("[REMINDERS_PAGE] No se encontró una API Key válida para el usuario.")
-    return <strong className="text-red-500">No se encontró una API Key válida.</strong>
-  }
+    // Obtener API Key
+    const resApikey = await getApiKeyById(user.apiKeyId)
+    if (!resApikey.success || !hasApiKey(resApikey)) {
+        console.error("[REMINDERS_PAGE] No se encontró una API Key válida para el usuario.")
+        return <strong className="text-red-500">No se encontró una API Key válida.</strong>
+    }
 
-  // Obtener recordatorios
-  const resReminder = await getRemindersByUserId(user.id)
-  if (!resReminder.success) {
-    console.error("[REMINDERS_PAGE] Error al obtener recordatorios:", resReminder.message)
-    return <strong>404</strong>
-  }
-  const reminders = hasReminder(resReminder) ? resReminder.data : []
+    // Obtener recordatorios
+    const resReminder = await getRemindersByUserId(user.id)
+    if (!resReminder.success) {
+        console.error("[REMINDERS_PAGE] Error al obtener recordatorios:", resReminder.message)
+        return <strong>404</strong>
+    }
+    const reminders = hasReminder(resReminder) ? resReminder.data : []
 
-  // Obtener sesiones
-  const resSession = await getSessionsByUserId(user.id)
-  if (!resSession.success) {
-    console.error("[REMINDERS_PAGE] Error al obtener sesiones:", resSession.message)
-    return <strong>404</strong>
-  }
-  const sessions = hasSession(resSession) ? resSession.data : []
+    // Obtener sesiones
+    const resSession = await getSessionsByUserId(user.id)
+    if (!resSession.success) {
+        console.error("[REMINDERS_PAGE] Error al obtener sesiones:", resSession.message)
+        return <strong>404</strong>
+    }
+    const sessions = hasSession(resSession) ? resSession.data : []
 
-  // Obtener workflows
-  const resWorkflow = await getWorkFlowByUser(user.id)
-  if (!resWorkflow.success) {
-    console.error("[REMINDERS_PAGE] Error al obtener flujos de trabajo:", resWorkflow.message)
-    return <strong>404</strong>
-  }
-  const workflows = hasWorkflow(resWorkflow) ? resWorkflow.data : []
+    // Obtener workflows
+    const resWorkflow = await getWorkFlowByUser(user.id)
+    if (!resWorkflow.success) {
+        console.error("[REMINDERS_PAGE] Error al obtener flujos de trabajo:", resWorkflow.message)
+        return <strong>404</strong>
+    }
+    const workflows = hasWorkflow(resWorkflow) ? resWorkflow.data : []
 
 
-  const resInstancia = await getInstancesByUserId(user.id)
-  if (!resInstancia.success || !hasInstancia(resInstancia)) {
-    console.error("[REMINDERS_PAGE] No se encontró una API Key válida para el usuario.")
-    return <strong className="text-red-500">No se encontró una API Key válida.</strong>
-  }
+    // **CORRECCIÓN:**
+    // Ahora que hasInstancia maneja un array, la lógica para verificar
+    // la existencia de una instancia es correcta.
+    const resInstancia = await getInstancesByUserId(user.id)
+    if (!resInstancia.success || !hasInstancia(resInstancia)) {
+        console.error("[REMINDERS_PAGE] No se encontró una instancia válida para el usuario.")
+        return <strong className="text-red-500">No se encontró una instancia válida.</strong>
+    }
+    // **NOTA:** Aquí `resInstancia.data` será un array.
+    // Si necesitas pasar una sola instancia a un componente,
+    // deberías seleccionar la primera, por ejemplo:
+    // const instancia = resInstancia.data[0];
 
-  /* Flag para comportamiento especifico del módulo de campañas */
-  const isCampaignPage = true;
 
-  return (
-    <div className="flex h-full w-full justify-center items-center">
-        <UnderConstruction />
-    </div>
+    /* Flag para comportamiento especifico del módulo de campañas */
+    const isCampaignPage = true;
+
+    return (
+        <div className="flex h-full w-full justify-center items-center">
+            <UnderConstruction />
+        </div>
 
         // <MainReminders
         //   isCampaignPage={isCampaignPage}
@@ -86,11 +96,9 @@ const CampaignsPage = async () => {
         //   reminders={reminders}
         //   leads={sessions}
         //   workflows={workflows}
-        //   instancia={resInstancia.data}
+        //   instancia={resInstancia.data} // Si MainReminders espera un array, esto está bien
         // />
-
-  )
-
+    )
 }
 
 export default CampaignsPage
