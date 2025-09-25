@@ -7,10 +7,10 @@ import { DataTable } from './data-table';
 import { getColumns } from './columns';
 import { ClientInterface } from '@/lib/types';
 import {
-    createUserWithPausar,
-    deleteUser,
-    updateAbrirPhrase,
-    updateClientData
+  createUserWithPausar,
+  deleteUser,
+  updateAbrirPhrase,
+  updateClientData
 } from '@/actions/userClientDataActions';
 import { CreateDialog, DeleteDialog, ToolsDialog, EditDialog, ClientStatusPanel, StatusKey } from './';
 import { ApiKey } from '@prisma/client';
@@ -20,198 +20,208 @@ import { Country } from '@/components/custom/CountryCodeSelect';
 export type DialogType = 'editar' | 'tools' | 'delete'
 
 interface Props {
-    users: ClientInterface[],
-    apikeys: ApiKey[],
-    availableApikeys: ApiKey[],
-    currentUserRol: string,
-    countries: Country[]
+  users: ClientInterface[],
+  apikeys: ApiKey[],
+  availableApikeys: ApiKey[],
+  currentUserRol: string,
+  countries: Country[]
 };
 
 export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRol, countries }: Props) => {
-    const router = useRouter();
-    const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-    const [openCreateDialog, setOpenCreateDialog] = useState(false);
-    const [openToolsDialog, setOpenToolsDialog] = useState(false);
-    const [openEditDialog, setOpenEditDialog] = useState(false);
-    const [user, setCurrentUser] = useState<ClientInterface>();
-    const [statusFilter, setStatusFilter] = useState<StatusKey | null>(null);
+  const router = useRouter();
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  const [openToolsDialog, setOpenToolsDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [user, setCurrentUser] = useState<ClientInterface>();
+  const [statusFilter, setStatusFilter] = useState<StatusKey | null>(null);
 
+  const handleCreate = async (formData: UserFormValues) => {
+    const toastId = 'create-client';
+    toast.loading('Creando cliente...', { id: toastId });
 
-    const handleCreate = async (formData: UserFormValues) => {
-        const toastId = 'create-client';
-        toast.loading('Creando cliente...', { id: toastId });
+    const {
+      name,
+      email,
+      password,
+      company,
+      notificationNumber,
+      role,
+      plan,
+      apiKeyId,
+      del_seguimiento,
+      webhookUrl,
+      apiUrl,
+    } = formData;
 
-        const {
-            name,
-            email,
-            password,
-            company,
-            notificationNumber,
-            role,
-            plan,
-            apiKeyId,
-            del_seguimiento,
-            webhookUrl,
-            apiUrl,
-        } = formData;
+    const result = await createUserWithPausar({
+      name,
+      email,
+      password,
+      company,
+      notificationNumber,
+      role,
+      plan,
+      apiKeyId,
+      del_seguimiento,
+      webhookUrl,
+      apiUrl,
+      // opcionales / defaults
+      muteAgentResponses: false,
+      onFacebook: false,
+      onInstagran: false,
+      lat: '0.0000',
+      lng: '0.0000',
+      mapsUrl: 'https://maps.google.com/?q=0,0',
+      openingPhrase: 'Fue un gusto ayudarle.',
+      theme: 'Default',
+      image: null,
+      emailVerified: null,
+      autoReactivate: '30',
+    });
 
-        const result = await createUserWithPausar({
-            name,
-            email,
-            password,
-            company,
-            notificationNumber,
-            role,
-            plan,
-            apiKeyId,
-            del_seguimiento,
-            webhookUrl,
-            apiUrl,
-            muteAgentResponses: false,
-            lat: '0.0000',
-            lng: '0.0000',
-            mapsUrl: 'https://maps.google.com/?q=0,0',
-            openingPhrase: 'Fue un gusto ayudarle.',
-            theme: 'Default',
-            image: null,
-            emailVerified: null,
-            autoReactivate: '30',
-        });
+    if (result.success) {
+      toast.success('Cliente creado', { id: toastId });
+      router.refresh();
+    } else {
+      toast.error(result.message || 'Error al crear cliente', { id: toastId });
+    }
 
-        if (result.success) {
-            toast.success('Cliente creado', { id: toastId });
-            router.refresh();
-        } else {
-            toast.error(result.message || 'Error al crear cliente', { id: toastId });
+    setOpenCreateDialog(false);
+  };
+
+  // 🔹 helper para normalizar booleanos (maneja hidden+checkbox)
+  const normalizeBooleanField = (fd: FormData, key: string) => {
+    const values = fd.getAll(key).map(v => String(v));
+    const isTrue = values.includes('true') || values.includes('on'); // por si algún checkbox manda "on"
+    fd.set(key, isTrue ? 'true' : 'false');
+  };
+
+  const handleEdit = async (userId: string, formData: FormData) => {
+    const toastId = 'edit-client';
+    toast.loading('Actualizando...', { id: toastId });
+
+    // === Validación y actualización de openMsg ===
+    if (formData.has('openMsg')) {
+      const currentValue = String(formData.get('openMsg') ?? '');
+      const currentUser = users.find(user => user.id === userId);
+      const savedMsg = currentUser?.pausar.find(p => p.tipo === 'abrir')?.mensaje ?? '';
+      if (savedMsg !== currentValue) {
+        const result = await updateAbrirPhrase(userId, currentValue);
+        if (!result.success) {
+          toast.error(result.message || 'Error al actualizar abrirPhrase', { id: toastId });
+          return;
         }
+      }
+    }
+    formData.delete('openMsg');
 
-        setOpenCreateDialog(false);
-    };
+    // === Normalizar booleanos (muy importante por el hidden+checkbox) ===
+    normalizeBooleanField(formData, 'onFacebook');
+    normalizeBooleanField(formData, 'onInstagran');
+    normalizeBooleanField(formData, 'muteAgentResponses');
 
-    const handleEdit = async (userId: string, formData: FormData) => {
-        const toastId = 'edit-client';
-        toast.loading('Actualizando...', { id: toastId });
+    // === Actualización del cliente ===
+    const result = await updateClientData(userId, formData);
 
-        // === Validación y actualización de openMsg ===
-        if (formData.has('openMsg')) {
-            const currentValue = String(formData.get('openMsg') ?? '');
+    if (result.success) {
+      toast.success(result.message, { id: toastId });
+      router.refresh();
+      setOpenEditDialog(false);
+    } else {
+      toast.error(result.message || 'Error al editar cliente', { id: toastId });
+    }
+  };
 
-            const currentUser = users.find(user => user.id === userId);
-            const savedMsg = currentUser?.pausar.find(p => p.tipo === 'abrir')?.mensaje ?? '';
-            if (savedMsg !== currentValue) {
-                const result = await updateAbrirPhrase(userId, currentValue);
-                if (!result.success) {
-                    toast.error(result.message || 'Error al actualizar abrirPhrase', { id: toastId });
-                    return;
-                }
-            }
-        }
-        formData.delete('openMsg');
+  const handleDelete = async (userId: string) => {
+    if (!userId || userId === '' || !openDeleteDialog) return toast.error('Faltan parametros para completar la ejecución.');
 
-        // === Actualización del cliente ===
-        const result = await updateClientData(userId, formData)
+    const toastId = 'delete-client';
+    toast.loading('Eliminando cliente...', { id: toastId });
+    const result = await deleteUser(userId);
 
-        if (result.success) {
-            toast.success(result.message, { id: toastId });
-            router.refresh();
-            setOpenEditDialog(false);
-        } else {
-            toast.error(result.message || 'Error al editar cliente', { id: toastId });
-        }
-    };
+    if (result.success) {
+      toast.success('Cliente eliminado', { id: toastId });
+      router.refresh();
+    } else {
+      toast.error('Error al eliminar cliente', { id: toastId });
+    }
+  };
 
-    const handleDelete = async (userId: string) => {
-        if (!userId || userId === '' || !openDeleteDialog) return toast.error('Faltan parametros para completar la ejecución.');;
+  const openDialogGetUserId = (userId: string, dialog: DialogType, state: boolean) => {
+    const currentUser = users.filter(user => user.id === userId)[0];
+    setCurrentUser(currentUser);
 
-        const toastId = 'delete-client';
-        toast.loading('Eliminando cliente...', { id: toastId });
-        const result = await deleteUser(userId);
+    if (dialog === 'tools') return setOpenToolsDialog(state);
+    if (dialog === 'delete') return setOpenDeleteDialog(state);
+    if (dialog === 'editar') return setOpenEditDialog(state);
+  };
 
-        if (result.success) {
-            toast.success('Cliente eliminado', { id: toastId });
-            router.refresh();
-        } else {
-            toast.error('Error al eliminar cliente', { id: toastId });
-        }
-    };
+  const openCreateDialogUser = () => {
+    setOpenCreateDialog(true);
+  };
 
-    const openDialogGetUserId = (userId: string, dialog: DialogType, state: boolean) => {
-        const currentUser = users.filter(user => user.id === userId)[0];
-        setCurrentUser(currentUser);
+  const filteredUsers = statusFilter
+    ? users.filter((user) => {
+        if (statusFilter === "qrDisconnected") return user.qrStatus === true;
+        if (statusFilter === "qrConnected") return user.qrStatus === false;
+        if (statusFilter === "evoOn") return user.isEvoEnabled === true;
+        if (statusFilter === "evoOff") return user.isEvoEnabled === false;
+        return true;
+      })
+    : users;
 
-        if (dialog === 'tools') return setOpenToolsDialog(state);
-        if (dialog === 'delete') return setOpenDeleteDialog(state);
-        if (dialog === 'editar') return setOpenEditDialog(state);
-    };
+  const columns = getColumns(openDialogGetUserId, currentUserRol);
 
-    const openCreateDialogUser = () => {
-        setOpenCreateDialog(true);
-    };
+  return (
+    <>
+      {/* Gestión de clients */}
+      <DataTable
+        columns={columns}
+        data={filteredUsers}
+        currentUserRol={currentUserRol}
+        openCreateDialogUser={openCreateDialogUser}
+        setStatusFilter={setStatusFilter}
+      />
 
-    const filteredUsers = statusFilter
-        ? users.filter((user) => {
-            if (statusFilter === "qrDisconnected") return user.qrStatus === true;
-            if (statusFilter === "qrConnected") return user.qrStatus === false;
-            if (statusFilter === "evoOn") return user.isEvoEnabled === true;
-            if (statusFilter === "evoOff") return user.isEvoEnabled === false;
-            return true;
-        })
-        : users;
-
-    const columns = getColumns(openDialogGetUserId, currentUserRol);
-
-    return (
-        <>
-
-            {/* Gestión de clients */}
-            <DataTable
-                columns={columns}
-                data={filteredUsers}
-                currentUserRol={currentUserRol}
-                openCreateDialogUser={openCreateDialogUser}
-                setStatusFilter={setStatusFilter}
-            />
-
-
-
-            {/* Dialog create */}
-            {availableApikeys && (
-                <CreateDialog
-                    countries={countries}
-                    handleCreate={handleCreate}
-                    setOpenCreateDialog={setOpenCreateDialog}
-                    openCreateDialog={openCreateDialog}
-                    apikeys={availableApikeys}
-                />
-            )}
-            {/* Dialog delete */}
-            {user && apikeys && (
-                <EditDialog
-                    openEditDialog={openEditDialog}
-                    setOpenEditDialog={setOpenEditDialog}
-                    handleEdit={handleEdit}
-                    user={user}
-                    apikeys={apikeys}
-                    currentUserRol={currentUserRol}
-                />
-            )}
-            {/* Dialog delete */}
-            {user && (
-                <DeleteDialog
-                    handleDelete={handleDelete}
-                    openDeleteDialog={openDeleteDialog}
-                    setOpenDeleteDialog={setOpenDeleteDialog}
-                    user={user}
-                />
-            )}
-            {/* Tools */}
-            {user && (
-                <ToolsDialog
-                    openToolsDialog={openToolsDialog}
-                    setOpenToolsDialog={setOpenToolsDialog}
-                    user={user}
-                />
-            )}
-        </>
-    );
+      {/* Dialog create */}
+      {availableApikeys && (
+        <CreateDialog
+          countries={countries}
+          handleCreate={handleCreate}
+          setOpenCreateDialog={setOpenCreateDialog}
+          openCreateDialog={openCreateDialog}
+          apikeys={availableApikeys}
+        />
+      )}
+      {/* Dialog editar */}
+      {user && apikeys && (
+        <EditDialog
+          openEditDialog={openEditDialog}
+          setOpenEditDialog={setOpenEditDialog}
+          handleEdit={handleEdit}
+          user={user}
+          apikeys={apikeys}
+          currentUserRol={currentUserRol}
+        />
+      )}
+      {/* Dialog delete */}
+      {user && (
+        <DeleteDialog
+          handleDelete={handleDelete}
+          openDeleteDialog={openDeleteDialog}
+          setOpenDeleteDialog={setOpenDeleteDialog}
+          user={user}
+        />
+      )}
+      {/* Tools */}
+      {user && (
+        <ToolsDialog
+          openToolsDialog={openToolsDialog}
+          setOpenToolsDialog={setOpenToolsDialog}
+          user={user}
+        />
+      )}
+    </>
+  );
 };

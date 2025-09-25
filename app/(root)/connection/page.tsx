@@ -1,55 +1,119 @@
-'use server'
-
-import { currentUser } from '@/lib/auth';
-import { ConnectionMain } from './_components';
+import { UnderConstruction } from "@/components/custom"
+import { currentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { ApiKey, Instancias } from "@prisma/client";
+import { ApiKey, Instancias, PromptInstancia } from "@prisma/client";
 import { getInstancesByUserId } from "@/actions/instances-actions";
-import { fetchInstanceAction } from '@/actions/fetch-intance-action';
-import { getApiKeyById } from '@/actions/api-action';
-import { UnderConstruction } from '@/components/custom';
-// import { SeedModules } from '@/components/custom/SeedModules';
+import { getApiKeyById } from "@/actions/api-action";
+import { fetchInstanceAction } from "@/actions/fetch-intance-action";
+import { getPromptsByUserId } from "@/actions/prompt-actions";
+import { ConnectionMain } from "./_components";
 
-function hasInstancia(result: { data?: Instancias | null }): result is { data: Instancias } {
-    return !!result.data
+// Tipo de la respuesta esperada
+interface ActionResponse<T> {
+  success: boolean;
+  message: string;
+  data?: T;
+}
+
+// Adapta las funciones de tipo para manejar arrays
+function hasInstancias(result: { data?: Instancias[] | null }): result is { data: Instancias[] } {
+  return !!result.data && result.data.length > 0;
 };
 
 function hasApikey(result: { data?: ApiKey | null }): result is { data: ApiKey } {
-    return !!result.data
+  return !!result.data
 };
 
-const ConnectionPage = async () => {
-    const user = await currentUser();
+function hasPrompts(result: { data?: PromptInstancia[] | null }): result is { data: PromptInstancia[] } {
+  return !!result.data && result.data.length > 0;
+};
 
-    if (!user) {
-        redirect("/login");
+// 🔹 Helper: normaliza el tipo (null/undefined -> "Whatsapp")
+const normalizeType = (t?: string | null) => t ?? "Whatsapp";
+
+const Home = async ({ searchParams }: SearchParamProps) => {
+  const user = await currentUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  // Obtenemos instancias, API key y prompts en paralelo para mejorar la eficiencia
+  const [resInstancias, resApikey, resPrompts] = await Promise.all([
+    getInstancesByUserId(user.id),
+    getApiKeyById(user.apiKeyId),
+    getPromptsByUserId(user.id)
+  ]);
+
+  const instancias = hasInstancias(resInstancias) ? resInstancias.data : [];
+  const apiKey = hasApikey(resApikey) ? resApikey.data : null;
+  const prompts = hasPrompts(resPrompts) ? resPrompts.data : [];
+
+  // Objeto para almacenar las instancias, su información y los prompts
+  const instancesData: { [key: string]: { instance?: Instancias, info?: any, prompts?: PromptInstancia[] } } = {
+    'Whatsapp': { prompts: [] },
+    'Instagram': { prompts: [] },
+    'Facebook': { prompts: [] }
+  };
+
+  // Asignar las instancias y los prompts al objeto por su tipo (normalizado)
+  instancias.forEach(instancia => {
+    const type = normalizeType(instancia.tipoInstancia);
+    if (instancesData[type]) {
+      instancesData[type].instance = instancia;
     }
+  });
 
-    const resInstancia = await getInstancesByUserId(user.id);
-    const instance = resInstancia.success && hasInstancia(resInstancia) ? resInstancia.data : undefined;
+  prompts.forEach(prompt => {
+    const type = normalizeType(prompt.tipoInstancia);
+    if (instancesData[type]) {
+      instancesData[type].prompts?.push(prompt);
+    }
+  });
 
-    const resApikey = await getApiKeyById(user.apiKeyId)
-    const apiKey = hasApikey(resApikey) ? resApikey.data : null
-
-    let instanceInfo = null;
-
-    if (apiKey && instance) {
-        instanceInfo = await fetchInstanceAction({
-            evoApiKey: apiKey.key,
-            evoUrl: apiKey.url,
-            instanceName: instance.instanceName
+  if (apiKey) {
+    // Itera sobre las instancias que se encontraron y hace la petición para cada una (usando tipo normalizado)
+    const fetchPromises = instancias.map(async (instancia) => {
+      const type = normalizeType(instancia.tipoInstancia);
+      if (instancesData[type]?.instance) {
+        const instanceInfo = await fetchInstanceAction({
+          evoApiKey: apiKey.key,
+          evoUrl: apiKey.url,
+          instanceName: instancia.instanceName
         });
-    }
 
-    return (
-        <div className="flex flex-1 flex-wrap gap-4 items-center justify-center">
-            <ConnectionMain user={user} instance={instance} instanceInfo={instanceInfo?.data} instanceType={'Whatsapp'} />
-            <ConnectionMain user={user} instance={instance} instanceInfo={instanceInfo?.data} instanceType={'Instagram'} />
-            <ConnectionMain user={user} instance={instance} instanceInfo={instanceInfo?.data} instanceType={'Facebook'} />
-            {/* <UnderConstruction /> */}
-            {/* <SeedModules /> */}
-        </div>
-    );
+        instancesData[type].info = instanceInfo?.data;
+      }
+    });
+
+    await Promise.all(fetchPromises);
+  }
+
+  return (
+    <div className="flex flex-1 flex-wrap gap-4 items-center justify-center">
+      <ConnectionMain 
+        user={user} 
+        instance={instancesData['Whatsapp'].instance} 
+        instanceInfo={instancesData['Whatsapp'].info} 
+        instanceType={'Whatsapp'}
+        prompts={instancesData['Whatsapp'].prompts} 
+      />
+      <ConnectionMain 
+        user={user} 
+        instance={instancesData['Instagram'].instance} 
+        instanceInfo={instancesData['Instagram'].info} 
+        instanceType={'Instagram'} 
+        prompts={instancesData['Instagram'].prompts}
+      />
+      <ConnectionMain 
+        user={user} 
+        instance={instancesData['Facebook'].instance} 
+        instanceInfo={instancesData['Facebook'].info} 
+        instanceType={'Facebook'} 
+        prompts={instancesData['Facebook'].prompts}
+      />
+    </div>
+  )
 }
 
-export default ConnectionPage
+export default Home;
