@@ -66,10 +66,9 @@ interface PromptDialogProps {
 
 export const PromptInstanceDialog = ({ open, setOpen, prompts, userId, platform }: PromptDialogProps) => {
     const router = useRouter();
-    const config = PLATFORM_CONFIG[platform];
-    if (!config) return null;
 
-    const [activeTab, setActiveTab] = useState<string>(config.defaultTab);
+    // CORRECTED: Move all React Hooks to the top of the component
+    const [activeTab, setActiveTab] = useState<string>(''); // Initialize with empty string or null
     const [allPrompts, setAllPrompts] = useState<Record<string, PromptInstanciaFormValues>>({});
 
     const form = useForm<PromptInstanciaFormValues>({
@@ -90,6 +89,10 @@ export const PromptInstanceDialog = ({ open, setOpen, prompts, userId, platform 
         },
         onError: () => toast.error("Ocurrió un error al guardar el prompt."),
     });
+
+    // CORRECTED: Now the conditional check can safely be here.
+    const config = PLATFORM_CONFIG[platform];
+    if (!config) return null;
 
     // Inicializa datos al abrir el modal SOLO una vez o cuando cambia la plataforma
     useEffect(() => {
@@ -118,8 +121,7 @@ export const PromptInstanceDialog = ({ open, setOpen, prompts, userId, platform 
             setValue("description", first.description);
             setValue("contenido", first.contenido || "");
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open, platform]);
+    }, [open, platform, userId, setValue, config, prompts]); // CORRECTED: Added missing dependencies
 
     const handleTabChange = (newTab: string) => {
         const currentValues = getValues();
