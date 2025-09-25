@@ -30,6 +30,8 @@ export async function currentUser(request?: Request) {
             webhookUrl: true,
             apiKeyId: true,
             instancias: true,
+            onFacebook:true,
+            onInstagran:true,
             // Solo selecciona los campos necesarios
         },
     });

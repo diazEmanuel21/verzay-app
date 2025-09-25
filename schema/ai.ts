@@ -42,3 +42,23 @@ export interface PromptTabsProps {
 };
 
 export type PromptAiFormValues = z.infer<typeof PromptAiSchema>
+
+// 1. Esquema de validación (Zod)
+export const PromptInstanciaSchema = z.object({
+  // 'id' es opcional porque no estará presente al crear un nuevo prompt
+  id: z.number().int().optional(), 
+  
+  // 'userId' es obligatorio
+  userId: z.string().min(1, "El ID del usuario es obligatorio."),
+
+  // 'tipoInstancia', 'description', y 'contenido' son opcionales
+  tipoInstancia: z.string().optional(),
+  description: z.string().optional(),
+  contenido: z.string().min(1, "El contenido del prompt no puede estar vacío.").optional(),
+  
+  // 'instanciaId' es opcional y puede ser nulo
+  instanciaId: z.number().int().optional(),
+});
+
+// 2. Tipo de dato de TypeScript (derivado del esquema)
+export type PromptInstanciaFormValues = z.infer<typeof PromptInstanciaSchema>;

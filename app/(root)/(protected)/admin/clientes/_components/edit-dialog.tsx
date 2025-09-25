@@ -32,7 +32,6 @@ interface Props {
   currentUserRol: string
 }
 
-
 export const EditDialog = ({
   openEditDialog,
   setOpenEditDialog,
@@ -56,6 +55,20 @@ export const EditDialog = ({
       defaultValue: user.muteAgentResponses,
       readOnly: false,
     },
+    // ✅ NUEVOS CAMPOS BOOLEANOS COMO CHECKBOX
+    {
+      id: "onFacebook",
+      label: "Activar canal Facebook",
+      defaultValue: user.onFacebook ?? false,
+      readOnly: false,
+    },
+    {
+      id: "onInstagran",
+      label: "Activar canal Instagram",
+      defaultValue: user.onInstagran ?? false,
+      readOnly: false,
+    },
+
     { id: "name", label: "Nombre", defaultValue: user.name, readOnly: false },
     { id: "email", label: "Email", defaultValue: user.email, readOnly: false },
     { id: "password", label: "Contraseña", defaultValue: user.password, readOnly: false },
@@ -77,10 +90,7 @@ export const EditDialog = ({
     const idsToRemove = ["apiKeyId", "webhookUrl", "apiUrl"]
     fields = fields.filter(field => !idsToRemove.includes(field.id))
 
-    const idsReadOnly = ["name",
-      "email",
-      "role",
-      "plan",]
+    const idsReadOnly = ["name","email","role","plan"]
     fields = fields.map(field =>
       idsReadOnly.includes(field.id)
         ? { ...field, readOnly: true }
@@ -129,11 +139,12 @@ export const EditDialog = ({
             </SelectContent>
           </Select>
         )
+
       case 'plan':
         return (
           <Select name={id} defaultValue={defaultValue?.toString() ?? ""} disabled={readOnly}>
             <SelectTrigger className="col-span-3">
-              <SelectValue placeholder="Selecciona un rol" />
+              <SelectValue placeholder="Selecciona un plan" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
@@ -146,6 +157,7 @@ export const EditDialog = ({
             </SelectContent>
           </Select>
         )
+
       case 'muteAgentResponses':
         return (
           <Select name={id} defaultValue={defaultValue ? 'true' : 'false'} disabled={readOnly}>
@@ -176,19 +188,32 @@ export const EditDialog = ({
               </SelectGroup>
             </SelectContent>
           </Select>
-
-          // <Select name={id} defaultValue={defaultValue ? "true" : "false"} disabled={readOnly}>
-          //   <SelectTrigger className="col-span-3">
-          //     <SelectValue placeholder="Silenciar respuestas" />
-          //   </SelectTrigger>
-          //   <SelectContent>
-          //     <SelectGroup>
-          //       <SelectItem value="true">Activado (Silenciado)</SelectItem>
-          //       <SelectItem value="false">Desactivado (Responde)</SelectItem>
-          //     </SelectGroup>
-          //   </SelectContent>
-          // </Select>
         )
+
+      // ✅ Render de CHECKBOX para booleanos onFacebook / onInstagran
+      case 'onFacebook':
+      case 'onInstagran': {
+        const checked = Boolean(defaultValue);
+        return (
+          <div className="col-span-3 flex items-center gap-3">
+            {/* Asegura envío de 'false' cuando NO está marcado */}
+            <input type="hidden" name={id} value="false" />
+            <input
+              id={id}
+              name={id}
+              type="checkbox"
+              defaultChecked={checked}
+              value="true"
+              disabled={readOnly}
+              className="h-4 w-4 accent-foreground cursor-pointer disabled:cursor-not-allowed"
+            />
+            <span className="text-sm text-muted-foreground">
+              {checked ? 'Activado' : 'Desactivado'}
+            </span>
+          </div>
+        )
+      }
+
       default:
         return (
           <Input

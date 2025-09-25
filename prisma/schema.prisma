@@ -31,27 +31,59 @@ model User {
   webhookUrl         String?            @default("https://n8npro.verzay.co/webhook")
   theme              ThemeApp?          @default(Default)
   muteAgentResponses Boolean            @default(false)
+  defaultProviderId  String?
+  timezone           String?
+  onFacebook         Boolean            @default(false)
+  onInstagran        Boolean            @default(false)
   accounts           Account[]
+  Appointment        Appointment[]
   instancias         Instancias[]
   pausar             Pausar[]
+  InstanciasPrompts  PromptInstancia[]
+  Service            Service[]
   sessions           Session[]
   systemMessages     SystemMessage[]
   tools              Tools[]
   apiKey             ApiKey?            @relation(fields: [apiKeyId], references: [id])
+  defaultProvider    AiProvider?        @relation(fields: [defaultProviderId], references: [id])
+  UserAvailability   UserAvailability[]
   iaCredit           IaCredit?
   clientesAsignados  reseller[]         @relation("RevendedorAsignador")
   esClienteDe        reseller[]         @relation("ClienteAsignado")
+  aiConfig           UserAiConfig[]
   modules            Module[]           @relation("UserModules")
-  UserAvailability   UserAvailability[]
-  Appointment        Appointment[]
-  Service            Service[]
+}
+
+model AiProvider {
+  id          String         @id @default(cuid())
+  name        String         @unique
+  description String?
+  aiModel     String
+  users       User[]
+  configs     UserAiConfig[]
+
+  @@map("ai_providers")
+}
+
+model UserAiConfig {
+  id         String     @id @default(cuid())
+  userId     String
+  providerId String
+  apiKey     String
+  isActive   Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  provider   AiProvider @relation(fields: [providerId], references: [id])
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, providerId])
+  @@map("user_ai_configs")
 }
 
 model Module {
   id                     String       @id @default(cuid())
   label                  String
-  customUrl              String?
-  route                  String       
+  route                  String
   icon                   String
   showInSidebar          Boolean?     @default(true)
   hiddenModuleToSelector Boolean?     @default(false)
@@ -62,6 +94,7 @@ model Module {
   createdAt              DateTime     @default(now())
   updatedAt              DateTime     @updatedAt
   showOnlySelectedPlans  Boolean?     @default(false)
+  customUrl              String?
   items                  ModuleItem[] @relation("ParentModule")
   users                  User[]       @relation("UserModules")
 }
@@ -81,17 +114,16 @@ model Session {
   remoteJid    String
   pushName     String
   instanceId   String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   status       Boolean
-  id           Int      @id @default(autoincrement())
-  seguimientos String?  @default("")
-  inactividad  String?  @default("")
+  id           Int           @id @default(autoincrement())
+  seguimientos String?       @default("")
+  inactividad  String?       @default("")
   sessionDelay String?
-  flujos       String?  @default("")
-
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Appointment Appointment[]
+  flujos       String?       @default("")
+  Appointment  Appointment[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Pausar {
@@ -142,11 +174,22 @@ model VerificationToken {
 }
 
 model Instancias {
-  id           Int    @id @default(autoincrement())
-  instanceName String
-  userId       String
-  instanceId   String
-  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            Int     @id @default(autoincrement())
+  instanceName  String
+  userId        String
+  instanceId    String
+  tipoInstancia String?
+  user          User    @relation(fields: [userId], references: [id])
+}
+
+model PromptInstancia {
+  id            Int     @id @default(autoincrement())
+  tipoInstancia String?
+  description   String?
+  contenido     String?
+  instanciaId   Int?
+  userId        String
+  user          User    @relation(fields: [userId], references: [id])
 }
 
 model SystemMessage {
@@ -294,18 +337,18 @@ model Reminders {
   userId       String?
   workflowId   String?
   remoteJid    String?
-  pushName     String?
-  isSchedule   Boolean?    @default(false)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+  pushName     String?
+  isSchedule   Boolean?    @default(false)
 }
 
 model PromptTemplate {
   id          String   @id @default(uuid())
   name        String   @unique
   description String?
-  content     String // Aquí se almacena el texto del prompt
-  category    String? // Opcional: ventas, soporte, onboarding, etc.
+  content     String
+  category    String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -314,9 +357,9 @@ model PromptTemplate {
 model UserAvailability {
   id        String @id @default(cuid())
   userId    String
-  dayOfWeek Int // 0 (domingo) al 6 (sábado)
-  startTime String // ej: "09:00"
-  endTime   String // ej: "17:00"
+  dayOfWeek Int
+  startTime String
+  endTime   String
   user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, dayOfWeek, startTime, endTime])
@@ -324,31 +367,29 @@ model UserAvailability {
 
 model Appointment {
   id        String            @id @default(cuid())
-  userId    String // Asesor que recibe la cita
-  sessionId Int // Cliente que agenda (id de Session)
+  userId    String
+  sessionId Int
   startTime DateTime
   endTime   DateTime
   timezone  String
   status    AppointmentStatus @default(PENDIENTE)
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
-  serviceId String? // <- NUEVO CAMPO: Motivo de la cita
-
-  service Service? @relation(fields: [serviceId], references: [id])
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  session Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  serviceId String?
+  service   Service?          @relation(fields: [serviceId], references: [id])
+  session   Session           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Service {
-  id          String   @id @default(cuid())
-  userId      String // para que cada asesor tenga sus propios motivos
-  name        String // Nombre visible: "Asesoría", "Reunión de ventas"
-  description String? // Opcional para mostrar más info en frontend
-  messageText String // Mensaje que se enviará automáticamente por WhatsApp
-  createdAt   DateTime @default(now())
-
-  user         User          @relation(fields: [userId], references: [id])
+  id           String        @id @default(cuid())
+  userId       String
+  name         String
+  description  String?
+  messageText  String
+  createdAt    DateTime      @default(now())
   appointments Appointment[]
+  user         User          @relation(fields: [userId], references: [id])
 }
 
 model SessionTrigger {
@@ -357,6 +398,15 @@ model SessionTrigger {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   sessionId String
+}
+
+enum tipoInstancia {
+  WHATSAPP
+  WHATSAPP_OFICIAL
+  FACEBOOK_MESSAGE
+  FACEBOOK_COMMENTS
+  INSTAGRAM_MESSAGE
+  INSTAGRAM_COMMENTS
 }
 
 enum RepeatType {
