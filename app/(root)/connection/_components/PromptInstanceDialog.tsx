@@ -121,7 +121,7 @@ export const PromptInstanceDialog = ({ open, setOpen, prompts, userId, platform 
             setValue("description", first.description);
             setValue("contenido", first.contenido || "");
         }
-    }, [open, platform, userId, setValue, config, prompts]); // CORRECTED: Added missing dependencies
+    }, [open, platform, userId, setValue, config, prompts, allPrompts.length]); // CORRECTED: Added missing dependencies
 
     const handleTabChange = (newTab: string) => {
         const currentValues = getValues();
