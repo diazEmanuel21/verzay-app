@@ -18,7 +18,7 @@ import {
     FormMessage
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Loader2 } from "lucide-react"
+import { Loader2, Lock } from "lucide-react"
 import { SubmitHandler, useForm } from "react-hook-form"
 import { FormInstanceConnectionValues, FormInstanceConnectionSchema } from '@/schema/connection'
 import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa"
@@ -82,7 +82,7 @@ export const ConnectionCard = ({
     defaultValues,
     instanceType
 }: ConnectionCardProps) => {
-    // CORRECTED: Move all Hook calls to the top, before any conditional logic.
+    // Hooks y Lógica
     const form = useForm<FormInstanceConnectionValues>({
         resolver: zodResolver(FormInstanceConnectionSchema),
         defaultValues: {
@@ -105,40 +105,56 @@ export const ConnectionCard = ({
     const isFacebookOrInstagram = isFacebook || isInstagram
     console.log('connection user is...',user)
 
-    // Habilitado SOLO si el flag es EXACTAMENTE true
     const isChannelEnabled = useMemo(() => {
         if (isFacebook) return isStrictTrue(user.onFacebook)
         if (isInstagram) return isStrictTrue(user.onInstagran)
-        // WhatsApp u otros: sin límites aquí
         return true
     }, [isFacebook, isInstagram, user.onFacebook, user.onInstagran])
 
-    // Now, the conditional return is safe because the hooks were already called.
+    // Renderizado Condicional: Tarjeta de Bloqueo con Tema Dual
     if (isFacebookOrInstagram && !isChannelEnabled) {
         return (
-            <Card className="border-border max-w-96">
-                <CardHeader className="flex flex-row items-center justify-center p-6">
-                    <CardTitle className="text-center text-2xl font-bold flex items-center gap-2">
+            <Card className="border-border max-w-60 text-center shadow-lg">
+                <CardHeader className="flex flex-col items-start justify-center p-6 space-y-3">
+                    <div className="flex items-center gap-2">
                         <SocialIconSelector instanceType={instanceType} />
-                    </CardTitle>
+                    </div>
+                    
                 </CardHeader>
-                <CardContent>
+                
+                <CardContent className="flex flex-col items-center justify-center space-y-4 pt-0">
+                    
+                    {/* ICONO: Azul en Claro, Ámbar en Oscuro */}
+                    <Lock 
+                        className="h-8 w-8 
+                                   text-blue-500/70 dark:text-amber-400" 
+                    /> 
+                    
                     <div
                         role="status"
                         aria-live="polite"
-                        className="text-sm rounded-md border border-dashed border-amber-300 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 text-amber-800 dark:text-amber-300"
+                        // RECUADRO: Azul en Claro, Ámbar en Oscuro, Sombra interior
+                        className="p-4 rounded-lg w-full shadow-inner 
+                                   border border-blue-200 dark:border-amber-900 
+                                   bg-blue-50 dark:bg-amber-950/40 
+                                   text-blue-700 dark:text-amber-300 
+                                   shadow-blue-100/50 dark:shadow-amber-900/20" 
                     >
-                        Consultar con un administrador para activar
+                        <p className="font-medium text-center text-sm"> {/* UX: Texto más pequeño */}
+                            Contacta con un administrador para activar este canal.
+                        </p>
                     </div>
+                    
                 </CardContent>
             </Card>
         )
     }
 
+    // Renderizado Condicional: Tarjeta de Formulario
     return (
         <Card className="border-border max-w-96">
             <CardHeader className="flex flex-row items-center justify-center p-6">
-                <CardTitle className="text-center text-2xl font-bold flex items-centergap-2">
+                <CardTitle className="text-center text-2xl font-bold flex items-center gap-2">
                     <SocialIconSelector instanceType={instanceType} />
                 </CardTitle>
             </CardHeader>
