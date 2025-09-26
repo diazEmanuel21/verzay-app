@@ -26,7 +26,7 @@ import { useMemo, useCallback } from "react"
 
 interface MinimalUser {
     onFacebook?: boolean
-    onInstagram?: boolean
+    onInstagran?: boolean
 }
 
 interface ConnectionCardProps {
@@ -103,14 +103,15 @@ export const ConnectionCard = ({
     const isFacebook = type === 'facebook'
     const isInstagram = type === 'instagram'
     const isFacebookOrInstagram = isFacebook || isInstagram
+    console.log('connection user is...',user)
 
     // Habilitado SOLO si el flag es EXACTAMENTE true
     const isChannelEnabled = useMemo(() => {
         if (isFacebook) return isStrictTrue(user.onFacebook)
-        if (isInstagram) return isStrictTrue(user.onInstagram)
+        if (isInstagram) return isStrictTrue(user.onInstagran)
         // WhatsApp u otros: sin límites aquí
         return true
-    }, [isFacebook, isInstagram, user.onFacebook, user.onInstagram])
+    }, [isFacebook, isInstagram, user.onFacebook, user.onInstagran])
 
     // Now, the conditional return is safe because the hooks were already called.
     if (isFacebookOrInstagram && !isChannelEnabled) {
