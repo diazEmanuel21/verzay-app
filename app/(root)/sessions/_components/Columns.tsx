@@ -177,7 +177,7 @@ export const columns = ({ onDeleteSuccess, mutateSessions }: { onDeleteSuccess: 
   {
     accessorKey: "updatedAt",
     header: "Creado",
-    cell: ({ row }) => new Date(row.getValue("updatedAt")).toLocaleString(),
+    cell: ({ row }) => new Date(row.getValue("updatedAt")).toLocaleDateString(),
   },
   {
     accessorKey: "seguimientos",
