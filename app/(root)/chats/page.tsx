@@ -1,10 +1,11 @@
-import { UnderConstruction } from "@/components/custom";
+import { ChatMain } from "./_components.tsx/chat-main";
+import { ChatSidebar } from "./_components.tsx/chat-sidebar";
 
-export default async function ChatsPage() {
-
+export default function ChatsPage() {
   return (
-    <div className="flex flex-1 flex-wrap gap-4 items-center justify-center">
-      <UnderConstruction />
+    <div className="flex h-full">
+      <ChatSidebar />
+      <ChatMain />
     </div>
-  )
+  );
 }
