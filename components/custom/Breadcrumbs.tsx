@@ -86,7 +86,7 @@ export const Breadcrumbs = () => {
         <div className="h-18 shrink-0">
           <header className={`sticky top-0 w-full border-border flex items-center px-4 dark:bg-gray-900 dark:text-white`}>
             {/* <Breadcrumb className='py-4 flex flex-row flex-1 overflow-hidden bg-slate-100 text-black dark:bg-gray-900 dark:text-white border-border'> */}
-            <Breadcrumb className='py-4 flex flex-row flex-1 overflow-hidden dark:bg-gray-900 dark:text-white'>
+            <Breadcrumb className='py-2 flex flex-row flex-1 overflow-hidden dark:bg-gray-900 dark:text-white'>
               {/* <BreadcrumbList> */}
               {/* <BreadcrumbList className="flex flex-wrap items-center gap-1"> */}
               <BreadcrumbList>
