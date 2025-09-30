@@ -21,7 +21,7 @@ type ChatData = {
 };
 export type FetchChatsResult =
   | { success: true; message: string; data: ChatData[] }
-  | { success: false, message: string };
+  | { success: false; message: string };
 
 /* ---------- Props ---------- */
 type ChatSidebarProps = {
@@ -31,9 +31,13 @@ type ChatSidebarProps = {
 };
 
 /* ---------- Helpers ---------- */
+function epochToMs(epoch?: number): number {
+  if (!epoch) return 0;
+  return epoch < 2_000_000_000 ? epoch * 1000 : epoch; // soporta segundos/ms
+}
 function formatTimeFromEpoch(epoch?: number): string {
-  if (!epoch) return "";
-  const ms = epoch < 2_000_000_000 ? epoch * 1000 : epoch;
+  const ms = epochToMs(epoch);
+  if (!ms) return "";
   return new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 function nameFrom(chat: ChatData): string {
@@ -62,16 +66,22 @@ export function ChatSidebar({ result, onSelectRemoteJid, selectedJid }: ChatSide
 
   const contacts = useMemo(() => {
     if (!result.success) return [];
-    return result.data.map((c) => ({
-      id: c.remoteJid,
-      name: nameFrom(c),
-      avatarSrc: avatarFrom(c),
-      lastMessage: lastTextFrom(c),
-      timestamp: formatTimeFromEpoch(c.lastMessage?.messageTimestamp),
-      hasUnread: (c.unreadCount ?? 0) > 0,
-      unreadCount: c.unreadCount ?? 0,
-      isGroup: isGroupJid(c.remoteJid),
-    }));
+    return result.data.map((c) => {
+      const ts = epochToMs(c.lastMessage?.messageTimestamp); // ← numérico para ordenar
+      return {
+        id: c.remoteJid,
+        name: nameFrom(c),
+        avatarSrc: avatarFrom(c),
+        lastMessage: lastTextFrom(c),
+        timestamp: formatTimeFromEpoch(c.lastMessage?.messageTimestamp),
+        ts, // ← clave para sort
+        hasUnread: (c.unreadCount ?? 0) > 0,
+        unreadCount: c.unreadCount ?? 0,
+        isGroup: isGroupJid(c.remoteJid),
+      };
+    })
+    // ✅ ORDEN PRINCIPAL: por fecha/hora (descendente)
+    .sort((a, b) => b.ts - a.ts);
   }, [result]);
 
   const filtered = useMemo(() => {
@@ -87,12 +97,8 @@ export function ChatSidebar({ result, onSelectRemoteJid, selectedJid }: ChatSide
           c.lastMessage.toLowerCase().includes(term)
       );
     }
-    // ordena por no leídos primero y luego por timestamp (desc)
-    list = list.slice().sort((a, b) => {
-      if (a.unreadCount !== b.unreadCount) return b.unreadCount - a.unreadCount;
-      return (b.timestamp || "").localeCompare(a.timestamp || "");
-    });
-    return list;
+    // Mantén el orden por fecha/hora tras filtrar
+    return list.slice().sort((a, b) => b.ts - a.ts);
   }, [contacts, q, tab]);
 
   return (
@@ -184,7 +190,9 @@ export function ChatSidebar({ result, onSelectRemoteJid, selectedJid }: ChatSide
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate font-medium">{c.name || "Sin nombre"}</span>
-                  <span className="text-muted-foreground shrink-0 text-xs">{c.timestamp}</span>
+                  <span className="text-muted-foreground shrink-0 text-xs">
+                    {c.timestamp}
+                  </span>
                 </div>
                 <div className="mt-0.5 flex items-center justify-between gap-2">
                   <p className="text-muted-foreground truncate text-sm">{c.lastMessage || "—"}</p>
