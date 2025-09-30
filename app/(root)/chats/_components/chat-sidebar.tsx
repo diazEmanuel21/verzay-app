@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Search, User, Users } from "lucide-react";
+import { Search, Users, User2, Inbox, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 /* ---------- Tipos del fetch ---------- */
 type LastMessage = {
@@ -19,59 +19,21 @@ type ChatData = {
   lastMessage: LastMessage | null;
   unreadCount: number;
 };
-type FetchChatsResult =
+export type FetchChatsResult =
   | { success: true; message: string; data: ChatData[] }
-  | { success: false; message: string };
+  | { success: false, message: string };
 
-/* ---------- UI interna ---------- */
-interface ChatContactProps {
-  id: string;
-  name: string;
-  avatarSrc: string;
-  lastMessage: string;
-  timestamp: string;
-  hasUnread: boolean;
-  isActive: boolean;
-  onClick: (id: string) => void;
-}
-const ChatContact = ({
-  id,
-  name,
-  avatarSrc,
-  lastMessage,
-  timestamp,
-  hasUnread,
-  isActive,
-  onClick,
-}: ChatContactProps) => (
-  <div
-    className={cn(
-      "hover:bg-muted flex cursor-pointer items-center gap-3 rounded-lg p-3 transition-colors",
-      isActive && "bg-muted"
-    )}
-    onClick={() => onClick(id)}
-  >
-    <Avatar>
-      <AvatarImage src={avatarSrc} alt={name || "Contacto"} />
-      <AvatarFallback>{name?.charAt(0)?.toUpperCase() || "?"}</AvatarFallback>
-    </Avatar>
-    <div className="flex-1">
-      <div className="flex items-center justify-between">
-        <span className="font-medium">{name || "Sin nombre"}</span>
-        <span className="text-muted-foreground text-xs">{timestamp}</span>
-      </div>
-      <div className="text-muted-foreground flex items-center justify-between text-sm">
-        <p className="truncate max-w-48">Prueba{lastMessage || "…"}</p>
-        {hasUnread && <div className="ml-2 h-2 w-2 rounded-full bg-blue-500" />}
-      </div>
-    </div>
-  </div>
-);
+/* ---------- Props ---------- */
+type ChatSidebarProps = {
+  result: FetchChatsResult;
+  onSelectRemoteJid?: (remoteJid: string) => void | Promise<void>;
+  selectedJid?: string;
+};
 
 /* ---------- Helpers ---------- */
 function formatTimeFromEpoch(epoch?: number): string {
   if (!epoch) return "";
-  const ms = epoch < 2_000_000_000 ? epoch * 1000 : epoch; // soporta seg/ms
+  const ms = epoch < 2_000_000_000 ? epoch * 1000 : epoch;
   return new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 function nameFrom(chat: ChatData): string {
@@ -89,11 +51,14 @@ function lastTextFrom(chat: ChatData): string {
 function avatarFrom(chat: ChatData): string {
   return chat.profilePicUrl || "/placeholder.svg?height=40&width=40";
 }
+function isGroupJid(jid: string) {
+  return jid?.includes("@g.us");
+}
 
-/* ---------- Componente ---------- */
-export function ChatSidebar({ result }: { result: FetchChatsResult }) {
-  const [activeTab, setActiveTab] = useState<"personal" | "groups">("personal");
-  const [activeChatId, setActiveChatId] = useState<string>("");
+/* ---------- UI ---------- */
+export function ChatSidebar({ result, onSelectRemoteJid, selectedJid }: ChatSidebarProps) {
+  const [q, setQ] = useState("");
+  const [tab, setTab] = useState<"all" | "dm" | "groups">("all");
 
   const contacts = useMemo(() => {
     if (!result.success) return [];
@@ -104,81 +69,145 @@ export function ChatSidebar({ result }: { result: FetchChatsResult }) {
       lastMessage: lastTextFrom(c),
       timestamp: formatTimeFromEpoch(c.lastMessage?.messageTimestamp),
       hasUnread: (c.unreadCount ?? 0) > 0,
-      isGroup: c.remoteJid?.includes("@g.us"),
+      unreadCount: c.unreadCount ?? 0,
+      isGroup: isGroupJid(c.remoteJid),
     }));
   }, [result]);
 
-  useEffect(() => {
-    if (!activeChatId && contacts.length > 0) setActiveChatId(contacts[0].id);
-  }, [contacts, activeChatId]);
-
-  const filteredContacts =
-    activeTab === "groups"
-      ? contacts.filter((c) => c.isGroup)
-      : contacts.filter((c) => !c.isGroup);
+  const filtered = useMemo(() => {
+    let list = contacts;
+    if (tab === "dm") list = contacts.filter((c) => !c.isGroup);
+    if (tab === "groups") list = contacts.filter((c) => c.isGroup);
+    if (q.trim()) {
+      const term = q.trim().toLowerCase();
+      list = list.filter(
+        (c) =>
+          c.name.toLowerCase().includes(term) ||
+          c.id.toLowerCase().includes(term) ||
+          c.lastMessage.toLowerCase().includes(term)
+      );
+    }
+    // ordena por no leídos primero y luego por timestamp (desc)
+    list = list.slice().sort((a, b) => {
+      if (a.unreadCount !== b.unreadCount) return b.unreadCount - a.unreadCount;
+      return (b.timestamp || "").localeCompare(a.timestamp || "");
+    });
+    return list;
+  }, [contacts, q, tab]);
 
   return (
-    <div className="flex w-80 flex-col border border-r p-4">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Chat</h1>
-        <Search className="text-muted-foreground h-5 w-5 cursor-pointer" />
-      </div>
+    <aside className="flex w-[320px] min-w-[280px] max-w-[360px] flex-col border-r bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/50">
+      {/* Top bar */}
+      <div className="sticky top-0 z-10 space-y-3 border-b bg-background/70 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/50">
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-semibold tracking-tight">Chats</h1>
+          <Inbox className="text-muted-foreground h-5 w-5" aria-hidden />
+        </div>
 
-      <div className="mb-2">
-        {!result.success ? (
-          <p className="text-destructive text-sm">{result.message}</p>
-        ) : (
-          <p className="text-muted-foreground text-xs">{contacts.length} chats</p>
-        )}
-      </div>
-
-      <div className="mb-6 flex rounded-lg border p-1">
-        <Button
-          variant="ghost"
-          className={cn(
-            "h-9 flex-1 rounded-md text-sm font-medium",
-            activeTab === "personal" ? "shadow-sm" : "text-muted-foreground hover:bg-transparent"
+        {/* Search */}
+        <div className="relative">
+          <Search className="text-muted-foreground absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar por nombre o mensaje…"
+            className="pl-8 pr-8"
+            aria-label="Buscar chats"
+          />
+          {q && (
+            <button
+              aria-label="Limpiar búsqueda"
+              className="text-muted-foreground absolute right-2 top-1/2 -translate-y-1/2"
+              onClick={() => setQ("")}
+            >
+              <X className="h-4 w-4" />
+            </button>
           )}
-          onClick={() => setActiveTab("personal")}
-        >
-          <User className="mr-2 h-4 w-4" />
-          Personal
-        </Button>
-        <Button
-          variant="ghost"
-          className={cn(
-            "h-9 flex-1 rounded-md text-sm font-medium",
-            activeTab === "groups" ? "shadow-sm" : "text-muted-foreground hover:bg-transparent"
-          )}
-          onClick={() => setActiveTab("groups")}
-        >
-          <Users className="mr-2 h-4 w-4" />
-          Groups
-        </Button>
+        </div>
+
+        {/* Tabs */}
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            onClick={() => setTab("all")}
+            className={cn(
+              "inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition",
+              tab === "all" ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"
+            )}
+          >
+            <Inbox className="h-4 w-4" /> Todos
+          </button>
+          <button
+            onClick={() => setTab("dm")}
+            className={cn(
+              "inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition",
+              tab === "dm" ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"
+            )}
+          >
+            <User2 className="h-4 w-4" /> Privados
+          </button>
+          <button
+            onClick={() => setTab("groups")}
+            className={cn(
+              "inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition",
+              tab === "groups" ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"
+            )}
+          >
+            <Users className="h-4 w-4" /> Grupos
+          </button>
+        </div>
       </div>
 
-      <div className="flex-1 space-y-2 overflow-y-auto pr-2">
-        {result.success && filteredContacts.length > 0 ? (
-          filteredContacts.map((c) => (
-            <ChatContact
+      {/* Listado */}
+      <div role="list" className="flex-1 space-y-1 overflow-y-auto p-3">
+        {result.success && filtered.length > 0 ? (
+          filtered.map((c) => (
+            <button
               key={c.id}
-              id={c.id}
-              name={c.name}
-              avatarSrc={c.avatarSrc}
-              lastMessage={c.lastMessage}
-              timestamp={c.timestamp}
-              hasUnread={c.hasUnread}
-              isActive={c.id === activeChatId}
-              onClick={setActiveChatId}
-            />
+              role="listitem"
+              onClick={() => onSelectRemoteJid?.(c.id)}
+              className={cn(
+                "group flex w-full items-center gap-3 rounded-xl border p-3 text-left transition hover:bg-accent hover:text-accent-foreground",
+                selectedJid === c.id ? "border-primary bg-primary/10" : "border-transparent"
+              )}
+              aria-current={selectedJid === c.id ? "true" : "false"}
+            >
+              <div className="relative">
+                <Avatar className="h-10 w-10 ring-2 ring-background group-hover:ring-accent">
+                  <AvatarImage src={c.avatarSrc} alt={c.name || "Contacto"} />
+                  <AvatarFallback>{c.name?.charAt(0)?.toUpperCase() || "?"}</AvatarFallback>
+                </Avatar>
+                {c.isGroup && (
+                  <Users className="absolute -right-1 -bottom-1 h-4 w-4 rounded-full bg-background/90 p-[2px] text-muted-foreground ring-1 ring-border" />
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate font-medium">{c.name || "Sin nombre"}</span>
+                  <span className="text-muted-foreground shrink-0 text-xs">{c.timestamp}</span>
+                </div>
+                <div className="mt-0.5 flex items-center justify-between gap-2">
+                  <p className="text-muted-foreground truncate text-sm">{c.lastMessage || "—"}</p>
+                  {c.unreadCount > 0 && (
+                    <span className="bg-primary text-primary-foreground inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold">
+                      {c.unreadCount > 99 ? "99+" : c.unreadCount}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </button>
           ))
         ) : (
-          <p className="text-muted-foreground text-sm">
-            {result.success ? "Sin chats para mostrar." : "No disponible."}
-          </p>
+          <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
+            <div className="rounded-2xl border p-6 opacity-70">
+              <Inbox className="h-8 w-8" />
+            </div>
+            <p className="text-sm">
+              {result.success ? "No hay chats que coincidan con el filtro." : result.message || "No disponible."}
+            </p>
+          </div>
         )}
       </div>
-
-    </div>
+    </aside>
   );
 }

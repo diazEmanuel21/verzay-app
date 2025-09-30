@@ -1,16 +1,17 @@
-// app/(ruta)/chats/page.tsx
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 
-import { ChatMain } from "./_components/chat-main";
-import { ChatSidebar } from "./_components/chat-sidebar";
-
 import { getInstancesByUserId } from "@/actions/instances-actions";
-import { fetchChatsFromEvolution } from "@/actions/chat-actions";
+import { fetchChatsFromEvolution, findMessagesByRemoteJid } from "@/actions/chat-actions";
 import { getApiKeyById } from "@/actions/api-action";
 import type { ApiKey, Instancias } from "@prisma/client";
+import type { EvolutionMessage } from "./_components/chat-main";
+import { ChatsClient } from "./_components/chats-client";
 
-/* ---------- Tipos mínimos (de la respuesta que usa el hijo) ---------- */
+/* ---------- Tipos mínimos ---------- */
 type LastMessage = {
   message?: { conversation?: string };
   messageTimestamp?: number;
@@ -43,7 +44,7 @@ function hasApikey(result: { data?: ApiKey | null }): result is { data: ApiKey }
 }
 
 /* ---------- Página ---------- */
-export default async function ChatsPage() {
+export default async function ChatsPage({ searchParams }: { searchParams?: { jid?: string } }) {
   const user = await currentUser();
   if (!user) redirect("/login");
 
@@ -68,10 +69,50 @@ export default async function ChatsPage() {
     };
   }
 
+  // JID inicial (por URL o primero)
+  const initialSelectedJid =
+    chatsResult.success && searchParams?.jid
+      ? searchParams.jid
+      : chatsResult.success && chatsResult.data.length > 0
+      ? chatsResult.data[0].remoteJid
+      : "";
+
+  // Precarga inicial de mensajes con FILTRO por JID
+  let initialMessages: EvolutionMessage[] = [];
+  if (chatsResult.success && initialSelectedJid && whatsappInstancia && apiKey) {
+    const msgsRes = await findMessagesByRemoteJid(
+      { url: apiKey.url, key: apiKey.key },
+      whatsappInstancia.instanceName,
+      initialSelectedJid,
+      { page: 1, pageSize: 50 }
+    );
+    if (msgsRes.success) {
+      const normJid = (initialSelectedJid || "").trim().toLowerCase();
+      initialMessages = (msgsRes.data || []).filter((m) => {
+        const a = (m?.key?.remoteJid || "").trim().toLowerCase();
+        const b = (m?.remoteJid || "").trim().toLowerCase();
+        return a === normJid || b === normJid;
+      });
+    }
+  }
+
+  // Server Action (POST) pre-bindeada con credenciales e instancia
+  const warmMessages =
+    whatsappInstancia && apiKey
+      ? findMessagesByRemoteJid.bind(
+          null,
+          { url: apiKey.url, key: apiKey.key },
+          whatsappInstancia.instanceName
+        )
+      : undefined;
+
   return (
-    <div className="flex h-full">
-      <ChatSidebar result={chatsResult} />
-      <ChatMain />
-    </div>
+    <ChatsClient
+      chatsResult={chatsResult}
+      initialSelectedJid={initialSelectedJid}
+      initialMessages={initialMessages}
+      warmMessages={warmMessages}
+      instanceName={whatsappInstancia?.instanceName}
+    />
   );
 }
