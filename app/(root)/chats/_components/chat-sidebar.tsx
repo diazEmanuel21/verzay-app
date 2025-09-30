@@ -61,7 +61,7 @@ const ChatContact = ({
         <span className="text-muted-foreground text-xs">{timestamp}</span>
       </div>
       <div className="text-muted-foreground flex items-center justify-between text-sm">
-        <p className="truncate">{lastMessage || "…"}</p>
+        <p className="truncate max-w-48">Prueba{lastMessage || "…"}</p>
         {hasUnread && <div className="ml-2 h-2 w-2 rounded-full bg-blue-500" />}
       </div>
     </div>
@@ -179,9 +179,6 @@ export function ChatSidebar({ result }: { result: FetchChatsResult }) {
         )}
       </div>
 
-      <div className="mt-6">
-        <Button className="w-full">New chat</Button>
-      </div>
     </div>
   );
 }
