@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog";
 import { deletePromptAi } from "@/actions/ai-actions";
-import { PromptAiFormValues } from '../../../../schema/ai';
+import { PromptAiFormValues } from '../../../../../schema/ai';
 import { toast } from "sonner";
 
 interface CustomTabsProps {

@@ -1,171 +1,75 @@
 "use client";
 
-import { useState } from "react";
-import { FormPromptAiProps, PromptAiFormValues, TYPE_AI_LABELS } from '@/schema/ai';
-import { SystemMessage, TypePromptAi } from '@prisma/client';
-import { useDebounce } from '@/hooks/useDebounce';
-import Header from '@/components/shared/header';
-import { Input } from '@/components/ui/input';
-import { AiTabs, MessageTabs, PromptDialog } from "./";
-import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog";
-import { deletePromptAi, deletePromptAiByUserId } from "@/actions/ai-actions";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Button } from "@/components/ui/button";
-import { ChevronDown, Ellipsis, MoreVertical } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 
-export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
-    const [searchTerm, setSearchTerm] = useState<string>("");
-    const [dialogOpen, setDialogOpen] = useState<boolean>(false);
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
-    const [delTraining, setDelTraining] = useState<boolean>(false);
-    const [editingData, setEditingData] = useState<PromptAiFormValues | null>(null);
-    const [dataDelete, setDataDelete] = useState<PromptAiFormValues | null>(null);
-    const [activeTab, setActiveTab] = useState<TypePromptAi>(TypePromptAi.TRAINING);
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BusinessPromptBuilder, PromptPreview, TrainingBuilder } from "./";
+import { buildPrompt } from "./helpers";
+import { BusinessValues, initialValues } from "@/types/agentAi";
 
-    const debouncedSearchTerm = useDebounce(searchTerm, 300);
+export const MainAi = () => {
+    const [values, setValues] = useState<BusinessValues>(initialValues);
 
-    const openCreateDialog = () => {
-        setEditingData({
-            title: '',
-            message: '',
-            userId,
-            typePrompt: 'TRAINING'
+    const handleChange = useCallback(
+        (key: keyof BusinessValues) =>
+            (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+                setValues(v => ({ ...v, [key]: e.target.value }));
+            },
+        []
+    );
+
+    const reset = () =>
+        setValues({
+            nombre: "",
+            sector: "",
+            ubicacion: "",
+            horarios: "",
+            maps: "",
+            telefono: "",
+            email: "",
+            sitio: "",
+            facebook: "",
+            instagram: "",
+            tiktok: "",
+            youtube: "",
+            notas: "",
+            training: "",
         });
-        setDialogOpen(true);
-    };
 
-    const openEditDialog = (msg: SystemMessage) => {
-        setEditingData({
-            id: msg.id,
-            message: msg.message,
-            title: msg.title,
-            typePrompt: msg.typePrompt ?? 'TRAINING',
-            userId: msg.userId
-        });
-        setDialogOpen(true);
-    };
-
-    const filteredMessages = (promptAi ?? []).filter((msg) => {
-        const lowerSearch = debouncedSearchTerm.toLowerCase();
-        return (
-            msg.title?.toLowerCase().includes(lowerSearch) ||
-            msg.message?.toLowerCase().includes(lowerSearch)
-        );
-    });
-
-    const highlightMatch = (text: string, query: string) => {
-        if (!query) return text;
-        const parts = text.split(new RegExp(`(${query})`, 'gi'));
-        return parts.map((part, i) =>
-            part.toLowerCase() === query.toLowerCase() ? (
-                <span key={i} className="bg-yellow-200 font-semibold">{part}</span>
-            ) : (
-                part
-            )
-        );
-    };
-
-    const truncateMessage = (text: string, maxLength: number) => {
-        if (text.length <= maxLength) return text;
-        return text.slice(0, maxLength) + "… Ver más";
-    };
-
-    const onTabChange = (tab: string) => {
-        setActiveTab(tab as TypePromptAi)
-    };
+    const prompt = useMemo(() => buildPrompt(values), [values]);
 
     return (
-        <div className="flex flex-col h-full">
-            {/* Header */}
-            <div className="sticky top-0 z-1 mb-4">
-                <div className="flex justify-between items-center pb-2">
-                    <Header title={'Entrena tu IA'} />
+        <div className="mx-auto max-w-7xl p-4 md:p-6 space-y-4">
+            <h1 className="text-xl md:text-2xl font-semibold tracking-tight">MainAi</h1>
+            <Tabs defaultValue="business" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="business">Negocio</TabsTrigger>
+                    <TabsTrigger value="training">Entrenamiento</TabsTrigger>
+                    <TabsTrigger value="extras">Extras</TabsTrigger>
+                </TabsList>
 
-                    <button
-                        onClick={openCreateDialog}
-                        className="bg-primary text-white px-4 py-2 rounded-md"
-                    >
-                        Crear
-                    </button>
-                </div>
-                {/* SEARCH */}
-                <Input
-                    placeholder="Buscar mensaje por título..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="max-w-sm mb-2"
-                />
-                {/* TABS */}
-                <div className="flex flex-1 ">
-                    <AiTabs
-                        onTabChange={onTabChange}
-                    />
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost">
-                                <Ellipsis />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                onClick={() => setDelTraining(true)}
-                            >
-                                Eliminar entrenamiento
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            </div>
+                <TabsContent value="business" className="mt-4">
+                    <BusinessPromptBuilder values={values} handleChange={handleChange} />
+                </TabsContent>
 
-            {/* Scroll interno para el contenido */}
-            <div className="flex-1 overflow-y-auto">
-                <MessageTabs
-                    messages={filteredMessages}
-                    debouncedSearchTerm={debouncedSearchTerm}
-                    highlightMatch={highlightMatch}
-                    truncateMessage={truncateMessage}
-                    openEditDialog={openEditDialog}
-                    activeTab={activeTab}
-                    setDeleteDialogOpen={setDeleteDialogOpen}
-                    setDataDelete={setDataDelete}
-                />
-            </div>
-            {/* Modal reutilizable */}
-            <PromptDialog
-                open={dialogOpen}
-                setOpen={setDialogOpen}
-                defaultValues={editingData}
-                userId={userId}
-            />
-            {
-                dataDelete &&
-                <GenericDeleteDialog
-                    open={deleteDialogOpen}
-                    setOpen={setDeleteDialogOpen}
-                    itemId={dataDelete.id ?? ''}
-                    mutationFn={() => deletePromptAi(dataDelete.id ?? '')}
-                    entityLabel={dataDelete.title}
-                />
-            }
+                <TabsContent value="training" className="mt-4">
+                    <TrainingBuilder values={{ training: values.training ?? '' }} handleChange={handleChange} />
+                </TabsContent>
 
-            {/* Dialog to delete all trainig */}
-            <GenericDeleteDialog
-                open={delTraining}
-                setOpen={setDelTraining}
-                itemName="Entrenamiento IA"
-                itemId={module.id}
-                mutationFn={() => deletePromptAiByUserId(userId)}
-                entityLabel="Todo el entrenamiento IA"
-            />
+                <TabsContent value="extras" className="mt-4">
+                    <Card className="border-muted/60">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base">Extras (próximamente)</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-sm text-muted-foreground">Espacio para funciones futuras (tono, reglas, herramientas, etc.).</p>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
+
+            <PromptPreview prompt={prompt} />
         </div>
     );
-};
+}

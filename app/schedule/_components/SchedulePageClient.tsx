@@ -17,9 +17,9 @@ import { sendingMessages } from "@/actions/sending-messages-actions";
 import { createSeguimiento } from "@/actions/seguimientos-actions";
 import { formatDateLabel, normalizeTimeToSeconds, normalizeToE164, subtractSecondsFromTime, toRemoteJid } from "../helpers";
 
-import { CalendarIcon, CheckCircle2, Clock, User2 } from "lucide-react";
+import { CalendarIcon, CheckCircle2, Clock, ScrollText, User2 } from "lucide-react";
 import { es } from "date-fns/locale";
-import { DateHourComponent, ScheduleForm, ServiceComponent, SummaryComponent } from "./steps";
+import { DateHourComponent, EmployeesComponent, ScheduleForm, ServiceComponent, SummaryComponent } from "./steps";
 import { SummaryItem } from "./";
 
 export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInterface) => {
@@ -28,7 +28,8 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
     const stepLabel = [
         { label: "Servicio", icon: <Clock className="h-4 w-4" /> },
         { label: "Fecha y hora", icon: <CalendarIcon className="h-4 w-4" /> },
-        { label: "Tus datos", icon: <User2 className="h-4 w-4" /> },
+        { label: "Encargado", icon: <User2 className="h-4 w-4" /> },
+        { label: "Tus datos", icon: <ScrollText className="h-4 w-4" /> },
         { label: "Revisión", icon: <CheckCircle2 className="h-4 w-4" /> },
     ];
 
@@ -245,7 +246,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                         {/* Stepper */}
                         <Card className="border-muted/50">
                             <CardContent className="p-4 sm:p-6">
-                                <div className="grid grid-cols-4 gap-2">
+                                <div className="flex flex-wrap justify-between gap-2">
                                     {stepLabel.map((s, i) => (
                                         <div key={i} className="flex items-center gap-2">
                                             <div
@@ -314,8 +315,14 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                             />
                         )}
 
-                        {/* Paso 2: Datos */}
+                        {/* Paso 2: Seleccion de empleado */}
                         {step === 2 && (
+                            <EmployeesComponent
+                            />
+                        )}
+
+                        {/* Paso 3: Revisión */}
+                        {step === 3 && (
                             <ScheduleForm
                                 nameClient={nameClient}
                                 countries={countries}
@@ -329,8 +336,8 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                             />
                         )}
 
-                        {/* Paso 3: Revisión */}
-                        {step === 3 && (
+                        {/* Paso 4: Revisión */}
+                        {step === 4 && (
                             <SummaryComponent
                                 user={user}
                                 timezone={timezone}

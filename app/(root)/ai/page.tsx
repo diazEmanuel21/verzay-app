@@ -1,10 +1,10 @@
 import { currentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
-import { MainAi } from './_components';
 import { SystemMessage } from '@prisma/client';
 import { getPromptAiByUserId } from '@/actions/ai-actions';
-import { MessagesSkeleton } from './_components';
+import { MessagesSkeleton } from './_components/OldPromptAi';
+import { MainAi } from './_components/OldPromptAi/MainAi';
 
 interface PageProps {
     params: { id?: string };
@@ -27,7 +27,11 @@ const AiPage = async ({ params, searchParams }: PageProps) => {
 
     return (
         <Suspense fallback={<MessagesSkeleton />}>
+            {/* OLD */}
             <MainAi promptAi={promptAi} userId={user.id} />
+
+            {/* NEW */}
+            {/* <MainAi /> */}
         </Suspense>
     );
 };
