@@ -5,28 +5,14 @@ import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 
 import { getInstancesByUserId } from "@/actions/instances-actions";
-import { fetchChatsFromEvolution, findMessagesByRemoteJid } from "@/actions/chat-actions";
+import { fetchChatsFromEvolution, findMessagesByRemoteJid, FetchChatsResult, EvolutionMessage } from "@/actions/chat-actions"; 
+// Asegúrate de que FetchChatsResult, EvolutionMessage y cualquier otro tipo que uses en la página,
+// se exporte desde "@/actions/chat-actions" y se importe aquí.
 import { getApiKeyById } from "@/actions/api-action";
 import type { ApiKey, Instancias } from "@prisma/client";
-import type { EvolutionMessage } from "./_components/chat-main";
 import { ChatsClient } from "./_components/chats-client";
 
 /* ---------- Tipos mínimos ---------- */
-type LastMessage = {
-  message?: { conversation?: string };
-  messageTimestamp?: number;
-  messageType?: string;
-};
-type ChatData = {
-  remoteJid: string;
-  pushName: string | null;
-  profilePicUrl: string | null;
-  lastMessage: LastMessage | null;
-  unreadCount: number;
-};
-export type FetchChatsResult =
-  | { success: true; message: string; data: ChatData[] }
-  | { success: false; message: string };
 
 /* ---------- Utils ---------- */
 function pickWhatsappOrNull(arr: Instancias[]) {
@@ -74,10 +60,10 @@ export default async function ChatsPage({ searchParams }: { searchParams?: { jid
     chatsResult.success && searchParams?.jid
       ? searchParams.jid
       : chatsResult.success && chatsResult.data.length > 0
-      ? chatsResult.data[0].remoteJid
-      : "";
+        ? chatsResult.data[0].remoteJid
+        : "";
 
-  // Precarga inicial de mensajes con FILTRO por JID
+  // Precarga inicial de mensajes
   let initialMessages: EvolutionMessage[] = [];
   if (chatsResult.success && initialSelectedJid && whatsappInstancia && apiKey) {
     const msgsRes = await findMessagesByRemoteJid(
@@ -86,24 +72,35 @@ export default async function ChatsPage({ searchParams }: { searchParams?: { jid
       initialSelectedJid,
       { page: 1, pageSize: 50 }
     );
+
     if (msgsRes.success) {
-      const normJid = (initialSelectedJid || "").trim().toLowerCase();
-      initialMessages = (msgsRes.data || []).filter((m) => {
-        const a = (m?.key?.remoteJid || "").trim().toLowerCase();
-        const b = (m?.remoteJid || "").trim().toLowerCase();
-        return a === normJid || b === normJid;
-      });
+      initialMessages = msgsRes.data || [];
     }
   }
 
-  // Server Action (POST) pre-bindeada con credenciales e instancia
+  // ----------------------------------------------------
+  // ✅ REEMPLAZO DE .bind() CON CLAUSURA DIRECTA Y 'USE SERVER'
+  // ----------------------------------------------------
+
+  // Definimos la Server Action parcial aquí, usando las variables del scope
   const warmMessages =
     whatsappInstancia && apiKey
-      ? findMessagesByRemoteJid.bind(
-          null,
-          { url: apiKey.url, key: apiKey.key },
-          whatsappInstancia.instanceName
-        )
+      ? async (
+        // Estos son los argumentos que el cliente pasará
+        remoteJid: string,
+        options?: { page?: number; pageSize?: number }
+      ) => {
+        // 🛑 CORRECCIÓN: Se añade la directiva 'use server'
+        'use server';
+
+        // Las variables 'apiKey' y 'whatsappInstancia' están cerradas (clausura)
+        return findMessagesByRemoteJid(
+          { url: apiKey!.url, key: apiKey!.key },
+          whatsappInstancia!.instanceName,
+          remoteJid,
+          options
+        );
+      }
       : undefined;
 
   return (
