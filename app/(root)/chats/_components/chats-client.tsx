@@ -38,20 +38,13 @@ export function ChatsClient({
     instanceName,
 }: ChatsClientProps) {
     const [selectedJid, setSelectedJid] = useState(initialSelectedJid || "");
-
-    // 💡 Estado mutable para la lista de chats
     const [currentChatsResult, setCurrentChatsResult] = useState(initialChatsResult); 
-
     const [messages, setMessages] = useState<EvolutionMessage[]>(initialMessages || []);
 
     const [info, setInfo] = useState<
         | {
-            total?: number;
-            pages?: number;
-            currentPage?: number;
-            nextPage?: number | null;
-            instanceName?: string;
-            remoteJid?: string;
+            total?: number; pages?: number; currentPage?: number; nextPage?: number | null;
+            instanceName?: string; remoteJid?: string;
         }
         | undefined
     >(initialSelectedJid ? { instanceName, remoteJid: initialSelectedJid } : undefined);
@@ -59,7 +52,6 @@ export function ChatsClient({
     const [loading, setLoading] = useState(false);
 
     const contacts = useMemo(() => {
-        // Usamos el estado local 'currentChatsResult'
         return currentChatsResult.success ? currentChatsResult.data : [];
     }, [currentChatsResult]);
 
@@ -87,27 +79,23 @@ export function ChatsClient({
     }, [contacts, selectedJid, instanceName]);
 
 
-    // 💡 LÓGICA DE ACTUALIZACIÓN PERIÓDICA DE CHATS (POLLING)
+    // 1. LÓGICA DE ACTUALIZACIÓN PERIÓDICA DE CHATS (Sidebar Polling)
     useEffect(() => {
         let intervalId: NodeJS.Timeout | null = null;
         
         const fetchNewChats = async () => {
             const result = await refetchChats();
             if (result.success) {
-                // Actualiza el estado de los chats
                 setCurrentChatsResult(result); 
             } else {
                 console.warn("[ChatsClient] Fallo al refrescar chats:", result.message);
             }
         };
 
-        // Solo configuramos la actualización si la carga inicial fue exitosa
         if (initialChatsResult.success) {
-            // Refresca cada 10 segundos
             intervalId = setInterval(fetchNewChats, 10000); 
         }
 
-        // Función de limpieza
         return () => {
             if (intervalId) clearInterval(intervalId);
         };
@@ -116,9 +104,6 @@ export function ChatsClient({
 
     // HANDLER para cambiar de chat (Cargar historial) y RECARGAR MENSAJES
     const handleSelectFromSidebar = useCallback(async (remoteJid: string) => {
-        // Si ya está seleccionado, forzar la recarga
-        // if (selectedJid === remoteJid) return; // NOTA: Comentamos esto para permitir la recarga forzada al enviar
-
         if (selectedJid !== remoteJid) {
             setSelectedJid(remoteJid);
         }
@@ -163,7 +148,32 @@ export function ChatsClient({
         }
     }, [selectedJid, warmMessages, instanceName]);
 
-    // HANDLER: Función para enviar el mensaje de texto
+
+    // 🟢 2. LÓGICA DE ACTUALIZACIÓN PERIÓDICA DE MENSAJES (ChatMain Polling)
+    useEffect(() => {
+        let messagePollingId: NodeJS.Timeout | null = null;
+        
+        const pollMessages = () => {
+            if (selectedJid && warmMessages) {
+                // Reutiliza el handler principal para forzar la recarga de mensajes
+                handleSelectFromSidebar(selectedJid); 
+            }
+        };
+
+        // Si hay un chat seleccionado y la función de fetch existe, iniciamos el polling
+        if (selectedJid && warmMessages) {
+            // Recarga los mensajes del chat activo cada 15 segundos
+            messagePollingId = setInterval(pollMessages, 15000); 
+        }
+
+        // Función de limpieza
+        return () => {
+            if (messagePollingId) clearInterval(messagePollingId);
+        };
+    }, [selectedJid, warmMessages, handleSelectFromSidebar]);
+
+
+    // 3. HANDLER: Función para enviar el mensaje de texto (con recarga inmediata)
     const handleSendText = useCallback(async (text: string) => {
         if (!selectedJid || !sendText) {
             console.warn("[ChatsClient] No se puede enviar: remoteJid no seleccionado o función sendText no proporcionada.");
@@ -173,15 +183,14 @@ export function ChatsClient({
         const result = await sendText(selectedJid, text);
         
         if (result.success) {
-            console.log("✅ Mensaje enviado con éxito:", result.data);
+            console.log("✅ Mensaje enviado con éxito. Forzando recarga de mensajes y chats.");
             
-            // 1. ACTUALIZACIÓN INMEDIATA DE MENSAJES DEL CHAT ACTUAL
+            // A) ACTUALIZACIÓN INMEDIATA DE MENSAJES DEL CHAT ACTUAL
             if (warmMessages) {
-                // Reutilizamos handleSelectFromSidebar para forzar la recarga del historial
                 handleSelectFromSidebar(selectedJid); 
             }
 
-            // 2. RECARGAR LISTA DE CHATS (Para que el chat suba al inicio de la Sidebar)
+            // B) RECARGAR LISTA DE CHATS
             await refetchChats(); 
             
         } else {
@@ -193,7 +202,7 @@ export function ChatsClient({
     return (
         <div className="flex h-full">
             <ChatSidebar
-                result={currentChatsResult} // 👈 Usamos el estado local que se refresca
+                result={currentChatsResult}
                 onSelectRemoteJid={handleSelectFromSidebar}
                 selectedJid={selectedJid}
             />
