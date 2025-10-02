@@ -93,7 +93,7 @@ export function ChatsClient({
         };
 
         if (initialChatsResult.success) {
-            intervalId = setInterval(fetchNewChats, 10000); 
+            intervalId = setInterval(fetchNewChats, 3000); 
         }
 
         return () => {
@@ -163,7 +163,7 @@ export function ChatsClient({
         // Si hay un chat seleccionado y la función de fetch existe, iniciamos el polling
         if (selectedJid && warmMessages) {
             // Recarga los mensajes del chat activo cada 15 segundos
-            messagePollingId = setInterval(pollMessages, 15000); 
+            messagePollingId = setInterval(pollMessages, 700); 
         }
 
         // Función de limpieza
