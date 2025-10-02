@@ -40,8 +40,7 @@ export const MainAi = () => {
     const prompt = useMemo(() => buildPrompt(values), [values]);
 
     return (
-        <div className="mx-auto max-w-7xl p-4 md:p-6 space-y-4">
-            <h1 className="text-xl md:text-2xl font-semibold tracking-tight">MainAi</h1>
+        <div className="mx-auto max-w-7xl md:p-6 space-y-4">
             <Tabs defaultValue="business" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="business">Negocio</TabsTrigger>
