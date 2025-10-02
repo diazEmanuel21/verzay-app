@@ -1,11 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, ImageIcon, MoreVertical, Paperclip, Loader2, ChevronDown } from "lucide-react";
+import { ArrowRight, ImageIcon, MoreVertical, Paperclip, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+
+// ------------------------------------------------
+// TIPOS
+// ------------------------------------------------
 
 export type EvolutionMessage = {
     id?: string;
@@ -25,7 +29,6 @@ type ChatInfoMeta = {
     total?: number; pages?: number; currentPage?: number; nextPage?: number | null;
     instanceName?: string; remoteJid?: string;
 };
-// 💡 MODIFICACIÓN: Se añade el prop handleSend
 type ChatMainProps = {
     header: ChatHeader;
     messages: EvolutionMessage[];
@@ -36,9 +39,18 @@ type ChatMainProps = {
 };
 
 interface MessageBubbleProps { message: string; isUserMessage: boolean; avatarSrc?: string; timestamp?: number; }
+type UIBubble = { id: string; sender: "user" | "other"; content: string; avatarSrc?: string; ts?: number };
+interface ChatMessageListProps {
+    uiMessages: UIBubble[];
+    loading?: boolean;
+    listRef: React.RefObject<HTMLDivElement>;
+    info?: ChatInfoMeta;
+}
 
-/* ---------- Utils (se asume que se mantiene en el archivo) ---------- */
-const DAY_MS = 24 * 60 * 60 * 1000;
+
+// ------------------------------------------------
+// UTILIDADES
+// ------------------------------------------------
 
 function evolutionToText(m: EvolutionMessage): string {
     const msg = (m.message ?? {}) as any;
@@ -69,7 +81,6 @@ function relativeTime(ts?: number) {
     return d.toLocaleDateString();
 }
 
-type UIBubble = { id: string; sender: "user" | "other"; content: string; avatarSrc?: string; ts?: number };
 function adaptEvolutionMessages(items: EvolutionMessage[], otherAvatar?: string): UIBubble[] {
     const sorted = [...(items || [])].sort((a, b) => getEpoch(a) - getEpoch(b));
     return sorted.map((m, idx) => {
@@ -77,7 +88,8 @@ function adaptEvolutionMessages(items: EvolutionMessage[], otherAvatar?: string)
         const idPart = m.id || m.key?.id || "no-id";
         const jidPart = m.key?.remoteJid || m.remoteJid || "no-jid";
         const tsPart = String(getEpoch(m));
-        const uniqueId = `${jidPart}::${idPart}::${tsPart}::${idx}`;
+        // Usamos una clave más robusta que incluye el índice para asegurar unicidad si la fuente es inconsistente
+        const uniqueId = `${jidPart}::${idPart}::${tsPart}::${idx}`; 
         return { id: uniqueId, sender: isUser ? "user" : "other", content: evolutionToText(m), avatarSrc: !isUser ? otherAvatar : undefined, ts: getEpoch(m) };
     });
 }
@@ -92,6 +104,11 @@ function isDifferentDay(a?: number, b?: number) {
         da.getDate() !== db.getDate()
     );
 }
+
+
+// ------------------------------------------------
+// COMPONENTES PRESENTACIONALES
+// ------------------------------------------------
 
 const MessageBubble = ({ message, isUserMessage, avatarSrc, timestamp }: MessageBubbleProps) => (
     <div className={cn("flex items-end gap-2", isUserMessage ? "justify-end" : "justify-start")}>
@@ -113,7 +130,7 @@ const MessageBubble = ({ message, isUserMessage, avatarSrc, timestamp }: Message
             {timestamp ? (
                 <span
                     className={cn(
-                        "text-[10px] opacity-80",
+                        "text-[10px] opacity-80 ml-2 float-right pt-1",
                         isUserMessage ? "text-primary-foreground/80" : "text-muted-foreground"
                     )}
                 >
@@ -136,7 +153,81 @@ function DaySeparator({ ts }: { ts: number }) {
     );
 }
 
-/* ---------- Componente ---------- */
+
+// ------------------------------------------------
+// COMPONENTE DE OPTIMIZACIÓN (LISTA DE MENSAJES MEMOIZADA)
+// ------------------------------------------------
+
+const ChatMessageListContent = ({ uiMessages, loading, listRef, info }: ChatMessageListProps) => {
+    
+    // La composición con separadores se memoiza aquí, y solo se recalcula si uiMessages cambia.
+    const composed = useMemo(() => {
+        const out: Array<{ type: "separator" | "msg"; ts: number; data?: UIBubble }> = [];
+        let prevTs = 0;
+        for (const m of uiMessages) {
+            const ts = m.ts || 0;
+            if (isDifferentDay(ts, prevTs)) {
+                out.push({ type: "separator", ts });
+            }
+            out.push({ type: "msg", ts, data: m });
+            prevTs = ts;
+        }
+        return out;
+    }, [uiMessages]);
+
+    return (
+        <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto p-4">
+            {/* Si loading (esqueleto) */}
+            {loading && (
+                 <div className="flex h-full items-center justify-center">
+                    <span className="text-muted-foreground">Cargando mensajes...</span>
+                 </div>
+            )}
+
+            {!loading && composed.length === 0 && (
+                <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-3 pt-10 text-center">
+                    <p className="text-lg font-medium">Inicia una conversación</p>
+                    <p className="text-sm">Envía tu primer mensaje a {info?.instanceName || "este contacto"} ({info?.remoteJid})</p>
+                </div>
+            )}
+
+            {!loading &&
+                composed.map((item, idx) =>
+                    item.type === "separator" ? (
+                        // La clave es crucial para que React identifique qué elementos cambiaron
+                        <DaySeparator key={`sep-${item.ts}-${idx}`} ts={item.ts} /> 
+                    ) : (
+                        <MessageBubble
+                            key={item.data!.id} // ¡Usamos el ID único de la burbuja!
+                            message={item.data!.content}
+                            isUserMessage={item.data!.sender === "user"}
+                            avatarSrc={item.data!.avatarSrc}
+                            timestamp={item.data!.ts}
+                        />
+                    )
+                )}
+
+            {/* Pie con metadatos de paginación */}
+            {!loading && info && (info.pages || info.currentPage) && (
+                <div className="text-muted-foreground/80 text-center text-[11px] pt-4">
+                    Página {info.currentPage} de {info.pages} | Total: {info.total}
+                </div>
+            )}
+        </div>
+    );
+};
+
+/**
+ * Componente memoizado para renderizar la lista de mensajes.
+ * React.memo previene que este componente se re-renderice si sus props no han cambiado.
+ */
+const ChatMessageList = React.memo(ChatMessageListContent);
+
+
+// ------------------------------------------------
+// COMPONENTE PRINCIPAL (ChatMain)
+// ------------------------------------------------
+
 export function ChatMain({ header, messages, info, loading, handleSend }: ChatMainProps) {
     const listRef = useRef<HTMLDivElement>(null);
     const [showScrollBtn, setShowScrollBtn] = useState(false);
@@ -144,13 +235,15 @@ export function ChatMain({ header, messages, info, loading, handleSend }: ChatMa
     // 💡 ESTADO: Para manejar el texto del input
     const [messageText, setMessageText] = useState("");
 
+    // 💡 Memoización de la adaptación de mensajes
     const uiMessages = useMemo(() => adaptEvolutionMessages(messages, header.avatarSrc), [messages, header.avatarSrc]);
 
     // Scroll to bottom
     const scrollToBottom = useCallback(() => {
         const el = listRef.current;
         if (!el) return;
-        el.scrollTop = el.scrollHeight + 9999;
+        // Scroll 9999 para asegurar que llega al final
+        el.scrollTop = el.scrollHeight + 9999; 
     }, []);
 
     // 💡 FUNCIÓN: Para manejar el envío del mensaje
@@ -173,31 +266,17 @@ export function ChatMain({ header, messages, info, loading, handleSend }: ChatMa
         const el = listRef.current;
         if (!el) return;
         const onScroll = () => {
-            const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 200;
+            // Cerca del fondo (menos de 200px)
+            const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 200; 
             setShowScrollBtn(!nearBottom);
         };
         el.addEventListener("scroll", onScroll, { passive: true });
         return () => el.removeEventListener("scroll", onScroll);
     }, []);
 
-    // Composición con separadores (no cambia)
-    const composed = useMemo(() => {
-        const out: Array<{ type: "separator" | "msg"; ts: number; data?: UIBubble }> = [];
-        let prevTs = 0;
-        for (const m of uiMessages) {
-            const ts = m.ts || 0;
-            if (isDifferentDay(ts, prevTs)) {
-                out.push({ type: "separator", ts });
-            }
-            out.push({ type: "msg", ts, data: m });
-            prevTs = ts;
-        }
-        return out;
-    }, [uiMessages]);
-
     return (
         <section className="relative m-4 flex flex-1 flex-col overflow-hidden rounded-2xl border bg-background shadow-sm">
-            {/* Header sticky (no cambia) */}
+            {/* Header sticky (no se re-renderiza con la entrada del teclado) */}
             <div className="sticky top-0 z-20 flex items-center gap-3 border-b bg-background/80 p-4 backdrop-blur">
                 <Avatar className="h-10 w-10 ring-2 ring-background">
                     <AvatarImage src={header.avatarSrc || "/placeholder.svg"} alt={header.name} />
@@ -212,41 +291,16 @@ export function ChatMain({ header, messages, info, loading, handleSend }: ChatMa
                 </button>
             </div>
 
-            {/* Lista de mensajes (no cambia) */}
-            <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto p-4">
-                {/* Skeleton / Loader */}
-                {/* ... (renderizado de skeleton) ... */}
+            {/* 💡 LISTA DE MENSAJES: Componente Memoizado */}
+            {/* Solo se re-renderiza cuando uiMessages (basado en 'messages' prop) cambia */}
+            <ChatMessageList 
+                uiMessages={uiMessages} 
+                loading={loading} 
+                listRef={listRef} 
+                info={info} 
+            />
 
-                {!loading && composed.length === 0 && (
-                    <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-3 pt-10 text-center">
-                         {/* ... (mensaje sin mensajes) ... */}
-                    </div>
-                )}
-
-                {!loading &&
-                    composed.map((item, idx) =>
-                        item.type === "separator" ? (
-                            <DaySeparator key={`sep-${item.ts}-${idx}`} ts={item.ts} />
-                        ) : (
-                            <MessageBubble
-                                key={item.data!.id}
-                                message={item.data!.content}
-                                isUserMessage={item.data!.sender === "user"}
-                                avatarSrc={item.data!.avatarSrc}
-                                timestamp={item.data!.ts}
-                            />
-                        )
-                    )}
-
-                {/* Pie con metadatos de paginación (no cambia) */}
-                {!loading && info && (info.pages || info.currentPage) && (
-                    <div className="text-muted-foreground/80 text-center text-[11px]">
-                         {/* ... (info de paginación) ... */}
-                    </div>
-                )}
-            </div>
-
-            {/* Composer */}
+            {/* Composer (no se re-renderiza con la actualización de mensajes) */}
             <div className="flex items-center gap-2 border-t bg-background/60 p-3 backdrop-blur">
                 <button className="rounded-full p-2 hover:bg-muted" aria-label="Adjuntar archivo">
                     <Paperclip className="text-muted-foreground h-5 w-5" />
@@ -255,10 +309,8 @@ export function ChatMain({ header, messages, info, loading, handleSend }: ChatMa
                     <ImageIcon className="text-muted-foreground h-5 w-5" />
                 </button>
                 <Input
-                    // 💡 IMPLEMENTACIÓN: Enlace al estado
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
-                    // 💡 IMPLEMENTACIÓN: Manejo de la tecla ENTER
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault(); 
@@ -269,7 +321,6 @@ export function ChatMain({ header, messages, info, loading, handleSend }: ChatMa
                     className="flex-1 border-none bg-muted/50 ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
                 <Button
-                    // 💡 IMPLEMENTACIÓN: Enlace a la función de envío
                     onClick={handleSendMessage}
                     disabled={messageText.trim().length === 0}
                     size="icon"
