@@ -3,9 +3,8 @@
 import type { ApiKey } from '@prisma/client';
 
 /* ==================================
-  1. Tipos de Datos (Exportados)
-  ... (mantener todos los tipos de datos como están)
-  ================================== */
+ 1. Tipos de Datos (Exportados)
+ ================================== */
 type LastMessage = {
   id: string | null;
   key: { id: string; fromMe: boolean; remoteJid: string };
@@ -62,22 +61,27 @@ export type EvolutionMessage = {
 
 export type FindMessagesResult =
   | {
-      success: true;
-      message: string;
-      data: EvolutionMessage[];
-      total?: number;
-      pages?: number;
-      currentPage?: number;
-      nextPage?: number | null;
-      raw?: unknown;
-      queriedRemoteJid?: string;
-    }
+     success: true;
+     message: string;
+     data: EvolutionMessage[];
+     total?: number;
+     pages?: number;
+     currentPage?: number;
+     nextPage?: number | null;
+     raw?: unknown;
+     queriedRemoteJid?: string;
+   }
   | { success: false; message: string; raw?: unknown; queriedRemoteJid?: string };
 
+// Nuevo tipo para el resultado del envío de mensaje
+export type SendMessageResult =
+    | { success: true; message: string; data?: unknown; remoteJid: string }
+    | { success: false; message: string; raw?: unknown; remoteJid: string };
+
+
 /* ==================================
-  2. Utilidades Comunes
-  ... (mantener todas las utilidades como están)
-  ================================== */
+ 2. Utilidades Comunes
+ ================================== */
 
 function normalizeBaseUrl(url: string): string {
   const trimmed = (url || '').trim().replace(/\/+$/, '');
@@ -135,132 +139,191 @@ async function doRequest(
 }
 
 /* ==================================
-  3. Acciones del Servidor
-  ... (mantener fetchChatsFromEvolution como está)
-  ================================== */
+ 3. Acciones del Servidor
+ ================================== */
 
 export async function fetchChatsFromEvolution(
-    apiKeyData: Pick<ApiKey, 'url' | 'key'>,
-    instanceName: string,
-    options?: { timeoutMs?: number; allowInsecureTLS?: boolean; path?: 'findChats'; }
+  apiKeyData: Pick<ApiKey, 'url' | 'key'>,
+  instanceName: string,
+  options?: { timeoutMs?: number; allowInsecureTLS?: boolean; path?: 'findChats'; }
 ): Promise<FetchChatsResult> {
-    const { url: baseUrlRaw, key: globalApiKey } = apiKeyData;
-    if (!baseUrlRaw || !globalApiKey || !instanceName) {
-        return { success: false, message: 'Parámetros de conexión faltantes.' };
+  const { url: baseUrlRaw, key: globalApiKey } = apiKeyData;
+  if (!baseUrlRaw || !globalApiKey || !instanceName) {
+    return { success: false, message: 'Parámetros de conexión faltantes.' };
+  }
+
+  const baseURL = normalizeBaseUrl(baseUrlRaw);
+  const endpointUrl = `${baseURL}/chat/findChats/${encodeURIComponent(instanceName)}`;
+  const apikeyHeader = globalApiKey;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 15000);
+
+  try {
+    let response = await doRequest(endpointUrl, apikeyHeader, controller.signal, 'POST');
+    if (!response.ok && (response.status === 404 || response.status === 405)) {
+      response = await doRequest(endpointUrl, apikeyHeader, controller.signal, 'GET');
     }
+    clearTimeout(timeout);
 
-    const baseURL = normalizeBaseUrl(baseUrlRaw);
-    const endpointUrl = `${baseURL}/chat/findChats/${encodeURIComponent(instanceName)}`;
-    const apikeyHeader = globalApiKey;
+    const raw = await response.json().catch(() => null);
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 15000);
-
-    try {
-        let response = await doRequest(endpointUrl, apikeyHeader, controller.signal, 'POST');
-        if (!response.ok && (response.status === 404 || response.status === 405)) {
-            response = await doRequest(endpointUrl, apikeyHeader, controller.signal, 'GET');
-        }
-        clearTimeout(timeout);
-
-        const raw = await response.json().catch(() => null);
-
-        if (!response.ok) {
-            const apiMsg = (raw?.message as string) || `Error ${response.status} en la API.`;
-            return { success: false, message: apiMsg };
-        }
-        
-        if (raw == null) return { success: false, message: 'Respuesta inválida o vacía.' };
-
-        const data = ensureArrayResponse(raw);
-        return { success: true, message: `OK findChats ${instanceName}`, data };
-
-    } catch (err: any) {
-        clearTimeout(timeout);
-        const errMsg = err?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${err?.message || String(err)}`;
-        return { success: false, message: errMsg };
+    if (!response.ok) {
+      const apiMsg = (raw?.message as string) || `Error ${response.status} en la API.`;
+      return { success: false, message: apiMsg };
     }
+    
+    if (raw == null) return { success: false, message: 'Respuesta inválida o vacía.' };
+
+    const data = ensureArrayResponse(raw);
+    return { success: true, message: `OK findChats ${instanceName}`, data };
+
+  } catch (err: any) {
+    clearTimeout(timeout);
+    const errMsg = err?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${err?.message || String(err)}`;
+    return { success: false, message: errMsg };
+  }
+}
+
+export async function findMessagesByRemoteJid(
+  apiKeyData: Pick<ApiKey, 'url' | 'key'>,
+  instanceName: string,
+  remoteJid: string,
+  options?: {
+    timeoutMs?: number;
+    page?: number;
+    pageSize?: number;
+    limit?: number;
+  }
+): Promise<FindMessagesResult> {
+  const { url: baseUrlRaw, key: globalApiKey } = apiKeyData;
+  
+  if (!baseUrlRaw || !globalApiKey || !instanceName || !remoteJid) {
+    return { success: false, message: 'URL / API Key / instanceName / remoteJid faltantes.', queriedRemoteJid: remoteJid };
+  }
+
+  const baseURL = normalizeBaseUrl(baseUrlRaw);
+  const endpointUrl = `${baseURL}/chat/findMessages/${encodeURIComponent(instanceName)}`;
+  const apikeyHeader = globalApiKey;
+
+  const payload: Record<string, any> = {
+    where: {
+      key: {
+        remoteJid: remoteJid,
+      },
+    },
+  };
+
+  if (options?.page) {
+    payload.page = options.page;
+  }
+  if (options?.pageSize) {
+    payload.offset = options.pageSize; 
+  } else if (options?.limit) {
+    payload.offset = options.limit; 
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 15000);
+
+  try {
+    const response = await doRequest(endpointUrl, apikeyHeader, controller.signal, 'POST', payload);
+    clearTimeout(timeout);
+
+    const raw = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const apiMsg = (raw?.message as string) || `Error ${response.status} en la API.`;
+      return { success: false, message: apiMsg, raw, queriedRemoteJid: remoteJid };
+    }
+    
+    if (raw == null) return { success: false, message: 'Respuesta inválida o vacía.', queriedRemoteJid: remoteJid };
+    
+    const { items, meta } = normalizeFindMessagesPayload(raw);
+
+    return {
+      success: true,
+      message: `OK findMessages ${instanceName} ${remoteJid}`,
+      data: items,
+      total: meta.total,
+      pages: meta.pages,
+      currentPage: meta.currentPage,
+      nextPage: meta.nextPage,
+      raw,
+      queriedRemoteJid: remoteJid,
+    };
+  } catch (err: any) {
+    clearTimeout(timeout);
+    const errMsg = err?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${err?.message || String(err)}`;
+    return { success: false, message: errMsg, queriedRemoteJid: remoteJid };
+  }
 }
 
 
-export async function findMessagesByRemoteJid(
+// 👇 NUEVA FUNCIÓN AÑADIDA
+export async function sendTextMessage(
     apiKeyData: Pick<ApiKey, 'url' | 'key'>,
     instanceName: string,
     remoteJid: string,
+    textMessage: string,
     options?: {
         timeoutMs?: number;
-        page?: number;
-        pageSize?: number;
-        limit?: number;
+        delay?: number;
+        quotedMessage?: { key: { id: string }; message: { conversation: string } };
+        linkPreview?: boolean;
+        mentionsEveryOne?: boolean;
+        mentioned?: string[];
     }
-): Promise<FindMessagesResult> {
+): Promise<SendMessageResult> {
     const { url: baseUrlRaw, key: globalApiKey } = apiKeyData;
     
-    if (!baseUrlRaw || !globalApiKey || !instanceName || !remoteJid) {
-        return { success: false, message: 'URL / API Key / instanceName / remoteJid faltantes.', queriedRemoteJid: remoteJid };
+    if (!baseUrlRaw || !globalApiKey || !instanceName || !remoteJid || !textMessage) {
+        return { success: false, message: 'Parámetros de conexión faltantes (URL, API Key, instanceName, remoteJid, o textMessage).', remoteJid };
     }
 
     const baseURL = normalizeBaseUrl(baseUrlRaw);
-    const endpointUrl = `${baseURL}/chat/findMessages/${encodeURIComponent(instanceName)}`;
+    // URL según la imagen: {{baseUrl}}/message/sendText/{{instance}}
+    const endpointUrl = `${baseURL}/message/sendText/${encodeURIComponent(instanceName)}`;
     const apikeyHeader = globalApiKey;
 
-    // 💡 MODIFICACIÓN CLAVE: Construir el payload con la estructura 'where' y las opciones de paginación
     const payload: Record<string, any> = {
-        where: {
-            key: {
-                remoteJid: remoteJid, // Se utiliza el parámetro 'remoteJid' de la función
-            },
-        },
+        // 'number' se mapea a remoteJid según tu body
+        number: remoteJid,
+        text: textMessage,
     };
 
-    // Agregar opciones de paginación/límite al payload, según sea necesario por la API (asumiendo que `limit` es para `offset`)
-    if (options?.page) {
-      // Nota: Si la API de Evolution usa 'page' para el paginado, se agrega.
-      // Si usa 'offset', deberías calcularlo o usar un nombre de propiedad diferente.
-      payload.page = options.page;
-    }
-    // Asumiendo que `pageSize` o `limit` se usaría para el número de registros por página/petición.
-    if (options?.pageSize) {
-        // Asumiendo que `pageSize` es el equivalente a `offset` en la documentación
-        payload.offset = options.pageSize; 
-    } else if (options?.limit) {
-        payload.offset = options.limit; 
-    }
-
+    // Agregar opciones opcionales
+    if (options?.delay) payload.delay = options.delay;
+    if (options?.quotedMessage) payload.quoted = options.quotedMessage;
+    if (options?.linkPreview !== undefined) payload.linkPreview = options.linkPreview;
+    if (options?.mentionsEveryOne !== undefined) payload.mentionsEveryOne = options.mentionsEveryOne;
+    if (options?.mentioned && options.mentioned.length > 0) payload.mentioned = options.mentioned;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 15000);
 
     try {
-        // La función doRequest ya se encarga de serializar `payload` a JSON para el body de la petición POST.
         const response = await doRequest(endpointUrl, apikeyHeader, controller.signal, 'POST', payload);
         clearTimeout(timeout);
 
         const raw = await response.json().catch(() => null);
 
         if (!response.ok) {
-            const apiMsg = (raw?.message as string) || `Error ${response.status} en la API.`;
-            return { success: false, message: apiMsg, raw, queriedRemoteJid: remoteJid };
+            const apiMsg = (raw?.message as string) || `Error ${response.status} en la API al enviar mensaje.`;
+            return { success: false, message: apiMsg, raw, remoteJid };
         }
         
-        if (raw == null) return { success: false, message: 'Respuesta inválida o vacía.', queriedRemoteJid: remoteJid };
+        if (raw == null) return { success: false, message: 'Respuesta inválida o vacía al enviar mensaje.', remoteJid };
         
-        const { items, meta } = normalizeFindMessagesPayload(raw);
-
         return {
             success: true,
-            message: `OK findMessages ${instanceName} ${remoteJid}`,
-            data: items,
-            total: meta.total,
-            pages: meta.pages,
-            currentPage: meta.currentPage,
-            nextPage: meta.nextPage,
-            raw,
-            queriedRemoteJid: remoteJid,
+            message: `Mensaje enviado OK a ${remoteJid}`,
+            data: raw,
+            remoteJid: remoteJid,
         };
     } catch (err: any) {
         clearTimeout(timeout);
         const errMsg = err?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${err?.message || String(err)}`;
-        return { success: false, message: errMsg, queriedRemoteJid: remoteJid };
+        return { success: false, message: errMsg, remoteJid };
     }
 }

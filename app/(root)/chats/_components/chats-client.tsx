@@ -4,38 +4,43 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { ChatSidebar } from "./chat-sidebar";
 import { ChatMain } from "./chat-main";
 
-// 🔑 CORRECCIÓN: Importamos los tipos directamente de la fuente de verdad (acciones)
 import type {
     EvolutionMessage,
     FetchChatsResult,
-    FindMessagesResult
-} from "@/actions/chat-actions";
-
-/* 🛑 Tipos duplicados eliminados (LastMessage, ChatData, FetchChatsResult) 🛑 */
+    FindMessagesResult,
+    SendMessageResult,
+} from "@/actions/chat-actions"; 
 
 interface ChatsClientProps {
-    chatsResult: FetchChatsResult; // Usa el tipo importado
+    chatsResult: FetchChatsResult;
     initialSelectedJid: string;
-    initialMessages: EvolutionMessage[]; // Usa el tipo importado
+    initialMessages: EvolutionMessage[];
     instanceName?: string;
-    /**
-    * Server Action (Clausura Directa) simplificada.
-    * Debe coincidir con el tipo de retorno de findMessagesByRemoteJid.
-    */
     warmMessages?: (
         remoteJid: string,
         opts?: { page?: number; pageSize?: number }
-    ) => Promise<FindMessagesResult>; // Usa el tipo importado
+    ) => Promise<FindMessagesResult>;
+    sendText: (
+        remoteJid: string,
+        textMessage: string
+    ) => Promise<SendMessageResult>;
+    /** Server Action para refrecar la lista de chats */
+    refetchChats: () => Promise<FetchChatsResult>; 
 }
 
 export function ChatsClient({
-    chatsResult,
+    chatsResult: initialChatsResult,
     initialSelectedJid,
     initialMessages,
     warmMessages,
+    sendText,
+    refetchChats,
     instanceName,
 }: ChatsClientProps) {
     const [selectedJid, setSelectedJid] = useState(initialSelectedJid || "");
+
+    // 💡 Estado mutable para la lista de chats
+    const [currentChatsResult, setCurrentChatsResult] = useState(initialChatsResult); 
 
     const [messages, setMessages] = useState<EvolutionMessage[]>(initialMessages || []);
 
@@ -54,9 +59,9 @@ export function ChatsClient({
     const [loading, setLoading] = useState(false);
 
     const contacts = useMemo(() => {
-        // ChatData ahora se infiere de FetchChatsResult
-        return chatsResult.success ? chatsResult.data : [];
-    }, [chatsResult]);
+        // Usamos el estado local 'currentChatsResult'
+        return currentChatsResult.success ? currentChatsResult.data : [];
+    }, [currentChatsResult]);
 
     const currentContact = useMemo(() => {
         if (!contacts.length || !selectedJid) return undefined;
@@ -71,7 +76,7 @@ export function ChatsClient({
         };
     }, [currentContact, selectedJid]);
 
-    // Autoselección inicial
+    // Autoselección inicial (usando 'contacts' del estado)
     useEffect(() => {
         if (!selectedJid && contacts.length > 0) {
             const first = contacts[0].remoteJid;
@@ -81,11 +86,43 @@ export function ChatsClient({
         }
     }, [contacts, selectedJid, instanceName]);
 
-    // HANDLER para cambiar de chat
-    const handleSelectFromSidebar = useCallback(async (remoteJid: string) => {
-        if (selectedJid === remoteJid) return;
 
-        setSelectedJid(remoteJid);
+    // 💡 LÓGICA DE ACTUALIZACIÓN PERIÓDICA DE CHATS (POLLING)
+    useEffect(() => {
+        let intervalId: NodeJS.Timeout | null = null;
+        
+        const fetchNewChats = async () => {
+            const result = await refetchChats();
+            if (result.success) {
+                // Actualiza el estado de los chats
+                setCurrentChatsResult(result); 
+            } else {
+                console.warn("[ChatsClient] Fallo al refrescar chats:", result.message);
+            }
+        };
+
+        // Solo configuramos la actualización si la carga inicial fue exitosa
+        if (initialChatsResult.success) {
+            // Refresca cada 10 segundos
+            intervalId = setInterval(fetchNewChats, 10000); 
+        }
+
+        // Función de limpieza
+        return () => {
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [refetchChats, initialChatsResult.success]);
+
+
+    // HANDLER para cambiar de chat (Cargar historial) y RECARGAR MENSAJES
+    const handleSelectFromSidebar = useCallback(async (remoteJid: string) => {
+        // Si ya está seleccionado, forzar la recarga
+        // if (selectedJid === remoteJid) return; // NOTA: Comentamos esto para permitir la recarga forzada al enviar
+
+        if (selectedJid !== remoteJid) {
+            setSelectedJid(remoteJid);
+        }
+        
         setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid }));
         setLoading(true);
         setMessages([]);
@@ -126,10 +163,37 @@ export function ChatsClient({
         }
     }, [selectedJid, warmMessages, instanceName]);
 
+    // HANDLER: Función para enviar el mensaje de texto
+    const handleSendText = useCallback(async (text: string) => {
+        if (!selectedJid || !sendText) {
+            console.warn("[ChatsClient] No se puede enviar: remoteJid no seleccionado o función sendText no proporcionada.");
+            return;
+        }
+
+        const result = await sendText(selectedJid, text);
+        
+        if (result.success) {
+            console.log("✅ Mensaje enviado con éxito:", result.data);
+            
+            // 1. ACTUALIZACIÓN INMEDIATA DE MENSAJES DEL CHAT ACTUAL
+            if (warmMessages) {
+                // Reutilizamos handleSelectFromSidebar para forzar la recarga del historial
+                handleSelectFromSidebar(selectedJid); 
+            }
+
+            // 2. RECARGAR LISTA DE CHATS (Para que el chat suba al inicio de la Sidebar)
+            await refetchChats(); 
+            
+        } else {
+            console.error("❌ Error al enviar mensaje:", result.message, result.raw);
+        }
+    }, [selectedJid, sendText, warmMessages, refetchChats, handleSelectFromSidebar]);
+
+
     return (
         <div className="flex h-full">
             <ChatSidebar
-                result={chatsResult}
+                result={currentChatsResult} // 👈 Usamos el estado local que se refresca
                 onSelectRemoteJid={handleSelectFromSidebar}
                 selectedJid={selectedJid}
             />
@@ -139,6 +203,7 @@ export function ChatsClient({
                 messages={messages}
                 info={info}
                 loading={loading}
+                handleSend={handleSendText}
             />
         </div>
     );

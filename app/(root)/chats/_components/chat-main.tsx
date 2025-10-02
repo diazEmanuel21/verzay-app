@@ -25,7 +25,15 @@ type ChatInfoMeta = {
   total?: number; pages?: number; currentPage?: number; nextPage?: number | null;
   instanceName?: string; remoteJid?: string;
 };
-type ChatMainProps = { header: ChatHeader; messages: EvolutionMessage[]; info?: ChatInfoMeta; loading?: boolean };
+// 💡 MODIFICACIÓN: Se añade el prop handleSend
+type ChatMainProps = {
+  header: ChatHeader;
+  messages: EvolutionMessage[];
+  info?: ChatInfoMeta;
+  loading?: boolean;
+  /** Función que se ejecuta al enviar un mensaje. Recibe el texto del input. */
+  handleSend: (message: string) => void;
+};
 
 interface MessageBubbleProps { message: string; isUserMessage: boolean; avatarSrc?: string; timestamp?: number; }
 
@@ -129,9 +137,11 @@ function DaySeparator({ ts }: { ts: number }) {
 }
 
 /* ---------- Componente ---------- */
-export function ChatMain({ header, messages, info, loading }: ChatMainProps) {
+export function ChatMain({ header, messages, info, loading, handleSend }: ChatMainProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
+  // 💡 NUEVO ESTADO: Para manejar el texto del input
+  const [messageText, setMessageText] = useState("");
 
   const uiMessages = useMemo(() => adaptEvolutionMessages(messages, header.avatarSrc), [messages, header.avatarSrc]);
 
@@ -141,6 +151,16 @@ export function ChatMain({ header, messages, info, loading }: ChatMainProps) {
     if (!el) return;
     el.scrollTop = el.scrollHeight + 9999;
   }, []);
+
+  // 💡 NUEVA FUNCIÓN: Para manejar el envío del mensaje
+  const handleSendMessage = useCallback(() => {
+    const text = messageText.trim();
+    if (text.length > 0) {
+      handleSend(text); // Ejecuta el prop handleSend con el mensaje
+      setMessageText(""); // Limpia el input
+    }
+  }, [messageText, handleSend]);
+
 
   // Auto-scroll al final cuando llegan mensajes
   useEffect(() => {
@@ -169,7 +189,7 @@ export function ChatMain({ header, messages, info, loading }: ChatMainProps) {
       messageTimestamp: m.messageTimestamp,
       keys: Object.keys(m.message || {}),
     }));
-    console.log("[ChatMain] info:", info, "len:", messages.length, "sample:", sample);
+    // console.log("[ChatMain] info:", info, "len:", messages.length, "sample:", sample);
   }, [messages, info]);
 
   // Composición con separadores
@@ -260,10 +280,26 @@ export function ChatMain({ header, messages, info, loading }: ChatMainProps) {
           <ImageIcon className="text-muted-foreground h-5 w-5" />
         </button>
         <Input
+          // 💡 IMPLEMENTACIÓN: Enlace al estado y manejo de cambios
+          value={messageText}
+          onChange={(e) => setMessageText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault(); // Evita el salto de línea por defecto
+              handleSendMessage();
+            }
+          }}
           placeholder="Escribe un mensaje…"
           className="flex-1 border-none bg-muted/50 ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
         />
-        <Button size="icon" className="rounded-full" aria-label="Enviar">
+        <Button
+          // 💡 IMPLEMENTACIÓN: Enlace a la función de envío
+          onClick={handleSendMessage}
+          disabled={messageText.trim().length === 0}
+          size="icon"
+          className="rounded-full"
+          aria-label="Enviar"
+        >
           <ArrowRight />
         </Button>
       </div>
