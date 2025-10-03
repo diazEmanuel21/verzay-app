@@ -19,34 +19,7 @@ import {
     CommandList,
 } from "@/components/ui/command";
 import { Plus, Trash2 } from "lucide-react";
-
-/* ---------- Modelo interno ---------- */
-type QaItem = {
-    id: string;
-    q: string; // pregunta
-    a: string; // respuesta
-};
-
-/* ---------- Plantillas predefinidas ---------- */
-const PRESETS: Array<{ title: string; answer: string }> = [
-    { title: "Promociones, descuentos y ofertas", answer: "Inserta aquí la respuesta oficial sobre promociones disponibles" },
-    { title: "Cliente pide descuento", answer: "Inserta aquí la respuesta para solicitudes de rebaja o promociones individuales" },
-    { title: "Me interesa", answer: "Inserta aquí la respuesta para leads interesados que desean avanzar" },
-    { title: "¿Cómo se hace la compra?", answer: "Explica brevemente el proceso de compra paso a paso" },
-    { title: "Garantía de compra", answer: "Indica condiciones de garantía, cobertura y duración" },
-    { title: "Medios de pago", answer: "Describe los métodos de pago aceptados: transferencias, contra entrega, etc." },
-    { title: "Tiempo de entrega", answer: "Indica tiempos de envío o entrega por zona o producto" },
-    { title: "Dirección, ubicación o tienda", answer: "Indica ubicación física o si es 100% online" },
-    { title: "Crédito y/o contra entrega", answer: "Informa si está disponible y bajo qué condiciones" },
-    { title: "Requisitos (para crédito o contra entrega)", answer: "Enumera los requisitos mínimos que debe cumplir el cliente para aplicar" },
-];
-
-export interface FaqSimpleProps {
-    values: { faq: string };
-    handleChange: (
-        key: "faq"
-    ) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-}
+import { FaqSimpleProps, PRESETS, QaItem } from "@/types/agentAi";
 
 export function FqaBuilder({ values, handleChange }: FaqSimpleProps) {
     const [openPicker, setOpenPicker] = useState(false);
@@ -62,8 +35,6 @@ export function FqaBuilder({ values, handleChange }: FaqSimpleProps) {
             }));
             setItems(initial);
         }
-        // solo en el primer render
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Markdown con el formato exacto

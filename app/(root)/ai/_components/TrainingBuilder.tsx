@@ -23,7 +23,8 @@ import {
     CommandSeparator,
 } from "@/components/ui/command";
 import { X, Plus, FileText, Zap, Trash2 } from "lucide-react";
-import { CAPTURE_SNIPPETS, CONSULTA_DATOS_SNIPPET, ElementFunction, ElementItem, ElementText, Flow, TrainingBuilderProps } from "@/types/agentAi";
+import { CAPTURE_SNIPPETS, CONSULTA_DATOS_SNIPPET, ElementFunction, ElementItem, ElementText, TrainingBuilderProps } from "@/types/agentAi";
+import { Workflow } from "@prisma/client";
 
 export function TrainingBuilder({
     flows = [],
@@ -152,7 +153,7 @@ export function TrainingBuilder({
             prev.map((e) => (e.id === id && e.kind === "text" ? { ...e, text } : e))
         );
 
-    const setFlowOnElement = (id: string, flow: Flow) =>
+    const setFlowOnElement = (id: string, flow: Workflow) =>
         setElements((prev) =>
             prev.map((e) =>
                 e.id === id && e.kind === "function" && e.fn === "ejecutar_flujo"

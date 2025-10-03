@@ -1,3 +1,11 @@
+import { UserWithApiKeys } from "@/schema/schema";
+import { Workflow } from "@prisma/client";
+import { ChangeEvent } from "react";
+
+export interface MainAiInterface {
+    flows: Workflow[];
+    user: UserWithApiKeys;
+};
 export interface BusinessValues {
     nombre: string;
     sector: string;
@@ -58,8 +66,6 @@ export interface TrainingBuilderExternalProps {
     ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }
 
-export type Flow = { id: string; name: string };
-
 export type ElementText = {
     id: string;
     kind: "text";
@@ -114,7 +120,7 @@ export const CONSULTA_DATOS_SNIPPET = `**Consultar Productos**: (Prioridad 2). S
 - *Disparadores:* “imagen”, “foto”, “video”, “pdf”, “documento”, “ver”, “ver el producto”, “muéstrame”, “catálogo”.`;
 
 export interface TrainingBuilderProps extends TrainingBuilderExternalProps {
-    flows?: Flow[];
+    flows: Workflow[];
     notificationNumber?: string | null;
     defaultMainMessage?: string;
     // ✅ Propiedad opcional que es una función
@@ -122,4 +128,35 @@ export interface TrainingBuilderProps extends TrainingBuilderExternalProps {
         mainMessage: string;
         elements: ElementItem[];
     }) => void;
+}
+
+
+/*****************  FQABUILDER ***********************/
+
+/* ---------- Modelo interno ---------- */
+export type QaItem = {
+    id: string;
+    q: string; // pregunta
+    a: string; // respuesta
+};
+
+/* ---------- Plantillas predefinidas ---------- */
+export const PRESETS: Array<{ title: string; answer: string }> = [
+    { title: "Promociones, descuentos y ofertas", answer: "Inserta aquí la respuesta oficial sobre promociones disponibles" },
+    { title: "Cliente pide descuento", answer: "Inserta aquí la respuesta para solicitudes de rebaja o promociones individuales" },
+    { title: "Me interesa", answer: "Inserta aquí la respuesta para leads interesados que desean avanzar" },
+    { title: "¿Cómo se hace la compra?", answer: "Explica brevemente el proceso de compra paso a paso" },
+    { title: "Garantía de compra", answer: "Indica condiciones de garantía, cobertura y duración" },
+    { title: "Medios de pago", answer: "Describe los métodos de pago aceptados: transferencias, contra entrega, etc." },
+    { title: "Tiempo de entrega", answer: "Indica tiempos de envío o entrega por zona o producto" },
+    { title: "Dirección, ubicación o tienda", answer: "Indica ubicación física o si es 100% online" },
+    { title: "Crédito y/o contra entrega", answer: "Informa si está disponible y bajo qué condiciones" },
+    { title: "Requisitos (para crédito o contra entrega)", answer: "Enumera los requisitos mínimos que debe cumplir el cliente para aplicar" },
+];
+
+export interface FaqSimpleProps {
+    values: { faq: string };
+    handleChange: (
+        key: "faq"
+    ) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }

@@ -6,7 +6,6 @@ import { rr, Workflow } from "@prisma/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { AutoRepliesActions } from "./";
 import { MessageCircleMoreIcon, PencilLine } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { updateRR } from "@/actions/rr-actions";
 import { toast } from "sonner";
