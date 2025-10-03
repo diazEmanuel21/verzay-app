@@ -13,6 +13,7 @@ export interface BusinessValues {
     youtube: string;
     notas: string;
     training?: string;
+    faq?: string
 };
 
 export const initialValues: BusinessValues = {
@@ -32,6 +33,7 @@ export const initialValues: BusinessValues = {
     notas: "",
     /* TrainingBuilder */
     training: "",
+    faq: "",
 };
 
 export interface BusinessBuilderInterface {

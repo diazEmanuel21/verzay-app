@@ -16,11 +16,6 @@ export const PromptPreview = ({
                     className="min-h-[540px] font-mono text-sm"
                     value={prompt}
                 />
-                {/* <div className="pt-3 flex justify-end">
-                    <Button id="copy-btn-bottom" onClick={copy} variant="secondary" className="gap-2">
-                        <Copy className="h-4 w-4" /> Copiar
-                    </Button>
-                </div> */}
             </CardContent>
         </Card>
     )

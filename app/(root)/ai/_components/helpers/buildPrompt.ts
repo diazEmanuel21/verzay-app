@@ -37,5 +37,10 @@ export const buildPrompt = (v: BusinessValues): string => {
         lines.push(v.training.trim());
     }
 
+    if (v.faq?.trim()) {
+        lines.push("\n## Preguntas & Respuestas");
+        lines.push(v.faq.trim());
+    }
+
     return lines.join("\n");
 }

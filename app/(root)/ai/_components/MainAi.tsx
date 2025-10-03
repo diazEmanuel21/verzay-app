@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BusinessPromptBuilder, PromptPreview, TrainingBuilder } from "./";
+import { BusinessPromptBuilder, FqaBuilder, PromptPreview, TrainingBuilder } from "./";
 import { buildPrompt } from "./helpers";
 import { BusinessValues, initialValues } from "@/types/agentAi";
 
@@ -45,6 +45,7 @@ export const MainAi = () => {
                 <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="business">Negocio</TabsTrigger>
                     <TabsTrigger value="training">Entrenamiento</TabsTrigger>
+                    <TabsTrigger value="faq">Preguntas</TabsTrigger>
                     <TabsTrigger value="extras">Extras</TabsTrigger>
                 </TabsList>
 
@@ -54,6 +55,10 @@ export const MainAi = () => {
 
                 <TabsContent value="training" className="mt-4">
                     <TrainingBuilder values={{ training: values.training ?? '' }} handleChange={handleChange} />
+                </TabsContent>
+
+                <TabsContent value="faq" className="mt-4">
+                    <FqaBuilder values={{ faq: values.faq ?? '' }} handleChange={handleChange} />
                 </TabsContent>
 
                 <TabsContent value="extras" className="mt-4">
