@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BusinessPromptBuilder, FqaBuilder, PromptPreview, TrainingBuilder } from "./";
 import { buildPrompt } from "./helpers";
 import { BusinessValues, initialValues, MainAiInterface } from "@/types/agentAi";
+import { ProductBuilder } from './ProductBuilder';
 
 export const MainAi = ({
     flows,
@@ -49,12 +50,17 @@ export const MainAi = ({
                 {/* Columna izquierda: constructor con tabs */}
                 <div className="space-y-4">
                     <Tabs defaultValue="business" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3">
-                            <TabsTrigger value="business">Negocio</TabsTrigger>
-                            <TabsTrigger value="training">Entrenamiento</TabsTrigger>
-                            <TabsTrigger value="faq">Preguntas</TabsTrigger>
-                            {/* <TabsTrigger value="extras">Extras</TabsTrigger> */}
-                        </TabsList>
+                        {/* Sticky + overflow-x */}
+                        <div className="sticky top-0 z-20 -mx-4 lg:mx-0 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                            <div className="overflow-x-auto no-scrollbar">
+                                <TabsList className="flex min-w-full w-max gap-2 px-4 py-2">
+                                    <TabsTrigger className="shrink-0" value="business">Negocio</TabsTrigger>
+                                    <TabsTrigger className="shrink-0" value="training">Entrenamiento</TabsTrigger>
+                                    <TabsTrigger className="shrink-0" value="faq">Preguntas</TabsTrigger>
+                                    <TabsTrigger className="shrink-0" value="products">Productos</TabsTrigger>
+                                </TabsList>
+                            </div>
+                        </div>
 
                         <TabsContent value="business" className="mt-4">
                             <BusinessPromptBuilder values={values} handleChange={handleChange} />
@@ -70,29 +76,18 @@ export const MainAi = ({
                         </TabsContent>
 
                         <TabsContent value="faq" className="mt-4">
-                            <FqaBuilder
-                                values={{ faq: values.faq ?? "" }}
-                                handleChange={handleChange}
-                            />
+                            <FqaBuilder values={{ faq: values.faq ?? "" }} handleChange={handleChange} />
                         </TabsContent>
 
-                        <TabsContent value="extras" className="mt-4">
-                            <Card className="border-muted/60">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-base">Extras (próximamente)</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-sm text-muted-foreground">
-                                        Espacio para funciones futuras (tono, reglas, herramientas, etc.).
-                                    </p>
-                                </CardContent>
-                            </Card>
+                        <TabsContent value="products" className="mt-4">
+                            <ProductBuilder values={{ products: values.products ?? "" }} handleChange={handleChange} />
                         </TabsContent>
                     </Tabs>
+
                 </div>
 
                 {/* Columna derecha: preview (sticky en desktop) */}
-                <aside className="lg:sticky lg:top-6 h-fit">
+                <aside className="lg:sticky h-fit">
                     <PromptPreview prompt={prompt} />
                 </aside>
             </div>

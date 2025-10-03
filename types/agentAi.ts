@@ -22,6 +22,7 @@ export interface BusinessValues {
     notas: string;
     training?: string;
     faq?: string
+    products?: string
 };
 
 export const initialValues: BusinessValues = {
@@ -39,9 +40,9 @@ export const initialValues: BusinessValues = {
     tiktok: "",
     youtube: "",
     notas: "",
-    /* TrainingBuilder */
     training: "",
     faq: "",
+    products: "",
 };
 
 export interface BusinessBuilderInterface {

@@ -42,5 +42,10 @@ export const buildPrompt = (v: BusinessValues): string => {
         lines.push(v.faq.trim());
     }
 
+    if (v.products?.trim()) {
+        lines.push("\n## Catálogo / Productos");
+        lines.push(v.products.trim());
+    }
+
     return lines.join("\n");
 }
