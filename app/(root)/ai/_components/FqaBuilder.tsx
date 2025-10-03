@@ -5,6 +5,7 @@ import { nanoid } from "nanoid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
     Popover,
     PopoverTrigger,
@@ -90,15 +91,20 @@ export const FqaBuilder = ({ values, handleChange, onChange }: QaBuilderExternal
     const [items, setItems] = useState<QaItem[]>([]);
     const [openPicker, setOpenPicker] = useState(false);
 
+    // Form para agregar personalizados
+    const [showCustom, setShowCustom] = useState(false);
+    const [newTitle, setNewTitle] = useState("");
+    const [newAnswer, setNewAnswer] = useState("");
+
+    const addedTitles = useMemo(() => new Set(items.map(i => i.title)), [items]);
+
+    const isAdded = (title: string) => addedTitles.has(title);
+
     // Markdown con el formato exacto solicitado
     const prompt = useMemo(() => {
         if (items.length === 0) return "";
         const blocks = items.map((it) => {
-            return [
-                `## ${it.title}`,
-                `*Respuesta:*  `,
-                it.answer.trim(),
-            ].join("\n");
+            return [`## ${it.title}`, `*Respuesta:*  `, it.answer.trim()].join("\n");
         });
         return blocks.join("\n\n---\n\n");
     }, [items]);
@@ -114,6 +120,8 @@ export const FqaBuilder = ({ values, handleChange, onChange }: QaBuilderExternal
     }, [prompt, items, values.faq]);
 
     const addFromPreset = (title: string) => {
+        // evita duplicados
+        if (isAdded(title)) return;
         const preset = PRESETS.find((p) => p.title === title);
         if (!preset) return;
         setItems((prev) => [
@@ -121,6 +129,16 @@ export const FqaBuilder = ({ values, handleChange, onChange }: QaBuilderExternal
             { id: nanoid(), title: preset.title, answer: preset.answer },
         ]);
         setOpenPicker(false);
+    };
+
+    const addCustom = () => {
+        const t = newTitle.trim();
+        const a = newAnswer.trim();
+        if (!t || !a || isAdded(t)) return;
+        setItems(prev => [...prev, { id: nanoid(), title: t, answer: a }]);
+        setNewTitle("");
+        setNewAnswer("");
+        setShowCustom(false);
     };
 
     const updateAnswer = (id: string, val: string) =>
@@ -131,40 +149,109 @@ export const FqaBuilder = ({ values, handleChange, onChange }: QaBuilderExternal
 
     return (
         <Card className="border-muted/60">
-            <CardHeader className="pb-2 flex items-center justify-between">
+            <CardHeader className="pb-2 flex items-center flex-row justify-between">
                 <CardTitle className="text-base">Preguntas & Respuestas</CardTitle>
 
-                <Popover open={openPicker} onOpenChange={setOpenPicker}>
-                    <PopoverTrigger asChild>
-                        <Button size="sm" className="gap-2">
-                            <Plus className="h-4 w-4" />
-                            Agregar desde plantillas
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="p-0 w-[360px]" align="end">
-                        <Command>
-                            <CommandInput placeholder="Buscar plantilla..." />
-                            <CommandList>
-                                <CommandEmpty>Sin resultados…</CommandEmpty>
-                                <CommandGroup heading="Plantillas disponibles">
-                                    {PRESETS.map((p) => (
-                                        <CommandItem key={p.title} onSelect={() => addFromPreset(p.title)}>
-                                            {p.title}
-                                        </CommandItem>
-                                    ))}
-                                </CommandGroup>
-                            </CommandList>
-                        </Command>
-                    </PopoverContent>
-                </Popover>
+                <div className="flex items-center gap-2">
+                    {/* Azul: Agregar desde Plantillas */}
+                    <Popover open={openPicker} onOpenChange={setOpenPicker}>
+                        <PopoverTrigger asChild>
+                            <Button size="sm" className="gap-2">
+                                <Plus className="h-4 w-4" />
+                                Agregar desde plantillas
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0 w-[360px]" align="end">
+                            <Command>
+                                <CommandInput placeholder="Buscar plantilla..." />
+                                <CommandList>
+                                    <CommandEmpty>Sin resultados…</CommandEmpty>
+                                    <CommandGroup heading="Plantillas disponibles">
+                                        {PRESETS.map((p) => {
+                                            const disabled = isAdded(p.title);
+                                            return (
+                                                <CommandItem
+                                                    key={p.title}
+                                                    onSelect={() => !disabled && addFromPreset(p.title)}
+                                                    // "deshabilitado" visual
+                                                    className={disabled ? "opacity-50 pointer-events-none" : ""}
+                                                    aria-disabled={disabled}
+                                                >
+                                                    {p.title}
+                                                </CommandItem>
+                                            );
+                                        })}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
+
+                    {/* Gris: Agregar personalizado */}
+                    <Button
+                        size="sm"
+                        variant="secondary"
+                        className="gap-2"
+                        onClick={() => setShowCustom((s) => !s)}
+                    >
+                        <Plus className="h-4 w-4" />
+                        Agregar
+                    </Button>
+                </div>
             </CardHeader>
 
             <CardContent className="space-y-6">
+                {/* Sugerencias rápidas: primeras 5 plantillas */}
+                <div className="flex flex-wrap gap-2">
+                    {PRESETS.slice(0, 5).map((p) => {
+                        const disabled = isAdded(p.title);
+                        return (
+                            <Button
+                                key={p.title}
+                                variant="outline"
+                                size="sm"
+                                className="rounded-full"
+                                onClick={() => addFromPreset(p.title)}
+                                disabled={disabled}
+                            >
+                                {disabled ? "Añadida" : p.title}
+                            </Button>
+                        );
+                    })}
+                </div>
+
+                {/* Form agregar personalizado */}
+                {showCustom && (
+                    <div className="rounded-md border p-3 border-muted/60 space-y-3">
+                        <div className="grid sm:grid-cols-2 gap-3">
+                            <Input
+                                placeholder="Título de la pregunta"
+                                value={newTitle}
+                                onChange={(e) => setNewTitle(e.target.value)}
+                            />
+                            <Button
+                                onClick={addCustom}
+                                className="sm:justify-self-end"
+                                disabled={!newTitle.trim() || !newAnswer.trim() || isAdded(newTitle.trim())}
+                            >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Agregar a la lista
+                            </Button>
+                        </div>
+                        <Textarea
+                            placeholder="Respuesta para la pregunta nueva…"
+                            className="min-h-[96px]"
+                            value={newAnswer}
+                            onChange={(e) => setNewAnswer(e.target.value)}
+                        />
+                    </div>
+                )}
+
                 {/* Lista actual (editable) */}
                 <div className="space-y-4">
                     {items.length === 0 ? (
                         <div className="text-center text-sm text-muted-foreground py-10">
-                            No hay preguntas agregadas. Usa <b>Agregar desde plantillas</b>.
+                            No hay preguntas agregadas. Usa <b>Agregar</b> o <b>Agregar desde plantillas</b>.
                         </div>
                     ) : (
                         items.map((it) => (
@@ -191,4 +278,4 @@ export const FqaBuilder = ({ values, handleChange, onChange }: QaBuilderExternal
             </CardContent>
         </Card>
     );
-}
+};

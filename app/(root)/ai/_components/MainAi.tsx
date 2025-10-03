@@ -46,7 +46,7 @@ export const MainAi = () => {
                     <TabsTrigger value="business">Negocio</TabsTrigger>
                     <TabsTrigger value="training">Entrenamiento</TabsTrigger>
                     <TabsTrigger value="faq">Preguntas</TabsTrigger>
-                    <TabsTrigger value="extras">Extras</TabsTrigger>
+                    {/* <TabsTrigger value="extras">Extras</TabsTrigger> */}
                 </TabsList>
 
                 <TabsContent value="business" className="mt-4">
