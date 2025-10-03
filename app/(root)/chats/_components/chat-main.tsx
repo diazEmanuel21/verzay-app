@@ -194,7 +194,7 @@ MediaRenderer.displayName = 'MediaRenderer';
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isUserMessage, avatarSrc, timestamp, media }) => {
   // Configuración estándar: Usuario Derecha (verde), Otro Izquierda (gris)
   const bubbleClass = isUserMessage
-    ? "bg-green-500 text-white rounded-xl rounded-br-sm self-end" // Usuario a la derecha
+    ? "bg-primary text-white rounded-xl rounded-br-sm self-end" // Usuario a la derecha
     : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl rounded-tl-sm self-start"; // Otro a la izquierda
 
   const contentClass = isUserMessage ? "text-white" : "text-gray-800 dark:text-gray-100";
@@ -217,7 +217,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isUserMessage, a
         <p className={cn("text-sm whitespace-pre-wrap", contentClass, "pr-10")}>{message}</p> 
         
         {timestamp && (
-          <span className={cn("text-[0.6rem] mt-1 block absolute bottom-1 right-2 opacity-80", isUserMessage ? "text-green-900/60" : "text-gray-500/80 dark:text-gray-400/80")}>
+          <span className={cn("text-[0.6rem] mt-1 block  bottom-1 right-2 ", isUserMessage ? "text-black" : "text-black dark:text-gray-400/80")}>
             {new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         )}
