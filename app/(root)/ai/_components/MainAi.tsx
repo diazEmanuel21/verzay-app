@@ -69,7 +69,7 @@ export const MainAi = ({ flows, user }: MainAiInterface) => {
             {/* Tabs CONTROLADAS por activeTab; sin TabsList/Trigger */}
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabKey)} className="w-full">
                 {/* Sticky + overflow-x + controles */}
-                <div className="sticky top-0 z-20 -mx-4 lg:mx-0 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <div className="absolute w-full top-0 z-20 -mx-4 lg:mx-0 bg-slate-100 dark:bg-black">
                     <div className="flex items-center justify-between gap-2 px-2 py-2">
                         {/* Flechas solo móviles */}
                         <Button
@@ -121,9 +121,9 @@ export const MainAi = ({ flows, user }: MainAiInterface) => {
                 </div>
 
                 {/* Layout principal: contenido + preview */}
-                <div className="flex flex-col lg:flex-row lg:items-start gap-4 mt-4">
+                <div className="flex flex-col lg:flex-row lg:items-start gap-4 m-0">
                     {/* Columna izquierda: contenido de cada Tab */}
-                    <div className="flex-1 w-full">
+                    <div className="flex-1 w-full mt-16">
                         <TabsContent value="business" className="m-0">
                             <BusinessPromptBuilder values={values} handleChange={handleChange} />
                         </TabsContent>
