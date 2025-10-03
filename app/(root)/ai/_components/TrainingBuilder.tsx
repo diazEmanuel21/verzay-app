@@ -182,7 +182,7 @@ export function TrainingBuilder({
                 <Separator className="my-2" />
 
                 {/* Header de elementos */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                         <span className="text-sm font-medium">Elementos del paso</span>
                         <Badge variant="secondary">{elements.length}</Badge>

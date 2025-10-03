@@ -65,93 +65,102 @@ export const MainAi = ({ flows, user }: MainAiInterface) => {
     const prompt = useMemo(() => buildPrompt(values), [values]);
 
     return (
-        <div className="mx-auto max-w-7xl">
-            {/* Tabs CONTROLADAS por activeTab; sin TabsList/Trigger */}
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabKey)} className="w-full">
-                {/* Sticky + overflow-x + controles */}
-                <div className="absolute w-full top-0 z-20 -mx-4 lg:mx-0 bg-slate-100 dark:bg-black">
-                    <div className="flex items-center justify-between gap-2 px-2 py-2">
-                        {/* Flechas solo móviles */}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => scroll("left")}
-                            className="sm:hidden"
-                            aria-label="Desplazar pestañas a la izquierda"
-                        >
-                            <ArrowLeft />
-                        </Button>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabKey)} className="w-full">
+            {/* Header tabs (no-scroll propio, solo botones horizontales) */}
+            <div className="sticky w-full top-0 z-10 -mx-4 lg:mx-0 bg-slate-100 dark:bg-black">
+                <div className="flex items-center justify-between gap-2 px-2 py-2">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => scroll("left")}
+                        className="sm:hidden"
+                        aria-label="Desplazar pestañas a la izquierda"
+                    >
+                        <ArrowLeft />
+                    </Button>
 
-                        {/* Carrusel de botones de pestañas */}
-                        <div
-                            ref={scrollRef}
-                            className={cn(
-                                "flex overflow-x-auto gap-2 pb-1 scrollbar-none",
-                                "sm:overflow-visible sm:justify-start sm:flex-wrap"
-                            )}
-                        >
-                            {(Object.keys(TYPE_AI_LABELS) as TabKey[]).map((key) => (
-                                <button
-                                    key={key}
-                                    onClick={() => handleTabClick(key)}
-                                    className={cn(
-                                        "px-4 py-2 rounded-t-md font-medium text-sm border-b-2 transition-colors duration-150 whitespace-nowrap",
-                                        activeTab === key
-                                            ? "border-primary text-primary"
-                                            : "border-transparent text-muted-foreground hover:text-foreground"
-                                    )}
-                                    aria-pressed={activeTab === key}
-                                    aria-label={`Cambiar a ${TYPE_AI_LABELS[key]}`}
-                                >
-                                    {TYPE_AI_LABELS[key]}
-                                </button>
-                            ))}
-                        </div>
-
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => scroll("right")}
-                            className="sm:hidden"
-                            aria-label="Desplazar pestañas a la derecha"
-                        >
-                            <ArrowRight />
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Layout principal: contenido + preview */}
-                <div className="flex flex-col lg:flex-row lg:items-start gap-4 m-0">
-                    {/* Columna izquierda: contenido de cada Tab */}
-                    <div className="flex-1 w-full mt-16">
-                        <TabsContent value="business" className="m-0">
-                            <BusinessPromptBuilder values={values} handleChange={handleChange} />
-                        </TabsContent>
-
-                        <TabsContent value="training" className="m-0">
-                            <TrainingBuilder
-                                flows={flows}
-                                values={{ training: values.training ?? "" }}
-                                handleChange={handleChange}
-                                notificationNumber={user.notificationNumber}
-                            />
-                        </TabsContent>
-
-                        <TabsContent value="faq" className="m-0">
-                            <FqaBuilder values={{ faq: values.faq ?? "" }} handleChange={handleChange} />
-                        </TabsContent>
-
-                        <TabsContent value="products" className="m-0">
-                            <ProductBuilder values={{ products: values.products ?? "" }} handleChange={handleChange} />
-                        </TabsContent>
+                    <div
+                        ref={scrollRef}
+                        className={cn(
+                            "flex overflow-x-auto gap-2 pb-1 scrollbar-none",
+                            "sm:overflow-visible sm:justify-start sm:flex-wrap"
+                        )}
+                    >
+                        {(Object.keys(TYPE_AI_LABELS) as TabKey[]).map((key) => (
+                            <button
+                                key={key}
+                                onClick={() => handleTabClick(key)}
+                                className={cn(
+                                    "px-4 py-2 rounded-t-md font-medium text-sm border-b-2 transition-colors duration-150 whitespace-nowrap",
+                                    activeTab === key
+                                        ? "border-primary text-primary"
+                                        : "border-transparent text-muted-foreground hover:text-foreground"
+                                )}
+                                aria-pressed={activeTab === key}
+                                aria-label={`Cambiar a ${TYPE_AI_LABELS[key]}`}
+                            >
+                                {TYPE_AI_LABELS[key]}
+                            </button>
+                        ))}
                     </div>
 
-                    {/* Columna derecha: preview (sticky en desktop) */}
-                    <aside className="w-full lg:w-[420px] lg:sticky lg:top-16">
-                        <PromptPreview prompt={prompt} />
-                    </aside>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => scroll("right")}
+                        className="sm:hidden"
+                        aria-label="Desplazar pestañas a la derecha"
+                    >
+                        <ArrowRight />
+                    </Button>
                 </div>
-            </Tabs>
-        </div>
+            </div>
+
+            {/* Contenedor de layout con altura fija y sin scroll global */}
+            <div
+                className={cn(
+                    // Altura de la zona de contenido. AJUSTA el 132px según tu navbar/sticky header real.
+                    "mt-0 lg:mt-2 h-[calc(100vh-132px)]",
+                    // Grid en desktop, stack en mobile
+                    "grid lg:grid-cols-[1fr,420px] gap-4",
+                    // Bloquear scroll fuera de la columna izquierda
+                    "overflow-hidden"
+                )}
+            >
+                {/* Columna izquierda: ÚNICA con scroll vertical */}
+                <div className="min-h-0 overflow-y-auto pr-1">
+                    <TabsContent value="business" className="m-0">
+                        <BusinessPromptBuilder values={values} handleChange={handleChange} />
+                    </TabsContent>
+
+                    <TabsContent value="training" className="m-0">
+                        <TrainingBuilder
+                            flows={flows}
+                            values={{ training: values.training ?? "" }}
+                            handleChange={handleChange}
+                            notificationNumber={user.notificationNumber}
+                        />
+                    </TabsContent>
+
+                    <TabsContent value="faq" className="m-0">
+                        <FqaBuilder values={{ faq: values.faq ?? "" }} handleChange={handleChange} />
+                    </TabsContent>
+
+                    <TabsContent value="products" className="m-0">
+                        <ProductBuilder values={{ products: values.products ?? "" }} handleChange={handleChange} />
+                    </TabsContent>
+
+                    {/* Padding bottom para no quedar pegado al borde al final del scroll */}
+                    <div className="h-6" />
+                </div>
+
+                {/* Columna derecha: SIN scroll; sticky en desktop */}
+                <aside
+                    className="hidden lg:block w-full lg:w-[420px] lg:sticky lg:top-[72px] self-start"
+                >
+                    <PromptPreview prompt={prompt} />
+                </aside>
+            </div>
+        </Tabs>
     );
 };
