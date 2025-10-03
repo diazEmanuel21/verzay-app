@@ -6,10 +6,7 @@ export const PromptPreview = ({
     prompt,
 }: PromptPreviewInterface) => {
     return (
-        <Card className="border-muted/60">
-            <CardHeader className="pb-2">
-                <CardTitle className="text-base">Vista previa del Prompt (texto plano)</CardTitle>
-            </CardHeader>
+        <Card className="border-none bg-transparent0">
             <CardContent>
                 <Textarea
                     readOnly
