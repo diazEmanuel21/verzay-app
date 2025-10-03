@@ -81,7 +81,7 @@ export function ChatsClient({
 
 
 
-    // 💡 NUEVO HANDLER: Solo para actualizar mensajes sin afectar loading ni limpiar
+    // HANDLER: Solo para actualizar mensajes sin afectar loading ni limpiar (Ahora con setter funcional)
     const pollAndCompareMessages = useCallback(async (remoteJid: string) => {
         if (!warmMessages) return;
 
@@ -94,19 +94,21 @@ export function ChatsClient({
             if (res?.success) {
                 const newMessages = res.data || [];
 
-                // 🔑 LÓGICA CLAVE: Compara la longitud de los mensajes actuales
-                // Si la cantidad de mensajes es diferente, actualiza.
-                if (newMessages.length !== messages.length) {
-                    setMessages(newMessages);
-                    setInfo({ ...res, instanceName, remoteJid });
-                }
+                setMessages((prevMsgs) => {
+                    // 🔑 LÓGICA CLAVE: Compara la longitud de los mensajes actuales (prevMsgs)
+                    if (newMessages.length !== prevMsgs.length) {
+                        setInfo({ ...res, instanceName, remoteJid });
+                        return newMessages; // Solo actualiza si hay cambios
+                    }
+                    return prevMsgs; // No hay cambios, retorna el estado anterior
+                });
             } else {
                 console.warn("[ChatsClient] warmMessages error during polling:", res?.message);
             }
         } catch (e) {
             console.error("[ChatsClient] warmMessages exception during polling:", e);
         }
-    }, [warmMessages, instanceName, messages.length]); // Dependencia CRUCIAL: messages.length
+    }, [warmMessages, instanceName]); // ✅ CORRECTO: messages.length fue eliminado de las dependencias
 
 
     // HANDLER para cambiar de chat (Carga inicial LIMPIA)
@@ -145,7 +147,7 @@ export function ChatsClient({
         } finally {
             setLoading(false);
         }
-    }, [selectedJid, warmMessages, instanceName]);
+    }, [selectedJid, warmMessages, instanceName]); // ✅ CORRECTO
 
 
     // HANDLER: Función para enviar el mensaje de texto (con recarga inmediata)
@@ -160,13 +162,19 @@ export function ChatsClient({
         if (result.success) {
             console.log("✅ Mensaje enviado con éxito. Forzando recarga de mensajes y chats.");
 
-            // 1. ACTUALIZACIÓN INMEDIATA DE MENSAJES (Ahora usa el comparador)
+            // 1. ACTUALIZACIÓN INMEDIATA DE MENSAJES 
             if (warmMessages) {
+                // Usamos pollAndCompareMessages para la actualización
                 pollAndCompareMessages(selectedJid);
             }
 
             // 2. RECARGAR LISTA DE CHATS
-            await refetchChats();
+            // Nota: La recarga de chats actualizará currentChatsResult, lo que forzará 
+            // una nueva renderización y una re-evaluación de la sidebar.
+            const chatRefreshResult = await refetchChats();
+            if (chatRefreshResult.success) {
+                setCurrentChatsResult(chatRefreshResult);
+            }
 
         } else {
             console.error("❌ Error al enviar mensaje:", result.message, result.raw);
@@ -174,7 +182,7 @@ export function ChatsClient({
     }, [selectedJid, sendText, warmMessages, refetchChats, pollAndCompareMessages]);
 
 
-    // LÓGICA DE ACTUALIZACIÓN PERIÓDICA DE CHATS (Sidebar Polling - Sin cambios)
+    // LÓGICA DE ACTUALIZACIÓN PERIÓDICA DE CHATS (Sidebar Polling)
     useEffect(() => {
         let intervalId: NodeJS.Timeout | null = null;
 
@@ -197,19 +205,19 @@ export function ChatsClient({
     }, [refetchChats, initialChatsResult.success]);
 
 
-    // 💡 LÓGICA DE ACTUALIZACIÓN PERIÓDICA DE MENSAJES (ChatMain Polling - MODIFICADO)
+    // LÓGICA DE ACTUALIZACIÓN PERIÓDICA DE MENSAJES (ChatMain Polling)
     useEffect(() => {
         let messagePollingId: NodeJS.Timeout | null = null;
 
         const pollMessages = () => {
             if (selectedJid && warmMessages) {
-                // 💡 Usamos el handler comparativo
+                // Usamos el handler comparativo
                 pollAndCompareMessages(selectedJid);
             }
         };
 
         if (selectedJid && warmMessages) {
-            // Aseguramos que la carga inicial se haga una vez al seleccionar el chat
+            // Carga inicial al seleccionar el chat (si no está cargando y no hay mensajes)
             if (messages.length === 0 && !loading) {
                 handleSelectFromSidebar(selectedJid);
             }
@@ -219,8 +227,7 @@ export function ChatsClient({
         return () => {
             if (messagePollingId) clearInterval(messagePollingId);
         };
-    }, [selectedJid, warmMessages, pollAndCompareMessages, handleSelectFromSidebar, messages.length, loading]);
-
+    }, [selectedJid, warmMessages, pollAndCompareMessages, handleSelectFromSidebar, loading]); // ✅ CORRECTO
 
     return (
         <div className="flex h-full">
