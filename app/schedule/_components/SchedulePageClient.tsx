@@ -28,7 +28,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
     const stepLabel = [
         { label: "Servicio", icon: <Clock className="h-4 w-4" /> },
         { label: "Fecha y hora", icon: <CalendarIcon className="h-4 w-4" /> },
-        { label: "Encargado", icon: <User2 className="h-4 w-4" /> },
+        // { label: "Encargado", icon: <User2 className="h-4 w-4" /> },
         { label: "Tus datos", icon: <ScrollText className="h-4 w-4" /> },
         { label: "Revisión", icon: <CheckCircle2 className="h-4 w-4" /> },
     ];
@@ -316,13 +316,13 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                         )}
 
                         {/* Paso 2: Seleccion de empleado */}
-                        {step === 2 && (
+                        {/* {step === 2 && (
                             <EmployeesComponent
                             />
-                        )}
+                        )} */}
 
                         {/* Paso 3: Revisión */}
-                        {step === 3 && (
+                        {step === 2 && (
                             <ScheduleForm
                                 nameClient={nameClient}
                                 countries={countries}
@@ -337,7 +337,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                         )}
 
                         {/* Paso 4: Revisión */}
-                        {step === 4 && (
+                        {step === 3 && (
                             <SummaryComponent
                                 user={user}
                                 timezone={timezone}
