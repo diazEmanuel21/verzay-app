@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+// Asumo que estas importaciones son correctas en tu proyecto
 import { PromptInstancia } from "@prisma/client";
 import { PromptInstanciaFormValues, PromptInstanciaSchema } from "@/schema/ai";
 import { createPromptInstancia, updatePromptInstancia } from "@/actions/prompt-actions";
@@ -25,8 +26,8 @@ import {
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 
 type PlatformConfig = {
-  tabs: Record<string, string>;       // key: tabKey, value: label
-  content: Record<string, string>;    // default content per tabKey
+  tabs: Record<string, string>;    // key: tabKey, value: label
+  content: Record<string, string>;  // default content per tabKey
   defaultTab: string;
 };
 
@@ -76,6 +77,8 @@ export const PromptInstanceDialog = ({
   // Estado UI
   const [activeTab, setActiveTab] = useState<string>("");
   const [allPrompts, setAllPrompts] = useState<Record<string, PromptInstanciaFormValues>>({});
+  // 💡 CORRECCIÓN: Estado para controlar si el formulario ya ha sido inicializado al abrir el diálogo
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Form
   const form = useForm<PromptInstanciaFormValues>({
@@ -94,6 +97,7 @@ export const PromptInstanceDialog = ({
       const formData = new FormData();
       Object.entries(data).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
+          // Asegura que 'contenido' sea una cadena, si es necesario
           formData.append(key, String(value));
         }
       });
@@ -104,11 +108,20 @@ export const PromptInstanceDialog = ({
     onError: () => toast.error("Ocurrió un error al guardar el prompt."),
   });
 
-  // Inicialización/actualización cuando se abre el diálogo o cambia plataforma/prompts
+  // 💡 CORRECCIÓN: Lógica de inicialización separada de la actualización en tiempo real.
   useEffect(() => {
-    if (!open || !config) return;
+    // Si el diálogo se cierra, resetea el estado de inicialización
+    if (!open || !config) {
+      setIsInitialized(false);
+      return;
+    }
 
-    // Construir mapa inicial por pestaña con defaults + existentes
+    // Si ya está inicializado (y el diálogo está abierto), no hagas nada más.
+    if (isInitialized) return;
+
+    // --- Lógica de Inicialización ---
+
+    // 1. Construir mapa inicial por pestaña con defaults + existentes
     const initialData: Record<string, PromptInstanciaFormValues> = {};
     Object.keys(config.tabs).forEach((tabKey) => {
       const existingPrompt = prompts?.find((p) => p.description === tabKey);
@@ -123,28 +136,38 @@ export const PromptInstanceDialog = ({
 
     setAllPrompts(initialData);
 
-    // Determinar pestaña activa (conserva si ya había una válida)
-    setActiveTab((prev) => (prev && initialData[prev] ? prev : config.defaultTab));
+    // 2. Determinar pestaña activa y cargar el formulario
+    // Usamos config.defaultTab para la primera carga, ya que activeTab es "" inicialmente
+    const effectiveTab = config.defaultTab;
+    setActiveTab(effectiveTab);
 
-    // Preparar formulario con el contenido de la pestaña activa efectiva
-    const effectiveTab = (initialData[activeTab] ? activeTab : config.defaultTab);
     const first = initialData[effectiveTab];
 
-    setValue("id", first.id);
-    setValue("userId", first.userId);
-    setValue("tipoInstancia", first.tipoInstancia);
-    setValue("description", first.description);
-    setValue("contenido", first.contenido || "");
+    // Cargar valores iniciales en el formulario.
+    // { shouldDirty: false } evita que el formulario se marque como modificado al cargar.
+    setValue("id", first.id, { shouldDirty: false });
+    setValue("userId", first.userId, { shouldDirty: false });
+    setValue("tipoInstancia", first.tipoInstancia, { shouldDirty: false });
+    setValue("description", first.description, { shouldDirty: false });
+    setValue("contenido", first.contenido || "", { shouldDirty: false });
+
+    // Marcar como inicializado para evitar futuras ejecuciones de este bloque mientras `open` es true
+    setIsInitialized(true);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, config, prompts, userId, platform, setValue]);
 
   // Cambio de pestaña: guardar la actual y cargar la nueva en el form
   const handleTabChange = useCallback((newTab: string) => {
+    // 1. Guardar el estado actual del formulario en la pestaña anterior
     setAllPrompts((prev) => {
       const currentValues = getValues();
       const updated = { ...prev, [activeTab]: currentValues };
+
+      // 2. Cargar el contenido de la nueva pestaña
       const selected = updated[newTab];
       if (selected) {
+        // Cargar los valores en el formulario. Esto actualiza el `textarea`.
         setValue("id", selected.id);
         setValue("userId", selected.userId);
         setValue("tipoInstancia", selected.tipoInstancia);
@@ -153,13 +176,16 @@ export const PromptInstanceDialog = ({
       }
       return updated;
     });
+    // 3. Cambiar la pestaña activa
     setActiveTab(newTab);
   }, [activeTab, getValues, setValue]);
 
   // Submit: guarda todas las pestañas (incluye la activa con los últimos cambios)
   const onSubmit = useCallback(async () => {
     try {
+      // Captura los valores finales del formulario para la pestaña activa
       const currentValues = getValues();
+      // Combina los prompts no activos con los últimos cambios de la pestaña activa
       const updatedPrompts = { ...allPrompts, [activeTab]: currentValues };
 
       const results = await Promise.all(
@@ -205,13 +231,16 @@ export const PromptInstanceDialog = ({
               </DialogHeader>
 
               <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col">
-                <TabsList className={`w-full grid ${gridColsClass}`}>
-                  {Object.entries(config.tabs).map(([key, label]) => (
-                    <TabsTrigger key={key} value={key}>
-                      {label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
+                {/* Solo renderizar TabsList si config está definido y hay pestañas */}
+                {config && Object.keys(config.tabs).length > 0 && (
+                  <TabsList className={`w-full grid ${gridColsClass}`}>
+                    {Object.entries(config.tabs).map(([key, label]) => (
+                      <TabsTrigger key={key} value={key}>
+                        {label}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                )}
 
                 <div className="mt-4 flex-1">
                   <FormField
