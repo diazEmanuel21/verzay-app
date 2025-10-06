@@ -7,7 +7,7 @@ import { ReminderActions } from "./"
 
 export const ReminderList = ({ reminder, workflow }: ReminderListInterface) => {
     const repeatLabel = reminder.repeatType === "NONE"
-        ? "Único"
+        ? "Unico"
         : `${repeatTypes.find(rt => rt.value === reminder.repeatType)?.label} - ${reminder.repeatEvery} ${reminder.repeatEvery === 1 ? "vez" : "veces"}`;
 
     return (

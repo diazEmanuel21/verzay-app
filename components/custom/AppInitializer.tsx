@@ -22,6 +22,7 @@ export default function AppInitializer({ onReseller, modules, user }: AppInitial
     const router = useRouter();
     const { initTheme } = useThemeStore();
     const { setReseller, clearReseller } = useResellerStore();
+    const { labelModule } = useModuleStore();
     const { setModules } = useModuleStore();
 
     const theme: ThemeApp = onReseller.success
@@ -35,6 +36,7 @@ export default function AppInitializer({ onReseller, modules, user }: AppInitial
             userRole: user.role,
             userPlan: user.plan,
             modules,
+            label: labelModule ?? ''
         });
 
         if (!access.allowed) {

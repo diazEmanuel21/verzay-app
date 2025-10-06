@@ -4,7 +4,7 @@ export const PLANS = Object.values(Plan);
 export const PLAN_LABELS: Record<Plan, string> = {
     enterprise: 'Enterprise',
     lite: 'Lite',
-    unico: 'Único',
+    unico: 'Unico',
     basico: 'Básico',
     intermedio: 'Intermedio',
     avanzado: 'Avanzado',
