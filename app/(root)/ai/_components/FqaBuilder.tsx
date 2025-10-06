@@ -28,7 +28,7 @@ export function FqaBuilder({ values, handleChange }: FaqSimpleProps) {
     // 1) Cargar por defecto todas las plantillas
     useEffect(() => {
         if (items.length === 0) {
-            const initial = PRESETS.map((p) => ({
+            const initial = PRESETS.slice(0, 2).map((p) => ({
                 id: nanoid(),
                 q: p.title,
                 a: p.answer,

@@ -1,6 +1,26 @@
 import { UserWithApiKeys } from "@/schema/schema";
 import { Workflow } from "@prisma/client";
 import { ChangeEvent } from "react";
+import z from "zod";
+
+/* ---------------------- Validación ligera con Zod ---------------------- */
+export const promptSchema = z.object({
+    nombre: z.string().min(1, "Requerido"),
+    sector: z.string().optional().default(""),
+    ubicacion: z.string().optional().default(""),
+    horarios: z.string().optional().default(""),
+    maps: z.string().url("URL inválida").or(z.string().length(0)).optional(),
+    telefono: z.string().optional().default(""),
+    email: z.string().email("Email inválido").or(z.string().length(0)).optional(),
+    sitio: z.string().url("URL inválida").or(z.string().length(0)).optional(),
+    facebook: z.string().url("URL inválida").or(z.string().length(0)).optional(),
+    instagram: z.string().url("URL inválida").or(z.string().length(0)).optional(),
+    tiktok: z.string().url("URL inválida").or(z.string().length(0)).optional(),
+    youtube: z.string().url("URL inválida").or(z.string().length(0)).optional(),
+    notas: z.string().optional().default(""),
+});
+
+export type FormValues = z.infer<typeof promptSchema>;
 
 export interface MainAiInterface {
     flows: Workflow[];
@@ -46,6 +66,7 @@ export const initialValues: BusinessValues = {
 };
 
 export interface BusinessBuilderInterface {
+    user: UserWithApiKeys;
     values: BusinessValues;
     handleChange: (
         key: keyof BusinessValues

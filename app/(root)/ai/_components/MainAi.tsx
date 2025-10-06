@@ -130,7 +130,7 @@ export const MainAi = ({ flows, user }: MainAiInterface) => {
                 {/* Columna izquierda: ÚNICA con scroll vertical */}
                 <div className="min-h-0 overflow-y-auto pr-1">
                     <TabsContent value="business" className="m-0">
-                        <BusinessPromptBuilder values={values} handleChange={handleChange} />
+                        <BusinessPromptBuilder user={user} values={values} handleChange={handleChange} />
                     </TabsContent>
 
                     <TabsContent value="training" className="m-0">
