@@ -13,7 +13,7 @@ import {
   type MediaType,
 } from "./attachment-menu";
 
-/* -------- Outgoing payload unificado (match con tu ChatsClient / sendAnyAction) -------- */
+/* -------- Outgoing payload unificado -------- */
 export type OutgoingTextPayload = {
   kind: "text";
   text: string;
@@ -26,7 +26,7 @@ export type OutgoingTextPayload = {
 export type OutgoingMediaPayload = {
   kind: "media";
   mediatype: MediaType;
-  mediaUrl: string;   // data URL base64
+  mediaUrl: string;   // Data URL Base64
   mimetype?: string;
   fileName?: string;
   caption?: string;
@@ -68,7 +68,7 @@ type ChatMainProps = {
   onSend: (payload: OutgoingMessagePayload) => void | Promise<void>;
 };
 
-/* -------- Helpers -------- */
+/* -------- Helpers de formateo -------- */
 function extractMediaInfo(msg: any, type: MediaType): MediaData | null {
   const typeKey = `${type}Message`;
   const mediaObj = msg[typeKey] || {};
@@ -107,7 +107,7 @@ function toUIMessages(messages: EvolutionMessage[], userJid: string | undefined)
   });
 }
 
-/* -------- Subcomponentes -------- */
+/* -------- Subcomponentes de UI -------- */
 const MediaRenderer: React.FC<{ media: MediaData | undefined }> = React.memo(({ media }) => {
   if (!media) return null;
   const { type, url, mimeType, caption } = media;
@@ -207,17 +207,14 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
   const handleComposeMediaChange = useCallback((m: ComposeMedia | null) => {
     setComposeMedia(m);
     if (m) {
-      // Caption por defecto = nombre del archivo
       setInput(m.fileName || "");
-    } else {
-      // Si se remove el adjunto, no tocamos el input (puedes limpiar si prefieres)
     }
   }, []);
 
   const clearComposeMedia = useCallback(() => setComposeMedia(null), []);
 
   const sendNow = useCallback(async () => {
-    // Si hay media → enviar media (caption por defecto = filename si input no se modificó)
+    // Media → enviar media (caption por defecto = filename si input vacío)
     if (composeMedia) {
       const payload: OutgoingMessagePayload = {
         kind: "media",
@@ -225,7 +222,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         mediaUrl: composeMedia.dataUrl,
         mimetype: composeMedia.mimeType,
         fileName: composeMedia.fileName,
-        caption: (input && input.trim()) ? input.trim() : composeMedia.fileName, // <-- default a filename
+        caption: (input && input.trim()) ? input.trim() : composeMedia.fileName,
       };
       await onSend(payload);
       setInput("");
@@ -233,7 +230,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
       return;
     }
 
-    // Si no hay media → enviar texto
+    // Texto → enviar texto
     const text = input.trim();
     if (text) {
       const payload: OutgoingMessagePayload = { kind: "text", text };
@@ -249,6 +246,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
     }
   }, [sendNow]);
 
+  // Auto-scroll al final cuando cambian los mensajes
   useEffect(() => {
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [uiMessages.length]);
@@ -310,12 +308,12 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         )}
 
         <div className="relative flex items-center gap-2">
-          {/* Clip DENTRO del input, con menú de adjuntos “como antes” */}
+          {/* Clip con menú de adjuntos */}
           <div className="absolute left-1 z-10">
             <AttachmentMenu onComposeMediaChange={handleComposeMediaChange} maxBase64MB={8} />
           </div>
 
-          {/* Input: si hay adjunto, se usa como caption (pre-llenado con filename) */}
+          {/* Input (si hay adjunto, se usa como caption) */}
           <Input
             type="text"
             placeholder={composeMedia ? "Añade un pie de foto…" : "Escribe un mensaje..."}
