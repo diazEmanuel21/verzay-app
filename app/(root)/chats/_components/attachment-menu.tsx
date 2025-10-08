@@ -141,14 +141,14 @@ export function AttachmentMenu({
             <ImageIcon className="w-4 h-4" />
             Imagen
           </button>
-          <button
+          {/* <button
             type="button"
             className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
             onClick={() => handlePick(vidInputRef)}
           >
             <Video className="w-4 h-4" />
             Video
-          </button>
+          </button> */}
           <button
             type="button"
             className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
