@@ -122,16 +122,16 @@ export type FetchChatsResult =
 
 export type FindMessagesResult =
   | {
-      success: true;
-      message: string;
-      data: EvolutionMessage[];
-      total?: number;
-      pages?: number;
-      currentPage?: number;
-      nextPage?: number | null;
-      raw?: unknown;
-      queriedRemoteJid?: string;
-    }
+    success: true;
+    message: string;
+    data: EvolutionMessage[];
+    total?: number;
+    pages?: number;
+    currentPage?: number;
+    nextPage?: number | null;
+    raw?: unknown;
+    queriedRemoteJid?: string;
+  }
   | { success: false; message: string; raw?: unknown; queriedRemoteJid?: string };
 
 export type SendMessageResult =
@@ -185,8 +185,8 @@ function ensureArrayResponse(payload: unknown): ChatArray {
       (Array.isArray((payload as any).data)
         ? (payload as any).data
         : Array.isArray((payload as any).chats)
-        ? (payload as any).chats
-        : null));
+          ? (payload as any).chats
+          : null));
   if (!arr || !Array.isArray(arr)) return [];
   return arr.filter(isChatData) as ChatArray;
 }
@@ -604,7 +604,7 @@ export async function sendAudio(
   const apikeyHeader = globalApiKey;
 
   let audioField = audioSource;
-  let encoding = false;
+  let encoding = false; // 👈 ESTO se elimina o se ignora
 
   const isHttp = /^https?:\/\//i.test(audioSource);
 
@@ -612,15 +612,13 @@ export async function sendAudio(
     // Data URL o base64 crudo (o URL forzada) → normalizamos a base64 “puro”
     const { base64 } = await ensureBase64FromString(audioSource, options?.mimetype || 'audio/ogg');
     audioField = base64;
-    encoding = true;
+    encoding = true; // 👈 Se elimina esta asignación
   }
 
   const body: Record<string, any> = {
     number: remoteJid,
     audio: audioField,
   };
-
-  if (encoding) body.encoding = true; // requerido cuando va base64
   if (typeof options?.delay === 'number') body.delay = options.delay;
   if (options?.quotedMessage) body.quoted = options.quotedMessage;
   if (typeof options?.mentionsEveryOne === 'boolean') body.mentionsEveryOne = options.mentionsEveryOne;
@@ -628,12 +626,12 @@ export async function sendAudio(
   if (typeof options?.ptt === 'boolean') body.ptt = options.ptt;
 
   // Logs
-  console.log(`[SENDAUDIO] number=${remoteJid} encoding=${encoding}`);
+  // console.log(`[SENDAUDIO] number=${remoteJid} encoding=${encoding}`);
   if (encoding) {
-    console.log(`[SENDAUDIO][EXACT audio base64] length=${String(audioField).length}`);
-    console.log(audioField);
+    // console.log(`[SENDAUDIO][EXACT audio base64] length=${String(audioField).length}`);
+    // console.log(audioField);
   } else {
-    console.log(`[SENDAUDIO] audio=url:${audioField}`);
+    // console.log(`[SENDAUDIO] audio=url:${audioField}`);
   }
 
   const controller = new AbortController();

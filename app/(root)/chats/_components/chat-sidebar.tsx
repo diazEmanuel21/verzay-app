@@ -136,7 +136,7 @@ export function ChatSidebar({ result, onSelectRemoteJid, selectedJid }: ChatSide
           <button
             onClick={() => setTab("all")}
             className={cn(
-              "inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition",
+              "inline-flex items-center justify-center gap-2 rounded-xl border text-sm transition",
               tab === "all" ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"
             )}
           >
@@ -145,20 +145,20 @@ export function ChatSidebar({ result, onSelectRemoteJid, selectedJid }: ChatSide
           <button
             onClick={() => setTab("dm")}
             className={cn(
-              "inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition",
+              "inline-flex items-center justify-center gap-2 rounded-xl border  text-sm transition",
               tab === "dm" ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"
             )}
           >
-            <User2 className="h-4 w-4" /> Privados
+             Privados
           </button>
           <button
             onClick={() => setTab("groups")}
             className={cn(
-              "inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition",
+              "inline-flex items-center justify-center gap-2 rounded-xl border  text-sm transition",
               tab === "groups" ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"
             )}
           >
-            <Users className="h-4 w-4" /> Grupos
+             Grupos
           </button>
         </div>
       </div>
