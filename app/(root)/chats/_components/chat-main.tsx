@@ -124,7 +124,7 @@ function extractMediaInfo(msg: any, type: MediaType): MediaData | null {
     return null;
 }
 
-function toUIMessages(messages: EvolutionMessage[], userJid: string | undefined): UIBubble[] {
+function toUIMessages(messages: EvolutionMessage[], userJid: string | undefined,avatarUrl:string|undefined): UIBubble[] {
     return messages.map((m) => {
         const isUser = m.key?.fromMe === true || m.key?.remoteJid !== userJid;
         const sender: 'user' | 'other' = isUser ? 'user' : 'other';
@@ -154,7 +154,7 @@ function toUIMessages(messages: EvolutionMessage[], userJid: string | undefined)
             id: m.id || String(ts) + (m.key?.id || ''),
             sender,
             content,
-            avatarSrc: sender === 'user' ? '/user-avatar.png' : '/bot-avatar.png',
+            avatarSrc: sender === 'user' ? '/default.png' : avatarUrl,
             ts: ts ? ts * 1000 : undefined,
             media: media || undefined,
         };
@@ -276,6 +276,7 @@ const MessageBubble: React.FC<{
     media?: MediaData;
     status?: 'sending';
 }> = ({ message, isUserMessage, avatarSrc, timestamp, media, status }) => {
+  console.log('message bubble recive',avatarSrc)
     const bubbleClass = isUserMessage
         ? 'bg-primary text-white rounded-xl rounded-br-sm self-end'
         : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl rounded-tl-sm self-start';
@@ -287,7 +288,7 @@ const MessageBubble: React.FC<{
             {showAvatar && (
                 <div className="mr-1">
                     <Avatar className="w-7 h-7">
-                        <AvatarImage src={avatarSrc} />
+                        <AvatarImage src={avatarSrc|| '/default-avatar.png'} />
                         <AvatarFallback>E</AvatarFallback>
                     </Avatar>
                 </div>
@@ -305,7 +306,7 @@ const MessageBubble: React.FC<{
                     </div>
                 )}
                 {/* Marcador de tiempo y estado */}
-                <div className={cn(' right-2 bottom-1 flex items-center gap-1')}>
+                <div className={cn('right-2 bottom-1 flex items-center gap-1')}>
                     {timestamp && (
                         <span
                             className={cn(
@@ -353,6 +354,7 @@ const ChatMessageList: React.FC<{
         <div className="flex-1 overflow-y-auto p-4 flex flex-col custom-scrollbar w-full" ref={listRef}>
             {loading && <div className="text-center text-gray-500 py-4">Cargando mensajes…</div>}
             {fullList.map((msg) => (
+                
                 msg.status === 'sending' ? (
                     <SendingMessageSkeleton key={msg.id} tempMessage={msg} />
                 ) : (
@@ -388,8 +390,8 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<BlobPart[]>([]);
     const timerRef = useRef<number | null>(null);
-
-    const uiMessages = useMemo(() => toUIMessages(messages.slice().reverse(), userJid), [messages, userJid]);
+  console.log(header.avatarSrc)
+    const uiMessages = useMemo(() => toUIMessages(messages.slice().reverse(), userJid,header.avatarSrc), [messages, userJid]);
 
     // ** LÓGICA DE SCROLL (EL CAMBIO CLAVE) **
     const scrollToBottom = useCallback(() => {
