@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { ArrowRight, Mic, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-
 import {
   AttachmentMenu,
   type ComposeMedia,
@@ -26,7 +25,7 @@ export type OutgoingTextPayload = {
 export type OutgoingMediaPayload = {
   kind: "media";
   mediatype: MediaType;
-  mediaUrl: string;   // Data URL Base64
+  mediaUrl: string; // Data URL Base64
   mimetype?: string;
   fileName?: string;
   caption?: string;
@@ -165,7 +164,7 @@ const MessageBubble: React.FC<{
         {media && <MediaRenderer media={media} />}
         {message && <p className={cn("text-sm whitespace-pre-wrap", contentClass, "pr-10")}>{message}</p>}
         {timestamp && (
-          <span className={cn("text-[0.6rem] mt-1 block bottom-1 right-2", isUserMessage ? "text-black" : "text-black dark:text-gray-400/80")}>
+          <span className={cn("text-[0.6rem] mt-1 block absolute bottom-1 right-2", isUserMessage ? "text-gray-300" : "text-gray-500 dark:text-gray-400/80")}>
             {new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </span>
         )}
@@ -194,6 +193,21 @@ const ChatMessageList: React.FC<{
   );
 };
 
+/* ========= AUDIO: helpers ========= */
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Error leyendo blob"));
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.readAsDataURL(blob);
+  });
+}
+function two(n: number) { return n.toString().padStart(2, "0"); }
+function stampFilename(ext = "webm") {
+  const d = new Date();
+  return `voice-note-${d.getFullYear()}${two(d.getMonth() + 1)}${two(d.getDate())}-${two(d.getHours())}${two(d.getMinutes())}${two(d.getSeconds())}.${ext}`;
+}
+
 /* -------- Componente principal -------- */
 export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, loading, onSend }) => {
   const [input, setInput] = useState("");
@@ -203,7 +217,6 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
 
   const uiMessages = useMemo(() => toUIMessages(messages.slice().reverse(), userJid), [messages, userJid]);
 
-  // Cuando se selecciona un archivo, pre-cargar el caption con el nombre del archivo
   const handleComposeMediaChange = useCallback((m: ComposeMedia | null) => {
     setComposeMedia(m);
     if (m) {
@@ -214,7 +227,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
   const clearComposeMedia = useCallback(() => setComposeMedia(null), []);
 
   const sendNow = useCallback(async () => {
-    // Media → enviar media (caption por defecto = filename si input vacío)
+    // --- Lógica de envío de Media ---
     if (composeMedia) {
       const payload: OutgoingMessagePayload = {
         kind: "media",
@@ -224,32 +237,136 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         fileName: composeMedia.fileName,
         caption: (input && input.trim()) ? input.trim() : composeMedia.fileName,
       };
-      await onSend(payload);
+
+      // ✅ CAMBIO: Limpiar el input y la media ANTES de enviar
       setInput("");
       setComposeMedia(null);
+
+      await onSend(payload);
       return;
     }
 
-    // Texto → enviar texto
+    // --- Lógica de envío de Texto ---
     const text = input.trim();
     if (text) {
       const payload: OutgoingMessagePayload = { kind: "text", text };
-      await onSend(payload);
+      
+      // ✅ CAMBIO: Limpiar el input ANTES de enviar
       setInput("");
+
+      await onSend(payload);
     }
   }, [composeMedia, input, onSend]);
 
   const handleKeyPress = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && !e.shiftKey) { // Añadido !e.shiftKey para permitir saltos de línea si se quisiera
       e.preventDefault();
       void sendNow();
     }
   }, [sendNow]);
 
-  // Auto-scroll al final cuando cambian los mensajes
   useEffect(() => {
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [uiMessages.length]);
+
+  /* ========= AUDIO: estado & lógica ========= */
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordSecs, setRecordSecs] = useState(0);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
+  const timerRef = useRef<number | null>(null);
+
+  const stopTimer = () => {
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const startTimer = () => {
+    stopTimer();
+    setRecordSecs(0);
+    timerRef.current = window.setInterval(() => {
+      setRecordSecs((s) => s + 1);
+    }, 1000) as unknown as number;
+  };
+
+  const formatSecs = (s: number) => `${two(Math.floor(s / 60))}:${two(s % 60)}`;
+
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      const mimeCandidates = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/webm', 'audio/ogg'];
+      const mimeType = mimeCandidates.find((m) => MediaRecorder.isTypeSupported(m)) || '';
+
+      const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      audioChunksRef.current = [];
+      rec.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      rec.onstart = () => {
+        setIsRecording(true);
+        startTimer();
+      };
+      rec.onstop = async () => {
+        stopTimer();
+        setIsRecording(false);
+        const blob = new Blob(audioChunksRef.current, { type: rec.mimeType || 'audio/webm' });
+        audioChunksRef.current = [];
+        if (!blob.size) return;
+        const dataUrl = await blobToDataUrl(blob);
+        const ext = (rec.mimeType.includes('ogg') ? 'ogg' : 'webm');
+        const fileName = stampFilename(ext);
+        const payload: OutgoingMessagePayload = {
+          kind: "media",
+          mediatype: "audio",
+          mediaUrl: dataUrl,
+          mimetype: rec.mimeType || 'audio/webm',
+          fileName,
+          ptt: true,
+        };
+        await onSend(payload);
+      };
+      rec.start();
+      mediaRecorderRef.current = rec;
+    } catch (err) {
+      console.error("Permiso de micrófono denegado o error de MediaRecorder:", err);
+    }
+  }, [onSend]);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+      mediaStreamRef.current = null;
+    }
+  }, []);
+
+  const cancelRecording = useCallback(() => {
+    stopTimer();
+    setIsRecording(false);
+    audioChunksRef.current = [];
+    if (mediaRecorderRef.current) {
+      try {
+        if (mediaRecorderRef.current.state !== "inactive") mediaRecorderRef.current.stop();
+      } catch { }
+      mediaRecorderRef.current = null;
+    }
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+      mediaStreamRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      cancelRecording();
+    };
+  }, [cancelRecording]);
 
   return (
     <div className="flex flex-col h-full w-full bg-white dark:bg-gray-800 border-l border-r">
@@ -269,13 +386,12 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
       {/* Mensajes */}
       <ChatMessageList uiMessages={uiMessages} loading={loading} listRef={listRef} />
 
-      {/* Barra de mensaje con clip, thumbnail y caption por defecto */}
+      {/* Barra de mensaje */}
       <div className="p-3 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
         {composeMedia && (
           <div className="mb-2 flex items-center gap-2">
             {composeMedia.mediatype === "image" ? (
               <div className="relative w-16 h-16 rounded-md overflow-hidden border bg-white dark:bg-gray-800">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={composeMedia.dataUrl} alt={composeMedia.fileName} className="w-full h-full object-cover" />
                 <button
                   className="absolute -top-2 -right-2 bg-black/70 text-white rounded-full p-1"
@@ -307,32 +423,68 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
           </div>
         )}
 
-        <div className="relative flex items-center gap-2">
-          {/* Clip con menú de adjuntos */}
+        {isRecording && (
+          <div className="mb-2 flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-2 rounded-full px-3 py-1 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
+              <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="font-medium">Grabando…</span>
+              <span className="tabular-nums">{formatSecs(recordSecs)}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-red-600 hover:text-red-700"
+                onClick={cancelRecording}
+                title="Cancelar grabación"
+                type="button"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <div className="relative flex items-center">
           <div className="absolute left-1 z-10">
             <AttachmentMenu onComposeMediaChange={handleComposeMediaChange} maxBase64MB={8} />
           </div>
 
-          {/* Input (si hay adjunto, se usa como caption) */}
           <Input
             type="text"
             placeholder={composeMedia ? "Añade un pie de foto…" : "Escribe un mensaje..."}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyPress}
-            className="pl-10 pr-12 h-11 bg-white dark:bg-gray-800 dark:text-white rounded-lg border-none w-full"
+            className={cn(
+              "h-11 bg-white dark:bg-gray-800 dark:text-white rounded-lg border-none w-full",
+              "pl-10 pr-24"
+            )}
           />
 
-          {/* Enviar */}
-          <Button
-            onClick={() => void sendNow()}
-            size="icon"
-            className="absolute right-1 rounded-full bg-blue-500 hover:bg-blue-600"
-            aria-label="Enviar"
-            type="button"
-          >
-            <ArrowRight className="w-5 h-5" />
-          </Button>
+          <div className="absolute right-1 flex items-center gap-1">
+            <Button
+              onClick={() => (isRecording ? stopRecording() : startRecording())}
+              size="icon"
+              className={cn(
+                "rounded-full",
+                isRecording ? "bg-red-500 hover:bg-red-600" : "bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+              )}
+              aria-label={isRecording ? "Detener grabación" : "Grabar audio"}
+              title={isRecording ? "Detener y enviar" : "Grabar nota de voz"}
+              type="button"
+            >
+              <Mic className={cn("w-5 h-5", isRecording ? "text-white" : "text-black dark:text-white")} />
+            </Button>
+
+            <Button
+              onClick={() => void sendNow()}
+              size="icon"
+              className="rounded-full bg-blue-500 hover:bg-blue-600"
+              aria-label="Enviar"
+              type="button"
+            >
+              <ArrowRight className="w-5 h-5 text-white" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

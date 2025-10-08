@@ -1,7 +1,7 @@
 'use server';
 
 import type { ApiKey } from '@prisma/client';
-import { Buffer } from 'buffer'; // 🔑 Importación necesaria para Node.js/Server Actions
+import { Buffer } from 'buffer';
 
 /* ==================================
 0. Utilidades de Logging y Base64
@@ -12,34 +12,21 @@ function maskKey(k?: string) {
   if (k.length <= 8) return '****';
   return `${k.slice(0, 4)}…${k.slice(-4)}`;
 }
+
 function isDataUrl(v?: string) {
-  // Verifica si es un Data URL (que incluye Base64)
   return !!v && /^data:[^;]+;base64,/i.test(v);
 }
-function shrinkDataUrl(v?: string) {
-  if (!v) return v;
-  if (!isDataUrl(v)) return v;
-  const comma = v.indexOf(',');
-  const header = v.slice(0, comma + 1);
-  const len = v.length - (comma + 1);
-  // Muestra el tipo y la longitud en el log, NO el Base64 completo
-  return `${header}(len=${len})`;
-}
+
+/** ⚠️ Útil para logs generales (NO se usa para `media` completo) */
 function safeJsonPreview(obj: unknown, max = 4000) {
   try {
-    const s = JSON.stringify(
-      obj,
-      (_k, v) => {
-        if (typeof v === 'string' && isDataUrl(v)) return shrinkDataUrl(v);
-        return v;
-      },
-      2
-    );
+    const s = JSON.stringify(obj, null, 2);
     return s.length > max ? s.slice(0, max) + `…(${s.length - max} chars)` : s;
   } catch {
     return '[unserializable]';
   }
 }
+
 async function parseTextAsJson(text: string) {
   try {
     return { json: JSON.parse(text), kind: 'json' as const };
@@ -52,7 +39,6 @@ async function parseTextAsJson(text: string) {
 1. Tipos de Datos (Exportados)
 ================================== */
 
-// 1.1. Tipos para Contenido Multimedia
 type MediaMessagePayload = {
   url?: string;
   mediaUrl?: string;
@@ -69,7 +55,6 @@ type MediaMessagePayload = {
   caption?: string;
 };
 
-// 1.2. Estructura del campo 'message'
 export type MessageContent = {
   conversation?: string;
   extendedTextMessage?: { text: string };
@@ -84,7 +69,6 @@ export type MessageContent = {
   messageContextInfo?: Record<string, unknown>;
 };
 
-// 1.3. Definición de EvolutionMessage
 export type EvolutionMessage = {
   id?: string;
   key?: { id?: string; fromMe?: boolean; remoteJid?: string; senderLid?: string };
@@ -101,7 +85,6 @@ export type EvolutionMessage = {
   MessageUpdate?: Array<any>;
 };
 
-// 1.4. Tipos para LastMessage
 export type LastMessage = {
   id: string | null;
   key: { id: string; fromMe: boolean; remoteJid: string; senderLid?: string };
@@ -117,7 +100,6 @@ export type LastMessage = {
   status: string;
 };
 
-// Definición COMPLETA de ChatData
 export type ChatData = {
   id: string | null;
   remoteJid: string;
@@ -152,17 +134,19 @@ export type FindMessagesResult =
     }
   | { success: false; message: string; raw?: unknown; queriedRemoteJid?: string };
 
-// Nuevo tipo para el resultado del envío de mensaje
 export type SendMessageResult =
   | { success: true; message: string; data?: unknown; remoteJid: string }
   | { success: false; message: string; raw?: unknown; remoteJid: string };
 
-// 🔑 Tipos para Envío de Media (AÑADIDOS)
 export type MediaType = 'image' | 'video' | 'audio' | 'document';
 
 export interface SendMediaUrlParams {
   mediatype: MediaType;
-  /** * ⚠️ IMPORTANTE: Debe ser la cadena Base64 completa (Data URL) o la URL directa.
+  /**
+   * Puede ser:
+   *  - Data URL (se extrae y se usa SOLO la parte base64)
+   *  - URL http(s) (para audio se manda como URL; para otros se convierte a base64 “puro”)
+   *  - Base64 “puro”
    */
   mediaUrl: string;
   fileName?: string;
@@ -208,7 +192,6 @@ function ensureArrayResponse(payload: unknown): ChatArray {
 }
 
 function normalizeFindMessagesPayload(payload: any) {
-  // Manejo de la estructura 'messages.records'
   if (payload?.messages?.records && Array.isArray(payload.messages.records)) {
     const container = payload.messages;
     return {
@@ -221,14 +204,13 @@ function normalizeFindMessagesPayload(payload: any) {
       },
     };
   }
-  // Manejo de la estructura de array simple o 'data'
   const items =
     (Array.isArray(payload) && payload) || (payload?.data && Array.isArray(payload.data) && payload.data) || [];
   return { items: items as EvolutionMessage[], meta: {} };
 }
 
 /**
- * doRequest con logging integrado. (MODIFICADA para incluir logging)
+ * doRequest con logging explícito del campo `media`/`audio` cuando shouldLog=true
  */
 async function doRequest(
   url: string,
@@ -236,19 +218,33 @@ async function doRequest(
   signal: AbortSignal,
   method: 'POST' | 'GET',
   bodyObj?: Record<string, any>,
-  // 💡 CAMBIO CLAVE: shouldLog ahora es false por defecto
-  shouldLog: boolean = false // 👈 VALOR PREDETERMINADO CAMBIADO A 'false'
+  shouldLog: boolean = false
 ) {
   const label = `[${method}] ${new URL(url, 'http://x').pathname} • ${Date.now().toString(36)}`;
 
-  // 💡 Log de Request (condicional)
   if (shouldLog) {
     console.log(`\n[EVOLUTION][REQ] ${label}`);
     console.log(`[EVOLUTION][REQ] url=${url}`);
     console.log(`[EVOLUTION][REQ] apikey=${maskKey(apikeyHeader)}`);
     if (bodyObj !== undefined) {
-      // Aquí se usa el preview para NO imprimir todo el Base64 en el log
-      console.log(`[EVOLUTION][REQ] body=${safeJsonPreview(bodyObj)}`);
+      console.log(
+        `[EVOLUTION][REQ] body(preview)=${safeJsonPreview({
+          ...bodyObj,
+          media: bodyObj.media ? `[base64 length=${String(bodyObj.media).length}]` : undefined,
+          audio:
+            typeof bodyObj.audio === 'string'
+              ? bodyObj.encoding
+                ? `[base64 length=${bodyObj.audio.length}]`
+                : '[url]'
+              : bodyObj.audio,
+        })}`
+      );
+      if (typeof bodyObj.media === 'string') {
+        console.log(`[EVOLUTION][REQ] body.media(EXACT)=${bodyObj.media}`);
+      }
+      if (typeof bodyObj.audio === 'string' && bodyObj.encoding === true) {
+        console.log(`[EVOLUTION][REQ] body.audio(EXACT)=${bodyObj.audio}`);
+      }
     }
     console.time(`[EVOLUTION][TIMER] ${label}`);
   }
@@ -260,18 +256,15 @@ async function doRequest(
       Accept: 'application/json',
       apikey: apikeyHeader,
     },
-    // Se envía el bodyObj ORIGINAL
     body: method === 'POST' ? JSON.stringify(bodyObj ?? {}) : undefined,
     cache: 'no-store',
     signal,
   });
 
-  // Clon para leer cuerpo (sin consumir el original)
   const clone = response.clone();
   const text = await clone.text().catch(() => '');
   const parsed = await parseTextAsJson(text);
 
-  // 💡 Log de Respuesta (condicional)
   if (shouldLog) {
     console.timeEnd(`[EVOLUTION][TIMER] ${label}`);
     console.log(`[EVOLUTION][RES] ${label} status=${response.status} ok=${response.ok}`);
@@ -286,11 +279,11 @@ async function doRequest(
     }
   }
 
-  return response; // mantiene compatibilidad con el resto del código
+  return response;
 }
 
 /* ==================================
-3. Acciones del Servidor (existentes)
+3. Acciones del Servidor (Chats/Mensajes)
 ================================== */
 
 export async function fetchChatsFromEvolution(
@@ -311,10 +304,8 @@ export async function fetchChatsFromEvolution(
   const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 15000);
 
   try {
-    // ❌ NO se pasa 'true' para shouldLog, usa el valor por defecto 'false'
     let response = await doRequest(endpointUrl, apikeyHeader, controller.signal, 'POST');
     if (!response.ok && (response.status === 404 || response.status === 405)) {
-      // ❌ NO se pasa 'true' para shouldLog
       response = await doRequest(endpointUrl, apikeyHeader, controller.signal, 'GET');
     }
     clearTimeout(timeout);
@@ -366,21 +357,14 @@ export async function findMessagesByRemoteJid(
     },
   };
 
-  if (options?.page) {
-    payload.page = options.page;
-  }
-  // NOTA: Evolution usa 'offset' para el tamaño de la página o límite, ajustamos aquí:
-  if (options?.pageSize) {
-    payload.offset = options.pageSize;
-  } else if (options?.limit) {
-    payload.offset = options.limit;
-  }
+  if (options?.page) payload.page = options.page;
+  if (options?.pageSize) payload.offset = options.pageSize;
+  else if (options?.limit) payload.offset = options.limit;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 15000);
 
   try {
-    // ❌ NO se pasa 'true' para shouldLog, usa el valor por defecto 'false'
     const response = await doRequest(endpointUrl, apikeyHeader, controller.signal, 'POST', payload);
     clearTimeout(timeout);
 
@@ -456,7 +440,6 @@ export async function sendTextMessage(
   const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 15000);
 
   try {
-    // 🟢 CAMBIO: Se pasa 'true' para habilitar el log en el envío de mensaje
     const response = await doRequest(endpointUrl, apikeyHeader, controller.signal, 'POST', payload, true);
     clearTimeout(timeout);
 
@@ -483,54 +466,29 @@ export async function sendTextMessage(
 }
 
 /* ==================================
-4. Conversión y Envío de Media (Base64) (AÑADIDAS)
+4. Conversión a BASE64 “puro” (sin data:)
 ================================== */
 
-/**
- * Función de utilidad: Convierte un objeto File a una cadena Base64 Data URL.
- */
-async function fileToBase64DataUrl(file: File): Promise<{ dataUrl: string; mime: string }> {
-  const mime = file.type;
-  if (!mime) {
-    throw new Error('No se pudo determinar el tipo MIME del archivo.');
-  }
-
-  // 1. Convertir el File a Buffer
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-
-  // 2. Codificar a Base64 y limpiar de cualquier salto de línea
-  let base64String = buffer.toString('base64');
-  base64String = base64String.replace(/(\r\n|\n|\r)/gm, '');
-
-  // 3. Crear el Data URL: data:[mimetype];base64,[cadena_base64]
-  const dataUrl = `data:${mime};base64,${base64String}`;
-
-  return { dataUrl, mime };
+/** File → base64 “puro” */
+async function fileToBase64Raw(file: File): Promise<{ base64: string; mime: string }> {
+  const mime = file.type || 'application/octet-stream';
+  const ab = await file.arrayBuffer();
+  const b64 = Buffer.from(ab).toString('base64').replace(/(\r\n|\n|\r)/gm, '');
+  return { base64: b64, mime };
 }
 
-/**
- * Convierte un Buffer a Data URL Base64
- */
-function bufferToDataUrl(mime: string, buffer: Buffer): string {
-  if (!mime) throw new Error('MIME requerido para Data URL');
-  let base64String = buffer.toString('base64').replace(/(\r\n|\n|\r)/gm, '');
-  return `data:${mime};base64,${base64String}`;
+/** Buffer → base64 “puro” */
+function bufferToBase64Raw(buffer: Buffer): string {
+  return buffer.toString('base64').replace(/(\r\n|\n|\r)/gm, '');
 }
 
-/**
- * Descarga una URL y devuelve { dataUrl, mime, fileName? }
- * Usa el header Content-Type si no se provee mimetype.
- */
-async function fetchUrlToDataUrl(url: string, hintedMime?: string) {
+/** Descarga URL → base64 “puro” + mime + fileName? */
+async function fetchUrlToBase64(url: string, hintedMime?: string) {
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error(`No se pudo descargar la media: ${res.status}`);
   const mime = hintedMime || res.headers.get('content-type') || 'application/octet-stream';
-
   const ab = await res.arrayBuffer();
-  const buf = Buffer.from(ab);
-  const dataUrl = bufferToDataUrl(mime, buf);
-  // Intento simple de nombre de archivo desde la URL
+  const base64 = bufferToBase64Raw(Buffer.from(ab));
   const urlName = (() => {
     try {
       const u = new URL(url);
@@ -540,49 +498,177 @@ async function fetchUrlToDataUrl(url: string, hintedMime?: string) {
       return undefined;
     }
   })();
+  return { base64, mime, fileName: urlName };
+}
 
-  return { dataUrl, mime, fileName: urlName };
+/** Normalización tolerante de Base64 (URL-safe, padding, etc.) */
+function normalizeBase64(b64: string): string {
+  let s = (b64 || '').trim();
+
+  // Base64 URL-safe → estándar
+  s = s.replace(/-/g, '+').replace(/_/g, '/');
+
+  // quitar espacios/linebreaks ya se hace antes, pero por si acaso:
+  s = s.replace(/(\s|\r\n|\n|\r)/g, '');
+
+  // Padding a múltiplo de 4
+  const mod = s.length % 4;
+  if (mod === 2) s += '==';
+  else if (mod === 3) s += '=';
+  else if (mod === 1) {
+    throw new Error('Cadena base64 inválida (longitud no válida).');
+  }
+
+  return s;
 }
 
 /**
- * Si es Data URL, lo devuelve tal cual.
- * Si es http/https, lo descarga y lo convierte a Data URL.
- * Si parece base64 sin prefijo, lo normaliza a Data URL usando el mimetype dado.
+ * Normaliza un string a base64 “puro” (tolerante):
+ *  - data:<mime>;base64,AAAA → extrae y normaliza
+ *  - http(s):// → descarga y convierte a base64
+ *  - base64 crudo (URL-safe o sin padding) → normaliza + valida decodificando
  */
-async function ensureDataUrlFromString(
+async function ensureBase64FromString(
   mediaUrl: string,
   mimetype?: string
-): Promise<{ dataUrl: string; mime: string; inferredName?: string }> {
-  if (isDataUrl(mediaUrl)) {
-    // data:<mime>;base64,<...>
-    // Intentar extraer el mime del header
-    const header = mediaUrl.slice(0, mediaUrl.indexOf(','));
+): Promise<{ base64: string; mime: string; inferredName?: string }> {
+  const input = (mediaUrl || '').trim();
+
+  // 1) Data URL
+  if (isDataUrl(input)) {
+    const commaIdx = input.indexOf(',');
+    const header = input.slice(0, commaIdx);
     const match = header.match(/^data:([^;]+);base64/i);
     const mime = match?.[1] || mimetype || 'application/octet-stream';
-    return { dataUrl: mediaUrl, mime };
+    const raw = input.slice(commaIdx + 1).replace(/(\s|\r\n|\n|\r)/g, '');
+    const base64 = normalizeBase64(raw);
+    // Validación decode
+    Buffer.from(base64, 'base64');
+    return { base64, mime };
   }
 
-  if (/^https?:\/\//i.test(mediaUrl)) {
-    const { dataUrl, mime, fileName } = await fetchUrlToDataUrl(mediaUrl, mimetype);
-    return { dataUrl, mime, inferredName: fileName };
+  // 2) http(s) URL
+  if (/^https?:\/\//i.test(input)) {
+    const { base64, mime, fileName } = await fetchUrlToBase64(input, mimetype);
+    // Validación decode
+    Buffer.from(base64, 'base64');
+    return { base64, mime, inferredName: fileName };
   }
 
-  // Cadena base64 “pura” sin prefijo data:
-  // Requiere mimetype para construir el Data URL correctamente
-  if (/^[a-z0-9+/=\r\n]+$/i.test(mediaUrl.replace(/\s+/g, ''))) {
-    const b64 = mediaUrl.replace(/(\r\n|\n|\r|\s)/gm, '');
-    const mime = mimetype || 'application/octet-stream';
-    const dataUrl = `data:${mime};base64,${b64}`;
-    return { dataUrl, mime };
-  }
+  // 3) base64 crudo
+  const cleaned = input.replace(/^base64,?/i, '').replace(/(\s|\r\n|\n|\r)/g, '');
+  const base64 = normalizeBase64(cleaned);
+  const mime = mimetype || 'application/octet-stream';
 
-  throw new Error('mediaUrl debe ser una Data URL, una URL http(s), o una cadena base64 válida.');
+  // Validación pragmática: intentar decodificar
+  Buffer.from(base64, 'base64');
+  return { base64, mime };
 }
 
+/* ==================================
+5A. Envío de AUDIO (usa body { number, audio, encoding })
+================================== */
+
 /**
- * Envía media usando una URL (Base64 Data URL o URL directa).
- * Siempre normaliza a Data URL Base64 antes de enviar.
+ * Envía audio usando el endpoint de Evolution que acepta:
+ * { number, audio: <url | base64>, encoding?: true, ... }
+ *
+ * - Si `audioSource` es http(s):// → se manda como URL (sin encoding).
+ * - Si es Data URL o base64 → se manda como base64 + encoding:true.
  */
+export async function sendAudio(
+  apiKeyData: Pick<ApiKey, 'url' | 'key'>,
+  instanceName: string,
+  remoteJid: string,
+  audioSource: string,
+  options?: {
+    timeoutMs?: number;
+    delay?: number;
+    quotedMessage?: { key: { id: string }; message: { conversation: string } };
+    mentionsEveryOne?: boolean;
+    mentioned?: string[];
+    ptt?: boolean; // opcional
+    mimetype?: string;
+    /** fuerza convertir http(s) a base64 + encoding:true */
+    forceBase64?: boolean;
+  }
+): Promise<SendMessageResult> {
+  const { url: baseUrlRaw, key: globalApiKey } = apiKeyData;
+
+  if (!baseUrlRaw || !globalApiKey || !instanceName || !remoteJid || !audioSource) {
+    return { success: false, message: 'Parámetros faltantes para audio.', remoteJid };
+  }
+
+  const baseURL = normalizeBaseUrl(baseUrlRaw);
+  const endpointUrl = `${baseURL}/message/sendWhatsAppAudio/${encodeURIComponent(instanceName)}`;
+  const apikeyHeader = globalApiKey;
+
+  let audioField = audioSource;
+  let encoding = false;
+
+  const isHttp = /^https?:\/\//i.test(audioSource);
+
+  if (!isHttp || options?.forceBase64) {
+    // Data URL o base64 crudo (o URL forzada) → normalizamos a base64 “puro”
+    const { base64 } = await ensureBase64FromString(audioSource, options?.mimetype || 'audio/ogg');
+    audioField = base64;
+    encoding = true;
+  }
+
+  const body: Record<string, any> = {
+    number: remoteJid,
+    audio: audioField,
+  };
+
+  if (encoding) body.encoding = true; // requerido cuando va base64
+  if (typeof options?.delay === 'number') body.delay = options.delay;
+  if (options?.quotedMessage) body.quoted = options.quotedMessage;
+  if (typeof options?.mentionsEveryOne === 'boolean') body.mentionsEveryOne = options.mentionsEveryOne;
+  if (Array.isArray(options?.mentioned) && options!.mentioned!.length > 0) body.mentioned = options!.mentioned;
+  if (typeof options?.ptt === 'boolean') body.ptt = options.ptt;
+
+  // Logs
+  console.log(`[SENDAUDIO] number=${remoteJid} encoding=${encoding}`);
+  if (encoding) {
+    console.log(`[SENDAUDIO][EXACT audio base64] length=${String(audioField).length}`);
+    console.log(audioField);
+  } else {
+    console.log(`[SENDAUDIO] audio=url:${audioField}`);
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 20000);
+
+  try {
+    const response = await doRequest(endpointUrl, apikeyHeader, controller.signal, 'POST', body, true);
+    clearTimeout(timeout);
+    const raw = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const apiMsg = (raw?.message as string) || `Error ${response.status} al enviar audio.`;
+      return { success: false, message: apiMsg, raw, remoteJid };
+    }
+
+    if (raw == null) return { success: false, message: 'Respuesta inválida o vacía al enviar audio.', remoteJid };
+
+    return {
+      success: true,
+      message: `Audio enviado a ${remoteJid}`,
+      data: raw,
+      remoteJid,
+    };
+  } catch (err: any) {
+    clearTimeout(timeout);
+    const errMsg = err?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${err?.message || String(err)}`;
+    return { success: false, message: errMsg, remoteJid };
+  }
+}
+
+/* ==================================
+5B. Envío de Media genérico (image/video/document) → media = base64 puro
+   (para audio ahora se delega a sendAudio)
+================================== */
+
 export async function sendMediaByUrl(
   apiKeyData: Pick<ApiKey, 'url' | 'key'>,
   instanceName: string,
@@ -595,26 +681,33 @@ export async function sendMediaByUrl(
   if (!baseUrlRaw || !globalApiKey || !instanceName || !remoteJid) {
     return { success: false, message: 'Parámetros faltantes (URL/API Key/instanceName/remoteJid).', remoteJid };
   }
-
   if (!params?.mediaUrl || !params?.mediatype) {
     return { success: false, message: 'Faltan campos en params: mediatype y mediaUrl son obligatorios.', remoteJid };
   }
 
-  if (params.mediatype === 'document' && !params.fileName) {
-    // Permitimos inferir luego; si no hay ni inferido ni provisto, aplicamos default abajo
+  // AUDIO → endpoint/body específico { number, audio, encoding }
+  if (params.mediatype === 'audio') {
+    return sendAudio(apiKeyData, instanceName, remoteJid, params.mediaUrl, {
+      timeoutMs: options?.timeoutMs,
+      delay: params.delay,
+      quotedMessage: params.quotedMessage,
+      mentionsEveryOne: params.mentionsEveryOne,
+      mentioned: params.mentioned,
+      ptt: params.ptt,
+      mimetype: params.mimetype,
+    });
   }
 
   const baseURL = normalizeBaseUrl(baseUrlRaw);
   const endpointUrl = `${baseURL}/message/sendMedia/${encodeURIComponent(instanceName)}`;
   const apikeyHeader = globalApiKey;
 
-  // ⇨ Siempre convertir/normalizar a Data URL antes de enviar
-  const normalized = await ensureDataUrlFromString(params.mediaUrl, params.mimetype);
+  // ⇨ Normalizar a base64 “puro”
+  const normalized = await ensureBase64FromString(params.mediaUrl, params.mimetype);
 
-  // Preparar fileName final si procede (especialmente para documentos)
+  // fileName si es documento
   let finalFileName = params.fileName || normalized.inferredName;
   if (params.mediatype === 'document' && !finalFileName) {
-    // Nombre mínimo por defecto si no lo proveen
     const extFromMime = (() => {
       const m = (normalized.mime || '').toLowerCase();
       if (m.includes('pdf')) return 'pdf';
@@ -634,29 +727,29 @@ export async function sendMediaByUrl(
     finalFileName = `file.${extFromMime}`;
   }
 
-  // CONSTRUCCIÓN DEL BODY SEGÚN EL MODELO DE EVOLUTION
   const body: Record<string, any> = {
     number: remoteJid,
     mediatype: params.mediatype,
-    mimetype: normalized.mime,      // usar el mime final
+    mimetype: normalized.mime,
     caption: params.caption,
-    media: normalized.dataUrl,      // 👈 SIEMPRE Data URL Base64
+    media: normalized.base64, // 👈 SOLO base64
     fileName: finalFileName,
   };
 
-  // Campos opcionales (Opciones)
-  if (typeof params.ptt === 'boolean') body.ptt = params.ptt;
   if (typeof params.delay === 'number') body.delay = params.delay;
   if (typeof params.linkPreview === 'boolean') body.linkPreview = params.linkPreview;
   if (typeof params.mentionsEveryOne === 'boolean') body.mentionsEveryOne = params.mentionsEveryOne;
   if (Array.isArray(params.mentioned) && params.mentioned.length > 0) body.mentioned = params.mentioned;
   if (params.quotedMessage) body.quoted = params.quotedMessage;
 
+  // 🔎 Log EXACTO del base64 que se envía en `media`
+  console.log(`[SENDMEDIA][EXACT media] length=${String(body.media).length}`);
+  console.log(body.media);
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 20000);
 
   try {
-    // 🟢 CAMBIO: Se pasa 'true' para habilitar el log en el envío de media
     const response = await doRequest(endpointUrl, apikeyHeader, controller.signal, 'POST', body, true);
 
     clearTimeout(timeout);
@@ -685,9 +778,10 @@ export async function sendMediaByUrl(
   }
 }
 
-/**
- * Maneja la subida del archivo, la conversión a Base64, y el envío.
- */
+/* ==================================
+6. Atajos: File → base64 puro y envío
+================================== */
+
 export async function sendFileBase64(
   apiKeyData: Pick<ApiKey, 'url' | 'key'>,
   instanceName: string,
@@ -696,29 +790,19 @@ export async function sendFileBase64(
   caption?: string
 ): Promise<SendMessageResult> {
   try {
-    // 1. Convertir el archivo a Base64 (Server-side)
-    const { dataUrl, mime } = await fileToBase64DataUrl(file);
+    const { base64, mime } = await fileToBase64Raw(file);
 
-    // 2. Determinar el tipo de medio
     let mediatype: MediaType;
-    if (mime.startsWith('image/')) {
-      mediatype = 'image';
-    } else if (mime.startsWith('video/')) {
-      mediatype = 'video';
-    } else if (mime.startsWith('audio/')) {
-      mediatype = 'audio';
-    } else {
-      mediatype = 'document'; // Default para otros tipos
-    }
+    if (mime.startsWith('image/')) mediatype = 'image';
+    else if (mime.startsWith('video/')) mediatype = 'video';
+    else if (mime.startsWith('audio/')) mediatype = 'audio';
+    else mediatype = 'document';
 
-    // Nombre del archivo para el envío
     const fileName = file.name;
 
-    // 3. Llamar a la función de envío de la API con la cadena Base64
-    // 🟢 sendMediaByUrl llamará a doRequest con 'true' para el log
     return await sendMediaByUrl(apiKeyData, instanceName, remoteJid, {
       mediatype,
-      mediaUrl: dataUrl, // 👈 Se envía el Base64
+      mediaUrl: base64, // 👈 base64 puro
       mimetype: mime,
       fileName,
       caption,
@@ -731,4 +815,104 @@ export async function sendFileBase64(
       remoteJid,
     };
   }
+}
+
+/* ==================================
+7. Envío unificado (File | string) → audio/media
+================================== */
+
+function mediaTypeFromMime(mime: string): MediaType {
+  const m = (mime || '').toLowerCase();
+  if (m.startsWith('image/')) return 'image';
+  if (m.startsWith('video/')) return 'video';
+  if (m.startsWith('audio/')) return 'audio';
+  return 'document';
+}
+
+/**
+ * Acepta File o string (data:, http(s), base64) y envía:
+ *  - AUDIO → `sendAudio` con body { number, audio, encoding }
+ *  - Otros  → `sendMediaByUrl` (media base64)
+ */
+export async function sendMediaAuto(
+  apiKeyData: Pick<ApiKey, 'url' | 'key'>,
+  instanceName: string,
+  remoteJid: string,
+  source: File | string,
+  hinted?: {
+    mimetype?: string;
+    mediatype?: MediaType;
+    fileName?: string;
+    caption?: string;
+    ptt?: boolean;
+    delay?: number;
+    linkPreview?: boolean;
+    mentionsEveryOne?: boolean;
+    mentioned?: string[];
+    quotedMessage?: { key: { id: string }; message: { conversation: string } };
+    timeoutMs?: number;
+    /** para audio: fuerza transformar URL http(s) a base64 + encoding:true */
+    forceAudioBase64?: boolean;
+  }
+): Promise<SendMessageResult> {
+  // mime inferido / provisto
+  let mime = hinted?.mimetype || 'application/octet-stream';
+  let fileName = hinted?.fileName;
+
+  if (typeof source !== 'string') {
+    mime = source.type || mime;
+    fileName = fileName || source.name;
+  }
+
+  const mediatype: MediaType = hinted?.mediatype || mediaTypeFromMime(mime);
+
+  // AUDIO → usar cuerpo { number, audio, encoding }
+  if (mediatype === 'audio') {
+    let audioSourceStr: string;
+    if (typeof source !== 'string') {
+      const { base64 } = await fileToBase64Raw(source);
+      audioSourceStr = base64; // base64 puro
+    } else {
+      audioSourceStr = source; // data:, http(s) o base64 puro
+    }
+
+    return sendAudio(apiKeyData, instanceName, remoteJid, audioSourceStr, {
+      timeoutMs: hinted?.timeoutMs,
+      delay: hinted?.delay,
+      quotedMessage: hinted?.quotedMessage,
+      mentionsEveryOne: hinted?.mentionsEveryOne,
+      mentioned: hinted?.mentioned,
+      ptt: hinted?.ptt,
+      mimetype: mime,
+      forceBase64: hinted?.forceAudioBase64,
+    });
+  }
+
+  // IMAGE/VIDEO/DOCUMENT → flujo clásico
+  let mediaUrlStr: string;
+  if (typeof source !== 'string') {
+    const { base64 } = await fileToBase64Raw(source);
+    mediaUrlStr = base64; // base64 puro
+  } else {
+    mediaUrlStr = source;
+  }
+
+  return sendMediaByUrl(
+    apiKeyData,
+    instanceName,
+    remoteJid,
+    {
+      mediatype,
+      mediaUrl: mediaUrlStr,
+      mimetype: mime,
+      fileName,
+      caption: hinted?.caption,
+      delay: hinted?.delay,
+      linkPreview: hinted?.linkPreview,
+      mentionsEveryOne: hinted?.mentionsEveryOne,
+      mentioned: hinted?.mentioned,
+      quotedMessage: hinted?.quotedMessage,
+    },
+    { timeoutMs: hinted?.timeoutMs }
+  );
 }
