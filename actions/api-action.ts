@@ -296,7 +296,7 @@ export async function createInstance(data: FormData) {
     return { success: false, message: error.message || "Error al crear la instancia." };
   }
 }
-export async function deleteInstance(userId: string,tipoInstancia:string) {
+export async function deleteInstance(userId: string,tipoInstancia:string='Whatsapp') {
   try {
     // Verificar si el usuario tiene una instancia activa
     const instanciaActiva = await checkActiveInstance(userId,tipoInstancia);
@@ -369,7 +369,7 @@ export async function deleteInstance(userId: string,tipoInstancia:string) {
   }
 }
 // Función para verificar si el usuario ya tiene una instancia
-export async function checkActiveInstance(userId: string,tipoInstancia:string) {
+export async function checkActiveInstance(userId: string,tipoInstancia:string='Whatsapp') {
   const instanciaActiva = await db.instancias.findFirst({
     where: { userId,tipoInstancia:tipoInstancia },
   });

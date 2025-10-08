@@ -92,9 +92,7 @@ export const ClientInstanceCard = ({
   const profileName = currentInstanceInfo?.profileName;
   const profilePicUrl = currentInstanceInfo?.profilePicUrl;
   const userInitial = intanceName.charAt(0).toUpperCase() ?? '?';
-  const isActive = instanceType == 'Facebook' ? user.onFacebook : user.onInstagran
-  console.log('Is active...',isActive,user)
-  
+  const isActive = instanceType == 'Facebook' ? user.onFacebook : user.onInstagran  
   
 
   return (
