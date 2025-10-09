@@ -221,16 +221,18 @@ export async function getApiKeyById(id: string) {
 // Función para crear una instancia si el usuario no tiene una
 export async function createInstance(data: FormData) {
   const instanceName = data.get('instanceName') as string;
+  const instanceType = data.get('instanceType') as string;
+
   const userId = data.get('userId') as string;
 
   try {
     // Validación de campos obligatorios
-    if (!instanceName || !userId) {
+    if (!instanceName || !userId || !instanceType) {
       throw new Error('Todos los campos son obligatorios');
     }
 
     // Verificar si el usuario ya tiene una instancia activa
-    const instanciaActiva = await checkActiveInstance(userId);
+    const instanciaActiva = await checkActiveInstance(userId, instanceType);
     if (instanciaActiva) {
       return { success: false, message: "El usuario ya tiene una instancia activa.", instancia: instanciaActiva };
     }
@@ -280,6 +282,7 @@ export async function createInstance(data: FormData) {
     const nuevaInstancia = await db.instancias.create({
       data: {
         instanceName,
+        instanceType,
         userId,
         instanceId,  // Usar el instanceId extraído de la respuesta
       },
@@ -293,10 +296,10 @@ export async function createInstance(data: FormData) {
     return { success: false, message: error.message || "Error al crear la instancia." };
   }
 }
-export async function deleteInstance(userId: string) {
+export async function deleteInstance(userId: string, instanceType: string = 'Whatsapp') {
   try {
     // Verificar si el usuario tiene una instancia activa
-    const instanciaActiva = await checkActiveInstance(userId);
+    const instanciaActiva = await checkActiveInstance(userId, instanceType);
     if (!instanciaActiva) {
       return { success: false, message: "El usuario no tiene ninguna instancia activa." };
     }
@@ -349,7 +352,7 @@ export async function deleteInstance(userId: string) {
 
     // 3. Eliminar la instancia de la base de datos
     const instancia = await db.instancias.findFirst({
-      where: { instanceName }
+      where: { instanceName, instanceType }
     });
 
     if (!instancia) {
@@ -366,9 +369,9 @@ export async function deleteInstance(userId: string) {
   }
 }
 // Función para verificar si el usuario ya tiene una instancia
-export async function checkActiveInstance(userId: string) {
+export async function checkActiveInstance(userId: string, instanceType: string = 'Whatsapp') {
   const instanciaActiva = await db.instancias.findFirst({
-    where: { userId },
+    where: { userId, instanceType },
   });
 
   return instanciaActiva;
