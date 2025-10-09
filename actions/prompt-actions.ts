@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 
 // Esquemas de validación con Zod
 const promptInstanciaSchema = z.object({
-  tipoInstancia: z.string().optional(),
+  instanceType: z.string().optional(),
   description: z.string().optional(),
   contenido: z.string().optional(),
   // `coercion` permite que Zod intente convertir el valor a un número.

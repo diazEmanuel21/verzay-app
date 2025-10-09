@@ -34,7 +34,7 @@ export const ConnectionMain = ({
 
         const formData = new FormData();
         formData.append('instanceName', data.instanceName);
-        formData.append('tipoInstancia', data.instanceType);
+        formData.append('instanceType', data.instanceType);
         formData.append('userId', user.id);
 
         try {
