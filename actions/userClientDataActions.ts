@@ -16,6 +16,26 @@ interface ClientResponse<T = undefined> {
 type FilterOptions = {
   resellerId?: string;
 };
+const RESTRICTED_FIELDS = new Set<string>(['openMsg']);
+const BOOLEAN_FIELDS = ['muteAgentResponses', 'onFacebook', 'onInstagram'] as const;
+
+/** Normaliza un booleano desde FormData (soporta hidden+checkbox, "true"/"on") */
+const normalizeBoolean = (fd: FormData, key: string): boolean | undefined => {
+  if (!fd.has(key)) return undefined; // si no vino, no actualizar
+  // getAll para considerar hidden + checkbox
+  const values = fd.getAll(key).map(v => String(v).toLowerCase());
+  return values.includes('true') || values.includes('on');
+};
+
+/** Copia valores no booleanos de FormData respetando campos restringidos */
+const assignNonBooleanFields = (fd: FormData, target: Record<string, any>) => {
+  fd.forEach((value, key) => {
+    if (RESTRICTED_FIELDS.has(key)) return;
+    if ((BOOLEAN_FIELDS as readonly string[]).includes(key)) return; // ya procesados
+    target[key] = value;
+  });
+};
+
 
 export async function getEnrichedClients(filter?: FilterOptions): Promise<ClientResponse<ClientInterface[]>> {
   try {
@@ -174,33 +194,24 @@ export const updateClientDataByField = async (
 ): Promise<{ success: boolean; message: string }> => {
   try {
     if (field === 'openMsg') {
-      return {
-        success: false,
-        message: 'El campo openMsg está restringido y no puede ser actualizado aquí.',
-      };
+      return { success: false, message: 'El campo openMsg está restringido y no puede ser actualizado aquí.' };
     }
-    if (field === '') {
-      return {
-        success: false,
-        message: 'El campo no existe en este formulario.',
-      };
+    if (!field) {
+      return { success: false, message: 'El campo no existe en este formulario.' };
     }
+
+    const isBooleanField = (BOOLEAN_FIELDS as readonly string[]).includes(field);
+    const parsedValue = isBooleanField ? (value === 'true' || value === 'on') : value;
 
     await db.user.update({
       where: { id: userId },
-      data: { [field]: value },
+      data: { [field]: parsedValue },
     });
 
-    return {
-      success: true,
-      message: `Campo "${field}" actualizado correctamente.`,
-    };
+    return { success: true, message: `Campo "${field}" actualizado correctamente.` };
   } catch (error) {
     console.error('Error actualizando datos del cliente:', error);
-    return {
-      success: false,
-      message: 'Error interno al actualizar los datos.',
-    };
+    return { success: false, message: 'Error interno al actualizar los datos.' };
   }
 };
 // ==============================
@@ -211,46 +222,31 @@ export const updateClientData = async (
   formData: FormData
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    const restrictedFields = ['openMsg']
+    const dataToUpdate: Record<string, any> = {};
 
-    const dataToUpdate: Record<string, any> = {}
+    // 1) Procesa primero los booleanos con getAll (evita conflictos hidden+checkbox)
+    (BOOLEAN_FIELDS as readonly string[]).forEach((key) => {
+      const b = normalizeBoolean(formData, key);
+      if (b !== undefined) dataToUpdate[key] = b;
+    });
 
-    const booleanFields = ['muteAgentResponses']
+    // 2) Copia el resto de campos no booleanos
+    assignNonBooleanFields(formData, dataToUpdate);
 
-    formData.forEach((value, key) => {
-      if (restrictedFields.includes(key)) return
-
-      if (booleanFields.includes(key)) {
-        dataToUpdate[key] = value === 'true'
-      } else {
-        dataToUpdate[key] = value
-      }
-    })
-
+    // 3) Validación mínima
     if (Object.keys(dataToUpdate).length === 0) {
-      return {
-        success: false,
-        message: 'No se encontraron campos válidos para actualizar.',
-      }
+      return { success: false, message: 'No se encontraron campos válidos para actualizar.' };
     }
 
-    await db.user.update({
-      where: { id: userId },
-      data: dataToUpdate,
-    })
+    await db.user.update({ where: { id: userId }, data: dataToUpdate });
 
-    return {
-      success: true,
-      message: 'Datos del cliente actualizados correctamente.',
-    }
+    return { success: true, message: 'Datos del cliente actualizados correctamente.' };
   } catch (error) {
-    console.error('Error actualizando datos del cliente desde formData:', error)
-    return {
-      success: false,
-      message: 'Error interno al actualizar los datos.',
-    }
+    console.error('Error actualizando datos del cliente desde formData:', error);
+    return { success: false, message: 'Error interno al actualizar los datos.' };
   }
-}
+};
+
 // ==============================
 // Función para actualizar la duración de la reunión de un usuario
 // ==============================

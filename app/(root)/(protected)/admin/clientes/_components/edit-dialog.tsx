@@ -66,6 +66,18 @@ export const EditDialog = ({
       defaultValue: user.muteAgentResponses,
       readOnly: false,
     },
+    {
+      id: "onFacebook",
+      label: "Activar canal Facebook",
+      defaultValue: user.onFacebook ?? false,
+      readOnly: false,
+    },
+    {
+      id: "onInstagram",
+      label: "Activar canal Instagram",
+      defaultValue: user.onInstagram ?? false,
+      readOnly: false,
+    },
     { id: "name", label: "Nombre", defaultValue: user.name, readOnly: false },
     { id: "email", label: "Email", defaultValue: user.email, readOnly: false },
     { id: "password", label: "Contraseña", defaultValue: user.password, readOnly: false },
@@ -188,6 +200,28 @@ export const EditDialog = ({
             </SelectContent>
           </Select>
         )
+      case 'onFacebook':
+      case 'onInstagram': {
+        const checked = Boolean(defaultValue);
+        return (
+          <div className="col-span-3 flex items-center gap-3">
+            {/* Asegura envío de 'false' cuando NO está marcado */}
+            <input type="hidden" name={id} value="false" />
+            <input
+              id={id}
+              name={id}
+              type="checkbox"
+              defaultChecked={checked}
+              value="true"
+              disabled={readOnly}
+              className="h-4 w-4 accent-foreground cursor-pointer disabled:cursor-not-allowed"
+            />
+            <span className="text-sm text-muted-foreground">
+              {checked ? 'Activado' : 'Desactivado'}
+            </span>
+          </div>
+        )
+      }
       case 'timezone':
         // Si es de solo lectura, muestra el valor fijo
         if (readOnly) {
