@@ -45,7 +45,10 @@ const Home = async ({ searchParams }: SearchParamProps) => {
     getPromptsByUserId(user.id)
   ]);
 
+ 
+
   const instancias = hasInstancias(resInstancias) ? resInstancias.data : [];
+  
   const apiKey = hasApikey(resApikey) ? resApikey.data : null;
   const prompts = hasPrompts(resPrompts) ? resPrompts.data : [];
 

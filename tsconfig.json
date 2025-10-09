@@ -28,6 +28,6 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "types" // ✅ asegurarse que está incluida
-  ],
+, "app/(root)/chats/_components"  ],
   "exclude": ["node_modules"]
 }
