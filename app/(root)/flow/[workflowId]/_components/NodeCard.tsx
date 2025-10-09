@@ -354,7 +354,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
       );
     }
 
-    // Si no hay contenido, mostrar opción de subir archivo
+    // Si no hay content, mostrar opción de subir archivo
     return (
       <div className="flex flex-col gap-2 w-full">
         <div

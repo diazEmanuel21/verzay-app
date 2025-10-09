@@ -139,7 +139,7 @@ export function DataTable<TData, TValue>({ columns, data, currentUserRol, openCr
       </div>
 
 
-      {/* Scroll interno para el contenido */}
+      {/* Scroll interno para el content */}
       <div className="flex-1 overflow-y-auto">
         <div className="grid grid-cols-1 gap-4">
           <Card className="border-border">

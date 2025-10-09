@@ -119,7 +119,7 @@ export const MainAi = ({ flows, user }: MainAiInterface) => {
             {/* Contenedor de layout con altura fija y sin scroll global */}
             <div
                 className={cn(
-                    // Altura de la zona de contenido. AJUSTA el 132px según tu navbar/sticky header real.
+                    // Altura de la zona de content. AJUSTA el 132px según tu navbar/sticky header real.
                     "mt-0 lg:mt-2 h-[calc(100vh-132px)]",
                     // Grid en desktop, stack en mobile
                     "grid lg:grid-cols-[1fr,420px] gap-4",

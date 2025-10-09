@@ -126,7 +126,7 @@ export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
                 </div>
             </div>
 
-            {/* Scroll interno para el contenido */}
+            {/* Scroll interno para el content */}
             <div className="flex-1 overflow-y-auto">
                 <MessageTabs
                     messages={filteredMessages}

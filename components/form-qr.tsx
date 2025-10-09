@@ -69,7 +69,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
     const handleCloseModal = () => setIsModalOpen(false);
 
     const handleBackdropClick = (event: React.MouseEvent) => {
-        // Cierra el modal solo si se hace clic en el fondo (no en el contenido del modal)
+        // Cierra el modal solo si se hace clic en el fondo (no en el content del modal)
         if (event.currentTarget === event.target) {
             handleCloseModal();
         }

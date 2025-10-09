@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache";
 const promptInstanciaSchema = z.object({
   instanceType: z.string().optional(),
   description: z.string().optional(),
-  contenido: z.string().optional(),
+  content: z.string().optional(),
   // `coercion` permite que Zod intente convertir el valor a un número.
   // Esto es más seguro que un `Number()` manual.
   instanciaId: z.coerce.number().int().optional().nullable(),

@@ -12,18 +12,19 @@ import {
 import { Settings } from "lucide-react"
 
 interface ConnectionActionsInterface {
-    handleDelete: (state: boolean) => void
+    handleDelete: (state: boolean) => void,
+    handlePrompt: (state: boolean) => void
 };
 
-export const ConnectionActions = ({ handleDelete }: ConnectionActionsInterface) => {
+export const ConnectionActions = ({ handleDelete, handlePrompt }: ConnectionActionsInterface) => {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size={'icon'}>
+                <Button variant="ghost" size={'icon'} onClick={() => handlePrompt(true)}>
                     <Settings className="h-4 w-4 text-muted-foreground cursor-pointer" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
+            {/* <DropdownMenuContent className="w-56">
                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuCheckboxItem
@@ -31,7 +32,7 @@ export const ConnectionActions = ({ handleDelete }: ConnectionActionsInterface) 
                 >
                     Eliminar
                 </DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
+            </DropdownMenuContent> */}
         </DropdownMenu>
     )
 }

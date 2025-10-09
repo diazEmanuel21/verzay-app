@@ -38,7 +38,7 @@ export const MainAutoReplies = ({ user, Workflows, autoReplies = [] }: Props) =>
         </div>
       </div>
 
-      {/* Scroll interno para el contenido */}
+      {/* Scroll interno para el content */}
       <div className="flex-1 overflow-y-auto">
         <div className="grid grid-cols-1 gap-4">
           {autoReplies.length === 0 ? (

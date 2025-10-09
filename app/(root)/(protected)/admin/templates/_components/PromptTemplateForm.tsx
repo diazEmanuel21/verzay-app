@@ -22,7 +22,7 @@ export const PromptTemplateSchema = z.object({
     id: z.string().optional(),
     name: z.string().min(3, 'Debe tener al menos 3 caracteres'),
     description: z.string().optional(),
-    content: z.string().min(10, 'El contenido debe tener al menos 10 caracteres'),
+    content: z.string().min(10, 'El content debe tener al menos 10 caracteres'),
     category: z.string().optional(),
     isActive: z.boolean().default(true),
     updatedAt: z.date().optional(),

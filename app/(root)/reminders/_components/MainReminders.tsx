@@ -83,7 +83,7 @@ export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, 
         </div>
       </div>
 
-      {/* Scroll interno para el contenido */}
+      {/* Scroll interno para el content */}
       <div className="flex-1 overflow-y-auto">
 
         <div className={isScheduleView ? 'flex gap-2 flex-col' : 'grid grid-cols-1 gap-2 p-2 md:grid-cols-2 xl:grid-cols-3'}>

@@ -272,7 +272,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
         </div>
       </div>
 
-      {/* Scroll interno para el contenido */}
+      {/* Scroll interno para el content */}
       <div className="flex-1 overflow-y-auto p-2">
         <div className="grid grid-cols-1 gap-4">
           <Card className="border-border">
