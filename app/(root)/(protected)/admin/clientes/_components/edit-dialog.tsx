@@ -24,6 +24,7 @@ import { VolumeX, Volume2 } from 'lucide-react'
 import { PLAN_LABELS, PLANS } from "@/types/plans"
 import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox"
 import { useEffect, useState } from "react"
+import { Switch } from "@/components/ui/switch" /* 👈 NUEVO */
 
 interface Props {
   openEditDialog: boolean
@@ -33,7 +34,6 @@ interface Props {
   apikeys: ApiKey[]
   currentUserRol: string
 }
-
 
 export const EditDialog = ({
   openEditDialog,
@@ -54,10 +54,16 @@ export const EditDialog = ({
   // 1) Estado local para la zona horaria (para el TimezoneCombobox)
   const [tz, setTz] = useState<string>(user.timezone ?? "");
 
+  // 👇 NUEVOS estados para switches
+  const [fb, setFb] = useState<boolean>(user.onFacebook ?? false);
+  const [ig, setIg] = useState<boolean>(user.onInstagram ?? false);
+
   // 2) Re-sincroniza cuando cambie el usuario o al abrir/cerrar
   useEffect(() => {
     setTz(user.timezone ?? "");
-  }, [user.id, openEditDialog, user.timezone]);
+    setFb(user.onFacebook ?? false);     // 👈 sync FB
+    setIg(user.onInstagram ?? false);    // 👈 sync IG
+  }, [user.id, openEditDialog, user.timezone, user.onFacebook, user.onInstagram]);
 
   let fields = [
     {
@@ -68,13 +74,13 @@ export const EditDialog = ({
     },
     {
       id: "onFacebook",
-      label: "Activar canal Facebook",
+      label: "Activar Facebook",
       defaultValue: user.onFacebook ?? false,
       readOnly: false,
     },
     {
       id: "onInstagram",
-      label: "Activar canal Instagram",
+      label: "Activar Instagram",
       defaultValue: user.onInstagram ?? false,
       readOnly: false,
     },
@@ -100,10 +106,7 @@ export const EditDialog = ({
     const idsToRemove = ["apiKeyId", "webhookUrl", "apiUrl"]
     fields = fields.filter(field => !idsToRemove.includes(field.id))
 
-    const idsReadOnly = ["name",
-      "email",
-      "role",
-      "plan",]
+    const idsReadOnly = ["name", "email", "role", "plan"]
     fields = fields.map(field =>
       idsReadOnly.includes(field.id)
         ? { ...field, readOnly: true }
@@ -200,30 +203,47 @@ export const EditDialog = ({
             </SelectContent>
           </Select>
         )
-      case 'onFacebook':
-      case 'onInstagram': {
-        const checked = Boolean(defaultValue);
+
+      case 'onFacebook': {
+        const checked = fb;
         return (
           <div className="col-span-3 flex items-center gap-3">
-            {/* Asegura envío de 'false' cuando NO está marcado */}
-            <input type="hidden" name={id} value="false" />
-            <input
-              id={id}
-              name={id}
-              type="checkbox"
-              defaultChecked={checked}
-              value="true"
+            <input type="hidden" name="onFacebook" value={checked ? "true" : "false"} />
+            {/* <span className="text-sm">
+              <span className={checked ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}>
+                {checked ? "Activado" : "Desactivado"}
+              </span>
+            </span> */}
+            <Switch
+              id="onFacebook"
+              checked={checked}
+              onCheckedChange={setFb}
               disabled={readOnly}
-              className="h-4 w-4 accent-foreground cursor-pointer disabled:cursor-not-allowed"
             />
-            <span className="text-sm text-muted-foreground">
-              {checked ? 'Activado' : 'Desactivado'}
-            </span>
           </div>
         )
       }
+      case 'onInstagram': {
+        const checked = ig;
+        return (
+          <div className="col-span-3 flex items-center gap-3">
+            <input type="hidden" name="onInstagram" value={checked ? "true" : "false"} />
+            {/* <span className="text-sm">
+              <span className={checked ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}>
+                {checked ? "Activado" : "Desactivado"}
+              </span>
+            </span> */}
+            <Switch
+              id="onInstagram"
+              checked={checked}
+              onCheckedChange={setIg}
+              disabled={readOnly}
+            />
+          </div>
+        )
+      }
+
       case 'timezone':
-        // Si es de solo lectura, muestra el valor fijo
         if (readOnly) {
           return (
             <Input
@@ -236,24 +256,12 @@ export const EditDialog = ({
             />
           );
         }
-        // Editable: combobox + input oculto para el formData
         return (
           <div className="col-span-3">
             <TimezoneCombobox value={tz} onChange={setTz} />
             <input type="hidden" name="timezone" value={tz} />
           </div>
         );
-      // <Select name={id} defaultValue={defaultValue ? "true" : "false"} disabled={readOnly}>
-      //   <SelectTrigger className="col-span-3">
-      //     <SelectValue placeholder="Silenciar respuestas" />
-      //   </SelectTrigger>
-      //   <SelectContent>
-      //     <SelectGroup>
-      //       <SelectItem value="true">Activado (Silenciado)</SelectItem>
-      //       <SelectItem value="false">Desactivado (Responde)</SelectItem>
-      //     </SelectGroup>
-      //   </SelectContent>
-      // </Select>
 
       default:
         return (
