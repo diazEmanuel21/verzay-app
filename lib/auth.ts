@@ -30,6 +30,8 @@ export async function currentUser(request?: Request) {
             webhookUrl: true,
             apiKeyId: true,
             instancias: true,
+            onFacebook: true,
+            onInstagram: true,
             meetingDuration: true,
             timezone: true,
             // Solo selecciona los campos necesarios

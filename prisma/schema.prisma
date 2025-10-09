@@ -32,6 +32,8 @@ model User {
   theme              ThemeApp?          @default(Default)
   muteAgentResponses Boolean            @default(false)
   timezone           String?
+  onInstagram        Boolean            @default(false)
+  onFacebook         Boolean            @default(false)
   meetingDuration    Int?
   accounts           Account[]
   Appointment        Appointment[]
@@ -48,6 +50,7 @@ model User {
   esClienteDe        reseller[]         @relation("ClienteAsignado")
   aiConfig           UserAiConfig[]
   modules            Module[]           @relation("UserModules")
+  PromptInstance     PromptInstance[]
 }
 
 model AiProvider {
@@ -180,11 +183,22 @@ model VerificationToken {
 }
 
 model Instancias {
-  id           Int    @id @default(autoincrement())
+  id           Int     @id @default(autoincrement())
   instanceName String
   userId       String
   instanceId   String
-  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instanceType String?
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PromptInstance {
+  id           Int     @id @default(autoincrement())
+  instanceType String?
+  description  String?
+  content      String?
+  instanceId   Int?
+  userId       String
+  user         User    @relation(fields: [userId], references: [id])
 }
 
 model SystemMessage {

@@ -24,8 +24,8 @@ function hasWorkflow(result: { data?: Workflow[] }): result is { data: Workflow[
     return !!result.data
 }
 
-function hasInstancia(result: { data?: Instancias | null }): result is { data: Instancias } {
-    return !!result.data
+function hasInstancia(result: { data?: Instancias[] }): result is { data: Instancias[] } {
+    return !!result.data && result.data.length > 0
 }
 
 const RemindersPage = async () => {
@@ -81,7 +81,7 @@ const RemindersPage = async () => {
             reminders={reminders}
             leads={sessions}
             workflows={workflows}
-            instancia={resInstancia.data}
+            instancia={resInstancia.data[0]}
         />
     )
 

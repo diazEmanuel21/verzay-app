@@ -25,8 +25,8 @@ function hasWorkflow(result: { data?: Workflow[] }): result is { data: Workflow[
   return !!result.data
 }
 
-function hasInstancia(result: { data?: Instancias | null }): result is { data: Instancias } {
-  return !!result.data
+function hasInstancia(result: { data?: Instancias[] }): result is { data: Instancias[] } {
+  return !!result.data && result.data.length > 0
 }
 
 const CampaignsPage = async () => {
@@ -76,18 +76,18 @@ const CampaignsPage = async () => {
 
   return (
     <div className="flex h-full w-full justify-center items-center">
-        <UnderConstruction />
+      <UnderConstruction />
     </div>
 
-        // <MainReminders
-        //   isCampaignPage={isCampaignPage}
-        //   user={user}
-        //   apiKey={resApikey.data}
-        //   reminders={reminders}
-        //   leads={sessions}
-        //   workflows={workflows}
-        //   instancia={resInstancia.data}
-        // />
+    // <MainReminders
+    //   isCampaignPage={isCampaignPage}
+    //   user={user}
+    //   apiKey={resApikey.data}
+    //   reminders={reminders}
+    //   leads={sessions}
+    //   workflows={workflows}
+    //   instancia={resInstancia.data}
+    // />
 
   )
 

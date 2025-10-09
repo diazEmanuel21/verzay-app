@@ -71,6 +71,8 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             timezone,
             meetingDuration: 60,//tiempo en minutos
             muteAgentResponses: false,
+            onFacebook: false,
+            onInstagram: false,
             lat: '0.0000',
             lng: '0.0000',
             mapsUrl: 'https://maps.google.com/?q=0,0',
