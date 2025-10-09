@@ -122,16 +122,16 @@ export type FetchChatsResult =
 
 export type FindMessagesResult =
   | {
-    success: true;
-    message: string;
-    data: EvolutionMessage[];
-    total?: number;
-    pages?: number;
-    currentPage?: number;
-    nextPage?: number | null;
-    raw?: unknown;
-    queriedRemoteJid?: string;
-  }
+      success: true;
+      message: string;
+      data: EvolutionMessage[];
+      total?: number;
+      pages?: number;
+      currentPage?: number;
+      nextPage?: number | null;
+      raw?: unknown;
+      queriedRemoteJid?: string;
+    }
   | { success: false; message: string; raw?: unknown; queriedRemoteJid?: string };
 
 export type SendMessageResult =
@@ -144,9 +144,9 @@ export interface SendMediaUrlParams {
   mediatype: MediaType;
   /**
    * Puede ser:
-   *  - Data URL (se extrae y se usa SOLO la parte base64)
-   *  - URL http(s) (para audio se manda como URL; para otros se convierte a base64 “puro”)
-   *  - Base64 “puro”
+   * - Data URL (se extrae y se usa SOLO la parte base64)
+   * - URL http(s) (para audio se manda como URL; para otros se convierte a base64 “puro”)
+   * - Base64 “puro”
    */
   mediaUrl: string;
   fileName?: string;
@@ -192,22 +192,42 @@ function ensureArrayResponse(payload: unknown): ChatArray {
 }
 
 function normalizeFindMessagesPayload(payload: any) {
+  // Primero, se extrae el array de mensajes 'crudos' y los metadatos de paginación
+  let rawItems: any[];
+  let meta: Record<string, unknown> = {};
+
   if (payload?.messages?.records && Array.isArray(payload.messages.records)) {
     const container = payload.messages;
-    return {
-      items: container.records as EvolutionMessage[],
-      meta: {
-        total: Number(container.total ?? 0) || undefined,
-        pages: Number(container.pages ?? 0) || undefined,
-        currentPage: Number(container.currentPage ?? 1) || undefined,
-        nextPage: (container.currentPage < container.pages ? container.currentPage + 1 : null) ?? undefined,
-      },
+    rawItems = container.records;
+    meta = {
+      total: Number(container.total ?? 0) || undefined,
+      pages: Number(container.pages ?? 0) || undefined,
+      currentPage: Number(container.currentPage ?? 1) || undefined,
+      nextPage: (container.currentPage < container.pages ? container.currentPage + 1 : null) ?? undefined,
     };
+  } else {
+    rawItems =
+      (Array.isArray(payload) && payload) || (payload?.data && Array.isArray(payload.data) && payload.data) || [];
   }
-  const items =
-    (Array.isArray(payload) && payload) || (payload?.data && Array.isArray(payload.data) && payload.data) || [];
-  return { items: items as EvolutionMessage[], meta: {} };
+
+  // Luego, se procesa cada mensaje para manejar el caso de mensajes nulos (eliminados)
+  const items = rawItems.map((msg): EvolutionMessage => {
+    if (msg.message === null || msg.message === undefined) {
+      return {
+        ...msg,
+        message: {
+          conversation: 'Mensaje eliminado', // Contenido alternativo
+        },
+        messageType: 'conversation', // Se ajusta el tipo para consistencia
+      };
+    }
+    return msg as EvolutionMessage;
+  });
+
+  // Se devuelve la lista de mensajes procesados y los metadatos
+  return { items, meta };
 }
+
 
 /**
  * doRequest con logging explícito del campo `media`/`audio` cuando shouldLog=true
@@ -383,10 +403,10 @@ export async function findMessagesByRemoteJid(
       success: true,
       message: `OK findMessages ${instanceName} ${remoteJid}`,
       data: items,
-      total: meta.total,
-      pages: meta.pages,
-      currentPage: meta.currentPage,
-      nextPage: meta.nextPage,
+      total: meta.total as number,
+      pages: meta.pages as number,
+      currentPage: meta.currentPage as number,
+      nextPage: meta.nextPage as number | null,
       raw,
       queriedRemoteJid: remoteJid,
     };
@@ -524,9 +544,9 @@ function normalizeBase64(b64: string): string {
 
 /**
  * Normaliza un string a base64 “puro” (tolerante):
- *  - data:<mime>;base64,AAAA → extrae y normaliza
- *  - http(s):// → descarga y convierte a base64
- *  - base64 crudo (URL-safe o sin padding) → normaliza + valida decodificando
+ * - data:<mime>;base64,AAAA → extrae y normaliza
+ * - http(s):// → descarga y convierte a base64
+ * - base64 crudo (URL-safe o sin padding) → normaliza + valida decodificando
  */
 async function ensureBase64FromString(
   mediaUrl: string,
@@ -664,7 +684,7 @@ export async function sendAudio(
 
 /* ==================================
 5B. Envío de Media genérico (image/video/document) → media = base64 puro
-   (para audio ahora se delega a sendAudio)
+    (para audio ahora se delega a sendAudio)
 ================================== */
 
 export async function sendMediaByUrl(
@@ -829,8 +849,8 @@ function mediaTypeFromMime(mime: string): MediaType {
 
 /**
  * Acepta File o string (data:, http(s), base64) y envía:
- *  - AUDIO → `sendAudio` con body { number, audio, encoding }
- *  - Otros  → `sendMediaByUrl` (media base64)
+ * - AUDIO → `sendAudio` con body { number, audio, encoding }
+ * - Otros  → `sendMediaByUrl` (media base64)
  */
 export async function sendMediaAuto(
   apiKeyData: Pick<ApiKey, 'url' | 'key'>,
