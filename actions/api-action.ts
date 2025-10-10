@@ -1,517 +1,494 @@
-"use server"
+'use server';
 
 import { db } from "@/lib/db";
 import { ApiKey } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
+/* ==================================
+0. Tipos de Interfaz
+================================== */
+
 interface GenerateQrInterface {
-  instanceName: string
-  userId: string
+    instanceName: string
+    userId: string
 }
 interface ClientResponse<T = undefined> {
-  success: boolean
-  message: string
-  data?: T
+    success: boolean
+    message: string
+    data?: T
 }
-interface WhatsAppConnectionStatus {
-  qr?: {
-    code: string; // Código QR en formato base64
-    pairingCode: string; // Código de emparejamiento
-  };
-  connectionState?: {
-    instance: {
-      state: string; // Estado de la conexión (e.g. 'open', 'closed')
-    };
-  };
-  success: boolean; // Indica si la conexión fue exitosa
-}
-
 interface QRCodeResponse {
-  qr?: {
-    code: string; // Código QR en formato base64
-    pairingCode?: string; // Código de emparejamiento (opcional)
-  };
-  connectionState?: {
-    instance: {
-      state: string; // Estado de la conexión (e.g. 'open', 'closed')
+    qr?: {
+        code: string;
+        pairingCode?: string;
     };
-  };
-  success: boolean; // Indica si la operación fue exitosa
-  message?: string; // Mensaje opcional para el usuario
+    connectionState?: {
+        instance: {
+            state: string;
+        };
+    };
+    success: boolean;
+    message?: string;
 }
 
-//Server-Action Para generar el QR
+/* ==================================
+1. Utilidades Auxiliares
+================================== */
+
+function normalizeBaseUrl(url: string): string {
+    const trimmed = (url || '').trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+    return trimmed;
+}
+
+/**
+ * Función para verificar si el usuario ya tiene UNA instancia activa (usa findFirst).
+ */
+export async function checkActiveInstance(userId: string, tipoInstancia: string = 'Whatsapp') {
+    const instanciaActiva = await db.instancias.findFirst({
+        where: { userId, tipoInstancia: tipoInstancia },
+    });
+
+    return instanciaActiva;
+}
+
+/* ==================================
+2. Server Actions: Instancias y QR
+================================== */
+
 export async function generateQRCode({ instanceName, userId }: GenerateQrInterface): Promise<QRCodeResponse> {
-  try {
-    // 🔥 Buscar el usuario y su ApiKey asignada
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      include: { apiKey: true },
-    });
+    try {
+        const user = await db.user.findUnique({
+            where: { id: userId },
+            include: { apiKey: true },
+        });
 
+        if (!user) throw new Error("El userId no existe.");
+        if (!user.apiKey) throw new Error("El usuario no tiene una ApiKey asignada.");
 
-    if (!user) {
-      throw new Error("El userId no existe.");
+        const { key: apiKey, url: serverUrlRaw } = user.apiKey;
+        const serverUrl = normalizeBaseUrl(serverUrlRaw);
+
+        const response = await fetch(`https://${serverUrl}/instance/connect/${instanceName}`, {
+            method: 'GET',
+            headers: { apikey: apiKey },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+            throw new Error(errorData.message || 'Error al conectar con la instancia.');
+        }
+
+        const data = await response.json();
+
+        if (data.base64) {
+            return {
+                success: true,
+                qr: { code: data.base64, pairingCode: data.pairingCode },
+            };
+        } else if (data.instance?.state === 'open') {
+            return {
+                success: true,
+                connectionState: { instance: { state: 'open' } },
+                message: 'Instancia ya conectada.',
+            };
+        } else {
+            return {
+                success: false,
+                message: data.message || 'No se pudo generar el código QR.',
+            };
+        }
+    } catch (error: any) {
+        console.error("Error en generateQRCode:", error.message);
+        return { success: false, message: error.message || 'Error al generar el código QR.' };
     }
-    if (!user.apiKey) {
-      throw new Error("El usuario no tiene una ApiKey asignada.");
-    }
-
-    const { key: apiKey, url: serverUrl } = user.apiKey;
-
-    // Lógica para obtener el código QR desde tu API
-    const response = await fetch(`https://${serverUrl}/instance/connect/${instanceName}`, {
-      method: 'GET',
-      headers: {
-        apikey: apiKey,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Error al conectar con la instancia.');
-    }
-
-    const data = await response.json();
-
-    // Retornar el resultado basado en la respuesta de la API
-    if (data.base64) {
-      return {
-        success: true,
-        qr: {
-          code: data.base64,
-          pairingCode: data.pairingCode, // Si se incluye en la respuesta
-        },
-      };
-    } else if (data.instance.state === 'open') {
-      return {
-        success: true,
-        connectionState: {
-          instance: {
-            state: 'open',
-          },
-        },
-      };
-    } else {
-      return {
-        success: false,
-        message: 'No se pudo generar el código QR.',
-      };
-    }
-  } catch (error: any) {
-    return { success: false, message: error.message || 'Error al generar el código QR.' };
-  }
 }
-export async function agregarApi(data: FormData): Promise<ClientResponse<ApiKey>> {
-  const url = data.get('url') as string
-  const key = data.get('key') as string
 
-  if (!url || !key) {
-    return {
-      success: false,
-      message: 'Todos los campos son obligatorios',
-    }
-  }
-
-  try {
-    const createdApiKey = await db.apiKey.create({
-      data: { url, key }
-    })
-
-    return {
-      success: true,
-      message: 'API Key agregada exitosamente',
-      data: createdApiKey,
-    }
-
-  } catch (error: any) {
-    console.error(error)
-
-    return {
-      success: false,
-      message: error.message || 'Error al agregar la API Key',
-    }
-  }
-}
-export async function editarApiKey(data: FormData): Promise<ClientResponse<ApiKey>> {
-  const id = data.get('id') as string
-  const url = data.get('url') as string
-  const key = data.get('key') as string
-
-  if (!url || !key || !id) {
-    return {
-      success: false,
-      message: 'Todos los campos son obligatorios',
-    }
-  }
-
-  try {
-    // Actualizar la API Key en la base de datos
-    await db.apiKey.update({
-      where: { id },
-      data: { url, key }
-    });
-
-    return {
-      success: true,
-      message: "API Key actualizada exitosamente."
-    };
-
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message
-        || "Error al actualizar la API Key."
-    };
-  }
-}
-export async function eliminarApiKey(id: string) {
-  if (!id) {
-    return {
-      success: false,
-      message: 'No se encontró el id',
-    }
-  }
-
-  try {
-    // Eliminar la API Key de la base de datos
-    await db.apiKey.delete({
-      where: { id },
-    });
-
-    // Revalidar la página si es necesario
-    revalidatePath('/agregar-api');
-
-    return {
-      success: true,
-      message: "API Key eliminada exitosamente."
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message || "Error al eliminar la API Key."
-    };
-  }
-}
-export async function obtenerApiKeys() {
-  try {
-    // Obtener todas las API Keys de la base de datos
-    const apiKeys = await db.apiKey.findMany();
-
-    return { success: true, data: apiKeys };
-  } catch (error: any) {
-    // Manejo de errores
-    return { success: false, message: error.message || "Error al obtener las API Keys." };
-  }
-}
-export async function getApiKeyById(id: string) {
-  try {
-    if (!id) return { success: false, message: 'Missing id' };
-
-    // Obtener todas las API Keys de la base de datos
-    const apiKey = await db.apiKey.findUnique({
-      where: { id }
-    });
-
-    return { success: true, data: apiKey };
-  } catch (error: any) {
-    // Manejo de errores
-    return { success: false, message: error.message || "Error al obtener las API Keys." };
-  }
-}
-// Función para crear una instancia si el usuario no tiene una
 export async function createInstance(data: FormData) {
-  const instanceName = data.get('instanceName') as string;
-  const tipoInstancia = data.get('tipoInstancia') as string;
+    const instanceName = data.get('instanceName') as string;
+    const tipoInstancia = data.get('tipoInstancia') as string;
+    const userId = data.get('userId') as string;
 
-  const userId = data.get('userId') as string;
+    try {
+        if (!instanceName || !userId || !tipoInstancia) throw new Error('Todos los campos son obligatorios');
 
-  try {
-    // Validación de campos obligatorios
-    if (!instanceName || !userId || !tipoInstancia) {
-      throw new Error('Todos los campos son obligatorios');
+        const instanciaActiva = await checkActiveInstance(userId, tipoInstancia);
+        if (instanciaActiva) {
+            return { success: false, message: "El usuario ya tiene una instancia activa.", instancia: instanciaActiva };
+        }
+
+        const user = await db.user.findUnique({
+            where: { id: userId },
+            include: { apiKey: true },
+        });
+
+        if (!user || !user.apiKey) throw new Error("El usuario no tiene una ApiKey asignada.");
+
+        const { key: apiKey, url: serverUrlRaw } = user.apiKey;
+        const serverUrl = normalizeBaseUrl(serverUrlRaw);
+
+          const options = {
+            method: 'POST',
+            headers: { 'apikey': apiKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              instanceName: instanceName,
+              qrcode: true,
+              integration: "WHATSAPP-BAILEYS"
+            })
+          };
+
+        const response = await fetch(`https://${serverUrl}/instance/create`, options);
+        const apiResult = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(apiResult.message || 'Error al crear la instancia en la API.');
+        }
+        
+        const instanceId = apiResult.hash;
+        if (!instanceId) {
+          throw new Error('No se recibió instanceId en la respuesta de la API.');
+        }
+      
+        
+        const nuevaInstancia = await db.instancias.create({
+          data: { instanceName, tipoInstancia, userId, instanceId },
+        });
+        
+        revalidatePath('/agregar-api');
+
+        return { success: true, message: "Instancia creada exitosamente.", instancia: nuevaInstancia, apiResult };
+    } catch (error: any) {
+        console.error("Error en createInstance:", error.message);
+        return { success: false, message: error.message || "Error al crear la instancia." };
     }
-
-    // Verificar si el usuario ya tiene una instancia activa
-    const instanciaActiva = await checkActiveInstance(userId,tipoInstancia);
-    if (instanciaActiva) {
-      return { success: false, message: "El usuario ya tiene una instancia activa.", instancia: instanciaActiva };
-    }
-
-    // 🔥 Buscar el usuario y su ApiKey asignada
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      include: { apiKey: true },
-    });
-
-    if (!user || !user.apiKey) {
-      throw new Error("El usuario no tiene una ApiKey asignada.");
-    }
-
-    const { key: apiKey, url: serverUrl } = user.apiKey;
-
-    // Configurar las opciones para la llamada a la API externa
-    const options = {
-      method: 'POST',
-      headers: {
-        'apikey': apiKey,  // Usar la clave API obtenida de la base de datos
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        instanceName: instanceName,
-        qrcode: true,
-        integration: "WHATSAPP-BAILEYS"
-      })
-    };
-
-    // Realizar la llamada a la API externa usando el serverUrl
-    const response = await fetch(`https://${serverUrl}/instance/create`, options);
-    const apiResult = await response.json();
-
-    // Manejo de errores en la respuesta de la API
-    if (!response.ok) {
-      throw new Error(apiResult.message || 'Error al crear la instancia en la API.');
-    }
-
-    // Extraer el instanceId desde el objeto "instance" en la respuesta de la API
-    const instanceId = apiResult.hash;
-    if (!instanceId) {
-      throw new Error('No se recibió instanceId en la respuesta de la API.');
-    }
-
-    // Guardar la nueva instancia en la base de datos si la creación en la API fue exitosa
-    const nuevaInstancia = await db.instancias.create({
-      data: {
-        instanceName,
-        tipoInstancia,
-        userId,
-        instanceId,  // Usar el instanceId extraído de la respuesta
-      },
-    });
-
-    // Revalidar la página si es necesario
-    revalidatePath('/agregar-api');
-
-    return { success: true, message: "Instancia creada exitosamente.", instancia: nuevaInstancia, apiResult };
-  } catch (error: any) {
-    return { success: false, message: error.message || "Error al crear la instancia." };
-  }
 }
-export async function deleteInstance(userId: string,tipoInstancia:string='Whatsapp') {
-  try {
-    // Verificar si el usuario tiene una instancia activa
-    const instanciaActiva = await checkActiveInstance(userId,tipoInstancia);
-    if (!instanciaActiva) {
-      return { success: false, message: "El usuario no tiene ninguna instancia activa." };
+
+/**
+ * 🔥 IMPLEMENTACIÓN CORREGIDA CON LOGS Y LÓGICA DE BÚSQUEDA OR
+ * Solo realiza llamadas a Evolution API si la instancia es de tipo 'Whatsapp' o nula.
+ */
+export async function deleteInstance(userId: string, tipoInstancia?: string | null) {
+    console.log(`[DELETE START] Iniciando borrado para userId: ${userId}, tipoInstancia recibido: ${tipoInstancia}`);
+
+    try {
+        // 1. Aplicar valor por defecto: usa 'Whatsapp' si el valor es null o undefined.
+        const finalTipoInstancia = tipoInstancia ?? 'Whatsapp';
+        console.log(`[DELETE INFO] Tipo de instancia a buscar (final): ${finalTipoInstancia}`);
+        
+        // 2. Construir la cláusula WHERE usando OR si el tipo es 'Whatsapp'.
+        let whereClause: any = { userId };
+        
+        if (finalTipoInstancia === 'Whatsapp') {
+            // Buscamos 'Whatsapp' O 'null'.
+            whereClause = {
+                userId,
+                OR: [
+                    { tipoInstancia: 'Whatsapp' },
+                    { tipoInstancia: null }
+                ]
+            };
+            console.log("[DELETE INFO] Aplicando filtro OR (Whatsapp y NULL) para la búsqueda.");
+        } else if (finalTipoInstancia) {
+            // Buscamos solo el tipo especificado.
+            whereClause.tipoInstancia = finalTipoInstancia;
+            console.log(`[DELETE INFO] Aplicando filtro simple para: ${finalTipoInstancia}.`);
+        }
+        
+        const instancias = await db.instancias.findMany({
+            where: whereClause,
+            select: { id: true, instanceName: true, tipoInstancia: true }
+        });
+
+        if (instancias.length === 0) {
+            console.log(`[DELETE SKIP] No se encontraron instancias del tipo(s) buscado(s) para el usuario.`);
+            return { success: false, message: `El usuario no tiene instancias del tipo solicitado para eliminar.` };
+        }
+        
+        console.log(`[DELETE COUNT] Se encontraron ${instancias.length} instancias para intentar borrar.`);
+
+        // 3. Obtener ApiKey y Server URL
+        const user = await db.user.findUnique({
+            where: { id: userId },
+            include: { apiKey: true },
+        });
+
+        // ----------------------------------------------------
+        // 🔥 CORRECCIÓN DEL ERROR DE NULIDAD (TS18047) 🔥
+        // Verificamos si user y user.apiKey existen antes de acceder a las propiedades.
+        const userApiKey = user?.apiKey;
+        
+        const hasApiKey = !!userApiKey;
+        const serverUrl = hasApiKey ? normalizeBaseUrl(userApiKey!.url) : null;
+        const apiKey = hasApiKey ? userApiKey!.key : null;
+        // ----------------------------------------------------
+        
+        if (!hasApiKey && instancias.some(i => !i.tipoInstancia || i.tipoInstancia === 'Whatsapp')) {
+            console.warn(`[DELETE WARN] API Key no encontrada. ${instancias.length} registros se eliminarán solo LOCALMENTE.`);
+        }
+
+        let apiDeleteSuccessCount = 0;
+
+        // --- 4. Bucle para eliminar CADA instancia ---
+        for (const instancia of instancias) {
+            const instanceName = instancia.instanceName;
+            
+            // Lógica de bifurcación: solo llamar a la API si es Whatsapp/Null Y tenemos API Key.
+            const shouldCallEvolutionAPI = hasApiKey && (!instancia.tipoInstancia || instancia.tipoInstancia === 'Whatsapp');
+
+            if (shouldCallEvolutionAPI) {
+                console.log(`[DELETE API] Intentando borrar instancia Evolution: ${instanceName} (Tipo: ${instancia.tipoInstancia})`);
+                
+                // Usamos el operador ! para asegurar a TypeScript que apiKey/serverUrl no son null aquí.
+                const deleteOptions = {
+                    method: 'DELETE',
+                    headers: { 'apikey': apiKey!, 'Content-Type': 'application/json' }
+                };
+
+                const deleteResponse = await fetch(`https://${serverUrl!}/instance/delete/${instanceName}`, deleteOptions);
+                const deleteResult = await deleteResponse.json().catch(() => ({ message: 'No JSON response or instance already deleted.' }));
+
+                if (!deleteResponse.ok) {
+                    console.warn(
+                        `[DELETE FAIL] Fallo al borrar API para ${instanceName}. Estado: ${deleteResponse.status}. 
+                        Mensaje: ${deleteResult.message || JSON.stringify(deleteResult)}`
+                    );
+                } else {
+                    console.log(`[DELETE SUCCESS] API borrada para ${instanceName}.`);
+                    apiDeleteSuccessCount++;
+                }
+            } else {
+                console.log(`[DELETE SKIP] Saltando llamada API para ${instanceName}. Tipo: ${instancia.tipoInstancia} (Solo DB)`);
+            }
+        }
+
+        // --- 5. Eliminación masiva de la base de datos local (Prisma) ---
+        const deletedCount = await db.instancias.deleteMany({
+            where: whereClause
+        });
+
+        console.log(`[DELETE DB] Eliminados ${deletedCount.count} registros de la DB local.`);
+        console.log(`[DELETE END] Proceso completado. Éxito en API: ${apiDeleteSuccessCount}/${instancias.length}`);
+        
+        revalidatePath('/');
+
+        return { success: true, message: `Se eliminaron ${deletedCount.count} instancias de la base de datos local. (${apiDeleteSuccessCount} borradas en Evolution API)` };
+
+    } catch (error: any) {
+        console.error(`[DELETE ERROR] Error crítico en el proceso de borrado: ${error.message}`);
+        return { success: false, message: error.message || "Error al eliminar las instancias." };
     }
-
-    const instanceName = instanciaActiva.instanceName;
-
-    // 🔥 Buscar el usuario y su ApiKey asignada
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      include: { apiKey: true },
-    });
-
-    if (!user || !user.apiKey) {
-      throw new Error("El usuario no tiene una ApiKey asignada.");
-    }
-
-    const { key: apiKey, url: serverUrl } = user.apiKey;
-
-    // 1. Logout de la instancia
-    const logoutOptions = {
-      method: 'DELETE',
-      headers: {
-        'apikey': apiKey,
-        'Content-Type': 'application/json'
-      }
-    };
-
-    const logoutResponse = await fetch(`https://${serverUrl}/instance/logout/${instanceName}`, logoutOptions);
-    const logoutResult = await logoutResponse.json();
-
-    if (!logoutResponse.ok) {
-      throw new Error(logoutResult.message || 'Error al hacer logout de la instancia en la API.');
-    }
-
-    // 2. Eliminar la instancia en la API
-    const deleteOptions = {
-      method: 'DELETE',
-      headers: {
-        'apikey': apiKey,
-        'Content-Type': 'application/json'
-      }
-    };
-
-    const deleteResponse = await fetch(`https://${serverUrl}/instance/delete/${instanceName}`, deleteOptions);
-    const deleteResult = await deleteResponse.json();
-
-    if (!deleteResponse.ok) {
-      throw new Error(deleteResult.message || 'Error al eliminar la instancia en la API.');
-    }
-
-    // 3. Eliminar la instancia de la base de datos
-    const instancia = await db.instancias.findFirst({
-      where: { instanceName,tipoInstancia }
-    });
-
-    if (!instancia) {
-      throw new Error("No se encontró la instancia en la base de datos.");
-    }
-
-    await db.instancias.delete({
-      where: { id: instancia.id }
-    });
-
-    return { success: true, message: "Instancia eliminada exitosamente." };
-  } catch (error: any) {
-    return { success: false, message: error.message || "Error al eliminar la instancia." };
-  }
 }
-// Función para verificar si el usuario ya tiene una instancia
-export async function checkActiveInstance(userId: string,tipoInstancia:string='Whatsapp') {
-  const instanciaActiva = await db.instancias.findFirst({
-    where: { userId,tipoInstancia:tipoInstancia },
-  });
 
-  return instanciaActiva;
-}
-// Funcion para traer datos del cliente
 export async function getInstances(userId: string) {
-  try {
-    const instance = await db.instancias.findMany({
-      where: {
-        userId: userId,
-      },
-      select: {
-        instanceName: true,
-        instanceId: true,
-      },
-    });
+    try {
+        const instance = await db.instancias.findMany({
+            where: { userId: userId },
+            select: { instanceName: true, instanceId: true },
+        });
 
-    // 🔥 Buscar el usuario y su ApiKey asignada
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      include: { apiKey: true },
-    });
+        const user = await db.user.findUnique({
+            where: { id: userId },
+            include: { apiKey: true },
+        });
 
-    if (!user || !user.apiKey) {
-      throw new Error("El usuario no tiene una ApiKey asignada.");
+        if (!user || !user.apiKey) throw new Error("El usuario no tiene una ApiKey asignada.");
+
+        const { url: serverUrlRaw } = user.apiKey;
+        const serverUrl = normalizeBaseUrl(serverUrlRaw);
+
+        const instances = instance.map((instance) => ({
+            ...instance,
+            serverUrl
+        }));
+
+        return instances;
+
+    } catch (error) {
+        console.error(`Error fetching instances:`, error);
+    }
+}
+
+/* ==================================
+3. Server Actions: API Keys
+================================== */
+
+export async function agregarApi(data: FormData): Promise<ClientResponse<ApiKey>> {
+    const url = data.get('url') as string
+    const key = data.get('key') as string
+
+    if (!url || !key) {
+        return { success: false, message: 'Todos los campos son obligatorios' }
     }
 
-    const { key: apiKey, url: serverUrl } = user.apiKey;
+    try {
+        const createdApiKey = await db.apiKey.create({
+            data: { url, key }
+        })
 
-    // Agregar apiKey y serverUrl a cada instancia
-    const instances = instance.map((instance) => ({
-      ...instance,
-      serverUrl
-    }));
+        return { success: true, message: 'API Key agregada exitosamente', data: createdApiKey }
 
-    return instances;
-
-  } catch (error) {
-    console.error(`Error fetching from:`, error);
-  }
+    } catch (error: any) {
+        console.error("Error en agregarApi:", error)
+        return { success: false, message: error.message || 'Error al agregar la API Key' }
+    }
 }
-// actions/createBotAction.ts
+
+export async function editarApiKey(data: FormData): Promise<ClientResponse<ApiKey>> {
+    const id = data.get('id') as string
+    const url = data.get('url') as string
+    const key = data.get('key') as string
+
+    if (!url || !key || !id) {
+        return { success: false, message: 'Todos los campos son obligatorios' }
+    }
+
+    try {
+        await db.apiKey.update({
+            where: { id },
+            data: { url, key }
+        });
+
+        return { success: true, message: "API Key actualizada exitosamente." };
+
+    } catch (error: any) {
+        console.error("Error en editarApiKey:", error)
+        return { success: false, message: error.message || "Error al actualizar la API Key." };
+    }
+}
+
+export async function eliminarApiKey(id: string) {
+    if (!id) {
+        return { success: false, message: 'No se encontró el id' }
+    }
+
+    try {
+        await db.apiKey.delete({
+            where: { id },
+        });
+
+        revalidatePath('/agregar-api');
+
+        return { success: true, message: "API Key eliminada exitosamente." };
+    } catch (error: any) {
+        console.error("Error en eliminarApiKey:", error)
+        return { success: false, message: error.message || "Error al eliminar la API Key." };
+    }
+}
+
+export async function obtenerApiKeys() {
+    try {
+        const apiKeys = await db.apiKey.findMany();
+        return { success: true, data: apiKeys };
+    } catch (error: any) {
+        console.error("Error en obtenerApiKeys:", error)
+        return { success: false, message: error.message || "Error al obtener las API Keys." };
+    }
+}
+
+export async function getApiKeyById(id: string) {
+    try {
+        if (!id) return { success: false, message: 'Missing id' };
+
+        const apiKey = await db.apiKey.findUnique({
+            where: { id }
+        });
+
+        return { success: true, data: apiKey };
+    } catch (error: any) {
+        console.error("Error en getApiKeyById:", error)
+        return { success: false, message: error.message || "Error al obtener las API Keys." };
+    }
+}
+
+/* ==================================
+4. Server Actions: Bot y Status
+================================== */
+
 export async function createBotAction(data: FormData) {
-  const instanceName = data.get('instanceName') as string;
-  const instanceId = data.get('instanceId') as string;
-  const systemMessage = data.get('systemMessage') as string;
+    const instanceName = data.get('instanceName') as string;
+    const instanceId = data.get('instanceId') as string;
+    const systemMessage = data.get('systemMessage') as string;
 
 
-  if (!instanceName || !instanceId || !systemMessage) {
-    throw new Error('Faltan datos necesarios.');
-  }
-
-  const requestBody = {
-    enabled: true,
-    openaiCredsId: 'cm2nql5yd6e7g12gecbdrflit',
-    botType: 'chatCompletion',
-    model: 'gpt-4',
-    systemMessages: [systemMessage],
-    assistantMessages: ['\n\nHello there, how may I assist you today?'],
-    userMessages: ['Hello!'],
-    maxTokens: 300,
-    triggerType: 'keyword',
-    triggerOperator: 'equals',
-    triggerValue: 'test',
-    expire: 20,
-    keywordFinish: '#EXIT',
-    delayMessage: 1000,
-    unknownMessage: 'Message not recognized',
-    listeningFromMe: false,
-    stopBotFromMe: false,
-    keepOpen: false,
-    debounceTime: 10,
-    ignoreJids: [],
-  };
-
-  try {
-    const response = await fetch(`https://conexion.aizenbots.com/openai/create/${instanceName}`, {
-      method: 'POST',
-      headers: {
-        'apikey': instanceId,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Error al crear el bot');
+    if (!instanceName || !instanceId || !systemMessage) {
+        throw new Error('Faltan datos necesarios.');
     }
 
-    return await response.json();
-  } catch (err) {
-    console.error(`Error:`, err);
-  }
+    const requestBody = {
+        enabled: true,
+        openaiCredsId: 'cm2nql5yd6e7g12gecbdrflit',
+        botType: 'chatCompletion',
+        model: 'gpt-4',
+        systemMessages: [systemMessage],
+        assistantMessages: ['\n\nHello there, how may I assist you today?'],
+        userMessages: ['Hello!'],
+        maxTokens: 300,
+        triggerType: 'keyword',
+        triggerOperator: 'equals',
+        triggerValue: 'test',
+        expire: 20,
+        keywordFinish: '#EXIT',
+        delayMessage: 1000,
+        unknownMessage: 'Message not recognized',
+        listeningFromMe: false,
+        stopBotFromMe: false,
+        keepOpen: false,
+        debounceTime: 10,
+        ignoreJids: [],
+    };
+
+    try {
+        const response = await fetch(`https://conexion.aizenbots.com/openai/create/${instanceName}`, {
+            method: 'POST',
+            headers: { 'apikey': instanceId, 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Error al crear el bot');
+        }
+
+        return await response.json();
+    } catch (err) {
+        console.error(`Error en createBotAction:`, err);
+    }
 }
-//Datos para api status
+
 export async function getDataApi(userId: string, apiKeyId: string) {
-  try {
-    const apiKey = await db.apiKey.findFirst({
-      where: {
-        id: apiKeyId
-      },
-      select: {
-        id: true,
-        url: true,
-        key: true,
-      },
-    });
+    try {
+        const apiKey = await db.apiKey.findFirst({
+            where: { id: apiKeyId },
+            select: { id: true, url: true, key: true },
+        });
 
-    const instancia = await db.instancias.findFirst({
-      where: { userId },
-      select: {
-        id: true,
-        instanceName: true,
-        instanceId: true,
-      },
-    });
+        const instancia = await db.instancias.findFirst({
+            where: { userId },
+            select: { id: true, instanceName: true, instanceId: true },
+        });
 
-    if (!apiKey || !instancia) {
-      return {
-        success: false,
-        data: null,
-        message: "No se encontró ApiKey o Instancia para este usuario.",
-      };
+        if (!apiKey || !instancia) {
+            return {
+                success: false,
+                data: null,
+                message: "No se encontró ApiKey o Instancia para este usuario.",
+            };
+        }
+
+        return {
+            success: true,
+            data: {
+                apiKeyId: apiKey.id,
+                url: apiKey.url,
+                key: instancia.instanceId,
+                instanceName: instancia.instanceName,
+                instanceId: instancia.instanceId,
+            },
+        };
+    } catch (error: any) {
+        console.error("Error en getDataApi:", error);
+        return {
+            success: false,
+            message: error.message || "Error al obtener datos de la API.",
+        };
     }
-
-    return {
-      success: true,
-      data: {
-        apiKeyId: apiKey.id,
-        url: apiKey.url,
-        key: instancia.instanceId,
-        instanceName: instancia.instanceName,
-        instanceId: instancia.instanceId,
-      },
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message || "Error al obtener datos de la API.",
-    };
-  }
 }
