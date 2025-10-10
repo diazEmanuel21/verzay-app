@@ -1,5 +1,3 @@
-// AiCreatePrompt refactorizado con useForm y zodResolver
-
 'use server'
 
 import { db } from '@/lib/db'
