@@ -144,9 +144,9 @@ export interface SendMediaUrlParams {
   mediatype: MediaType;
   /**
    * Puede ser:
-   *  - Data URL (se extrae y se usa SOLO la parte base64)
-   *  - URL http(s) (para audio se manda como URL; para otros se convierte a base64 “puro”)
-   *  - Base64 “puro”
+   * - Data URL (se extrae y se usa SOLO la parte base64)
+   * - URL http(s) (para audio se manda como URL; para otros se convierte a base64 “puro”)
+   * - Base64 “puro”
    */
   mediaUrl: string;
   fileName?: string;
@@ -177,6 +177,14 @@ function isChatData(x: any): x is ChatData {
   return x && typeof x === 'object' && typeof x.remoteJid === 'string' && typeof x.unreadCount !== 'undefined';
 }
 
+/**
+ * 🆕 NUEVA FUNCIÓN: Filtra el chat especial de Estados de WhatsApp (`status@broadcast`).
+ */
+function filterOutStatusChat(chats: ChatArray): ChatArray {
+  const STATUS_JID = 'status@broadcast';
+  return chats.filter(chat => chat.remoteJid !== STATUS_JID);
+}
+
 function ensureArrayResponse(payload: unknown): ChatArray {
   const arr =
     (Array.isArray(payload) && payload) ||
@@ -192,22 +200,42 @@ function ensureArrayResponse(payload: unknown): ChatArray {
 }
 
 function normalizeFindMessagesPayload(payload: any) {
+  // Primero, se extrae el array de mensajes 'crudos' y los metadatos de paginación
+  let rawItems: any[];
+  let meta: Record<string, unknown> = {};
+
   if (payload?.messages?.records && Array.isArray(payload.messages.records)) {
     const container = payload.messages;
-    return {
-      items: container.records as EvolutionMessage[],
-      meta: {
-        total: Number(container.total ?? 0) || undefined,
-        pages: Number(container.pages ?? 0) || undefined,
-        currentPage: Number(container.currentPage ?? 1) || undefined,
-        nextPage: (container.currentPage < container.pages ? container.currentPage + 1 : null) ?? undefined,
-      },
+    rawItems = container.records;
+    meta = {
+      total: Number(container.total ?? 0) || undefined,
+      pages: Number(container.pages ?? 0) || undefined,
+      currentPage: Number(container.currentPage ?? 1) || undefined,
+      nextPage: (container.currentPage < container.pages ? container.currentPage + 1 : null) ?? undefined,
     };
+  } else {
+    rawItems =
+      (Array.isArray(payload) && payload) || (payload?.data && Array.isArray(payload.data) && payload.data) || [];
   }
-  const items =
-    (Array.isArray(payload) && payload) || (payload?.data && Array.isArray(payload.data) && payload.data) || [];
-  return { items: items as EvolutionMessage[], meta: {} };
+
+  // Luego, se procesa cada mensaje para manejar el caso de mensajes nulos (eliminados)
+  const items = rawItems.map((msg): EvolutionMessage => {
+    if (msg.message === null || msg.message === undefined) {
+      return {
+        ...msg,
+        message: {
+          conversation: 'Mensaje eliminado', // Contenido alternativo
+        },
+        messageType: 'conversation', // Se ajusta el tipo para consistencia
+      };
+    }
+    return msg as EvolutionMessage;
+  });
+
+  // Se devuelve la lista de mensajes procesados y los metadatos
+  return { items, meta };
 }
+
 
 /**
  * doRequest con logging explícito del campo `media`/`audio` cuando shouldLog=true
@@ -319,7 +347,12 @@ export async function fetchChatsFromEvolution(
 
     if (raw == null) return { success: false, message: 'Respuesta inválida o vacía.' };
 
-    const data = ensureArrayResponse(raw);
+    // 1. Obtener la respuesta de la API como un array de chats
+    let data = ensureArrayResponse(raw);
+
+    // 2. 🚨 APLICAR EL FILTRO: Excluir el JID de Estados de WhatsApp.
+    data = filterOutStatusChat(data);
+
     return { success: true, message: `OK findChats ${instanceName}`, data };
   } catch (err: any) {
     clearTimeout(timeout);
@@ -383,10 +416,10 @@ export async function findMessagesByRemoteJid(
       success: true,
       message: `OK findMessages ${instanceName} ${remoteJid}`,
       data: items,
-      total: meta.total,
-      pages: meta.pages,
-      currentPage: meta.currentPage,
-      nextPage: meta.nextPage,
+      total: meta.total as number,
+      pages: meta.pages as number,
+      currentPage: meta.currentPage as number,
+      nextPage: meta.nextPage as number | null,
       raw,
       queriedRemoteJid: remoteJid,
     };
@@ -524,9 +557,9 @@ function normalizeBase64(b64: string): string {
 
 /**
  * Normaliza un string a base64 “puro” (tolerante):
- *  - data:<mime>;base64,AAAA → extrae y normaliza
- *  - http(s):// → descarga y convierte a base64
- *  - base64 crudo (URL-safe o sin padding) → normaliza + valida decodificando
+ * - data:<mime>;base64,AAAA → extrae y normaliza
+ * - http(s):// → descarga y convierte a base64
+ * - base64 crudo (URL-safe o sin padding) → normaliza + valida decodificando
  */
 async function ensureBase64FromString(
   mediaUrl: string,
@@ -604,7 +637,7 @@ export async function sendAudio(
   const apikeyHeader = globalApiKey;
 
   let audioField = audioSource;
-  let encoding = false; // 👈 ESTO se elimina o se ignora
+  let encoding = false; // 👈 ESTO se elimina o se ignora (se usa en el log para preview)
 
   const isHttp = /^https?:\/\//i.test(audioSource);
 
@@ -612,7 +645,7 @@ export async function sendAudio(
     // Data URL o base64 crudo (o URL forzada) → normalizamos a base64 “puro”
     const { base64 } = await ensureBase64FromString(audioSource, options?.mimetype || 'audio/ogg');
     audioField = base64;
-    encoding = true; // 👈 Se elimina esta asignación
+    encoding = true; // 👈 Se usa para el log
   }
 
   const body: Record<string, any> = {
@@ -625,14 +658,12 @@ export async function sendAudio(
   if (Array.isArray(options?.mentioned) && options!.mentioned!.length > 0) body.mentioned = options!.mentioned;
   if (typeof options?.ptt === 'boolean') body.ptt = options.ptt;
 
-  // Logs
-  // console.log(`[SENDAUDIO] number=${remoteJid} encoding=${encoding}`);
+  // Nota: el campo 'encoding: true' se quita o ignora en el body final si la API lo maneja automáticamente,
+  // pero aquí se mantiene la lógica de `encoding` para el logging.
   if (encoding) {
-    // console.log(`[SENDAUDIO][EXACT audio base64] length=${String(audioField).length}`);
-    // console.log(audioField);
-  } else {
-    // console.log(`[SENDAUDIO] audio=url:${audioField}`);
+    body.encoding = true;
   }
+
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 20000);
@@ -664,7 +695,7 @@ export async function sendAudio(
 
 /* ==================================
 5B. Envío de Media genérico (image/video/document) → media = base64 puro
-   (para audio ahora se delega a sendAudio)
+    (para audio ahora se delega a sendAudio)
 ================================== */
 
 export async function sendMediaByUrl(
@@ -741,8 +772,8 @@ export async function sendMediaByUrl(
   if (params.quotedMessage) body.quoted = params.quotedMessage;
 
   // 🔎 Log EXACTO del base64 que se envía en `media`
-  console.log(`[SENDMEDIA][EXACT media] length=${String(body.media).length}`);
-  console.log(body.media);
+  // console.log(`[SENDMEDIA][EXACT media] length=${String(body.media).length}`);
+  // console.log(body.media);
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 20000);
@@ -767,7 +798,7 @@ export async function sendMediaByUrl(
       success: true,
       message: `Media (${params.mediatype}) enviada a ${remoteJid}`,
       data: raw,
-      remoteJid,
+      remoteJid: remoteJid,
     };
   } catch (err: any) {
     clearTimeout(timeout);
@@ -829,8 +860,8 @@ function mediaTypeFromMime(mime: string): MediaType {
 
 /**
  * Acepta File o string (data:, http(s), base64) y envía:
- *  - AUDIO → `sendAudio` con body { number, audio, encoding }
- *  - Otros  → `sendMediaByUrl` (media base64)
+ * - AUDIO → `sendAudio` con body { number, audio, encoding }
+ * - Otros  → `sendMediaByUrl` (media base64)
  */
 export async function sendMediaAuto(
   apiKeyData: Pick<ApiKey, 'url' | 'key'>,

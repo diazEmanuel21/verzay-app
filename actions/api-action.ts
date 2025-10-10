@@ -1,4 +1,3 @@
-
 'use server';
 
 import { db } from "@/lib/db";
@@ -46,7 +45,7 @@ function normalizeBaseUrl(url: string): string {
  */
 export async function checkActiveInstance(userId: string, instanceType: string = 'Whatsapp') {
   const instanciaActiva = await db.instancias.findFirst({
-    where: { userId, instanceType: instanceType },
+    where: { userId, instanceType },
   });
 
   return instanciaActiva;
@@ -149,6 +148,7 @@ export async function createInstance(data: FormData) {
       throw new Error('No se recibió instanceId en la respuesta de la API.');
     }
 
+
     const nuevaInstancia = await db.instancias.create({
       data: { instanceName, instanceType, userId, instanceId },
     });
@@ -164,9 +164,7 @@ export async function createInstance(data: FormData) {
 
 /**
  * 🔥 IMPLEMENTACIÓN CORREGIDA CON LOGS Y LÓGICA DE BÚSQUEDA OR
- * * Elimina TODAS las instancias asociadas a un usuario.
- * Si el tipo de instancia es 'Whatsapp' (por defecto o explícito), incluye también 
- * las instancias donde 'instanceType' es NULL.
+ * Solo realiza llamadas a Evolution API si la instancia es de tipo 'Whatsapp' o nula.
  */
 export async function deleteInstance(userId: string, instanceType?: string | null) {
   console.log(`[DELETE START] Iniciando borrado para userId: ${userId}, instanceType recibido: ${instanceType}`);
@@ -180,7 +178,7 @@ export async function deleteInstance(userId: string, instanceType?: string | nul
     let whereClause: any = { userId };
 
     if (finalTipoInstancia === 'Whatsapp') {
-      // Si el usuario quiere borrar 'Whatsapp', buscamos 'Whatsapp' O 'null'.
+      // Buscamos 'Whatsapp' O 'null'.
       whereClause = {
         userId,
         OR: [
@@ -190,7 +188,7 @@ export async function deleteInstance(userId: string, instanceType?: string | nul
       };
       console.log("[DELETE INFO] Aplicando filtro OR (Whatsapp y NULL) para la búsqueda.");
     } else if (finalTipoInstancia) {
-      // Si el usuario especificó otro tipo (e.g., 'Telegram'), buscamos solo ese tipo.
+      // Buscamos solo el tipo especificado.
       whereClause.instanceType = finalTipoInstancia;
       console.log(`[DELETE INFO] Aplicando filtro simple para: ${finalTipoInstancia}.`);
     }
@@ -201,7 +199,7 @@ export async function deleteInstance(userId: string, instanceType?: string | nul
     });
 
     if (instancias.length === 0) {
-      console.log(`[DELETE SKIP] No se encontraron instancias de tipo(s) buscado(s) para el usuario.`);
+      console.log(`[DELETE SKIP] No se encontraron instancias del tipo(s) buscado(s) para el usuario.`);
       return { success: false, message: `El usuario no tiene instancias del tipo solicitado para eliminar.` };
     }
 
@@ -213,40 +211,52 @@ export async function deleteInstance(userId: string, instanceType?: string | nul
       include: { apiKey: true },
     });
 
-    if (!user || !user.apiKey) {
-      console.warn(`[DELETE WARN] API Key no encontrada. Eliminando ${instancias.length} registros locales SOLAMENTE.`);
-      await db.instancias.deleteMany({ where: whereClause });
-      revalidatePath('/');
-      return { success: false, message: "El usuario no tiene una ApiKey asignada, se eliminaron solo los registros locales." };
-    }
+    // ----------------------------------------------------
+    // 🔥 CORRECCIÓN DEL ERROR DE NULIDAD (TS18047) 🔥
+    // Verificamos si user y user.apiKey existen antes de acceder a las propiedades.
+    const userApiKey = user?.apiKey;
 
-    const { key: apiKey, url: serverUrlRaw } = user.apiKey;
-    const serverUrl = normalizeBaseUrl(serverUrlRaw);
-    console.log(`[DELETE API] Usando servidor API en: ${serverUrl}`);
+    const hasApiKey = !!userApiKey;
+    const serverUrl = hasApiKey ? normalizeBaseUrl(userApiKey!.url) : null;
+    const apiKey = hasApiKey ? userApiKey!.key : null;
+    // ----------------------------------------------------
+
+    if (!hasApiKey && instancias.some(i => !i.instanceType || i.instanceType === 'Whatsapp')) {
+      console.warn(`[DELETE WARN] API Key no encontrada. ${instancias.length} registros se eliminarán solo LOCALMENTE.`);
+    }
 
     let apiDeleteSuccessCount = 0;
 
-    // --- 4. Bucle para eliminar CADA instancia en la API externa ---
+    // --- 4. Bucle para eliminar CADA instancia ---
     for (const instancia of instancias) {
       const instanceName = instancia.instanceName;
-      console.log(`[DELETE API] Intentando borrar instancia: ${instanceName} (ID DB: ${instancia.id})`);
 
-      const deleteOptions = {
-        method: 'DELETE',
-        headers: { 'apikey': apiKey, 'Content-Type': 'application/json' }
-      };
+      // Lógica de bifurcación: solo llamar a la API si es Whatsapp/Null Y tenemos API Key.
+      const shouldCallEvolutionAPI = hasApiKey && (!instancia.instanceType || instancia.instanceType === 'Whatsapp');
 
-      const deleteResponse = await fetch(`https://${serverUrl}/instance/delete/${instanceName}`, deleteOptions);
-      const deleteResult = await deleteResponse.json().catch(() => ({ message: 'No JSON response or instance already deleted.' }));
+      if (shouldCallEvolutionAPI) {
+        console.log(`[DELETE API] Intentando borrar instancia Evolution: ${instanceName} (Tipo: ${instancia.instanceType})`);
 
-      if (!deleteResponse.ok) {
-        console.warn(
-          `[DELETE FAIL] Fallo al borrar API para ${instanceName}. Estado: ${deleteResponse.status}. 
-                    Mensaje: ${deleteResult.message || JSON.stringify(deleteResult)}`
-        );
+        // Usamos el operador ! para asegurar a TypeScript que apiKey/serverUrl no son null aquí.
+        const deleteOptions = {
+          method: 'DELETE',
+          headers: { 'apikey': apiKey!, 'Content-Type': 'application/json' }
+        };
+
+        const deleteResponse = await fetch(`https://${serverUrl!}/instance/delete/${instanceName}`, deleteOptions);
+        const deleteResult = await deleteResponse.json().catch(() => ({ message: 'No JSON response or instance already deleted.' }));
+
+        if (!deleteResponse.ok) {
+          console.warn(
+            `[DELETE FAIL] Fallo al borrar API para ${instanceName}. Estado: ${deleteResponse.status}. 
+                        Mensaje: ${deleteResult.message || JSON.stringify(deleteResult)}`
+          );
+        } else {
+          console.log(`[DELETE SUCCESS] API borrada para ${instanceName}.`);
+          apiDeleteSuccessCount++;
+        }
       } else {
-        console.log(`[DELETE SUCCESS] API borrada para ${instanceName}.`);
-        apiDeleteSuccessCount++;
+        console.log(`[DELETE SKIP] Saltando llamada API para ${instanceName}. Tipo: ${instancia.instanceType} (Solo DB)`);
       }
     }
 
@@ -260,7 +270,7 @@ export async function deleteInstance(userId: string, instanceType?: string | nul
 
     revalidatePath('/');
 
-    return { success: true, message: `Se eliminaron ${deletedCount.count} instancias de la base de datos local. (${apiDeleteSuccessCount} borradas en API)` };
+    return { success: true, message: `Se eliminaron ${deletedCount.count} instancias de la base de datos local. (${apiDeleteSuccessCount} borradas en Evolution API)` };
 
   } catch (error: any) {
     console.error(`[DELETE ERROR] Error crítico en el proceso de borrado: ${error.message}`);

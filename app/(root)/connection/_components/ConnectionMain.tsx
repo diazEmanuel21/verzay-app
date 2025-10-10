@@ -40,28 +40,38 @@ export const ConnectionMain = ({
         try {
             const result = await createInstance(formData);
             result.success ? toast.success(result.message) : toast.error(result.message);
-        } catch (error) {
+        } catch {
             toast.error('Hubo un error al procesar la solicitud.');
         } finally {
             setLoading(false);
         }
     };
 
-    return instance ? (
-        <ClientInstanceCard
-            intanceName={instanceName}
-            instanceType={instanceType ?? ''}
-            user={user}
-            currentInstanceInfo={currentInstanceInfo}
-            prompts={filteredPrompts}
-        />
-    ) : (
-        <ConnectionCard
-            user={user}
-            handleSubmit={onSubmit}
-            loading={loading}
-            defaultValues={{ instanceName, instanceType }}
-            instanceType={instanceType}
-        />
-    );
+    return (
+        <>
+            {
+                (instanceType === 'Instagram' && !user.onInstagram) ||
+                    (instanceType === 'Facebook' && !user.onFacebook) ? <></> :
+                    <>{
+                        instance ? (
+                            <ClientInstanceCard
+                                intanceName={instanceName}
+                                instanceType={instanceType ?? ''}
+                                user={user}
+                                currentInstanceInfo={currentInstanceInfo}
+                                prompts={filteredPrompts}
+                            />
+                        ) : (
+                            <ConnectionCard
+                                user={user}
+                                handleSubmit={onSubmit}
+                                loading={loading}
+                                defaultValues={{ instanceName, instanceType }}
+                                instanceType={instanceType}
+                            />
+                        )
+                    } </>
+            }
+        </>
+    )
 };
