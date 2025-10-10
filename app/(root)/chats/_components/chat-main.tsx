@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { ArrowRight, Mic, Send, Trash2, X, Clock, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -124,7 +124,7 @@ function extractMediaInfo(msg: any, type: MediaType): MediaData | null {
     return null;
 }
 
-function toUIMessages(messages: EvolutionMessage[], userJid: string | undefined,avatarUrl:string|undefined): UIBubble[] {
+function toUIMessages(messages: EvolutionMessage[], userJid: string | undefined, avatarUrl: string | undefined): UIBubble[] {
     return messages.map((m) => {
         const isUser = m.key?.fromMe === true || m.key?.remoteJid !== userJid;
         const sender: 'user' | 'other' = isUser ? 'user' : 'other';
@@ -214,7 +214,6 @@ const SendingMessageSkeleton: React.FC<{ tempMessage: UIBubble }> = ({ tempMessa
     );
 };
 
-
 const MediaRenderer: React.FC<{ media: MediaData | undefined }> = React.memo(({ media }) => {
     if (!media) return null;
     const { type, url, mimeType, caption } = media;
@@ -256,10 +255,12 @@ const MediaRenderer: React.FC<{ media: MediaData | undefined }> = React.memo(({ 
                 </a>
             )}
             {caption && type !== 'audio' && (
-                 <div className={cn(
-                    'text-xs p-1', 
-                    type === 'document' ? 'text-gray-600 dark:text-gray-300' : 'text-gray-800 dark:text-gray-100'
-                    )}>
+                <div
+                    className={cn(
+                        'text-xs p-1',
+                        type === 'document' ? 'text-gray-600 dark:text-gray-300' : 'text-gray-800 dark:text-gray-100'
+                    )}
+                >
                     <ExpandableText message={caption} isUserMessage={false} />
                 </div>
             )}
@@ -276,7 +277,6 @@ const MessageBubble: React.FC<{
     media?: MediaData;
     status?: 'sending';
 }> = ({ message, isUserMessage, avatarSrc, timestamp, media, status }) => {
-  console.log('message bubble recive',avatarSrc)
     const bubbleClass = isUserMessage
         ? 'bg-primary text-white rounded-xl rounded-br-sm self-end'
         : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl rounded-tl-sm self-start';
@@ -288,7 +288,7 @@ const MessageBubble: React.FC<{
             {showAvatar && (
                 <div className="mr-1">
                     <Avatar className="w-7 h-7">
-                        <AvatarImage src={avatarSrc|| '/default-avatar.png'} />
+                        <AvatarImage src={avatarSrc || '/default-avatar.png'} />
                         <AvatarFallback>E</AvatarFallback>
                     </Avatar>
                 </div>
@@ -349,12 +349,10 @@ const ChatMessageList: React.FC<{
         return list;
     }, [uiMessages, tempMessage]);
 
-
     return (
         <div className="flex-1 overflow-y-auto p-4 flex flex-col custom-scrollbar w-full" ref={listRef}>
             {loading && <div className="text-center text-gray-500 py-4">Cargando mensajes…</div>}
-            {fullList.map((msg) => (
-                
+            {fullList.map((msg) =>
                 msg.status === 'sending' ? (
                     <SendingMessageSkeleton key={msg.id} tempMessage={msg} />
                 ) : (
@@ -367,7 +365,7 @@ const ChatMessageList: React.FC<{
                         media={msg.media}
                     />
                 )
-            ))}
+            )}
         </div>
     );
 };
@@ -379,6 +377,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
     const [isSending, setIsSending] = useState(false); // NUEVO: Estado de envío
     const [tempMessage, setTempMessage] = useState<UIBubble | null>(null); // NUEVO: Mensaje esqueleto
     const listRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const userJid = info?.remoteJid;
 
     // Estados de Grabación de Audio
@@ -390,8 +389,11 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<BlobPart[]>([]);
     const timerRef = useRef<number | null>(null);
-  console.log(header.avatarSrc)
-    const uiMessages = useMemo(() => toUIMessages(messages.slice().reverse(), userJid,header.avatarSrc), [messages, userJid]);
+
+    const uiMessages = useMemo(
+        () => toUIMessages(messages.slice().reverse(), userJid, header.avatarSrc),
+        [messages, userJid, header.avatarSrc]
+    );
 
     // ** LÓGICA DE SCROLL (EL CAMBIO CLAVE) **
     const scrollToBottom = useCallback(() => {
@@ -405,7 +407,15 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         scrollToBottom();
     }, [uiMessages.length, tempMessage, scrollToBottom]);
     // ****************************************
-    
+
+    // Auto-resize del Textarea
+    useEffect(() => {
+        const el = textareaRef.current;
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = Math.min(el.scrollHeight, 160) + 'px'; // 160px ≈ max-h-40
+    }, [input]);
+
     /* -------- Handlers de UI -------- */
     const handleComposeMediaChange = useCallback((m: ComposeMedia | null) => {
         setComposeMedia(m);
@@ -482,7 +492,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
                 mimeType: composeMedia.mimeType,
                 caption: caption,
             };
-            
+
             setInput('');
             setComposeMedia(null);
         } else {
@@ -494,7 +504,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
 
             setInput('');
         }
-        
+
         // --- 2. Mostrar Esqueleto y Enviar ---
         if (payload) {
             // Crear y mostrar mensaje temporal/esqueleto
@@ -520,13 +530,13 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
                 // Limpiar el esqueleto SÓLO después de que la respuesta del servidor haya llegado
                 // y los mensajes hayan sido actualizados (lo cual debe suceder en tu componente padre)
                 setIsSending(false);
-                setTempMessage(null); 
+                setTempMessage(null);
             }
         }
     }, [recordedAudio, composeMedia, input, onSend]);
 
     const handleKeyPress = useCallback(
-        (e: React.KeyboardEvent<HTMLInputElement>) => {
+        (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
             // Solo permite enviar si no estamos grabando, previsualizando audio, o enviando
             if (!isRecording && !recordedAudio && !isSending && e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -552,7 +562,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         if (mediaRecorderRef.current) {
             try {
                 if (mediaRecorderRef.current.state !== 'inactive') mediaRecorderRef.current.stop();
-            } catch {}
+            } catch { }
             mediaRecorderRef.current = null;
         }
         stopMicrophoneStream(); // Liberar recurso del micrófono
@@ -637,7 +647,6 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
     const isInputActive = !isRecording && !isPreviewingAudio && !isSending;
     const isSendButtonVisible = isInputActive && (input.trim() || composeMedia);
 
-
     return (
         <div className="flex flex-col h-full w-full bg-white dark:bg-gray-800 border-l border-r">
             {/* Header */}
@@ -654,10 +663,10 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
             </div>
 
             {/* Mensajes */}
-            <ChatMessageList 
-                uiMessages={uiMessages} 
-                loading={loading} 
-                listRef={listRef} 
+            <ChatMessageList
+                uiMessages={uiMessages}
+                loading={loading}
+                listRef={listRef}
                 tempMessage={tempMessage} // Pasar el mensaje esqueleto
             />
 
@@ -667,7 +676,6 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
                 {/* Previsualización de adjuntos de archivo (Imágenes/Archivos) */}
                 {composeMedia && (
                     <div className="mb-2 flex items-center gap-2">
-                        {/* ... (Tu código de previsualización de adjuntos sigue aquí) ... */}
                         {composeMedia.mediatype === 'image' ? (
                             <div className="relative w-16 h-16 rounded-md overflow-hidden border bg-white dark:bg-gray-800">
                                 <img
@@ -760,37 +768,34 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
                     </div>
                 )}
 
-
                 {/* Área de Input y Botones */}
-                <div className="relative flex items-center">
-
+                <div className="relative flex items-end">
                     {/* Menu de Adjuntos */}
-                    <div className="absolute left-1 z-10">
+                    <div className="absolute left-1 z-10 bottom-2">
                         {isInputActive && <AttachmentMenu onComposeMediaChange={handleComposeMediaChange} maxBase64MB={8} />}
                     </div>
 
-                    {/* Input de Texto */}
-                    <Input
-                        type="text"
+                    {/* Textarea multilínea con auto-resize */}
+                    <Textarea
+                        ref={textareaRef}
                         placeholder={composeMedia ? 'Añade un pie de foto…' : 'Escribe un mensaje...'}
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyPress}
                         disabled={!isInputActive}
+                        rows={1}
                         className={cn(
-                            'h-11 bg-white dark:bg-gray-800 dark:text-white rounded-lg border-none w-full',
-                            'pl-10 pr-24',
-                            !isInputActive && "opacity-0 pointer-events-none" // Ocultar input si hay audio o se está enviando
+                            'min-h-[44px] max-h-40 h-auto bg-white dark:bg-gray-800 dark:text-white rounded-lg border-none w-full',
+                            'pl-10 pr-24 resize-none overflow-y-auto',
+                            !isInputActive && 'opacity-0 pointer-events-none'
                         )}
                     />
 
                     {/* Controles de Audio y Envío */}
-                    <div className="absolute right-1 flex items-center gap-1">
-
+                    <div className="absolute right-1 flex items-center gap-1 bottom-2">
                         {/* Botón de Micrófono/Detener (Activo solo si no hay previsualización o envío en curso) */}
                         {!isPreviewingAudio && !isSending && (
                             <Button
-                                // La acción principal es Detener y Previsualizar/Enviar
                                 onClick={() => (isRecording ? stopRecordingAndPreview() : startRecording())}
                                 size="icon"
                                 className={cn(
@@ -819,9 +824,9 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
                                 <ArrowRight className="w-5 h-5 text-white" />
                             </Button>
                         )}
-                        
-                         {/* Indicador de envío (reemplaza el botón de enviar mientras se está enviando) */}
-                         {isSending && (
+
+                        {/* Indicador de envío (reemplaza el botón de enviar mientras se está enviando) */}
+                        {isSending && (
                             <div className="p-2 bg-blue-500 rounded-full animate-spin">
                                 <Clock className="w-5 h-5 text-white" />
                             </div>

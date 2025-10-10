@@ -45,7 +45,7 @@ function normalizeBaseUrl(url: string): string {
  */
 export async function checkActiveInstance(userId: string, instanceType: string = 'Whatsapp') {
   const instanciaActiva = await db.instancias.findFirst({
-    where: { userId, instanceType },
+    where: { userId, instanceType: instanceType },
   });
 
   return instanciaActiva;
