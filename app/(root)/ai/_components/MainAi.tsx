@@ -152,12 +152,12 @@ export const MainAi = ({ flows, user }: MainAiInterface) => {
                         <ProductBuilder values={{ products: values.products ?? "" }} handleChange={handleChange} />
                     </TabsContent>
 
-                    <TabsContent value="more" className="m-0">
+                    {/* <TabsContent value="more" className="m-0">
                         <ExtraInfoBuilder
                             values={{ more: values.more ?? "" }}
                             handleChange={handleChange}
                         />
-                    </TabsContent>
+                    </TabsContent> */}
 
                     {/* Padding bottom para no quedar pegado al borde al final del scroll */}
                     <div className="h-6" />
