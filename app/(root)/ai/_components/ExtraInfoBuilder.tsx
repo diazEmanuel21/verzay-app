@@ -10,18 +10,15 @@ import { Trash2, Plus, PenSquare } from "lucide-react";
 import type { ChangeEvent } from "react";
 
 /* ===== Firma por defecto (texto exacto) ===== */
-const PROMPT_SIGNATURE_DEFAULT = "# ✍️ FIRMA DEL AGENTE" +
-
-    "Debes poner siempre la firma *“🤖 *Asisnte Virtual”* al inicio de cada mensaje o respuesta que le des al usuario, **nunca al final*. Esto permite mantener una identidad clara del agente y una conversación ordenada." +
-
-    "### Ejemplo de uso real:" +
-
-    "*Usuario:*" +
-    "¿Quien eres?" +
-
-    "*Respuesta del agente:*" +
-    "🤖 Asisnte Virtual" +
-    "Soy un asistente virtual. ¿En qué puedo ayudarte hoy?";
+const PROMPT_SIGNATURE_DEFAULT =
+  "# ✍️ FIRMA DEL AGENTE\n\n" +
+  "Debes poner siempre la firma *“🤖 *Asisnte Virtual”* al inicio de cada mensaje o respuesta que le des al usuario, **nunca al final*. Esto permite mantener una identidad clara del agente y una conversación ordenada.\n\n" +
+  "### Ejemplo de uso real:\n\n" +
+  "*Usuario:*\n" +
+  "¿Quien eres?\n\n" +
+  "*Respuesta del agente:*\n" +
+  "🤖 Asisnte Virtual\n" +
+  "Soy un asistente virtual. ¿En qué puedo ayudarte hoy?";
 
 type ExtraItem = { id: string; title: string; content: string };
 
