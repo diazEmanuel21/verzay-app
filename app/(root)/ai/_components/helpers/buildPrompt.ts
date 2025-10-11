@@ -4,9 +4,9 @@ import { addPromptItem as add } from "./";
 export const buildPrompt = (v: BusinessValues): string => {
     const lines: string[] = [];
 
-    if (!v.nombre?.trim()) {
-        return `Completa al menos el nombre del negocio para generar el prompt.`;
-    }
+    // if (!v.nombre?.trim()) {
+    //     return `Completa al menos el nombre del negocio para generar el prompt.`;
+    // }
 
     lines.push(`# 🎯 PERFIL DEL NEGOCIO`);
     lines.push(`Nombre: ${v.nombre.trim()}`);
@@ -45,6 +45,11 @@ export const buildPrompt = (v: BusinessValues): string => {
     if (v.products?.trim()) {
         lines.push("\n## Catálogo / Productos");
         lines.push(v.products.trim());
+    }
+
+    if (v.more?.trim()) {
+        lines.push("\n## Extras");
+        lines.push(v.more.trim());
     }
 
     return lines.join("\n");

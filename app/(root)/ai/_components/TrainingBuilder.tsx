@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { nanoid } from "nanoid";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -214,19 +214,19 @@ export function TrainingBuilder({
       prev.map((s) =>
         s.id === stepId
           ? {
-              ...s,
-              elements: [
-                ...s.elements,
-                {
-                  id: nanoid(),
-                  kind: "function",
-                  fn: "ejecutar_flujo",
-                  flowId: null,
-                  flowName: null,
-                } as ElementFunction,
-              ],
-              openPicker: false,
-            }
+            ...s,
+            elements: [
+              ...s.elements,
+              {
+                id: nanoid(),
+                kind: "function",
+                fn: "ejecutar_flujo",
+                flowId: null,
+                flowName: null,
+              } as ElementFunction,
+            ],
+            openPicker: false,
+          }
           : s
       )
     );
@@ -237,18 +237,18 @@ export function TrainingBuilder({
       prev.map((s) =>
         s.id === stepId
           ? {
-              ...s,
-              elements: [
-                ...s.elements,
-                {
-                  id: nanoid(),
-                  kind: "function",
-                  fn: "notificar_asesor",
-                  notificationNumber: notificationNumber ?? null,
-                } as ElementFunction,
-              ],
-              openPicker: false,
-            }
+            ...s,
+            elements: [
+              ...s.elements,
+              {
+                id: nanoid(),
+                kind: "function",
+                fn: "notificar_asesor",
+                notificationNumber: notificationNumber ?? null,
+              } as ElementFunction,
+            ],
+            openPicker: false,
+          }
           : s
       )
     );
@@ -259,18 +259,18 @@ export function TrainingBuilder({
       prev.map((s) =>
         s.id === stepId
           ? {
-              ...s,
-              elements: [
-                ...s.elements,
-                {
-                  id: nanoid(),
-                  kind: "function",
-                  fn: "consulta_datos",
-                  prompt: CONSULTA_DATOS_SNIPPET,
-                } as ElementFunction,
-              ],
-              openPicker: false,
-            }
+            ...s,
+            elements: [
+              ...s.elements,
+              {
+                id: nanoid(),
+                kind: "function",
+                fn: "consulta_datos",
+                prompt: CONSULTA_DATOS_SNIPPET,
+              } as ElementFunction,
+            ],
+            openPicker: false,
+          }
           : s
       )
     );
@@ -289,11 +289,11 @@ export function TrainingBuilder({
       prev.map((s) =>
         s.id === stepId
           ? {
-              ...s,
-              elements: s.elements.map((e) =>
-                e.id === elId && e.kind === "text" ? { ...e, text } : e
-              ),
-            }
+            ...s,
+            elements: s.elements.map((e) =>
+              e.id === elId && e.kind === "text" ? { ...e, text } : e
+            ),
+          }
           : s
       )
     );
@@ -304,13 +304,13 @@ export function TrainingBuilder({
       prev.map((s) =>
         s.id === stepId
           ? {
-              ...s,
-              elements: s.elements.map((e) =>
-                e.id === elId && e.kind === "function" && e.fn === "ejecutar_flujo"
-                  ? { ...e, flowId: flow.id, flowName: flow.name }
-                  : e
-              ),
-            }
+            ...s,
+            elements: s.elements.map((e) =>
+              e.id === elId && e.kind === "function" && e.fn === "ejecutar_flujo"
+                ? { ...e, flowId: flow.id, flowName: flow.name }
+                : e
+            ),
+          }
           : s
       )
     );
@@ -354,7 +354,7 @@ export function TrainingBuilder({
   /* --------------------------------- UI --------------------------------- */
   return (
     <Card className="border-muted/60">
-      <CardHeader className="pb-2 flex items-center justify-between gap-2">
+      <CardHeader className="pb-2 flex items-center justify-between gap-2 flex-row">
         <CardTitle className="text-base">Entrenamiento</CardTitle>
         <Button size="sm" onClick={addStep} className="gap-2">
           <Plus className="w-4 h-4" />
@@ -373,7 +373,6 @@ export function TrainingBuilder({
               <Card key={step.id} className="bg-muted/10 border-muted/60">
                 <CardHeader className="py-3">
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary">Paso {idx + 1}</Badge>
                     <Input
                       value={step.title}
                       onChange={(e) => updateStepTitle(step.id, e.target.value)}
@@ -410,7 +409,7 @@ export function TrainingBuilder({
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">Elementos del paso</span>
-                      <Badge variant="secondary">{step.elements.length}</Badge>
+                      <Badge variant="secondary">{idx + 1}</Badge>
                     </div>
                     <div className="flex gap-2">
                       <Popover open={!!step.openPicker} onOpenChange={(o) => toggleStepPicker(step.id, o)}>
@@ -623,6 +622,15 @@ export function TrainingBuilder({
           </div>
         )}
       </CardContent>
+      {steps.length > 1 && <CardFooter className="pb-2 flex items-center justify-between gap-2 flex-row">
+        <CardTitle className="text-base">Entrenamiento</CardTitle>
+
+        <Button size="sm" onClick={addStep} className="gap-2">
+          <Plus className="w-4 h-4" />
+          Agregar paso
+        </Button>
+      </CardFooter>
+      }
     </Card>
   );
 }

@@ -43,6 +43,7 @@ export interface BusinessValues {
     training?: string;
     faq?: string
     products?: string
+    more?: string
 };
 
 export const initialValues: BusinessValues = {

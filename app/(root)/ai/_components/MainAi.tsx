@@ -3,7 +3,7 @@
 import { ChangeEvent, useCallback, useMemo, useRef, useState } from "react";
 
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { BusinessPromptBuilder, FqaBuilder, PromptPreview, TrainingBuilder } from "./";
+import { BusinessPromptBuilder, ExtraInfoBuilder, FqaBuilder, PromptPreview, TrainingBuilder } from "./";
 import { buildPrompt } from "./helpers";
 import { BusinessValues, initialValues, MainAiInterface } from "@/types/agentAi";
 import { ProductBuilder } from "./ProductBuilder";
@@ -16,6 +16,7 @@ export const TYPE_AI_LABELS = {
     training: "Entrenamiento",
     faq: "Preguntas",
     products: "Productos",
+    more: "Extras",
 } as const;
 
 type TabKey = keyof typeof TYPE_AI_LABELS;
@@ -60,6 +61,7 @@ export const MainAi = ({ flows, user }: MainAiInterface) => {
             youtube: "",
             notas: "",
             training: "",
+            more: "",
         });
 
     const prompt = useMemo(() => buildPrompt(values), [values]);
@@ -148,6 +150,13 @@ export const MainAi = ({ flows, user }: MainAiInterface) => {
 
                     <TabsContent value="products" className="m-0">
                         <ProductBuilder values={{ products: values.products ?? "" }} handleChange={handleChange} />
+                    </TabsContent>
+
+                    <TabsContent value="more" className="m-0">
+                        <ExtraInfoBuilder
+                            values={{ more: values.more ?? "" }}
+                            handleChange={handleChange}
+                        />
                     </TabsContent>
 
                     {/* Padding bottom para no quedar pegado al borde al final del scroll */}

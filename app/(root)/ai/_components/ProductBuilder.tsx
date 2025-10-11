@@ -98,10 +98,12 @@ export function ProductBuilder({ values, handleChange, onChange }: ProductBuilde
                         />
                     </div>
                 ))}
-
-                <Button type="button" variant="secondary" onClick={addProduct} className="gap-2">
-                    <Plus className="h-4 w-4" /> Agregar producto
-                </Button>
+                <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium"></span>
+                    <Button type="button" variant="secondary" onClick={addProduct} className="gap-2">
+                        <Plus className="h-4 w-4" /> Agregar producto
+                    </Button>
+                </div>
             </CardContent>
         </Card>
     );
