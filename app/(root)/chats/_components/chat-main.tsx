@@ -6,11 +6,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowRight, Mic, Send, Trash2, X, Clock, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import {
-  AttachmentMenu,
-  type ComposeMedia,
-  type MediaType,
-} from './attachment-menu';
+import { AttachmentMenu, type ComposeMedia, type MediaType } from './attachment-menu';
+
+/* ✅ Importa la función que SÍ existe en tu action */
+import { getMediaBase64FromMessage } from '@/actions/chat-actions';
 
 /* -------- Outgoing payload unificado -------- */
 export type OutgoingTextPayload = {
@@ -25,7 +24,7 @@ export type OutgoingTextPayload = {
 export type OutgoingMediaPayload = {
   kind: 'media';
   mediatype: MediaType;
-  mediaUrl: string; // ✅ Base64 PURO (para audio) o Data URL (para adjuntos)
+  mediaUrl: string; // Base64 PURO (audio) o Data URL (adjuntos)
   mimetype?: string;
   fileName?: string;
   caption?: string;
@@ -59,6 +58,9 @@ type ChatInfoMeta = {
   nextPage?: number | null;
   instanceName?: string;
   remoteJid?: string;
+
+  /** ⬇️ OPCIONAL: si el padre lo pasa, podemos resolver el base64 sin tocar más código */
+  apiKeyData?: { url: string; key: string };
 };
 export type MediaData = { type: MediaType; url: string; mimeType: string; caption?: string };
 type UIBubble = {
@@ -68,7 +70,7 @@ type UIBubble = {
   avatarSrc?: string;
   ts?: number;
   media?: MediaData;
-  status?: 'sending'; // Nuevo estado para el esqueleto
+  status?: 'sending';
 };
 
 type ChatMainProps = {
@@ -79,24 +81,18 @@ type ChatMainProps = {
   onSend: (payload: OutgoingMessagePayload) => void | Promise<void>;
 };
 
-// Nuevo tipo de estado para la previsualización del audio
+// Estado de previsualización de audio
 type RecordedAudioData = {
-  base64Pure: string; // Base64 PURO para el payload de envío
-  dataUrlWithPrefix: string; // Data URL completa para el reproductor del cliente
+  base64Pure: string; // Base64 PURO
+  dataUrlWithPrefix: string; // Data URL para reproductor
   mimetype: string;
   durationSecs: number;
 };
 
-/* -------- Helpers de formateo y conversión -------- */
-
+/* -------- Helpers -------- */
 function two(n: number) {
   return n.toString().padStart(2, '0');
 }
-
-/**
- * Convierte Blob a Base64 PURO (sin el prefijo 'data:mime/type;base64,').
- * Es la clave para enviar "datos crudos" al backend.
- */
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -113,18 +109,22 @@ function blobToBase64(blob: Blob): Promise<string> {
     reader.readAsDataURL(blob);
   });
 }
-
 function extractMediaInfo(msg: any, type: MediaType): MediaData | null {
   const typeKey = `${type}Message`;
   const mediaObj = msg[typeKey] || {};
-  const url = msg.mediaUrl || mediaObj.mediaUrl || mediaObj.url;
+  const url = msg.mediaUrl || mediaObj.mediaUrl || mediaObj.url || mediaObj.directPath;
   const mimeType = mediaObj.mimetype || 'unknown/mime';
   const caption = mediaObj.caption;
   if (url) return { type, url, mimeType, caption: caption || undefined };
   return null;
 }
 
-function toUIMessages(messages: EvolutionMessage[], userJid: string | undefined, avatarUrl: string | undefined): UIBubble[] {
+function toUIMessages(
+  messages: EvolutionMessage[],
+  userJid: string | undefined,
+  avatarUrl: string | undefined,
+  base64Map?: Map<string, { dataUrl: string; mime: string; length: number }>
+): UIBubble[] {
   return messages.map((m) => {
     const isUser = m.key?.fromMe === true || m.key?.remoteJid !== userJid;
     const sender: 'user' | 'other' = isUser ? 'user' : 'other';
@@ -150,6 +150,13 @@ function toUIMessages(messages: EvolutionMessage[], userJid: string | undefined,
       content = media?.caption || '';
     } else content = `[Mensaje ${m.messageType || 'desconocido'}]`;
 
+    // ⬇️ Inyección de base64 si está en caché
+    const msgId = m.key?.id || m.id;
+    if (msgId && base64Map?.has(msgId) && media) {
+      const cached = base64Map.get(msgId)!;
+      media = { ...media, url: cached.dataUrl, mimeType: cached.mime };
+    }
+
     return {
       id: m.id || String(ts) + (m.key?.id || ''),
       sender,
@@ -161,42 +168,29 @@ function toUIMessages(messages: EvolutionMessage[], userJid: string | undefined,
   });
 }
 
-/* -------- Subcomponentes de UI -------- */
-
-// NUEVO: Componente de texto expandible
+/* -------- Subcomponentes -------- */
 const ExpandableText: React.FC<{ message: string; isUserMessage: boolean }> = ({ message, isUserMessage }) => {
-  const MAX_LENGTH = 250; // Límite de caracteres para "ver más"
+  const MAX_LENGTH = 250;
   const [isExpanded, setIsExpanded] = useState(false);
-
-  if (message.length <= MAX_LENGTH) {
-    return <p className="text-sm whitespace-pre-wrap">{message}</p>;
-  }
-
+  if (message.length <= MAX_LENGTH) return <p className="text-sm whitespace-pre-wrap">{message}</p>;
   const displayedText = isExpanded ? message : `${message.substring(0, MAX_LENGTH)}...`;
   const linkClass = isUserMessage ? 'text-gray-300 hover:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300';
-
   return (
     <p className="text-sm whitespace-pre-wrap">
       {displayedText}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className={cn('ml-1 font-semibold text-xs inline-block', linkClass)}
-        type="button"
-      >
+      <button onClick={() => setIsExpanded(!isExpanded)} className={cn('ml-1 font-semibold text-xs inline-block', linkClass)} type="button">
         {isExpanded ? 'Ver menos' : 'Ver más...'}
       </button>
     </p>
   );
 };
 
-// NUEVO: Componente de esqueleto de mensaje (Enviando...)
 const SendingMessageSkeleton: React.FC<{ tempMessage: UIBubble }> = ({ tempMessage }) => {
   const isMedia = tempMessage.media !== undefined;
   const bubbleClass = 'bg-gray-300/50 dark:bg-gray-700/50 text-gray-500 rounded-xl rounded-br-sm self-end animate-pulse';
-
   return (
     <div className="flex items-end gap-1 my-1 justify-end opacity-70">
-      <div className={cn('p-2 break-words shadow-sm relative inline-block max-w-[90%] sm:max-w-[70%]', bubbleClass)}>
+      <div className={cn('p-2 break-words relative inline-block max-w-[90%] sm:max-w-[70%]', bubbleClass)}>
         {isMedia ? (
           <div className="w-24 h-24 rounded-md bg-gray-400/50 dark:bg-gray-600/50 my-1" />
         ) : (
@@ -219,15 +213,8 @@ const MediaRenderer: React.FC<{ media: MediaData | undefined }> = React.memo(({ 
   const { type, url, mimeType, caption } = media;
   const baseStyle = 'my-1 rounded-md overflow-hidden border dark:border-gray-600';
   const audioDocStyle = 'w-full max-w-[350px]';
-
   return (
-    <div
-      className={cn(
-        baseStyle,
-        'max-w-full',
-        type === 'audio' || type === 'document' ? audioDocStyle : 'md:max-w-[300px]'
-      )}
-    >
+    <div className={cn(baseStyle, 'max-w-full', type === 'audio' || type === 'document' ? audioDocStyle : 'md:max-w-[300px]')}>
       {type === 'image' && (
         <img
           src={url}
@@ -244,23 +231,13 @@ const MediaRenderer: React.FC<{ media: MediaData | undefined }> = React.memo(({ 
         </div>
       )}
       {type === 'document' && (
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="p-3 bg-blue-500 text-white flex items-center justify-between hover:bg-blue-600 transition"
-        >
+        <a href={url} target="_blank" rel="noopener noreferrer" className="p-3 bg-blue-500 text-white flex items-center justify-between hover:bg-blue-600 transition">
           <span className="truncate">{caption || mimeType}</span>
           <ArrowRight className="w-4 h-4" />
         </a>
       )}
       {caption && type !== 'audio' && (
-        <div
-          className={cn(
-            'text-xs p-1',
-            type === 'document' ? 'text-gray-600 dark:text-gray-300' : 'text-gray-800 dark:text-gray-100'
-          )}
-        >
+        <div className={cn('text-xs p-1', type === 'document' ? 'text-gray-600 dark:text-gray-300' : 'text-gray-800 dark:text-gray-100')}>
           <ExpandableText message={caption} isUserMessage={false} />
         </div>
       )}
@@ -293,38 +270,22 @@ const MessageBubble: React.FC<{
           </Avatar>
         </div>
       )}
-      <div
-        className={cn(
-          'p-2 break-words shadow-sm relative inline-block max-w-[90%] sm:max-w-[70%]',
-          bubbleClass
-        )}
-      >
+      <div className={cn('p-2 break-words relative inline-block max-w-[90%] sm:max-w-[70%]', bubbleClass)}>
         {media && <MediaRenderer media={media} />}
         {message && (
           <div className={cn(contentClass, 'pr-10')}>
             <ExpandableText message={message} isUserMessage={isUserMessage} />
           </div>
         )}
-        {/* Marcador de tiempo y estado */}
         <div className={cn('right-2 bottom-1 flex items-center gap-1')}>
           {timestamp && (
-            <span
-              className={cn(
-                'text-[0.6rem] mt-1 block',
-                isUserMessage ? 'text-gray-300' : 'text-gray-500 dark:text-gray-400/80'
-              )}
-            >
+            <span className={cn('text-[0.6rem] mt-1 block', isUserMessage ? 'text-gray-300' : 'text-gray-500 dark:text-gray-400/80')}>
               {new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
           {isUserMessage && (
             <span className="text-[0.6rem] mt-1 block">
-              {status === 'sending' ? (
-                <Clock className="w-3 h-3 text-gray-300" />
-              ) : (
-                // Asume "Enviado/Leído" si no es 'sending'
-                <Check className="w-3 h-3 text-gray-300" />
-              )}
+              {status === 'sending' ? <Clock className="w-3 h-3 text-gray-300" /> : <Check className="w-3 h-3 text-gray-300" />}
             </span>
           )}
         </div>
@@ -337,15 +298,11 @@ const ChatMessageList: React.FC<{
   uiMessages: UIBubble[];
   loading?: boolean;
   listRef: React.RefObject<HTMLDivElement>;
-  tempMessage: UIBubble | null; // Nuevo: Mensaje temporal
+  tempMessage: UIBubble | null;
 }> = ({ uiMessages, loading, listRef, tempMessage }) => {
-  // Unir el mensaje temporal (si existe) a la lista
   const fullList = useMemo(() => {
     const list = [...uiMessages];
-    if (tempMessage) {
-      // El mensaje temporal siempre va al final
-      list.push(tempMessage);
-    }
+    if (tempMessage) list.push(tempMessage);
     return list;
   }, [uiMessages, tempMessage]);
 
@@ -374,56 +331,109 @@ const ChatMessageList: React.FC<{
 export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, loading, onSend }) => {
   const [input, setInput] = useState('');
   const [composeMedia, setComposeMedia] = useState<ComposeMedia | null>(null);
-  const [isSending, setIsSending] = useState(false); // NUEVO: Estado de envío
-  const [tempMessage, setTempMessage] = useState<UIBubble | null>(null); // NUEVO: Mensaje esqueleto
+  const [isSending, setIsSending] = useState(false);
+  const [tempMessage, setTempMessage] = useState<UIBubble | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const userJid = info?.remoteJid;
 
-  // Estados de Grabación de Audio
+  // Grabación de audio
   const [isRecording, setIsRecording] = useState(false);
   const [recordSecs, setRecordSecs] = useState(0);
   const [recordedAudio, setRecordedAudio] = useState<RecordedAudioData | null>(null);
-
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
   const timerRef = useRef<number | null>(null);
 
+  /* ✅ Caché de base64 por messageId + dedupe de solicitudes en vuelo */
+  const [mediaCache, setMediaCache] = useState<Map<string, { dataUrl: string; mime: string; length: number }>>(
+    () => new Map()
+  );
+  const inflightRef = useRef<Set<string>>(new Set());
+
+  // Detectores
+  const isMediaMsg = (m: EvolutionMessage) => {
+    const body = (m.message || {}) as any;
+    return !!(body.imageMessage || body.videoMessage || body.audioMessage || body.documentMessage);
+  };
+  const hasRemoteOnly = (m: EvolutionMessage) => {
+    const body = (m.message || {}) as any;
+    const media = body.imageMessage || body.videoMessage || body.audioMessage || body.documentMessage || {};
+    const url = body.mediaUrl || media.mediaUrl || media.url || media.directPath;
+    return !!url && typeof url === 'string' && !/^data:[^;]+;base64,/.test(url);
+  };
+  const getMessageId = (m: EvolutionMessage) => m.key?.id || m.id || null;
+
+  /* 🔌 Resolver base64 usando TU action existente */
+  useEffect(() => {
+    const instanceName = info?.instanceName;
+    const apiKeyData = info?.apiKeyData; // opcional
+
+    if (!instanceName || !messages?.length || !apiKeyData) return;
+
+    const candidates: string[] = [];
+    for (const m of messages) {
+      if (!isMediaMsg(m) || !hasRemoteOnly(m)) continue;
+      const mid = getMessageId(m);
+      if (!mid) continue;
+      if (mediaCache.has(mid) || inflightRef.current.has(mid)) continue;
+      candidates.push(mid);
+    }
+    if (!candidates.length) return;
+
+    (async () => {
+      for (const messageId of candidates) {
+        try {
+          inflightRef.current.add(messageId);
+          const res = await getMediaBase64FromMessage(apiKeyData, instanceName, messageId);
+          if (res?.success && res.data?.base64) {
+            const dataUrl = `data:${res.data.mimetype || 'application/octet-stream'};base64,${res.data.base64}`;
+            setMediaCache((prev) => {
+              const next = new Map(prev);
+              next.set(messageId, { dataUrl, mime: res.data!.mimetype, length: res.data!.fileLength });
+              return next;
+            });
+          } else {
+            // console.warn('getMediaBase64FromMessage error', messageId, res?.message);
+          }
+        } catch (e) {
+          // console.error('getMediaBase64FromMessage exception', e);
+        } finally {
+          inflightRef.current.delete(messageId);
+        }
+      }
+    })();
+  }, [messages, info?.instanceName, info?.apiKeyData, mediaCache]);
+
+  /* Construye UI con caché */
+  const reversed = useMemo(() => messages.slice().reverse(), [messages]);
   const uiMessages = useMemo(
-    () => toUIMessages(messages.slice().reverse(), userJid, header.avatarSrc),
-    [messages, userJid, header.avatarSrc]
+    () => toUIMessages(reversed, userJid, header.avatarSrc, mediaCache),
+    [reversed, userJid, header.avatarSrc, mediaCache]
   );
 
-  // ** LÓGICA DE SCROLL (EL CAMBIO CLAVE) **
+  /* Scroll */
   const scrollToBottom = useCallback(() => {
-    if (listRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight;
-    }
+    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
   }, []);
-
   useEffect(() => {
-    // Ejecutar scroll cada vez que cambia la lista de mensajes confirmados o se agrega el esqueleto
     scrollToBottom();
   }, [uiMessages.length, tempMessage, scrollToBottom]);
-  // ****************************************
 
-  // Auto-resize del Textarea
+  /* Auto-resize */
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 160) + 'px'; // 160px ≈ max-h-40
+    el.style.height = Math.min(el.scrollHeight, 160) + 'px';
   }, [input]);
 
-  /* -------- Handlers de UI -------- */
+  /* Handlers */
   const handleComposeMediaChange = useCallback((m: ComposeMedia | null) => {
     setComposeMedia(m);
-    if (m) {
-      setInput(m.fileName || '');
-    }
+    if (m) setInput(m.fileName || '');
   }, []);
-
   const clearComposeMedia = useCallback(() => setComposeMedia(null), []);
 
   const stopTimer = () => {
@@ -432,15 +442,11 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
       timerRef.current = null;
     }
   };
-
   const startTimer = () => {
     stopTimer();
     setRecordSecs(0);
-    timerRef.current = window.setInterval(() => {
-      setRecordSecs((s) => s + 1);
-    }, 1000) as unknown as number;
+    timerRef.current = window.setInterval(() => setRecordSecs((s) => s + 1), 1000) as unknown as number;
   };
-
   const formatSecs = (s: number) => `${two(Math.floor(s / 60))}:${two(s % 60)}`;
 
   const stopMicrophoneStream = useCallback(() => {
@@ -450,15 +456,13 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
     }
   }, []);
 
-  /* -------- Lógica de Envío -------- */
+  /* Envío */
   const sendNow = useCallback(async () => {
     let payload: OutgoingMessagePayload | null = null;
     let content = '';
     let media: MediaData | undefined = undefined;
 
-    // --- 1. Determinar Payload y Contenido Temporal ---
     if (recordedAudio) {
-      // Envío de Audio Grabado (PTT)
       payload = {
         kind: 'media',
         mediatype: 'audio',
@@ -467,47 +471,31 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         ptt: true,
       };
       content = '';
-      media = {
-        type: 'audio',
-        url: recordedAudio.dataUrlWithPrefix,
-        mimeType: recordedAudio.mimetype,
-      };
-
+      media = { type: 'audio', url: recordedAudio.dataUrlWithPrefix, mimeType: recordedAudio.mimetype };
       setRecordedAudio(null);
     } else if (composeMedia) {
-      // Envío de Media Adjunta
       const caption = input && input.trim() ? input.trim() : composeMedia.fileName;
       payload = {
         kind: 'media',
         mediatype: composeMedia.mediatype,
-        mediaUrl: composeMedia.dataUrl, // Data URL completa para adjuntos
+        mediaUrl: composeMedia.dataUrl,
         mimetype: composeMedia.mimeType,
         fileName: composeMedia.fileName,
-        caption: caption,
+        caption,
       };
       content = caption || '';
-      media = {
-        type: composeMedia.mediatype,
-        url: composeMedia.dataUrl,
-        mimeType: composeMedia.mimeType,
-        caption: caption,
-      };
-
+      media = { type: composeMedia.mediatype, url: composeMedia.dataUrl, mimeType: composeMedia.mimeType, caption };
       setInput('');
       setComposeMedia(null);
     } else {
-      // Envío de Texto
       const text = input.trim();
-      if (!text) return; // No enviar si es solo espacio
+      if (!text) return;
       payload = { kind: 'text', text };
       content = text;
-
       setInput('');
     }
 
-    // --- 2. Mostrar Esqueleto y Enviar ---
     if (payload) {
-      // Crear y mostrar mensaje temporal/esqueleto
       const tempMsg: UIBubble = {
         id: `temp-${Date.now()}`,
         sender: 'user',
@@ -515,20 +503,15 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         avatarSrc: '/user-avatar.png',
         ts: Date.now(),
         media,
-        status: 'sending', // Marcar como esqueleto
+        status: 'sending',
       };
       setTempMessage(tempMsg);
       setIsSending(true);
-
       try {
         await onSend(payload);
-        // El backend debe disparar la obtención de mensajes que reemplazará el esqueleto
       } catch (error) {
         console.error('Error al enviar mensaje:', error);
-        // Opcional: Mostrar error o dejar el esqueleto con un ícono de fallo
       } finally {
-        // Limpiar el esqueleto SÓLO después de que la respuesta del servidor haya llegado
-        // y los mensajes hayan sido actualizados (lo cual debe suceder en tu componente padre)
         setIsSending(false);
         setTempMessage(null);
       }
@@ -537,7 +520,6 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
 
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      // Solo permite enviar si no estamos grabando, previsualizando audio, o enviando
       if (!isRecording && !recordedAudio && !isSending && e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         void sendNow();
@@ -546,56 +528,44 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
     [sendNow, isRecording, recordedAudio, isSending]
   );
 
-  /* -------- Lógica de Grabación de Audio -------- */
+  /* Grabación de Audio */
   const stopRecordingAndPreview = useCallback(() => {
-    // Detener la grabadora para disparar rec.onstop
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
     }
   }, []);
-
   const cancelRecording = useCallback(() => {
     stopTimer();
     setIsRecording(false);
     audioChunksRef.current = [];
-    setRecordedAudio(null); // Limpiar previsualización
+    setRecordedAudio(null);
     if (mediaRecorderRef.current) {
       try {
         if (mediaRecorderRef.current.state !== 'inactive') mediaRecorderRef.current.stop();
       } catch {}
       mediaRecorderRef.current = null;
     }
-    stopMicrophoneStream(); // Liberar recurso del micrófono
+    stopMicrophoneStream();
   }, [stopMicrophoneStream]);
-
   const startRecording = useCallback(async () => {
-    if (isSending) return; // No grabar si estamos enviando
-    cancelRecording(); // Limpiar cualquier estado anterior y previsualización
-
+    if (isSending) return;
+    cancelRecording();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
 
-      const mimeCandidates = [
-        'audio/webm;codecs=opus',
-        'audio/ogg;codecs=opus',
-        'audio/webm',
-        'audio/ogg',
-      ];
+      const mimeCandidates = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/webm', 'audio/ogg'];
       const mimeType = mimeCandidates.find((m) => MediaRecorder.isTypeSupported(m)) || '';
-
       const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
 
       audioChunksRef.current = [];
       rec.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data);
       };
-
       rec.onstart = () => {
         setIsRecording(true);
         startTimer();
       };
-
       rec.onstop = async () => {
         stopTimer();
         setIsRecording(false);
@@ -606,15 +576,11 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         audioChunksRef.current = [];
 
         if (blob.size === 0) {
-          console.warn('Grabación vacía. Cancelando.');
           stopMicrophoneStream();
           return;
         }
 
-        // ✅ CONVERSIÓN CRÍTICA: Base64 PURO para envío
         const base64Pure = await blobToBase64(blob);
-
-        // Data URL COMPLETA para el reproductor en el cliente (necesita el prefijo)
         const dataUrlWithPrefix = `data:${finalMimeType};base64,${base64Pure}`;
 
         setRecordedAudio({
@@ -624,21 +590,19 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
           durationSecs: recordSecs,
         });
 
-        stopMicrophoneStream(); // Detener el stream después de crear la Data
+        stopMicrophoneStream();
       };
 
       rec.start();
       mediaRecorderRef.current = rec;
     } catch (err) {
-      console.error('Error al iniciar grabación (permiso denegado):', err);
-      cancelRecording(); // Limpiar todo si falla la inicialización
+      console.error('Error al iniciar grabación:', err);
+      cancelRecording();
     }
   }, [cancelRecording, recordSecs, stopMicrophoneStream, isSending]);
 
-  /* -------- Efectos y UI State -------- */
   useEffect(() => {
     return () => {
-      // Cleanup en desmontaje
       cancelRecording();
     };
   }, [cancelRecording]);
@@ -663,44 +627,24 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
       </div>
 
       {/* Mensajes */}
-      <ChatMessageList
-        uiMessages={uiMessages}
-        loading={loading}
-        listRef={listRef}
-        tempMessage={tempMessage} // Pasar el mensaje esqueleto
-      />
+      <ChatMessageList uiMessages={uiMessages} loading={loading} listRef={listRef} tempMessage={tempMessage} />
 
       {/* Barra de mensaje */}
       <div className="p-3 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-
-        {/* Previsualización de adjuntos de archivo (Imágenes/Archivos) */}
+        {/* Previsualización de adjuntos */}
         {composeMedia && (
           <div className="mb-2 flex items-center gap-2">
             {composeMedia.mediatype === 'image' ? (
               <div className="relative w-16 h-16 rounded-md overflow-hidden border bg-white dark:bg-gray-800">
-                <img
-                  src={composeMedia.dataUrl}
-                  alt={composeMedia.fileName}
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  className="absolute -top-2 -right-2 bg-black/70 text-white rounded-full p-1"
-                  onClick={clearComposeMedia}
-                  aria-label="Quitar adjunto"
-                  type="button"
-                >
+                <img src={composeMedia.dataUrl} alt={composeMedia.fileName} className="w-full h-full object-cover" />
+                <button className="absolute -top-2 -right-2 bg-black/70 text-white rounded-full p-1" onClick={clearComposeMedia} aria-label="Quitar adjunto" type="button">
                   <X className="w-3 h-3" />
                 </button>
               </div>
             ) : (
               <div className="relative w-16 h-16 rounded-md overflow-hidden border bg-white dark:bg-gray-800 flex items-center justify-center text-xs px-1 text-center">
                 <span className="truncate">{composeMedia.fileName}</span>
-                <button
-                  className="absolute -top-2 -right-2 bg-black/70 text-white rounded-full p-1"
-                  onClick={clearComposeMedia}
-                  aria-label="Quitar adjunto"
-                  type="button"
-                >
+                <button className="absolute -top-2 -right-2 bg-black/70 text-white rounded-full p-1" onClick={clearComposeMedia} aria-label="Quitar adjunto" type="button">
                   <X className="w-3 h-3" />
                 </button>
               </div>
@@ -713,7 +657,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
           </div>
         )}
 
-        {/* Indicador de Grabación de Audio */}
+        {/* Indicador de Grabación */}
         {isRecording && (
           <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm">
@@ -723,14 +667,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
                 <span className="tabular-nums">{formatSecs(recordSecs)}</span>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-red-600 hover:text-red-700"
-              onClick={cancelRecording}
-              title="Cancelar grabación"
-              type="button"
-            >
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700" onClick={cancelRecording} title="Cancelar grabación" type="button">
               <Trash2 className="w-4 h-4" />
             </Button>
           </div>
@@ -739,43 +676,23 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         {/* Previsualización de Audio Grabado */}
         {isPreviewingAudio && recordedAudio && (
           <div className="flex items-center gap-2 p-2 mb-2 rounded-lg bg-gray-100 dark:bg-gray-700 border dark:border-gray-600">
-            <Button
-              onClick={cancelRecording}
-              size="icon"
-              className="rounded-full bg-red-500 hover:bg-red-600 flex-shrink-0"
-              title="Borrar nota de voz"
-              type="button"
-            >
+            <Button onClick={cancelRecording} size="icon" className="rounded-full bg-red-500 hover:bg-red-600 flex-shrink-0" title="Borrar nota de voz" type="button">
               <Trash2 className="w-5 h-5" />
             </Button>
-
-            {/* Usar la Data URL CON PREFIJO para el reproductor nativo */}
             <audio src={recordedAudio.dataUrlWithPrefix} controls className="flex-1 h-8" />
-
-            <span className="text-sm tabular-nums text-gray-600 dark:text-gray-300 flex-shrink-0">
-              {formatSecs(recordedAudio.durationSecs)}
-            </span>
-
-            <Button
-              onClick={() => void sendNow()}
-              size="icon"
-              className="rounded-full bg-green-500 hover:bg-green-600 flex-shrink-0"
-              title="Enviar nota de voz"
-              type="button"
-            >
+            <span className="text-sm tabular-nums text-gray-600 dark:text-gray-300 flex-shrink-0">{formatSecs(recordedAudio.durationSecs)}</span>
+            <Button onClick={() => void sendNow()} size="icon" className="rounded-full bg-green-500 hover:bg-green-600 flex-shrink-0" title="Enviar nota de voz" type="button">
               <Send className="w-5 h-5 text-white" />
             </Button>
           </div>
         )}
 
-        {/* Área de Input y Botones */}
+        {/* Input + botones */}
         <div className="relative flex items-end">
-          {/* Menu de Adjuntos */}
           <div className="absolute left-1 z-10 bottom-2">
             {isInputActive && <AttachmentMenu onComposeMediaChange={handleComposeMediaChange} maxBase64MB={8} />}
           </div>
 
-          {/* Textarea multilínea con auto-resize */}
           <Textarea
             ref={textareaRef}
             placeholder={composeMedia ? 'Añade un pie de foto…' : 'Escribe un mensaje...'}
@@ -791,19 +708,12 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
             )}
           />
 
-          {/* Controles de Audio y Envío */}
           <div className="absolute right-1 flex items-center gap-1 bottom-2">
-            {/* Botón de Micrófono/Detener (Activo solo si no hay previsualización o envío en curso) */}
             {!isPreviewingAudio && !isSending && (
               <Button
                 onClick={() => (isRecording ? stopRecordingAndPreview() : startRecording())}
                 size="icon"
-                className={cn(
-                  'rounded-full',
-                  isRecording
-                    ? 'bg-red-500 hover:bg-red-600'
-                    : 'bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600'
-                )}
+                className={cn('rounded-full', isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600')}
                 aria-label={isRecording ? 'Detener grabación' : 'Grabar audio'}
                 title={isRecording ? 'Detener y previsualizar' : 'Grabar nota de voz'}
                 type="button"
@@ -812,20 +722,12 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
               </Button>
             )}
 
-            {/* Botón de Enviar (Solo si hay texto o media adjunta, pero no audio grabado) */}
             {isSendButtonVisible && !isSending && (
-              <Button
-                onClick={() => void sendNow()}
-                size="icon"
-                className="rounded-full bg-blue-500 hover:bg-blue-600"
-                aria-label="Enviar"
-                type="button"
-              >
+              <Button onClick={() => void sendNow()} size="icon" className="rounded-full bg-blue-500 hover:bg-blue-600" aria-label="Enviar" type="button">
                 <ArrowRight className="w-5 h-5 text-white" />
               </Button>
             )}
 
-            {/* Indicador de envío (reemplaza el botón de enviar mientras se está enviando) */}
             {isSending && (
               <div className="p-2 bg-blue-500 rounded-full animate-spin">
                 <Clock className="w-5 h-5 text-white" />
