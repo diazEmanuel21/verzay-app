@@ -3,7 +3,156 @@ import { Workflow } from "@prisma/client";
 import { ChangeEvent } from "react";
 import z from "zod";
 
-/* ---------------------- Validación ligera con Zod ---------------------- */
+/* =========================
+   0) Zod Schemas (payloads)
+========================= */
+
+export const SectionKeySchema = z.enum(['business', 'training', 'faq', 'products', 'extras']);
+
+/* ---------- DRAFT (para edición/autosave) ---------- */
+export const BusinessDraftSchema = z.object({
+    nombre: z.string().optional().default(""),
+    sector: z.string().optional().default(""),
+    ubicacion: z.string().optional().default(""),
+    horarios: z.string().optional().default(""),
+    maps: z.string().optional().default(""),
+    telefono: z.string().optional().default(""),
+    email: z.string().optional().default(""),
+    sitio: z.string().optional().default(""),
+    facebook: z.string().optional().default(""),
+    instagram: z.string().optional().default(""),
+    tiktok: z.string().optional().default(""),
+    youtube: z.string().optional().default(""),
+    notas: z.string().optional().default(""),
+});
+
+export const TrainingDraftSchema = z.object({
+    id: z.string().optional().default(""),
+    title: z.string().optional().default(""),
+
+    steps: z.array(
+        z.object({
+            id: z.string(),
+            title: z.string().optional(),
+            mainMessage: z.string().optional().default(""),
+            elements: z.array(
+                z.union([
+                    z.object({
+                        id: z.string(),
+                        kind: z.literal("text"),
+                        text: z.string().optional().default(""),
+                    }),
+                    z.object({
+                        id: z.string(),
+                        kind: z.literal("function"),
+                        fn: z.enum([
+                            "captura_datos",
+                            "ejecutar_flujo",
+                            "notificar_asesor",
+                            "consulta_datos",
+                        ]),
+                        // ⬇️ refuerza el enum como en el type
+                        subtype: z
+                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas"])
+                            .optional(),
+                        prompt: z.string().optional(),
+                        fields: z.array(z.string()).optional(),
+
+                        // ⬇️ acepta null | string (coincide con tus types)
+                        flowId: z.string().nullable().optional(),
+                        flowName: z.string().nullable().optional(),
+                        notificationNumber: z.string().nullable().optional(),
+                    }),
+                ])
+            ).default([]),
+        })
+    ).default([]),
+
+    mainMessage: z.string().optional().default(""),
+});
+
+export const FaqDraftSchema = z.object({
+    items: z.array(z.object({ id: z.string(), q: z.string().optional().default(""), a: z.string().optional().default("") })).default([]),
+});
+
+export const ProductsDraftSchema = z.object({
+    items: z.array(z.object({ id: z.string(), name: z.string().optional().default(""), description: z.string().optional().default("") })).default([]),
+});
+
+export const ExtrasDraftSchema = z.object({
+    firmaEnabled: z.boolean().optional().default(false),
+    firmaText: z.string().optional().default(""),
+    items: z.array(z.object({ id: z.string(), title: z.string().optional().default(""), content: z.string().optional().default("") })).default([]),
+});
+
+export const SectionsDraftSchema = z.object({
+    business: BusinessDraftSchema,
+    training: TrainingDraftSchema,
+    faq: FaqDraftSchema,
+    products: ProductsDraftSchema,
+    extras: ExtrasDraftSchema,
+});
+
+/* ---------- STRICT (para publicar/validación fuerte) ---------- */
+export const BusinessStrictSchema = z.object({
+    nombre: z.string().min(1, 'nombre requerido'),
+    sector: z.string().optional(),
+    ubicacion: z.string().optional(),
+    horarios: z.string().optional(),
+    maps: z.string().optional(),
+    telefono: z.string().optional(),
+    email: z.string().optional(),
+    sitio: z.string().optional(),
+    facebook: z.string().optional(),
+    instagram: z.string().optional(),
+    tiktok: z.string().optional(),
+    youtube: z.string().optional(),
+    notas: z.string().optional(),
+});
+
+export const TrainingStrictSchema = TrainingDraftSchema;
+export const FaqStrictSchema = FaqDraftSchema;
+export const ProductsStrictSchema = ProductsDraftSchema;
+export const ExtrasStrictSchema = ExtrasDraftSchema;
+
+export const SectionsStrictSchema = z.object({
+    business: BusinessStrictSchema,
+    training: TrainingStrictSchema,
+    faq: FaqStrictSchema,
+    products: ProductsStrictSchema,
+    extras: ExtrasStrictSchema,
+});
+
+/* ---------- Schemas de acciones ---------- */
+export const PatchSectionSchema = z.object({
+    promptId: z.string().min(1, "promptId requerido"),
+    version: z.number().int().positive(),
+    sectionKey: SectionKeySchema,
+    patch: z.any(), // Se valida contra los DraftSchemas según la sección en la action
+});
+
+export const SaveSchema = z.object({
+    promptId: z.string().uuid(),
+    version: z.number().int().positive(),
+    revalidate: z.string().optional(), // ruta opcional para revalidatePath
+});
+
+// OJO: publishedBy es String (cuid), NO uuid
+export const PublishSchema = z.object({
+    promptId: z.string().uuid(),
+    version: z.number().int().positive(),
+    publishedBy: z.string(),
+    note: z.string().optional(),
+    revalidate: z.string().optional(),
+});
+
+export const RevertSchema = z.object({
+    promptId: z.string().uuid(),
+    revisionNumber: z.number().int().nonnegative(),
+    revalidate: z.string().optional(),
+});
+
+/* ---------------------- Validación ligera UI (React Hook Form) ---------------------- */
 export const promptSchema = z.object({
     nombre: z.string().min(1, "Requerido"),
     sector: z.string().optional().default(""),
@@ -22,10 +171,13 @@ export const promptSchema = z.object({
 
 export type FormValues = z.infer<typeof promptSchema>;
 
+/* ---------------------- Tipos de componentes/props ---------------------- */
 export interface MainAiInterface {
     flows: Workflow[];
     user: UserWithApiKeys;
-};
+    promptMeta: { id: string; version: number };
+}
+
 export interface BusinessValues {
     nombre: string;
     sector: string;
@@ -41,13 +193,12 @@ export interface BusinessValues {
     youtube: string;
     notas: string;
     training?: string;
-    faq?: string
-    products?: string
-    more?: string
-};
+    faq?: string;
+    products?: string;
+    more?: string;
+}
 
 export const initialValues: BusinessValues = {
-    /* BusinessPromptBuilder */
     nombre: "",
     sector: "",
     ubicacion: "",
@@ -72,22 +223,54 @@ export interface BusinessBuilderInterface {
     handleChange: (
         key: keyof BusinessValues
     ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+}
+
+export type BusinessPromptBuilderProps = BusinessBuilderInterface & {
+    promptId: string;
+    version: number;
+    onVersionChange: (v: number) => void;
+    onConflict?: (serverState: any) => void;
 };
 
 export interface PromptPreviewInterface {
-    prompt: string
-};
+    prompt: string;
+}
 
 /******** TrainingBuilder **********/
-
-// types.ts (o arriba del componente)
 export interface TrainingBuilderExternalProps {
-    // Solo necesitamos la propiedad training del objeto principal
     values: { training: string };
     handleChange: (
         key: "training"
     ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }
+
+export interface TrainingBuilderProps extends TrainingBuilderExternalProps {
+    flows: Workflow[];
+    notificationNumber?: string | null;
+    onChange?: (state: { mainMessage: string; elements: ElementItem[] }) => void;
+    // NUEVO:
+    promptId: string;
+    version: number;
+    onVersionChange: (v: number) => void;
+    onConflict?: (serverState: any) => void;
+    initialSteps?: Array<any>; // steps desde BD (sections.training.steps)
+}
+
+/* -------------------- Tipos locales para PASOS -------------------- */
+export type StepTraining = {
+    id: string;
+    title?: string;
+    mainMessage?: string;
+    elements: ElementItem[];
+    openPicker?: boolean; // UI state por paso
+};
+
+export type PedidoFunctionEl = ElementFunction & {
+    fn: "captura_datos";
+    subtype: "Pedidos";
+    prompt: string;
+    fields?: string[]; // ← campos adicionales (cc, name, etc.)
+};
 
 export type ElementText = {
     id: string;
@@ -120,7 +303,7 @@ export type ElementFunction =
         id: string;
         kind: "function";
         fn: "consulta_datos";
-        prompt: string; // snippet fijo
+        prompt: string;
     };
 
 export type ElementItem = ElementText | ElementFunction;
@@ -140,30 +323,11 @@ export const CAPTURE_SNIPPETS: Record<
 };
 
 export const CONSULTA_DATOS_SNIPPET = `**Consultar Productos**: (Prioridad 2). Si no hay un flujo activo y el usuario pregunta por un producto, ejecuta esta herramienta.
-- *Disparadores:* “imagen”, “foto”, “video”, “pdf”, “documento”, “ver”, “ver el producto”, “muéstrame”, “catálogo”.`;
-
-export interface TrainingBuilderProps extends TrainingBuilderExternalProps {
-    flows: Workflow[];
-    notificationNumber?: string | null;
-    defaultMainMessage?: string;
-    // ✅ Propiedad opcional que es una función
-    onChange?: (state: {
-        mainMessage: string;
-        elements: ElementItem[];
-    }) => void;
-}
-
+- *Disparadores:* “imagen”, “foto”, “video”, “pdf”, “documento”, “ver”, “ver el producto”, “muéstrame”, “catálogo”.`
 
 /*****************  FQABUILDER ***********************/
+export type QaItem = { id: string; q: string; a: string };
 
-/* ---------- Modelo interno ---------- */
-export type QaItem = {
-    id: string;
-    q: string; // pregunta
-    a: string; // respuesta
-};
-
-/* ---------- Plantillas predefinidas ---------- */
 export const PRESETS: Array<{ title: string; answer: string }> = [
     { title: "Promociones, descuentos y ofertas", answer: "Inserta aquí la respuesta oficial sobre promociones disponibles" },
     { title: "Cliente pide descuento", answer: "Inserta aquí la respuesta para solicitudes de rebaja o promociones individuales" },
@@ -179,7 +343,5 @@ export const PRESETS: Array<{ title: string; answer: string }> = [
 
 export interface FaqSimpleProps {
     values: { faq: string };
-    handleChange: (
-        key: "faq"
-    ) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+    handleChange: (key: "faq") => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }

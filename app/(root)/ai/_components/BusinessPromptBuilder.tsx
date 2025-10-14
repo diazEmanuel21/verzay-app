@@ -18,10 +18,17 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 
-import { BusinessBuilderInterface, FormValues, promptSchema } from "@/types/agentAi";
+import { BusinessBuilderInterface, BusinessPromptBuilderProps, FormValues, promptSchema } from "@/types/agentAi";
+import { useBusinessAutosave } from "./hooks/useBusinessAutosave";
 
 
-export const BusinessPromptBuilder = ({ values, handleChange, user }: BusinessBuilderInterface) => {
+export const BusinessPromptBuilder = ({ values,
+    handleChange,
+    user,
+    promptId,
+    version,
+    onVersionChange,
+    onConflict }: BusinessPromptBuilderProps) => {
     // Flags de bloqueo por datos del user
     const isCompanyLocked = Boolean(user?.company);
     const isMapsLocked = Boolean(user?.mapsUrl);
@@ -30,21 +37,30 @@ export const BusinessPromptBuilder = ({ values, handleChange, user }: BusinessBu
     const form = useForm<FormValues>({
         resolver: zodResolver(promptSchema),
         defaultValues: {
-            nombre: user?.company ?? values.nombre ?? "",
-            sector: values.sector ?? "",
-            ubicacion: values.ubicacion ?? "",
-            horarios: values.horarios ?? "",
-            maps: user?.mapsUrl ?? values.maps ?? "",
-            telefono: user?.notificationNumber ?? values.telefono ?? "",
-            email: values.email ?? "",
-            sitio: values.sitio ?? "",
-            facebook: values.facebook ?? "",
-            instagram: values.instagram ?? "",
-            tiktok: values.tiktok ?? "",
-            youtube: values.youtube ?? "",
-            notas: values.notas ?? "",
+            nombre: user?.company ?? values.nombre ?? '',
+            sector: values.sector ?? '',
+            ubicacion: values.ubicacion ?? '',
+            horarios: values.horarios ?? '',
+            maps: user?.mapsUrl ?? values.maps ?? '',
+            telefono: user?.notificationNumber ?? values.telefono ?? '',
+            email: values.email ?? '',
+            sitio: values.sitio ?? '',
+            facebook: values.facebook ?? '',
+            instagram: values.instagram ?? '',
+            tiktok: values.tiktok ?? '',
+            youtube: values.youtube ?? '',
+            notas: values.notas ?? '',
         },
-        mode: "onChange",
+        mode: 'onChange',
+    });
+
+    // 🔁 AUTOSAVE con debounce y control de versionado
+    useBusinessAutosave({
+        form,
+        promptId,
+        version,
+        onVersionChange,
+        onConflict,
     });
 
     return (

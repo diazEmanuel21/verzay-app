@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { nanoid } from "nanoid";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from "@/components/ui/button";
@@ -29,25 +29,13 @@ import {
   ElementFunction,
   ElementItem,
   ElementText,
+  StepTraining,
   TrainingBuilderProps,
 } from "@/types/agentAi";
 import { Workflow } from "@prisma/client";
+import { useTrainingAutosave } from "./hooks/useTrainingAutosave";
+import { PedidoFunctionEl } from '../../../../types/agentAi';
 
-/* -------------------- Tipos locales para PASOS -------------------- */
-type Step = {
-  id: string;
-  title: string;
-  mainMessage: string;
-  elements: ElementItem[];
-  openPicker?: boolean; // UI state por paso
-};
-
-type PedidoFunctionEl = ElementFunction & {
-  fn: "captura_datos";
-  subtype: "Pedidos";
-  prompt: string;
-  fields?: string[]; // ← campos adicionales (cc, name, etc.)
-};
 
 /* utilidad: type-guard para pedidos */
 function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
@@ -61,12 +49,40 @@ function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
 export function TrainingBuilder({
   flows = [],
   notificationNumber = null,
-  defaultMainMessage = "Saluda al cliente y pregúntale si desea retirar en tienda o envío a domicilio",
   onChange,
   values,
   handleChange,
+
+  // NUEVO:
+  promptId,
+  version,
+  onVersionChange,
+  onConflict,
+  initialSteps = [],
 }: TrainingBuilderProps) {
-  const [steps, setSteps] = useState<Step[]>([]);
+  const [steps, setSteps] = useState<StepTraining[]>(() => {
+    // Hidrata desde BD si hay datos; si no, arranca vacío
+    if (Array.isArray(initialSteps) && initialSteps.length > 0) {
+      return initialSteps as StepTraining[];
+    }
+    return [];
+  });
+
+  const handleConflict = useCallback((serverState: any) => {
+    const serverSteps = serverState?.sections?.training?.steps ?? [];
+    setSteps(serverSteps);
+    // si quieres hacer algo más aquí…
+  }, [setSteps]);
+
+  // 🔁 AUTOSAVE con debounce (guarda { steps } en sections.training)
+  useTrainingAutosave({
+    promptId,
+    version,
+    steps,
+    onVersionChange,
+    onConflict: handleConflict,
+  });
+
   // Para compatibilidad con tu API onChange antigua, usamos el primer paso
   const firstStep = steps[0];
 
@@ -130,7 +146,7 @@ export function TrainingBuilder({
   /* --------- Propagar cambios: onChange (compat) + values.training --------- */
   useEffect(() => {
     // Compatibilidad: emite el primer paso si existe
-    if (firstStep) onChange?.({ mainMessage: firstStep.mainMessage, elements: firstStep.elements });
+    if (firstStep) onChange?.({ mainMessage: firstStep.mainMessage ?? '', elements: firstStep.elements });
 
     // Actualiza values.training en el padre usando tu handleChange
     if (values.training !== trainingPrompt) {
@@ -150,7 +166,7 @@ export function TrainingBuilder({
       {
         id: nanoid(),
         title: `Paso ${nextIndex}`,
-        mainMessage: defaultMainMessage,
+        mainMessage: "Saluda al cliente y pregúntale si desea retirar en tienda o envío a domicilio",
         elements: [],
         openPicker: false,
       },

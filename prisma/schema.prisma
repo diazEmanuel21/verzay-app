@@ -8,49 +8,52 @@ datasource db {
 }
 
 model User {
-  id                 String             @id @default(cuid())
-  name               String?
-  email              String             @unique
-  password           String?
-  emailVerified      DateTime?
-  image              String?
-  role               Role               @default(user)
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  apiUrl             String             @default("https://api.openAI.co")
-  company            String             @default("Empresa Demo")
-  lat                String             @default("0.0000")
-  lng                String             @default("0.0000")
-  mapsUrl            String             @default("https://maps.google.com/?q=0,0")
-  notificationNumber String             @default("0000000000")
-  openingPhrase      String?            @default("DEPRECATED")
-  apiKeyId           String?
-  del_seguimiento    String?            @default("Estamos para servirle.")
-  plan               Plan               @default(basico)
-  autoReactivate     String?
-  webhookUrl         String?            @default("https://n8npro.verzay.co/webhook")
-  theme              ThemeApp?          @default(Default)
-  muteAgentResponses Boolean            @default(false)
-  timezone           String?
-  onInstagram        Boolean            @default(false)
-  onFacebook         Boolean            @default(false)
-  meetingDuration    Int?
-  accounts           Account[]
-  Appointment        Appointment[]
-  instancias         Instancias[]
-  pausar             Pausar[]
-  Service            Service[]
-  sessions           Session[]
-  systemMessages     SystemMessage[]
-  tools              Tools[]
-  apiKey             ApiKey?            @relation(fields: [apiKeyId], references: [id])
-  UserAvailability   UserAvailability[]
-  iaCredit           IaCredit?
-  clientesAsignados  reseller[]         @relation("RevendedorAsignador")
-  esClienteDe        reseller[]         @relation("ClienteAsignado")
-  aiConfig           UserAiConfig[]
-  modules            Module[]           @relation("UserModules")
-  PromptInstance     PromptInstance[]
+  id                            String                @id @default(cuid())
+  name                          String?
+  email                         String                @unique
+  password                      String?
+  emailVerified                 DateTime?
+  image                         String?
+  role                          Role                  @default(user)
+  createdAt                     DateTime              @default(now())
+  updatedAt                     DateTime              @updatedAt
+  apiUrl                        String                @default("https://api.openAI.co")
+  company                       String                @default("Empresa Demo")
+  lat                           String                @default("0.0000")
+  lng                           String                @default("0.0000")
+  mapsUrl                       String                @default("https://maps.google.com/?q=0,0")
+  notificationNumber            String                @default("0000000000")
+  openingPhrase                 String?               @default("DEPRECATED")
+  apiKeyId                      String?
+  del_seguimiento               String?               @default("Estamos para servirle.")
+  plan                          Plan                  @default(basico)
+  autoReactivate                String?
+  webhookUrl                    String?               @default("https://n8npro.verzay.co/webhook")
+  theme                         ThemeApp?             @default(Default)
+  muteAgentResponses            Boolean               @default(false)
+  timezone                      String?
+  onInstagram                   Boolean               @default(false)
+  onFacebook                    Boolean               @default(false)
+  meetingDuration               Int?
+  accounts                      Account[]
+  Appointment                   Appointment[]
+  instancias                    Instancias[]
+  pausar                        Pausar[]
+  Service                       Service[]
+  sessions                      Session[]
+  systemMessages                SystemMessage[]
+  tools                         Tools[]
+  apiKey                        ApiKey?               @relation(fields: [apiKeyId], references: [id])
+  UserAvailability              UserAvailability[]
+  iaCredit                      IaCredit?
+  clientesAsignados             reseller[]            @relation("RevendedorAsignador")
+  esClienteDe                   reseller[]            @relation("ClienteAsignado")
+  aiConfig                      UserAiConfig[]
+  modules                       Module[]              @relation("UserModules")
+  // Back-relations requeridos:
+  agentPrompts                  AgentPrompt[]         @relation("UserAgentPrompts")
+  publishedAgentPromptRevisions AgentPromptRevision[] @relation("UserPublishedRevisions")
+  PromptInstance                PromptInstance[]
 }
 
 model AiProvider {
@@ -210,6 +213,56 @@ model SystemMessage {
   title      String        @default("Sin título")
   typePrompt TypePromptAi? @default(TRAINING)
   user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum PromptStatus {
+  draft
+  published
+}
+
+model AgentPrompt {
+  id      String       @id @default(uuid()) @db.Uuid
+  userId  String
+  agentId String?
+  status  PromptStatus @default(draft)
+  version Int          @default(1)
+
+  sections       Json
+  promptText     String  @db.Text
+  businessName   String?
+  businessSector String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  revisions AgentPromptRevision[]
+  user      User                  @relation("UserAgentPrompts", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([agentId])
+  @@index([status])
+  @@index([businessName])
+  @@index([businessSector])
+  @@index([sections], type: Gin)
+}
+
+model AgentPromptRevision {
+  id       String      @id @default(uuid()) @db.Uuid
+  promptId String      @db.Uuid
+  prompt   AgentPrompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  revisionNumber     Int
+  sectionsSnapshot   Json
+  promptTextSnapshot String @db.Text
+
+  publishedBy     String
+  publishedByUser User   @relation("UserPublishedRevisions", fields: [publishedBy], references: [id], onDelete: Cascade)
+
+  publishedAt DateTime @default(now())
+  notes       String?
+
+  @@unique([promptId, revisionNumber])
+  @@index([publishedAt])
 }
 
 model Tools {
