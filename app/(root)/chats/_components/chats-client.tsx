@@ -30,6 +30,11 @@ function areListsDifferent(a: EvolutionMessage[], b: EvolutionMessage[]) {
 }
 
 /* -------------------------------------
+   Tipos locales
+-------------------------------------- */
+type ApiKeyData = { url: string; key: string };
+
+/* -------------------------------------
    Props del componente
 -------------------------------------- */
 interface ChatsClientProps {
@@ -48,6 +53,9 @@ interface ChatsClientProps {
 
   /** Server Action para refrescar la lista de chats */
   refetchChats: () => Promise<FetchChatsResult>;
+
+  /** NUEVO: credenciales para que ChatMain pueda resolver media cifrada */
+  apiKeyData?: ApiKeyData;
 }
 
 /* -------------------------------------
@@ -61,6 +69,7 @@ export function ChatsClient({
   sendAny,
   refetchChats,
   instanceName,
+  apiKeyData, // NUEVO
 }: ChatsClientProps) {
   const [selectedJid, setSelectedJid] = useState(initialSelectedJid || "");
   const [currentChatsResult, setCurrentChatsResult] = useState(initialChatsResult);
@@ -68,20 +77,29 @@ export function ChatsClient({
 
   const [info, setInfo] = useState<
     | {
-        total?: number; pages?: number; currentPage?: number; nextPage?: number | null;
-        instanceName?: string; remoteJid?: string;
+        total?: number;
+        pages?: number;
+        currentPage?: number;
+        nextPage?: number | null;
+        instanceName?: string;
+        remoteJid?: string;
+        apiKeyData?: ApiKeyData; // NUEVO
       }
     | undefined
-  >(initialSelectedJid ? { instanceName, remoteJid: initialSelectedJid } : undefined);
+  >(
+    initialSelectedJid
+      ? { instanceName, remoteJid: initialSelectedJid, apiKeyData }
+      : undefined
+  );
 
   const [loading, setLoading] = useState(false);
 
   // --- Control del polling del chat
   const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inFlightRef = useRef(false);
-  const backoffRef = useRef(0);           // ms (0 = intervalo base)
-  const BASE_INTERVAL = 2000;             // 2s base
-  const MAX_BACKOFF = 30000;              // 30s
+  const backoffRef = useRef(0); // ms (0 = intervalo base)
+  const BASE_INTERVAL = 2000; // 2s base
+  const MAX_BACKOFF = 30000; // 30s
 
   // Lista de contactos para sidebar
   const contacts = useMemo(() => {
@@ -107,10 +125,10 @@ export function ChatsClient({
     if (!selectedJid && contacts.length > 0) {
       const first = contacts[0].remoteJid;
       setSelectedJid(first);
-      setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid: first }));
+      setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid: first, apiKeyData }));
       if (!initialSelectedJid) setMessages([]);
     }
-  }, [contacts, selectedJid, instanceName, initialSelectedJid]);
+  }, [contacts, selectedJid, instanceName, initialSelectedJid, apiKeyData]);
 
   // --- Polling comparativo de mensajes (robusto)
   const pollAndCompareMessages = useCallback(
@@ -128,7 +146,7 @@ export function ChatsClient({
           const newMessages = res.data || [];
           setMessages((prevMsgs) => {
             if (areListsDifferent(prevMsgs, newMessages)) {
-              setInfo({ ...res, instanceName, remoteJid });
+              setInfo({ ...res, instanceName, remoteJid, apiKeyData });
               return newMessages;
             }
             return prevMsgs;
@@ -146,7 +164,7 @@ export function ChatsClient({
         inFlightRef.current = false;
       }
     },
-    [warmMessages, instanceName]
+    [warmMessages, instanceName, apiKeyData]
   );
 
   // Cambiar chat desde sidebar
@@ -154,7 +172,7 @@ export function ChatsClient({
     async (remoteJid: string) => {
       if (selectedJid !== remoteJid) setSelectedJid(remoteJid);
 
-      setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid }));
+      setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid, apiKeyData }));
       setLoading(true);
       setMessages([]);
 
@@ -170,28 +188,30 @@ export function ChatsClient({
 
         if (res?.success) {
           setMessages(res.data || []);
-          setInfo({ ...res, instanceName, remoteJid });
+          setInfo({ ...res, instanceName, remoteJid, apiKeyData });
         } else {
           setMessages([]);
-          setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid }));
+          setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid, apiKeyData }));
           console.warn("[ChatsClient] warmMessages error:", res?.message);
         }
       } catch (e) {
         setMessages([]);
-        setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid }));
+        setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid, apiKeyData }));
         console.error("[ChatsClient] warmMessages exception:", e);
       } finally {
         setLoading(false);
       }
     },
-    [selectedJid, warmMessages, instanceName]
+    [selectedJid, warmMessages, instanceName, apiKeyData]
   );
 
   // Envío unificado (texto o media) + refrescos
   const handleSendAny = useCallback(
     async (payload: OutgoingMessagePayload) => {
       if (!selectedJid || !sendAny) {
-        console.warn("[ChatsClient] No se puede enviar: remoteJid no seleccionado o función sendAny no proporcionada.");
+        console.warn(
+          "[ChatsClient] No se puede enviar: remoteJid no seleccionado o función sendAny no proporcionada."
+        );
         return;
       }
 
@@ -300,7 +320,14 @@ export function ChatsClient({
         document.removeEventListener("visibilitychange", onVisibility);
       }
     };
-  }, [selectedJid, warmMessages, pollAndCompareMessages, handleSelectFromSidebar, loading, messages.length]);
+  }, [
+    selectedJid,
+    warmMessages,
+    pollAndCompareMessages,
+    handleSelectFromSidebar,
+    loading,
+    messages.length,
+  ]);
 
   return (
     <div className="flex h-full">

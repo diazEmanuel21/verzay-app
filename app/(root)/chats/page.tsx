@@ -8,19 +8,19 @@ import {
   fetchChatsFromEvolution,
   findMessagesByRemoteJid,
   sendTextMessage,
+  sendMediaByUrl, // asegúrate de exportarla en tu action
   type FetchChatsResult,
   type EvolutionMessage as EvoMsgFromAction,
-  type SendMessageResult
+  type SendMessageResult,
 } from "@/actions/chat-actions";
-import { sendMediaByUrl } from "@/actions/chat-actions"; // <-- Asegúrate de exportarla en tu action
 import { getApiKeyById } from "@/actions/api-action";
 import type { ApiKey, Instancias } from "@prisma/client";
 import { ChatsClient } from "./_components/chats-client";
 
-// 🔄 Tipos importados desde ChatMain (cliente) para consistencia
+// Tipos importados desde ChatMain (cliente)
 import type { OutgoingMessagePayload } from "./_components/chat-main";
 
-// ---------- Utils ----------
+/* ---------- Utils ---------- */
 function pickWhatsappOrNull(arr: Instancias[]) {
   return (
     arr.find((i) => i.tipoInstancia === "Whatsapp") ??
@@ -28,14 +28,20 @@ function pickWhatsappOrNull(arr: Instancias[]) {
     null
   );
 }
-function hasInstancias(result: { data?: Instancias[] | null }): result is { data: Instancias[] } {
+function hasInstancias(
+  result: { data?: Instancias[] | null }
+): result is { data: Instancias[] } {
   return Array.isArray(result.data) && result.data.length > 0;
 }
 function hasApikey(result: { data?: ApiKey | null }): result is { data: ApiKey } {
   return !!result.data;
 }
 
-export default async function ChatsPage({ searchParams }: { searchParams?: { jid?: string } }) {
+export default async function ChatsPage({
+  searchParams,
+}: {
+  searchParams?: { jid?: string };
+}) {
   const user = await currentUser();
   if (!user) redirect("/login");
 
@@ -86,7 +92,10 @@ export default async function ChatsPage({ searchParams }: { searchParams?: { jid
   // 1) Carga mensajes por JID (para ChatsClient)
   const warmMessages =
     whatsappInstancia && apiKey
-      ? async (remoteJid: string, options?: { page?: number; pageSize?: number }) => {
+      ? async (
+          remoteJid: string,
+          options?: { page?: number; pageSize?: number }
+        ) => {
           "use server";
           return findMessagesByRemoteJid(
             { url: apiKey!.url, key: apiKey!.key },
@@ -112,10 +121,13 @@ export default async function ChatsPage({ searchParams }: { searchParams?: { jid
           message: "No hay instancia o API key configurada para refrescar chats.",
         });
 
-  // 3) ✅ Callback unificado para enviar cualquier formato
+  // 3) Callback unificado para enviar cualquier formato
   const sendAnyAction =
     whatsappInstancia && apiKey
-      ? async (remoteJid: string, payload: OutgoingMessagePayload): Promise<SendMessageResult> => {
+      ? async (
+          remoteJid: string,
+          payload: OutgoingMessagePayload
+        ): Promise<SendMessageResult> => {
           "use server";
 
           const base = { url: apiKey!.url, key: apiKey!.key } as const;
@@ -158,10 +170,10 @@ export default async function ChatsPage({ searchParams }: { searchParams?: { jid
       initialSelectedJid={initialSelectedJid}
       initialMessages={initialMessages}
       warmMessages={warmMessages}
-      /* ⬇️ usa el nuevo envío unificado */
-      sendAny={sendAnyAction}
+      sendAny={sendAnyAction}          /* envío unificado */
       refetchChats={refetchChatsAction}
       instanceName={whatsappInstancia?.instanceName}
+      apiKeyData={apiKey ? { url: apiKey.url, key: apiKey.key } : undefined} /* ⬅️ clave para media cifrada */
     />
   );
 }

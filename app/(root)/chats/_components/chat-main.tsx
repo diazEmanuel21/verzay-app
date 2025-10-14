@@ -1,6 +1,13 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useLayoutEffect,
+} from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowRight, Mic, Send, Trash2, X, Clock, Check } from 'lucide-react';
@@ -93,72 +100,85 @@ type RecordedAudioData = {
 function two(n: number) {
   return n.toString().padStart(2, '0');
 }
-function blobToBase64(blob: Blob): Promise<string> {
+function base64FromBlob(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error('Error leyendo blob'));
     reader.onloadend = () => {
       const dataUrl = reader.result as string;
       const commaIndex = dataUrl.indexOf(',');
-      if (commaIndex === -1) {
-        reject(new Error('Formato de Data URL inválido.'));
-        return;
-      }
+      if (commaIndex === -1) return reject(new Error('Formato de Data URL inválido.'));
       resolve(dataUrl.substring(commaIndex + 1)); // Base64 PURO
     };
     reader.readAsDataURL(blob);
   });
 }
+function initialFromName(name?: string) {
+  const c = (name || '').trim().charAt(0);
+  return c ? c.toUpperCase() : 'U';
+}
 function extractMediaInfo(msg: any, type: MediaType): MediaData | null {
   const typeKey = `${type}Message`;
-  const mediaObj = msg[typeKey] || {};
-  const url = msg.mediaUrl || mediaObj.mediaUrl || mediaObj.url || mediaObj.directPath;
-  const mimeType = mediaObj.mimetype || 'unknown/mime';
+  const mediaObj = msg?.[typeKey] || {};
+  const url = msg?.mediaUrl || mediaObj.mediaUrl || mediaObj.url || mediaObj.directPath;
+  const mimeType = mediaObj.mimetype || 'application/octet-stream';
   const caption = mediaObj.caption;
   if (url) return { type, url, mimeType, caption: caption || undefined };
   return null;
 }
 
+/** Convierte EvolutionMessage -> UIBubble (inyectando media desde caché si existe) */
 function toUIMessages(
   messages: EvolutionMessage[],
   userJid: string | undefined,
   avatarUrl: string | undefined,
-  base64Map?: Map<string, { dataUrl: string; mime: string; length: number }>
+  base64Map: Map<string, { dataUrl: string; mime: string; length: number }>
 ): UIBubble[] {
   return messages.map((m) => {
-    const isUser = m.key?.fromMe === true || m.key?.remoteJid !== userJid;
+    // ✅ Clasificación correcta: "user" solo si fromMe === true
+    const isUser = m.key?.fromMe === true;
     const sender: 'user' | 'other' = isUser ? 'user' : 'other';
     const ts = m.messageTimestamp;
     let content = '';
     let media: MediaData | null = null;
-    const messageData = m.message as any;
+    const messageData = (m.message || {}) as any;
 
-    if (m.messageType === 'conversation' && messageData?.conversation) content = messageData.conversation as string;
-    else if (m.messageType === 'extendedTextMessage' && messageData?.extendedTextMessage?.text)
-      content = messageData.extendedTextMessage.text as string;
-    else if (m.messageType === 'imageMessage') {
-      media = extractMediaInfo(messageData, 'image');
-      content = media?.caption || '';
-    } else if (m.messageType === 'videoMessage') {
-      media = extractMediaInfo(messageData, 'video');
-      content = media?.caption || '';
-    } else if (m.messageType === 'audioMessage') {
-      media = extractMediaInfo(messageData, 'audio');
-      content = '';
-    } else if (m.messageType === 'documentMessage') {
-      media = extractMediaInfo(messageData, 'document');
-      content = media?.caption || '';
-    } else content = `[Mensaje ${m.messageType || 'desconocido'}]`;
+    switch (m.messageType) {
+      case 'conversation':
+        content = messageData?.conversation || '';
+        break;
+      case 'extendedTextMessage':
+        content = messageData?.extendedTextMessage?.text || '';
+        break;
+      case 'imageMessage':
+        media = extractMediaInfo(messageData, 'image');
+        content = media?.caption || '';
+        break;
+      case 'videoMessage':
+        media = extractMediaInfo(messageData, 'video');
+        content = media?.caption || '';
+        break;
+      case 'audioMessage':
+        media = extractMediaInfo(messageData, 'audio');
+        content = '';
+        break;
+      case 'documentMessage':
+        media = extractMediaInfo(messageData, 'document');
+        content = media?.caption || '';
+        break;
+      default:
+        content = `[Mensaje ${m.messageType || 'desconocido'}]`;
+    }
 
     // ⬇️ Inyección de base64 si está en caché
     const msgId = m.key?.id || m.id;
-    if (msgId && base64Map?.has(msgId) && media) {
+    if (msgId && base64Map.has(msgId) && media) {
       const cached = base64Map.get(msgId)!;
       media = { ...media, url: cached.dataUrl, mimeType: cached.mime };
     }
 
     return {
-      id: m.id || String(ts) + (m.key?.id || ''),
+      id: m.id || (ts ? String(ts) : '') + (m.key?.id || Math.random().toString(36).slice(2)),
       sender,
       content,
       avatarSrc: sender === 'user' ? '/default.png' : avatarUrl,
@@ -169,16 +189,28 @@ function toUIMessages(
 }
 
 /* -------- Subcomponentes -------- */
-const ExpandableText: React.FC<{ message: string; isUserMessage: boolean }> = ({ message, isUserMessage }) => {
+const ExpandableText: React.FC<{ message: string; isUserMessage: boolean }> = ({
+  message,
+  isUserMessage,
+}) => {
   const MAX_LENGTH = 250;
   const [isExpanded, setIsExpanded] = useState(false);
+  if (!message) return null;
   if (message.length <= MAX_LENGTH) return <p className="text-sm whitespace-pre-wrap">{message}</p>;
   const displayedText = isExpanded ? message : `${message.substring(0, MAX_LENGTH)}...`;
-  const linkClass = isUserMessage ? 'text-gray-300 hover:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300';
+  const linkClass = isUserMessage
+    ? 'text-gray-300 hover:text-white'
+    : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300';
   return (
     <p className="text-sm whitespace-pre-wrap">
       {displayedText}
-      <button onClick={() => setIsExpanded(!isExpanded)} className={cn('ml-1 font-semibold text-xs inline-block', linkClass)} type="button">
+      <button
+        onClick={() => setIsExpanded((v) => !v)}
+        className={cn('ml-1 font-semibold text-xs inline-block', linkClass)}
+        type="button"
+        aria-expanded={isExpanded}
+        aria-label={isExpanded ? 'Ver menos' : 'Ver más'}
+      >
         {isExpanded ? 'Ver menos' : 'Ver más...'}
       </button>
     </p>
@@ -187,9 +219,10 @@ const ExpandableText: React.FC<{ message: string; isUserMessage: boolean }> = ({
 
 const SendingMessageSkeleton: React.FC<{ tempMessage: UIBubble }> = ({ tempMessage }) => {
   const isMedia = tempMessage.media !== undefined;
-  const bubbleClass = 'bg-gray-300/50 dark:bg-gray-700/50 text-gray-500 rounded-xl rounded-br-sm self-end animate-pulse';
+  const bubbleClass =
+    'bg-gray-300/50 dark:bg-gray-700/50 text-gray-500 rounded-xl rounded-br-sm self-end animate-pulse';
   return (
-    <div className="flex items-end gap-1 my-1 justify-end opacity-70">
+    <div className="flex items-end gap-1 my-1 justify-end opacity-70" aria-live="polite">
       <div className={cn('p-2 break-words relative inline-block max-w-[90%] sm:max-w-[70%]', bubbleClass)}>
         {isMedia ? (
           <div className="w-24 h-24 rounded-md bg-gray-400/50 dark:bg-gray-600/50 my-1" />
@@ -200,7 +233,7 @@ const SendingMessageSkeleton: React.FC<{ tempMessage: UIBubble }> = ({ tempMessa
           </>
         )}
         <div className="text-[0.6rem] mt-1 flex justify-end items-center gap-1 text-gray-500/70">
-          <Clock className="w-3 h-3 text-white" />
+          <Clock className="w-3 h-3" />
           <span>Enviando...</span>
         </div>
       </div>
@@ -214,30 +247,57 @@ const MediaRenderer: React.FC<{ media: MediaData | undefined }> = React.memo(({ 
   const baseStyle = 'my-1 rounded-md overflow-hidden border dark:border-gray-600';
   const audioDocStyle = 'w-full max-w-[350px]';
   return (
-    <div className={cn(baseStyle, 'max-w-full', type === 'audio' || type === 'document' ? audioDocStyle : 'md:max-w-[300px]')}>
+    <div
+      className={cn(
+        baseStyle,
+        'max-w-full',
+        type === 'audio' || type === 'document' ? audioDocStyle : 'md:max-w-[300px]'
+      )}
+    >
       {type === 'image' && (
         <img
           src={url}
           alt={caption || 'Imagen'}
           className="w-full h-auto object-cover max-h-[300px] cursor-pointer"
           onClick={() => window.open(url, '_blank')}
+          loading="lazy"
+          decoding="async"
         />
       )}
-      {type === 'video' && <video src={url} controls className="w-full h-auto max-h-[300px] bg-black" poster={caption} />}
+      {type === 'video' && (
+        <video
+          src={url}
+          controls
+          className="w-full h-auto max-h-[300px] bg-black"
+          poster={caption}
+          preload="metadata"
+        />
+      )}
       {type === 'audio' && (
         <div className="p-2 bg-white dark:bg-gray-700 flex items-center border-t dark:border-gray-600">
           <Mic className="w-5 h-5 text-gray-500 dark:text-gray-300 mr-2 flex-shrink-0" />
-          <audio src={url} controls className="flex-1 h-8" />
+          <audio src={url} controls className="flex-1 h-8" preload="metadata" />
         </div>
       )}
       {type === 'document' && (
-        <a href={url} target="_blank" rel="noopener noreferrer" className="p-3 bg-blue-500 text-white flex items-center justify-between hover:bg-blue-600 transition">
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-3 bg-blue-500 text-white flex items-center justify-between hover:bg-blue-600 transition"
+          aria-label="Abrir documento"
+        >
           <span className="truncate">{caption || mimeType}</span>
           <ArrowRight className="w-4 h-4" />
         </a>
       )}
       {caption && type !== 'audio' && (
-        <div className={cn('text-xs p-1', type === 'document' ? 'text-gray-600 dark:text-gray-300' : 'text-gray-800 dark:text-gray-100')}>
+        <div
+          className={cn(
+            'text-xs p-1',
+            type === 'document' ? 'text-gray-600 dark:text-gray-300' : 'text-gray-800 dark:text-gray-100'
+          )}
+        >
           <ExpandableText message={caption} isUserMessage={false} />
         </div>
       )}
@@ -266,7 +326,7 @@ const MessageBubble: React.FC<{
         <div className="mr-1">
           <Avatar className="w-7 h-7">
             <AvatarImage src={avatarSrc || '/default-avatar.png'} />
-            <AvatarFallback>E</AvatarFallback>
+            <AvatarFallback>{initialFromName()}</AvatarFallback>
           </Avatar>
         </div>
       )}
@@ -279,12 +339,18 @@ const MessageBubble: React.FC<{
         )}
         <div className={cn('right-2 bottom-1 flex items-center gap-1')}>
           {timestamp && (
-            <span className={cn('text-[0.6rem] mt-1 block', isUserMessage ? 'text-gray-300' : 'text-gray-500 dark:text-gray-400/80')}>
+            <span
+              className={cn(
+                'text-[0.6rem] mt-1 block',
+                isUserMessage ? 'text-gray-300' : 'text-gray-500 dark:text-gray-400/80'
+              )}
+              aria-label="Hora del mensaje"
+            >
               {new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
           {isUserMessage && (
-            <span className="text-[0.6rem] mt-1 block">
+            <span className="text-[0.6rem] mt-1 block" aria-label={status === 'sending' ? 'Enviando' : 'Enviado'}>
               {status === 'sending' ? <Clock className="w-3 h-3 text-gray-300" /> : <Check className="w-3 h-3 text-gray-300" />}
             </span>
           )}
@@ -346,30 +412,28 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
   const audioChunksRef = useRef<BlobPart[]>([]);
   const timerRef = useRef<number | null>(null);
 
-  /* ✅ Caché de base64 por messageId + dedupe de solicitudes en vuelo */
-  const [mediaCache, setMediaCache] = useState<Map<string, { dataUrl: string; mime: string; length: number }>>(
-    () => new Map()
-  );
+  /* ✅ Caché de base64 en ref (evita bucles de renders) + dedupe de solicitudes en vuelo */
+  const mediaCacheRef = useRef<Map<string, { dataUrl: string; mime: string; length: number }>>(new Map());
+  const [mediaCacheTick, setMediaCacheTick] = useState(0); // solo para re-render controlado cuando se actualiza la caché
   const inflightRef = useRef<Set<string>>(new Set());
 
-  // Detectores
-  const isMediaMsg = (m: EvolutionMessage) => {
+  // Detectores memoizados
+  const isMediaMsg = useCallback((m: EvolutionMessage) => {
     const body = (m.message || {}) as any;
     return !!(body.imageMessage || body.videoMessage || body.audioMessage || body.documentMessage);
-  };
-  const hasRemoteOnly = (m: EvolutionMessage) => {
+  }, []);
+  const hasRemoteOnly = useCallback((m: EvolutionMessage) => {
     const body = (m.message || {}) as any;
     const media = body.imageMessage || body.videoMessage || body.audioMessage || body.documentMessage || {};
     const url = body.mediaUrl || media.mediaUrl || media.url || media.directPath;
     return !!url && typeof url === 'string' && !/^data:[^;]+;base64,/.test(url);
-  };
-  const getMessageId = (m: EvolutionMessage) => m.key?.id || m.id || null;
+  }, []);
+  const getMessageId = useCallback((m: EvolutionMessage) => m.key?.id || m.id || null, []);
 
-  /* 🔌 Resolver base64 usando TU action existente */
+  /* 🔌 Resolver base64 usando TU action existente (sin depender del Map como estado) */
   useEffect(() => {
     const instanceName = info?.instanceName;
-    const apiKeyData = info?.apiKeyData; // opcional
-
+    const apiKeyData = info?.apiKeyData;
     if (!instanceName || !messages?.length || !apiKeyData) return;
 
     const candidates: string[] = [];
@@ -377,51 +441,59 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
       if (!isMediaMsg(m) || !hasRemoteOnly(m)) continue;
       const mid = getMessageId(m);
       if (!mid) continue;
-      if (mediaCache.has(mid) || inflightRef.current.has(mid)) continue;
+      if (mediaCacheRef.current.has(mid) || inflightRef.current.has(mid)) continue;
       candidates.push(mid);
     }
     if (!candidates.length) return;
+
+    let cancelled = false;
 
     (async () => {
       for (const messageId of candidates) {
         try {
           inflightRef.current.add(messageId);
           const res = await getMediaBase64FromMessage(apiKeyData, instanceName, messageId);
-          if (res?.success && res.data?.base64) {
+          if (!res || cancelled) continue;
+          if (res.success && res.data?.base64) {
             const dataUrl = `data:${res.data.mimetype || 'application/octet-stream'};base64,${res.data.base64}`;
-            setMediaCache((prev) => {
-              const next = new Map(prev);
-              next.set(messageId, { dataUrl, mime: res.data!.mimetype, length: res.data!.fileLength });
-              return next;
+            mediaCacheRef.current.set(messageId, {
+              dataUrl,
+              mime: res.data.mimetype,
+              length: res.data.fileLength,
             });
-          } else {
-            // console.warn('getMediaBase64FromMessage error', messageId, res?.message);
+            setMediaCacheTick((t) => t + 1); // provoca re-render
           }
-        } catch (e) {
-          // console.error('getMediaBase64FromMessage exception', e);
+        } catch {
+          // swallow; si falla uno seguimos con los demás
         } finally {
           inflightRef.current.delete(messageId);
         }
       }
     })();
-  }, [messages, info?.instanceName, info?.apiKeyData, mediaCache]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [messages, info?.instanceName, info?.apiKeyData, isMediaMsg, hasRemoteOnly, getMessageId]);
 
   /* Construye UI con caché */
   const reversed = useMemo(() => messages.slice().reverse(), [messages]);
   const uiMessages = useMemo(
-    () => toUIMessages(reversed, userJid, header.avatarSrc, mediaCache),
-    [reversed, userJid, header.avatarSrc, mediaCache]
+    () => toUIMessages(reversed, userJid, header.avatarSrc, mediaCacheRef.current),
+    // incluye mediaCacheTick para re-computar cuando se actualiza el ref
+    [reversed, userJid, header.avatarSrc, mediaCacheTick]
   );
 
-  /* Scroll */
+  /* Scroll to bottom (useLayoutEffect minimiza “salto” visual) */
   const scrollToBottom = useCallback(() => {
-    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
+    const el = listRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, []);
-  useEffect(() => {
+  useLayoutEffect(() => {
     scrollToBottom();
   }, [uiMessages.length, tempMessage, scrollToBottom]);
 
-  /* Auto-resize */
+  /* Auto-resize del textarea */
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -436,18 +508,21 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
   }, []);
   const clearComposeMedia = useCallback(() => setComposeMedia(null), []);
 
-  const stopTimer = () => {
+  const stopTimer = useCallback(() => {
     if (timerRef.current) {
       window.clearInterval(timerRef.current);
       timerRef.current = null;
     }
-  };
-  const startTimer = () => {
+  }, []);
+  const startTimer = useCallback(() => {
     stopTimer();
     setRecordSecs(0);
     timerRef.current = window.setInterval(() => setRecordSecs((s) => s + 1), 1000) as unknown as number;
-  };
-  const formatSecs = (s: number) => `${two(Math.floor(s / 60))}:${two(s % 60)}`;
+  }, [stopTimer]);
+  const formatSecs = useCallback(
+    (s: number) => `${two(Math.floor(s / 60))}:${two(s % 60)}`,
+    []
+  );
 
   const stopMicrophoneStream = useCallback(() => {
     if (mediaStreamRef.current) {
@@ -458,6 +533,8 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
 
   /* Envío */
   const sendNow = useCallback(async () => {
+    if (isSending) return;
+
     let payload: OutgoingMessagePayload | null = null;
     let content = '';
     let media: MediaData | undefined = undefined;
@@ -484,7 +561,12 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         caption,
       };
       content = caption || '';
-      media = { type: composeMedia.mediatype, url: composeMedia.dataUrl, mimeType: composeMedia.mimeType, caption };
+      media = {
+        type: composeMedia.mediatype,
+        url: composeMedia.dataUrl,
+        mimeType: composeMedia.mimeType,
+        caption,
+      };
       setInput('');
       setComposeMedia(null);
     } else {
@@ -516,7 +598,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         setTempMessage(null);
       }
     }
-  }, [recordedAudio, composeMedia, input, onSend]);
+  }, [recordedAudio, composeMedia, input, onSend, isSending]);
 
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -530,33 +612,35 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
 
   /* Grabación de Audio */
   const stopRecordingAndPreview = useCallback(() => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-    }
+    const rec = mediaRecorderRef.current;
+    if (rec && rec.state !== 'inactive') rec.stop();
   }, []);
   const cancelRecording = useCallback(() => {
     stopTimer();
     setIsRecording(false);
     audioChunksRef.current = [];
     setRecordedAudio(null);
-    if (mediaRecorderRef.current) {
+    const rec = mediaRecorderRef.current;
+    if (rec) {
       try {
-        if (mediaRecorderRef.current.state !== 'inactive') mediaRecorderRef.current.stop();
+        if (rec.state !== 'inactive') rec.stop();
       } catch {}
       mediaRecorderRef.current = null;
     }
     stopMicrophoneStream();
-  }, [stopMicrophoneStream]);
+  }, [stopTimer, stopMicrophoneStream]);
+
   const startRecording = useCallback(async () => {
     if (isSending) return;
+    // Reinicia cualquier grabación previa
     cancelRecording();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
 
       const mimeCandidates = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/webm', 'audio/ogg'];
-      const mimeType = mimeCandidates.find((m) => MediaRecorder.isTypeSupported(m)) || '';
-      const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      const chosenMime = mimeCandidates.find((m) => MediaRecorder.isTypeSupported(m));
+      const rec = new MediaRecorder(stream, chosenMime ? { mimeType: chosenMime } : undefined);
 
       audioChunksRef.current = [];
       rec.ondataavailable = (e) => {
@@ -571,7 +655,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         setIsRecording(false);
         mediaRecorderRef.current = null;
 
-        const finalMimeType = rec.mimeType || 'audio/webm';
+        const finalMimeType = rec.mimeType || chosenMime || 'audio/webm';
         const blob = new Blob(audioChunksRef.current, { type: finalMimeType });
         audioChunksRef.current = [];
 
@@ -579,18 +663,20 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
           stopMicrophoneStream();
           return;
         }
-
-        const base64Pure = await blobToBase64(blob);
-        const dataUrlWithPrefix = `data:${finalMimeType};base64,${base64Pure}`;
-
-        setRecordedAudio({
-          base64Pure,
-          dataUrlWithPrefix,
-          mimetype: finalMimeType,
-          durationSecs: recordSecs,
-        });
-
-        stopMicrophoneStream();
+        try {
+          const base64Pure = await base64FromBlob(blob);
+          const dataUrlWithPrefix = `data:${finalMimeType};base64,${base64Pure}`;
+          setRecordedAudio({
+            base64Pure,
+            dataUrlWithPrefix,
+            mimetype: finalMimeType,
+            durationSecs: (prev => prev)(recordSecs), // mantiene lo contado
+          });
+        } catch (err) {
+          console.error('Error preparando audio base64:', err);
+        } finally {
+          stopMicrophoneStream();
+        }
       };
 
       rec.start();
@@ -599,17 +685,15 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
       console.error('Error al iniciar grabación:', err);
       cancelRecording();
     }
-  }, [cancelRecording, recordSecs, stopMicrophoneStream, isSending]);
+  }, [cancelRecording, startTimer, stopTimer, stopMicrophoneStream, isSending, recordSecs]);
 
-  useEffect(() => {
-    return () => {
-      cancelRecording();
-    };
-  }, [cancelRecording]);
+  // Cleanup al desmontar
+  useEffect(() => cancelRecording, [cancelRecording]);
 
+  // Flags derivados
   const isPreviewingAudio = recordedAudio !== null && !isRecording;
   const isInputActive = !isRecording && !isPreviewingAudio && !isSending;
-  const isSendButtonVisible = isInputActive && (input.trim() || composeMedia);
+  const isSendButtonVisible = isInputActive && (input.trim().length > 0 || !!composeMedia);
 
   return (
     <div className="flex flex-col h-full w-full bg-white dark:bg-gray-800 border-l border-r">
@@ -618,7 +702,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         <div className="flex items-center gap-3">
           <Avatar className="w-10 h-10">
             <AvatarImage src={header.avatarSrc || '/default-avatar.png'} />
-            <AvatarFallback>{header.name?.charAt(0) ?? '?'}</AvatarFallback>
+            <AvatarFallback>{initialFromName(header.name)}</AvatarFallback>
           </Avatar>
           <div>
             <p className="font-semibold text-md dark:text-white">{header.name}</p>
@@ -627,7 +711,12 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
       </div>
 
       {/* Mensajes */}
-      <ChatMessageList uiMessages={uiMessages} loading={loading} listRef={listRef} tempMessage={tempMessage} />
+      <ChatMessageList
+        uiMessages={uiMessages}
+        loading={loading}
+        listRef={listRef}
+        tempMessage={tempMessage}
+      />
 
       {/* Barra de mensaje */}
       <div className="p-3 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
@@ -636,15 +725,31 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
           <div className="mb-2 flex items-center gap-2">
             {composeMedia.mediatype === 'image' ? (
               <div className="relative w-16 h-16 rounded-md overflow-hidden border bg-white dark:bg-gray-800">
-                <img src={composeMedia.dataUrl} alt={composeMedia.fileName} className="w-full h-full object-cover" />
-                <button className="absolute -top-2 -right-2 bg-black/70 text-white rounded-full p-1" onClick={clearComposeMedia} aria-label="Quitar adjunto" type="button">
+                <img
+                  src={composeMedia.dataUrl}
+                  alt={composeMedia.fileName}
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  className="absolute -top-2 -right-2 bg-black/70 text-white rounded-full p-1"
+                  onClick={clearComposeMedia}
+                  aria-label="Quitar adjunto"
+                  type="button"
+                  title="Quitar adjunto"
+                >
                   <X className="w-3 h-3" />
                 </button>
               </div>
             ) : (
               <div className="relative w-16 h-16 rounded-md overflow-hidden border bg-white dark:bg-gray-800 flex items-center justify-center text-xs px-1 text-center">
                 <span className="truncate">{composeMedia.fileName}</span>
-                <button className="absolute -top-2 -right-2 bg-black/70 text-white rounded-full p-1" onClick={clearComposeMedia} aria-label="Quitar adjunto" type="button">
+                <button
+                  className="absolute -top-2 -right-2 bg-black/70 text-white rounded-full p-1"
+                  onClick={clearComposeMedia}
+                  aria-label="Quitar adjunto"
+                  type="button"
+                  title="Quitar adjunto"
+                >
                   <X className="w-3 h-3" />
                 </button>
               </div>
@@ -667,7 +772,15 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
                 <span className="tabular-nums">{formatSecs(recordSecs)}</span>
               </div>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700" onClick={cancelRecording} title="Cancelar grabación" type="button">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-red-600 hover:text-red-700"
+              onClick={cancelRecording}
+              title="Cancelar grabación"
+              aria-label="Cancelar grabación"
+              type="button"
+            >
               <Trash2 className="w-4 h-4" />
             </Button>
           </div>
@@ -676,12 +789,28 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         {/* Previsualización de Audio Grabado */}
         {isPreviewingAudio && recordedAudio && (
           <div className="flex items-center gap-2 p-2 mb-2 rounded-lg bg-gray-100 dark:bg-gray-700 border dark:border-gray-600">
-            <Button onClick={cancelRecording} size="icon" className="rounded-full bg-red-500 hover:bg-red-600 flex-shrink-0" title="Borrar nota de voz" type="button">
+            <Button
+              onClick={cancelRecording}
+              size="icon"
+              className="rounded-full bg-red-500 hover:bg-red-600 flex-shrink-0"
+              title="Borrar nota de voz"
+              aria-label="Borrar nota de voz"
+              type="button"
+            >
               <Trash2 className="w-5 h-5" />
             </Button>
             <audio src={recordedAudio.dataUrlWithPrefix} controls className="flex-1 h-8" />
-            <span className="text-sm tabular-nums text-gray-600 dark:text-gray-300 flex-shrink-0">{formatSecs(recordedAudio.durationSecs)}</span>
-            <Button onClick={() => void sendNow()} size="icon" className="rounded-full bg-green-500 hover:bg-green-600 flex-shrink-0" title="Enviar nota de voz" type="button">
+            <span className="text-sm tabular-nums text-gray-600 dark:text-gray-300 flex-shrink-0">
+              {formatSecs(recordedAudio.durationSecs)}
+            </span>
+            <Button
+              onClick={() => void sendNow()}
+              size="icon"
+              className="rounded-full bg-green-500 hover:bg-green-600 flex-shrink-0"
+              title="Enviar nota de voz"
+              aria-label="Enviar nota de voz"
+              type="button"
+            >
               <Send className="w-5 h-5 text-white" />
             </Button>
           </div>
@@ -690,7 +819,12 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         {/* Input + botones */}
         <div className="relative flex items-end">
           <div className="absolute left-1 z-10 bottom-2">
-            {isInputActive && <AttachmentMenu onComposeMediaChange={handleComposeMediaChange} maxBase64MB={8} />}
+            {isInputActive && (
+              <AttachmentMenu
+                onComposeMediaChange={handleComposeMediaChange}
+                maxBase64MB={8}
+              />
+            )}
           </div>
 
           <Textarea
@@ -701,6 +835,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
             onKeyDown={handleKeyPress}
             disabled={!isInputActive}
             rows={1}
+            aria-label="Escribe tu mensaje"
             className={cn(
               'min-h-[44px] max-h-40 h-auto bg-white dark:bg-gray-800 dark:text-white rounded-lg border-none w-full',
               'pl-10 pr-24 resize-none overflow-y-auto',
@@ -713,8 +848,11 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
               <Button
                 onClick={() => (isRecording ? stopRecordingAndPreview() : startRecording())}
                 size="icon"
-                className={cn('rounded-full', isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600')}
-                aria-label={isRecording ? 'Detener grabación' : 'Grabar audio'}
+                className={cn(
+                  'rounded-full',
+                  isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600'
+                )}
+                aria-label={isRecording ? 'Detener grabación y previsualizar' : 'Grabar nota de voz'}
                 title={isRecording ? 'Detener y previsualizar' : 'Grabar nota de voz'}
                 type="button"
               >
@@ -723,13 +861,20 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
             )}
 
             {isSendButtonVisible && !isSending && (
-              <Button onClick={() => void sendNow()} size="icon" className="rounded-full bg-blue-500 hover:bg-blue-600" aria-label="Enviar" type="button">
+              <Button
+                onClick={() => void sendNow()}
+                size="icon"
+                className="rounded-full bg-blue-500 hover:bg-blue-600"
+                aria-label="Enviar"
+                title="Enviar"
+                type="button"
+              >
                 <ArrowRight className="w-5 h-5 text-white" />
               </Button>
             )}
 
             {isSending && (
-              <div className="p-2 bg-blue-500 rounded-full animate-spin">
+              <div className="p-2 bg-blue-500 rounded-full animate-spin" aria-label="Enviando">
                 <Clock className="w-5 h-5 text-white" />
               </div>
             )}

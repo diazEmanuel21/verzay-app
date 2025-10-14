@@ -50,30 +50,15 @@ const normalizeFindMessagesPayload = (p: any) => {
   const items = (Array.isArray(p) && p) || (p?.data && Array.isArray(p.data) && p.data) || [];
   return { items: items as EvolutionMessage[], meta: {} };
 };
+
 async function doRequest(
   url: string,
   apikey: string,
   signal: AbortSignal,
   method: 'POST' | 'GET',
   body?: Record<string, any>,
-  log = false
+  _log = false // se mantiene la firma, pero no se loggea nada
 ) {
-  const tag = `[${method}] ${new URL(url, 'http://x').pathname} • ${Date.now().toString(36)}`;
-  if (log) {
-    console.log(`\n[EVOLUTION][REQ] ${tag}\n[EVOLUTION][REQ] url=${url}\n[EVOLUTION][REQ] apikey=${maskKey(apikey)}`);
-    if (body) {
-      console.log(
-        `[EVOLUTION][REQ] body(preview)=${safeJsonPreview({
-          ...body,
-          media: body.media ? `[base64 length=${String(body.media).length}]` : undefined,
-          audio: typeof body.audio === 'string' ? (body.encoding ? `[base64 length=${body.audio.length}]` : '[url]') : body.audio,
-        })}`
-      );
-      if (typeof body.media === 'string') console.log(`[EVOLUTION][REQ] body.media(EXACT)=${body.media}`);
-      if (typeof body.audio === 'string' && body.encoding === true) console.log(`[EVOLUTION][REQ] body.audio(EXACT)=${body.audio}`);
-    }
-    console.time(`[EVOLUTION][TIMER] ${tag}`);
-  }
   const res = await fetch(url, {
     method,
     headers: { 'Content-Type': 'application/json', Accept: 'application/json', apikey },
@@ -81,18 +66,14 @@ async function doRequest(
     cache: 'no-store',
     signal,
   });
-  const txt = await res.clone().text().catch(() => '');
-  const parsed = await parseTextAsJson(txt);
-  if (log) {
-    console.timeEnd(`[EVOLUTION][TIMER] ${tag}`);
-    console.log(`[EVOLUTION][RES] ${tag} status=${res.status} ok=${res.ok}`);
-    console.log(`[EVOLUTION][RES] ${tag} content-type=${res.headers.get('content-type') || ''}`);
-    console.log(`[EVOLUTION][RES] ${tag} ${parsed.kind === 'json' ? `json=${safeJsonPreview(parsed.json)}` : `text=${txt.length > 1200 ? txt.slice(0, 1200) + `…(${txt.length - 1200} chars)` : txt}`}`);
-  }
   return res;
 }
+
 /* base64 helpers */
-const fileToBase64Raw = async (f: File) => ({ base64: Buffer.from(await f.arrayBuffer()).toString('base64').replace(/(\r\n|\n|\r)/g, ''), mime: f.type || 'application/octet-stream' });
+const fileToBase64Raw = async (f: File) => ({
+  base64: Buffer.from(await f.arrayBuffer()).toString('base64').replace(/(\r\n|\n|\r)/g, ''),
+  mime: f.type || 'application/octet-stream',
+});
 const bufferToBase64Raw = (b: Buffer) => b.toString('base64').replace(/(\r\n|\n|\r)/g, '');
 const fetchUrlToBase64 = async (u: string, hinted?: string) => {
   const r = await fetch(u, { cache: 'no-store' });
@@ -103,7 +84,7 @@ const fetchUrlToBase64 = async (u: string, hinted?: string) => {
   try {
     const last = new URL(u).pathname.split('/').filter(Boolean).pop();
     fileName = last || undefined;
-  } catch { }
+  } catch {}
   return { base64, mime, fileName };
 };
 function normalizeBase64(b64: string) {
@@ -117,7 +98,9 @@ function normalizeBase64(b64: string) {
 async function ensureBase64FromString(mediaUrl: string, mimetype?: string) {
   const input = (mediaUrl || '').trim();
   if (isDataUrl(input)) {
-    const i = input.indexOf(','), head = input.slice(0, i), m = head.match(/^data:([^;]+);base64/i);
+    const i = input.indexOf(','),
+      head = input.slice(0, i),
+      m = head.match(/^data:([^;]+);base64/i);
     const mime = m?.[1] || mimetype || 'application/octet-stream';
     const base64 = normalizeBase64(input.slice(i + 1).replace(/(\s|\r\n|\n|\r)/g, ''));
     Buffer.from(base64, 'base64');
@@ -136,16 +119,27 @@ const mediaTypeFromMime = (m: string): MediaType =>
   (m = (m || '').toLowerCase()).startsWith('image/')
     ? 'image'
     : m.startsWith('video/')
-      ? 'video'
-      : m.startsWith('audio/')
-        ? 'audio'
-        : 'document';
+    ? 'video'
+    : m.startsWith('audio/')
+    ? 'audio'
+    : 'document';
 
 /* ===== Tipos exportados ===== */
 
 type MediaMessagePayload = {
-  url?: string; mediaUrl?: string; mediaKey?: string; mimetype?: string; fileLength?: string | number;
-  fileSha256?: string; fileEncSha256?: string; jpegThumbnail?: string; width?: number; height?: number; seconds?: number; ptt?: boolean; caption?: string;
+  url?: string;
+  mediaUrl?: string;
+  mediaKey?: string;
+  mimetype?: string;
+  fileLength?: string | number;
+  fileSha256?: string;
+  fileEncSha256?: string;
+  jpegThumbnail?: string;
+  width?: number;
+  height?: number;
+  seconds?: number;
+  ptt?: boolean;
+  caption?: string;
 };
 
 export type MessageContent = {
@@ -210,7 +204,17 @@ export type FetchChatsResult =
   | { success: false; message: string };
 
 export type FindMessagesResult =
-  | { success: true; message: string; data: EvolutionMessage[]; total?: number; pages?: number; currentPage?: number; nextPage?: number | null; raw?: unknown; queriedRemoteJid?: string }
+  | {
+      success: true;
+      message: string;
+      data: EvolutionMessage[];
+      total?: number;
+      pages?: number;
+      currentPage?: number;
+      nextPage?: number | null;
+      raw?: unknown;
+      queriedRemoteJid?: string;
+    }
   | { success: false; message: string; raw?: unknown; queriedRemoteJid?: string };
 
 export type SendMessageResult =
@@ -234,7 +238,13 @@ export interface SendMediaUrlParams {
 }
 
 export type GetMediaResult =
-  | { success: true; message: string; data: { base64: string; mimetype: string; fileLength: number }; raw?: unknown; messageId: string }
+  | {
+      success: true;
+      message: string;
+      data: { base64: string; mimetype: string; fileLength: number };
+      raw?: unknown;
+      messageId: string;
+    }
   | { success: false; message: string; raw?: unknown; messageId: string };
 
 /* ===== Acciones exportadas ===== */
@@ -260,7 +270,10 @@ export async function fetchChatsFromEvolution(
     return { success: true, message: `OK findChats ${instanceName}`, data: ensureArrayResponse(raw) };
   } catch (e: any) {
     clearTimeout(t);
-    return { success: false, message: e?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${e?.message || String(e)}` };
+    return {
+      success: false,
+      message: e?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${e?.message || String(e)}`,
+    };
   }
 }
 
@@ -272,7 +285,11 @@ export async function findMessagesByRemoteJid(
 ): Promise<FindMessagesResult> {
   const { url: baseUrlRaw, key } = apiKeyData;
   if (!baseUrlRaw || !key || !instanceName || !remoteJid)
-    return { success: false, message: 'URL / API Key / instanceName / remoteJid faltantes.', queriedRemoteJid: remoteJid };
+    return {
+      success: false,
+      message: 'URL / API Key / instanceName / remoteJid faltantes.',
+      queriedRemoteJid: remoteJid,
+    };
   const baseURL = normalizeBaseUrl(baseUrlRaw);
   const endpoint = `${baseURL}/chat/findMessages/${encodeURIComponent(instanceName)}`;
   const payload: Record<string, any> = { where: { key: { remoteJid } } };
@@ -285,13 +302,33 @@ export async function findMessagesByRemoteJid(
     const res = await doRequest(endpoint, key, ctrl.signal, 'POST', payload);
     clearTimeout(t);
     const raw = await res.json().catch(() => null);
-    if (!res.ok) return { success: false, message: (raw?.message as string) || `Error ${res.status} en la API.`, raw, queriedRemoteJid: remoteJid };
+    if (!res.ok)
+      return {
+        success: false,
+        message: (raw?.message as string) || `Error ${res.status} en la API.`,
+        raw,
+        queriedRemoteJid: remoteJid,
+      };
     if (!raw) return { success: false, message: 'Respuesta inválida o vacía.', queriedRemoteJid: remoteJid };
     const { items, meta } = normalizeFindMessagesPayload(raw);
-    return { success: true, message: `OK findMessages ${instanceName} ${remoteJid}`, data: items, total: meta.total, pages: meta.pages, currentPage: meta.currentPage, nextPage: (meta as any).nextPage, raw, queriedRemoteJid: remoteJid };
+    return {
+      success: true,
+      message: `OK findMessages ${instanceName} ${remoteJid}`,
+      data: items,
+      total: meta.total,
+      pages: meta.pages,
+      currentPage: meta.currentPage,
+      nextPage: (meta as any).nextPage,
+      raw,
+      queriedRemoteJid: remoteJid,
+    };
   } catch (e: any) {
     clearTimeout(t);
-    return { success: false, message: e?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${e?.message || String(e)}`, queriedRemoteJid: remoteJid };
+    return {
+      success: false,
+      message: e?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${e?.message || String(e)}`,
+      queriedRemoteJid: remoteJid,
+    };
   }
 }
 
@@ -300,11 +337,23 @@ export async function sendTextMessage(
   instanceName: string,
   remoteJid: string,
   textMessage: string,
-  options?: { timeoutMs?: number; delay?: number; quotedMessage?: { key: { id: string }; message: { conversation: string } }; linkPreview?: boolean; mentionsEveryOne?: boolean; mentioned?: string[] }
+  options?: {
+    timeoutMs?: number;
+    delay?: number;
+    quotedMessage?: { key: { id: string }; message: { conversation: string } };
+    linkPreview?: boolean;
+    mentionsEveryOne?: boolean;
+    mentioned?: string[];
+  }
 ): Promise<SendMessageResult> {
   const { url: baseUrlRaw, key } = apiKeyData;
   if (!baseUrlRaw || !key || !instanceName || !remoteJid || !textMessage)
-    return { success: false, message: 'Parámetros de conexión faltantes (URL, API Key, instanceName, remoteJid, o textMessage).', remoteJid };
+    return {
+      success: false,
+      message:
+        'Parámetros de conexión faltantes (URL, API Key, instanceName, remoteJid, o textMessage).',
+      remoteJid,
+    };
   const baseURL = normalizeBaseUrl(baseUrlRaw);
   const endpoint = `${baseURL}/message/sendText/${encodeURIComponent(instanceName)}`;
   const body: Record<string, any> = { number: remoteJid, text: textMessage };
@@ -319,12 +368,22 @@ export async function sendTextMessage(
     const res = await doRequest(endpoint, key, ctrl.signal, 'POST', body, true);
     clearTimeout(t);
     const raw = await res.json().catch(() => null);
-    if (!res.ok) return { success: false, message: (raw?.message as string) || `Error ${res.status} en la API al enviar mensaje.`, raw, remoteJid };
+    if (!res.ok)
+      return {
+        success: false,
+        message: (raw?.message as string) || `Error ${res.status} en la API al enviar mensaje.`,
+        raw,
+        remoteJid,
+      };
     if (!raw) return { success: false, message: 'Respuesta inválida o vacía al enviar mensaje.', remoteJid };
     return { success: true, message: `Mensaje enviado OK a ${remoteJid}`, data: raw, remoteJid };
   } catch (e: any) {
     clearTimeout(t);
-    return { success: false, message: e?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${e?.message || String(e)}`, remoteJid };
+    return {
+      success: false,
+      message: e?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${e?.message || String(e)}`,
+      remoteJid,
+    };
   }
 }
 
@@ -336,21 +395,28 @@ export async function sendAudio(
   remoteJid: string,
   audioSource: string,
   options?: {
-    timeoutMs?: number; delay?: number;
+    timeoutMs?: number;
+    delay?: number;
     quotedMessage?: { key: { id: string }; message: { conversation: string } };
-    mentionsEveryOne?: boolean; mentioned?: string[];
-    ptt?: boolean; mimetype?: string; forceBase64?: boolean;
+    mentionsEveryOne?: boolean;
+    mentioned?: string[];
+    ptt?: boolean;
+    mimetype?: string;
+    forceBase64?: boolean;
   }
 ): Promise<SendMessageResult> {
   const { url: baseUrlRaw, key } = apiKeyData;
-  if (!baseUrlRaw || !key || !instanceName || !remoteJid || !audioSource) return { success: false, message: 'Parámetros faltantes para audio.', remoteJid };
+  if (!baseUrlRaw || !key || !instanceName || !remoteJid || !audioSource)
+    return { success: false, message: 'Parámetros faltantes para audio.', remoteJid };
   const baseURL = normalizeBaseUrl(baseUrlRaw);
   const endpoint = `${baseURL}/message/sendWhatsAppAudio/${encodeURIComponent(instanceName)}`;
   const isHttp = /^https?:\/\//i.test(audioSource);
-  let audio: string | undefined, encoding = false;
+  let audio: string | undefined,
+    encoding = false;
   if (!isHttp || options?.forceBase64) {
     const { base64 } = await ensureBase64FromString(audioSource, options?.mimetype || 'audio/ogg');
-    audio = base64; encoding = true;
+    audio = base64;
+    encoding = true;
   } else audio = audioSource;
   const body: Record<string, any> = { number: remoteJid, audio };
   if (options?.delay !== undefined) body.delay = options.delay;
@@ -366,12 +432,22 @@ export async function sendAudio(
     const res = await doRequest(endpoint, key, ctrl.signal, 'POST', body, true);
     clearTimeout(t);
     const raw = await res.json().catch(() => null);
-    if (!res.ok) return { success: false, message: (raw?.message as string) || `Error ${res.status} al enviar audio.`, raw, remoteJid };
+    if (!res.ok)
+      return {
+        success: false,
+        message: (raw?.message as string) || `Error ${res.status} al enviar audio.`,
+        raw,
+        remoteJid,
+      };
     if (!raw) return { success: false, message: 'Respuesta inválida o vacía al enviar audio.', remoteJid };
     return { success: true, message: `Audio enviado a ${remoteJid}`, data: raw, remoteJid };
   } catch (e: any) {
     clearTimeout(t);
-    return { success: false, message: e?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${e?.message || String(e)}`, remoteJid };
+    return {
+      success: false,
+      message: e?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${e?.message || String(e)}`,
+      remoteJid,
+    };
   }
 }
 
@@ -385,12 +461,19 @@ export async function sendMediaByUrl(
   options?: { timeoutMs?: number }
 ): Promise<SendMessageResult> {
   const { url: baseUrlRaw, key } = apiKeyData;
-  if (!baseUrlRaw || !key || !instanceName || !remoteJid) return { success: false, message: 'Parámetros faltantes (URL/API Key/instanceName/remoteJid).', remoteJid };
-  if (!params?.mediaUrl || !params?.mediatype) return { success: false, message: 'Faltan campos en params: mediatype y mediaUrl son obligatorios.', remoteJid };
+  if (!baseUrlRaw || !key || !instanceName || !remoteJid)
+    return { success: false, message: 'Parámetros faltantes (URL/API Key/instanceName/remoteJid).', remoteJid };
+  if (!params?.mediaUrl || !params?.mediatype)
+    return { success: false, message: 'Faltan campos en params: mediatype y mediaUrl son obligatorios.', remoteJid };
   if (params.mediatype === 'audio')
     return sendAudio(apiKeyData, instanceName, remoteJid, params.mediaUrl, {
-      timeoutMs: options?.timeoutMs, delay: params.delay, quotedMessage: params.quotedMessage,
-      mentionsEveryOne: params.mentionsEveryOne, mentioned: params.mentioned, ptt: params.ptt, mimetype: params.mimetype,
+      timeoutMs: options?.timeoutMs,
+      delay: params.delay,
+      quotedMessage: params.quotedMessage,
+      mentionsEveryOne: params.mentionsEveryOne,
+      mentioned: params.mentioned,
+      ptt: params.ptt,
+      mimetype: params.mimetype,
     });
 
   const baseURL = normalizeBaseUrl(baseUrlRaw);
@@ -400,19 +483,46 @@ export async function sendMediaByUrl(
   if (params.mediatype === 'document' && !fileName) {
     const m = (norm.mime || '').toLowerCase();
     const ext =
-      m.includes('pdf') ? 'pdf' : m.includes('zip') ? 'zip' : m.includes('msword') ? 'doc' : m.includes('excel') ? 'xls' : m.includes('powerpoint') ? 'ppt' : m.includes('text') ? 'txt' : m.includes('json') ? 'json' : m.includes('csv') ? 'csv' : m.includes('png') ? 'png' : (m.includes('jpeg') || m.includes('jpg')) ? 'jpg' : m.includes('mp4') ? 'mp4' : m.includes('mp3') ? 'mp3' : 'bin';
+      m.includes('pdf')
+        ? 'pdf'
+        : m.includes('zip')
+        ? 'zip'
+        : m.includes('msword')
+        ? 'doc'
+        : m.includes('excel')
+        ? 'xls'
+        : m.includes('powerpoint')
+        ? 'ppt'
+        : m.includes('text')
+        ? 'txt'
+        : m.includes('json')
+        ? 'json'
+        : m.includes('csv')
+        ? 'csv'
+        : m.includes('png')
+        ? 'png'
+        : m.includes('jpeg') || m.includes('jpg')
+        ? 'jpg'
+        : m.includes('mp4')
+        ? 'mp4'
+        : m.includes('mp3')
+        ? 'mp3'
+        : 'bin';
     fileName = `file.${ext}`;
   }
   const body: Record<string, any> = {
-    number: remoteJid, mediatype: params.mediatype, mimetype: norm.mime, caption: params.caption, media: norm.base64, fileName,
+    number: remoteJid,
+    mediatype: params.mediatype,
+    mimetype: norm.mime,
+    caption: params.caption,
+    media: norm.base64,
+    fileName,
   };
   if (params.delay !== undefined) body.delay = params.delay;
   if (params.linkPreview !== undefined) body.linkPreview = params.linkPreview;
   if (params.mentionsEveryOne !== undefined) body.mentionsEveryOne = params.mentionsEveryOne;
   if (params.mentioned?.length) body.mentioned = params.mentioned;
   if (params.quotedMessage) body.quoted = params.quotedMessage;
-
-  console.log(`[SENDMEDIA][EXACT media] length=${String(body.media).length}`); console.log(body.media);
 
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), options?.timeoutMs ?? 20000);
@@ -422,14 +532,20 @@ export async function sendMediaByUrl(
     const raw = await res.json().catch(() => null);
     if (!res.ok) {
       const em = raw?.response?.message;
-      const msg = (Array.isArray(em) ? em.join(', ') : (em as string) || (raw?.message as string)) || `Error ${res.status} al enviar media.`;
+      const msg =
+        (Array.isArray(em) ? em.join(', ') : (em as string) || (raw?.message as string)) ||
+        `Error ${res.status} al enviar media.`;
       return { success: false, message: msg, raw, remoteJid };
     }
     if (!raw) return { success: false, message: 'Respuesta inválida o vacía al enviar media.', remoteJid };
     return { success: true, message: `Media (${params.mediatype}) enviada a ${remoteJid}`, data: raw, remoteJid };
   } catch (e: any) {
     clearTimeout(t);
-    return { success: false, message: e?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${e?.message || String(e)}`, remoteJid };
+    return {
+      success: false,
+      message: e?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${e?.message || String(e)}`,
+      remoteJid,
+    };
   }
 }
 
@@ -449,7 +565,7 @@ export async function getMediaBase64FromMessage(
 
   const body: Record<string, any> = {
     message: {
-      key: { id: messageId }
+      key: { id: messageId },
     },
     convertToMp4: options?.convertToMp4 === true,
   };
@@ -458,12 +574,17 @@ export async function getMediaBase64FromMessage(
   const t = setTimeout(() => ctrl.abort(), options?.timeoutMs ?? 20000);
 
   try {
-    const res = await doRequest(endpoint, key, ctrl.signal, 'POST', body, true);
+    const res = await doRequest(endpoint, key, ctrl.signal, 'POST', body, false);
     clearTimeout(t);
     const raw = await res.json().catch(() => null);
 
     if (!res.ok) {
-      return { success: false, message: (raw?.message as string) || `Error ${res.status} al obtener media.`, raw, messageId };
+      return {
+        success: false,
+        message: (raw?.message as string) || `Error ${res.status} al obtener media.`,
+        raw,
+        messageId,
+      };
     }
     if (!raw || !raw.base64) {
       return { success: false, message: 'Respuesta inválida o falta el campo base64.', messageId };
@@ -484,10 +605,13 @@ export async function getMediaBase64FromMessage(
     };
   } catch (e: any) {
     clearTimeout(t);
-    return { success: false, message: e?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${e?.message || String(e)}`, messageId };
+    return {
+      success: false,
+      message: e?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${e?.message || String(e)}`,
+      messageId,
+    };
   }
 }
-
 
 /* ===== Atajos ===== */
 
@@ -500,11 +624,26 @@ export async function sendFileBase64(
 ): Promise<SendMessageResult> {
   try {
     const { base64, mime } = await fileToBase64Raw(file);
-    const mediatype: MediaType = mime.startsWith('image/') ? 'image' : mime.startsWith('video/') ? 'video' : mime.startsWith('audio/') ? 'audio' : 'document';
-    return await sendMediaByUrl(apiKeyData, instanceName, remoteJid, { mediatype, mediaUrl: base64, mimetype: mime, fileName: file.name, caption });
+    const mediatype: MediaType = mime.startsWith('image/')
+      ? 'image'
+      : mime.startsWith('video/')
+      ? 'video'
+      : mime.startsWith('audio/')
+      ? 'audio'
+      : 'document';
+    return await sendMediaByUrl(apiKeyData, instanceName, remoteJid, {
+      mediatype,
+      mediaUrl: base64,
+      mimetype: mime,
+      fileName: file.name,
+      caption,
+    });
   } catch (e: any) {
-    console.error('[NEXTJS][ERR] sendFileBase64', e);
-    return { success: false, message: `Error en la preparación/conversión: ${e?.message || String(e)}`, remoteJid };
+    return {
+      success: false,
+      message: `Error en la preparación/conversión: ${e?.message || String(e)}`,
+      remoteJid,
+    };
   }
 }
 
@@ -514,26 +653,57 @@ export async function sendMediaAuto(
   remoteJid: string,
   source: File | string,
   hinted?: {
-    mimetype?: string; mediatype?: MediaType; fileName?: string; caption?: string; ptt?: boolean; delay?: number;
-    linkPreview?: boolean; mentionsEveryOne?: boolean; mentioned?: string[];
+    mimetype?: string;
+    mediatype?: MediaType;
+    fileName?: string;
+    caption?: string;
+    ptt?: boolean;
+    delay?: number;
+    linkPreview?: boolean;
+    mentionsEveryOne?: boolean;
+    mentioned?: string[];
     quotedMessage?: { key: { id: string }; message: { conversation: string } };
-    timeoutMs?: number; forceAudioBase64?: boolean;
+    timeoutMs?: number;
+    forceAudioBase64?: boolean;
   }
 ): Promise<SendMessageResult> {
-  let mime = hinted?.mimetype || 'application/octet-stream', fileName = hinted?.fileName;
-  if (typeof source !== 'string') { mime = source.type || mime; fileName = fileName || source.name; }
+  let mime = hinted?.mimetype || 'application/octet-stream',
+    fileName = hinted?.fileName;
+  if (typeof source !== 'string') {
+    mime = source.type || mime;
+    fileName = fileName || source.name;
+  }
   const mediatype: MediaType = hinted?.mediatype || mediaTypeFromMime(mime);
   if (mediatype === 'audio') {
     const audioSource = typeof source === 'string' ? source : (await fileToBase64Raw(source)).base64;
     return sendAudio(apiKeyData, instanceName, remoteJid, audioSource, {
-      timeoutMs: hinted?.timeoutMs, delay: hinted?.delay, quotedMessage: hinted?.quotedMessage,
-      mentionsEveryOne: hinted?.mentionsEveryOne, mentioned: hinted?.mentioned, ptt: hinted?.ptt, mimetype: mime, forceBase64: hinted?.forceAudioBase64,
+      timeoutMs: hinted?.timeoutMs,
+      delay: hinted?.delay,
+      quotedMessage: hinted?.quotedMessage,
+      mentionsEveryOne: hinted?.mentionsEveryOne,
+      mentioned: hinted?.mentioned,
+      ptt: hinted?.ptt,
+      mimetype: mime,
+      forceBase64: hinted?.forceAudioBase64,
     });
   }
   const mediaUrl = typeof source === 'string' ? source : (await fileToBase64Raw(source)).base64;
   return sendMediaByUrl(
-    apiKeyData, instanceName, remoteJid,
-    { mediatype, mediaUrl, mimetype: mime, fileName, caption: hinted?.caption, delay: hinted?.delay, linkPreview: hinted?.linkPreview, mentionsEveryOne: hinted?.mentionsEveryOne, mentioned: hinted?.mentioned, quotedMessage: hinted?.quotedMessage },
+    apiKeyData,
+    instanceName,
+    remoteJid,
+    {
+      mediatype,
+      mediaUrl,
+      mimetype: mime,
+      fileName,
+      caption: hinted?.caption,
+      delay: hinted?.delay,
+      linkPreview: hinted?.linkPreview,
+      mentionsEveryOne: hinted?.mentionsEveryOne,
+      mentioned: hinted?.mentioned,
+      quotedMessage: hinted?.quotedMessage,
+    },
     { timeoutMs: hinted?.timeoutMs }
   );
 }
