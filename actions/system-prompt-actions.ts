@@ -20,7 +20,6 @@ import { composePromptFromSections } from '@/app/(root)/ai/_components/helpers/c
 /* =========================
    Actions públicas
 ========================= */
-// actions/system-prompt-actions.ts
 export async function patchBusinessSection(input: {
     promptId: string;
     version: number;
@@ -42,7 +41,6 @@ export async function patchBusinessSection(input: {
     return result;
 }
 
-// actions/system-prompt-actions.ts
 export async function patchTrainingSection(input: {
     promptId: string;
     version: number;
@@ -67,6 +65,74 @@ export async function patchTrainingSection(input: {
         sectionKey: "training",
         patch: parsed, // ← sección completa (al menos { steps })
     });
+}
+
+export async function patchFaqSection(input: {
+    promptId: string;
+    version: number;
+    data: z.input<typeof FaqDraftSchema>;
+}) {
+    "use server";
+    const { promptId, version, data } = input;
+
+    const parsed = FaqDraftSchema.parse({
+        items: [],
+        ...data,
+    });
+
+    return await patchSection({
+        promptId,
+        version,
+        sectionKey: "faq",
+        patch: parsed, // { items: [...] }
+    });
+}
+
+export async function patchProductsSection(input: {
+    promptId: string;
+    version: number;
+    data: z.input<typeof ProductsDraftSchema>; 
+}) {
+    "use server";
+
+    const { promptId, version, data } = input;
+
+    // normaliza + valida con Draft
+    const parsed = ProductsDraftSchema.parse({
+        items: [],
+        ...data,
+    });
+
+    return await patchSection({
+        promptId,
+        version,
+        sectionKey: "products",
+        patch: parsed, // { items: [...] }
+    });
+}
+
+export async function patchExtrasSection(input: {
+  promptId: string;
+  version: number;
+  data: z.input<typeof ExtrasDraftSchema>; // { firmaEnabled?, firmaText?, items? }
+}) {
+  "use server";
+  const { promptId, version, data } = input;
+
+  // Normaliza con Draft (defaults seguros)
+  const parsed = ExtrasDraftSchema.parse({
+    firmaEnabled: false,
+    firmaText: "",
+    items: [],
+    ...data,
+  });
+
+  return await patchSection({
+    promptId,
+    version,
+    sectionKey: "extras",
+    patch: parsed,
+  });
 }
 
 /** Obtiene o crea el draft del agente. */

@@ -345,3 +345,11 @@ export interface FaqSimpleProps {
     values: { faq: string };
     handleChange: (key: "faq") => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }
+
+export type FqaBuilderProps = FaqSimpleProps & {
+    promptId: string;
+    version: number;
+    onVersionChange: (v: number) => void;
+    onConflict?: (serverState: any) => void;
+    initialItems?: QaItem[]; // ← sections.faq.items desde BD
+};

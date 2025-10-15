@@ -1,3 +1,4 @@
+// app/(root)/ai/_components/ExtraInfoBuilder.tsx
 "use client";
 
 import { nanoid } from "nanoid";
@@ -8,17 +9,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus, PenSquare } from "lucide-react";
 import type { ChangeEvent } from "react";
+import { useExtrasAutosave, ExtraItemDTO } from "./hooks/useExtrasAutosave";
 
-/* ===== Firma por defecto (texto exacto) ===== */
 const PROMPT_SIGNATURE_DEFAULT =
-  "# ✍️ FIRMA DEL AGENTE\n\n" +
-  "Debes poner siempre la firma *“🤖 *Asisnte Virtual”* al inicio de cada mensaje o respuesta que le des al usuario, **nunca al final*. Esto permite mantener una identidad clara del agente y una conversación ordenada.\n\n" +
-  "### Ejemplo de uso real:\n\n" +
-  "*Usuario:*\n" +
-  "¿Quien eres?\n\n" +
-  "*Respuesta del agente:*\n" +
-  "🤖 Asisnte Virtual\n" +
-  "Soy un asistente virtual. ¿En qué puedo ayudarte hoy?";
+    "# ✍️ FIRMA DEL AGENTE\n\n" +
+    "Debes poner siempre la firma *“🤖 *Asisnte Virtual”* al inicio de cada mensaje o respuesta que le des al usuario, **nunca al final*. Esto permite mantener una identidad clara del agente y una conversación ordenada.\n\n" +
+    "### Ejemplo de uso real:\n\n" +
+    "*Usuario:*\n" +
+    "¿Quien eres?\n\n" +
+    "*Respuesta del agente:*\n" +
+    "🤖 Asisnte Virtual\n" +
+    "Soy un asistente virtual. ¿En qué puedo ayudarte hoy?";
 
 type ExtraItem = { id: string; title: string; content: string };
 
@@ -33,18 +34,56 @@ export interface ExtraInfoBuilderProps {
         firmaText: string;
         prompt: string;
     }) => void;
+
+    // NUEVO (persistencia)
+    promptId: string;
+    version: number;
+    onVersionChange: (v: number) => void;
+    onConflict?: (serverState: any) => void;
+    initialExtras?: { items?: ExtraItemDTO[]; firmaEnabled?: boolean; firmaText?: string };
 }
 
-export function ExtraInfoBuilder({ values, handleChange, onChange }: ExtraInfoBuilderProps) {
-    const [items, setItems] = useState<ExtraItem[]>([{ id: nanoid(), title: "", content: "" }]);
-    const [firmaEnabled, setFirmaEnabled] = useState<boolean>(false);
-    const [firmaText, setFirmaText] = useState<string>(PROMPT_SIGNATURE_DEFAULT);
+export function ExtraInfoBuilder({
+    values, handleChange, onChange,
+    promptId, version, onVersionChange, onConflict,
+    initialExtras,
+}: ExtraInfoBuilderProps) {
+    const [items, setItems] = useState<ExtraItemDTO[]>(
+        initialExtras?.items && initialExtras.items.length > 0
+            ? initialExtras.items
+            : [{ id: nanoid(), title: "", content: "" }]
+    );
+    const [firmaEnabled, setFirmaEnabled] = useState<boolean>(initialExtras?.firmaEnabled ?? false);
+    const [firmaText, setFirmaText] = useState<string>(initialExtras?.firmaText ?? PROMPT_SIGNATURE_DEFAULT);
 
-    // Construir prompt (Markdown)
+    // AUTOSAVE
+    useExtrasAutosave({
+        promptId,
+        version,
+        items,
+        firmaEnabled,
+        firmaText,
+        onVersionChange,
+        onConflict: (serverState) => {
+            const s = serverState?.sections?.extras ?? {};
+            setItems(s.items ?? []);
+            setFirmaEnabled(Boolean(s.firmaEnabled));
+            setFirmaText(s.firmaText ?? PROMPT_SIGNATURE_DEFAULT);
+            onConflict?.(serverState);
+        },
+    });
+
+    // Prompt (Markdown) para preview
     const prompt = useMemo(() => {
         const extraBlocks = items
-            .filter((e) => e.title.trim() || e.content.trim())
-            .map((e) => [`## Campo: ${e.title.trim() || "(Sin título)"}`, `*Contenido:*`, e.content.trim() || "(Sin contenido)"].join("\n"));
+            .filter((e) => (e.title ?? "").trim() || (e.content ?? "").trim())
+            .map((e) =>
+                [
+                    `## Campo: ${(e.title ?? "").trim() || "(Sin título)"}`,
+                    `*Contenido:*`,
+                    (e.content ?? "").trim() || "(Sin contenido)",
+                ].join("\n")
+            );
 
         const parts: string[] = [];
         if (firmaEnabled) parts.push((firmaText || PROMPT_SIGNATURE_DEFAULT).trim());
@@ -52,9 +91,9 @@ export function ExtraInfoBuilder({ values, handleChange, onChange }: ExtraInfoBu
         return parts.join("\n\n---\n\n");
     }, [items, firmaEnabled, firmaText]);
 
-    // Sincroniza con el padre (igual patrón que ProductBuilder)
+    // Sync al padre (preview) evitando loops
     useEffect(() => {
-        onChange?.({ items, firmaEnabled, firmaText, prompt });
+        onChange?.({ items: items as ExtraItem[], firmaEnabled, firmaText, prompt });
         if (values.more !== prompt) {
             const setMore = handleChange("more");
             setMore({ target: { value: prompt } } as React.ChangeEvent<HTMLTextAreaElement>);
@@ -62,7 +101,7 @@ export function ExtraInfoBuilder({ values, handleChange, onChange }: ExtraInfoBu
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [prompt, items, firmaEnabled, firmaText, values.more]);
 
-    // Handlers
+    // Mutadores locales
     const addItem = () => setItems((p) => [...p, { id: nanoid(), title: "", content: "" }]);
     const removeItem = (id: string) => setItems((p) => p.filter((x) => x.id !== id));
     const updateTitle = (id: string, v: string) =>
@@ -128,7 +167,7 @@ export function ExtraInfoBuilder({ values, handleChange, onChange }: ExtraInfoBu
                             </div>
                             <Input
                                 placeholder="Ej. Políticas de garantía"
-                                value={it.title}
+                                value={it.title ?? ""}
                                 onChange={(e) => updateTitle(it.id, e.target.value)}
                             />
 
@@ -136,7 +175,7 @@ export function ExtraInfoBuilder({ values, handleChange, onChange }: ExtraInfoBu
                             <Textarea
                                 className="min-h-[96px]"
                                 placeholder="Texto libre, listas, detalles, condiciones…"
-                                value={it.content}
+                                value={it.content ?? ""}
                                 onChange={(e) => updateContent(it.id, e.target.value)}
                             />
                         </div>

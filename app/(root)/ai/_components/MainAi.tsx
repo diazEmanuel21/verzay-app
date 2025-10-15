@@ -182,17 +182,50 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                     </TabsContent>
 
                     <TabsContent value="faq" className="m-0">
-                        <FqaBuilder values={{ faq: values.faq ?? "" }} handleChange={handleChange} />
+                        <FqaBuilder
+                            values={{ faq: values.faq ?? "" }}
+                            handleChange={handleChange}
+                            promptId={promptMeta.id}
+                            version={promptVersion}
+                            onVersionChange={setPromptVersion}
+                            onConflict={(serverState) => {
+                                setValues((prev) => ({ ...prev, faq: prev.faq }));
+                            }}
+                            initialItems={sections?.faq?.items ?? []}
+                        />
                     </TabsContent>
 
                     <TabsContent value="products" className="m-0">
-                        <ProductBuilder values={{ products: values.products ?? "" }} handleChange={handleChange} />
+                        <TabsContent value="products" className="m-0">
+                            <ProductBuilder
+                                values={{ products: values.products ?? "" }}
+                                handleChange={handleChange}
+                                // NUEVO:
+                                promptId={promptMeta.id}
+                                version={promptVersion}
+                                onVersionChange={setPromptVersion}
+                                onConflict={(serverState) => { /* opcional */ }}
+                                initialItems={sections?.products?.items ?? []}
+                            />
+                        </TabsContent>
                     </TabsContent>
 
                     <TabsContent value="more" className="m-0">
-                        <ExtraInfoBuilder values={{ more: values.more ?? "" }} handleChange={handleChange} />
+                        <ExtraInfoBuilder
+                            values={{ more: values.more ?? "" }}
+                            handleChange={handleChange}
+                            // Persistencia:
+                            promptId={promptMeta.id}
+                            version={promptVersion}
+                            onVersionChange={setPromptVersion}
+                            onConflict={(serverState) => { /* opcional */ }}
+                            initialExtras={{
+                                items: sections?.extras?.items ?? [],
+                                firmaEnabled: sections?.extras?.firmaEnabled ?? false,
+                                firmaText: sections?.extras?.firmaText ?? undefined,
+                            }}
+                        />
                     </TabsContent>
-
                     <div className="h-6" />
                 </div>
 

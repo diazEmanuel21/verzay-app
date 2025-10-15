@@ -1,18 +1,16 @@
+// app/(root)/ai/_components/ProductBuilder.tsx
 "use client";
 
 import { nanoid } from "nanoid";
+import { useEffect, useMemo, useState, ChangeEvent } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus } from "lucide-react";
-import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { useProductsAutosave, ProductItemDTO } from "./hooks/useProductsAutosave";
 
-type ProductItem = {
-    id: string;
-    name: string;
-    description: string;
-};
+type ProductItem = { id: string; name: string; description: string };
 
 export interface ProductBuilderProps {
     values: { products: string };
@@ -20,22 +18,54 @@ export interface ProductBuilderProps {
         key: "products"
     ) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
     onChange?: (state: { items: ProductItem[]; prompt: string }) => void;
+
+    // NUEVO (persistencia)
+    promptId: string;
+    version: number;
+    onVersionChange: (v: number) => void;
+    onConflict?: (serverState: any) => void;
+    initialItems?: ProductItemDTO[]; // sections.products.items desde BD
 }
 
-export function ProductBuilder({ values, handleChange, onChange }: ProductBuilderProps) {
-    const [items, setItems] = useState<ProductItem[]>([
-        { id: nanoid(), name: "", description: "" },
-    ]);
+export function ProductBuilder({
+    values,
+    handleChange,
+    onChange,
 
-    // Construye el bloque tipo prompt (Markdown)
+    promptId,
+    version,
+    onVersionChange,
+    onConflict,
+    initialItems = [],
+}: ProductBuilderProps) {
+    const [items, setItems] = useState<ProductItemDTO[]>(
+        Array.isArray(initialItems) && initialItems.length > 0
+            ? initialItems
+            : [{ id: nanoid(), name: "", description: "" }]
+    );
+
+    // Autosave estructurado
+    useProductsAutosave({
+        promptId,
+        version,
+        items,
+        onVersionChange,
+        onConflict: (serverState) => {
+            const serverItems = serverState?.sections?.products?.items ?? [];
+            setItems(serverItems);
+            onConflict?.(serverState);
+        },
+    });
+
+    // Construcción del bloque tipo prompt (Markdown) para la vista previa
     const prompt = useMemo(() => {
-        const blocks = items
-            .filter((p) => p.name.trim() || p.description.trim())
+        const blocks = (items as ProductItemDTO[])
+            .filter((p) => (p.name ?? "").trim() || (p.description ?? "").trim())
             .map((p) =>
                 [
-                    `## Producto: ${p.name.trim() || "(Sin nombre)"}`,
+                    `## Producto: ${(p.name ?? "").trim() || "(Sin nombre)"}`,
                     `*Descripción:*`,
-                    p.description.trim() || "(Sin descripción)",
+                    (p.description ?? "").trim() || "(Sin descripción)",
                 ].join("\n")
             );
         return blocks.join("\n\n---\n\n");
@@ -43,7 +73,7 @@ export function ProductBuilder({ values, handleChange, onChange }: ProductBuilde
 
     // Sincroniza con el padre (evita loops)
     useEffect(() => {
-        onChange?.({ items, prompt });
+        onChange?.({ items: items as ProductItem[], prompt });
         if (values.products !== prompt) {
             const setProducts = handleChange("products");
             setProducts({ target: { value: prompt } } as React.ChangeEvent<HTMLTextAreaElement>);
@@ -51,6 +81,7 @@ export function ProductBuilder({ values, handleChange, onChange }: ProductBuilde
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [prompt, items, values.products]);
 
+    // Mutadores locales
     const updateName = (id: string, v: string) =>
         setItems((prev) => prev.map((it) => (it.id === id ? { ...it, name: v } : it)));
 
@@ -85,7 +116,7 @@ export function ProductBuilder({ values, handleChange, onChange }: ProductBuilde
                         </div>
                         <Input
                             placeholder="Ej. Camiseta básica unisex"
-                            value={it.name}
+                            value={it.name ?? ""}
                             onChange={(e) => updateName(it.id, e.target.value)}
                         />
 
@@ -93,13 +124,14 @@ export function ProductBuilder({ values, handleChange, onChange }: ProductBuilde
                         <Textarea
                             placeholder="Breve descripción del producto, materiales, tallas, colores, etc."
                             className="min-h-[96px]"
-                            value={it.description}
+                            value={it.description ?? ""}
                             onChange={(e) => updateDesc(it.id, e.target.value)}
                         />
                     </div>
                 ))}
+
                 <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium"></span>
+                    <span className="text-sm font-medium" />
                     <Button type="button" variant="secondary" onClick={addProduct} className="gap-2">
                         <Plus className="h-4 w-4" /> Agregar producto
                     </Button>
