@@ -30,6 +30,11 @@ function areListsDifferent(a: EvolutionMessage[], b: EvolutionMessage[]) {
 }
 
 /* -------------------------------------
+   Tipos locales
+-------------------------------------- */
+type ApiKeyData = { url: string; key: string };
+
+/* -------------------------------------
    Props del componente
 -------------------------------------- */
 interface ChatsClientProps {
@@ -48,6 +53,9 @@ interface ChatsClientProps {
 
   /** Server Action para refrescar la lista de chats */
   refetchChats: () => Promise<FetchChatsResult>;
+
+  /** NUEVO: credenciales para que ChatMain pueda resolver media cifrada */
+  apiKeyData?: ApiKeyData;
 }
 
 /* -------------------------------------
@@ -61,31 +69,43 @@ export function ChatsClient({
   sendAny,
   refetchChats,
   instanceName,
+  apiKeyData,
 }: ChatsClientProps) {
   const [selectedJid, setSelectedJid] = useState(initialSelectedJid || "");
   const [currentChatsResult, setCurrentChatsResult] = useState(initialChatsResult);
   const [messages, setMessages] = useState<EvolutionMessage[]>(initialMessages || []);
-
   const [info, setInfo] = useState<
     | {
-        total?: number; pages?: number; currentPage?: number; nextPage?: number | null;
-        instanceName?: string; remoteJid?: string;
-      }
+      total?: number;
+      pages?: number;
+      currentPage?: number;
+      nextPage?: number | null;
+      instanceName?: string;
+      remoteJid?: string;
+      apiKeyData?: ApiKeyData;
+    }
     | undefined
-  >(initialSelectedJid ? { instanceName, remoteJid: initialSelectedJid } : undefined);
+  >(
+    initialSelectedJid
+      ? { instanceName, remoteJid: initialSelectedJid, apiKeyData }
+      : undefined
+  );
 
   const [loading, setLoading] = useState(false);
 
   // --- Control del polling del chat
   const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inFlightRef = useRef(false);
-  const backoffRef = useRef(0);           // ms (0 = intervalo base)
-  const BASE_INTERVAL = 2000;             // 2s base
-  const MAX_BACKOFF = 30000;              // 30s
+  const backoffRef = useRef(0);
+  const BASE_INTERVAL = 2000;
+  const MAX_BACKOFF = 30000;
 
-  // Lista de contactos para sidebar
+  // ✅ Filtro: excluir "status@broadcast"
   const contacts = useMemo(() => {
-    return currentChatsResult.success ? currentChatsResult.data : [];
+    if (!currentChatsResult.success) return [];
+    return currentChatsResult.data.filter(
+      (c) => c.remoteJid && c.remoteJid !== "status@broadcast"
+    );
   }, [currentChatsResult]);
 
   const currentContact = useMemo(() => {
@@ -93,7 +113,6 @@ export function ChatsClient({
     return contacts.find((c) => c.remoteJid === selectedJid);
   }, [contacts, selectedJid]);
 
-  // Header del chat (izquierda)
   const header = useMemo(() => {
     return {
       name: currentContact?.pushName || selectedJid || "Sin contacto",
@@ -107,16 +126,15 @@ export function ChatsClient({
     if (!selectedJid && contacts.length > 0) {
       const first = contacts[0].remoteJid;
       setSelectedJid(first);
-      setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid: first }));
+      setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid: first, apiKeyData }));
       if (!initialSelectedJid) setMessages([]);
     }
-  }, [contacts, selectedJid, instanceName, initialSelectedJid]);
+  }, [contacts, selectedJid, instanceName, initialSelectedJid, apiKeyData]);
 
-  // --- Polling comparativo de mensajes (robusto)
   const pollAndCompareMessages = useCallback(
     async (remoteJid: string) => {
       if (!warmMessages || inFlightRef.current) return;
-      if (typeof document !== "undefined" && document.hidden) return; // pausa si la pestaña está oculta
+      if (typeof document !== "undefined" && document.hidden) return;
 
       inFlightRef.current = true;
       try {
@@ -128,33 +146,35 @@ export function ChatsClient({
           const newMessages = res.data || [];
           setMessages((prevMsgs) => {
             if (areListsDifferent(prevMsgs, newMessages)) {
-              setInfo({ ...res, instanceName, remoteJid });
+              setInfo({ ...res, instanceName, remoteJid, apiKeyData });
               return newMessages;
             }
             return prevMsgs;
           });
-          // Reinicia backoff en éxito
           backoffRef.current = 0;
         } else {
-          console.warn("[ChatsClient] warmMessages error during polling:", res?.message);
-          backoffRef.current = Math.min((backoffRef.current || BASE_INTERVAL) * 2, MAX_BACKOFF);
+          backoffRef.current = Math.min(
+            (backoffRef.current || BASE_INTERVAL) * 2,
+            MAX_BACKOFF
+          );
         }
-      } catch (e) {
-        console.error("[ChatsClient] warmMessages exception during polling:", e);
-        backoffRef.current = Math.min((backoffRef.current || BASE_INTERVAL) * 2, MAX_BACKOFF);
+      } catch {
+        backoffRef.current = Math.min(
+          (backoffRef.current || BASE_INTERVAL) * 2,
+          MAX_BACKOFF
+        );
       } finally {
         inFlightRef.current = false;
       }
     },
-    [warmMessages, instanceName]
+    [warmMessages, instanceName, apiKeyData]
   );
 
-  // Cambiar chat desde sidebar
   const handleSelectFromSidebar = useCallback(
     async (remoteJid: string) => {
       if (selectedJid !== remoteJid) setSelectedJid(remoteJid);
 
-      setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid }));
+      setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid, apiKeyData }));
       setLoading(true);
       setMessages([]);
 
@@ -170,51 +190,46 @@ export function ChatsClient({
 
         if (res?.success) {
           setMessages(res.data || []);
-          setInfo({ ...res, instanceName, remoteJid });
+          setInfo({ ...res, instanceName, remoteJid, apiKeyData });
         } else {
           setMessages([]);
-          setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid }));
-          console.warn("[ChatsClient] warmMessages error:", res?.message);
+          setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid, apiKeyData }));
         }
-      } catch (e) {
+      } catch {
         setMessages([]);
-        setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid }));
-        console.error("[ChatsClient] warmMessages exception:", e);
+        setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid, apiKeyData }));
       } finally {
         setLoading(false);
       }
     },
-    [selectedJid, warmMessages, instanceName]
+    [selectedJid, warmMessages, instanceName, apiKeyData]
   );
 
-  // Envío unificado (texto o media) + refrescos
   const handleSendAny = useCallback(
     async (payload: OutgoingMessagePayload) => {
-      if (!selectedJid || !sendAny) {
-        console.warn("[ChatsClient] No se puede enviar: remoteJid no seleccionado o función sendAny no proporcionada.");
-        return;
-      }
+      if (!selectedJid || !sendAny) return;
 
       const result = await sendAny(selectedJid, payload);
 
       if (result.success) {
-        // 1) refrescar mensajes del chat actual
-        if (warmMessages) {
-          await pollAndCompareMessages(selectedJid);
-        }
-        // 2) refrescar lista de chats (sidebar)
+        if (warmMessages) await pollAndCompareMessages(selectedJid);
         const chatRefreshResult = await refetchChats();
         if (chatRefreshResult.success) {
-          setCurrentChatsResult(chatRefreshResult);
+          // ✅ Mantener el filtro al refrescar también
+          const filtered = {
+            ...chatRefreshResult,
+            data: chatRefreshResult.data.filter(
+              (c) => c.remoteJid && c.remoteJid !== "status@broadcast"
+            ),
+          };
+          setCurrentChatsResult(filtered);
         }
-      } else {
-        console.error("❌ Error al enviar:", result.message, result.raw);
       }
     },
     [selectedJid, sendAny, warmMessages, refetchChats, pollAndCompareMessages]
   );
 
-  // Polling sidebar (setTimeout para evitar solapamientos)
+  // Polling sidebar
   useEffect(() => {
     let stopped = false;
     let t: ReturnType<typeof setTimeout> | null = null;
@@ -223,9 +238,13 @@ export function ChatsClient({
       if (stopped) return;
       const result = await refetchChats();
       if (result.success) {
-        setCurrentChatsResult(result);
-      } else {
-        console.warn("[ChatsClient] Fallo al refrescar chats:", result.message);
+        const filtered = {
+          ...result,
+          data: result.data.filter(
+            (c) => c.remoteJid && c.remoteJid !== "status@broadcast"
+          ),
+        };
+        setCurrentChatsResult(filtered);
       }
       t = setTimeout(loop, 10000);
     };
@@ -240,21 +259,18 @@ export function ChatsClient({
     };
   }, [refetchChats, initialChatsResult.success]);
 
-  // Polling del chat (robusto: sin solaparse, con backoff, pausa en background)
+  // Polling mensajes
   useEffect(() => {
-    // limpia cualquier timer previo
     if (pollingRef.current) {
       clearTimeout(pollingRef.current);
       pollingRef.current = null;
     }
 
     let stopped = false;
-
     const tick = async () => {
       if (stopped) return;
 
       if (selectedJid && warmMessages) {
-        // Si no hay mensajes y no está cargando, trae el primer lote
         if (messages.length === 0 && !loading) {
           await handleSelectFromSidebar(selectedJid);
         } else {
@@ -262,20 +278,12 @@ export function ChatsClient({
         }
       }
 
-      // calcula próximo intervalo con backoff (si 0 => BASE_INTERVAL)
       const wait = backoffRef.current > 0 ? backoffRef.current : BASE_INTERVAL;
-
-      pollingRef.current = setTimeout(() => {
-        void tick();
-      }, wait);
+      pollingRef.current = setTimeout(() => void tick(), wait);
     };
 
-    // arranque
-    if (selectedJid && warmMessages) {
-      void tick();
-    }
+    if (selectedJid && warmMessages) void tick();
 
-    // pausa/reanuda según visibilidad
     const onVisibility = () => {
       if (document.hidden) {
         if (pollingRef.current) {
@@ -283,7 +291,6 @@ export function ChatsClient({
           pollingRef.current = null;
         }
       } else {
-        // reanudar inmediatamente al volver a foreground
         backoffRef.current = 0;
         if (!pollingRef.current) void tick();
       }
@@ -300,7 +307,14 @@ export function ChatsClient({
         document.removeEventListener("visibilitychange", onVisibility);
       }
     };
-  }, [selectedJid, warmMessages, pollAndCompareMessages, handleSelectFromSidebar, loading, messages.length]);
+  }, [
+    selectedJid,
+    warmMessages,
+    pollAndCompareMessages,
+    handleSelectFromSidebar,
+    loading,
+    messages.length,
+  ]);
 
   return (
     <div className="flex h-full">

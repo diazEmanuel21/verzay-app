@@ -8,70 +8,100 @@ import { ConnectionMainInterface, FormInstanceConnectionValues } from '@/schema/
 import { PromptInstance } from '@prisma/client';
 
 export const ConnectionMain = ({
-    user,
-    instance,
-    instanceInfo,
-    instanceType,
-    prompts,
+  user,
+  instance,
+  instanceInfo,
+  instanceType,
+  prompts,
 }: ConnectionMainInterface) => {
-    const [loading, setLoading] = useState<boolean>(false);
-    const instanceName = !instance ? '' : instance.instanceName;
-    const currentInstanceInfo = instanceInfo?.find((i) => i.name === instanceName);
+  const [loading, setLoading] = useState<boolean>(false);
+  const instanceName = !instance ? '' : instance.instanceName;
+  const currentInstanceInfo = instanceInfo?.find((i) => i.name === instanceName);
 
-    // Memoiza prompts para evitar recrear arrays en cada render
-    const filteredPrompts: PromptInstance[] = useMemo(() => {
-        return prompts ? prompts.filter((p) => p.instanceType === instanceType) : [];
-    }, [prompts, instanceType]);
+  // 🚀 [LOG] Datos iniciales
+  console.log('[ConnectionMain] Mount →', {
+    userId: user.id,
+    instance,
+    instanceType,
+    promptsCount: prompts?.length ?? 0,
+  });
 
-    const onSubmit = async (data: FormInstanceConnectionValues) => {
-        setLoading(true);
+  // Memoiza prompts para evitar recrear arrays en cada render
+  const filteredPrompts: PromptInstance[] = useMemo(() => {
+    const filtered = prompts ? prompts.filter((p) => p.instanceType === instanceType) : [];
+    console.log('[ConnectionMain] Filtrando prompts →', {
+      instanceType: instanceType,
+      encontrados: filtered.length,
+    });
+    return filtered;
+  }, [prompts, instanceType]);
 
-        if (instance) {
-            toast.error('El usuario ya tiene una instancia activa.');
-            setLoading(false);
-            return;
-        }
+  const onSubmit = async (data: FormInstanceConnectionValues) => {
+    console.log('[ConnectionMain] onSubmit → datos recibidos', data);
+    setLoading(true);
 
-        const formData = new FormData();
-        formData.append('instanceName', data.instanceName);
-        formData.append('instanceType', data.instanceType);
-        formData.append('userId', user.id);
+    if (instance) {
+      console.warn('[ConnectionMain] Instancia ya existente, cancelando creación.');
+      toast.error('El usuario ya tiene una instancia activa.');
+      setLoading(false);
+      return;
+    }
 
-        try {
-            const result = await createInstance(formData);
-            result.success ? toast.success(result.message) : toast.error(result.message);
-        } catch {
-            toast.error('Hubo un error al procesar la solicitud.');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const formData = new FormData();
+    formData.append('instanceName', data.instanceName);
+    formData.append('instanceType', data.instanceType);
+    formData.append('userId', user.id);
 
-    return (
-        <>
-            {
-                (instanceType === 'Instagram' && !user.onInstagram) ||
-                    (instanceType === 'Facebook' && !user.onFacebook) ? <></> :
-                    <>{
-                        instance ? (
-                            <ClientInstanceCard
-                                intanceName={instanceName}
-                                instanceType={instanceType ?? ''}
-                                user={user}
-                                currentInstanceInfo={currentInstanceInfo}
-                                prompts={filteredPrompts}
-                            />
-                        ) : (
-                            <ConnectionCard
-                                user={user}
-                                handleSubmit={onSubmit}
-                                loading={loading}
-                                defaultValues={{ instanceName, instanceType }}
-                                instanceType={instanceType}
-                            />
-                        )
-                    } </>
-            }
-        </>
-    )
+    // 🔍 [LOG] Verificando datos antes del envío
+    console.log('[ConnectionMain] Enviando FormData →', {
+      instanceName: data.instanceName,
+      instanceType: data.instanceType,
+      userId: user.id,
+    });
+
+    try {
+      const result = await createInstance(formData);
+      console.log('[ConnectionMain] Resultado de createInstance →', result);
+
+      if (result.success) {
+        console.log('[ConnectionMain] ✅ Instancia creada con éxito.');
+        toast.success(result.message);
+      } else {
+        console.warn('[ConnectionMain] ❌ Error al crear instancia →', result.message);
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error('[ConnectionMain] ⚠️ Excepción atrapada →', error);
+      toast.error('Hubo un error al procesar la solicitud.');
+    } finally {
+      setLoading(false);
+      console.log('[ConnectionMain] Estado finalizado (loading = false)');
+    }
+  };
+
+  // 🔄 [LOG] Render dinámico según estado
+  console.log('[ConnectionMain] Render →', {
+    tieneInstancia: !!instance,
+    instanceName,
+    instanceType,
+    loading,
+  });
+
+  return instance ? (
+    <ClientInstanceCard
+      intanceName={instanceName}
+      instanceType={instanceType}
+      user={user}
+      currentInstanceInfo={currentInstanceInfo}
+      prompts={filteredPrompts}
+    />
+  ) : (
+    <ConnectionCard
+      user={user}
+      handleSubmit={onSubmit}
+      loading={loading}
+      defaultValues={{ instanceName, instanceType: instanceType }}
+      instanceType={instanceType}
+    />
+  );
 };
