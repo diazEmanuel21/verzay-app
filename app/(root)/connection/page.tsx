@@ -17,51 +17,81 @@ interface ActionResponse<T> {
 
 // Adapta las funciones de tipo para manejar arrays
 function hasInstancias(result: { data?: Instancias[] | null }): result is { data: Instancias[] } {
-    return !!result.data && result.data.length > 0;
-};
-
+  return !!result.data && result.data.length > 0;
+}
 function hasApikey(result: { data?: ApiKey | null }): result is { data: ApiKey } {
-    return !!result.data
-};
+  return !!result.data;
+}
+function hasPrompts(result: { data?: PromptInstancia[] | null }): result is { data: PromptInstancia[] } {
+  return !!result.data && result.data.length > 0;
+}
 
-function hasPrompts(result: { data?: PromptInstance[] | null }): result is { data: PromptInstance[] } {
-    return !!result.data && result.data.length > 0;
+// 🔹 Normaliza el tipo (null/undefined -> "Desconocido")
+const normalizeType = (t?: string | null): string => {
+  const valid = ["Whatsapp", "Instagram", "Facebook"];
+  if (!t) return "Desconocido";
+  const normalized = t.trim();
+  return valid.includes(normalized) ? normalized : "Desconocido";
 };
-
-// 🔹 Helper: normaliza el tipo (null/undefined -> "Whatsapp")
-const normalizeType = (t?: string | null) => t ?? "Whatsapp";
 
 const Home = async ({ searchParams }: SearchParamProps) => {
-    const user = await currentUser();
+  const user = await currentUser();
+  if (!user) {
+    redirect("/login");
+  }
 
-    if (!user) {
-        redirect("/login");
+  // Obtener instancias, API key y prompts en paralelo
+  const [resInstancias, resApikey, resPrompts] = await Promise.all([
+    getInstancesByUserId(user.id),
+    getApiKeyById((user as any).apiKeyId),
+    getPromptsByUserId(user.id)
+  ]);
+
+  const instancias = hasInstancias(resInstancias) ? resInstancias.data : [];
+  const apiKey = hasApikey(resApikey) ? resApikey.data : null;
+  const prompts = hasPrompts(resPrompts) ? resPrompts.data : [];
+
+  // Estructura base para las instancias
+  const instancesData: Record<string, {
+    instance?: Instancias;
+    info?: any;
+    prompts?: PromptInstancia[];
+  }> = {
+    Whatsapp: { prompts: [] },
+    Instagram: { prompts: [] },
+    Facebook: { prompts: [] },
+    Desconocido: { prompts: [] },
+  };
+
+  // Asignar instancias sin interferir entre tipos
+  instancias.forEach(instancia => {
+    const type = normalizeType(instancia.tipoInstancia);
+    if (!instancesData[type]) instancesData[type] = { prompts: [] };
+    if (!instancesData[type].instance) {
+      instancesData[type].instance = instancia;
     }
 
-    // Obtenemos instancias, API key y prompts en paralelo para mejorar la eficiencia
-    const [resInstancias, resApikey, resPrompts] = await Promise.all([
-        getInstancesByUserId(user.id),
-        getApiKeyById(user.apiKeyId),
-        getPromptsByUserId(user.id)
-    ]);
+  // Asignar prompts por tipo
+  prompts.forEach(prompt => {
+    const type = normalizeType(prompt.tipoInstancia);
+    if (!instancesData[type]) instancesData[type] = { prompts: [] };
+    instancesData[type].prompts?.push(prompt);
+  });
 
-    const instancias = hasInstancias(resInstancias) ? resInstancias.data : [];
-    const apiKey = hasApikey(resApikey) ? resApikey.data : null;
-    const prompts = hasPrompts(resPrompts) ? resPrompts.data : [];
+  // Obtener info de Evolution solo para instancias de tipo WhatsApp
+  if (apiKey) {
+    const fetchPromises = instancias.map(async (instancia) => {
+      const type = normalizeType(instancia.tipoInstancia);
+      if (type !== "Whatsapp") return;
 
-    // Objeto para almacenar las instancias, su información y los prompts
-    const instancesData: { [key: string]: { instance?: Instancias, info?: any, prompts?: PromptInstance[] } } = {
-        'Whatsapp': { prompts: [] },
-        'Instagram': { prompts: [] },
-        'Facebook': { prompts: [] }
-    };
-
-    // Asignar las instancias y los prompts al objeto por su tipo (normalizado)
-    instancias.forEach(instancia => {
-        const type = normalizeType(instancia.instanceType);
-        if (instancesData[type]) {
-            instancesData[type].instance = instancia;
-        }
+      if (instancesData[type]?.instance) {
+        const instanceInfo = await fetchInstanceAction({
+          evoApiKey: apiKey.key,
+          evoUrl: apiKey.url,
+          instanceName: instancia.instanceName
+        });
+        instancesData[type].info = instanceInfo?.data;
+      }
     });
 
     prompts.forEach(prompt => {
@@ -71,49 +101,33 @@ const Home = async ({ searchParams }: SearchParamProps) => {
         }
     });
 
-    if (apiKey) {
-        // Itera sobre las instancias que se encontraron y hace la petición para cada una (usando tipo normalizado)
-        const fetchPromises = instancias.map(async (instancia) => {
-            const type = normalizeType(instancia.instanceType);
-            if (instancesData[type]?.instance) {
-                const instanceInfo = await fetchInstanceAction({
-                    evoApiKey: apiKey.key,
-                    evoUrl: apiKey.url,
-                    instanceName: instancia.instanceName
-                });
-
-                instancesData[type].info = instanceInfo?.data;
-            }
-        });
-
-        await Promise.all(fetchPromises);
-    }
-
-    return (
-        <div className="flex flex-1 flex-wrap gap-4 items-center justify-center">
-            <ConnectionMain
-                user={user}
-                instance={instancesData['Whatsapp'].instance}
-                instanceInfo={instancesData['Whatsapp'].info}
-                instanceType={'Whatsapp'}
-                prompts={instancesData['Whatsapp'].prompts}
-            />
-            <ConnectionMain
-                user={user}
-                instance={instancesData['Instagram'].instance}
-                instanceInfo={instancesData['Instagram'].info}
-                instanceType={'Instagram'}
-                prompts={instancesData['Instagram'].prompts}
-            />
-            <ConnectionMain
-                user={user}
-                instance={instancesData['Facebook'].instance}
-                instanceInfo={instancesData['Facebook'].info}
-                instanceType={'Facebook'}
-                prompts={instancesData['Facebook'].prompts}
-            />
-        </div>
-    )
-}
+  // Render principal
+  return (
+    <div className="flex flex-1 flex-wrap gap-4 items-center justify-center">
+      <ConnectionMain
+        user={user}
+        instance={instancesData["Whatsapp"].instance}
+        instanceInfo={instancesData["Whatsapp"].info}
+        instanceType={"Whatsapp"}
+        prompts={instancesData["Whatsapp"].prompts}
+      />
+      <ConnectionMain
+        user={user}
+        instance={instancesData["Instagram"].instance}
+        instanceInfo={instancesData["Instagram"].info}
+        instanceType={"Instagram"}
+        prompts={instancesData["Instagram"].prompts}
+      />
+      <ConnectionMain
+        user={user}
+        instance={instancesData["Facebook"].instance}
+        instanceInfo={instancesData["Facebook"].info}
+        instanceType={"Facebook"}
+        prompts={instancesData["Facebook"].prompts}
+      />
+      {/* No se renderiza la tarjeta “Desconocido” */}
+    </div>
+  );
+};
 
 export default Home;
