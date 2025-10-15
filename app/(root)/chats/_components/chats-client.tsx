@@ -61,20 +61,15 @@ export function ChatsClient({
   sendAny,
   refetchChats,
   instanceName,
-  apiKeyData,
 }: ChatsClientProps) {
   const [selectedJid, setSelectedJid] = useState(initialSelectedJid || "");
   const [currentChatsResult, setCurrentChatsResult] = useState(initialChatsResult);
   const [messages, setMessages] = useState<EvolutionMessage[]>(initialMessages || []);
+
   const [info, setInfo] = useState<
     | {
-        total?: number;
-        pages?: number;
-        currentPage?: number;
-        nextPage?: number | null;
-        instanceName?: string;
-        remoteJid?: string;
-        apiKeyData?: ApiKeyData;
+        total?: number; pages?: number; currentPage?: number; nextPage?: number | null;
+        instanceName?: string; remoteJid?: string;
       }
     | undefined
   >(initialSelectedJid ? { instanceName, remoteJid: initialSelectedJid } : undefined);
@@ -84,16 +79,13 @@ export function ChatsClient({
   // --- Control del polling del chat
   const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inFlightRef = useRef(false);
-  const backoffRef = useRef(0);
-  const BASE_INTERVAL = 2000;
-  const MAX_BACKOFF = 30000;
+  const backoffRef = useRef(0);           // ms (0 = intervalo base)
+  const BASE_INTERVAL = 2000;             // 2s base
+  const MAX_BACKOFF = 30000;              // 30s
 
-  // ✅ Filtro: excluir "status@broadcast"
+  // Lista de contactos para sidebar
   const contacts = useMemo(() => {
-    if (!currentChatsResult.success) return [];
-    return currentChatsResult.data.filter(
-      (c) => c.remoteJid && c.remoteJid !== "status@broadcast"
-    );
+    return currentChatsResult.success ? currentChatsResult.data : [];
   }, [currentChatsResult]);
 
   const currentContact = useMemo(() => {
@@ -101,6 +93,7 @@ export function ChatsClient({
     return contacts.find((c) => c.remoteJid === selectedJid);
   }, [contacts, selectedJid]);
 
+  // Header del chat (izquierda)
   const header = useMemo(() => {
     return {
       name: currentContact?.pushName || selectedJid || "Sin contacto",
@@ -119,10 +112,11 @@ export function ChatsClient({
     }
   }, [contacts, selectedJid, instanceName, initialSelectedJid]);
 
+  // --- Polling comparativo de mensajes (robusto)
   const pollAndCompareMessages = useCallback(
     async (remoteJid: string) => {
       if (!warmMessages || inFlightRef.current) return;
-      if (typeof document !== "undefined" && document.hidden) return;
+      if (typeof document !== "undefined" && document.hidden) return; // pausa si la pestaña está oculta
 
       inFlightRef.current = true;
       try {
@@ -139,18 +133,15 @@ export function ChatsClient({
             }
             return prevMsgs;
           });
+          // Reinicia backoff en éxito
           backoffRef.current = 0;
         } else {
-          backoffRef.current = Math.min(
-            (backoffRef.current || BASE_INTERVAL) * 2,
-            MAX_BACKOFF
-          );
+          console.warn("[ChatsClient] warmMessages error during polling:", res?.message);
+          backoffRef.current = Math.min((backoffRef.current || BASE_INTERVAL) * 2, MAX_BACKOFF);
         }
-      } catch {
-        backoffRef.current = Math.min(
-          (backoffRef.current || BASE_INTERVAL) * 2,
-          MAX_BACKOFF
-        );
+      } catch (e) {
+        console.error("[ChatsClient] warmMessages exception during polling:", e);
+        backoffRef.current = Math.min((backoffRef.current || BASE_INTERVAL) * 2, MAX_BACKOFF);
       } finally {
         inFlightRef.current = false;
       }
@@ -158,6 +149,7 @@ export function ChatsClient({
     [warmMessages, instanceName]
   );
 
+  // Cambiar chat desde sidebar
   const handleSelectFromSidebar = useCallback(
     async (remoteJid: string) => {
       if (selectedJid !== remoteJid) setSelectedJid(remoteJid);
@@ -181,11 +173,13 @@ export function ChatsClient({
           setInfo({ ...res, instanceName, remoteJid });
         } else {
           setMessages([]);
-          setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid, apiKeyData }));
+          setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid }));
+          console.warn("[ChatsClient] warmMessages error:", res?.message);
         }
-      } catch {
+      } catch (e) {
         setMessages([]);
-        setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid, apiKeyData }));
+        setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid }));
+        console.error("[ChatsClient] warmMessages exception:", e);
       } finally {
         setLoading(false);
       }
@@ -193,31 +187,34 @@ export function ChatsClient({
     [selectedJid, warmMessages, instanceName]
   );
 
+  // Envío unificado (texto o media) + refrescos
   const handleSendAny = useCallback(
     async (payload: OutgoingMessagePayload) => {
-      if (!selectedJid || !sendAny) return;
+      if (!selectedJid || !sendAny) {
+        console.warn("[ChatsClient] No se puede enviar: remoteJid no seleccionado o función sendAny no proporcionada.");
+        return;
+      }
 
       const result = await sendAny(selectedJid, payload);
 
       if (result.success) {
-        if (warmMessages) await pollAndCompareMessages(selectedJid);
+        // 1) refrescar mensajes del chat actual
+        if (warmMessages) {
+          await pollAndCompareMessages(selectedJid);
+        }
+        // 2) refrescar lista de chats (sidebar)
         const chatRefreshResult = await refetchChats();
         if (chatRefreshResult.success) {
-          // ✅ Mantener el filtro al refrescar también
-          const filtered = {
-            ...chatRefreshResult,
-            data: chatRefreshResult.data.filter(
-              (c) => c.remoteJid && c.remoteJid !== "status@broadcast"
-            ),
-          };
-          setCurrentChatsResult(filtered);
+          setCurrentChatsResult(chatRefreshResult);
         }
+      } else {
+        console.error("❌ Error al enviar:", result.message, result.raw);
       }
     },
     [selectedJid, sendAny, warmMessages, refetchChats, pollAndCompareMessages]
   );
 
-  // Polling sidebar
+  // Polling sidebar (setTimeout para evitar solapamientos)
   useEffect(() => {
     let stopped = false;
     let t: ReturnType<typeof setTimeout> | null = null;
@@ -226,13 +223,9 @@ export function ChatsClient({
       if (stopped) return;
       const result = await refetchChats();
       if (result.success) {
-        const filtered = {
-          ...result,
-          data: result.data.filter(
-            (c) => c.remoteJid && c.remoteJid !== "status@broadcast"
-          ),
-        };
-        setCurrentChatsResult(filtered);
+        setCurrentChatsResult(result);
+      } else {
+        console.warn("[ChatsClient] Fallo al refrescar chats:", result.message);
       }
       t = setTimeout(loop, 10000);
     };
@@ -247,18 +240,21 @@ export function ChatsClient({
     };
   }, [refetchChats, initialChatsResult.success]);
 
-  // Polling mensajes
+  // Polling del chat (robusto: sin solaparse, con backoff, pausa en background)
   useEffect(() => {
+    // limpia cualquier timer previo
     if (pollingRef.current) {
       clearTimeout(pollingRef.current);
       pollingRef.current = null;
     }
 
     let stopped = false;
+
     const tick = async () => {
       if (stopped) return;
 
       if (selectedJid && warmMessages) {
+        // Si no hay mensajes y no está cargando, trae el primer lote
         if (messages.length === 0 && !loading) {
           await handleSelectFromSidebar(selectedJid);
         } else {
@@ -266,12 +262,20 @@ export function ChatsClient({
         }
       }
 
+      // calcula próximo intervalo con backoff (si 0 => BASE_INTERVAL)
       const wait = backoffRef.current > 0 ? backoffRef.current : BASE_INTERVAL;
-      pollingRef.current = setTimeout(() => void tick(), wait);
+
+      pollingRef.current = setTimeout(() => {
+        void tick();
+      }, wait);
     };
 
-    if (selectedJid && warmMessages) void tick();
+    // arranque
+    if (selectedJid && warmMessages) {
+      void tick();
+    }
 
+    // pausa/reanuda según visibilidad
     const onVisibility = () => {
       if (document.hidden) {
         if (pollingRef.current) {
@@ -279,6 +283,7 @@ export function ChatsClient({
           pollingRef.current = null;
         }
       } else {
+        // reanudar inmediatamente al volver a foreground
         backoffRef.current = 0;
         if (!pollingRef.current) void tick();
       }
