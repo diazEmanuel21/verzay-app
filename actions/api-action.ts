@@ -3,7 +3,11 @@
 import { db } from "@/lib/db";
 import { ApiKey } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { randomUUID } from "crypto";
 
+/* =========================
+   Tipos
+========================= */
 interface GenerateQrInterface {
   instanceName: string
   userId: string
@@ -25,7 +29,6 @@ interface WhatsAppConnectionStatus {
   };
   success: boolean; // Indica si la conexión fue exitosa
 }
-
 interface QRCodeResponse {
   qr?: {
     code: string; // Código QR en formato base64
@@ -40,15 +43,35 @@ interface QRCodeResponse {
   message?: string; // Mensaje opcional para el usuario
 }
 
-//Server-Action Para generar el QR
+/* =========================
+   Helper
+========================= */
+const isWhatsappLike = (t?: string | null) => (!t || t.trim().toLowerCase() === "whatsapp");
+
+/* =========================
+   Server-Action: Generar QR
+   - Solo usa Evolution si tipoInstancia es WhatsApp o nulo.
+   - Mantiene TUS mensajes originales.
+========================= */
 export async function generateQRCode({ instanceName, userId }: GenerateQrInterface): Promise<QRCodeResponse> {
   try {
+    // Detectar tipo de instancia (si existe en BD)
+    const inst = await db.instancias.findFirst({
+      where: { userId, instanceName },
+      select: { tipoInstancia: true },
+    });
+    const tipoInstancia = inst?.tipoInstancia ?? null;
+
+    if (!isWhatsappLike(tipoInstancia)) {
+      // Reutilizamos tu mensaje existente para casos donde no se puede generar QR
+      return { success: false, message: 'No se pudo generar el código QR.' };
+    }
+
     // 🔥 Buscar el usuario y su ApiKey asignada
     const user = await db.user.findUnique({
       where: { id: userId },
       include: { apiKey: true },
     });
-
 
     if (!user) {
       throw new Error("El userId no existe.");
@@ -59,12 +82,10 @@ export async function generateQRCode({ instanceName, userId }: GenerateQrInterfa
 
     const { key: apiKey, url: serverUrl } = user.apiKey;
 
-    // Lógica para obtener el código QR desde tu API
+    // Lógica para obtener el código QR desde tu API (Evolution)
     const response = await fetch(`https://${serverUrl}/instance/connect/${instanceName}`, {
       method: 'GET',
-      headers: {
-        apikey: apiKey,
-      },
+      headers: { apikey: apiKey },
     });
 
     if (!response.ok) {
@@ -73,156 +94,103 @@ export async function generateQRCode({ instanceName, userId }: GenerateQrInterfa
 
     const data = await response.json();
 
-    // Retornar el resultado basado en la respuesta de la API
     if (data.base64) {
       return {
         success: true,
         qr: {
           code: data.base64,
-          pairingCode: data.pairingCode, // Si se incluye en la respuesta
+          pairingCode: data.pairingCode,
         },
       };
-    } else if (data.instance.state === 'open') {
+    } else if (data.instance?.state === 'open') {
       return {
         success: true,
-        connectionState: {
-          instance: {
-            state: 'open',
-          },
-        },
+        connectionState: { instance: { state: 'open' } },
       };
     } else {
-      return {
-        success: false,
-        message: 'No se pudo generar el código QR.',
-      };
+      return { success: false, message: 'No se pudo generar el código QR.' };
     }
   } catch (error: any) {
     return { success: false, message: error.message || 'Error al generar el código QR.' };
   }
 }
+
+/* =========================
+   API Keys CRUD (sin cambios de mensajes)
+========================= */
 export async function agregarApi(data: FormData): Promise<ClientResponse<ApiKey>> {
   const url = data.get('url') as string
   const key = data.get('key') as string
 
   if (!url || !key) {
-    return {
-      success: false,
-      message: 'Todos los campos son obligatorios',
-    }
+    return { success: false, message: 'Todos los campos son obligatorios' }
   }
 
   try {
-    const createdApiKey = await db.apiKey.create({
-      data: { url, key }
-    })
-
-    return {
-      success: true,
-      message: 'API Key agregada exitosamente',
-      data: createdApiKey,
-    }
-
+    const createdApiKey = await db.apiKey.create({ data: { url, key } })
+    return { success: true, message: 'API Key agregada exitosamente', data: createdApiKey }
   } catch (error: any) {
     console.error(error)
-
-    return {
-      success: false,
-      message: error.message || 'Error al agregar la API Key',
-    }
+    return { success: false, message: error.message || 'Error al agregar la API Key' }
   }
 }
+
 export async function editarApiKey(data: FormData): Promise<ClientResponse<ApiKey>> {
   const id = data.get('id') as string
   const url = data.get('url') as string
   const key = data.get('key') as string
 
   if (!url || !key || !id) {
-    return {
-      success: false,
-      message: 'Todos los campos son obligatorios',
-    }
+    return { success: false, message: 'Todos los campos son obligatorios' }
   }
 
   try {
-    // Actualizar la API Key en la base de datos
-    await db.apiKey.update({
-      where: { id },
-      data: { url, key }
-    });
-
-    return {
-      success: true,
-      message: "API Key actualizada exitosamente."
-    };
-
+    await db.apiKey.update({ where: { id }, data: { url, key } });
+    return { success: true, message: "API Key actualizada exitosamente." }
   } catch (error: any) {
-    return {
-      success: false,
-      message: error.message
-        || "Error al actualizar la API Key."
-    };
+    return { success: false, message: error.message || "Error al actualizar la API Key." }
   }
 }
+
 export async function eliminarApiKey(id: string) {
   if (!id) {
-    return {
-      success: false,
-      message: 'No se encontró el id',
-    }
+    return { success: false, message: 'No se encontró el id' }
   }
 
   try {
-    // Eliminar la API Key de la base de datos
-    await db.apiKey.delete({
-      where: { id },
-    });
-
-    // Revalidar la página si es necesario
+    await db.apiKey.delete({ where: { id } });
     revalidatePath('/agregar-api');
-
-    return {
-      success: true,
-      message: "API Key eliminada exitosamente."
-    };
+    return { success: true, message: "API Key eliminada exitosamente." }
   } catch (error: any) {
-    return {
-      success: false,
-      message: error.message || "Error al eliminar la API Key."
-    };
+    return { success: false, message: error.message || "Error al eliminar la API Key." }
   }
 }
+
 export async function obtenerApiKeys() {
   try {
-    // Obtener todas las API Keys de la base de datos
     const apiKeys = await db.apiKey.findMany();
-
     return { success: true, data: apiKeys };
   } catch (error: any) {
-    // Manejo de errores
     return { success: false, message: error.message || "Error al obtener las API Keys." };
   }
 }
+
 export async function getApiKeyById(id: string) {
   try {
     if (!id) return { success: false, message: 'Missing id' };
-
-    // Obtener todas las API Keys de la base de datos
-    const apiKey = await db.apiKey.findUnique({
-      where: { id }
-    });
-
+    const apiKey = await db.apiKey.findUnique({ where: { id } });
     return { success: true, data: apiKey };
   } catch (error: any) {
-    // Manejo de errores
     return { success: false, message: error.message || "Error al obtener las API Keys." };
   }
 }
-// Función para crear una instancia si el usuario no tiene una
+
+/* =========================
+   Instancias
+========================= */
 export async function createInstance(data: FormData) {
   const instanceName = data.get('instanceName') as string;
   const tipoInstancia = data.get('tipoInstancia') as string;
-
   const userId = data.get('userId') as string;
 
   try {
@@ -232,161 +200,161 @@ export async function createInstance(data: FormData) {
     }
 
     // Verificar si el usuario ya tiene una instancia activa
-    const instanciaActiva = await checkActiveInstance(userId,tipoInstancia);
+    const instanciaActiva = await checkActiveInstance(userId, tipoInstancia);
     if (instanciaActiva) {
       return { success: false, message: "El usuario ya tiene una instancia activa.", instancia: instanciaActiva };
     }
 
-    // 🔥 Buscar el usuario y su ApiKey asignada
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      include: { apiKey: true },
-    });
+    if (isWhatsappLike(tipoInstancia)) {
+      // 🔥 Evolution SOLO para WhatsApp/nulo
+      const user = await db.user.findUnique({
+        where: { id: userId },
+        include: { apiKey: true },
+      });
 
-    if (!user || !user.apiKey) {
-      throw new Error("El usuario no tiene una ApiKey asignada.");
+      if (!user || !user.apiKey) {
+        throw new Error("El usuario no tiene una ApiKey asignada.");
+      }
+
+      const { key: apiKey, url: serverUrl } = user.apiKey;
+
+      const options = {
+        method: 'POST',
+        headers: {
+          'apikey': apiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          instanceName: instanceName,
+          qrcode: true,
+          integration: "WHATSAPP-BAILEYS"
+        })
+      };
+
+      const response = await fetch(`https://${serverUrl}/instance/create`, options);
+      const apiResult = await response.json();
+
+      if (!response.ok) {
+        throw new Error(apiResult.message || 'Error al crear la instancia en la API.');
+      }
+
+      const instanceId = apiResult.hash;
+      if (!instanceId) {
+        throw new Error('No se recibió instanceId en la respuesta de la API.');
+      }
+
+      const nuevaInstancia = await db.instancias.create({
+        data: { instanceName, tipoInstancia, userId, instanceId },
+      });
+
+      revalidatePath('/agregar-api');
+      return { success: true, message: "Instancia creada exitosamente.", instancia: nuevaInstancia, apiResult };
+    } else {
+      // ❇️ Solo BD (mensajes iguales)
+      const nuevaInstancia = await db.instancias.create({
+        data: {
+          instanceName,
+          tipoInstancia,
+          userId,
+          instanceId: `local-${randomUUID()}`, // id local para integridad
+        },
+      });
+
+      revalidatePath('/agregar-api');
+      return { success: true, message: "Instancia creada exitosamente.", instancia: nuevaInstancia };
     }
-
-    const { key: apiKey, url: serverUrl } = user.apiKey;
-
-    // Configurar las opciones para la llamada a la API externa
-    const options = {
-      method: 'POST',
-      headers: {
-        'apikey': apiKey,  // Usar la clave API obtenida de la base de datos
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        instanceName: instanceName,
-        qrcode: true,
-        integration: "WHATSAPP-BAILEYS"
-      })
-    };
-
-    // Realizar la llamada a la API externa usando el serverUrl
-    const response = await fetch(`https://${serverUrl}/instance/create`, options);
-    const apiResult = await response.json();
-
-    // Manejo de errores en la respuesta de la API
-    if (!response.ok) {
-      throw new Error(apiResult.message || 'Error al crear la instancia en la API.');
-    }
-
-    // Extraer el instanceId desde el objeto "instance" en la respuesta de la API
-    const instanceId = apiResult.hash;
-    if (!instanceId) {
-      throw new Error('No se recibió instanceId en la respuesta de la API.');
-    }
-
-    // Guardar la nueva instancia en la base de datos si la creación en la API fue exitosa
-    const nuevaInstancia = await db.instancias.create({
-      data: {
-        instanceName,
-        tipoInstancia,
-        userId,
-        instanceId,  // Usar el instanceId extraído de la respuesta
-      },
-    });
-
-    // Revalidar la página si es necesario
-    revalidatePath('/agregar-api');
-
-    return { success: true, message: "Instancia creada exitosamente.", instancia: nuevaInstancia, apiResult };
   } catch (error: any) {
     return { success: false, message: error.message || "Error al crear la instancia." };
   }
 }
-export async function deleteInstance(userId: string,tipoInstancia:string='Whatsapp') {
+
+export async function deleteInstance(userId: string, tipoInstancia: string = 'Whatsapp') {
   try {
     // Verificar si el usuario tiene una instancia activa
-    const instanciaActiva = await checkActiveInstance(userId,tipoInstancia);
+    const instanciaActiva = await checkActiveInstance(userId, tipoInstancia);
     if (!instanciaActiva) {
       return { success: false, message: "El usuario no tiene ninguna instancia activa." };
     }
 
     const instanceName = instanciaActiva.instanceName;
 
-    // 🔥 Buscar el usuario y su ApiKey asignada
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      include: { apiKey: true },
-    });
+    if (isWhatsappLike(tipoInstancia)) {
+      // 🔥 Evolution SOLO para WhatsApp/nulo
+      const user = await db.user.findUnique({
+        where: { id: userId },
+        include: { apiKey: true },
+      });
 
-    if (!user || !user.apiKey) {
-      throw new Error("El usuario no tiene una ApiKey asignada.");
-    }
-
-    const { key: apiKey, url: serverUrl } = user.apiKey;
-
-    // 1. Logout de la instancia
-    const logoutOptions = {
-      method: 'DELETE',
-      headers: {
-        'apikey': apiKey,
-        'Content-Type': 'application/json'
+      if (!user || !user.apiKey) {
+        throw new Error("El usuario no tiene una ApiKey asignada.");
       }
-    };
 
-    const logoutResponse = await fetch(`https://${serverUrl}/instance/logout/${instanceName}`, logoutOptions);
-    const logoutResult = await logoutResponse.json();
+      const { key: apiKey, url: serverUrl } = user.apiKey;
 
-    if (!logoutResponse.ok) {
-      throw new Error(logoutResult.message || 'Error al hacer logout de la instancia en la API.');
-    }
+      // 1. Logout de la instancia
+      const logoutOptions = {
+        method: 'DELETE',
+        headers: {
+          'apikey': apiKey,
+          'Content-Type': 'application/json'
+        }
+      };
 
-    // 2. Eliminar la instancia en la API
-    const deleteOptions = {
-      method: 'DELETE',
-      headers: {
-        'apikey': apiKey,
-        'Content-Type': 'application/json'
+      const logoutResponse = await fetch(`https://${serverUrl}/instance/logout/${instanceName}`, logoutOptions);
+      const logoutResult = await logoutResponse.json();
+
+      if (!logoutResponse.ok) {
+        throw new Error(logoutResult.message || 'Error al hacer logout de la instancia en la API.');
       }
-    };
 
-    const deleteResponse = await fetch(`https://${serverUrl}/instance/delete/${instanceName}`, deleteOptions);
-    const deleteResult = await deleteResponse.json();
+      // 2. Eliminar la instancia en la API
+      const deleteOptions = {
+        method: 'DELETE',
+        headers: {
+          'apikey': apiKey,
+          'Content-Type': 'application/json'
+        }
+      };
 
-    if (!deleteResponse.ok) {
-      throw new Error(deleteResult.message || 'Error al eliminar la instancia en la API.');
+      const deleteResponse = await fetch(`https://${serverUrl}/instance/delete/${instanceName}`, deleteOptions);
+      const deleteResult = await deleteResponse.json();
+
+      if (!deleteResponse.ok) {
+        throw new Error(deleteResult.message || 'Error al eliminar la instancia en la API.');
+      }
     }
 
     // 3. Eliminar la instancia de la base de datos
     const instancia = await db.instancias.findFirst({
-      where: { instanceName,tipoInstancia }
+      where: { instanceName, tipoInstancia }
     });
 
     if (!instancia) {
       throw new Error("No se encontró la instancia en la base de datos.");
     }
 
-    await db.instancias.delete({
-      where: { id: instancia.id }
-    });
+    await db.instancias.delete({ where: { id: instancia.id } });
 
     return { success: true, message: "Instancia eliminada exitosamente." };
   } catch (error: any) {
     return { success: false, message: error.message || "Error al eliminar la instancia." };
   }
 }
-// Función para verificar si el usuario ya tiene una instancia
-export async function checkActiveInstance(userId: string,tipoInstancia:string='Whatsapp') {
-  const instanciaActiva = await db.instancias.findFirst({
-    where: { userId,tipoInstancia:tipoInstancia },
-  });
 
+// Función para verificar si el usuario ya tiene una instancia
+export async function checkActiveInstance(userId: string, tipoInstancia: string = 'Whatsapp') {
+  const instanciaActiva = await db.instancias.findFirst({
+    where: { userId, tipoInstancia: tipoInstancia },
+  });
   return instanciaActiva;
 }
+
 // Funcion para traer datos del cliente
 export async function getInstances(userId: string) {
   try {
     const instance = await db.instancias.findMany({
-      where: {
-        userId: userId,
-      },
-      select: {
-        instanceName: true,
-        instanceId: true,
-      },
+      where: { userId: userId },
+      select: { instanceName: true, instanceId: true },
     });
 
     // 🔥 Buscar el usuario y su ApiKey asignada
@@ -399,26 +367,20 @@ export async function getInstances(userId: string) {
       throw new Error("El usuario no tiene una ApiKey asignada.");
     }
 
-    const { key: apiKey, url: serverUrl } = user.apiKey;
+    const { url: serverUrl } = user.apiKey;
 
-    // Agregar apiKey y serverUrl a cada instancia
-    const instances = instance.map((instance) => ({
-      ...instance,
-      serverUrl
-    }));
-
+    const instances = instance.map((i) => ({ ...i, serverUrl }));
     return instances;
-
   } catch (error) {
     console.error(`Error fetching from:`, error);
   }
 }
+
 // actions/createBotAction.ts
 export async function createBotAction(data: FormData) {
   const instanceName = data.get('instanceName') as string;
   const instanceId = data.get('instanceId') as string;
   const systemMessage = data.get('systemMessage') as string;
-
 
   if (!instanceName || !instanceId || !systemMessage) {
     throw new Error('Faltan datos necesarios.');
@@ -467,27 +429,18 @@ export async function createBotAction(data: FormData) {
     console.error(`Error:`, err);
   }
 }
+
 //Datos para api status
 export async function getDataApi(userId: string, apiKeyId: string) {
   try {
     const apiKey = await db.apiKey.findFirst({
-      where: {
-        id: apiKeyId
-      },
-      select: {
-        id: true,
-        url: true,
-        key: true,
-      },
+      where: { id: apiKeyId },
+      select: { id: true, url: true, key: true },
     });
 
     const instancia = await db.instancias.findFirst({
       where: { userId },
-      select: {
-        id: true,
-        instanceName: true,
-        instanceId: true,
-      },
+      select: { id: true, instanceName: true, instanceId: true },
     });
 
     if (!apiKey || !instancia) {
