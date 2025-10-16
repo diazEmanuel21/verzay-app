@@ -1,10 +1,8 @@
-// app/(root)/ai/_components/hooks/useExtrasAutosave.ts
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
 import { patchExtrasSection } from "@/actions/system-prompt-actions";
-
-export type ExtraItemDTO = { id: string; title?: string; content?: string };
+import { ExtraItemDTO } from "@/types/agentAi";
 
 function createDebounced<F extends (...args: any[]) => any>(fn: F, ms = 700) {
     let t: ReturnType<typeof setTimeout> | null = null;

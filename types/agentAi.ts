@@ -3,6 +3,8 @@ import { Workflow } from "@prisma/client";
 import { ChangeEvent } from "react";
 import z from "zod";
 
+
+
 /* =========================
    0) Zod Schemas (payloads)
 ========================= */
@@ -27,9 +29,6 @@ export const BusinessDraftSchema = z.object({
 });
 
 export const TrainingDraftSchema = z.object({
-    id: z.string().optional().default(""),
-    title: z.string().optional().default(""),
-
     steps: z.array(
         z.object({
             id: z.string(),
@@ -67,8 +66,6 @@ export const TrainingDraftSchema = z.object({
             ).default([]),
         })
     ).default([]),
-
-    mainMessage: z.string().optional().default(""),
 });
 
 export const FaqDraftSchema = z.object({
@@ -125,7 +122,8 @@ export const SectionsStrictSchema = z.object({
 
 /* ---------- Schemas de acciones ---------- */
 export const PatchSectionSchema = z.object({
-    promptId: z.string().min(1, "promptId requerido"),
+    promptId: z.string().uuid(),
+    // promptId: z.string().min(1, "promptId requerido"),
     version: z.number().int().positive(),
     sectionKey: SectionKeySchema,
     patch: z.any(), // Se valida contra los DraftSchemas según la sección en la action
@@ -172,12 +170,48 @@ export const promptSchema = z.object({
 export type FormValues = z.infer<typeof promptSchema>;
 
 /* ---------------------- Tipos de componentes/props ---------------------- */
+export type SectionsPromptSystem = {
+    business: {
+        nombre: string; sector?: string; ubicacion?: string; horarios?: string;
+        maps?: string; telefono?: string; email?: string; sitio?: string;
+        facebook?: string; instagram?: string; tiktok?: string; youtube?: string;
+        notas?: string;
+    };
+    training: {
+        steps: Array<{
+            id: string;
+            title?: string;
+            mainMessage?: string;
+            elements: Array<
+                | { id: string; kind: "text"; text: string }
+                // | { id: string; kind: "function"; fn: "captura_datos"; subtype?: string; prompt?: string; fields?: string[] }
+                | { id: string; kind: "function"; fn: "ejecutar_flujo"; flowId: string; flowName?: string }
+                | { id: string; kind: "function"; fn: "notificar_asesor"; notificationNumber: string }
+            // | { id: string; kind: "function"; fn: "consulta_datos"; prompt?: string }
+            >;
+        }>;
+    };
+    faq: {
+        items: Array<{ id: string; q: string; a: string }>;
+    };
+    products: {
+        items: Array<{ id: string; name: string; description?: string }>;
+    };
+    extras: {
+        firmaEnabled: boolean;
+        firmaText: string;
+        items: Array<{ id: string; title: string; content: string }>;
+    };
+};
+
 export interface MainAiInterface {
     flows: Workflow[];
     user: UserWithApiKeys;
     promptMeta: { id: string; version: number };
 }
-
+export type MainAiProps = MainAiInterface & {
+    sections: SectionsPromptSystem;
+};
 export interface BusinessValues {
     nombre: string;
     sector: string;
@@ -353,3 +387,48 @@ export type FqaBuilderProps = FaqSimpleProps & {
     onConflict?: (serverState: any) => void;
     initialItems?: QaItem[]; // ← sections.faq.items desde BD
 };
+
+
+export type ProductItem = { id: string; name: string; description: string };
+
+export type ProductItemDTO = { id: string; name?: string; description?: string };
+
+export interface ProductBuilderProps {
+    values: { products: string };
+    handleChange: (
+        key: "products"
+    ) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+    onChange?: (state: { items: ProductItem[]; prompt: string }) => void;
+
+    // NUEVO (persistencia)
+    promptId: string;
+    version: number;
+    onVersionChange: (v: number) => void;
+    onConflict?: (serverState: any) => void;
+    initialItems?: ProductItemDTO[]; // sections.products.items desde BD
+}
+
+export type ExtraItem = { id: string; title: string; content: string };
+
+
+export type ExtraItemDTO = { id: string; title?: string; content?: string };
+
+export interface ExtraInfoBuilderProps {
+    values: { more: string };
+    handleChange: (
+        key: "more"
+    ) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+    onChange?: (state: {
+        items: ExtraItem[];
+        firmaEnabled: boolean;
+        firmaText: string;
+        prompt: string;
+    }) => void;
+
+    // NUEVO (persistencia)
+    promptId: string;
+    version: number;
+    onVersionChange: (v: number) => void;
+    onConflict?: (serverState: any) => void;
+    initialExtras?: { items?: ExtraItemDTO[]; firmaEnabled?: boolean; firmaText?: string };
+}

@@ -1,4 +1,3 @@
-// app/(root)/ai/_components/ExtraInfoBuilder.tsx
 "use client";
 
 import { nanoid } from "nanoid";
@@ -8,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus, PenSquare } from "lucide-react";
-import type { ChangeEvent } from "react";
-import { useExtrasAutosave, ExtraItemDTO } from "./hooks/useExtrasAutosave";
+import { useExtrasAutosave } from "./hooks/useExtrasAutosave";
+import { ExtraInfoBuilderProps, ExtraItem, ExtraItemDTO } from "@/types/agentAi";
 
 const PROMPT_SIGNATURE_DEFAULT =
     "# ✍️ FIRMA DEL AGENTE\n\n" +
@@ -21,40 +20,22 @@ const PROMPT_SIGNATURE_DEFAULT =
     "🤖 Asisnte Virtual\n" +
     "Soy un asistente virtual. ¿En qué puedo ayudarte hoy?";
 
-type ExtraItem = { id: string; title: string; content: string };
-
-export interface ExtraInfoBuilderProps {
-    values: { more: string };
-    handleChange: (
-        key: "more"
-    ) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-    onChange?: (state: {
-        items: ExtraItem[];
-        firmaEnabled: boolean;
-        firmaText: string;
-        prompt: string;
-    }) => void;
-
-    // NUEVO (persistencia)
-    promptId: string;
-    version: number;
-    onVersionChange: (v: number) => void;
-    onConflict?: (serverState: any) => void;
-    initialExtras?: { items?: ExtraItemDTO[]; firmaEnabled?: boolean; firmaText?: string };
-}
 
 export function ExtraInfoBuilder({
     values, handleChange, onChange,
     promptId, version, onVersionChange, onConflict,
     initialExtras,
 }: ExtraInfoBuilderProps) {
+    const userSignaturePrompt = initialExtras?.firmaText === '' ? PROMPT_SIGNATURE_DEFAULT : initialExtras?.firmaText ?? "";
+
     const [items, setItems] = useState<ExtraItemDTO[]>(
         initialExtras?.items && initialExtras.items.length > 0
             ? initialExtras.items
             : [{ id: nanoid(), title: "", content: "" }]
     );
     const [firmaEnabled, setFirmaEnabled] = useState<boolean>(initialExtras?.firmaEnabled ?? false);
-    const [firmaText, setFirmaText] = useState<string>(initialExtras?.firmaText ?? PROMPT_SIGNATURE_DEFAULT);
+    const [firmaText, setFirmaText] = useState<string>(userSignaturePrompt);
+    console.log(firmaText)
 
     // AUTOSAVE
     useExtrasAutosave({

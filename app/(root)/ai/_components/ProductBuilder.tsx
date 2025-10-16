@@ -8,24 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus } from "lucide-react";
-import { useProductsAutosave, ProductItemDTO } from "./hooks/useProductsAutosave";
-
-type ProductItem = { id: string; name: string; description: string };
-
-export interface ProductBuilderProps {
-    values: { products: string };
-    handleChange: (
-        key: "products"
-    ) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-    onChange?: (state: { items: ProductItem[]; prompt: string }) => void;
-
-    // NUEVO (persistencia)
-    promptId: string;
-    version: number;
-    onVersionChange: (v: number) => void;
-    onConflict?: (serverState: any) => void;
-    initialItems?: ProductItemDTO[]; // sections.products.items desde BD
-}
+import { useProductsAutosave } from "./hooks/useProductsAutosave";
+import { ProductBuilderProps, ProductItem, ProductItemDTO } from "@/types/agentAi";
 
 export function ProductBuilder({
     values,

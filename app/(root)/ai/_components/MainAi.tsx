@@ -5,12 +5,17 @@ import { ChangeEvent, useCallback, useMemo, useRef, useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { BusinessPromptBuilder, ExtraInfoBuilder, FqaBuilder, PromptPreview, TrainingBuilder } from "./";
 import { buildPrompt } from "./helpers";
-import { BusinessValues, initialValues, MainAiInterface } from "@/types/agentAi";
+import { BusinessValues, ExtrasDraftSchema, FaqDraftSchema, initialValues, MainAiInterface, MainAiProps, ProductsDraftSchema, SectionsPromptSystem, TrainingDraftSchema } from "@/types/agentAi";
 import { ProductBuilder } from "./ProductBuilder";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SectionsPromptSystem } from "@/types/SystemPrompt";
+import { PromptToolbar } from "./PromptToolbar";
+
+import { buildTrainingMarkdown } from "./helpers/buildTrainingMarkdown";
+import { buildFaqMarkdown } from "./helpers/buildFaqMarkdown";
+import { buildProductsMarkdown } from "./helpers/buildProductsMarkdown";
+import { buildExtrasMarkdown } from "./helpers/buildExtrasMarkdown";
 
 export const TYPE_AI_LABELS = {
     business: "Negocio",
@@ -21,14 +26,26 @@ export const TYPE_AI_LABELS = {
 } as const;
 type TabKey = keyof typeof TYPE_AI_LABELS;
 
-type MainAiProps = MainAiInterface & {
-    promptMeta: { id: string; version: number };
-    sections: SectionsPromptSystem;
-};
 
 export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
+    const trainingMd = sections?.training
+        ? buildTrainingMarkdown(TrainingDraftSchema.parse(sections.training))
+        : "";
+
+    const faqMd = sections?.faq
+        ? buildFaqMarkdown(FaqDraftSchema.parse(sections.faq))
+        : "";
+
+    const productsMd = sections?.products
+        ? buildProductsMarkdown(ProductsDraftSchema.parse(sections.products))
+        : "";
+
+    const extrasMd = sections?.extras
+        ? buildExtrasMarkdown(ExtrasDraftSchema.parse(sections.extras))
+        : "";
     // 1) Hidrata estado local con lo que viene de BD (business)
     const hydrated: BusinessValues = {
+        // Business
         nombre: user?.company ?? sections?.business?.nombre ?? "",
         sector: sections?.business?.sector ?? "",
         ubicacion: sections?.business?.ubicacion ?? "",
@@ -42,10 +59,12 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
         tiktok: sections?.business?.tiktok ?? "",
         youtube: sections?.business?.youtube ?? "",
         notas: sections?.business?.notas ?? "",
-        training: sections?.training ? "[Contenido cargado]" : "", // (tu vista de training ya pinta su propio editor)
-        faq: sections?.faq ? "[Contenido cargado]" : "",
-        products: sections?.products ? "[Contenido cargado]" : "",
-        more: sections?.extras ? "[Contenido cargado]" : "",
+
+        // ✅ Hidrata con el markdown real en vez de "[Contenido cargado]"
+        training: trainingMd,
+        faq: faqMd,
+        products: productsMd,
+        more: extrasMd,
     };
 
     const [values, setValues] = useState<BusinessValues>({ ...initialValues, ...hydrated });
@@ -122,6 +141,19 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                         <ArrowRight />
                     </Button>
                 </div>
+
+                <PromptToolbar
+                    promptId={promptMeta.id}
+                    version={promptVersion}
+                    userId={user.id}
+                    onVersionChange={setPromptVersion}
+                    onConflict={(server) => {
+                        // Rehidrata si quieres: sections, tabs, etc.
+                        // setSections(server.sections); setPromptVersion(server.version);
+                    }}
+                    revalidatePath={"/ia"}       // opcional
+                    revisions={[]}               // si ya las tienes en props
+                />
             </div>
 
             {/* layout */}
@@ -196,18 +228,16 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                     </TabsContent>
 
                     <TabsContent value="products" className="m-0">
-                        <TabsContent value="products" className="m-0">
-                            <ProductBuilder
-                                values={{ products: values.products ?? "" }}
-                                handleChange={handleChange}
-                                // NUEVO:
-                                promptId={promptMeta.id}
-                                version={promptVersion}
-                                onVersionChange={setPromptVersion}
-                                onConflict={(serverState) => { /* opcional */ }}
-                                initialItems={sections?.products?.items ?? []}
-                            />
-                        </TabsContent>
+                        <ProductBuilder
+                            values={{ products: values.products ?? "" }}
+                            handleChange={handleChange}
+                            // NUEVO:
+                            promptId={promptMeta.id}
+                            version={promptVersion}
+                            onVersionChange={setPromptVersion}
+                            onConflict={(serverState) => { /* opcional */ }}
+                            initialItems={sections?.products?.items ?? []}
+                        />
                     </TabsContent>
 
                     <TabsContent value="more" className="m-0">

@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { patchProductsSection } from "@/actions/system-prompt-actions";
-
-export type ProductItemDTO = { id: string; name?: string; description?: string };
+import { ProductItemDTO } from "@/types/agentAi";
 
 function createDebounced<F extends (...args: any[]) => any>(fn: F, ms = 700) {
     let t: ReturnType<typeof setTimeout> | null = null;

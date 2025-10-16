@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,9 +16,8 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 
-import { BusinessBuilderInterface, BusinessPromptBuilderProps, FormValues, promptSchema } from "@/types/agentAi";
+import { BusinessPromptBuilderProps, FormValues, promptSchema } from "@/types/agentAi";
 import { useBusinessAutosave } from "./hooks/useBusinessAutosave";
-
 
 export const BusinessPromptBuilder = ({ values,
     handleChange,
