@@ -15,7 +15,7 @@ import { createAppointment } from "@/actions/appointments-actions";
 import { getAvailableSlots } from "@/actions/getAvailableSlots-actions";
 import { sendingMessages } from "@/actions/sending-messages-actions";
 import { createSeguimiento } from "@/actions/seguimientos-actions";
-import { formatDateLabel, normalizeTimeToSeconds, normalizeToE164, subtractSecondsFromTime, toRemoteJid } from "../helpers";
+import { formatDateLabel, formatServiceMessage, normalizeTimeToSeconds, normalizeToE164, subtractSecondsFromTime, toRemoteJid } from "../helpers";
 
 import { CalendarIcon, CheckCircle2, Clock, ScrollText, User2 } from "lucide-react";
 import { es } from "date-fns/locale";
@@ -129,7 +129,13 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                     instancia: rem.instanceName ?? undefined,
                     apikey: rem.apikey ?? undefined,
                     remoteJid,
-                    mensaje: `${rem.description?.replace(/@nombre\b/g, `*${nameClient}*`)}`,
+                    mensaje: formatServiceMessage(rem.description ?? '', {
+                        nameClient,
+                        selectedDate,
+                        selectedSlot,
+                        timezone,
+                        slotDuration,
+                    }),
                     tipo: "text",
                     time: seguimientoTime,
                     name_file: undefined,
@@ -204,7 +210,13 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
         const apikey = user.instancias[0].instanceId;
         const url = `https://${urlevo}/message/sendText/${instanceName}`;
         const currentService = user.Service.find((s) => s.id === selectedService);
-        const text = currentService?.messageText ? `${currentService?.messageText?.replace(/@nombre\b/g, `*${nameClient}*`)}` : "Thanks fow scheduling with us.";
+        const text = formatServiceMessage(currentService?.messageText, {
+            nameClient,
+            selectedDate,
+            selectedSlot,
+            timezone,
+            slotDuration,
+        });
         const e164 = normalizeToE164(areaCode, phone);
         if (!e164) {
             toast.error("Número de WhatsApp inválido. Verifica el país y el número.");
