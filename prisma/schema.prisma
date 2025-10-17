@@ -189,7 +189,7 @@ model Instancias {
   instanceName String
   userId       String
   instanceId   String
-  instanceType String?
+  instanceType String? @default("Whatsapp")
   user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
