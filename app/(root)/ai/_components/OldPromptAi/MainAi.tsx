@@ -20,6 +20,28 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Ellipsis, MoreVertical } from "lucide-react";
 
+export function formatPromptArray(data: any): string {
+    // Verificamos que sea un array válido
+    if (!Array.isArray(data)) {
+        throw new Error('El parámetro recibido no es un array válido.');
+    }
+
+    // Creamos el resultado acumulado
+    let result = '';
+
+    // Iteramos por cada elemento del array
+    data.forEach((item) => {
+        const title = typeof item.title === 'string' ? item.title.trim() : 'Sin título';
+        const message = typeof item.message === 'string' ? item.message.trim() : '';
+
+        // Concatenamos con saltos de línea
+        result += `${title}\n${message}\n\n`;
+    });
+
+    // Retornamos el texto limpio sin espacios al final
+    return result.trim();
+}
+
 export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [dialogOpen, setDialogOpen] = useState<boolean>(false);
@@ -29,6 +51,7 @@ export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
     const [dataDelete, setDataDelete] = useState<PromptAiFormValues | null>(null);
     const [activeTab, setActiveTab] = useState<TypePromptAi>(TypePromptAi.TRAINING);
 
+    const promptFormatted = formatPromptArray(promptAi);
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
     const openCreateDialog = () => {
@@ -106,6 +129,7 @@ export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
                 <div className="flex flex-1 ">
                     <AiTabs
                         onTabChange={onTabChange}
+                        promptFormatted={promptFormatted}
                     />
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -169,3 +193,5 @@ export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
         </div>
     );
 };
+
+

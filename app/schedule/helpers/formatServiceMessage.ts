@@ -1,4 +1,3 @@
-// helpers/formatServiceMessage.ts
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toZonedTime } from "date-fns-tz";
@@ -35,19 +34,19 @@ export function formatServiceMessage(
         // Nombre del cliente
         formatted = formatted.replace(/@client_name\b/gi, `*${nameClient}*`);
 
-        // Fecha y hora local
+        // Fecha y hora local formateada como "17/10/2025 3:00 PM."
         if (selectedDate && selectedSlot) {
             const [startTime] = selectedSlot.split("|");
             const localTime = toZonedTime(new Date(startTime), timezone);
-            const dateLabel = format(selectedDate, "d 'de' MMMM 'de' yyyy", { locale: es });
-            const hourLabel = format(localTime, "hh:mm a", { locale: es });
-            const fullDateTime = `${dateLabel} a las ${hourLabel}`;
+            const dateLabel = format(selectedDate, "dd/MM/yyyy", { locale: es });
+            const hourLabel = format(localTime, "h:mm a", { locale: es });
+            const fullDateTime = `${dateLabel} ${hourLabel}.`;
             formatted = formatted.replace(/@appointment_datetime\b/gi, fullDateTime);
         }
 
         // Duración
         formatted = formatted.replace(/@appointment_duration\b/gi, `${slotDuration} min`);
-
+        
     } catch (err) {
         console.error("Error formateando messageText:", err);
     }
