@@ -16,7 +16,6 @@ import { Plus, Trash2 } from "lucide-react";
 import { FqaBuilderProps, PRESETS, QaItem } from "@/types/agentAi";
 import { useFaqAutosave } from "./hooks/useFaqAutosave";
 
-
 export function FqaBuilder({
     values,
     handleChange,

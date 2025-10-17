@@ -36,7 +36,6 @@ import { Workflow } from "@prisma/client";
 import { useTrainingAutosave } from "./hooks/useTrainingAutosave";
 import { PedidoFunctionEl } from '../../../../types/agentAi';
 
-
 /* utilidad: type-guard para pedidos */
 function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
   return (
@@ -52,12 +51,9 @@ export function TrainingBuilder({
   onChange,
   values,
   handleChange,
-
-  // NUEVO:
   promptId,
   version,
   onVersionChange,
-  onConflict,
   initialSteps = [],
 }: TrainingBuilderProps) {
   const [steps, setSteps] = useState<StepTraining[]>(() => {

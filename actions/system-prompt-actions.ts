@@ -14,8 +14,15 @@ import {
     FaqDraftSchema,
     ProductsDraftSchema,
     ExtrasDraftSchema,
+    SectionsStrictSchema,
 } from '@/types/agentAi';
 import { composePromptFromSections } from '@/app/(root)/ai/_components/helpers/composePromptFromSections';
+import { denormalizeBusiness } from '@/app/(root)/ai/_components/helpers/denormalizeBusiness';
+import { nextRevisionNumber } from '@/app/(root)/ai/_components/helpers/nextRevisionNumber';
+
+type Ok<T> = { ok: true; data: T };
+type Conflict<T = any> = { ok: false; conflict: true; data: T };
+type Fail = { ok: false; error: string };
 
 /* =========================
    Actions públicas
@@ -25,7 +32,6 @@ export async function patchBusinessSection(input: {
     version: number;
     data: z.input<typeof BusinessDraftSchema>;
 }) {
-    "use server";
     const { promptId, version, data } = input;
 
     // Zod completa defaults y normaliza aquí
@@ -46,7 +52,6 @@ export async function patchTrainingSection(input: {
     version: number;
     data: z.input<typeof TrainingDraftSchema>;
 }) {
-    "use server";
     const { promptId, version, data } = input;
 
     // Normaliza + valida la **sección** de training
@@ -72,7 +77,6 @@ export async function patchFaqSection(input: {
     version: number;
     data: z.input<typeof FaqDraftSchema>;
 }) {
-    "use server";
     const { promptId, version, data } = input;
 
     const parsed = FaqDraftSchema.parse({
@@ -91,10 +95,8 @@ export async function patchFaqSection(input: {
 export async function patchProductsSection(input: {
     promptId: string;
     version: number;
-    data: z.input<typeof ProductsDraftSchema>; 
+    data: z.input<typeof ProductsDraftSchema>;
 }) {
-    "use server";
-
     const { promptId, version, data } = input;
 
     // normaliza + valida con Draft
@@ -112,27 +114,26 @@ export async function patchProductsSection(input: {
 }
 
 export async function patchExtrasSection(input: {
-  promptId: string;
-  version: number;
-  data: z.input<typeof ExtrasDraftSchema>; // { firmaEnabled?, firmaText?, items? }
+    promptId: string;
+    version: number;
+    data: z.input<typeof ExtrasDraftSchema>; // { firmaEnabled?, firmaText?, items? }
 }) {
-  "use server";
-  const { promptId, version, data } = input;
+    const { promptId, version, data } = input;
 
-  // Normaliza con Draft (defaults seguros)
-  const parsed = ExtrasDraftSchema.parse({
-    firmaEnabled: false,
-    firmaText: "",
-    items: [],
-    ...data,
-  });
+    // Normaliza con Draft (defaults seguros)
+    const parsed = ExtrasDraftSchema.parse({
+        firmaEnabled: false,
+        firmaText: "",
+        items: [],
+        ...data,
+    });
 
-  return await patchSection({
-    promptId,
-    version,
-    sectionKey: "extras",
-    patch: parsed,
-  });
+    return await patchSection({
+        promptId,
+        version,
+        sectionKey: "extras",
+        patch: parsed,
+    });
 }
 
 /** Obtiene o crea el draft del agente. */
@@ -244,79 +245,102 @@ export async function patchSection(input: z.infer<typeof PatchSectionSchema>) {
 
 /** Recompone y guarda el prompt derivado (sin publicar). */
 export async function savePrompt(input: z.infer<typeof SaveSchema>) {
-    const { promptId, version, revalidate } = SaveSchema.parse(input);
+    try {
+        const { promptId, version, revalidate } = SaveSchema.parse(input);
 
-    const updated = await db.$transaction(async (tx) => {
-        const current = await tx.agentPrompt.findUnique({ where: { id: promptId } });
-        if (!current) throw new Error('Prompt no encontrado');
-        if (current.version !== version) throw new Error('Conflicto de versión');
+        const current = await db.agentPrompt.findUnique({
+            where: { id: promptId },
+        });
+        if (!current) return { ok: false, error: "Prompt no encontrado" } as Fail;
 
-        const sections = SectionsDraftSchema.parse(current.sections as any);
-        const promptText = composePromptFromSections(sections);
+        // Control de concurrencia optimista
+        if (current.version !== version) {
+            return { ok: false, conflict: true, data: current } as Conflict<typeof current>;
+        }
 
-        return tx.agentPrompt.update({
+        // Normaliza con Draft (limpia UI-only keys si tus DraftSchemas así lo hacen)
+        const draft = SectionsDraftSchema.parse(current.sections);
+        const promptText = composePromptFromSections(draft);
+
+        const { businessName, businessSector } = denormalizeBusiness(draft);
+
+        const updated = await db.agentPrompt.update({
             where: { id: promptId },
             data: {
                 promptText,
+                businessName,
+                businessSector,
                 version: { increment: 1 },
-                businessName: sections.business.nombre || null,
-                businessSector: sections.business.sector || null,
             },
         });
-    });
 
-    if (revalidate) revalidatePath(revalidate);
-    return updated;
+        if (revalidate) revalidatePath(revalidate);
+
+        return { ok: true, data: updated } as Ok<typeof updated>;
+    } catch (e: any) {
+        return { ok: false, error: e?.message ?? "Error al guardar prompt" } as Fail;
+    }
 }
 
 /** Publica (crea revisión) + deja el draft sincronizado. */
 export async function publishPrompt(input: z.infer<typeof PublishSchema>) {
-    const { promptId, version, note, publishedBy, revalidate } = PublishSchema.parse(input);
+    try {
+        const { promptId, version, publishedBy, note, revalidate } = PublishSchema.parse(input);
 
-    const result = await db.$transaction(async (tx) => {
-        const current = await tx.agentPrompt.findUnique({ where: { id: promptId } });
-        if (!current) throw new Error('Prompt no encontrado');
-        if (current.version !== version) throw new Error('Conflicto de versión');
+        const result = await db.$transaction(async (tx) => {
+            const current = await tx.agentPrompt.findUnique({ where: { id: promptId } });
+            if (!current) return { ok: false, error: "Prompt no encontrado" } as Fail;
 
-        const sections = SectionsDraftSchema.parse(current.sections as any);
-        const promptText = composePromptFromSections(sections);
+            // Concurrencia
+            if (current.version !== version) {
+                return { ok: false, conflict: true, data: current } as Conflict<typeof current>;
+            }
 
-        // siguiente número de revisión
-        const last = await tx.agentPromptRevision.findFirst({
-            where: { promptId },
-            orderBy: { revisionNumber: 'desc' },
-            select: { revisionNumber: true },
+            // Validación estricta antes de publicar
+            const strict = SectionsStrictSchema.parse(current.sections);
+            const normalizedForCompose = SectionsDraftSchema.parse(strict);
+            const promptTextStrict = composePromptFromSections(normalizedForCompose);
+
+            const { businessName, businessSector } = denormalizeBusiness(strict);
+
+            // Crea revisión (snapshot)
+            const revNumber = await nextRevisionNumber(promptId);
+            const revision = await tx.agentPromptRevision.create({
+                data: {
+                    promptId,
+                    revisionNumber: revNumber,
+                    sectionsSnapshot: strict,            // snapshot exacto publicado
+                    promptTextSnapshot: promptTextStrict,
+                    publishedBy: publishedBy,
+                    notes: note ?? null,
+                },
+            });
+
+            // Marca prompt como publicado y actualiza promptText + denormalizados
+            const updated = await tx.agentPrompt.update({
+                where: { id: promptId },
+                data: {
+                    status: "published",
+                    promptText: promptTextStrict,
+                    businessName,
+                    businessSector,
+                    version: { increment: 1 },
+                },
+            });
+
+            return { ok: true, data: { prompt: updated, revision } } as Ok<{ prompt: typeof updated; revision: typeof revision }>;
         });
-        const nextRevision = (last?.revisionNumber ?? 0) + 1;
 
-        const updated = await tx.agentPrompt.update({
-            where: { id: promptId },
-            data: {
-                promptText,
-                status: 'published',
-                version: { increment: 1 },
-                businessName: sections.business.nombre || null,
-                businessSector: sections.business.sector || null,
-            },
-        });
+        if (result.ok && input.revalidate) {
+            revalidatePath(input.revalidate);
+        }
 
-        const rev = await tx.agentPromptRevision.create({
-            data: {
-                promptId,
-                revisionNumber: nextRevision,
-                sectionsSnapshot: sections,
-                promptTextSnapshot: promptText,
-                publishedBy,
-                notes: note ?? null,
-            },
-        });
-
-        return { updated, revision: rev };
-    });
-
-    if (revalidate) revalidatePath(revalidate);
-    return result;
+        return result;
+    } catch (e: any) {
+        return { ok: false, error: e?.message ?? "Error al publicar prompt" } as Fail;
+    }
 }
+
 
 /** Lista revisiones (paginable si quieres) */
 export async function listRevisions(promptId: string) {
@@ -326,32 +350,43 @@ export async function listRevisions(promptId: string) {
     });
 }
 
-/** Revierte el draft a una revisión concreta (y NO publica). */
+
 export async function revertToRevision(input: z.infer<typeof RevertSchema>) {
-    const { promptId, revisionNumber, revalidate } = RevertSchema.parse(input);
+    try {
+        const { promptId, revisionNumber, revalidate } = RevertSchema.parse(input);
 
-    const updated = await db.$transaction(async (tx) => {
-        const rev = await tx.agentPromptRevision.findUnique({
-            where: { promptId_revisionNumber: { promptId, revisionNumber } },
+        const result = await db.$transaction(async (tx) => {
+            const rev = await tx.agentPromptRevision.findFirst({
+                where: { promptId, revisionNumber },
+            });
+            if (!rev) return { ok: false, error: "Revisión no encontrada" } as Fail;
+
+            // Por seguridad, valida el snapshot como Draft (o Strict si así lo prefieres)
+            const draft = SectionsDraftSchema.parse(rev.sectionsSnapshot);
+            const promptText = composePromptFromSections(draft);
+            const { businessName, businessSector } = denormalizeBusiness(draft);
+
+            const updated = await tx.agentPrompt.update({
+                where: { id: promptId },
+                data: {
+                    sections: draft,                // restauramos snapshot
+                    promptText,
+                    status: "draft",                // recomendado: vuelve a borrador
+                    businessName,
+                    businessSector,
+                    version: { increment: 1 },
+                },
+            });
+
+            return { ok: true, data: updated } as Ok<typeof updated>;
         });
-        if (!rev) throw new Error('Revisión no encontrada');
 
-        const sections = SectionsDraftSchema.parse(rev.sectionsSnapshot as any);
-        const promptText = composePromptFromSections(sections);
+        if (result.ok && revalidate) {
+            revalidatePath(revalidate);
+        }
 
-        return tx.agentPrompt.update({
-            where: { id: promptId },
-            data: {
-                sections,
-                promptText,
-                version: { increment: 1 },
-                status: 'draft',
-                businessName: sections.business.nombre || null,
-                businessSector: sections.business.sector || null,
-            },
-        });
-    });
-
-    if (revalidate) revalidatePath(revalidate);
-    return updated;
+        return result;
+    } catch (e: any) {
+        return { ok: false, error: e?.message ?? "Error al revertir a la revisión" } as Fail;
+    }
 }
