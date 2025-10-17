@@ -32,13 +32,16 @@ model User {
   theme                         ThemeApp?             @default(Default)
   muteAgentResponses            Boolean               @default(false)
   timezone                      String?
-  onInstagram                   Boolean               @default(false)
-  onFacebook                    Boolean               @default(false)
   meetingDuration               Int?
+  onFacebook                    Boolean               @default(false)
+  onInstagram                   Boolean               @default(false)
   accounts                      Account[]
+  agentPrompts                  AgentPrompt[]         @relation("UserAgentPrompts")
+  publishedAgentPromptRevisions AgentPromptRevision[] @relation("UserPublishedRevisions")
   Appointment                   Appointment[]
   instancias                    Instancias[]
   pausar                        Pausar[]
+  PromptInstance                PromptInstance[]
   Service                       Service[]
   sessions                      Session[]
   systemMessages                SystemMessage[]
@@ -50,10 +53,6 @@ model User {
   esClienteDe                   reseller[]            @relation("ClienteAsignado")
   aiConfig                      UserAiConfig[]
   modules                       Module[]              @relation("UserModules")
-  // Back-relations requeridos:
-  agentPrompts                  AgentPrompt[]         @relation("UserAgentPrompts")
-  publishedAgentPromptRevisions AgentPromptRevision[] @relation("UserPublishedRevisions")
-  PromptInstance                PromptInstance[]
 }
 
 model AiProvider {
@@ -215,28 +214,20 @@ model SystemMessage {
   user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-enum PromptStatus {
-  draft
-  published
-}
-
 model AgentPrompt {
-  id      String       @id @default(uuid()) @db.Uuid
-  userId  String
-  agentId String?
-  status  PromptStatus @default(draft)
-  version Int          @default(1)
-
+  id             String                @id @default(uuid()) @db.Uuid
+  userId         String
+  agentId        String?
+  status         PromptStatus          @default(draft)
+  version        Int                   @default(1)
   sections       Json
-  promptText     String  @db.Text
+  promptText     String
   businessName   String?
   businessSector String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  revisions AgentPromptRevision[]
-  user      User                  @relation("UserAgentPrompts", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  user           User                  @relation("UserAgentPrompts", fields: [userId], references: [id], onDelete: Cascade)
+  revisions      AgentPromptRevision[]
 
   @@index([userId])
   @@index([agentId])
@@ -247,19 +238,16 @@ model AgentPrompt {
 }
 
 model AgentPromptRevision {
-  id       String      @id @default(uuid()) @db.Uuid
-  promptId String      @db.Uuid
-  prompt   AgentPrompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
-
+  id                 String      @id @default(uuid()) @db.Uuid
+  promptId           String      @db.Uuid
   revisionNumber     Int
   sectionsSnapshot   Json
-  promptTextSnapshot String @db.Text
-
-  publishedBy     String
-  publishedByUser User   @relation("UserPublishedRevisions", fields: [publishedBy], references: [id], onDelete: Cascade)
-
-  publishedAt DateTime @default(now())
-  notes       String?
+  promptTextSnapshot String
+  publishedBy        String
+  publishedAt        DateTime    @default(now())
+  notes              String?
+  prompt             AgentPrompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  publishedByUser    User        @relation("UserPublishedRevisions", fields: [publishedBy], references: [id], onDelete: Cascade)
 
   @@unique([promptId, revisionNumber])
   @@index([publishedAt])
@@ -460,6 +448,11 @@ model SessionTrigger {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   sessionId String
+}
+
+enum PromptStatus {
+  draft
+  published
 }
 
 enum RepeatType {

@@ -354,7 +354,7 @@ export async function getInstances(userId: string) {
   try {
     const instance = await db.instancias.findMany({
       where: { userId: userId },
-      select: { instanceName: true, instanceId: true },
+      select: { instanceName: true, instanceId: true,instanceType:true },
     });
 
     // 🔥 Buscar el usuario y su ApiKey asignada
