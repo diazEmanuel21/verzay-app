@@ -49,7 +49,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
       if (instances && instances.length > 0) {
         const whatsappInstance = instances.findIndex(i => i.instanceType == 'Whatsapp')
         const { instanceName, instanceId,serverUrl } = instances[whatsappInstance];
-        console.log('Datos de activacion',{ instanceName, instanceId,serverUrl })
+        // console.log('Datos de activacion',{ instanceName, instanceId,serverUrl })
         // const { instanceName, instanceId, serverUrl } = instances[0];
         setInstanceData({ instanceName, instanceId, serverUrl });
         await fetchWebhookStatus(instanceName, instanceId, serverUrl);
