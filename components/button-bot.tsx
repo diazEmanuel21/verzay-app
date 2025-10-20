@@ -181,7 +181,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
   // ---------------------------------------------------------------------
   return (
     // Contenedor minimalista con flex-col para Switch arriba y estado abajo
-    <div className="flex flex-col items-center justify-center w-full min-w-[70px]"> 
+    <div className="flex flex-col items-center justify-center w-full min-w-[70px] relative"> 
         
         {/* Switch o Loader */}
         {isLoadingData || isToggling || isEnabled === null ? (
@@ -196,7 +196,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
                     // Clases para darle color Verde/Rojo al switch
                     className="
                         data-[state=checked]:bg-green-600 
-                        data-[state=unchecked]:bg-secondary
+                        data-[state=unchecked]:bg-gray-500
                         disabled:bg-gray-400
                         h-6 
                     "
@@ -233,12 +233,12 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
         )}
         
         {/* Indicador de estado debajo del Switch */}
-        {/* <span className={`text-xs mt-1 font-semibold leading-none ${isEnabled ? 'text-green-600' : 'text-red-600'} ${isLoadingData || isToggling ? 'text-muted-foreground' : ''}`}>
+        <span className={` text-xs mt-1 font-semibold leading-none ${isEnabled ? 'text-green-600' : 'text-red-600'} ${isLoadingData || isToggling ? 'text-muted-foreground' : ''}`}>
              {isLoadingData || isToggling
                 ? "Loading..." // Muestra 'Loading...' mientras se carga o se cambia el estado
                 : isEnabled ? "Activado" : "Desactivado"
              }
-        </span> */}
+        </span>
     </div>
   );
 };

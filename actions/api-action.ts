@@ -8,6 +8,13 @@ import { randomUUID } from "crypto";
 /* =========================
    Tipos
 ========================= */
+
+// --- Tipos para la respuesta estándar ---
+interface ClientResponse {
+  success: boolean;
+  message: string;
+}
+
 interface GenerateQrInterface {
   instanceName: string
   userId: string
@@ -465,6 +472,59 @@ export async function getDataApi(userId: string, apiKeyId: string) {
     return {
       success: false,
       message: error.message || "Error al obtener datos de la API.",
+    };
+  }
+}
+
+/**
+ * Activa o desactiva la integración de Facebook o Instagram para un usuario.
+ * @param userId El ID del usuario a modificar.
+ * @param platform El nombre de la plataforma ('facebook' o 'instagram').
+ * @param isEnabled El estado deseado (true para activar, false para desactivar).
+ * @returns Un objeto con el resultado de la operación.
+ */
+export async function toggleUserPlatform(
+  userId: string,
+  platform: 'Facebook' | 'Instagram',
+  isEnabled: boolean
+): Promise<ClientResponse> {
+  if (!userId) {
+    return { success: false, message: "El ID de usuario es obligatorio." };
+  }
+
+  try {
+    // 1. Crear el objeto de datos a actualizar dinámicamente
+    // Esto asegura que solo se actualice la columna correcta (onFacebook o onInstagram).
+    const updateData: { [key: string]: boolean } = {};
+    const columnKey = platform === 'Facebook' ? 'onFacebook' : 'onInstagram';
+    
+    updateData[columnKey] = isEnabled;
+
+    // 2. Realizar la actualización en la base de datos
+    await db.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    const action = isEnabled ? "activada" : "desactivada";
+    
+    return { 
+      success: true, 
+      message: `La integración de ${platform} ha sido ${action} exitosamente.` 
+    };
+
+  } catch (error: any) {
+    // Manejo de errores específicos de Prisma o generales
+    console.error(`Error al actualizar ${platform} para el usuario ${userId}:`, error);
+    
+    if (error.code === 'P2025') {
+        // P2025 es el código de "Registro no encontrado" en Prisma
+        return { success: false, message: "Error: No se encontró el usuario con el ID proporcionado." };
+    }
+    
+    return { 
+      success: false, 
+      message: error.message || "Error desconocido al actualizar la plataforma." 
     };
   }
 }
