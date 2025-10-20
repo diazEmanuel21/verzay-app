@@ -137,11 +137,12 @@ export const ClientInstanceCard = ({
             {(instanceType != 'Whatsapp') && (isActive ? 'Activo 🟢' : 'Desactivado 🔴')}
           </div>
 
-          <div className="flex items-center justify-between mt-4 text-xs flex-col gap-2">
-            <div className="flex flex-1 justify-end gap-1 items-center flex-row w-full">
+          <div className="flex items-center justify-between mt-4 text-xs flex-col gap-2 w-full">
+            <div className="flex justify-between flex-row w-full p-2">
               {instanceType === 'Whatsapp' && (
                 <>
                   <QRCodeGenerator userId={user.id} />
+
                   <EnableToggleButton
                     userId={user.id}
                     userName={user.name}

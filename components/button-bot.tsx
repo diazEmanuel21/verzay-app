@@ -1,9 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+// Importamos Switch y Label
+import { Switch } from "./ui/switch"; 
+import { Label } from "@/components/ui/label"; 
+// Mantenemos Button para el AlertDialogAction
+import { Button } from "@/components/ui/button"; 
 import {
   AlertDialog,
-  AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogFooter,
@@ -33,7 +36,8 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
   webhookUrl
 }) => {
   const [isEnabled, setIsEnabled] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [isLoadingData, setIsLoadingData] = useState<boolean>(true); 
+  const [isToggling, setIsToggling] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [instanceData, setInstanceData] = useState<{
     instanceName: string;
@@ -48,9 +52,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
       const instances = await getInstances(userId);
       if (instances && instances.length > 0) {
         const whatsappInstance = instances.findIndex(i => i.instanceType == 'Whatsapp')
-        const { instanceName, instanceId,serverUrl } = instances[whatsappInstance];
-        console.log('Datos de activacion',{ instanceName, instanceId,serverUrl })
-        // const { instanceName, instanceId, serverUrl } = instances[0];
+        const { instanceName, instanceId, serverUrl } = instances[whatsappInstance];
         setInstanceData({ instanceName, instanceId, serverUrl });
         await fetchWebhookStatus(instanceName, instanceId, serverUrl);
       } else {
@@ -62,11 +64,9 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
         }`
       );
     } finally {
-      setLoading(false);
+      setIsLoadingData(false);
     }
   };
-
-  const baseUrl = "https://" + instanceData?.serverUrl;
 
   const fetchWebhookStatus = async (
     instanceName: string,
@@ -100,13 +100,15 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
     }
   };
 
-  const toggleEnable = async () => {
+  const toggleEnable = async (newState?: boolean) => {
+    const stateToToggle = newState !== undefined ? newState : !isEnabled;
     if (!instanceData) {
       toast.error("No se encontró información de la instancia.");
+      if (newState === false) setIsEnabled(true); 
       return;
     }
 
-    setLoading(true);
+    setIsToggling(true);
     setError(null);
 
     try {
@@ -120,8 +122,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
           },
           body: JSON.stringify({
             webhook: {
-              enabled: !isEnabled,
-              // url: `https://n8npro.verzay.co/webhook/${userName}`,
+              enabled: stateToToggle,
               url: webhookUrl,
               base64: true,
               events: ["MESSAGES_UPSERT"],
@@ -132,10 +133,9 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
 
       if (!response.ok) throw new Error("Error al cambiar el estado.");
 
-      const newState = !isEnabled;
-      setIsEnabled(newState);
+      setIsEnabled(stateToToggle);
 
-      if (newState) {
+      if (stateToToggle) {
         toast.success("Robot encendido correctamente.");
       } else {
         toast.warning("Robot apagado correctamente.");
@@ -145,8 +145,19 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
         }`;
       setError(errorMessage);
       toast.error(errorMessage);
+      setIsEnabled(!stateToToggle); 
     } finally {
-      setLoading(false);
+      setIsToggling(false);
+    }
+  };
+
+  const handleToggleChange = (checked: boolean) => {
+    if (isLoadingData || !instanceData || isToggling) return;
+
+    if (checked) {
+      toggleEnable(true);
+    } else {
+      setIsDialogOpen(true);
     }
   };
 
@@ -154,77 +165,81 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
     loadInstanceData();
   }, [userId]);
 
-  return (
-    <>
-      {/* BOTÓN DE ENCENDIDO */}
-      {!isEnabled ? (
-        <Button
-          onClick={toggleEnable}
-          disabled={loading || !instanceData}
-          className="bg-green-600 hover:bg-green-700 w-full"
-          variant="default"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="animate-spin w-5 h-5" />
-              Encendiendo...
-            </>
-          ) : (
-            <>
-              <Power className="w-6 h-6" />
-              Activar
-            </>
-          )}
-        </Button>
-      ) : (
-        // BOTÓN DE APAGADO CON ALERT DIALOG
-        <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <AlertDialogTrigger asChild>
-            <Button
-              className="w-full"
-              disabled={loading || !instanceData}
-              variant="destructive"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="animate-spin w-5 h-5" />
-                  Apagando...
-                </>
-              ) : (
-                <>
-                  <Power className="w-6 h-6" />
-                  Apagar
-                </>
-              )}
-            </Button>
-          </AlertDialogTrigger>
+  const isDisabled = isLoadingData || !instanceData || isToggling;
 
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Esto apagará el Robot de la instancia. Las respuestas
-                automáticas se detendrán hasta que vuelvas a encenderlo.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setIsDialogOpen(false)}>
-                Cancelar
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={async () => {
-                  setIsDialogOpen(false);
-                  await toggleEnable();
-                }}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                Confirmar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-    </>
+  // Renderizamos el error si existe
+  if (error && !instanceData) {
+    return (
+        <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+        </Alert>
+    );
+  }
+
+  // ---------------------------------------------------------------------
+  // RENDERIZADO ULTRA MINIMALISTA
+  // ---------------------------------------------------------------------
+  return (
+    // Contenedor minimalista con flex-col para Switch arriba y estado abajo
+    <div className="flex flex-col items-center justify-center w-full min-w-[70px]"> 
+        
+        {/* Switch o Loader */}
+        {isLoadingData || isToggling || isEnabled === null ? (
+            <Loader2 className="animate-spin w-6 h-6 text-primary mb-1" />
+        ) : (
+            <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <Switch
+                    id="robot-toggle"
+                    checked={isEnabled}
+                    onCheckedChange={handleToggleChange}
+                    disabled={isDisabled}
+                    // Clases para darle color Verde/Rojo al switch
+                    className="
+                        data-[state=checked]:bg-green-600 
+                        data-[state=unchecked]:bg-secondary
+                        disabled:bg-gray-400
+                        h-6 
+                    "
+                />
+
+                {/* AlertDialog de Confirmación (mantenido) */}
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esto apagará el Robot de la instancia. Las respuestas automáticas se detendrán hasta que vuelvas a encenderlo.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => {
+                            setIsDialogOpen(false);
+                            setIsEnabled(true); 
+                        }}>
+                            Cancelar
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={async () => {
+                                setIsDialogOpen(false);
+                                await toggleEnable(false);
+                            }}
+                            className="bg-red-600 hover:bg-red-700"
+                            disabled={isToggling}
+                        >
+                            Confirmar
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        )}
+        
+        {/* Indicador de estado debajo del Switch */}
+        {/* <span className={`text-xs mt-1 font-semibold leading-none ${isEnabled ? 'text-green-600' : 'text-red-600'} ${isLoadingData || isToggling ? 'text-muted-foreground' : ''}`}>
+             {isLoadingData || isToggling
+                ? "Loading..." // Muestra 'Loading...' mientras se carga o se cambia el estado
+                : isEnabled ? "Activado" : "Desactivado"
+             }
+        </span> */}
+    </div>
   );
 };
 

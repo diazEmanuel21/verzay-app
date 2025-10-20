@@ -101,7 +101,6 @@ export const ConnectionCard = ({
     const isFacebook = type === 'facebook'
     const isInstagram = type === 'instagram'
     const isFacebookOrInstagram = isFacebook || isInstagram
-    console.log('connection user is...', user)
 
     const isChannelEnabled = useMemo(() => {
         if (isFacebook) return isStrictTrue(user.onFacebook)
