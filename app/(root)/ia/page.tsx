@@ -20,7 +20,7 @@ const ProfilePage = async () => {
     const prompt = await getOrCreatePrompt({ userId: user.id });
 
     // // 2) Secciones completas para hidratar tabs (especialmente Business)
-    const sections = prompt.sections;
+    const sections = prompt?.sections ?? {};
 
     // 3) Pasa meta + sections a MainAi
     return (
@@ -28,7 +28,7 @@ const ProfilePage = async () => {
             flows={workflows}
             user={user}
             promptMeta={{ id: prompt.id, version: prompt.version }}
-            sections={prompt.sections as any}
+            sections={sections as any}
         />
     );
 };
