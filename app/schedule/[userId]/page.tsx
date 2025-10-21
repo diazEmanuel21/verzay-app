@@ -17,6 +17,7 @@ const SchedulePage = async ({ params }: { params: { userId: string } }) => {
             instancias: true,
             Service: true,
             apiKey: true,
+            employees: true,
         },
     });
 

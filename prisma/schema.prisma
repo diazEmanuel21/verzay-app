@@ -36,7 +36,7 @@ model User {
   onFacebook                    Boolean               @default(false)
   onInstagram                   Boolean               @default(false)
   accounts                      Account[]
-  Employees                     Employee[] // 👈 relación directa
+  employees                     Employee[] // 👈 relación directa
   agentPrompts                  AgentPrompt[]         @relation("UserAgentPrompts")
   publishedAgentPromptRevisions AgentPromptRevision[] @relation("UserPublishedRevisions")
   Appointment                   Appointment[]

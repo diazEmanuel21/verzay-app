@@ -78,6 +78,7 @@ const SchedulePage = async ({ params }: { params: { userId: string } }) => {
 
     return (
         <MainSchedule
+            employees={user.employees}
             isCampaignPage={isCampaignPage}
             user={user}
             apiKey={resApikey.data}

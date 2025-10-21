@@ -1,6 +1,6 @@
-import { ApiKey, Instancias, Reminders, Session, User, Workflow } from "@prisma/client";
+import { ApiKey, Employee, Instancias, Reminders, Session, User, Workflow } from "@prisma/client";
 import { z } from "zod";
-import { UserWithApiKeys } from "./schema";
+import { UserWithApiKeys, UserWithEmployees } from "./schema";
 
 export const repeatTypes = [
     { value: "NONE", label: "No se repite" },
@@ -68,7 +68,7 @@ export interface ReminderInterface {
 
 export interface MainReminderInterface {
     isCampaignPage: boolean,
-    user: UserWithApiKeys,
+    user: UserWithEmployees,
     apiKey: ApiKey,
     reminders: Reminders[],
     leads: Session[],
@@ -76,6 +76,10 @@ export interface MainReminderInterface {
     instancia: Instancias
     isScheduleView?: boolean,
     isSchedule?: boolean,
+}
+
+export interface MainScheduleInterface extends MainReminderInterface {
+    employees: Employee[]
 }
 
 export interface ReminderListInterface {

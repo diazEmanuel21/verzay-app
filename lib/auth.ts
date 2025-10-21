@@ -34,6 +34,7 @@ export async function currentUser(request?: Request) {
             onInstagram: true,
             meetingDuration: true,
             timezone: true,
+            employees: true,
             // Solo selecciona los campos necesarios
         },
     });

@@ -10,13 +10,14 @@ import {
 } from "@/components/ui/tabs";
 
 import { MainReminders } from "../../reminders/_components";
-import { MainReminderInterface } from "@/schema/reminder";
+import { MainReminderInterface, MainScheduleInterface } from "@/schema/reminder";
 import ServiceManager from './services/ServiceManager';
 import { CustomCalendar } from "./dashboard";
 import { ShareScheduleLinkButton, UserAvailabilityForm } from "./availability";
 import { UpdateMeetingDuration } from "./settings";
+import { MainEmployees } from "./employees";
 
-export const MainSchedule = ({ isCampaignPage, user, apiKey, reminders, leads, workflows, instancia, }: MainReminderInterface) => {
+export const MainSchedule = ({ isCampaignPage, user, apiKey, reminders, leads, workflows, instancia, employees }: MainScheduleInterface) => {
     const userId = user.id;
 
     return (
@@ -27,6 +28,7 @@ export const MainSchedule = ({ isCampaignPage, user, apiKey, reminders, leads, w
                     <TabsTrigger value="availability">Disponibilidad</TabsTrigger>
                     <TabsTrigger value="services">Servicios</TabsTrigger>
                     <TabsTrigger value="reminders">Recordatorios</TabsTrigger>
+                    <TabsTrigger value="employees">Encargados</TabsTrigger>
                     <TabsTrigger value="settings">Ajustes</TabsTrigger>
                 </TabsList>
                 <TabsContent value="dashboard">
@@ -65,6 +67,13 @@ export const MainSchedule = ({ isCampaignPage, user, apiKey, reminders, leads, w
                                 isScheduleView={true}
                                 isSchedule={true}
                             />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="employees">
+                    <Card className="border-none bg-transparent">
+                        <CardContent className="flex flex-col gap-2 ">
+                            <MainEmployees user={user} employees={employees} />
                         </CardContent>
                     </Card>
                 </TabsContent>

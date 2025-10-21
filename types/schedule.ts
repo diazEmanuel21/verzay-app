@@ -58,7 +58,6 @@ export interface DateHourInterface {
     nameClient: string;
 }
 
-
 export interface ScheduleFormInterface {
     // valores actuales
     nameClient: string;
@@ -101,3 +100,5 @@ export interface SummaryComponentInterface {
   setStep: (step: number) => void;        // o: (step: 0|1|2|3) => void
   setOpenDialog: (open: boolean) => void; // o: React.Dispatch<React.SetStateAction<boolean>>
 }
+
+
