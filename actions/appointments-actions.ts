@@ -20,6 +20,7 @@ interface CreateAppointmentInput {
     endTime: string;
     timezone: string;
     serviceId: string;
+    employeeId: string;
 }
 
 // ✅ Obtener citas por usuario (Asesor)

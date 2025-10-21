@@ -1,8 +1,7 @@
 "use client";
 
-import * as React from "react";
-import { Search, Users, Check, X, Clock } from "lucide-react";
-
+import { FC, useMemo, useState } from "react";
+import { Search, Users, Check, X, Clock, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,19 +12,9 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Employee } from "@prisma/client";
 
-type Employee = {
-  id: string;
-  userId: string;
-  name: string;
-  role?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  timezone?: string | null;
-  isActive: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-};
+
 
 type EmployeesComponentProps = {
   employees?: Employee[];
@@ -33,58 +22,26 @@ type EmployeesComponentProps = {
   selectionMode?: "single" | "multiple";
   onChange?: (ids: string[]) => void;
   onContinue?: (ids: string[]) => void;
+  onBack?: () => void; // 👈 nuevo callback para el botón Atrás
 };
-
-// Mock (elimínalo si pasas `employees` por props)
-const employeesMock: Employee[] = [
-  {
-    id: "emp_01",
-    userId: "user_abc123",
-    name: "María Pérez",
-    role: "Fisioterapeuta",
-    email: "maria.perez@empresa.com",
-    phone: "+57 3001234567",
-    timezone: "America/Bogota",
-    isActive: true,
-  },
-  {
-    id: "emp_02",
-    userId: "user_abc123",
-    name: "Juan Rodríguez",
-    role: "Quiropráctico",
-    email: "juan.rodriguez@empresa.com",
-    phone: "+57 3012345678",
-    timezone: "America/Bogota",
-    isActive: true,
-  },
-  {
-    id: "emp_03",
-    userId: "user_abc123",
-    name: "Laura Gómez",
-    role: "Masoterapeuta",
-    email: "laura.gomez@empresa.com",
-    phone: "+57 3023456789",
-    timezone: "America/Mexico_City",
-    isActive: false,
-  },
-];
 
 function initials(name: string) {
   const parts = name.trim().split(" ");
   return (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "");
 }
 
-export const EmployeesComponent: React.FC<EmployeesComponentProps> = ({
-  employees = employeesMock,
+export const EmployeesComponent: FC<EmployeesComponentProps> = ({
+  employees = [],
   defaultSelectedIds = [],
   selectionMode = "single",
   onChange,
   onContinue,
+  onBack, // 👈 lo recibimos como prop
 }) => {
-  const [query, setQuery] = React.useState("");
-  const [selected, setSelected] = React.useState<string[]>(defaultSelectedIds);
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<string[]>(defaultSelectedIds);
 
-  const filtered = React.useMemo(() => {
+  const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
     if (!q) return employees;
     return employees.filter((e) =>
@@ -131,8 +88,7 @@ export const EmployeesComponent: React.FC<EmployeesComponentProps> = ({
         <div className="flex items-center justify-between gap-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Selecciona uno para continuar  
-            {/* Selecciona {selectionMode === "single" ? "un empleado" : "empleados"} */}
+            Selecciona uno para continuar
           </CardTitle>
           <TooltipProvider delayDuration={150}>
             <Tooltip>
@@ -227,27 +183,15 @@ export const EmployeesComponent: React.FC<EmployeesComponentProps> = ({
                       </div>
                     </div>
 
-                    {selectionMode === "single" ? (
-                      <Button
-                        variant={isSelected ? "default" : "outline"}
-                        size="sm"
-                        className="gap-1"
-                        onClick={() => toggle(e.id)}
-                      >
-                        {isSelected ? <Check className="h-4 w-4" /> : null}
-                        {isSelected ? "Seleccionado" : "Elegir"}
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={cn("gap-1", isSelected && "border-primary")}
-                        onClick={() => toggle(e.id)}
-                      >
-                        {isSelected ? <Check className="h-4 w-4" /> : null}
-                        {isSelected ? "Quitar" : "Agregar"}
-                      </Button>
-                    )}
+                    <Button
+                      variant={isSelected ? "default" : "outline"}
+                      size="sm"
+                      className={cn("gap-1", isSelected && "border-primary")}
+                      onClick={() => toggle(e.id)}
+                    >
+                      {isSelected ? <Check className="h-4 w-4" /> : null}
+                      {isSelected ? "Seleccionado" : "Elegir"}
+                    </Button>
                   </div>
                 </li>
               );
@@ -261,11 +205,22 @@ export const EmployeesComponent: React.FC<EmployeesComponentProps> = ({
           </ul>
         </ScrollArea>
 
+        {/* 🔙 Botones inferiores */}
         <div className="p-4 flex items-center justify-between gap-3 border-t">
-          <div className="text-xs text-muted-foreground">
+          <Button
+            variant="outline"
+            className="flex items-center gap-1"
+            onClick={onBack}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Atrás
+          </Button>
+
+          <div className="flex-1 text-center text-xs text-muted-foreground">
             {filtered.length} resultado{filtered.length !== 1 ? "s" : ""} — {selected.length} seleccionado
             {selected.length !== 1 ? "s" : ""}
           </div>
+
           <Button onClick={handleContinue} disabled={selected.length === 0}>
             Continuar
           </Button>

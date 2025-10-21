@@ -28,7 +28,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
     const stepLabel = [
         { label: "Servicio", icon: <Clock className="h-4 w-4" /> },
         { label: "Fecha y hora", icon: <CalendarIcon className="h-4 w-4" /> },
-        // { label: "Encargado", icon: <User2 className="h-4 w-4" /> },
+        { label: "Encargado", icon: <User2 className="h-4 w-4" /> },
         { label: "Tus datos", icon: <ScrollText className="h-4 w-4" /> },
         { label: "Revisión", icon: <CheckCircle2 className="h-4 w-4" /> },
     ];
@@ -44,6 +44,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
     const [selectedDateYmd, setSelectedDateYmd] = useState<string>("");
     const [slots, setSlots] = useState<{ startTime: string; endTime: string }[]>([]);
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+    const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
 
     const [nameClient, setNameClient] = useState("");
     const [areaCode, setAreaCode] = useState("");
@@ -98,12 +99,13 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
             const res = await createAppointment({
                 userId: user.id,
                 pushName: nameClient,
-                phone: remoteJid, // lo dejas como lo tienes
+                phone: remoteJid,
                 instanceName,
                 startTime,
                 endTime,
                 timezone,
                 serviceId: selectedService,
+                employeeId: selectedEmployee ?? '',//TODO: APLICAR VALIDACIÓN, NO PUEDE SER STRING VACIO
             });
 
             if (!res.success) {
@@ -112,7 +114,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                 return;
             }
 
-            // Seguimientos (como ya lo tienes)
+            // Seguimientos
             const secondsReminders = reminders.map((rem) => ({
                 ...rem,
                 normalizedSeconds: isNaN(normalizeTimeToSeconds(rem?.time ?? "")) ? 0 : normalizeTimeToSeconds(rem?.time ?? ""),
@@ -327,14 +329,28 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                             />
                         )}
 
-                        {/* Paso 2: Seleccion de empleado */}
-                        {/* {step === 2 && (
+                        {step === 2 && (
                             <EmployeesComponent
+                                employees={user.employees ?? []}
+                                selectionMode="single"
+                                onChange={(ids) => {
+                                    // Guarda el empleado seleccionado en el estado
+                                    setSelectedEmployee(ids[0] || null);
+                                }}
+                                onContinue={(ids) => {
+                                    if (ids.length === 0) {
+                                        toast.info("Selecciona un empleado antes de continuar");
+                                        return;
+                                    }
+                                    setSelectedEmployee(ids[0]);
+                                    setStep(3);
+                                }}
+                                onBack={() => setStep(1)}
                             />
-                        )} */}
+                        )}
 
                         {/* Paso 3: Revisión */}
-                        {step === 2 && (
+                        {step === 3 && (
                             <ScheduleForm
                                 nameClient={nameClient}
                                 countries={countries}
@@ -349,7 +365,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                         )}
 
                         {/* Paso 4: Revisión */}
-                        {step === 3 && (
+                        {step === 4 && (
                             <SummaryComponent
                                 user={user}
                                 timezone={timezone}
@@ -360,6 +376,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                                 selectedService={selectedService}
                                 selectedSlot={selectedSlot}
                                 selectedDate={selectedDate}
+                                selectedEmployee={selectedEmployee} // <-- nuevo prop
                                 setStep={setStep}
                                 setOpenDialog={setOpenDialog}
                             />
@@ -375,24 +392,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                         <AlertDialogHeader>
                             <AlertDialogTitle>Confirmar cita</AlertDialogTitle>
                             <AlertDialogDescription>
-                                Estás a punto de agendar una cita con los siguientes datos:
-                                <Card className="border-none mt-2 ">
-                                    <CardContent className="space-y-4 p-0 m-0">
-                                        <SummaryItem label="Servicio" value={user.Service.find((s) => s.id === selectedService)?.name ?? "—"} />
-                                        <SummaryItem label="Duración" value={`${slotDuration} min`} />
-                                        <SummaryItem label="Fecha" value={formatDateLabel(selectedDate)} />
-                                        <SummaryItem label="Contacto" value={`${areaCode} ${phone}`} />
-                                        <SummaryItem
-                                            label="Hora"
-                                            value={
-                                                selectedSlot
-                                                    ? format(toZonedTime(new Date(selectedSlot.split("|")[0]), timezone), "hh:mm a")
-                                                    : "—"
-                                            }
-                                        />
-                                        <SummaryItem label="Zona horaria" value={timezone} />
-                                    </CardContent>
-                                </Card>
+                                Estás a punto de agendar una cita ¿deseas confirmar?
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

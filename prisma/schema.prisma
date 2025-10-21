@@ -36,6 +36,7 @@ model User {
   onFacebook                    Boolean               @default(false)
   onInstagram                   Boolean               @default(false)
   accounts                      Account[]
+  Employees                     Employee[] // 👈 relación directa
   agentPrompts                  AgentPrompt[]         @relation("UserAgentPrompts")
   publishedAgentPromptRevisions AgentPromptRevision[] @relation("UserPublishedRevisions")
   Appointment                   Appointment[]
@@ -53,6 +54,23 @@ model User {
   esClienteDe                   reseller[]            @relation("ClienteAsignado")
   aiConfig                      UserAiConfig[]
   modules                       Module[]              @relation("UserModules")
+}
+
+model Employee {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name     String
+  role     String?
+  email    String?
+  phone    String?
+  timezone String? @default("America/Bogota")
+  isActive Boolean @default(true)
+
+  appointments Appointment[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 }
 
 model AiProvider {
@@ -416,19 +434,22 @@ model UserAvailability {
 }
 
 model Appointment {
-  id        String            @id @default(cuid())
-  userId    String
-  sessionId Int
-  startTime DateTime
-  endTime   DateTime
-  timezone  String
-  status    AppointmentStatus @default(PENDIENTE)
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-  serviceId String?
-  service   Service?          @relation(fields: [serviceId], references: [id])
-  session   Session           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String            @id @default(cuid())
+  userId     String
+  
+  sessionId  Int
+  startTime  DateTime
+  endTime    DateTime
+  timezone   String
+  status     AppointmentStatus @default(PENDIENTE)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  serviceId  String?
+  service    Service?          @relation(fields: [serviceId], references: [id])
+  session    Session           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Employee   Employee?         @relation(fields: [employeeId], references: [id])
+  employeeId String?
 }
 
 model Service {

@@ -16,6 +16,7 @@ export const SummaryComponent = ({
   selectedService,
   selectedSlot,
   selectedDate,
+  selectedEmployee, //TODO: MAPEARLO Y MOSTRARLO
   setStep,
   setOpenDialog,
 }: SummaryComponentInterface) => {
@@ -42,7 +43,7 @@ export const SummaryComponent = ({
           <SummaryItem label="Contacto" value={`${areaCode} ${phone}`} />
         </div>
         <div className="flex justify-between gap-2 pt-2">
-          <Button variant="outline" onClick={() => setStep(2)}>
+          <Button variant="outline" onClick={() => setStep(3)}>
             Atrás
           </Button>
           <Button className="px-8" onClick={() => setOpenDialog(true)} disabled={loading}>

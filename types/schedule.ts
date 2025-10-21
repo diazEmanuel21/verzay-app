@@ -1,6 +1,7 @@
 // Tipos mínimos que el componente necesita
 import { Country } from '@/components/custom/CountryCodeSelect';
 import { UserWithApiKeys } from '@/schema/schema';
+import { Employee } from '@prisma/client';
 
 export interface ServiceInterface {
     selectedService: string;
@@ -92,6 +93,9 @@ export interface SummaryComponentInterface {
   selectedService: string;          // serviceId
   selectedSlot: string | null;      // `${startISO}|${endISO}`
   selectedDate?: Date;
+
+  //employess
+  selectedEmployee?: string | null;
 
   // acciones
   setStep: (step: number) => void;        // o: (step: 0|1|2|3) => void
