@@ -41,7 +41,7 @@ export const WorkflowAction = ({ workflowName, workflowId, userId }: { workflowN
                 "flex items-center gap-2"
             )}>
                 <ShuffleIcon size={16} />
-                Editar
+                Ingresar/Editar
             </Link>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
