@@ -17,7 +17,8 @@ export function buildTrainingMarkdown(training: z.infer<typeof TrainingDraftSche
                         body.push(`> función: captura_datos\n${nonEmpty(fn.prompt) || ''}\nCampos: ${(fn.fields || []).join(', ')}`);
                         break;
                     case 'ejecutar_flujo':
-                        body.push(`> función: ejecutar_flujo\nFlow: ${fn.flowName || fn.flowId || ''}`);
+                        body.push(`> función: Ejecutar Flujo: ${fn.flowName || fn.flowId || ''}\n`);
+                        body.push(`*Comportamiento:* Después de ejecutar un flujo, tu única respuesta debe ser una pregunta contextual para guiar al usuario al siguiente paso lógico de la conversión. No añadas texto innecesario. ${fn.flowName || fn.flowId || ''}`);
                         break;
                     case 'notificar_asesor':
                         body.push(`> función: notificar_asesor\nDestino: ${fn.notificationNumber || ''}`);

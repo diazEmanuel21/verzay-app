@@ -120,7 +120,8 @@ export function TrainingBuilder({
               return;
             }
             if (el.fn === "ejecutar_flujo") {
-              lines.push(`- (${k}) Ejecutar flujo: ${el.flowName ?? "—"}`);
+              lines.push(`> función: Ejecutar Flujo: ${el.flowName || el.flowId || ''}\n`);
+              lines.push(`*Comportamiento:* Después de ejecutar un flujo, tu única respuesta debe ser una pregunta contextual para guiar al usuario al siguiente paso lógico de la conversión. No añadas texto innecesario. ${el.flowName || el.flowId || ''}`);
               return;
             }
             if (el.fn === "notificar_asesor") {
