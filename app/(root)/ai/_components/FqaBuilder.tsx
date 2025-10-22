@@ -1,4 +1,3 @@
-// app/(root)/ai/_components/FqaBuilder.tsx
 "use client";
 
 import { ChangeEvent, useEffect, useMemo, useState, useCallback } from "react";
@@ -7,10 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
-    Popover, PopoverTrigger, PopoverContent,
+    Popover,
+    PopoverTrigger,
+    PopoverContent,
 } from "@/components/ui/popover";
 import {
-    Command, CommandGroup, CommandItem, CommandEmpty, CommandInput, CommandList,
+    Command,
+    CommandGroup,
+    CommandItem,
+    CommandEmpty,
+    CommandInput,
+    CommandList,
 } from "@/components/ui/command";
 import { Plus, Trash2 } from "lucide-react";
 import { FqaBuilderProps, PRESETS, QaItem } from "@/types/agentAi";
@@ -24,6 +30,7 @@ export function FqaBuilder({
     onVersionChange,
     onConflict,
     initialItems = [],
+    flows = [], // 👈 lista de flujos ya cargados desde BD
 }: FqaBuilderProps) {
     const [openPicker, setOpenPicker] = useState(false);
     const [items, setItems] = useState<QaItem[]>(
@@ -33,11 +40,14 @@ export function FqaBuilder({
     );
 
     // Autosave estructurado
-    const stableOnConflict = useCallback((serverState: any) => {
-        const serverItems = serverState?.sections?.faq?.items ?? [];
-        setItems(serverItems);
-        onConflict?.(serverState);
-    }, [onConflict]);
+    const stableOnConflict = useCallback(
+        (serverState: any) => {
+            const serverItems = serverState?.sections?.faq?.items ?? [];
+            setItems(serverItems);
+            onConflict?.(serverState);
+        },
+        [onConflict]
+    );
 
     useFaqAutosave({
         promptId,
@@ -47,7 +57,7 @@ export function FqaBuilder({
         onConflict: stableOnConflict,
     });
 
-    // Markdown para la vista previa (igual que antes)
+    // Markdown de preview
     const prompt = useMemo(() => {
         const blocks = items
             .filter((i) => i.q.trim() || i.a.trim())
@@ -57,15 +67,17 @@ export function FqaBuilder({
         return blocks.join("\n\n---\n\n");
     }, [items]);
 
-    // Sincroniza con el padre (texto para Preview) evitando loops
+    // Sincroniza con el padre
     useEffect(() => {
         if (values.faq !== prompt) {
-            handleChange("faq")({ target: { value: prompt } } as ChangeEvent<HTMLTextAreaElement>);
+            handleChange("faq")({
+                target: { value: prompt },
+            } as ChangeEvent<HTMLTextAreaElement>);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [prompt]);
 
-    // Helpers UI
+    // Helpers
     const addedQuestions = useMemo(
         () => new Set(items.map((i) => i.q.trim().toLowerCase())),
         [items]
@@ -95,6 +107,20 @@ export function FqaBuilder({
     const removeItem = (id: string) =>
         setItems((prev) => prev.filter((i) => i.id !== id));
 
+    // 🔽 Agregar nombre del flujo como texto plano en la respuesta
+    const appendFlowToAnswer = (faqId: string, flowName: string) => {
+        setItems((prev) =>
+            prev.map((i) =>
+                i.id === faqId
+                    ? {
+                        ...i,
+                        a: (i.a ? i.a.trim() + "\n\n" : "") + `> Ejecutar flujo: **${flowName}**`,
+                    }
+                    : i
+            )
+        );
+    };
+
     return (
         <div className="gap-2 flex flex-col">
             <Card className="border-muted/60">
@@ -104,10 +130,18 @@ export function FqaBuilder({
 
                 <CardContent className="space-y-4">
                     {items.map((it) => (
-                        <div key={it.id} className="rounded-md border p-3 border-muted/60 space-y-2">
+                        <div
+                            key={it.id}
+                            className="rounded-md border p-3 border-muted/60 space-y-3"
+                        >
                             <div className="flex items-center justify-between">
                                 <div className="text-sm font-medium">Pregunta:</div>
-                                <Button variant="ghost" size="icon" onClick={() => removeItem(it.id)} aria-label="Eliminar FAQ">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => removeItem(it.id)}
+                                    aria-label="Eliminar FAQ"
+                                >
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
                             </div>
@@ -123,8 +157,41 @@ export function FqaBuilder({
                                 placeholder="Atendemos de lunes a domingo de 8:00 AM a 10:00 PM"
                                 value={it.a}
                                 onChange={(e) => updateA(it.id, e.target.value)}
-                                className="min-h-[80px]"
+                                className="min-h-[100px]"
                             />
+
+                            {/* 🔽 Agregar flujo como texto */}
+                            {flows.length > 0 && (
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full justify-between"
+                                        >
+                                            Agregar flujo a esta respuesta
+                                            <Plus className="h-4 w-4 opacity-60" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent align="start" className="p-0 w-[320px]">
+                                        <Command>
+                                            <CommandInput placeholder="Buscar flujo…" />
+                                            <CommandList>
+                                                <CommandEmpty>Sin resultados…</CommandEmpty>
+                                                <CommandGroup>
+                                                    {flows.map((f) => (
+                                                        <CommandItem
+                                                            key={f.id}
+                                                            onSelect={() => appendFlowToAnswer(it.id, f.name)}
+                                                        >
+                                                            {f.name}
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                            )}
                         </div>
                     ))}
 
@@ -148,7 +215,9 @@ export function FqaBuilder({
                                                     <CommandItem
                                                         key={p.title}
                                                         onSelect={() => !disabled && addFromPreset(p.title)}
-                                                        className={disabled ? "opacity-50 pointer-events-none" : ""}
+                                                        className={
+                                                            disabled ? "opacity-50 pointer-events-none" : ""
+                                                        }
                                                         aria-disabled={disabled}
                                                     >
                                                         {p.title}
