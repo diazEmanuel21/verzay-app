@@ -11,6 +11,7 @@ export function buildTrainingMarkdown(training: z.infer<typeof TrainingDraftSche
             if ((el as any).kind === 'text') {
                 body.push((el as any).text ?? '');
             } else {
+                
                 const fn = el as any;
                 switch (fn.fn) {
                     case 'captura_datos':
