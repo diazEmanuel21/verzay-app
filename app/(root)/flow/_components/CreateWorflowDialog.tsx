@@ -78,7 +78,7 @@ function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
 
               />
 
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name='description'
                 render={({ field }) => (
@@ -96,7 +96,7 @@ function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
               <Button type='submit' className='w-full' disabled={isPending}>
                 {!isPending && "Iniciar"}
                 {isPending && <Loader2 className='animate-spin' ></Loader2>}

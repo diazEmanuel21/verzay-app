@@ -105,7 +105,8 @@ export const WorkflowCard = ({
                                             </FormItem>
                                         )}
                                     />
-                                    <FormField
+                                    {/* //TODO: SE COMENTA DESC DE FLUJOS */}
+                                    {/* <FormField
                                         control={form.control}
                                         name="description"
                                         render={({ field }) => (
@@ -121,7 +122,7 @@ export const WorkflowCard = ({
                                                 </FormControl>
                                             </FormItem>
                                         )}
-                                    />
+                                    /> */}
                                 </form>
                             </Form>
                         ) : (
@@ -135,14 +136,15 @@ export const WorkflowCard = ({
                                     </h3>
                                     <PencilLine className="w-4 h-4 text-muted-foreground opacity-60 group-hover:opacity-100 transition" />
                                 </div>
-                                <div
+                                {/* //TODO: SE COMENTA DESC DE FLUJOS */}
+                                {/* <div
                                     className="flex items-center gap-2 cursor-pointer group"
                                     onClick={() => setEditing(true)}
                                 >
                                     <p className="text-sm text-muted-foreground group-hover:underline">
                                         {workflow.description || "Sin descripción"}
                                     </p>
-                                </div>
+                                </div> */}
                             </>
                         )}
                     </div>
