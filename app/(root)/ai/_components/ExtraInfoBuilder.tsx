@@ -35,7 +35,6 @@ export function ExtraInfoBuilder({
     );
     const [firmaEnabled, setFirmaEnabled] = useState<boolean>(initialExtras?.firmaEnabled ?? false);
     const [firmaText, setFirmaText] = useState<string>(userSignaturePrompt);
-    console.log(firmaText)
 
     // AUTOSAVE
     useExtrasAutosave({

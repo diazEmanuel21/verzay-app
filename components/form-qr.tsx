@@ -47,8 +47,6 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
                 if (Array.isArray(instances) && instances.length > 0) {
                     const whatsappInstance = instances.findIndex(i=>i.instanceType=='Whatsapp')                
                     const { instanceName, instanceId } = instances[whatsappInstance];
-                    console.log('instancias',instances)
-                    console.log('Whatsapp',instances[whatsappInstance])
                     setInstanceData({ instanceName, instanceId });
                     fetchQRCode(instanceName);
 

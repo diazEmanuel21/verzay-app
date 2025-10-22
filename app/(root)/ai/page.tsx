@@ -11,9 +11,9 @@ interface PageProps {
     searchParams: { [key: string]: string | string[] | undefined };
 };
 
-function hasAiPrompt(result: { data?: SystemMessage[] }): result is { data: SystemMessage[] } {
-    return !!result.data
-};
+function hasAiPrompt(result: { data?: unknown }): result is { data: SystemMessage[] } {
+  return Array.isArray(result.data);
+}
 
 const AiPage = async ({ params, searchParams }: PageProps) => {
     const user = await currentUser();
@@ -23,15 +23,11 @@ const AiPage = async ({ params, searchParams }: PageProps) => {
     };
 
     const resPromptAi = await getPromptAiByUserId(user.id);
-    const promptAi = hasAiPrompt(resPromptAi) ? resPromptAi.data : null;
+    const promptAi = Array.isArray(resPromptAi.data) ? resPromptAi.data : [];
 
     return (
         <Suspense fallback={<MessagesSkeleton />}>
-            {/* OLD */}
             <MainAi promptAi={promptAi} userId={user.id} />
-
-            {/* NEW */}
-            {/* <MainAi /> */}
         </Suspense>
     );
 };

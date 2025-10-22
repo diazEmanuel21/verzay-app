@@ -34,7 +34,7 @@ const normalizeType = (t?: string | null): string => {
     return valid.includes(normalized) ? normalized : "Desconocido";
 };
 
-const Home = async ({ searchParams }: SearchParamProps) => {
+const Connection = async ({ searchParams }: SearchParamProps) => {
     const user = await currentUser();
     if (!user) {
         redirect("/login");
@@ -127,4 +127,4 @@ const Home = async ({ searchParams }: SearchParamProps) => {
     );
 };
 
-export default Home;
+export default Connection;

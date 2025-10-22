@@ -198,15 +198,15 @@ export const ReminderForm = ({
                                 leads={leads}
                                 onSelect={(leads) => {
 
-                                    console.log(leads)
-                                    const remoteJids = leads.map(lead => lead.remoteJid).join(',');
-                                    console.log(remoteJids)
-                                    const userIds = leads.map(lead => lead.userId).join(',');
-                                    console.log(userIds)
-                                    const instanceNames = leads.map(lead => lead.instanceId).join(',');
-                                    console.log(instanceNames)
-                                    const pushNames = leads.map(lead => lead.pushName).join(',');
-                                    console.log(pushNames)
+                                    // console.log(leads)
+                                    // const remoteJids = leads.map(lead => lead.remoteJid).join(',');
+                                    // console.log(remoteJids)
+                                    // const userIds = leads.map(lead => lead.userId).join(',');
+                                    // console.log(userIds)
+                                    // const instanceNames = leads.map(lead => lead.instanceId).join(',');
+                                    // console.log(instanceNames)
+                                    // const pushNames = leads.map(lead => lead.pushName).join(',');
+                                    // console.log(pushNames)
 
                                     // setValue("userId", userIds, { shouldValidate: true });
                                     // setValue("remoteJid", remoteJids, { shouldValidate: true });
