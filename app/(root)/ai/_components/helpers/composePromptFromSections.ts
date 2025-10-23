@@ -20,25 +20,25 @@ export function composePromptFromSections(sections: z.infer<typeof SectionsDraft
 
     const trainingMd = buildTrainingMarkdown(sections.training);
     if (nonEmpty(trainingMd)) {
-        out.push('\n## Entrenamiento');
+        out.push('\n## ENTRENAMIENTO');
         out.push(trainingMd);
     }
 
     const faqMd = buildFaqMarkdown(sections.faq);
     if (nonEmpty(faqMd)) {
-        out.push('\n## Preguntas & Respuestas');
+        out.push('\n## PREGUNTAS & RESPUESTAS');
         out.push(faqMd);
     }
 
     const prodMd = buildProductsMarkdown(sections.products);
     if (nonEmpty(prodMd)) {
-        out.push('\n## Catálogo / Productos');
+        out.push('\n## CATÁLOGO / PRODUCTOS');
         out.push(prodMd);
     }
 
     const extrasMd = buildExtrasMarkdown(sections.extras);
     if (nonEmpty(extrasMd)) {
-        out.push('\n## Extras');
+        out.push('\n## EXTRAS');
         out.push(extrasMd);
     }
 

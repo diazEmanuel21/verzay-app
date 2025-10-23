@@ -59,7 +59,7 @@ export function ProductBuilder({
             .filter((p) => (p.name ?? "").trim() || (p.description ?? "").trim())
             .map((p) =>
                 [
-                    `## Producto: ${(p.name ?? "").trim() || "(Sin nombre)"}`,
+                    `### Producto: ${(p.name ?? "").trim() || "(Sin nombre)"}`,
                     `*Descripción:*`,
                     (p.description ?? "").trim() || "(Sin descripción)",
                 ].join("\n")

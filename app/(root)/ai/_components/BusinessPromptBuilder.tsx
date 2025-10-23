@@ -84,7 +84,7 @@ export const BusinessPromptBuilder = ({ values,
                                                 <Input
                                                     placeholder="Ej. Holi Print RD"
                                                     {...field}
-                                                    disabled={isCompanyLocked}
+                                                    // disabled={isCompanyLocked}
                                                     onChange={(e) => {
                                                         field.onChange(e);
                                                         handleChange?.("nombre")(e);
@@ -163,7 +163,7 @@ export const BusinessPromptBuilder = ({ values,
                                 />
 
                                 {/* Maps URL */}
-                                <FormField
+                                {/* <FormField
                                     control={form.control}
                                     name="maps"
                                     render={({ field }) => (
@@ -174,7 +174,7 @@ export const BusinessPromptBuilder = ({ values,
                                                     type="url"
                                                     placeholder="https://maps.google.com/..."
                                                     {...field}
-                                                    disabled={isMapsLocked}
+                                                    // disabled={isMapsLocked}
                                                     onChange={(e) => {
                                                         field.onChange(e);
                                                         handleChange?.("maps")(e);
@@ -184,7 +184,7 @@ export const BusinessPromptBuilder = ({ values,
                                             <FormMessage />
                                         </FormItem>
                                     )}
-                                />
+                                /> */}
 
                                 {/* Teléfono */}
                                 <FormField
@@ -197,7 +197,7 @@ export const BusinessPromptBuilder = ({ values,
                                                 <Input
                                                     placeholder="Ej. +57 300 123 4567"
                                                     {...field}
-                                                    disabled={isPhoneLocked}
+                                                    // disabled={isPhoneLocked}
                                                     onChange={(e) => {
                                                         field.onChange(e);
                                                         handleChange?.("telefono")(e);
@@ -210,7 +210,7 @@ export const BusinessPromptBuilder = ({ values,
                                 />
 
                                 {/* Email */}
-                                <FormField
+                                {/* <FormField
                                     control={form.control}
                                     name="email"
                                     render={({ field }) => (
@@ -230,7 +230,7 @@ export const BusinessPromptBuilder = ({ values,
                                             <FormMessage />
                                         </FormItem>
                                     )}
-                                />
+                                /> */}
 
                                 {/* Sitio web */}
                                 <FormField

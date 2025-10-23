@@ -30,7 +30,7 @@ const PROMPT_SIGNATURE_DEFAULT =
     "*Usuario:*\n" +
     "¿Quien eres?\n\n" +
     "*Respuesta del agente:*\n" +
-    "🤖 Asisnte Virtual\n" +
+    "🤖 @signature_name\n" +
     "Soy un asistente virtual. ¿En qué puedo ayudarte hoy?";
 
 export function ExtraInfoBuilder({
@@ -69,7 +69,7 @@ export function ExtraInfoBuilder({
 
     // Generar el texto final de la firma
     const firmaText = useMemo(() => {
-        return PROMPT_SIGNATURE_DEFAULT.replace("@signature_name", signatureName);
+        return PROMPT_SIGNATURE_DEFAULT.replaceAll("@signature_name", signatureName);
     }, [signatureName]);
 
     // AUTOSAVE
@@ -99,7 +99,7 @@ export function ExtraInfoBuilder({
             .filter((e) => (e.title ?? "").trim() || (e.content ?? "").trim())
             .map((e) =>
                 [
-                    `## Campo: ${(e.title ?? "").trim() || "(Sin título)"}`,
+                    `### Campo: ${(e.title ?? "").trim() || "(Sin título)"}`,
                     `*Contenido:*`,
                     (e.content ?? "").trim() || "(Sin contenido)",
                 ].join("\n")
@@ -185,13 +185,13 @@ export function ExtraInfoBuilder({
                                 value={signatureName}
                                 onChange={(e) => setSignatureName(e.target.value)}
                             />
-                            <p className="text-xs text-muted-foreground">
+                            {/* <p className="text-xs text-muted-foreground">
                                 Solo puedes modificar el nombre de la firma. El resto del texto
                                 es fijo.
-                            </p>
+                            </p> */}
 
                             <Textarea
-                                className="min-h-[160px] text-xs opacity-80"
+                                className="min-h-[160px] text-xs opacity-80 hidden"
                                 readOnly
                                 value={firmaText}
                             />

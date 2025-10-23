@@ -162,7 +162,8 @@ export function TrainingBuilder({
       ...prev,
       {
         id: nanoid(),
-        title: `Paso ${nextIndex}`,
+        // title: `Paso ${nextIndex}`,
+        title: ``,
         mainMessage: "Saluda al cliente y pregúntale si desea retirar en tienda o envío a domicilio",
         elements: [],
         openPicker: false,
@@ -438,7 +439,23 @@ export function TrainingBuilder({
                             <CommandList>
                               <CommandEmpty>Sin coincidencias…</CommandEmpty>
 
-                              <CommandGroup heading="OPCIÓN #1 · Captura de datos">
+                              <CommandGroup heading="OPCIÓN #1 · Ejecutar flujo">
+                                <CommandItem onSelect={() => addFunctionEjecutarFlujo(step.id)}>
+                                  Seleccionar flujo
+                                </CommandItem>
+                              </CommandGroup>
+
+                              <CommandSeparator />
+
+                              <CommandGroup heading="OPCIÓN #2 · Consulta de datos">
+                                <CommandItem onSelect={() => addFunctionConsultaDatos(step.id)}>
+                                  Agregar “Consultar Productos”
+                                </CommandItem>
+                              </CommandGroup>
+
+                              <CommandSeparator />
+
+                              <CommandGroup heading="OPCIÓN #3 · Captura de datos">
                                 {(["Solicitudes", "Reclamos", "Pedidos", "Reservas"] as const).map((opt) => (
                                   <CommandItem key={opt} onSelect={() => addFunctionCaptura(step.id, opt)}>
                                     {opt}
@@ -446,17 +463,8 @@ export function TrainingBuilder({
                                 ))}
                               </CommandGroup>
 
-                              <CommandSeparator />
 
-                              <CommandGroup heading="OPCIÓN #2 · Ejecutar flujo">
-                                <CommandItem onSelect={() => addFunctionEjecutarFlujo(step.id)}>
-                                  Seleccionar flujo desde BD…
-                                </CommandItem>
-                              </CommandGroup>
-
-                              <CommandSeparator />
-
-                              <CommandGroup heading="OPCIÓN #3 · Notificar asesor">
+                              <CommandGroup heading="OPCIÓN #4 · Notificar asesor">
                                 <CommandItem onSelect={() => addFunctionNotificar(step.id)}>
                                   Usar número de notificación del perfil
                                 </CommandItem>
@@ -464,11 +472,7 @@ export function TrainingBuilder({
 
                               <CommandSeparator />
 
-                              <CommandGroup heading="OPCIÓN #4 · Consulta de datos">
-                                <CommandItem onSelect={() => addFunctionConsultaDatos(step.id)}>
-                                  Agregar “Consultar Productos”
-                                </CommandItem>
-                              </CommandGroup>
+
                             </CommandList>
                           </Command>
                         </PopoverContent>
@@ -523,21 +527,23 @@ export function TrainingBuilder({
                                     <X className="h-4 w-4" />
                                   </Button>
                                 </CardHeader>
-                                <CardContent className="space-y-3">
-                                  <div className="space-y-1">
+                                <CardContent className="p-0 m-0">
+                                  {/* <div className="space-y-1">
                                     <label className="text-xs font-medium">Prompt agregado:</label>
                                     <Textarea value={(el as any).prompt} readOnly className="min-h-[80px]" />
-                                  </div>
+                                  </div> */}
 
                                   {/* Campos personalizados cuando subtype === "Pedidos" */}
                                   {isPedidos && (
-                                    <PedidoFieldsEditor
-                                      stepId={step.id}
-                                      elId={el.id}
-                                      element={el as PedidoFunctionEl}
-                                      onAdd={(field) => addPedidoField(step.id, el.id, field)}
-                                      onRemove={(field) => removePedidoField(step.id, el.id, field)}
-                                    />
+                                    <div className="px-4">
+                                      <PedidoFieldsEditor
+                                        stepId={step.id}
+                                        elId={el.id}
+                                        element={el as PedidoFunctionEl}
+                                        onAdd={(field) => addPedidoField(step.id, el.id, field)}
+                                        onRemove={(field) => removePedidoField(step.id, el.id, field)}
+                                      />
+                                    </div>
                                   )}
                                 </CardContent>
                               </Card>
@@ -556,8 +562,8 @@ export function TrainingBuilder({
                                 <CardContent className="space-y-3">
                                   <div className="text-sm text-muted-foreground">
                                     {flows.length === 0
-                                      ? "No hay flujos cargados desde la BD."
-                                      : "Selecciona un flujo creado en la BD."}
+                                      ? "No hay flujos"
+                                      : ""}
                                   </div>
 
                                   {flows.length > 0 && (
@@ -603,7 +609,7 @@ export function TrainingBuilder({
                                   </Button>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
-                                  <label className="text-xs font-medium">Número de notificación (perfil):</label>
+                                  {/* <label className="text-xs font-medium">Número de notificación (perfil):</label> */}
                                   <Input value={(el as any).notificationNumber ?? ""} readOnly placeholder="No disponible" />
                                 </CardContent>
                               </Card>
@@ -619,10 +625,10 @@ export function TrainingBuilder({
                                   <X className="h-4 w-4" />
                                 </Button>
                               </CardHeader>
-                              <CardContent className="space-y-2">
+                              {/* <CardContent className="space-y-2">
                                 <label className="text-xs font-medium">Snippet agregado:</label>
                                 <Textarea value={(el as any).prompt} readOnly className="min-h-[96px]" />
-                              </CardContent>
+                              </CardContent> */}
                             </Card>
                           );
                         })}
@@ -670,7 +676,7 @@ function PedidoFieldsEditor({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 pb-3">
       <label className="text-xs font-medium">Campos de pedido (texto plano):</label>
       <div className="flex gap-2">
         <Input

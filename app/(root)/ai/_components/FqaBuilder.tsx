@@ -62,7 +62,7 @@ export function FqaBuilder({
         const blocks = items
             .filter((i) => i.q.trim() || i.a.trim())
             .map((i) =>
-                [`## ${i.q.trim() || "Pregunta"}`, `*Respuesta:*`, i.a.trim() || "(sin respuesta)"].join("\n")
+                [`### ${i.q.trim() || "Pregunta"}`, `*Respuesta:*`, i.a.trim() || "(sin respuesta)"].join("\n")
             );
         return blocks.join("\n\n---\n\n");
     }, [items]);
@@ -195,7 +195,7 @@ export function FqaBuilder({
                         </div>
                     ))}
 
-                    <div className="flex flex-row w-full gap-2">
+                    <div className="flex flex-row w-full gap-2 justify-end">
                         <Popover open={openPicker} onOpenChange={setOpenPicker}>
                             <PopoverTrigger asChild>
                                 <Button size="sm" className="gap-2">

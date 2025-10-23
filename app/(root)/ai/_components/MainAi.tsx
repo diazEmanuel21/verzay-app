@@ -19,7 +19,7 @@ import { buildExtrasMarkdown } from "./helpers/buildExtrasMarkdown";
 
 export const TYPE_AI_LABELS = {
     business: "Negocio",
-    training: "Entrenamiento",
+    training: "Primeros pasos",
     faq: "Preguntas",
     products: "Productos",
     more: "Extras",

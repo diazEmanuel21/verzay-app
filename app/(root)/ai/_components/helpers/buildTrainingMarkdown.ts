@@ -4,7 +4,7 @@ import z from "zod";
 
 export function buildTrainingMarkdown(training: z.infer<typeof TrainingDraftSchema>): string {
     const stepBlocks = (training.steps ?? []).map((s, idx) => {
-        const head = `## Paso ${idx + 1}${nonEmpty(s.title) ? `: ${s.title}` : ''}`;
+        const head = `### Paso ${idx + 1}${nonEmpty(s.title) ? `: ${s.title}` : ''}`;
         const body: string[] = [];
         if (nonEmpty(s.mainMessage)) body.push(s.mainMessage!);
         for (const el of s.elements ?? []) {

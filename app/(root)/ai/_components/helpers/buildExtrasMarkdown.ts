@@ -9,7 +9,7 @@ export function buildExtrasMarkdown(extras: z.infer<typeof ExtrasDraftSchema>): 
         .filter((e) => nonEmpty(e.title) || nonEmpty(e.content))
         .map(
             (e) =>
-                `## Campo: ${nonEmpty(e.title) || '(Sin título)'}\n*Contenido:*\n${nonEmpty(e.content) || '(Sin contenido)'}`
+                `### Campo: ${nonEmpty(e.title) || '(Sin título)'}\n*Contenido:*\n${nonEmpty(e.content) || '(Sin contenido)'}`
         );
     if (blocks.length) parts.push(blocks.join('\n\n---\n\n'));
     return parts.filter(Boolean).join('\n\n---\n\n');
