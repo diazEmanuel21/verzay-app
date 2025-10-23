@@ -60,6 +60,8 @@ export const BusinessPromptBuilder = ({ values,
         onConflict,
     });
 
+//TODO:  CREAR  FUNCIONALIDAD PARA QUE LOS FIELDS COMENTADOS APAREZCAN O SE OCULTEN MEDIANTE UN SELECTOR COMBOBOX
+
     return (
         <div className="gap-2 flex flex-col">
             <Card className="border-muted/60">
@@ -233,7 +235,7 @@ export const BusinessPromptBuilder = ({ values,
                                 /> */}
 
                                 {/* Sitio web */}
-                                <FormField
+                                {/* <FormField
                                     control={form.control}
                                     name="sitio"
                                     render={({ field }) => (
@@ -253,10 +255,10 @@ export const BusinessPromptBuilder = ({ values,
                                             <FormMessage />
                                         </FormItem>
                                     )}
-                                />
+                                /> */}
 
                                 {/* Facebook */}
-                                <FormField
+                                {/* <FormField
                                     control={form.control}
                                     name="facebook"
                                     render={({ field }) => (
@@ -276,10 +278,10 @@ export const BusinessPromptBuilder = ({ values,
                                             <FormMessage />
                                         </FormItem>
                                     )}
-                                />
+                                /> */}
 
                                 {/* Instagram */}
-                                <FormField
+                                {/* <FormField
                                     control={form.control}
                                     name="instagram"
                                     render={({ field }) => (
@@ -299,10 +301,10 @@ export const BusinessPromptBuilder = ({ values,
                                             <FormMessage />
                                         </FormItem>
                                     )}
-                                />
+                                /> */}
 
                                 {/* TikTok */}
-                                <FormField
+                                {/* <FormField
                                     control={form.control}
                                     name="tiktok"
                                     render={({ field }) => (
@@ -322,10 +324,10 @@ export const BusinessPromptBuilder = ({ values,
                                             <FormMessage />
                                         </FormItem>
                                     )}
-                                />
+                                /> */}
 
                                 {/* YouTube */}
-                                <FormField
+                                {/* <FormField
                                     control={form.control}
                                     name="youtube"
                                     render={({ field }) => (
@@ -345,13 +347,13 @@ export const BusinessPromptBuilder = ({ values,
                                             <FormMessage />
                                         </FormItem>
                                     )}
-                                />
+                                /> */}
                             </div>
 
                             <Separator />
 
                             {/* Notas */}
-                            <FormField
+                            {/* <FormField
                                 control={form.control}
                                 name="notas"
                                 render={({ field }) => (
@@ -372,7 +374,7 @@ export const BusinessPromptBuilder = ({ values,
                                         <FormMessage />
                                     </FormItem>
                                 )}
-                            />
+                            /> */}
                         </form>
                     </Form>
                 </CardContent>

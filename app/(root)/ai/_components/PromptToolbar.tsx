@@ -31,21 +31,21 @@ export function PromptToolbar(props: {
 
     return (
         <div className="flex flex-wrap gap-2 items-center">
-            <Button onClick={save} disabled={loading !== null} className="gap-2" variant="secondary">
+            {/* <Button onClick={save} disabled={loading !== null} className="gap-2" variant="secondary">
                 <CheckCircle2 className="h-4 w-4" />
                 Guardar
-            </Button>
+            </Button> */}
 
-            <div className="flex items-center gap-2">
-                <Input
+            <div className="flex items-center gap-2 w-full justify-end">
+                {/* <Input
                     placeholder="Nota de publicación (opcional)"
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     className="h-9 w-[240px]"
-                />
+                /> */}
                 <Button onClick={() => publish(note)} disabled={loading !== null} className="gap-2">
                     <UploadCloud className="h-4 w-4" />
-                    Publicar
+                    Guardar
                 </Button>
             </div>
 

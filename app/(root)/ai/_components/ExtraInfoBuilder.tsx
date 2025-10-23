@@ -24,13 +24,13 @@ import { useExtrasAutosave } from "./hooks/useExtrasAutosave";
 import { ExtraInfoBuilderProps, ExtraItem, ExtraItemDTO } from "@/types/agentAi";
 
 const PROMPT_SIGNATURE_DEFAULT =
-    "# ✍️ FIRMA DEL AGENTE\n\n" +
-    "Debes poner siempre la firma *“🤖 *@signature_name”* al inicio de cada mensaje o respuesta que le des al usuario, **nunca al final*. Esto permite mantener una identidad clara del agente y una conversación ordenada.\n\n" +
+    "###  FIRMA DEL AGENTE\n\n" +
+    "Debes poner siempre la firma *“*@signature_name”* al inicio de cada mensaje o respuesta que le des al usuario, **nunca al final*. Esto permite mantener una identidad clara del agente y una conversación ordenada.\n\n" +
     "### Ejemplo de uso real:\n\n" +
     "*Usuario:*\n" +
     "¿Quien eres?\n\n" +
     "*Respuesta del agente:*\n" +
-    "🤖 @signature_name\n" +
+    "@signature_name\n" +
     "Soy un asistente virtual. ¿En qué puedo ayudarte hoy?";
 
 export function ExtraInfoBuilder({
@@ -62,7 +62,7 @@ export function ExtraInfoBuilder({
 
     // 🧩 Extraer el nombre actual de la firma
     const match = userSignaturePrompt.match(/@([a-zA-Z0-9_]+)/);
-    const initialSignatureName = match ? match[1] : "AsistenteVirtual";
+    const initialSignatureName = match ? match[1] : "Asistente virtual";
 
     const [signatureName, setSignatureName] =
         useState<string>(initialSignatureName);
@@ -87,7 +87,7 @@ export function ExtraInfoBuilder({
 
             const savedText = s.firmaText ?? PROMPT_SIGNATURE_DEFAULT;
             const m = savedText.match(/@([a-zA-Z0-9_]+)/);
-            setSignatureName(m ? m[1] : "AsistenteVirtual");
+            setSignatureName(m ? m[1] : "Asistente virtual");
 
             onConflict?.(serverState);
         },

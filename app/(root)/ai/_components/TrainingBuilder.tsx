@@ -164,7 +164,7 @@ export function TrainingBuilder({
         id: nanoid(),
         // title: `Paso ${nextIndex}`,
         title: ``,
-        mainMessage: "Saluda al cliente y pregúntale si desea retirar en tienda o envío a domicilio",
+        mainMessage: "",
         elements: [],
         openPicker: false,
       },
@@ -480,7 +480,7 @@ export function TrainingBuilder({
 
                       <Button size="sm" variant="secondary" className="gap-2" onClick={() => addText(step.id)}>
                         <FileText className="h-4 w-4" />
-                        Agregar Texto
+                        Agregar Regla
                       </Button>
                     </div>
                   </div>

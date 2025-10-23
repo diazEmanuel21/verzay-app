@@ -231,7 +231,7 @@ export function FqaBuilder({
                         </Popover>
 
                         <Button variant="secondary" onClick={addFaq} className="gap-2">
-                            + Agregar FAQ
+                            + Agregar pregunta
                         </Button>
                     </div>
                 </CardContent>

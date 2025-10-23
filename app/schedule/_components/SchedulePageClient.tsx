@@ -170,7 +170,6 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                 const displayPhone = e164;
 
 
-                //TODO: ARREGLAR MSJ
                 const ownerText = `✅ *Tienes Nueva Cita*:
 
 👤 *Nombre*: ${nameClient}

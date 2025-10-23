@@ -8,7 +8,7 @@ export const buildPrompt = (v: BusinessValues): string => {
     //     return `Completa al menos el nombre del negocio para generar el prompt.`;
     // }
 
-    lines.push(`# 🎯 PERFIL DEL NEGOCIO`);
+    lines.push(`## PERFIL DEL NEGOCIO`);
     lines.push(`Nombre: ${v.nombre.trim()}`);
 
     add(lines, "Sector/Rubro", v.sector);
