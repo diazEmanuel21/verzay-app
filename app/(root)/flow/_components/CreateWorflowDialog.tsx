@@ -77,7 +77,6 @@ function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
                 )}
 
               />
-              {/* TODO: SE COMENTA EL INPUT DE DESC */}
               {/* <FormField
                 control={form.control}
                 name='description'

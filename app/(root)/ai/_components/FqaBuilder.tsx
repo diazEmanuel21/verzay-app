@@ -149,7 +149,7 @@ export function FqaBuilder({
                                 placeholder="¿Cuáles son los horarios de atención?"
                                 value={it.q}
                                 onChange={(e) => updateQ(it.id, e.target.value)}
-                                className="min-h-[56px]"
+                                className="min-h-[64px]"
                             />
 
                             <div className="text-sm font-medium mt-2">Respuesta:</div>
@@ -157,7 +157,7 @@ export function FqaBuilder({
                                 placeholder="Atendemos de lunes a domingo de 8:00 AM a 10:00 PM"
                                 value={it.a}
                                 onChange={(e) => updateA(it.id, e.target.value)}
-                                className="min-h-[100px]"
+                                className="min-h-[64px]"
                             />
 
                             {/* 🔽 Agregar flujo como texto */}

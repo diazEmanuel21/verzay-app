@@ -191,7 +191,7 @@ export function ExtraInfoBuilder({
                             </p> */}
 
                             <Textarea
-                                className="min-h-[160px] text-xs opacity-80 hidden"
+                                className="min-h-[64px] text-xs opacity-80 hidden"
                                 readOnly
                                 value={firmaText}
                             />

@@ -530,7 +530,7 @@ export function TrainingBuilder({
                                 <CardContent className="p-0 m-0">
                                   {/* <div className="space-y-1">
                                     <label className="text-xs font-medium">Prompt agregado:</label>
-                                    <Textarea value={(el as any).prompt} readOnly className="min-h-[80px]" />
+                                    <Textarea value={(el as any).prompt} readOnly className="min-h-[64px]" />
                                   </div> */}
 
                                   {/* Campos personalizados cuando subtype === "Pedidos" */}
@@ -627,7 +627,7 @@ export function TrainingBuilder({
                               </CardHeader>
                               {/* <CardContent className="space-y-2">
                                 <label className="text-xs font-medium">Snippet agregado:</label>
-                                <Textarea value={(el as any).prompt} readOnly className="min-h-[96px]" />
+                                <Textarea value={(el as any).prompt} readOnly className="min-h-[64px]" />
                               </CardContent> */}
                             </Card>
                           );
