@@ -215,6 +215,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
 
                     <TabsContent value="faq" className="m-0">
                         <FqaBuilder
+                            flows={flows}
                             values={{ faq: values.faq ?? "" }}
                             handleChange={handleChange}
                             promptId={promptMeta.id}
@@ -229,6 +230,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
 
                     <TabsContent value="products" className="m-0">
                         <ProductBuilder
+                            flows={flows}
                             values={{ products: values.products ?? "" }}
                             handleChange={handleChange}
                             // NUEVO:
@@ -242,6 +244,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
 
                     <TabsContent value="more" className="m-0">
                         <ExtraInfoBuilder
+                            flows={flows}
                             values={{ more: values.more ?? "" }}
                             handleChange={handleChange}
                             // Persistencia:

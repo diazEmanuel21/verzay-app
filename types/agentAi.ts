@@ -386,6 +386,7 @@ export type FqaBuilderProps = FaqSimpleProps & {
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
     initialItems?: QaItem[]; // ← sections.faq.items desde BD
+    flows: Workflow[];
 };
 
 
@@ -406,6 +407,7 @@ export interface ProductBuilderProps {
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
     initialItems?: ProductItemDTO[]; // sections.products.items desde BD
+    flows: Workflow[];
 }
 
 export type ExtraItem = { id: string; title: string; content: string };
@@ -430,5 +432,6 @@ export interface ExtraInfoBuilderProps {
     version: number;
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
+    flows: Workflow[];
     initialExtras?: { items?: ExtraItemDTO[]; firmaEnabled?: boolean; firmaText?: string };
 }

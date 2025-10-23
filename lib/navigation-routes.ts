@@ -16,6 +16,7 @@ export const navigationRoutes: NavigationRoutesInterface[] = [
     { route: "/connection" },
     { route: "/ia" },
     { route: "/ai" },
+    { route: "/products" },
     { route: "/chats" },
     { route: "/sessions" },
     { route: "/flow" },
