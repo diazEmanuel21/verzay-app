@@ -261,7 +261,7 @@ const MediaRenderer: React.FC<{ media: MediaData | undefined }> = React.memo(({ 
                         type === 'document' ? 'text-gray-600 dark:text-gray-300' : 'text-gray-800 dark:text-gray-100'
                     )}
                 >
-                    <ExpandableText message={caption} isUserMessage={false} />
+                    
                 </div>
             )}
         </div>
