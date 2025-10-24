@@ -538,12 +538,12 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
     const handleKeyPress = useCallback(
         (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
             // Solo permite enviar si no estamos grabando, previsualizando audio, o enviando
-            if (!isRecording && !recordedAudio && !isSending && e.key === 'Enter' && !e.shiftKey) {
+            if (!isRecording && !recordedAudio  && e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 void sendNow();
             }
         },
-        [sendNow, isRecording, recordedAudio, isSending]
+        [sendNow, isRecording, recordedAudio, ]
     );
 
     /* -------- Lógica de Grabación de Audio -------- */
@@ -644,7 +644,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
     }, [cancelRecording]);
 
     const isPreviewingAudio = recordedAudio !== null && !isRecording;
-    const isInputActive = !isRecording && !isPreviewingAudio && !isSending;
+    const isInputActive = !isRecording && !isPreviewingAudio;
     const isSendButtonVisible = isInputActive && (input.trim() || composeMedia);
 
     return (
@@ -794,7 +794,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
                     {/* Controles de Audio y Envío */}
                     <div className="absolute right-1 flex items-center gap-1 bottom-2">
                         {/* Botón de Micrófono/Detener (Activo solo si no hay previsualización o envío en curso) */}
-                        {!isPreviewingAudio && !isSending && (
+                        {!isPreviewingAudio && (
                             <Button
                                 onClick={() => (isRecording ? stopRecordingAndPreview() : startRecording())}
                                 size="icon"
@@ -813,7 +813,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
                         )}
 
                         {/* Botón de Enviar (Solo si hay texto o media adjunta, pero no audio grabado) */}
-                        {isSendButtonVisible && !isSending && (
+                        {(
                             <Button
                                 onClick={() => void sendNow()}
                                 size="icon"
@@ -826,11 +826,11 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
                         )}
 
                         {/* Indicador de envío (reemplaza el botón de enviar mientras se está enviando) */}
-                        {isSending && (
+                        {/* {isSending && (
                             <div className="p-2 bg-blue-500 rounded-full animate-spin">
                                 <Clock className="w-5 h-5 text-white" />
                             </div>
-                        )}
+                        )} */}
                     </div>
                 </div>
             </div>

@@ -251,27 +251,16 @@ async function doRequest(
   const label = `[${method}] ${new URL(url, 'http://x').pathname} • ${Date.now().toString(36)}`;
 
   if (shouldLog) {
-    console.log(`\n[EVOLUTION][REQ] ${label}`);
-    console.log(`[EVOLUTION][REQ] url=${url}`);
-    console.log(`[EVOLUTION][REQ] apikey=${maskKey(apikeyHeader)}`);
+
+
+
     if (bodyObj !== undefined) {
-      console.log(
-        `[EVOLUTION][REQ] body(preview)=${safeJsonPreview({
-          ...bodyObj,
-          media: bodyObj.media ? `[base64 length=${String(bodyObj.media).length}]` : undefined,
-          audio:
-            typeof bodyObj.audio === 'string'
-              ? bodyObj.encoding
-                ? `[base64 length=${bodyObj.audio.length}]`
-                : '[url]'
-              : bodyObj.audio,
-        })}`
-      );
+      
       if (typeof bodyObj.media === 'string') {
-        console.log(`[EVOLUTION][REQ] body.media(EXACT)=${bodyObj.media}`);
+
       }
       if (typeof bodyObj.audio === 'string' && bodyObj.encoding === true) {
-        console.log(`[EVOLUTION][REQ] body.audio(EXACT)=${bodyObj.audio}`);
+
       }
     }
     console.time(`[EVOLUTION][TIMER] ${label}`);
@@ -295,15 +284,15 @@ async function doRequest(
 
   if (shouldLog) {
     console.timeEnd(`[EVOLUTION][TIMER] ${label}`);
-    console.log(`[EVOLUTION][RES] ${label} status=${response.status} ok=${response.ok}`);
+
     const ctype = response.headers.get('content-type') || '';
-    console.log(`[EVOLUTION][RES] ${label} content-type=${ctype}`);
+
     if (parsed.kind === 'json') {
-      console.log(`[EVOLUTION][RES] ${label} json=${safeJsonPreview(parsed.json)}`);
+
     } else {
       const max = 1200;
       const preview = text.length > max ? text.slice(0, max) + `…(${text.length - max} chars)` : text;
-      console.log(`[EVOLUTION][RES] ${label} text=${preview}`);
+
     }
   }
 
@@ -370,23 +359,26 @@ export async function findMessagesByRemoteJid(
     page?: number;
     pageSize?: number;
     limit?: number;
+    // La lectura ahora es obligatoria, se eliminó la opción 'fetchAndMarkAsRead'
   }
 ): Promise<FindMessagesResult> {
-  const { url: baseUrlRaw, key: globalApiKey } = apiKeyData;
+  const { url: baseUrlRaw, key } = apiKeyData;
 
-  if (!baseUrlRaw || !globalApiKey || !instanceName || !remoteJid) {
-    return { success: false, message: 'URL / API Key / instanceName / remoteJid faltantes.', queriedRemoteJid: remoteJid };
+  if (!baseUrlRaw || !key || !instanceName || !remoteJid) {
+    return {
+      success: false,
+      message: 'URL / API Key / instanceName / remoteJid faltantes.',
+      queriedRemoteJid: remoteJid,
+    };
   }
 
   const baseURL = normalizeBaseUrl(baseUrlRaw);
-  const endpointUrl = `${baseURL}/chat/findMessages/${encodeURIComponent(instanceName)}`;
-  const apikeyHeader = globalApiKey;
+  const endpoint = `${baseURL}/chat/findMessages/${encodeURIComponent(instanceName)}`;
 
+  // 1. Construcción del Payload: Buscamos TODOS los mensajes
   const payload: Record<string, any> = {
     where: {
-      key: {
-        remoteJid: remoteJid,
-      },
+      key: { remoteJid },
     },
   };
 
@@ -394,24 +386,47 @@ export async function findMessagesByRemoteJid(
   if (options?.pageSize) payload.offset = options.pageSize;
   else if (options?.limit) payload.offset = options.limit;
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 15000);
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), options?.timeoutMs ?? 15000);
 
   try {
-    const response = await doRequest(endpointUrl, apikeyHeader, controller.signal, 'POST', payload);
-    clearTimeout(timeout);
 
-    const raw = await response.json().catch(() => null);
+    const res = await doRequest(endpoint, key, ctrl.signal, 'POST', payload);
+    clearTimeout(t);
+    const raw = await res.json().catch(() => null);
 
-    if (!response.ok) {
-      const apiMsg = (raw?.message as string) || `Error ${response.status} en la API.`;
+    if (!res.ok) {
+      const apiMsg = (raw?.message as string) || `Error ${res.status} en la API.`;
       return { success: false, message: apiMsg, raw, queriedRemoteJid: remoteJid };
     }
 
-    if (raw == null) return { success: false, message: 'Respuesta inválida o vacía.', queriedRemoteJid: remoteJid };
+    if (!raw) return { success: false, message: 'Respuesta inválida o vacía.', queriedRemoteJid: remoteJid };
 
     const { items, meta } = normalizeFindMessagesPayload(raw);
 
+    // 2. Lógica de Marcado como Leído (MANDATORIA)
+    if (items.length > 0) {
+
+
+      const messagesToMark = items.map(msg => ({
+        remoteJid: msg.key?.remoteJid || remoteJid,
+        messageId: msg.key?.id || '',
+        fromMe: msg.key?.fromMe ?? false,
+      })).filter(m => m.messageId); // Filtramos mensajes sin ID
+
+      // Se utiliza la función eficiente para enviar un ARRAY de mensajes
+      const resultRead = await markMessagesAsReadByIds(apiKeyData, instanceName, messagesToMark);
+
+      if (resultRead.success) {
+
+      } else {
+        console.warn(`[READ] ⚠️ Falló la Lectura Mandatoria en ${remoteJid}: ${resultRead.message}`);
+      }
+    } else {
+
+    }
+
+    // 3. Retorno de Resultados
     return {
       success: true,
       message: `OK findMessages ${instanceName} ${remoteJid}`,
@@ -423,10 +438,13 @@ export async function findMessagesByRemoteJid(
       raw,
       queriedRemoteJid: remoteJid,
     };
-  } catch (err: any) {
-    clearTimeout(timeout);
-    const errMsg = err?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${err?.message || String(err)}`;
-    return { success: false, message: errMsg, queriedRemoteJid: remoteJid };
+  } catch (e: any) {
+    clearTimeout(t);
+    return {
+      success: false,
+      message: e?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${e?.message || String(e)}`,
+      queriedRemoteJid: remoteJid,
+    };
   }
 }
 
@@ -771,10 +789,6 @@ export async function sendMediaByUrl(
   if (Array.isArray(params.mentioned) && params.mentioned.length > 0) body.mentioned = params.mentioned;
   if (params.quotedMessage) body.quoted = params.quotedMessage;
 
-  // 🔎 Log EXACTO del base64 que se envía en `media`
-  // console.log(`[SENDMEDIA][EXACT media] length=${String(body.media).length}`);
-  // console.log(body.media);
-
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 20000);
 
@@ -861,7 +875,7 @@ function mediaTypeFromMime(mime: string): MediaType {
 /**
  * Acepta File o string (data:, http(s), base64) y envía:
  * - AUDIO → `sendAudio` con body { number, audio, encoding }
- * - Otros  → `sendMediaByUrl` (media base64)
+ * - Otros → `sendMediaByUrl` (media base64)
  */
 export async function sendMediaAuto(
   apiKeyData: Pick<ApiKey, 'url' | 'key'>,
@@ -944,4 +958,79 @@ export async function sendMediaAuto(
     },
     { timeoutMs: hinted?.timeoutMs }
   );
+}
+
+// Define el tipo para la entrada de la función
+type MessageReadKey = {
+  remoteJid: string;
+  messageId: string; // ID del mensaje (key.id)
+  fromMe: boolean;  // Si el mensaje fue enviado por la instancia de WhatsApp
+};
+
+export async function markMessagesAsReadByIds(
+  apiKeyData: Pick<ApiKey, 'url' | 'key'>,
+  instanceName: string,
+  // Parámetro modificado para aceptar un array
+  messagesToMark: MessageReadKey[],
+  options?: { timeoutMs?: number }
+): Promise<{ success: boolean; message: string; raw?: unknown }> {
+  const { url, key } = apiKeyData;
+
+  // 1. Validación de parámetros de conexión y entrada
+  if (!url || !key || !instanceName) {
+    console.error(`[READ] 🛑 Error markMessagesAsReadByIds: Parámetros de conexión faltantes.`);
+    return { success: false, message: 'Parámetros de conexión (url, key, o instanceName) faltantes.' };
+  }
+  if (!messagesToMark || messagesToMark.length === 0) {
+    console.warn(`[READ] ℹ️ markMessagesAsReadByIds: Array de mensajes vacío. Terminando sin acción.`);
+    return { success: true, message: 'Array de mensajes para marcar como leídos estaba vacío.', raw: {} };
+  }
+
+  const endpoint = `${normalizeBaseUrl(url)}/chat/markMessageAsRead/${encodeURIComponent(instanceName)}`;
+
+  // 2. Mapeo de la entrada al formato de la API
+  const readMessagesPayload = messagesToMark.map(m => ({
+    "remoteJid": m.remoteJid,
+    "fromMe": m.fromMe,
+    "id": m.messageId
+  }));
+
+  const body = {
+    "readMessages": readMessagesPayload
+  };
+
+  // Logs para seguimiento
+  const count = readMessagesPayload.length;
+  const jid = readMessagesPayload[0].remoteJid; // JID del primer mensaje para log
+
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 10000);
+
+  try {
+    const res = await doRequest(endpoint, key, controller.signal, 'POST', body, false);
+    clearTimeout(timeout);
+
+    const raw = await res.json().catch(() => null);
+    if (!res.ok) {
+      const errorMsg = raw?.message || `Error ${res.status} al marcar ${count} mensajes como leídos.`;
+      console.error(`[READ] ❌ Falló markMessagesAsReadByIds (x${count}, JID: ${jid}): ${errorMsg}`);
+      return {
+        success: false,
+        message: errorMsg,
+        raw,
+      };
+    }
+
+
+    return { success: true, message: `${count} mensajes marcados como leídos con éxito.`, raw };
+  } catch (e: any) {
+    clearTimeout(timeout);
+    const errMsg = e?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${e.message || String(e)}`;
+    console.error(`[READ] 🛑 Error de red/timeout en markMessagesAsReadByIds (x${count}, JID: ${jid}): ${errMsg}`);
+    return {
+      success: false,
+      message: errMsg,
+    };
+  }
 }
