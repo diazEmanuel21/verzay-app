@@ -7,3 +7,4 @@ export * from './buildPrompt';
 export * from './buildTrainingMarkdown';
 export * from './composePromptFromSections';
 export * from './nonEmpty';
+export * from './FunctionSelectorInline';

@@ -21,6 +21,7 @@ import {
 import { Plus, Trash2 } from "lucide-react";
 import { FqaBuilderProps, PRESETS, QaItem } from "@/types/agentAi";
 import { useFaqAutosave } from "./hooks/useFaqAutosave";
+import { FunctionSelectorInline } from "./helpers";
 
 export function FqaBuilder({
     values,
@@ -160,38 +161,11 @@ export function FqaBuilder({
                                 className="min-h-[64px]"
                             />
 
-                            {/* 🔽 Agregar flujo como texto */}
-                            {flows.length > 0 && (
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            className="w-full justify-between"
-                                        >
-                                            Agregar flujo a esta respuesta
-                                            <Plus className="h-4 w-4 opacity-60" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent align="start" className="p-0 w-[320px]">
-                                        <Command>
-                                            <CommandInput placeholder="Buscar flujo…" />
-                                            <CommandList>
-                                                <CommandEmpty>Sin resultados…</CommandEmpty>
-                                                <CommandGroup>
-                                                    {flows.map((f) => (
-                                                        <CommandItem
-                                                            key={f.id}
-                                                            onSelect={() => appendFlowToAnswer(it.id, f.name)}
-                                                        >
-                                                            {f.name}
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
-                            )}
+                            <FunctionSelectorInline
+                                onInsert={(text) =>
+                                    updateA(it.id, it.a ? it.a.trim() + "\n" + text : text)
+                                }
+                            />
                         </div>
                     ))}
 

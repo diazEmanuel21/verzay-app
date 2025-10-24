@@ -215,6 +215,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
 
                     <TabsContent value="faq" className="m-0">
                         <FqaBuilder
+                            notificationNumber={user.notificationNumber}
                             flows={flows}
                             values={{ faq: values.faq ?? "" }}
                             handleChange={handleChange}
