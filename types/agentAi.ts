@@ -442,3 +442,8 @@ export interface FunctionSelectorInterface {
     setSteps: React.Dispatch<React.SetStateAction<StepTraining[]>>
     notificationNumber: string | null
 }
+
+export interface FnSelectorInterface {
+    onInsert: (text: string) => void;
+    flows: Workflow[];
+}

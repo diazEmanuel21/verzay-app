@@ -161,11 +161,14 @@ export function FqaBuilder({
                                 className="min-h-[64px]"
                             />
 
-                            <FunctionSelectorInline
-                                onInsert={(text) =>
-                                    updateA(it.id, it.a ? it.a.trim() + "\n" + text : text)
-                                }
-                            />
+                            <div className="flex w-full flex-col">
+                                <FunctionSelectorInline
+                                    flows={flows}
+                                    onInsert={(text) =>
+                                        updateA(it.id, it.a ? it.a.trim() + "\n" + text : text)
+                                    }
+                                />
+                            </div>
                         </div>
                     ))}
 
