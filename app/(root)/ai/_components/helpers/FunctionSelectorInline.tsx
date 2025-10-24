@@ -17,25 +17,52 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import { CONSULTA_DATOS_SNIPPET, FnSelectorInterface } from "@/types/agentAi";
+import { CONSULTA_DATOS_SNIPPET, CAPTURE_SNIPPETS, FnSelectorInterface } from "@/types/agentAi";
 import { Zap, Plus, X } from "lucide-react";
+import { PedidoFieldsEditor } from "../PedidoFieldsEditor";
 
-/**
- * Selector principal con 5 opciones y subcomponentes dinámicos
- */
-export const FunctionSelectorInline = ({ onInsert, flows = [], notificationNumber }: FnSelectorInterface) => {
+export const FunctionSelectorInline = ({
+    onInsert,
+    flows = [],
+    notificationNumber,
+}: FnSelectorInterface) => {
     const [selected, setSelected] = useState<string | null>(null);
+    const [subtype, setSubtype] = useState<string | null>(null);
+    const [pedidoFields, setPedidoFields] = useState<string[]>([]);
 
     // Inserta texto sin reemplazar
     const insert = (text: string) => onInsert(text);
+    const reset = () => {
+        setSelected(null);
+        setSubtype(null);
+        setPedidoFields([]);
+    };
 
-    // Limpia selección
-    const reset = () => setSelected(null);
+    /* 🔹 Inserta captura con campos si es Pedidos */
+    const handleInsertCaptura = (tipo: string) => {
+        const basePrompt = CAPTURE_SNIPPETS[tipo as keyof typeof CAPTURE_SNIPPETS];
+        let texto = `> Captura de datos — ${tipo}: **${basePrompt}**`;
+        if (tipo === "Pedidos" && pedidoFields.length > 0) {
+            texto += `\nCampos: ${pedidoFields.join(", ")}`;
+        }
+        insert(texto);
+        reset();
+    };
+
+    /* 🔹 Agregar campo de pedido (solo local) */
+    const addPedidoField = (field: string) => {
+        if (!field.trim()) return;
+        setPedidoFields((prev) => Array.from(new Set([...prev, field.trim()])));
+    };
+
+    const removePedidoField = (field: string) => {
+        setPedidoFields((prev) => prev.filter((f) => f !== field));
+    };
 
     return (
         <div className="space-y-3">
             {/* Selector principal */}
-            <div className="flex w-ful justify-end">
+            <div className="flex w-full justify-end">
                 <Popover>
                     <PopoverTrigger asChild>
                         <Button size="sm" variant="default" className="gap-2">
@@ -69,9 +96,11 @@ export const FunctionSelectorInline = ({ onInsert, flows = [], notificationNumbe
                                     {(["Solicitudes", "Reclamos", "Pedidos", "Reservas"] as const).map((opt) => (
                                         <CommandItem
                                             key={opt}
-                                            onSelect={() => setSelected("captura_datos")}
+                                            onSelect={() => {
+                                                setSelected("captura_datos");
+                                                setSubtype(opt);
+                                            }}
                                         >
-
                                             {opt}
                                         </CommandItem>
                                     ))}
@@ -84,23 +113,13 @@ export const FunctionSelectorInline = ({ onInsert, flows = [], notificationNumbe
                                         Usar número de notificación del perfil
                                     </CommandItem>
                                 </CommandGroup>
-
-                                <CommandSeparator />
-
-                                {/* <CommandGroup heading="OPCIÓN #5 · Agregar Regla">
-                                    <CommandItem
-                                        onSelect={() => insert("> Agregar regla: [descripción de la regla]")}
-                                    >
-                                        Agrega pautas/parametros al prompt
-                                    </CommandItem>
-                                </CommandGroup> */}
                             </CommandList>
                         </Command>
                     </PopoverContent>
                 </Popover>
             </div>
 
-            {/* Subcomponente dinámico */}
+            {/* Subcomponente: ejecutar_flujo */}
             {selected === "ejecutar_flujo" && (
                 <Card className="bg-muted/20 border-muted/60">
                     <CardHeader className="py-3 flex-row items-center justify-between">
@@ -113,7 +132,6 @@ export const FunctionSelectorInline = ({ onInsert, flows = [], notificationNumbe
                         {flows.length === 0 && (
                             <div className="text-sm text-muted-foreground">No hay flujos disponibles</div>
                         )}
-
                         {flows.length > 0 && (
                             <Popover>
                                 <PopoverTrigger asChild>
@@ -149,39 +167,47 @@ export const FunctionSelectorInline = ({ onInsert, flows = [], notificationNumbe
                 </Card>
             )}
 
-            {selected === "captura_datos" && (
-                // const isPedidos = (el as any).subtype === "Pedidos";
+            {/* Subcomponente: captura_datos */}
+            {selected === "captura_datos" && subtype && (
                 <Card className="bg-muted/20 border-muted/60">
                     <CardHeader className="py-3 flex-row items-center justify-between">
                         <CardTitle className="text-sm">
-                            {/* Formularios · Captura de datos — {(el as any).subtype} */}
+                            Captura de datos — {subtype}
                         </CardTitle>
-                        {/* <Button variant="ghost" size="icon" onClick={() => removeElement(step.id, el.id)}>
+                        <Button variant="ghost" size="icon" onClick={reset}>
                             <X className="h-4 w-4" />
-                        </Button> */}
+                        </Button>
                     </CardHeader>
-                    <CardContent className="p-0 m-0">
-                        {/* <div className="space-y-1">
-                                                <label className="text-xs font-medium">Prompt agregado:</label>
-                                                <Textarea value={(el as any).prompt} readOnly className="min-h-[64px]" />
-                                              </div> */}
-
-                        {/* Campos personalizados cuando subtype === "Pedidos" */}
-                        {/* {isPedidos && (
-                            <div className="px-4">
+                    <CardContent className="space-y-3">
+                        {subtype === "Pedidos" ? (
+                            <div className="px-2">
                                 <PedidoFieldsEditor
-                                    stepId={step.id}
-                                    elId={el.id}
-                                    element={el as PedidoFunctionEl}
-                                    onAdd={(field) => addPedidoField(step.id, el.id, field)}
-                                    onRemove={(field) => removePedidoField(step.id, el.id, field)}
+                                    stepId="faq" // valores dummy
+                                    elId="captura"
+                                    element={{ id: "x", kind: "function", fn: "captura_datos", subtype: "Pedidos", prompt: "", fields: pedidoFields }}
+                                    onAdd={addPedidoField}
+                                    onRemove={removePedidoField}
                                 />
+                                <div className="flex justify-end pt-2">
+                                    <Button
+                                        size="sm"
+                                        variant="default"
+                                        onClick={() => handleInsertCaptura("Pedidos")}
+                                    >
+                                        Insertar captura con campos
+                                    </Button>
+                                </div>
                             </div>
-                        )} */}
+                        ) : (
+                            <div className="flex justify-end">
+                                <Button size="sm" variant="default" onClick={() => handleInsertCaptura(subtype)}>
+                                    Insertar captura
+                                </Button>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
-            )
-            }
+            )}
         </div>
     );
 };
