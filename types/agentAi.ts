@@ -387,6 +387,7 @@ export type FqaBuilderProps = FaqSimpleProps & {
     onConflict?: (serverState: any) => void;
     initialItems?: QaItem[]; // ← sections.faq.items desde BD
     flows: Workflow[];
+    notificationNumber: string;
 };
 
 
@@ -434,4 +435,10 @@ export interface ExtraInfoBuilderProps {
     onConflict?: (serverState: any) => void;
     flows: Workflow[];
     initialExtras?: { items?: ExtraItemDTO[]; firmaEnabled?: boolean; firmaText?: string };
+}
+
+export interface FunctionSelectorInterface {
+    step: StepTraining
+    setSteps: React.Dispatch<React.SetStateAction<StepTraining[]>>
+    notificationNumber: string | null
 }

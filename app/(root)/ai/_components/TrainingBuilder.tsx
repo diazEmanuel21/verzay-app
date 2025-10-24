@@ -20,13 +20,9 @@ import {
   CommandEmpty,
   CommandInput,
   CommandList,
-  CommandSeparator,
 } from "@/components/ui/command";
-import { X, Plus, FileText, Zap, Trash2 } from "lucide-react";
+import { X, Plus, Trash2 } from "lucide-react";
 import {
-  CAPTURE_SNIPPETS,
-  CONSULTA_DATOS_SNIPPET,
-  ElementFunction,
   ElementItem,
   ElementText,
   StepTraining,
@@ -35,6 +31,7 @@ import {
 import { Workflow } from "@prisma/client";
 import { useTrainingAutosave } from "./hooks/useTrainingAutosave";
 import { PedidoFunctionEl } from '../../../../types/agentAi';
+import { FunctionSelector,  PedidoFieldsEditor } from './';
 
 /* utilidad: type-guard para pedidos */
 function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
@@ -183,113 +180,6 @@ export function TrainingBuilder({
     setSteps((prev) => prev.map((s) => (s.id === stepId ? { ...s, mainMessage } : s)));
   };
 
-  const toggleStepPicker = (stepId: string, open: boolean) => {
-    setSteps((prev) => prev.map((s) => (s.id === stepId ? { ...s, openPicker: open } : s)));
-  };
-
-  /* -------------------- Elementos dentro de un paso -------------------- */
-  const addText = (stepId: string) => {
-    setSteps((prev) =>
-      prev.map((s) =>
-        s.id === stepId
-          ? { ...s, elements: [...s.elements, { id: nanoid(), kind: "text", text: "" } as ElementText] }
-          : s
-      )
-    );
-  };
-
-  const addFunctionCaptura = (stepId: string, subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas") => {
-    setSteps((prev) =>
-      prev.map((s) => {
-        if (s.id !== stepId) return s;
-        const base: ElementFunction = {
-          id: nanoid(),
-          kind: "function",
-          fn: "captura_datos",
-          subtype,
-          prompt: CAPTURE_SNIPPETS[subtype],
-        };
-        const el: ElementItem =
-          subtype === "Pedidos"
-            ? ({ ...base, fields: [] } as PedidoFunctionEl)
-            : base;
-
-        return {
-          ...s,
-          elements: [...s.elements, el],
-          openPicker: false,
-        };
-      })
-    );
-  };
-
-  const addFunctionEjecutarFlujo = (stepId: string) => {
-    setSteps((prev) =>
-      prev.map((s) =>
-        s.id === stepId
-          ? {
-            ...s,
-            elements: [
-              ...s.elements,
-              {
-                id: nanoid(),
-                kind: "function",
-                fn: "ejecutar_flujo",
-                flowId: null,
-                flowName: null,
-              } as ElementFunction,
-            ],
-            openPicker: false,
-          }
-          : s
-      )
-    );
-  };
-
-  const addFunctionNotificar = (stepId: string) => {
-    setSteps((prev) =>
-      prev.map((s) =>
-        s.id === stepId
-          ? {
-            ...s,
-            elements: [
-              ...s.elements,
-              {
-                id: nanoid(),
-                kind: "function",
-                fn: "notificar_asesor",
-                notificationNumber: notificationNumber ?? null,
-              } as ElementFunction,
-            ],
-            openPicker: false,
-          }
-          : s
-      )
-    );
-  };
-
-  const addFunctionConsultaDatos = (stepId: string) => {
-    setSteps((prev) =>
-      prev.map((s) =>
-        s.id === stepId
-          ? {
-            ...s,
-            elements: [
-              ...s.elements,
-              {
-                id: nanoid(),
-                kind: "function",
-                fn: "consulta_datos",
-                prompt: CONSULTA_DATOS_SNIPPET,
-              } as ElementFunction,
-            ],
-            openPicker: false,
-          }
-          : s
-      )
-    );
-  };
-
   const removeElement = (stepId: string, elId: string) => {
     setSteps((prev) =>
       prev.map((s) =>
@@ -426,63 +316,7 @@ export function TrainingBuilder({
                       <Badge variant="secondary">{idx + 1}</Badge>
                     </div>
                     <div className="flex gap-2">
-                      <Popover open={!!step.openPicker} onOpenChange={(o) => toggleStepPicker(step.id, o)}>
-                        <PopoverTrigger asChild>
-                          <Button size="sm" variant="default" className="gap-2">
-                            <Zap className="h-4 w-4" />
-                            Agregar Función
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="p-0 w-[320px]" align="end">
-                          <Command>
-                            <CommandInput placeholder="Buscar opción…" />
-                            <CommandList>
-                              <CommandEmpty>Sin coincidencias…</CommandEmpty>
-
-                              <CommandGroup heading="OPCIÓN #1 · Ejecutar flujo">
-                                <CommandItem onSelect={() => addFunctionEjecutarFlujo(step.id)}>
-                                  Seleccionar flujo
-                                </CommandItem>
-                              </CommandGroup>
-
-                              <CommandSeparator />
-
-                              <CommandGroup heading="OPCIÓN #2 · Consulta de datos">
-                                <CommandItem onSelect={() => addFunctionConsultaDatos(step.id)}>
-                                  Agregar “Consultar Productos”
-                                </CommandItem>
-                              </CommandGroup>
-
-                              <CommandSeparator />
-
-                              <CommandGroup heading="OPCIÓN #3 · Captura de datos">
-                                {(["Solicitudes", "Reclamos", "Pedidos", "Reservas"] as const).map((opt) => (
-                                  <CommandItem key={opt} onSelect={() => addFunctionCaptura(step.id, opt)}>
-                                    {opt}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-
-                              <CommandSeparator />
-
-                              <CommandGroup heading="OPCIÓN #4 · Notificar asesor">
-                                <CommandItem onSelect={() => addFunctionNotificar(step.id)}>
-                                  Usar número de notificación del perfil
-                                </CommandItem>
-                              </CommandGroup>
-
-                              <CommandSeparator />
-
-                              <CommandGroup heading="OPCIÓN #5 · Agregar Regla">
-                                <CommandItem onSelect={() => addText(step.id)}>
-                                  Agrega pautas/parametros al prompt
-                                </CommandItem>
-                              </CommandGroup>
-
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
+                      <FunctionSelector step={step} setSteps={setSteps} notificationNumber={notificationNumber} />
                     </div>
                   </div>
 
@@ -652,69 +486,5 @@ export function TrainingBuilder({
       </CardFooter>
       }
     </Card>
-  );
-}
-
-/* ----------------- Editor de campos para "Pedidos" ----------------- */
-function PedidoFieldsEditor({
-  stepId,
-  elId,
-  element,
-  onAdd,
-  onRemove,
-}: {
-  stepId: string;
-  elId: string;
-  element: PedidoFunctionEl;
-  onAdd: (field: string) => void;
-  onRemove: (field: string) => void;
-}) {
-  const [input, setInput] = useState("");
-
-  const add = () => {
-    onAdd(input);
-    setInput("");
-  };
-
-  return (
-    <div className="space-y-2 pb-3">
-      <label className="text-xs font-medium">Campos de pedido (texto plano):</label>
-      <div className="flex gap-2">
-        <Input
-          placeholder="Ej.: cc, name, direccion…"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              add();
-            }
-          }}
-        />
-        <Button type="button" variant="secondary" onClick={add}>
-          Agregar
-        </Button>
-      </div>
-
-      {element.fields && element.fields.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {element.fields.map((f) => (
-            <Badge key={f} variant="outline" className="gap-1">
-              {f}
-              <button
-                type="button"
-                aria-label={`Eliminar ${f}`}
-                className="ml-1 opacity-70 hover:opacity-100"
-                onClick={() => onRemove(f)}
-              >
-                ×
-              </button>
-            </Badge>
-          ))}
-        </div>
-      ) : (
-        <p className="text-xs text-muted-foreground">Aún no hay campos agregados.</p>
-      )}
-    </div>
   );
 }
