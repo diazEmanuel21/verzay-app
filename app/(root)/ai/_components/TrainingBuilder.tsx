@@ -463,6 +463,7 @@ export function TrainingBuilder({
                                 ))}
                               </CommandGroup>
 
+                              <CommandSeparator />
 
                               <CommandGroup heading="OPCIÓN #4 · Notificar asesor">
                                 <CommandItem onSelect={() => addFunctionNotificar(step.id)}>
@@ -472,16 +473,16 @@ export function TrainingBuilder({
 
                               <CommandSeparator />
 
+                              <CommandGroup heading="OPCIÓN #5 · Agregar Regla">
+                                <CommandItem onSelect={() => addText(step.id)}>
+                                  Agrega pautas/parametros al prompt
+                                </CommandItem>
+                              </CommandGroup>
 
                             </CommandList>
                           </Command>
                         </PopoverContent>
                       </Popover>
-
-                      <Button size="sm" variant="secondary" className="gap-2" onClick={() => addText(step.id)}>
-                        <FileText className="h-4 w-4" />
-                        Agregar Regla
-                      </Button>
                     </div>
                   </div>
 
@@ -498,14 +499,14 @@ export function TrainingBuilder({
                             return (
                               <Card key={el.id} className="bg-muted/30 border-muted/60">
                                 <CardHeader className="py-3 flex-row items-center justify-between">
-                                  <CardTitle className="text-sm">Texto adicional</CardTitle>
+                                  <CardTitle className="text-sm">Regla/parámetro</CardTitle>
                                   <Button variant="ghost" size="icon" onClick={() => removeElement(step.id, el.id)}>
                                     <X className="h-4 w-4" />
                                   </Button>
                                 </CardHeader>
                                 <CardContent>
                                   <Textarea
-                                    placeholder="Texto adicional para este paso…"
+                                    placeholder="Regla adicional para este paso…"
                                     value={el.text}
                                     onChange={(e) => updateText(step.id, el.id, e.target.value)}
                                     className="min-h-[84px]"
