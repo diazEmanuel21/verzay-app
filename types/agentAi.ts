@@ -280,7 +280,7 @@ export interface TrainingBuilderExternalProps {
 
 export interface TrainingBuilderProps extends TrainingBuilderExternalProps {
     flows: Workflow[];
-    notificationNumber?: string | null;
+    notificationNumber?: string;
     onChange?: (state: { mainMessage: string; elements: ElementItem[] }) => void;
     // NUEVO:
     promptId: string;
@@ -356,7 +356,7 @@ export const CAPTURE_SNIPPETS: Record<
         "**Captura de Reservas**: Recolecta fecha, hora, sede, cantidad de personas/ítems, nombre y teléfono. Confirma disponibilidad y condiciones.",
 };
 
-export const CONSULTA_DATOS_SNIPPET = `**Consultar Productos**: (Prioridad 2). Si no hay un flujo activo y el usuario pregunta por un producto, ejecuta esta herramienta.
+export const CONSULTA_DATOS_SNIPPET = `**Consultar Productos**. Si no hay un flujo activo y el usuario pregunta por un producto, ejecuta esta herramienta.
 - *Disparadores:* “imagen”, “foto”, “video”, “pdf”, “documento”, “ver”, “ver el producto”, “muéstrame”, “catálogo”.`
 
 /*****************  FQABUILDER ***********************/
@@ -440,10 +440,12 @@ export interface ExtraInfoBuilderProps {
 export interface FunctionSelectorInterface {
     step: StepTraining
     setSteps: React.Dispatch<React.SetStateAction<StepTraining[]>>
-    notificationNumber: string | null
+    notificationNumber: string
 }
 
 export interface FnSelectorInterface {
     onInsert: (text: string) => void;
     flows: Workflow[];
+    notificationNumber: string
+
 }

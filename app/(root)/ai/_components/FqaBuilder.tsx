@@ -31,7 +31,8 @@ export function FqaBuilder({
     onVersionChange,
     onConflict,
     initialItems = [],
-    flows = [], // 👈 lista de flujos ya cargados desde BD
+    flows = [], 
+    notificationNumber,
 }: FqaBuilderProps) {
     const [openPicker, setOpenPicker] = useState(false);
     const [items, setItems] = useState<QaItem[]>(
@@ -167,6 +168,7 @@ export function FqaBuilder({
                                     onInsert={(text) =>
                                         updateA(it.id, it.a ? it.a.trim() + "\n" + text : text)
                                     }
+                                    notificationNumber={notificationNumber}
                                 />
                             </div>
                         </div>

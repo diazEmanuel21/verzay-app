@@ -31,7 +31,7 @@ import {
 import { Workflow } from "@prisma/client";
 import { useTrainingAutosave } from "./hooks/useTrainingAutosave";
 import { PedidoFunctionEl } from '../../../../types/agentAi';
-import { FunctionSelector,  PedidoFieldsEditor } from './';
+import { FunctionSelector, PedidoFieldsEditor } from './';
 
 /* utilidad: type-guard para pedidos */
 function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
@@ -44,7 +44,7 @@ function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
 
 export function TrainingBuilder({
   flows = [],
-  notificationNumber = null,
+  notificationNumber,
   onChange,
   values,
   handleChange,
@@ -316,7 +316,7 @@ export function TrainingBuilder({
                       <Badge variant="secondary">{idx + 1}</Badge>
                     </div>
                     <div className="flex gap-2">
-                      <FunctionSelector step={step} setSteps={setSteps} notificationNumber={notificationNumber} />
+                      <FunctionSelector step={step} setSteps={setSteps} notificationNumber={notificationNumber ?? ''} />
                     </div>
                   </div>
 

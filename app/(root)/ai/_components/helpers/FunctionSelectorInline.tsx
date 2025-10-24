@@ -17,13 +17,13 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import { FnSelectorInterface } from "@/types/agentAi";
+import { CONSULTA_DATOS_SNIPPET, FnSelectorInterface } from "@/types/agentAi";
 import { Zap, Plus, X } from "lucide-react";
 
 /**
  * Selector principal con 5 opciones y subcomponentes dinámicos
  */
-export const FunctionSelectorInline = ({ onInsert, flows = [] }: FnSelectorInterface) => {
+export const FunctionSelectorInline = ({ onInsert, flows = [], notificationNumber }: FnSelectorInterface) => {
     const [selected, setSelected] = useState<string | null>(null);
 
     // Inserta texto sin reemplazar
@@ -50,7 +50,7 @@ export const FunctionSelectorInline = ({ onInsert, flows = [] }: FnSelectorInter
                                 <CommandEmpty>Sin coincidencias…</CommandEmpty>
 
                                 <CommandGroup heading="OPCIÓN #1 · Ejecutar flujo">
-                                    <CommandItem onSelect={() => setSelected("flujo")}>
+                                    <CommandItem onSelect={() => setSelected("ejecutar_flujo")}>
                                         Seleccionar flujo
                                     </CommandItem>
                                 </CommandGroup>
@@ -58,7 +58,7 @@ export const FunctionSelectorInline = ({ onInsert, flows = [] }: FnSelectorInter
                                 <CommandSeparator />
 
                                 <CommandGroup heading="OPCIÓN #2 · Consulta de datos">
-                                    <CommandItem onSelect={() => insert("> Consulta de datos: **[consulta]**")}>
+                                    <CommandItem onSelect={() => insert(CONSULTA_DATOS_SNIPPET)}>
                                         Agregar “Consultar Productos”
                                     </CommandItem>
                                 </CommandGroup>
@@ -69,8 +69,9 @@ export const FunctionSelectorInline = ({ onInsert, flows = [] }: FnSelectorInter
                                     {(["Solicitudes", "Reclamos", "Pedidos", "Reservas"] as const).map((opt) => (
                                         <CommandItem
                                             key={opt}
-                                            onSelect={() => insert(`> Captura de datos — ${opt}: **[prompt]**`)}
+                                            onSelect={() => setSelected("captura_datos")}
                                         >
+
                                             {opt}
                                         </CommandItem>
                                     ))}
@@ -79,20 +80,20 @@ export const FunctionSelectorInline = ({ onInsert, flows = [] }: FnSelectorInter
                                 <CommandSeparator />
 
                                 <CommandGroup heading="OPCIÓN #4 · Notificar asesor">
-                                    <CommandItem onSelect={() => insert("> Notificar asesor")}>
+                                    <CommandItem onSelect={() => insert(`> Notificar asesor: ${notificationNumber}`)}>
                                         Usar número de notificación del perfil
                                     </CommandItem>
                                 </CommandGroup>
 
                                 <CommandSeparator />
 
-                                <CommandGroup heading="OPCIÓN #5 · Agregar Regla">
+                                {/* <CommandGroup heading="OPCIÓN #5 · Agregar Regla">
                                     <CommandItem
                                         onSelect={() => insert("> Agregar regla: [descripción de la regla]")}
                                     >
                                         Agrega pautas/parametros al prompt
                                     </CommandItem>
-                                </CommandGroup>
+                                </CommandGroup> */}
                             </CommandList>
                         </Command>
                     </PopoverContent>
@@ -100,7 +101,7 @@ export const FunctionSelectorInline = ({ onInsert, flows = [] }: FnSelectorInter
             </div>
 
             {/* Subcomponente dinámico */}
-            {selected === "flujo" && (
+            {selected === "ejecutar_flujo" && (
                 <Card className="bg-muted/20 border-muted/60">
                     <CardHeader className="py-3 flex-row items-center justify-between">
                         <CardTitle className="text-sm">Seleccionar flujo</CardTitle>
@@ -147,6 +148,40 @@ export const FunctionSelectorInline = ({ onInsert, flows = [] }: FnSelectorInter
                     </CardContent>
                 </Card>
             )}
+
+            {selected === "captura_datos" && (
+                // const isPedidos = (el as any).subtype === "Pedidos";
+                <Card className="bg-muted/20 border-muted/60">
+                    <CardHeader className="py-3 flex-row items-center justify-between">
+                        <CardTitle className="text-sm">
+                            {/* Formularios · Captura de datos — {(el as any).subtype} */}
+                        </CardTitle>
+                        {/* <Button variant="ghost" size="icon" onClick={() => removeElement(step.id, el.id)}>
+                            <X className="h-4 w-4" />
+                        </Button> */}
+                    </CardHeader>
+                    <CardContent className="p-0 m-0">
+                        {/* <div className="space-y-1">
+                                                <label className="text-xs font-medium">Prompt agregado:</label>
+                                                <Textarea value={(el as any).prompt} readOnly className="min-h-[64px]" />
+                                              </div> */}
+
+                        {/* Campos personalizados cuando subtype === "Pedidos" */}
+                        {/* {isPedidos && (
+                            <div className="px-4">
+                                <PedidoFieldsEditor
+                                    stepId={step.id}
+                                    elId={el.id}
+                                    element={el as PedidoFunctionEl}
+                                    onAdd={(field) => addPedidoField(step.id, el.id, field)}
+                                    onRemove={(field) => removePedidoField(step.id, el.id, field)}
+                                />
+                            </div>
+                        )} */}
+                    </CardContent>
+                </Card>
+            )
+            }
         </div>
     );
 };
