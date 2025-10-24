@@ -6,22 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import {
-    Popover,
-    PopoverTrigger,
-    PopoverContent,
-} from "@/components/ui/popover";
-import {
-    Command,
-    CommandGroup,
-    CommandItem,
-    CommandEmpty,
-    CommandInput,
-    CommandList,
-} from "@/components/ui/command";
 import { Trash2, Plus } from "lucide-react";
 import { useProductsAutosave } from "./hooks/useProductsAutosave";
 import { ProductBuilderProps, ProductItem, ProductItemDTO } from "@/types/agentAi";
+import { FunctionSelectorInline } from "./helpers";
 
 export function ProductBuilder({
     values,
@@ -33,6 +21,7 @@ export function ProductBuilder({
     onConflict,
     initialItems = [],
     flows = [], // 👈 lista de flujos disponibles desde BD
+    notificationNumber
 }: ProductBuilderProps) {
     const [items, setItems] = useState<ProductItemDTO[]>(
         Array.isArray(initialItems) && initialItems.length > 0
@@ -83,6 +72,20 @@ export function ProductBuilder({
     const updateName = (id: string, v: string) =>
         setItems((prev) => prev.map((it) => (it.id === id ? { ...it, name: v } : it)));
 
+    // 🔧 Inserta texto adicional al final de la descripción
+    const appendToDescription = (id: string, text: string) => {
+        setItems((prev) =>
+            prev.map((p) =>
+                p.id === id
+                    ? {
+                        ...p,
+                        description: (p.description ? p.description.trim() + "\n" : "") + text,
+                    }
+                    : p
+            )
+        );
+    };
+
     const updateDesc = (id: string, v: string) =>
         setItems((prev) =>
             prev.map((it) => (it.id === id ? { ...it, description: v } : it))
@@ -93,22 +96,6 @@ export function ProductBuilder({
 
     const removeProduct = (id: string) =>
         setItems((prev) => prev.filter((it) => it.id !== id));
-
-    // 🔽 Agregar nombre del flujo como texto plano en la descripción
-    const appendFlowToDescription = (productId: string, flowName: string) => {
-        setItems((prev) =>
-            prev.map((p) =>
-                p.id === productId
-                    ? {
-                        ...p,
-                        description:
-                            (p.description ? p.description.trim() + "\n\n" : "") +
-                            `> Ejecutar flujo: **${flowName}**`,
-                    }
-                    : p
-            )
-        );
-    };
 
     return (
         <Card className="border-muted/60">
@@ -145,38 +132,13 @@ export function ProductBuilder({
                             onChange={(e) => updateDesc(it.id, e.target.value)}
                         />
 
-                        {/* 🔽 Agregar flujo como texto a la descripción */}
-                        {flows.length > 0 && (
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        className="w-full justify-between"
-                                    >
-                                        Agregar flujo a esta descripción
-                                        <Plus className="h-4 w-4 opacity-60" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent align="start" className="p-0 w-[320px]">
-                                    <Command>
-                                        <CommandInput placeholder="Buscar flujo…" />
-                                        <CommandList>
-                                            <CommandEmpty>Sin resultados…</CommandEmpty>
-                                            <CommandGroup>
-                                                {flows.map((f) => (
-                                                    <CommandItem
-                                                        key={f.id}
-                                                        onSelect={() => appendFlowToDescription(it.id, f.name)}
-                                                    >
-                                                        {f.name}
-                                                    </CommandItem>
-                                                ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-                        )}
+                        <div className="flex w-full flex-col">
+                            <FunctionSelectorInline
+                                flows={flows}
+                                notificationNumber={notificationNumber}
+                                onInsert={(text) => appendToDescription(it.id, text)}
+                            />
+                        </div>
                     </div>
                 ))}
 

@@ -6,22 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import {
-    Popover,
-    PopoverTrigger,
-    PopoverContent,
-} from "@/components/ui/popover";
-import {
-    Command,
-    CommandGroup,
-    CommandItem,
-    CommandEmpty,
-    CommandInput,
-    CommandList,
-} from "@/components/ui/command";
 import { Trash2, Plus, PenSquare } from "lucide-react";
 import { useExtrasAutosave } from "./hooks/useExtrasAutosave";
 import { ExtraInfoBuilderProps, ExtraItem, ExtraItemDTO } from "@/types/agentAi";
+import { FunctionSelectorInline } from "./helpers";
 
 const PROMPT_SIGNATURE_DEFAULT =
     "###  FIRMA DEL AGENTE\n\n" +
@@ -42,7 +30,8 @@ export function ExtraInfoBuilder({
     onVersionChange,
     onConflict,
     initialExtras,
-    flows = [], // 👈 lista de flujos disponibles
+    flows = [],
+    notificationNumber
 }: ExtraInfoBuilderProps & { flows?: { id: string; name: string }[] }) {
     // Obtener la firma actual o la default
     const userSignaturePrompt =
@@ -133,16 +122,14 @@ export function ExtraInfoBuilder({
     const updateContent = (id: string, v: string) =>
         setItems((p) => p.map((x) => (x.id === id ? { ...x, content: v } : x)));
 
-    // 🔽 Agregar nombre del flujo al contenido (texto plano)
-    const appendFlowToContent = (itemId: string, flowName: string) => {
+    // 🔧 Inserta texto adicional al final del contenido
+    const appendToContent = (id: string, text: string) => {
         setItems((prev) =>
             prev.map((x) =>
-                x.id === itemId
+                x.id === id
                     ? {
                         ...x,
-                        content:
-                            (x.content ? x.content.trim() + "\n\n" : "") +
-                            `> Ejecutar flujo: **${flowName}**`,
+                        content: (x.content ? x.content.trim() + "\n" : "") + text,
                     }
                     : x
             )
@@ -232,40 +219,13 @@ export function ExtraInfoBuilder({
                                 onChange={(e) => updateContent(it.id, e.target.value)}
                             />
 
-                            {/* 🔽 Agregar flujo en contenido */}
-                            {flows.length > 0 && (
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            className="w-full justify-between"
-                                        >
-                                            Agregar flujo a este contenido
-                                            <Plus className="h-4 w-4 opacity-60" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent align="start" className="p-0 w-[320px]">
-                                        <Command>
-                                            <CommandInput placeholder="Buscar flujo…" />
-                                            <CommandList>
-                                                <CommandEmpty>Sin resultados…</CommandEmpty>
-                                                <CommandGroup>
-                                                    {flows.map((f) => (
-                                                        <CommandItem
-                                                            key={f.id}
-                                                            onSelect={() =>
-                                                                appendFlowToContent(it.id, f.name)
-                                                            }
-                                                        >
-                                                            {f.name}
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
-                            )}
+                            <div className="flex w-full flex-col">
+                                <FunctionSelectorInline
+                                    flows={flows}
+                                    notificationNumber={notificationNumber}
+                                    onInsert={(text) => appendToContent(it.id, text)}
+                                />
+                            </div>
                         </div>
                     ))}
 

@@ -409,6 +409,7 @@ export interface ProductBuilderProps {
     onConflict?: (serverState: any) => void;
     initialItems?: ProductItemDTO[]; // sections.products.items desde BD
     flows: Workflow[];
+    notificationNumber: string;
 }
 
 export type ExtraItem = { id: string; title: string; content: string };
@@ -417,6 +418,7 @@ export type ExtraItem = { id: string; title: string; content: string };
 export type ExtraItemDTO = { id: string; title?: string; content?: string };
 
 export interface ExtraInfoBuilderProps {
+    notificationNumber: string;
     values: { more: string };
     handleChange: (
         key: "more"

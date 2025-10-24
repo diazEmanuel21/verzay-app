@@ -231,6 +231,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
 
                     <TabsContent value="products" className="m-0">
                         <ProductBuilder
+                            notificationNumber={user.notificationNumber}
                             flows={flows}
                             values={{ products: values.products ?? "" }}
                             handleChange={handleChange}
@@ -245,6 +246,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
 
                     <TabsContent value="more" className="m-0">
                         <ExtraInfoBuilder
+                            notificationNumber={user.notificationNumber}
                             flows={flows}
                             values={{ more: values.more ?? "" }}
                             handleChange={handleChange}
