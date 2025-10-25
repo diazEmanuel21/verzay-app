@@ -818,7 +818,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
 
         {/* Input + botones */}
         <div className="relative flex items-end">
-          <div className="absolute left-1 z-10 bottom-2">
+          <div className=" left-1 z-10 bottom-2">
             { (
               <AttachmentMenu
                 onComposeMediaChange={handleComposeMediaChange}
@@ -833,7 +833,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyPress}
-            // disabled={!isInputActive}
+            
             rows={1}
             aria-label="Escribe tu mensaje"
             className={cn(
