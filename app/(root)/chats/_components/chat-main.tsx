@@ -731,7 +731,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
                   className="w-full h-full object-cover"
                 />
                 <button
-                  className="absolute -top-2 -right-2 bg-black/70 text-white rounded-full p-1"
+                  className="absolute -top-2 -right-2 bg-black/70 text-white rounded-full p-1 z-10"
                   onClick={clearComposeMedia}
                   aria-label="Quitar adjunto"
                   type="button"
@@ -798,7 +798,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
               type="button"
             >
               <Trash2 className="w-5 h-5" />
-            </Button>
+            </Button> 
             <audio src={recordedAudio.dataUrlWithPrefix} controls className="flex-1 h-8" />
             <span className="text-sm tabular-nums text-gray-600 dark:text-gray-300 flex-shrink-0">
               {formatSecs(recordedAudio.durationSecs)}
@@ -817,8 +817,8 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         )}
 
         {/* Input + botones */}
-        <div className="relative flex items-end">
-          <div className=" left-1 z-10 bottom-2">
+        <div className="relative flex ">
+          <div className="absolute left-1 bottom-1 top-50 z-10 ">
             { (
               <AttachmentMenu
                 onComposeMediaChange={handleComposeMediaChange}
@@ -842,7 +842,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
             )}
           />
 
-          <div className="absolute right-1 flex items-center gap-1 bottom-2">
+          <div className="absolute right-1 flex items-center gap-1 bottom-1">
             {!isPreviewingAudio && (
               <Button
                 onClick={() => (isRecording ? stopRecordingAndPreview() : startRecording())}
