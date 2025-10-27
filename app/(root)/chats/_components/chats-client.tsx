@@ -76,14 +76,14 @@ export function ChatsClient({
   const [messages, setMessages] = useState<EvolutionMessage[]>(initialMessages || []);
   const [info, setInfo] = useState<
     | {
-      total?: number;
-      pages?: number;
-      currentPage?: number;
-      nextPage?: number | null;
-      instanceName?: string;
-      remoteJid?: string;
-      apiKeyData?: ApiKeyData;
-    }
+        total?: number;
+        pages?: number;
+        currentPage?: number;
+        nextPage?: number | null;
+        instanceName?: string;
+        remoteJid?: string;
+        apiKeyData?: ApiKeyData;
+      }
     | undefined
   >(
     initialSelectedJid
