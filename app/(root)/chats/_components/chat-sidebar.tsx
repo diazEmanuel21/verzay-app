@@ -325,11 +325,11 @@ export function ChatSidebar({ result, onSelectRemoteJid, selectedJid }: ChatSide
                                             )}
                                             <span>{c.lastMessage || "—"}</span>
                                         </p>
-                                        {/* {c.unreadCount > 0 && (
+                                         {c.unreadCount > 0 && (
      <span className="bg-primary text-primary-foreground inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold">
-     {c.unreadCount > 99 ? "99+" : c.unreadCount}
+     !
      </span>
-    )} */}
+    )} 
                                     </div>
                                 </div>
                             </button>
