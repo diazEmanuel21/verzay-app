@@ -201,7 +201,7 @@ export const FunctionSelectorInline = ({
                         ) : (
                             <div className="flex justify-end">
                                 <Button size="sm" variant="default" onClick={() => handleInsertCaptura(subtype)}>
-                                    Insertar captura
+                                    Insertar captura 
                                 </Button>
                             </div>
                         )}
