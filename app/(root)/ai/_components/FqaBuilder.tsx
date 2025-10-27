@@ -22,6 +22,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { FqaBuilderProps, PRESETS, QaItem } from "@/types/agentAi";
 import { useFaqAutosave } from "./hooks/useFaqAutosave";
 import { FunctionSelectorInline } from "./helpers";
+import { Input } from "@/components/ui/input";
 
 export function FqaBuilder({
     values,
@@ -120,7 +121,7 @@ export function FqaBuilder({
                     {items.map((it) => (
                         <div
                             key={it.id}
-                            className="rounded-md border p-3 border-muted/60 space-y-3"
+                            className="rounded-md border p-3 border-muted/60 space-y-2"
                         >
                             <div className="flex items-center justify-between">
                                 <div className="text-sm font-medium">Pregunta:</div>
@@ -133,11 +134,10 @@ export function FqaBuilder({
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
                             </div>
-                            <Textarea
+                            <Input
                                 placeholder="¿Cuáles son los horarios de atención?"
                                 value={it.q}
                                 onChange={(e) => updateQ(it.id, e.target.value)}
-                                className="min-h-[64px]"
                             />
 
                             <div className="text-sm font-medium mt-2">Respuesta:</div>
@@ -145,7 +145,7 @@ export function FqaBuilder({
                                 placeholder="Atendemos de lunes a domingo de 8:00 AM a 10:00 PM"
                                 value={it.a}
                                 onChange={(e) => updateA(it.id, e.target.value)}
-                                className="min-h-[64px]"
+                                className="min-h-[32px]"
                             />
 
                             <div className="flex w-full flex-col">

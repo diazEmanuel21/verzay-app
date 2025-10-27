@@ -1,7 +1,10 @@
 "use client";
 
+import { useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { UploadCloud } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { UploadCloud, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { usePromptActions } from "./hooks/usePromptActions";
 
 export function PromptToolbar(props: {
@@ -24,14 +27,61 @@ export function PromptToolbar(props: {
         revalidatePath,
     });
 
+    const isSaving = !!loading;
+
+    const handlePublish = useCallback(async () => {
+        try {
+            await publish();
+            toast.success("Guardado correctamente");
+        } catch (e: any) {
+            toast.error(e?.message ?? "No se pudo guardar");
+        }
+    }, [publish]);
+
+    useEffect(() => {
+        if (error) toast.error(error);
+    }, [error]);
+
     return (
-        <div className="flex items-center gap-2 w-full justify-end">
-            <Button onClick={() => publish()} disabled={loading !== null} className="gap-2">
-                <UploadCloud className="h-4 w-4" />
-                Guardar
-            </Button>
-            {loading && <span className="text-xs text-muted-foreground">Procesando…</span>}
+        <>
+            <div aria-live="polite" aria-atomic="true" className="sr-only">
+                {isSaving ? "Guardando…" : "Listo para guardar"}
+            </div>
+
+            <TooltipProvider>
+                <Tooltip delayDuration={200}>
+                    <TooltipTrigger asChild>
+                        <Button
+                            onClick={handlePublish}
+                            disabled={isSaving}
+                            aria-busy={isSaving}
+                            aria-label="Guardar"
+                            className="
+                gap-0 sm:gap-2 px-2 sm:px-3 h-9
+                bg-emerald-600 text-white
+                hover:bg-emerald-700
+                focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2
+                disabled:bg-emerald-600/60 disabled:text-white/80
+              "
+                        >
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <span className="hidden sm:inline">Guardando…</span>
+                                </>
+                            ) : (
+                                <>
+                                    <UploadCloud className="h-4 w-4" />
+                                    <span className="hidden sm:inline">Guardar</span>
+                                </>
+                            )}
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">Guardar</TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+
             {error && <span className="text-xs text-destructive">{error}</span>}
-        </div>
+        </>
     );
 }

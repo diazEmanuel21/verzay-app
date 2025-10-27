@@ -42,7 +42,6 @@ import { useBusinessAutosave } from "./hooks/useBusinessAutosave";
 /* ---------- CAMPOS ADICIONALES DISPONIBLES ---------- */
 const optionalFields = [
     { value: "email", label: "Correo electrónico" },
-    { value: "sitio", label: "Sitio web" },
     { value: "facebook", label: "Facebook" },
     { value: "instagram", label: "Instagram" },
     { value: "tiktok", label: "TikTok" },
@@ -159,6 +158,27 @@ export const BusinessPromptBuilder = ({
                                     )}
                                 />
 
+                                {/* <FormField
+                                    control={form.control}
+                                    name="maps"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>maps</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Ej. Stickers y etiquetas"
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        field.onChange(e);
+                                                        handleChange?.("maps")(e);
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                /> */}
+
                                 {/* Ubicación */}
                                 <FormField
                                     control={form.control}
@@ -225,6 +245,28 @@ export const BusinessPromptBuilder = ({
                                     )}
                                 />
 
+                                <FormField
+                                    control={form.control}
+                                    name="sitio"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Sitio web</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="url"
+                                                    placeholder="https://negocio.com"
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        field.onChange(e);
+                                                        handleChange?.("sitio")(e);
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
                                 {/* Campos dinámicos */}
                                 {selectedFields.includes("email") && (
                                     <FormField
@@ -241,30 +283,6 @@ export const BusinessPromptBuilder = ({
                                                         onChange={(e) => {
                                                             field.onChange(e);
                                                             handleChange?.("email")(e);
-                                                        }}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                )}
-
-                                {selectedFields.includes("sitio") && (
-                                    <FormField
-                                        control={form.control}
-                                        name="sitio"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Sitio web</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        type="url"
-                                                        placeholder="https://negocio.com"
-                                                        {...field}
-                                                        onChange={(e) => {
-                                                            field.onChange(e);
-                                                            handleChange?.("sitio")(e);
                                                         }}
                                                     />
                                                 </FormControl>
