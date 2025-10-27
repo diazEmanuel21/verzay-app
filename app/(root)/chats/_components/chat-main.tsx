@@ -504,7 +504,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
   /* Handlers */
   const handleComposeMediaChange = useCallback((m: ComposeMedia | null) => {
     setComposeMedia(m);
-    if (m) setInput(m.fileName || '');
+    if (m) setInput('');
   }, []);
   const clearComposeMedia = useCallback(() => setComposeMedia(null), []);
 
