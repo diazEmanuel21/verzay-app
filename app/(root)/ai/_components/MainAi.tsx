@@ -265,7 +265,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                     <div className="h-6" />
                 </div>
 
-                <aside className="hidden lg:block lg:w-[520px]">
+                <aside className="hidden lg:block lg:w-[420px]">
                     <PromptPreview prompt={prompt} />
                 </aside>
             </div>
