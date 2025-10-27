@@ -41,9 +41,7 @@ import { useBusinessAutosave } from "./hooks/useBusinessAutosave";
 
 /* ---------- CAMPOS ADICIONALES DISPONIBLES ---------- */
 const optionalFields = [
-    { value: "maps", label: "URL Google Maps" },
     { value: "email", label: "Correo electrónico" },
-    { value: "sitio", label: "Sitio web" },
     { value: "facebook", label: "Facebook" },
     { value: "instagram", label: "Instagram" },
     { value: "tiktok", label: "TikTok" },
@@ -70,7 +68,7 @@ export const BusinessPromptBuilder = ({
             ubicacion: values.ubicacion ?? "",
             horarios: values.horarios ?? "",
             maps: user?.mapsUrl ?? values.maps ?? "",
-            telefono: user?.notificationNumber ?? values.telefono ?? "",
+            telefono: values.telefono ?? values.telefono ?? "",
             email: values.email ?? "",
             sitio: values.sitio ?? "",
             facebook: values.facebook ?? "",
@@ -111,52 +109,6 @@ export const BusinessPromptBuilder = ({
                 <CardContent className="space-y-4">
                     <Form {...form}>
                         <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-                            {/* 🔽 Selector de Campos Adicionales */}
-                            <div className="flex flex-col gap-2">
-                                <FormLabel>Campos adicionales</FormLabel>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            role="combobox"
-                                            className="justify-between"
-                                        >
-                                            {selectedFields.length > 0
-                                                ? `${selectedFields.length} seleccionados`
-                                                : "Seleccionar campos..."}
-                                            <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="p-0 w-[280px]">
-                                        <Command>
-                                            <CommandInput placeholder="Buscar campo..." />
-                                            <CommandList>
-                                                <CommandGroup>
-                                                    {optionalFields.map((field) => (
-                                                        <CommandItem
-                                                            key={field.value}
-                                                            onSelect={() => toggleField(field.value)}
-                                                        >
-                                                            <Check
-                                                                className={cn(
-                                                                    "mr-2 h-4 w-4",
-                                                                    selectedFields.includes(field.value)
-                                                                        ? "opacity-100"
-                                                                        : "opacity-0"
-                                                                )}
-                                                            />
-                                                            {field.label}
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-
-                            <Separator />
-
                             {/* Campos Principales */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {/* Nombre */}
@@ -205,6 +157,27 @@ export const BusinessPromptBuilder = ({
                                         </FormItem>
                                     )}
                                 />
+
+                                {/* <FormField
+                                    control={form.control}
+                                    name="maps"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>maps</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Ej. Stickers y etiquetas"
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        field.onChange(e);
+                                                        handleChange?.("maps")(e);
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                /> */}
 
                                 {/* Ubicación */}
                                 <FormField
@@ -271,34 +244,30 @@ export const BusinessPromptBuilder = ({
                                         </FormItem>
                                     )}
                                 />
-                            </div>
 
-                            {/* Campos dinámicos */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {selectedFields.includes("maps") && (
-                                    <FormField
-                                        control={form.control}
-                                        name="maps"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>URL Google Maps</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        type="url"
-                                                        placeholder="https://maps.google.com/..."
-                                                        {...field}
-                                                        onChange={(e) => {
-                                                            field.onChange(e);
-                                                            handleChange?.("maps")(e);
-                                                        }}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                )}
+                                <FormField
+                                    control={form.control}
+                                    name="sitio"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Sitio web</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="url"
+                                                    placeholder="https://negocio.com"
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        field.onChange(e);
+                                                        handleChange?.("sitio")(e);
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
+                                {/* Campos dinámicos */}
                                 {selectedFields.includes("email") && (
                                     <FormField
                                         control={form.control}
@@ -314,30 +283,6 @@ export const BusinessPromptBuilder = ({
                                                         onChange={(e) => {
                                                             field.onChange(e);
                                                             handleChange?.("email")(e);
-                                                        }}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                )}
-
-                                {selectedFields.includes("sitio") && (
-                                    <FormField
-                                        control={form.control}
-                                        name="sitio"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Sitio web</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        type="url"
-                                                        placeholder="https://negocio.com"
-                                                        {...field}
-                                                        onChange={(e) => {
-                                                            field.onChange(e);
-                                                            handleChange?.("sitio")(e);
                                                         }}
                                                     />
                                                 </FormControl>
@@ -471,6 +416,52 @@ export const BusinessPromptBuilder = ({
                                     />
                                 </>
                             )}
+
+                            <Separator />
+
+                            {/* 🔽 Selector de Campos Adicionales */}
+                            <div className="flex flex-col gap-2">
+                                <FormLabel>Campos adicionales</FormLabel>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            className="justify-between"
+                                        >
+                                            {selectedFields.length > 0
+                                                ? `${selectedFields.length} seleccionados`
+                                                : "Seleccionar campos..."}
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="p-0 w-[280px]">
+                                        <Command>
+                                            <CommandInput placeholder="Buscar campo..." />
+                                            <CommandList>
+                                                <CommandGroup>
+                                                    {optionalFields.map((field) => (
+                                                        <CommandItem
+                                                            key={field.value}
+                                                            onSelect={() => toggleField(field.value)}
+                                                        >
+                                                            <Check
+                                                                className={cn(
+                                                                    "mr-2 h-4 w-4",
+                                                                    selectedFields.includes(field.value)
+                                                                        ? "opacity-100"
+                                                                        : "opacity-0"
+                                                                )}
+                                                            />
+                                                            {field.label}
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
                         </form>
                     </Form>
                 </CardContent>

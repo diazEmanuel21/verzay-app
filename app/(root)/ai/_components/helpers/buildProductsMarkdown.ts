@@ -7,7 +7,7 @@ export function buildProductsMarkdown(products: z.infer<typeof ProductsDraftSche
         .filter((p) => nonEmpty(p.name) || nonEmpty(p.description))
         .map(
             (p) =>
-                `### Producto: ${nonEmpty(p.name) || '(Sin nombre)'}\n*Descripción:*\n${nonEmpty(p.description) || '(Sin descripción)'}`
+                `### Producto: ${nonEmpty(p.name) || '(Sin nombre)'}\n* **Descripción:**\n${nonEmpty(p.description) || '(Sin descripción)'}`
         );
     return blocks.join('\n\n---\n\n');
 }

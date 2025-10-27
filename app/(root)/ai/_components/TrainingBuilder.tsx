@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -90,18 +91,18 @@ export function TrainingBuilder({
 
     steps.forEach((step, i) => {
       const n = i + 1;
-      lines.push(`\n# Paso ${n} — ${step.title || "Sin título"}`);
+      lines.push(`\n### Paso ${n} — ${step.title || "Sin título"}`);
       if (step.mainMessage?.trim()) {
-        lines.push(`Mensaje principal del paso:\n${step.mainMessage.trim()}`);
+        lines.push(`* **Orden principal del paso:**\n${step.mainMessage.trim()}`);
       }
 
       if (step.elements.length > 0) {
-        lines.push("\nElementos del paso:");
+        lines.push("\n#### Elementos del paso:");
         step.elements.forEach((el, idx) => {
           const k = idx + 1;
           if (el.kind === "text") {
             const t = el.text?.trim();
-            if (t) lines.push(`- (${k}) Texto: ${t}`);
+            if (t) lines.push(`- (${k})  **Regla/parámetro:** ${t}`);
             return;
           }
           if (el.kind === "function") {
@@ -117,8 +118,8 @@ export function TrainingBuilder({
               return;
             }
             if (el.fn === "ejecutar_flujo") {
-              lines.push(`> función: Ejecutar Flujo: ${el.flowName || el.flowId || ''}\n`);
-              lines.push(`*Comportamiento:* Después de ejecutar un flujo, tu única respuesta debe ser una pregunta contextual para guiar al usuario al siguiente paso lógico de la conversión. No añadas texto innecesario. ${el.flowName || el.flowId || ''}`);
+              lines.push(`> función: Ejecuta el flujo '${el.flowName || el.flowId || ''}'`);
+              lines.push("* **Poscondición de la función:** Tras ejecutar el flujo, **envía solo su salida literal de ‘Regla/parámetro’**; si no hay orden clara, **formula 1 pregunta contextual mínima** que guíe al siguiente paso lógico de conversión.");
               return;
             }
             if (el.fn === "notificar_asesor") {
@@ -258,13 +259,14 @@ export function TrainingBuilder({
   /* --------------------------------- UI --------------------------------- */
   return (
     <Card className="border-muted/60">
-      <CardHeader className="pb-2 flex items-center justify-between gap-2 flex-row">
+      {steps.length < 1 && <CardHeader className="pb-2 flex items-center justify-between gap-2 flex-row">
         <CardTitle className="text-base">Entrenamiento</CardTitle>
         <Button size="sm" onClick={addStep} className="gap-2">
           <Plus className="w-4 h-4" />
           Agregar paso
         </Button>
       </CardHeader>
+      }
 
       <CardContent className="space-y-4">
         {steps.length === 0 ? (
@@ -277,12 +279,17 @@ export function TrainingBuilder({
               <Card key={step.id} className="bg-muted/10 border-muted/60">
                 <CardHeader className="py-3">
                   <div className="flex items-center gap-2">
-                    <Input
-                      value={step.title}
-                      onChange={(e) => updateStepTitle(step.id, e.target.value)}
-                      className="h-8"
-                      placeholder="Título del paso"
-                    />
+                    <div className="grid w-full max-w-sm items-center gap-3">
+                      <Label htmlFor={step.id}>{`Paso ${idx + 1}`}</Label>
+                      <Input
+                        id={step.id}
+                        value={step.title}
+                        onChange={(e) => updateStepTitle(step.id, e.target.value)}
+                        className="h-8"
+                        placeholder="Título del paso"
+                      />
+                    </div>
+
                     <Button
                       variant="ghost"
                       size="icon"
@@ -298,12 +305,12 @@ export function TrainingBuilder({
                 <CardContent className="space-y-3">
                   {/* Mensaje principal del paso (vive dentro del paso) */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Mensaje principal del paso</label>
+                    <label className="text-sm font-medium">Orden principal del paso</label>
                     <Textarea
                       value={step.mainMessage}
                       onChange={(e) => updateStepMainMessage(step.id, e.target.value)}
                       placeholder="Escribe el mensaje inicial para este paso…"
-                      className="min-h-[72px]"
+                      className="min-h-[32px]"
                     />
                   </div>
 
@@ -321,9 +328,9 @@ export function TrainingBuilder({
                   </div>
 
                   {/* Lista de elementos del paso */}
-                  <div className="rounded-lg border border-dashed border-muted/60 p-3">
+                  <div className="rounded-lg border border-dashed border-muted/60 p-1">
                     {step.elements.length === 0 ? (
-                      <div className="text-center text-sm text-muted-foreground py-8">
+                      <div className="text-center text-sm text-muted-foreground">
                         No hay elementos en este paso. Agrega funciones o textos usando los botones de arriba.
                       </div>
                     ) : (
@@ -343,7 +350,7 @@ export function TrainingBuilder({
                                     placeholder="Regla adicional para este paso…"
                                     value={el.text}
                                     onChange={(e) => updateText(step.id, el.id, e.target.value)}
-                                    className="min-h-[84px]"
+                                    className="min-h-[32px]"
                                   />
                                 </CardContent>
                               </Card>
@@ -476,7 +483,7 @@ export function TrainingBuilder({
           </div>
         )}
       </CardContent>
-      {steps.length > 1 && <CardFooter className="pb-2 flex items-center justify-between gap-2 flex-row">
+      {steps.length > 0 && <CardFooter className="pb-2 flex items-center justify-between gap-2 flex-row">
         <CardTitle className="text-base">Entrenamiento</CardTitle>
 
         <Button size="sm" onClick={addStep} className="gap-2">

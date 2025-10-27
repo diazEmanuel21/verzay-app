@@ -49,7 +49,7 @@ export function ProductBuilder({
             .map((p) =>
                 [
                     `### Producto: ${(p.name ?? "").trim() || "(Sin nombre)"}`,
-                    `*Descripción:*`,
+                    `* **Descripción:**`,
                     (p.description ?? "").trim() || "(Sin descripción)",
                 ].join("\n")
             );
@@ -127,7 +127,7 @@ export function ProductBuilder({
                         <label className="text-sm font-medium mt-2">Descripción</label>
                         <Textarea
                             placeholder="Breve descripción del producto, materiales, tallas, colores, etc."
-                            className="min-h-[64px]"
+                            className="min-h-[32px]"
                             value={it.description ?? ""}
                             onChange={(e) => updateDesc(it.id, e.target.value)}
                         />

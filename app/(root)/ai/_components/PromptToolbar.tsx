@@ -1,26 +1,24 @@
-// app/(root)/ai/_components/PromptToolbar.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { CheckCircle2, UploadCloud, RotateCcw } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { UploadCloud, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { usePromptActions } from "./hooks/usePromptActions";
 
 export function PromptToolbar(props: {
     promptId: string;
     version: number;
-    userId: string;                  // publishedBy
+    userId: string;
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
     revalidatePath?: string;
-    revisions?: Array<{ revisionNumber: number; label?: string }>; // si ya las traes
+    revisions?: Array<{ revisionNumber: number; label?: string }>;
 }) {
-    const { promptId, version, userId, onVersionChange, onConflict, revalidatePath, revisions = [] } = props;
-    const [note, setNote] = useState("");
-    const [rev, setRev] = useState<number | undefined>(undefined);
+    const { promptId, version, userId, onVersionChange, onConflict, revalidatePath } = props;
 
-    const { loading, error, save, publish, revert } = usePromptActions({
+    const { loading, error, publish } = usePromptActions({
         promptId,
         version,
         publishedBy: userId,
@@ -29,54 +27,61 @@ export function PromptToolbar(props: {
         revalidatePath,
     });
 
+    const isSaving = !!loading;
+
+    const handlePublish = useCallback(async () => {
+        try {
+            await publish();
+            toast.success("Guardado correctamente");
+        } catch (e: any) {
+            toast.error(e?.message ?? "No se pudo guardar");
+        }
+    }, [publish]);
+
+    useEffect(() => {
+        if (error) toast.error(error);
+    }, [error]);
+
     return (
-        <div className="flex flex-wrap gap-2 items-center">
-            {/* <Button onClick={save} disabled={loading !== null} className="gap-2" variant="secondary">
-                <CheckCircle2 className="h-4 w-4" />
-                Guardar
-            </Button> */}
-
-            <div className="flex items-center gap-2 w-full justify-end">
-                {/* <Input
-                    placeholder="Nota de publicación (opcional)"
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    className="h-9 w-[240px]"
-                /> */}
-                <Button onClick={() => publish(note)} disabled={loading !== null} className="gap-2">
-                    <UploadCloud className="h-4 w-4" />
-                    Guardar
-                </Button>
+        <>
+            <div aria-live="polite" aria-atomic="true" className="sr-only">
+                {isSaving ? "Guardando…" : "Listo para guardar"}
             </div>
 
-            <div className="flex items-center gap-2">
-                {revisions.length > 0 && (
-                    <select
-                        className="h-9 rounded-md border px-2 text-sm"
-                        value={rev ?? ""}
-                        onChange={(e) => setRev(e.target.value ? Number(e.target.value) : undefined)}
-                    >
-                        <option value="">Selecciona revisión…</option>
-                        {revisions.map(r => (
-                            <option key={r.revisionNumber} value={r.revisionNumber}>
-                                {r.label ?? `Rev #${r.revisionNumber}`}
-                            </option>
-                        ))}
-                    </select>
-                )}
-                {/* <Button
-                    variant="outline"
-                    onClick={() => rev !== undefined && revert(rev)}
-                    disabled={loading !== null || rev === undefined}
-                    className="gap-2"
-                >
-                    <RotateCcw className="h-4 w-4" />
-                    Revertir
-                </Button> */}
-            </div>
+            <TooltipProvider>
+                <Tooltip delayDuration={200}>
+                    <TooltipTrigger asChild>
+                        <Button
+                            onClick={handlePublish}
+                            disabled={isSaving}
+                            aria-busy={isSaving}
+                            aria-label="Guardar"
+                            className="
+                gap-0 sm:gap-2 px-2 sm:px-3 h-9
+                bg-emerald-600 text-white
+                hover:bg-emerald-700
+                focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2
+                disabled:bg-emerald-600/60 disabled:text-white/80
+              "
+                        >
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <span className="hidden sm:inline">Guardando…</span>
+                                </>
+                            ) : (
+                                <>
+                                    <UploadCloud className="h-4 w-4" />
+                                    <span className="hidden sm:inline">Guardar</span>
+                                </>
+                            )}
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">Guardar</TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
 
-            {loading && <span className="text-xs text-muted-foreground">Procesando…</span>}
             {error && <span className="text-xs text-destructive">{error}</span>}
-        </div>
+        </>
     );
 }

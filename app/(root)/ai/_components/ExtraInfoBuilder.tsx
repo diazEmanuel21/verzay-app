@@ -89,7 +89,7 @@ export function ExtraInfoBuilder({
             .map((e) =>
                 [
                     `### Campo: ${(e.title ?? "").trim() || "(Sin título)"}`,
-                    `*Contenido:*`,
+                    `* **Contenido:**`,
                     (e.content ?? "").trim() || "(Sin contenido)",
                 ].join("\n")
             );
@@ -146,7 +146,7 @@ export function ExtraInfoBuilder({
 
             <CardContent className="space-y-6">
                 {/* Firma */}
-                <div className="rounded-md border p-3 border-muted/60 space-y-3">
+                <div className="rounded-md border p-2 border-muted/60 space-y-2">
                     <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">
                             Firma del agente (solo editable el nombre)
@@ -178,7 +178,7 @@ export function ExtraInfoBuilder({
                             </p> */}
 
                             <Textarea
-                                className="min-h-[64px] text-xs opacity-80 hidden"
+                                className="min-h-[32px] text-xs opacity-80 hidden"
                                 readOnly
                                 value={firmaText}
                             />
@@ -213,7 +213,7 @@ export function ExtraInfoBuilder({
 
                             <label className="text-sm font-medium mt-2">Contenido</label>
                             <Textarea
-                                className="min-h-[96px]"
+                                className="min-h-[32px]"
                                 placeholder="Texto libre, listas, detalles, condiciones…"
                                 value={it.content ?? ""}
                                 onChange={(e) => updateContent(it.id, e.target.value)}

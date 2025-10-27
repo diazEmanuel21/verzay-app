@@ -18,8 +18,8 @@ import { buildProductsMarkdown } from "./helpers/buildProductsMarkdown";
 import { buildExtrasMarkdown } from "./helpers/buildExtrasMarkdown";
 
 export const TYPE_AI_LABELS = {
-    business: "Negocio",
-    training: "Primeros pasos",
+    business: "Inicio",
+    training: "Pasos",
     faq: "Preguntas",
     products: "Productos",
     more: "Extras",
@@ -136,29 +136,29 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                 {TYPE_AI_LABELS[key]}
                             </button>
                         ))}
+                        <PromptToolbar
+                            promptId={promptMeta.id}
+                            version={promptVersion}
+                            userId={user.id}
+                            onVersionChange={setPromptVersion}
+                            onConflict={(server) => {
+                                // Rehidrata si quieres: sections, tabs, etc.
+                                // setSections(server.sections); setPromptVersion(server.version);
+                            }}
+                            revalidatePath={"/ia"}
+                            revisions={[]}
+                        />
                     </div>
                     <Button variant="ghost" size="icon" onClick={() => scroll("right")} className="sm:hidden" aria-label="Desplazar pestañas a la derecha">
                         <ArrowRight />
                     </Button>
-                </div>
 
-                <PromptToolbar
-                    promptId={promptMeta.id}
-                    version={promptVersion}
-                    userId={user.id}
-                    onVersionChange={setPromptVersion}
-                    onConflict={(server) => {
-                        // Rehidrata si quieres: sections, tabs, etc.
-                        // setSections(server.sections); setPromptVersion(server.version);
-                    }}
-                    revalidatePath={"/ia"}       // opcional
-                    revisions={[]}               // si ya las tienes en props
-                />
+                </div>
             </div>
 
             {/* layout */}
-            <div className={cn("mt-0 lg:mt-2 h-[calc(100vh-132px)]", "grid lg:grid-cols-[1fr,420px] gap-4", "overflow-hidden")}>
-                <div className="min-h-0 overflow-y-auto pr-1">
+            <div className="flex flex-row w-full gap-2 max-h-[87vh]">
+                <div className="flex flex-1 flex-col min-h-0 overflow-y-auto pr-1 ">
                     <TabsContent value="business" className="m-0">
                         <BusinessPromptBuilder
                             user={user}
@@ -265,7 +265,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                     <div className="h-6" />
                 </div>
 
-                <aside className="hidden lg:block w-full lg:w-[420px] lg:sticky lg:top-[72px] self-start">
+                <aside className="hidden lg:block lg:w-[420px]">
                     <PromptPreview prompt={prompt} />
                 </aside>
             </div>
