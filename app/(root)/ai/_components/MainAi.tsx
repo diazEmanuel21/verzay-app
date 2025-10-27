@@ -140,9 +140,22 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                     <Button variant="ghost" size="icon" onClick={() => scroll("right")} className="sm:hidden" aria-label="Desplazar pestañas a la derecha">
                         <ArrowRight />
                     </Button>
+                    
+                    <PromptToolbar
+                        promptId={promptMeta.id}
+                        version={promptVersion}
+                        userId={user.id}
+                        onVersionChange={setPromptVersion}
+                        onConflict={(server) => {
+                            // Rehidrata si quieres: sections, tabs, etc.
+                            // setSections(server.sections); setPromptVersion(server.version);
+                        }}
+                        revalidatePath={"/ia"}       // opcional
+                        revisions={[]}               // si ya las tienes en props
+                    />
                 </div>
 
-                <PromptToolbar
+                {/* <PromptToolbar
                     promptId={promptMeta.id}
                     version={promptVersion}
                     userId={user.id}
@@ -153,7 +166,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                     }}
                     revalidatePath={"/ia"}       // opcional
                     revisions={[]}               // si ya las tienes en props
-                />
+                /> */}
             </div>
 
             {/* layout */}

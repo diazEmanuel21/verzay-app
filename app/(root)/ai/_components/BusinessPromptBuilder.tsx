@@ -41,7 +41,6 @@ import { useBusinessAutosave } from "./hooks/useBusinessAutosave";
 
 /* ---------- CAMPOS ADICIONALES DISPONIBLES ---------- */
 const optionalFields = [
-    { value: "maps", label: "URL Google Maps" },
     { value: "email", label: "Correo electrónico" },
     { value: "sitio", label: "Sitio web" },
     { value: "facebook", label: "Facebook" },
@@ -70,7 +69,7 @@ export const BusinessPromptBuilder = ({
             ubicacion: values.ubicacion ?? "",
             horarios: values.horarios ?? "",
             maps: user?.mapsUrl ?? values.maps ?? "",
-            telefono: user?.notificationNumber ?? values.telefono ?? "",
+            telefono: values.telefono ?? values.telefono ?? "",
             email: values.email ?? "",
             sitio: values.sitio ?? "",
             facebook: values.facebook ?? "",
@@ -225,34 +224,8 @@ export const BusinessPromptBuilder = ({
                                         </FormItem>
                                     )}
                                 />
-                            </div>
 
-                            {/* Campos dinámicos */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {selectedFields.includes("maps") && (
-                                    <FormField
-                                        control={form.control}
-                                        name="maps"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>URL Google Maps</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        type="url"
-                                                        placeholder="https://maps.google.com/..."
-                                                        {...field}
-                                                        onChange={(e) => {
-                                                            field.onChange(e);
-                                                            handleChange?.("maps")(e);
-                                                        }}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                )}
-
+                                {/* Campos dinámicos */}
                                 {selectedFields.includes("email") && (
                                     <FormField
                                         control={form.control}

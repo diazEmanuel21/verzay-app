@@ -90,18 +90,18 @@ export function TrainingBuilder({
 
     steps.forEach((step, i) => {
       const n = i + 1;
-      lines.push(`\n# Paso ${n} — ${step.title || "Sin título"}`);
+      lines.push(`\n### Paso ${n} — ${step.title || "Sin título"}`);
       if (step.mainMessage?.trim()) {
-        lines.push(`Mensaje principal del paso:\n${step.mainMessage.trim()}`);
+        lines.push(`* **Orden principal del paso:**\n${step.mainMessage.trim()}`);
       }
 
       if (step.elements.length > 0) {
-        lines.push("\nElementos del paso:");
+        lines.push("\n#### Elementos del paso:");
         step.elements.forEach((el, idx) => {
           const k = idx + 1;
           if (el.kind === "text") {
             const t = el.text?.trim();
-            if (t) lines.push(`- (${k}) Texto: ${t}`);
+            if (t) lines.push(`- (${k})  **Regla/parámetro:** ${t}`);
             return;
           }
           if (el.kind === "function") {
@@ -117,8 +117,8 @@ export function TrainingBuilder({
               return;
             }
             if (el.fn === "ejecutar_flujo") {
-              lines.push(`> función: Ejecutar Flujo: ${el.flowName || el.flowId || ''}\n`);
-              lines.push(`*Comportamiento:* Después de ejecutar un flujo, tu única respuesta debe ser una pregunta contextual para guiar al usuario al siguiente paso lógico de la conversión. No añadas texto innecesario. ${el.flowName || el.flowId || ''}`);
+              lines.push(`> función: Ejecuta el flujo '${el.flowName || el.flowId || ''}'`);
+              lines.push("* **Poscondición de la función:** Tras ejecutar el flujo, **envía solo su salida literal de ‘Regla/parámetro’**; si no hay orden clara, **formula 1 pregunta contextual mínima** que guíe al siguiente paso lógico de conversión.");
               return;
             }
             if (el.fn === "notificar_asesor") {

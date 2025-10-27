@@ -11,15 +11,15 @@ export function buildTrainingMarkdown(training: z.infer<typeof TrainingDraftSche
             if ((el as any).kind === 'text') {
                 body.push((el as any).text ?? '');
             } else {
-                
+
                 const fn = el as any;
                 switch (fn.fn) {
                     case 'captura_datos':
                         body.push(`> función: captura_datos\n${nonEmpty(fn.prompt) || ''}\nCampos: ${(fn.fields || []).join(', ')}`);
                         break;
                     case 'ejecutar_flujo':
-                        body.push(`> función: Ejecutar Flujo: ${fn.flowName || fn.flowId || ''}\n`);
-                        body.push(`*Comportamiento:* Después de ejecutar un flujo, tu única respuesta debe ser una pregunta contextual para guiar al usuario al siguiente paso lógico de la conversión. No añadas texto innecesario. ${fn.flowName || fn.flowId || ''}`);
+                        body.push(`> función: Ejecuta el flujo '${fn.flowName || fn.flowId || ''}'`);
+                        body.push("* **Poscondición de la función:** Tras ejecutar el flujo, **envía solo su salida literal de ‘Regla/parámetro’**; si no hay orden clara, **formula 1 pregunta contextual mínima** que guíe al siguiente paso lógico de conversión.");
                         break;
                     case 'notificar_asesor':
                         body.push(`> función: notificar_asesor\nDestino: ${fn.notificationNumber || ''}`);

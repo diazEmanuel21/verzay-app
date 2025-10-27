@@ -89,7 +89,7 @@ export function ExtraInfoBuilder({
             .map((e) =>
                 [
                     `### Campo: ${(e.title ?? "").trim() || "(Sin título)"}`,
-                    `*Contenido:*`,
+                    `* **Contenido:**`,
                     (e.content ?? "").trim() || "(Sin contenido)",
                 ].join("\n")
             );

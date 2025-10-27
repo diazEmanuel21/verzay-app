@@ -146,11 +146,14 @@ export const FunctionSelectorInline = ({
                                         <CommandList>
                                             <CommandEmpty>Sin resultados…</CommandEmpty>
                                             <CommandGroup>
+
+                                                {/* //TODO: EN LOS  FIELD CON PROMPT SOLO DEBE DE SALIR UNA PEQUEÑA PARTE, POR EX: EN FLUJO SALE, EJECUTAR FLUJO: NOMBRE */}
+                                                {/* //TODO: INMITAR COMPORTAMIENTO DE PASOS */}
                                                 {flows.map((f) => (
                                                     <CommandItem
                                                         key={f.id}
                                                         onSelect={() => {
-                                                            insert(`> Ejecutar flujo: **${f.name}**`);
+                                                            insert(`> función: Ejecuta el flujo '${f.name.toUpperCase()}'\n* **Poscondición de la función:** Tras ejecutar el flujo, **envía solo su salida literal de ‘Regla/parámetro’**; si no hay orden clara, **formula 1 pregunta contextual mínima** que guíe al siguiente paso lógico de conversión.'`);
                                                             reset();
                                                         }}
                                                     >
@@ -201,7 +204,7 @@ export const FunctionSelectorInline = ({
                         ) : (
                             <div className="flex justify-end">
                                 <Button size="sm" variant="default" onClick={() => handleInsertCaptura(subtype)}>
-                                    Insertar captura 
+                                    Insertar captura
                                 </Button>
                             </div>
                         )}

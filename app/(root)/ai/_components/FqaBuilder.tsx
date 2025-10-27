@@ -64,7 +64,7 @@ export function FqaBuilder({
         const blocks = items
             .filter((i) => i.q.trim() || i.a.trim())
             .map((i) =>
-                [`### ${i.q.trim() || "Pregunta"}`, `*Respuesta:*`, i.a.trim() || "(sin respuesta)"].join("\n")
+                [`### ${i.q.trim() || "Pregunta"}`, `* **Respuesta:**`, i.a.trim() || "(sin respuesta)"].join("\n")
             );
         return blocks.join("\n\n---\n\n");
     }, [items]);
@@ -108,20 +108,6 @@ export function FqaBuilder({
 
     const removeItem = (id: string) =>
         setItems((prev) => prev.filter((i) => i.id !== id));
-
-    // 🔽 Agregar nombre del flujo como texto plano en la respuesta
-    const appendFlowToAnswer = (faqId: string, flowName: string) => {
-        setItems((prev) =>
-            prev.map((i) =>
-                i.id === faqId
-                    ? {
-                        ...i,
-                        a: (i.a ? i.a.trim() + "\n\n" : "") + `> Ejecutar flujo: **${flowName}**`,
-                    }
-                    : i
-            )
-        );
-    };
 
     return (
         <div className="gap-2 flex flex-col">
