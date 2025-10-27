@@ -36,7 +36,7 @@ export function PromptToolbar(props: {
                 Guardar
             </Button> */}
 
-            <div className="flex items-center gap-2 w-full justify-end">
+            <div className="flex items-center gap-2 w-full justify-start">
                 {/* <Input
                     placeholder="Nota de publicación (opcional)"
                     value={note}

@@ -18,8 +18,8 @@ import { buildProductsMarkdown } from "./helpers/buildProductsMarkdown";
 import { buildExtrasMarkdown } from "./helpers/buildExtrasMarkdown";
 
 export const TYPE_AI_LABELS = {
-    business: "Negocio",
-    training: "Primeros pasos",
+    business: "Inicio",
+    training: "Pasos",
     faq: "Preguntas",
     products: "Productos",
     more: "Extras",
@@ -157,7 +157,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
             </div>
 
             {/* layout */}
-            <div className={cn("mt-0 lg:mt-2 h-[calc(100vh-132px)]", "grid lg:grid-cols-[1fr,420px] gap-4", "overflow-hidden")}>
+            <div className={cn("mt-0 lg:mt-2 h-[calc(100vh-132px)]", "grid lg:grid-cols-[1fr,520px] gap-4", "overflow-hidden")}>
                 <div className="min-h-0 overflow-y-auto pr-1">
                     <TabsContent value="business" className="m-0">
                         <BusinessPromptBuilder
@@ -265,7 +265,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                     <div className="h-6" />
                 </div>
 
-                <aside className="hidden lg:block w-full lg:w-[420px] lg:sticky lg:top-[72px] self-start">
+                <aside className="hidden lg:block w-full lg:w-[520px] lg:sticky self-start">
                     <PromptPreview prompt={prompt} />
                 </aside>
             </div>

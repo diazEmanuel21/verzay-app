@@ -111,52 +111,6 @@ export const BusinessPromptBuilder = ({
                 <CardContent className="space-y-4">
                     <Form {...form}>
                         <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-                            {/* 🔽 Selector de Campos Adicionales */}
-                            <div className="flex flex-col gap-2">
-                                <FormLabel>Campos adicionales</FormLabel>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            role="combobox"
-                                            className="justify-between"
-                                        >
-                                            {selectedFields.length > 0
-                                                ? `${selectedFields.length} seleccionados`
-                                                : "Seleccionar campos..."}
-                                            <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="p-0 w-[280px]">
-                                        <Command>
-                                            <CommandInput placeholder="Buscar campo..." />
-                                            <CommandList>
-                                                <CommandGroup>
-                                                    {optionalFields.map((field) => (
-                                                        <CommandItem
-                                                            key={field.value}
-                                                            onSelect={() => toggleField(field.value)}
-                                                        >
-                                                            <Check
-                                                                className={cn(
-                                                                    "mr-2 h-4 w-4",
-                                                                    selectedFields.includes(field.value)
-                                                                        ? "opacity-100"
-                                                                        : "opacity-0"
-                                                                )}
-                                                            />
-                                                            {field.label}
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-
-                            <Separator />
-
                             {/* Campos Principales */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {/* Nombre */}
@@ -471,6 +425,52 @@ export const BusinessPromptBuilder = ({
                                     />
                                 </>
                             )}
+
+                            <Separator />
+
+                            {/* 🔽 Selector de Campos Adicionales */}
+                            <div className="flex flex-col gap-2">
+                                <FormLabel>Campos adicionales</FormLabel>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            className="justify-between"
+                                        >
+                                            {selectedFields.length > 0
+                                                ? `${selectedFields.length} seleccionados`
+                                                : "Seleccionar campos..."}
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="p-0 w-[280px]">
+                                        <Command>
+                                            <CommandInput placeholder="Buscar campo..." />
+                                            <CommandList>
+                                                <CommandGroup>
+                                                    {optionalFields.map((field) => (
+                                                        <CommandItem
+                                                            key={field.value}
+                                                            onSelect={() => toggleField(field.value)}
+                                                        >
+                                                            <Check
+                                                                className={cn(
+                                                                    "mr-2 h-4 w-4",
+                                                                    selectedFields.includes(field.value)
+                                                                        ? "opacity-100"
+                                                                        : "opacity-0"
+                                                                )}
+                                                            />
+                                                            {field.label}
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
                         </form>
                     </Form>
                 </CardContent>
