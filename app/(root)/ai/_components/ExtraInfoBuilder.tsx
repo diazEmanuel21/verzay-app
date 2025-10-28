@@ -212,7 +212,6 @@ export function ExtraInfoBuilder({
                                     items={items}
                                     addItem={(it) => setItems((prev) => [...prev, it])}
                                     removeItem={(id) => setItems((prev) => prev.filter(x => x.id !== id))}
-                                    onInsert={(append) => updateContent(it.id, it.content ? `${it.content}\n${append}` : append)}
                                     flows={flows}
                                     notificationNumber={notificationNumber}
                                 />

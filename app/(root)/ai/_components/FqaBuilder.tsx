@@ -154,7 +154,6 @@ export function FqaBuilder({
                                     items={items}
                                     addItem={(it) => setItems((prev) => [...prev, it])}
                                     removeItem={(id) => setItems((prev) => prev.filter(x => x.id !== id))}
-                                    onInsert={(append) => updateA(it.id, it.a ? `${it.a}\n${append}` : append)}
                                     flows={flows}
                                     notificationNumber={notificationNumber}
                                 />

@@ -138,7 +138,6 @@ export function ProductBuilder({
                                 items={items} 
                                 addItem={(it) => addProduct()}
                                 removeItem={(id) => removeProduct(it.id)}
-                                // onInsert opcional para apéndices en descripción si lo deseas
                                 flows={flows}
                             />
                         </div>
