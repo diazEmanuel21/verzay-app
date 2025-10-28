@@ -504,7 +504,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
   /* Handlers */
   const handleComposeMediaChange = useCallback((m: ComposeMedia | null) => {
     setComposeMedia(m);
-    if (m) setInput(m.fileName || '');
+    if (m) setInput('');
   }, []);
   const clearComposeMedia = useCallback(() => setComposeMedia(null), []);
 
@@ -533,7 +533,6 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
 
   /* Envío */
   const sendNow = useCallback(async () => {
-    if (isSending) return;
 
     let payload: OutgoingMessagePayload | null = null;
     let content = '';
@@ -551,7 +550,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
       media = { type: 'audio', url: recordedAudio.dataUrlWithPrefix, mimeType: recordedAudio.mimetype };
       setRecordedAudio(null);
     } else if (composeMedia) {
-      const caption = input && input.trim() ? input.trim() : composeMedia.fileName;
+      const caption = input && input.trim() ? input.trim() : '';
       payload = {
         kind: 'media',
         mediatype: composeMedia.mediatype,
