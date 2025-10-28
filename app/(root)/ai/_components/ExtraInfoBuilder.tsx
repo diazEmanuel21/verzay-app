@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Trash2, Plus, PenSquare } from "lucide-react";
 import { useExtrasAutosave } from "./hooks/useExtrasAutosave";
 import { ExtraInfoBuilderProps, ExtraItem, ExtraItemDTO } from "@/types/agentAi";
-import { FunctionSelectorInline } from "./helpers";
+import { FunctionSelectorInline, previewText } from "./helpers";
 
 const PROMPT_SIGNATURE_DEFAULT =
     "###  FIRMA DEL AGENTE\n\n" +
@@ -177,60 +177,41 @@ export function ExtraInfoBuilder({
                     {items.map((it) => (
                         <div
                             key={it.id}
-                            className="rounded-md border p-3 border-muted/60 space-y-3"
+                            className="rounded-md border border-muted/60 p-2 space-y-2"
                         >
-                            <div className="flex items-center justify-between">
-                                <label className="text-sm font-medium">Título</label>
+                            {/* Header compacto (nombre) */}
+                            <div className="flex items-start justify-between gap-2">
+                                <pre className="text-[13px] leading-snug whitespace-pre-wrap break-words font-medium text-foreground/90">
+                                    {it.title || "sin titulo"}
+                                </pre>
+
                                 <Button
-                                    type="button"
                                     variant="ghost"
                                     size="icon"
-                                    aria-label="Eliminar campo"
+                                    aria-label="Eliminar producto"
                                     onClick={() => removeItem(it.id)}
+                                    className="shrink-0 h-7 w-7"
                                 >
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
                             </div>
-                            <Input
-                                placeholder="Ej. Políticas de garantía"
-                                value={it.title ?? ""}
-                                onChange={(e) => updateTitle(it.id, e.target.value)}
-                            />
-                            
 
-                            <label className="text-sm font-medium mt-2">Contenido</label>
-                            <Textarea
-                                className="min-h-[32px]"
-                                placeholder="Texto libre, listas, detalles, condiciones…"
-                                value={it.content ?? ""}
-                                onChange={(e) => updateContent(it.id, e.target.value)}
-                            />
-
-                            <div className="flex w-full flex-col">
-                                <FunctionSelectorInline<ExtraItemDTO>
-                                    mode="extras"
-                                    items={items}
-                                    addItem={(it) => setItems((prev) => [...prev, it])}
-                                    flows={flows}
-                                    notificationNumber={notificationNumber}
-                                />
-
-                            </div>
+                            {/* Descripción compacta (truncada) */}
+                            <pre className="text-xs leading-snug whitespace-pre-wrap break-words text-foreground/80">
+                                {previewText(it.content, 80)}
+                            </pre>
                         </div>
                     ))}
 
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">
-                            Campos/Información extra
-                        </span>
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            className="gap-2"
-                            onClick={addItem}
-                        >
-                            <Plus className="h-4 w-4" /> Agregar campo
-                        </Button>
+                    <div className="flex w-full flex-col">
+                        <FunctionSelectorInline<ExtraItemDTO>
+                            mode="extras"
+                            items={items}
+                            addItem={(it) => setItems((prev) => [...prev, it])}
+                            flows={flows}
+                            notificationNumber={notificationNumber}
+                        />
+
                     </div>
                 </div>
             </CardContent>

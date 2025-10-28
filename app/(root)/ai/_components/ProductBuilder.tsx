@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Trash2, Plus } from "lucide-react";
 import { useProductsAutosave } from "./hooks/useProductsAutosave";
 import { ProductBuilderProps, ProductItem, ProductItemDTO } from "@/types/agentAi";
-import { FunctionSelectorInline } from "./helpers";
+import { FunctionSelectorInline, previewText } from "./helpers";
 
 export function ProductBuilder({
     values,
@@ -103,59 +103,48 @@ export function ProductBuilder({
                 <CardTitle className="text-base">Registro de productos</CardTitle>
             </CardHeader>
 
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
                 {items.map((it) => (
-                    <div key={it.id} className="rounded-md border p-3 border-muted/60 space-y-3">
-                        <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium">Nombre</label>
+                    <div
+                        key={it.id}
+                        className="rounded-md border border-muted/60 p-2 space-y-2"
+                    >
+                        {/* Header compacto (nombre) */}
+                        <div className="flex items-start justify-between gap-2">
+                            <pre className="text-[13px] leading-snug whitespace-pre-wrap break-words font-medium text-foreground/90">
+                                {it.name || "Producto sin nombre"}
+                            </pre>
+
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 aria-label="Eliminar producto"
                                 onClick={() => removeProduct(it.id)}
+                                className="shrink-0 h-7 w-7"
                             >
                                 <Trash2 className="h-4 w-4" />
                             </Button>
                         </div>
 
-                        <Input
-                            placeholder="Ej. Camiseta básica unisex"
-                            value={it.name ?? ""}
-                            onChange={(e) => updateName(it.id, e.target.value)}
-                        />
-
-                        <label className="text-sm font-medium mt-2">Descripción</label>
-                        <Textarea
-                            placeholder="Breve descripción del producto, materiales, tallas, colores, etc."
-                            className="min-h-[32px]"
-                            value={it.description ?? ""}
-                            onChange={(e) => updateDesc(it.id, e.target.value)}
-                        />
-
-                        <div className="flex w-full flex-col">
-                            <FunctionSelectorInline<ProductItemDTO>
-                                mode="products"
-                                items={items}
-                                addItem={(newItem) => setItems((prev) => [...prev, newItem])}
-                                flows={flows}
-                                notificationNumber={notificationNumber}
-                            />
-                        </div>
+                        {/* Descripción compacta (truncada) */}
+                        <pre className="text-xs leading-snug whitespace-pre-wrap break-words text-foreground/80">
+                            {previewText(it.description, 80)}
+                        </pre>
                     </div>
                 ))}
 
-                <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium" />
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={addProduct}
-                        className="gap-2"
-                    >
-                        <Plus className="h-4 w-4" /> Agregar producto
-                    </Button>
+                {/* Acciones (compactas) */}
+                <div className="flex w-full flex-row justify-end items-center gap-2">
+                    <FunctionSelectorInline<ProductItemDTO>
+                        mode="products"
+                        items={items}
+                        addItem={(newItem) => setItems((prev) => [...prev, newItem])}
+                        flows={flows}
+                        notificationNumber={notificationNumber}
+                    />
                 </div>
             </CardContent>
         </Card>
+
     );
 }

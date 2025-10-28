@@ -128,7 +128,7 @@ export function FunctionSelectorInline<T extends QaItem | ProductItemDTO | Extra
 
     // ========= UI =========
     return (
-        <div className="space-y-3">
+        <div className="flex flex-1 flex-col">
             {/* Selector principal */}
             <div className="flex w-full justify-end gap-2">
                 <Popover>
@@ -185,112 +185,114 @@ export function FunctionSelectorInline<T extends QaItem | ProductItemDTO | Extra
                 </Button>
             </div>
 
-            {/* Subcomponente: ejecutar_flujo */}
-            {selected === "ejecutar_flujo" && (
-                <Card className="bg-muted/20 border-muted/60">
-                    <CardHeader className="py-3 flex-row items-center justify-between">
-                        <CardTitle className="text-sm">Seleccionar flujo</CardTitle>
-                        <Button variant="ghost" size="icon" onClick={() => setSelected(null)}>
-                            <X className="h-4 w-4" />
-                        </Button>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        {flows.length === 0 && (
-                            <div className="text-sm text-muted-foreground">No hay flujos disponibles</div>
-                        )}
-                        {flows.length > 0 && (
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant="outline" className="w-full justify-between">
-                                        Elegir flujo…
-                                        <Plus className="h-4 w-4 opacity-60" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent align="start" className="p-0 w-[320px]">
-                                    <Command>
-                                        <CommandInput placeholder="Buscar flujo…" />
-                                        <CommandList>
-                                            <CommandEmpty>Sin resultados…</CommandEmpty>
-                                            <CommandGroup>
-                                                {flows.map((f) => (
-                                                    <CommandItem key={f.id} onSelect={() => handleInsertEjecutarFlujo(f.name)}>
-                                                        {f.name}
-                                                    </CommandItem>
-                                                ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-                        )}
-                    </CardContent>
-                </Card>
-            )}
+            <div className="flex flex-1 flex-col w-full justify-center items-center">
+                {/* Subcomponente: ejecutar_flujo */}
+                {selected === "ejecutar_flujo" && (
+                    <Card className="bg-muted/20 border-muted/60">
+                        <CardHeader className="py-3 flex-row items-center justify-between">
+                            <CardTitle className="text-sm">Seleccionar flujo</CardTitle>
+                            <Button variant="ghost" size="icon" onClick={() => setSelected(null)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {flows.length === 0 && (
+                                <div className="text-sm text-muted-foreground">No hay flujos disponibles</div>
+                            )}
+                            {flows.length > 0 && (
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-between">
+                                            Elegir flujo…
+                                            <Plus className="h-4 w-4 opacity-60" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent align="start" className="p-0 w-[320px]">
+                                        <Command>
+                                            <CommandInput placeholder="Buscar flujo…" />
+                                            <CommandList>
+                                                <CommandEmpty>Sin resultados…</CommandEmpty>
+                                                <CommandGroup>
+                                                    {flows.map((f) => (
+                                                        <CommandItem key={f.id} onSelect={() => handleInsertEjecutarFlujo(f.name)}>
+                                                            {f.name}
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
 
-            {/* Subcomponente: captura_datos */}
-            {selected === "captura_datos" && subtype && (
-                <Card className="bg-muted/20 border-muted/60">
-                    <CardHeader className="py-3 flex-row items-center justify-between">
-                        <CardTitle className="text-sm">Captura de datos — {subtype}</CardTitle>
-                        <Button variant="ghost" size="icon" onClick={() => setSelected(null)}>
-                            <X className="h-4 w-4" />
-                        </Button>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        {subtype === "Pedidos" ? (
-                            <div className="px-2">
-                                <PedidoFieldsEditor
-                                    stepId="faq" // valores dummy
-                                    elId="captura"
-                                    element={{ id: "x", kind: "function", fn: "captura_datos", subtype: "Pedidos", prompt: "", fields: pedidoFields }}
-                                    onAdd={addPedidoField}
-                                    onRemove={removePedidoField}
-                                />
+                {/* Subcomponente: captura_datos */}
+                {selected === "captura_datos" && subtype && (
+                    <Card className="bg-muted/20 border-muted/60">
+                        <CardHeader className="py-3 flex-row items-center justify-between">
+                            <CardTitle className="text-sm">Captura de datos — {subtype}</CardTitle>
+                            <Button variant="ghost" size="icon" onClick={() => setSelected(null)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {subtype === "Pedidos" ? (
+                                <div className="px-2">
+                                    <PedidoFieldsEditor
+                                        stepId="faq" // valores dummy
+                                        elId="captura"
+                                        element={{ id: "x", kind: "function", fn: "captura_datos", subtype: "Pedidos", prompt: "", fields: pedidoFields }}
+                                        onAdd={addPedidoField}
+                                        onRemove={removePedidoField}
+                                    />
 
-                                <div className="flex justify-end pt-2">
-                                    <Button size="sm" variant="default" onClick={() => handleInsertCaptura("Pedidos")}>
-                                        Insertar captura con campos
+                                    <div className="flex justify-end pt-2">
+                                        <Button size="sm" variant="default" onClick={() => handleInsertCaptura("Pedidos")}>
+                                            Insertar captura con campos
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex justify-end">
+                                    <Button size="sm" variant="default" onClick={() => handleInsertCaptura(subtype)}>
+                                        Insertar captura
                                     </Button>
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="flex justify-end">
-                                <Button size="sm" variant="default" onClick={() => handleInsertCaptura(subtype)}>
-                                    Insertar captura
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Subcomponente: add_rule */}
+                {selected === "add_rule" && (
+                    <Card className="bg-muted/30 border-muted/60">
+                        <CardHeader className="py-3 flex-row items-center justify-between">
+                            <CardTitle className="text-sm">Regla/parámetro</CardTitle>
+                            <Button variant="ghost" size="icon" onClick={() => setSelected(null)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            <Textarea
+                                placeholder="Regla adicional para este paso…"
+                                value={ruleText}
+                                onChange={(e) => setRuleText(e.target.value)}
+                                className="min-h-[72px]"
+                            />
+                            <div className="flex justify-end gap-2">
+                                <Button variant="outline" onClick={() => setSelected(null)}>
+                                    Cancelar
+                                </Button>
+                                <Button variant="default" onClick={handleInsertRule}>
+                                    Insertar regla
                                 </Button>
                             </div>
-                        )}
-                    </CardContent>
-                </Card>
-            )}
-
-            {/* Subcomponente: add_rule */}
-            {selected === "add_rule" && (
-                <Card className="bg-muted/30 border-muted/60">
-                    <CardHeader className="py-3 flex-row items-center justify-between">
-                        <CardTitle className="text-sm">Regla/parámetro</CardTitle>
-                        <Button variant="ghost" size="icon" onClick={() => setSelected(null)}>
-                            <X className="h-4 w-4" />
-                        </Button>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        <Textarea
-                            placeholder="Regla adicional para este paso…"
-                            value={ruleText}
-                            onChange={(e) => setRuleText(e.target.value)}
-                            className="min-h-[72px]"
-                        />
-                        <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setSelected(null)}>
-                                Cancelar
-                            </Button>
-                            <Button variant="default" onClick={handleInsertRule}>
-                                Insertar regla
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
         </div>
     );
 }

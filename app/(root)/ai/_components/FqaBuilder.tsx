@@ -4,7 +4,6 @@ import { ChangeEvent, useEffect, useMemo, useState, useCallback } from "react";
 import { nanoid } from "nanoid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
     Popover,
     PopoverTrigger,
@@ -22,7 +21,6 @@ import { Plus, Trash2 } from "lucide-react";
 import { FqaBuilderProps, PRESETS, QaItem } from "@/types/agentAi";
 import { useFaqAutosave } from "./hooks/useFaqAutosave";
 import { FunctionSelectorInline, previewText } from "./helpers";
-import { Input } from "@/components/ui/input";
 
 export function FqaBuilder({
     values,
@@ -190,11 +188,6 @@ export function FqaBuilder({
                                     </Command>
                                 </PopoverContent>
                             </Popover>
-                        {/* Footer de acciones globales */}
-                        {/* {items.length < 1 &&
-                            <Button variant="secondary" onClick={addFaq} className="gap-2">
-                                + Agregar pregunta
-                            </Button>} */}
                     </div>
                 </CardContent>
             </Card>
