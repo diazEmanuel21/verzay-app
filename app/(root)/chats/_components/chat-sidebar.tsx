@@ -1,43 +1,49 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-// 1. IMPORTAMOS LOS ICONOS NECESARIOS (MessageSquare es para texto por defecto)
-import { Search, Users, Inbox, X, Image as ImageIcon, Video, FileText, AudioLines, Mic, MessageSquare } from "lucide-react";
+import { Search, Users, Inbox, X, Image as ImageIcon, Video, FileText, AudioLines, Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-// Importamos LucideIcon para tipado
 import { LucideIcon } from "lucide-react";
+// Importamos el tipo MessageRecord y el hook
+import { useLocalStorageObjectArray, MessageRecord } from "@/hooks/chats/useSeenMessages"; 
 
-/* ---------- Tipos del fetch ---------- */
-// NOTA: Se ha modificado el tipo LastMessage para incluir el messageType en el objeto que se mapea.
+
+/* ---------- Tipos del fetch (Se mantiene) ---------- */
+type MessageKey = {
+    id: string;
+    fromMe: boolean; // <-- USADO EN lastTextFrom
+    remoteJid: string;
+};
+
 type LastMessage = {
     message?: { conversation?: string };
     messageTimestamp?: number;
     messageType?: string;
+    key: MessageKey;
 };
 type ChatData = {
     remoteJid: string;
     pushName: string | null;
     profilePicUrl: string | null;
     lastMessage: LastMessage | null;
-    unreadCount: number;
+    unreadCount: number; // No usado, pero debe estar en el tipo si viene del fetch
 };
 export type FetchChatsResult =
     | { success: true; message: string; data: ChatData[] }
     | { success: false; message: string };
 
-/* ---------- Props ---------- */
+/* ---------- Props y Helpers (Modificado: lastTextFrom) ---------- */
 type ChatSidebarProps = {
     result: FetchChatsResult;
     onSelectRemoteJid?: (remoteJid: string) => void | Promise<void>;
     selectedJid?: string;
 };
 
-/* ---------- Helpers ---------- */
 function epochToMs(epoch?: number): number {
     if (!epoch) return 0;
-    return epoch < 2_000_000_000 ? epoch * 1000 : epoch; // soporta segundos/ms
+    return epoch < 2_000_000_000 ? epoch * 1000 : epoch; 
 }
 function formatTimeFromEpoch(epoch?: number): string {
     const ms = epochToMs(epoch);
@@ -48,42 +54,38 @@ function nameFrom(chat: ChatData): string {
     const name = chat.pushName?.trim();
     if (name) return name;
     const jid = chat.remoteJid || "";
-    // LOG: Si no hay pushName, usamos parte del JID.
-    
     return jid.includes("@") ? jid.split("@")[0] : jid;
 }
 
-// 2. NUEVA FUNCIÓN HELPER: Mapea el messageType a un Icono de Lucide.
-function getIconForMessageType(type?: string): LucideIcon | null {
+function getIconForMessageType(type?: string): LucideIcon | null { 
     if (!type) return null;
 
-    // Mapeo basado en Evolution Message Types (ajusta según tus necesidades)
     switch (type) {
         case 'conversation':
         case 'extendedTextMessage':
-            return null; // Texto no necesita icono, o usa MessageSquare si lo prefieres
+            return null;
         case 'imageMessage':
             return ImageIcon;
         case 'videoMessage':
             return Video;
         case 'audioMessage':
-            return Mic; // Usamos Mic para notas de voz/archivos de audio
-        case 'documentMessage': // fileMessage se traduce a documentMessage en la mayoría de los casos
+            return Mic;
+        case 'documentMessage':
         case 'fileMessage':
             return FileText;
         case 'locationMessage':
-            return MessageSquare; // Ejemplo: Si no tienes un icono de ubicación
+            return null; 
         default:
-            // LOG: Mensajes de tipo no mapeado
-
             return null;
     }
 }
 
-// 3. MODIFICACIÓN DE lastTextFrom: Devuelve el texto y el tipo de mensaje.
-function lastTextFrom(chat: ChatData): { text: string; messageType?: string } {
+// MODIFICADO: Ahora devuelve fromMe
+function lastTextFrom(chat: ChatData): { text: string; messageType?: string, id: string, fromMe: boolean } {
     const msg = chat.lastMessage?.message;
     const type = chat.lastMessage?.messageType;
+    const id = chat.lastMessage?.key.id ?? '' 
+    const fromMe = chat.lastMessage?.key.fromMe ?? false; // <-- EXTRAEMOS fromMe
     let text = "";
 
     if (!msg) {
@@ -91,7 +93,6 @@ function lastTextFrom(chat: ChatData): { text: string; messageType?: string } {
     } else if (msg.conversation) {
         text = msg.conversation;
     } else {
-        // Asignar un texto representativo basado en el tipo
         switch (type) {
             case 'imageMessage':
                 text = "Imagen";
@@ -115,7 +116,7 @@ function lastTextFrom(chat: ChatData): { text: string; messageType?: string } {
         }
     }
 
-    return { text, messageType: type };
+    return { text, messageType: type, id, fromMe }; // <-- DEVOLVEMOS fromMe
 }
 
 function avatarFrom(chat: ChatData): string {
@@ -125,113 +126,137 @@ function isGroupJid(jid: string) {
     return jid?.includes("@g.us");
 }
 
-/* ---------- UI ---------- */
+/* ---------- Componente UI ---------- */
 export function ChatSidebar({ result, onSelectRemoteJid, selectedJid }: ChatSidebarProps) {
+
     const [q, setQ] = useState("");
     const [tab, setTab] = useState<"all" | "dm" | "groups">("all");
+    
+    // Hook para el almacenamiento local de mensajes vistos
+    const [seenMessages, setSeenMessages] = useLocalStorageObjectArray('seenMessages', [] as MessageRecord[]);
 
-    // LOG: Efecto para ver el montaje y las props iniciales
-    useEffect(() => {
 
+    // FUNCIÓN PARA MARCAR UN MENSAJE COMO VISTO (Guarda el remoteJid y el messageId)
+    const markMessageAsSeen = useCallback((remoteJid: string, messageId: string) => {
+        if (!remoteJid || !messageId) return;
 
-        if (!result.success) {
-            console.error(`[CSB] ❌ Error en el fetch inicial: ${result.message}`);
-        }
-    }, [result.success, selectedJid, result.success ? result.data.length : 0]);
+        setSeenMessages(prevMsgs => {
+            // Remueve el registro anterior para este chat (remoteJid)
+            const filtered = prevMsgs.filter(m => m.userId !== remoteJid);
+            
+            // Agrega el nuevo registro del último mensaje visto
+            const newRecord: MessageRecord = { userId: remoteJid, messageId };
+            return [...filtered, newRecord];
+        });
+        
+    }, [setSeenMessages]);
+    
+    // FUNCIÓN PARA COMPROBAR SI UN MENSAJE FUE VISTO LOCALMENTE
+    const isMessageSeen = useCallback((remoteJid: string, messageId: string) => {
+        if (!messageId) return false; 
+        
+        const record = seenMessages.find(m => m.userId === remoteJid);
+        
+        // Es visto si el ID guardado coincide con el ID del último mensaje
+        return record?.messageId === messageId;
 
-   
+    }, [seenMessages]);
 
 
     const contacts = useMemo(() => {
-        // LOG: Seguimiento de cuándo se recalcula la lista base
-
-
         if (!result.success) return [];
-
+        
         const mappedContacts = result.data.map((c) => {
-            const ts = epochToMs(c.lastMessage?.messageTimestamp); // ← numérico para ordenar
-            const lastMsgData = lastTextFrom(c); // Obtener datos del último mensaje
+            const ts = epochToMs(c.lastMessage?.messageTimestamp);
+            const lastMsgData = lastTextFrom(c); 
+            const lastMessageId = lastMsgData.id;
+            
+            // --- NUEVA LÓGICA DE LECTURA COMBINADA ---
+            const isFromMe = lastMsgData.fromMe; // 1. Fue enviado por mí
+            const isSelected = c.remoteJid === selectedJid; // 2. Es el chat seleccionado
+            const wasSeenPreviously = lastMessageId ? isMessageSeen(c.remoteJid, lastMessageId) : false; // 3. Visto previamente
+
+            // El chat se considera LEÍDO si CUALQUIERA de estas condiciones es verdadera:
+            const isRead = wasSeenPreviously || isFromMe || isSelected;
+
+            // Es NO LEÍDO localmente si NO está marcado como leído por la lógica combinada.
+            const isUnreadLocal = lastMessageId ? !isRead : false;
+            
             return {
                 id: c.remoteJid,
                 name: nameFrom(c),
                 avatarSrc: avatarFrom(c),
-                lastMessage: lastMsgData.text, // El texto formateado
-                messageType: lastMsgData.messageType, // El tipo de mensaje para el icono
+                lastMessage: lastMsgData.text,
+                lastMessageId: lastMessageId,
+                messageType: lastMsgData.messageType,
                 timestamp: formatTimeFromEpoch(c.lastMessage?.messageTimestamp),
-                ts, // ← clave para sort
-                hasUnread: (c.unreadCount ?? 0) > 0,
-                unreadCount: c.unreadCount ?? 0,
+                ts,
                 isGroup: isGroupJid(c.remoteJid),
+                isUnreadLocal: isUnreadLocal, // Bandera de estado de lectura local
             };
         })
-            // ✅ ORDEN PRINCIPAL: por fecha/hora (descendente)
             .sort((a, b) => b.ts - a.ts);
 
-
+        // Al seleccionar, marcamos el último mensaje del chat como visto
+        // Esto lo hacemos en handleSelectJid para persistencia, pero el useMemo
+        // se recalcula inmediatamente debido a la dependencia [selectedJid]
+        
         return mappedContacts;
-    }, [result]);
+    }, [result, isMessageSeen, selectedJid]); // <-- selectedJid es la clave para la re-evaluación instantánea
+
 
     const filtered = useMemo(() => {
-        // LOG: Seguimiento de cuándo se recalcula la lista filtrada
-
-
         let list = contacts;
 
-        // 1. Filtrado por pestaña
         if (tab === "dm") {
             list = contacts.filter((c) => !c.isGroup);
-
         }
         if (tab === "groups") {
             list = contacts.filter((c) => c.isGroup);
-
         }
 
-        // 2. Filtrado por búsqueda
         if (q.trim()) {
             const term = q.trim().toLowerCase();
-            const initialLength = list.length;
             list = list.filter(
                 (c) =>
                     c.name.toLowerCase().includes(term) ||
                     c.id.toLowerCase().includes(term) ||
                     c.lastMessage.toLowerCase().includes(term)
             );
-
         }
 
-        // Mantén el orden por fecha/hora tras filtrar
         return list.slice().sort((a, b) => b.ts - a.ts);
     }, [contacts, q, tab]);
 
-    // LOG: función para el clic
-    const handleSelectJid = useCallback((jid: string) => {
+    // Lógica para seleccionar JID y marcar como visto (persistencia)
+    const handleSelectJid = useCallback((jid: string, lastMessageId: string) => {
+        
+        // Al seleccionar, marcamos el último mensaje del chat como visto, 
+        // lo que persistirá el estado "leído" en localStorage para el futuro.
+        if (jid && lastMessageId) {
+            markMessageAsSeen(jid, lastMessageId);
+        }
 
         if (onSelectRemoteJid) {
             onSelectRemoteJid(jid);
         }
-    }, [onSelectRemoteJid]);
+    }, [onSelectRemoteJid, markMessageAsSeen]);
 
 
     return (
         <aside className="flex w-[320px] min-w-[280px] max-w-[360px] flex-col border-r bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/50">
-            {/* Top bar */}
+            {/* Top bar, Search, y Tabs (Mismo código) */}
             <div className="sticky top-0 z-10 space-y-3 border-b bg-background/70 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/50">
                 <div className="flex items-center justify-between">
                     <h1 className="text-lg font-semibold tracking-tight">Chats</h1>
                     <Inbox className="text-muted-foreground h-5 w-5" aria-hidden />
                 </div>
-
                 {/* Search */}
                 <div className="relative">
                     <Search className="text-muted-foreground absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2" />
                     <Input
                         value={q}
-                        onChange={(e) => {
-                            // LOG: Cambio de búsqueda
-
-                            setQ(e.target.value);
-                        }}
+                        onChange={(e) => setQ(e.target.value)}
                         placeholder="Buscar por nombre o mensaje…"
                         className="pl-8 pr-8"
                         aria-label="Buscar chats"
@@ -240,16 +265,12 @@ export function ChatSidebar({ result, onSelectRemoteJid, selectedJid }: ChatSide
                         <button
                             aria-label="Limpiar búsqueda"
                             className="text-muted-foreground absolute right-2 top-1/2 -translate-y-1/2"
-                            onClick={() => {
-
-                                setQ("");
-                            }}
+                            onClick={() => setQ("")}
                         >
                             <X className="h-4 w-4" />
                         </button>
                     )}
                 </div>
-
                 {/* Tabs */}
                 <div className="grid grid-cols-3 gap-2">
                     <button
@@ -282,18 +303,22 @@ export function ChatSidebar({ result, onSelectRemoteJid, selectedJid }: ChatSide
                 </div>
             </div>
 
+
             {/* Listado */}
             <div role="list" className="flex-1 space-y-1 overflow-y-auto p-1">
                 {result.success && filtered.length > 0 ? (
                     filtered.map((c) => {
-                        // Obtener el componente Icono para este chat
-                        const IconComponent = getIconForMessageType(c.messageType);
+                        const IconComponent: React.ElementType | null = getIconForMessageType(c.messageType);
+                        
+                        // Determina si el chat se considera NO LEÍDO localmente
+                        const isUnread = c.isUnreadLocal; 
 
                         return (
                             <button
                                 key={c.id}
                                 role="listitem"
-                                onClick={() => handleSelectJid(c.id)} // Usar el handler con log
+                                // El handler marca el mensaje como visto al hacer clic
+                                onClick={() => handleSelectJid(c.id, c.lastMessageId)} 
                                 className={cn(
                                     "group flex w-full items-center gap-3 rounded-xl border p-2 text-left transition hover:bg-accent hover:text-accent-foreground",
                                     selectedJid === c.id ? "border-primary bg-primary/10" : "border-transparent"
@@ -312,24 +337,29 @@ export function ChatSidebar({ result, onSelectRemoteJid, selectedJid }: ChatSide
 
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-center justify-between gap-2">
-                                        <span className="truncate font-medium text-sm">{c.name || "Sin nombre"}</span>
+                                        {/* Nombre resaltado si no es leído */}
+                                        <span className={cn("truncate font-medium text-sm", isUnread && "text-foreground")}>
+                                            {c.name || "Sin nombre"}
+                                        </span>
                                         <span className="text-muted-foreground shrink-0 text-xs">
                                             {c.timestamp}
                                         </span>
                                     </div>
                                     <div className="mt-0.5 flex items-center justify-between gap-2">
-                                        {/* 4. RENDERIZADO DEL ICONO */}
-                                        <p className="text-muted-foreground truncate text-sm flex items-center gap-1">
+                                        {/* Último mensaje resaltado si no es leído */}
+                                        <p className={cn("truncate text-sm flex items-center gap-1", 
+                                            isUnread ? "text-foreground font-semibold" : "text-muted-foreground"
+                                        )}>
                                             {IconComponent && (
                                                 <IconComponent className="h-4 w-4 flex-shrink-0 text-muted-foreground opacity-70" />
                                             )}
                                             <span>{c.lastMessage || "—"}</span>
                                         </p>
-                                         {c.unreadCount > 0 && (
-     <span className="bg-primary text-primary-foreground inline-flex h-2 min-w-2 items-center justify-center rounded-full px-1 text-[10px] font-semibold">
-     
-     </span>
-    )} 
+                                        
+                                        {/* Indicador visual de NO LEÍDO (Punto) */}
+                                        {isUnread && (
+                                            <span className="bg-primary inline-block h-2 w-2 rounded-full shrink-0"></span>
+                                        )}
                                     </div>
                                 </div>
                             </button>
