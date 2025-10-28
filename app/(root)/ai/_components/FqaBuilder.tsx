@@ -32,7 +32,7 @@ export function FqaBuilder({
     onVersionChange,
     onConflict,
     initialItems = [],
-    flows = [], 
+    flows = [],
     notificationNumber,
 }: FqaBuilderProps) {
     const [openPicker, setOpenPicker] = useState(false);
@@ -149,11 +149,13 @@ export function FqaBuilder({
                             />
 
                             <div className="flex w-full flex-col">
-                                <FunctionSelectorInline
+                                <FunctionSelectorInline<QaItem>
+                                    mode="faq"
+                                    items={items}
+                                    addItem={(it) => setItems((prev) => [...prev, it])}
+                                    removeItem={(id) => setItems((prev) => prev.filter(x => x.id !== id))}
+                                    onInsert={(append) => updateA(it.id, it.a ? `${it.a}\n${append}` : append)}
                                     flows={flows}
-                                    onInsert={(text) =>
-                                        updateA(it.id, it.a ? it.a.trim() + "\n" + text : text)
-                                    }
                                     notificationNumber={notificationNumber}
                                 />
                             </div>

@@ -122,20 +122,6 @@ export function ExtraInfoBuilder({
     const updateContent = (id: string, v: string) =>
         setItems((p) => p.map((x) => (x.id === id ? { ...x, content: v } : x)));
 
-    // 🔧 Inserta texto adicional al final del contenido
-    const appendToContent = (id: string, text: string) => {
-        setItems((prev) =>
-            prev.map((x) =>
-                x.id === id
-                    ? {
-                        ...x,
-                        content: (x.content ? x.content.trim() + "\n" : "") + text,
-                    }
-                    : x
-            )
-        );
-    };
-
     return (
         <Card className="border-muted/60">
             <CardHeader className="pb-2">
@@ -220,11 +206,16 @@ export function ExtraInfoBuilder({
                             />
 
                             <div className="flex w-full flex-col">
-                                <FunctionSelectorInline
+                                <FunctionSelectorInline<ExtraItemDTO>
+                                    mode="extras"
+                                    items={items}
+                                    addItem={(it) => setItems((prev) => [...prev, it])}
+                                    removeItem={(id) => setItems((prev) => prev.filter(x => x.id !== id))}
+                                    onInsert={(append) => updateContent(it.id, it.content ? `${it.content}\n${append}` : append)}
                                     flows={flows}
                                     notificationNumber={notificationNumber}
-                                    onInsert={(text) => appendToContent(it.id, text)}
                                 />
+
                             </div>
                         </div>
                     ))}

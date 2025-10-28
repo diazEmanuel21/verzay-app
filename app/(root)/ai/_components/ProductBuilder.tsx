@@ -133,10 +133,13 @@ export function ProductBuilder({
                         />
 
                         <div className="flex w-full flex-col">
-                            <FunctionSelectorInline
+                            <FunctionSelectorInline<ProductItemDTO>
+                                mode="products"
+                                items={items} 
+                                addItem={(it) => addProduct()}
+                                removeItem={(id) => removeProduct(it.id)}
+                                // onInsert opcional para apéndices en descripción si lo deseas
                                 flows={flows}
-                                notificationNumber={notificationNumber}
-                                onInsert={(text) => appendToDescription(it.id, text)}
                             />
                         </div>
                     </div>

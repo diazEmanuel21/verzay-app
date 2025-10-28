@@ -445,9 +445,18 @@ export interface FunctionSelectorInterface {
     notificationNumber: string
 }
 
-export interface FnSelectorInterface {
-    onInsert: (text: string) => void;
-    flows: Workflow[];
-    notificationNumber: string
+// Tipos de las colecciones
 
-}
+export type Mode = "faq" | "products" | "extras";
+
+// Props genéricas: el padre controla almacenamiento en BD
+export type FnSelector<T> = {
+    mode: Mode;
+    items: T[];
+    addItem: (item: T) => void;
+    removeItem: (id: string) => void;
+    /** Solo para casos donde quieras actualizar descripción/answer (p.ej. FAQ.a) */
+    onInsert?: (appendText: string) => void;
+    flows?: Workflow[];
+    notificationNumber?: string;
+};
