@@ -316,6 +316,7 @@ export function ChatsClient({
     messages.length,
   ]);
 
+  
   return (
     <div className="flex h-full">
       <ChatSidebar
