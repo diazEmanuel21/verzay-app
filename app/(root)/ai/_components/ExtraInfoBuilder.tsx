@@ -196,6 +196,7 @@ export function ExtraInfoBuilder({
                                 value={it.title ?? ""}
                                 onChange={(e) => updateTitle(it.id, e.target.value)}
                             />
+                            
 
                             <label className="text-sm font-medium mt-2">Contenido</label>
                             <Textarea
