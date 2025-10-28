@@ -116,7 +116,7 @@ export async function patchProductsSection(input: {
 export async function patchExtrasSection(input: {
     promptId: string;
     version: number;
-    data: z.input<typeof ExtrasDraftSchema>; // { firmaEnabled?, firmaText?, items? }
+    data: z.input<typeof ExtrasDraftSchema>; // { firmaEnabled?, firmaText?, firmaName?, items? }
 }) {
     const { promptId, version, data } = input;
 
@@ -124,6 +124,7 @@ export async function patchExtrasSection(input: {
     const parsed = ExtrasDraftSchema.parse({
         firmaEnabled: false,
         firmaText: "",
+        firmaName: "",
         items: [],
         ...data,
     });
@@ -165,7 +166,7 @@ export async function getOrCreatePrompt(opts: { userId: string; agentId?: string
             training: { steps: [] },
             faq: { items: [] },
             products: { items: [] },
-            extras: { firmaEnabled: false, firmaText: '', items: [] },
+            extras: { firmaEnabled: false, firmaText: '', firmaName: '', items: [] },
         };
 
         prompt = await db.agentPrompt.create({

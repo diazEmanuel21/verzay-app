@@ -259,6 +259,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                 items: sections?.extras?.items ?? [],
                                 firmaEnabled: sections?.extras?.firmaEnabled ?? false,
                                 firmaText: sections?.extras?.firmaText ?? undefined,
+                                firmaName: sections?.extras?.firmaName ?? undefined,
                             }}
                         />
                     </TabsContent>

@@ -93,11 +93,11 @@ export function TrainingBuilder({
       const n = i + 1;
       lines.push(`\n### Paso ${n} — ${step.title || "Sin título"}`);
       if (step.mainMessage?.trim()) {
-        lines.push(`* **Orden principal del paso:**\n${step.mainMessage.trim()}`);
+        lines.push(`* **Objetivo principal del paso:**\n${step.mainMessage.trim()}`);
       }
 
       if (step.elements.length > 0) {
-        lines.push("\n#### Elementos del paso:");
+        lines.push(`\n#### Elementos del paso: ${n}`);
         step.elements.forEach((el, idx) => {
           const k = idx + 1;
           if (el.kind === "text") {
@@ -306,7 +306,7 @@ export function TrainingBuilder({
                 <CardContent className="space-y-3">
                   {/* Mensaje principal del paso (vive dentro del paso) */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Orden principal del paso</label>
+                    <label className="text-sm font-medium">Objetivo principal del paso</label>
                     <Textarea
                       value={step.mainMessage}
                       onChange={(e) => updateStepMainMessage(step.id, e.target.value)}

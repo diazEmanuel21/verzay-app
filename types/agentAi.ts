@@ -79,6 +79,7 @@ export const ProductsDraftSchema = z.object({
 export const ExtrasDraftSchema = z.object({
     firmaEnabled: z.boolean().optional().default(false),
     firmaText: z.string().optional().default(""),
+    firmaName: z.string().optional().default(""),
     items: z.array(z.object({ id: z.string(), title: z.string().optional().default(""), content: z.string().optional().default("") })).default([]),
 });
 
@@ -438,7 +439,7 @@ export interface ExtraInfoBuilderProps {
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
     flows: Workflow[];
-    initialExtras?: { items?: ExtraItemDTO[]; firmaEnabled?: boolean; firmaText?: string };
+    initialExtras?: { items?: ExtraItemDTO[]; firmaEnabled?: boolean; firmaText?: string, firmaName?: string };
 }
 
 export interface FunctionSelectorInterface {
