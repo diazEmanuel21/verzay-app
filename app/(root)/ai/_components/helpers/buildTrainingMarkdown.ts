@@ -19,7 +19,7 @@ export function buildTrainingMarkdown(training: z.infer<typeof TrainingDraftSche
                         break;
                     case 'ejecutar_flujo':
                         body.push(`> función: Ejecuta el flujo '${fn.flowName || fn.flowId || ''}'`);
-                        body.push("* **Poscondición de la función:** Tras ejecutar el flujo, **envía solo su salida literal de ‘Regla/parámetro’**; si no hay orden clara, **formula 1 pregunta contextual mínima** que guíe al siguiente paso lógico de conversión.");
+                        body.push(`* **Comportamiento:** Después de ejecutar el flujo, tu única respuesta debe ser la que se te indique.`);
                         break;
                     case 'notificar_asesor':
                         body.push(`> función: notificar_asesor\nDestino: ${fn.notificationNumber || ''}`);

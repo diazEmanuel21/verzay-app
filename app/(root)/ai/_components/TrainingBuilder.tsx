@@ -119,7 +119,7 @@ export function TrainingBuilder({
             }
             if (el.fn === "ejecutar_flujo") {
               lines.push(`> función: Ejecuta el flujo '${el.flowName || el.flowId || ''}'`);
-              lines.push("* **Poscondición de la función:** Tras ejecutar el flujo, **envía solo su salida literal de ‘Regla/parámetro’**; si no hay orden clara, **formula 1 pregunta contextual mínima** que guíe al siguiente paso lógico de conversión.");
+              lines.push(`* **Comportamiento:** Después de ejecutar el flujo, tu única respuesta debe ser la que se te indique.`)
               return;
             }
             if (el.fn === "notificar_asesor") {

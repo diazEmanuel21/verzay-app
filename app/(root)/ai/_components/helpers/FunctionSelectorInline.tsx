@@ -72,10 +72,8 @@ export function FunctionSelectorInline<T extends QaItem | ProductItemDTO | Extra
         const title = `función — ${name}`;
         const full =
             `> función: Ejecuta el flujo '${name.toUpperCase()}'\n` +
-            `* **Poscondición de la función:** Tras ejecutar el flujo, **envía solo su salida literal de ‘Regla/parámetro’**; ` +
-            `si no hay orden clara, **formula 1 pregunta contextual mínima** que guíe al siguiente paso lógico de conversión.`;
-
-        // Por defecto: agregar como item (extras/products) …
+            // Por defecto: agregar como item (extras/products) …
+            `* **Comportamiento:** Después de ejecutar el flujo, tu única respuesta debe ser la que se te indique.`
         createItemFromAction(title, full);
 
         // … y si estamos en FAQ y quieres que esta acción también añada texto a la respuesta `a`,
@@ -144,7 +142,7 @@ export function FunctionSelectorInline<T extends QaItem | ProductItemDTO | Extra
     return (
         <div className="space-y-3">
             {/* Badges/listado compacto (de la colección actual) */}
-            {items.length > 0 && (
+            {/* {items.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                     {items.map((it: any) => (
                         <span key={it.id} className="inline-flex items-center gap-2 text-xs rounded-md bg-muted px-2 py-1">
@@ -160,7 +158,7 @@ export function FunctionSelectorInline<T extends QaItem | ProductItemDTO | Extra
                         </span>
                     ))}
                 </div>
-            )}
+            )} */}
 
             {/* Selector principal */}
             <div className="flex w-full justify-end gap-2">
