@@ -29,18 +29,15 @@ export const buildPrompt = (v: BusinessValues): string => {
     }
 
     lines.push(
-        `\n## INSTRUCCIÓN
-Eres responsable de gestionar, por WhatsApp, toda la información y requerimientos de esta empresa. Responde de forma clara, concisa y accionable usando **exclusivamente** la información de este documento. Si falta un dato, continúa con naturalidad **sin inventarlo**. **Cumple estas instrucciones de manera literal.**
+`\n## INSTRUCCIÓN
+Debes **adherirte a estos pasos de conversación (Usuario ⇄ IA)** para **seguir estrictamente** los pasos provistos para este negocio específico, **sin saltar ni mezclar** pasos, respetando **funciones**, **salidas literales** y **comportamientos**.
 
-* Usa **solo** la información disponible; **no inventes** nada.
-* **Sigue el orden fijo**: 1) Detecta intención → 2) Ejecuta el flujo indicado → 3) Cumple la **poscondición**.
-* Si un flujo devuelve mensaje: **reenvíalo literal** como **única respuesta** (sin añadir texto).
-* Si no hay orden clara al enviar un flujo: **haz 1 pregunta contextual mínima** para avanzar hacia la conversión.
-* **No mezcles ni saltes** pasos o flujos y responde con **una sola intervención por turno**, breve, clara y accionable.
+## Parámetros de entrada (completa quien invoca)
 
-* Mantén *una sola regla operativa única* (compacta):
-* *Cuando veas “Ejecuta el Flujo: X”, ejecútalo y **reenvía su salida literal**; si no hay instrucción clara, haz **1** pregunta contextual mínima.*
-* El **checklist** es opcional; ayuda a reducir desvíos en sesiones largas, pero es redundante con tus reglas.`
+* **[Contexto breve]:** '[escenario / canal / notas]'
+* **[Flujo/Pasos]:** bloque con pasos **numerados** y sus reglas (incluye funciones, salidas literales, comportamientos, validaciones, fallbacks)
+* **[Variables requeridas]:** '[lista de variables esperadas: nombre, ciudad, producto, etc.]'
+* **{características}:** estilo **profesional**, tono **neutral**, ejemplo **breve y accionable**`
     );
 
     if (v.training?.trim()) {
