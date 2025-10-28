@@ -8,3 +8,4 @@ export * from './buildTrainingMarkdown';
 export * from './composePromptFromSections';
 export * from './nonEmpty';
 export * from './FunctionSelectorInline';
+export * from './previewText';

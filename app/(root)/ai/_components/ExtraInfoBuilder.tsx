@@ -211,7 +211,6 @@ export function ExtraInfoBuilder({
                                     mode="extras"
                                     items={items}
                                     addItem={(it) => setItems((prev) => [...prev, it])}
-                                    removeItem={(id) => setItems((prev) => prev.filter(x => x.id !== id))}
                                     flows={flows}
                                     notificationNumber={notificationNumber}
                                 />

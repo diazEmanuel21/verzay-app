@@ -11,14 +11,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Textarea } from "@/components/ui/textarea";
 import { Zap, Plus, X } from "lucide-react";
 import { CONSULTA_DATOS_SNIPPET, CAPTURE_SNIPPETS, QaItem, ProductItemDTO, ExtraItemDTO, FnSelector } from "@/types/agentAi";
+import { PedidoFieldsEditor } from "../PedidoFieldsEditor";
 
 
 export function FunctionSelectorInline<T extends QaItem | ProductItemDTO | ExtraItemDTO>({
     mode,
     items,
     addItem,
-    removeItem,
-    onInsert,
     flows = [],
     notificationNumber,
 }: FnSelector<T>) {
@@ -34,7 +33,6 @@ export function FunctionSelectorInline<T extends QaItem | ProductItemDTO | Extra
             case "faq":
                 return {
                     // Para FAQ, los "items" son Q/A. Usaremos "addItem" cuando queramos crear nuevas Q/A
-                    // y "onInsert" cuando queramos APÉNDICE en la respuesta `a` del item seleccionado por el padre.
                     makeItemFromPreset: (title: string, content?: string) =>
                         ({ id: nanoid(), q: title, a: content ?? "" }) as T,
                     displayTitle: (it: T) => (it as QaItem).q,
@@ -61,7 +59,6 @@ export function FunctionSelectorInline<T extends QaItem | ProductItemDTO | Extra
     // ========= Helpers de presets (acciones) =========
     // Cada acción puede:
     //  A) Crear un nuevo item (addItem) con title/content normalizados
-    //  B) O bien, para FAQ, apéndice a `a` usando onInsert (cuando se trata de "contenido de respuesta")
     const createItemFromAction = (title: string, full?: string) => {
         const item = adapter.makeItemFromPreset(title, full);
         addItem(item);
@@ -75,10 +72,6 @@ export function FunctionSelectorInline<T extends QaItem | ProductItemDTO | Extra
             // Por defecto: agregar como item (extras/products) …
             `* **Comportamiento:** Después de ejecutar el flujo, tu única respuesta debe ser la que se te indique.`
         createItemFromAction(title, full);
-
-        // … y si estamos en FAQ y quieres que esta acción también añada texto a la respuesta `a`,
-        // usa onInsert (opcional):
-        if (mode == "faq" && onInsert) onInsert(`\n${full}`);
         setSelected(null);
     };
 
@@ -87,7 +80,6 @@ export function FunctionSelectorInline<T extends QaItem | ProductItemDTO | Extra
         const full = CONSULTA_DATOS_SNIPPET;
 
         createItemFromAction(title, full);
-        if (mode == "faq" && onInsert) onInsert(`\n${full}`);
         setSelected(null);
     };
 
@@ -96,7 +88,6 @@ export function FunctionSelectorInline<T extends QaItem | ProductItemDTO | Extra
         const full = `> Notificar asesor: ${notificationNumber ?? ""}`;
 
         createItemFromAction(title, full);
-        if (mode == "faq" && onInsert) onInsert(`\n${full}`);
         setSelected(null);
     };
 
@@ -112,7 +103,6 @@ export function FunctionSelectorInline<T extends QaItem | ProductItemDTO | Extra
         }
 
         createItemFromAction(title, full);
-        if (mode == "faq" && onInsert) onInsert(`\n${full}`);
         setSelected(null);
     };
 
@@ -123,8 +113,6 @@ export function FunctionSelectorInline<T extends QaItem | ProductItemDTO | Extra
         const full = `> Regla/parámetro: ${value}`;
 
         createItemFromAction(title, full);
-        if (mode == "faq" && onInsert) onInsert(`\n${full}`);
-
         setRuleText("");
         setSelected(null);
     };
@@ -135,38 +123,19 @@ export function FunctionSelectorInline<T extends QaItem | ProductItemDTO | Extra
         if (!f) return;
         setPedidoFields((prev) => Array.from(new Set([...prev, f])));
     };
-    const removePedidoFieldLocal = (field: string) =>
+    const removePedidoField = (field: string) =>
         setPedidoFields((prev) => prev.filter((f) => f !== field));
 
     // ========= UI =========
     return (
         <div className="space-y-3">
-            {/* Badges/listado compacto (de la colección actual) */}
-            {/* {items.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                    {items.map((it: any) => (
-                        <span key={it.id} className="inline-flex items-center gap-2 text-xs rounded-md bg-muted px-2 py-1">
-                            {adapter.displayTitle(it)}
-                            <button
-                                type="button"
-                                aria-label="Eliminar"
-                                className="opacity-60 hover:opacity-100 transition"
-                                onClick={() => removeItem(it.id)}
-                            >
-                                <X className="h-3 w-3" />
-                            </button>
-                        </span>
-                    ))}
-                </div>
-            )} */}
-
             {/* Selector principal */}
             <div className="flex w-full justify-end gap-2">
                 <Popover>
                     <PopoverTrigger asChild>
                         <Button size="sm" variant="default" className="gap-2">
                             <Zap className="h-4 w-4" />
-                            Agregar Acción
+                            Acción
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="p-0 w-[320px]" align="end">
@@ -212,7 +181,7 @@ export function FunctionSelectorInline<T extends QaItem | ProductItemDTO | Extra
                 </Popover>
 
                 <Button onClick={() => setSelected("add_rule")} variant="outline">
-                    Agregar regla
+                    Regla
                 </Button>
             </div>
 
@@ -270,20 +239,13 @@ export function FunctionSelectorInline<T extends QaItem | ProductItemDTO | Extra
                     <CardContent className="space-y-3">
                         {subtype === "Pedidos" ? (
                             <div className="px-2">
-                                {/* Editor local de campos */}
-                                <div className="text-xs font-medium mb-1">Campos de pedido</div>
-                                <div className="flex flex-wrap gap-2 mb-2">
-                                    {pedidoFields.map((f) => (
-                                        <span key={f} className="text-xs bg-muted rounded px-2 py-1 inline-flex items-center gap-2">
-                                            {f}
-                                            <button className="opacity-60 hover:opacity-100" onClick={() => removePedidoFieldLocal(f)}>
-                                                <X className="h-3 w-3" />
-                                            </button>
-                                        </span>
-                                    ))}
-                                </div>
-                                {/* Puedes reusar tu PedidoFieldsEditor si lo prefieres */}
-                                {/* ... */}
+                                <PedidoFieldsEditor
+                                    stepId="faq" // valores dummy
+                                    elId="captura"
+                                    element={{ id: "x", kind: "function", fn: "captura_datos", subtype: "Pedidos", prompt: "", fields: pedidoFields }}
+                                    onAdd={addPedidoField}
+                                    onRemove={removePedidoField}
+                                />
 
                                 <div className="flex justify-end pt-2">
                                     <Button size="sm" variant="default" onClick={() => handleInsertCaptura("Pedidos")}>

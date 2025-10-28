@@ -135,10 +135,10 @@ export function ProductBuilder({
                         <div className="flex w-full flex-col">
                             <FunctionSelectorInline<ProductItemDTO>
                                 mode="products"
-                                items={items} 
-                                addItem={(it) => addProduct()}
-                                removeItem={(id) => removeProduct(it.id)}
+                                items={items}
+                                addItem={(newItem) => setItems((prev) => [...prev, newItem])}
                                 flows={flows}
+                                notificationNumber={notificationNumber}
                             />
                         </div>
                     </div>

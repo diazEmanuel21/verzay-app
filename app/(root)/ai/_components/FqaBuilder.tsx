@@ -21,7 +21,7 @@ import {
 import { Plus, Trash2 } from "lucide-react";
 import { FqaBuilderProps, PRESETS, QaItem } from "@/types/agentAi";
 import { useFaqAutosave } from "./hooks/useFaqAutosave";
-import { FunctionSelectorInline } from "./helpers";
+import { FunctionSelectorInline, previewText } from "./helpers";
 import { Input } from "@/components/ui/input";
 
 export function FqaBuilder({
@@ -117,92 +117,88 @@ export function FqaBuilder({
                     <CardTitle className="text-base">Preguntas Frecuentes</CardTitle>
                 </CardHeader>
 
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3">
                     {items.map((it) => (
                         <div
                             key={it.id}
-                            className="rounded-md border p-3 border-muted/60 space-y-2"
+                            className="rounded-md border border-muted/60 p-2 space-y-2"
                         >
-                            <div className="flex items-center justify-between">
-                                <div className="text-sm font-medium">Pregunta:</div>
+                            {/* Header compacto */}
+                            <div className="flex items-start justify-between gap-2">
+                                <pre className="text-[13px] leading-snug whitespace-pre-wrap break-words font-medium text-foreground/90">
+                                    {it.q || "Pregunta sin título"}
+                                </pre>
+
                                 <Button
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => removeItem(it.id)}
                                     aria-label="Eliminar FAQ"
+                                    className="shrink-0 h-7 w-7"
                                 >
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
                             </div>
-                            <Input
-                                placeholder="¿Cuáles son los horarios de atención?"
-                                value={it.q}
-                                onChange={(e) => updateQ(it.id, e.target.value)}
-                            />
 
-                            <div className="text-sm font-medium mt-2">Respuesta:</div>
-                            <Textarea
-                                placeholder="Atendemos de lunes a domingo de 8:00 AM a 10:00 PM"
-                                value={it.a}
-                                onChange={(e) => updateA(it.id, e.target.value)}
-                                className="min-h-[32px]"
-                            />
+                            {/* Respuesta compacta */}
+                            <pre className="text-xs leading-snug whitespace-pre-wrap break-words text-foreground/80">
+                                {previewText(it.a, 80)}
+                            </pre>
 
-                            <div className="flex w-full flex-col">
-                                <FunctionSelectorInline<QaItem>
-                                    mode="faq"
-                                    items={items}
-                                    addItem={(it) => setItems((prev) => [...prev, it])}
-                                    removeItem={(id) => setItems((prev) => prev.filter(x => x.id !== id))}
-                                    flows={flows}
-                                    notificationNumber={notificationNumber}
-                                />
-                 
-                            </div>
+
                         </div>
                     ))}
 
-                    <div className="flex flex-row w-full gap-2 justify-end">
-                        <Popover open={openPicker} onOpenChange={setOpenPicker}>
-                            <PopoverTrigger asChild>
-                                <Button size="sm" className="gap-2">
-                                    <Plus className="h-4 w-4" />
-                                    Agregar desde plantillas
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="p-0 w-[360px]" align="end">
-                                <Command>
-                                    <CommandInput placeholder="Buscar plantilla..." />
-                                    <CommandList>
-                                        <CommandEmpty>Sin resultados…</CommandEmpty>
-                                        <CommandGroup heading="Plantillas disponibles">
-                                            {PRESETS.map((p) => {
-                                                const disabled = isAdded(p.title);
-                                                return (
-                                                    <CommandItem
-                                                        key={p.title}
-                                                        onSelect={() => !disabled && addFromPreset(p.title)}
-                                                        className={
-                                                            disabled ? "opacity-50 pointer-events-none" : ""
-                                                        }
-                                                        aria-disabled={disabled}
-                                                    >
-                                                        {p.title}
-                                                    </CommandItem>
-                                                );
-                                            })}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
+                    {/* Acciones (compactas) */}
+                    <div className="flex w-full flex-row justify-end items-center gap-2">
+                            <FunctionSelectorInline<QaItem>
+                                mode="faq"
+                                items={items}
+                                addItem={(newItem) => setItems((prev) => [...prev, newItem])}
+                                flows={flows}
+                                notificationNumber={notificationNumber}
+                            />
 
-                        <Button variant="secondary" onClick={addFaq} className="gap-2">
-                            + Agregar pregunta
-                        </Button>
+                            <Popover open={openPicker} onOpenChange={setOpenPicker}>
+                                <PopoverTrigger asChild>
+                                    <Button size="sm" className="gap-2">
+                                        <Plus className="h-4 w-4" />
+                                        Plantillas
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="p-0 w-[360px]" align="end">
+                                    <Command>
+                                        <CommandInput placeholder="Buscar plantilla..." />
+                                        <CommandList>
+                                            <CommandEmpty>Sin resultados…</CommandEmpty>
+                                            <CommandGroup heading="Plantillas disponibles">
+                                                {PRESETS.map((p) => {
+                                                    const disabled = isAdded(p.title);
+                                                    return (
+                                                        <CommandItem
+                                                            key={p.title}
+                                                            onSelect={() => !disabled && addFromPreset(p.title)}
+                                                            className={disabled ? "opacity-50 pointer-events-none" : ""}
+                                                            aria-disabled={disabled}
+                                                        >
+                                                            {p.title}
+                                                        </CommandItem>
+                                                    );
+                                                })}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+                        {/* Footer de acciones globales */}
+                        {/* {items.length < 1 &&
+                            <Button variant="secondary" onClick={addFaq} className="gap-2">
+                                + Agregar pregunta
+                            </Button>} */}
                     </div>
                 </CardContent>
             </Card>
+
         </div>
     );
 }

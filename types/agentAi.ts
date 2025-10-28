@@ -454,9 +454,7 @@ export type FnSelector<T> = {
     mode: Mode;
     items: T[];
     addItem: (item: T) => void;
-    removeItem: (id: string) => void;
     /** Solo para casos donde quieras actualizar descripción/answer (p.ej. FAQ.a) */
-    onInsert?: (appendText: string) => void;
     flows?: Workflow[];
     notificationNumber?: string;
 };
