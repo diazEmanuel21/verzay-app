@@ -68,9 +68,8 @@ export function FunctionSelectorInline<T extends QaItem | ProductItemDTO | Extra
     const handleInsertEjecutarFlujo = (name: string) => {
         const title = `función — ${name}`;
         const full =
-            `> función: Ejecuta el flujo '${name.toUpperCase()}'\n` +
-            // Por defecto: agregar como item (extras/products) …
-            `* **Comportamiento:** Después de ejecutar el flujo, tu única respuesta debe ser la que se te indique.`
+            `> Función: Ejecuta el flujo '${name.toUpperCase()}'\n` +
+            `* **Comportamiento:** Después de ejecutar el flujo, tu única respuesta es la que se te indique en **Regla/parámetro**.`
         createItemFromAction(title, full);
         setSelected(null);
     };

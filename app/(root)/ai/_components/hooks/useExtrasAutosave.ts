@@ -20,10 +20,11 @@ export function useExtrasAutosave(opts: {
     items: ExtraItemDTO[];
     firmaEnabled: boolean;
     firmaText: string;
+    firmaName: string;
     onVersionChange: (next: number) => void;
     onConflict?: (serverState: any) => void;
 }) {
-    const { promptId, version, items, firmaEnabled, firmaText, onVersionChange, onConflict } = opts;
+    const { promptId, version, items, firmaEnabled, firmaText, firmaName, onVersionChange, onConflict } = opts;
 
     const versionRef = useRef(version);
     useEffect(() => { versionRef.current = version; }, [version]);
@@ -35,13 +36,13 @@ export function useExtrasAutosave(opts: {
     useEffect(() => { mountedRef.current = true; }, []);
 
     const payloadHash = useMemo(
-        () => JSON.stringify({ items, firmaEnabled, firmaText }),
-        [items, firmaEnabled, firmaText]
+        () => JSON.stringify({ items, firmaEnabled, firmaText, firmaName }),
+        [items, firmaEnabled, firmaText, firmaName]
     );
     const lastHashRef = useRef<string>("");
 
     const runSave = useMemo(() => {
-        const fn = async (payload: { items: ExtraItemDTO[]; firmaEnabled: boolean; firmaText: string }) => {
+        const fn = async (payload: { items: ExtraItemDTO[]; firmaEnabled: boolean; firmaText: string, firmaName: string }) => {
             if (!promptId) return;
             if (!mountedRef.current) return;
 
@@ -49,7 +50,7 @@ export function useExtrasAutosave(opts: {
                 const res = await patchExtrasSection({
                     promptId,
                     version: versionRef.current,
-                    data: payload, // { items, firmaEnabled, firmaText }
+                    data: payload, // { items, firmaEnabled, firmaText, firmaName }
                 });
 
                 if (res?.conflict) {
@@ -69,7 +70,7 @@ export function useExtrasAutosave(opts: {
         if (lastHashRef.current === payloadHash) return;
         lastHashRef.current = payloadHash;
 
-        runSave({ items, firmaEnabled, firmaText });
+        runSave({ items, firmaEnabled, firmaText, firmaName });
         return () => runSave.cancel?.();
-    }, [payloadHash, promptId, runSave, items, firmaEnabled, firmaText]);
+    }, [payloadHash, promptId, runSave, items, firmaEnabled, firmaText, firmaName]);
 }

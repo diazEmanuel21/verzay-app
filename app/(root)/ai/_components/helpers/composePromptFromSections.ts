@@ -16,37 +16,31 @@ export function composePromptFromSections(sections: z.infer<typeof SectionsDraft
     out.push(buildBusinessHeader(sections.business));
     out.push(
         `\n## INSTRUCCIÓN
-Debes **adherirte a estos pasos de conversación (Usuario ⇄ IA)** para **seguir estrictamente** los pasos provistos para este negocio específico, **sin saltar ni mezclar** pasos, respetando **funciones**, **salidas literales** y **comportamientos**.
-
-## Parámetros de entrada (completa quien invoca)
-
-* **[Contexto breve]:** '[escenario / canal / notas]'
-* **[Flujo/Pasos]:** bloque con pasos **numerados** y sus reglas (incluye funciones, salidas literales, comportamientos, validaciones, fallbacks)
-* **[Variables requeridas]:** '[lista de variables esperadas: nombre, ciudad, producto, etc.]'
-* **{características}:** estilo **profesional**, tono **neutral**, ejemplo **breve y accionable**`
+Debes **adherirte a estos pasos de conversación (Usuario ⇄ IA)** para **seguir estrictamente** los pasos provistos para este negocio específico, **sin saltar ni mezclar** pasos, respetando **funciones**, **salidas literales** y **comportamientos**. ## Parámetros de entrada (completa quien invoca) * **[Contexto breve]:** '[escenario / canal / notas]' * **[Flujo/Pasos]:** bloque con pasos **numerados** y sus reglas (incluye funciones, salidas literales, comportamientos, validaciones, fallbacks) * **[Variables requeridas]:** '[lista de variables esperadas: nombre, ciudad, producto, etc.]' * **{características}:** estilo **profesional**, tono **neutral**, ejemplo **breve y accionable** usando **exclusivamente** la información de este documento. Si falta un dato, continúa con naturalidad **sin inventarlo**. 
+`
     );
 
     const trainingMd = buildTrainingMarkdown(sections.training);
     if (nonEmpty(trainingMd)) {
-        out.push('\n## PROCEDIMIENTO OBLIGATORIO (CHATS SIN HISTORIAL)');
+        out.push('\n## PROCEDIMIENTO OBLIGATORIO (CHATS SIN HISTORIAL)\n');
         out.push(trainingMd);
     }
 
     const faqMd = buildFaqMarkdown(sections.faq);
     if (nonEmpty(faqMd)) {
-        out.push('\n## PREGUNTAS & RESPUESTAS');
+        out.push('\n## PREGUNTAS & RESPUESTAS\n');
         out.push(faqMd);
     }
 
     const prodMd = buildProductsMarkdown(sections.products);
     if (nonEmpty(prodMd)) {
-        out.push('\n## CATÁLOGO / PRODUCTOS');
+        out.push('\n## CATÁLOGO / PRODUCTOS\n');
         out.push(prodMd);
     }
 
     const extrasMd = buildExtrasMarkdown(sections.extras);
     if (nonEmpty(extrasMd)) {
-        out.push('\n## EXTRAS');
+        out.push('\n## EXTRAS\n');
         out.push(extrasMd);
     }
 

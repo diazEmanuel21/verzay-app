@@ -30,33 +30,27 @@ export const buildPrompt = (v: BusinessValues): string => {
 
     lines.push(
 `\n## INSTRUCCIÓN
-Debes **adherirte a estos pasos de conversación (Usuario ⇄ IA)** para **seguir estrictamente** los pasos provistos para este negocio específico, **sin saltar ni mezclar** pasos, respetando **funciones**, **salidas literales** y **comportamientos**.
-
-## Parámetros de entrada (completa quien invoca)
-
-* **[Contexto breve]:** '[escenario / canal / notas]'
-* **[Flujo/Pasos]:** bloque con pasos **numerados** y sus reglas (incluye funciones, salidas literales, comportamientos, validaciones, fallbacks)
-* **[Variables requeridas]:** '[lista de variables esperadas: nombre, ciudad, producto, etc.]'
-* **{características}:** estilo **profesional**, tono **neutral**, ejemplo **breve y accionable**`
+Debes **adherirte a estos pasos de conversación (Usuario ⇄ IA)** para **seguir estrictamente** los pasos provistos para este negocio específico, **sin saltar ni mezclar** pasos, respetando **funciones**, **salidas literales** y **comportamientos**. ## Parámetros de entrada (completa quien invoca) * **[Contexto breve]:** '[escenario / canal / notas]' * **[Flujo/Pasos]:** bloque con pasos **numerados** y sus reglas (incluye funciones, salidas literales, comportamientos, validaciones, fallbacks) * **[Variables requeridas]:** '[lista de variables esperadas: nombre, ciudad, producto, etc.]' * **{características}:** estilo **profesional**, tono **neutral**, ejemplo **breve y accionable** usando **exclusivamente** la información de este documento. Si falta un dato, continúa con naturalidad **sin inventarlo**. 
+`
     );
 
     if (v.training?.trim()) {
-        lines.push("\n## PROCEDIMIENTO OBLIGATORIO (CHATS SIN HISTORIAL)");
+        lines.push("\n## PROCEDIMIENTO OBLIGATORIO (CHATS SIN HISTORIAL)\n");
         lines.push(v.training.trim());
     }
 
     if (v.faq?.trim()) {
-        lines.push("\n## PREGUNTAS & RESPUESTAS");
+        lines.push("\n## PREGUNTAS & RESPUESTAS\n");
         lines.push(v.faq.trim());
     }
 
     if (v.products?.trim()) {
-        lines.push("\n## CATÁLOGO / PRODUCTOS");
+        lines.push("\n## CATÁLOGO / PRODUCTOS\n");
         lines.push(v.products.trim());
     }
 
     if (v.more?.trim()) {
-        lines.push("\n## EXTRAS");
+        lines.push("\n## EXTRAS\n");
         lines.push(v.more.trim());
     }
 

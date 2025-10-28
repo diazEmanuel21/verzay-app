@@ -118,8 +118,8 @@ export function TrainingBuilder({
               return;
             }
             if (el.fn === "ejecutar_flujo") {
-              lines.push(`> función: Ejecuta el flujo '${el.flowName || el.flowId || ''}'`);
-              lines.push(`* **Comportamiento:** Después de ejecutar el flujo, tu única respuesta debe ser la que se te indique.`)
+              lines.push(`> Función: Ejecuta el flujo '${el.flowName || el.flowId || ''}'`);
+              lines.push(`* **Comportamiento:** Después de ejecutar el flujo, tu única respuesta es la que se te indique en **Regla/parámetro**.`);
               return;
             }
             if (el.fn === "notificar_asesor") {
@@ -259,14 +259,15 @@ export function TrainingBuilder({
   /* --------------------------------- UI --------------------------------- */
   return (
     <Card className="border-muted/60">
-      {steps.length < 1 && <CardHeader className="pb-2 flex items-center justify-between gap-2 flex-row">
+      <CardHeader className="pb-2 flex items-center justify-between gap-2 flex-row">
         <CardTitle className="text-base">Entrenamiento</CardTitle>
-        <Button size="sm" onClick={addStep} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Agregar paso
-        </Button>
+        {steps.length < 1 &&
+          <Button size="sm" onClick={addStep} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Agregar paso
+          </Button>
+        }
       </CardHeader>
-      }
 
       <CardContent className="space-y-4">
         {steps.length === 0 ? (

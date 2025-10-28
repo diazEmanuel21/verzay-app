@@ -198,6 +198,7 @@ export type SectionsPromptSystem = {
         items: Array<{ id: string; name: string; description?: string }>;
     };
     extras: {
+        firmaName: string;
         firmaEnabled: boolean;
         firmaText: string;
         items: Array<{ id: string; title: string; content: string }>;
@@ -427,6 +428,7 @@ export interface ExtraInfoBuilderProps {
         items: ExtraItem[];
         firmaEnabled: boolean;
         firmaText: string;
+        firmaName: string;
         prompt: string;
     }) => void;
 

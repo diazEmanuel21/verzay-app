@@ -11,6 +11,8 @@ import { useExtrasAutosave } from "./hooks/useExtrasAutosave";
 import { ExtraInfoBuilderProps, ExtraItem, ExtraItemDTO } from "@/types/agentAi";
 import { FunctionSelectorInline, previewText } from "./helpers";
 
+const firmaName = 'emanuel';
+
 const PROMPT_SIGNATURE_DEFAULT =
     "###  FIRMA DEL AGENTE\n\n" +
     "Debes poner siempre la firma *“*@signature_name”* al inicio de cada mensaje o respuesta que le des al usuario, **nunca al final*. Esto permite mantener una identidad clara del agente y una conversación ordenada.\n\n" +
@@ -51,6 +53,7 @@ export function ExtraInfoBuilder({
 
     // 🧩 Extraer el nombre actual de la firma
     const match = userSignaturePrompt.match(/@([a-zA-Z0-9_]+)/);
+    debugger;
     const initialSignatureName = match ? match[1] : "Asistente virtual";
 
     const [signatureName, setSignatureName] =
@@ -68,6 +71,7 @@ export function ExtraInfoBuilder({
         items,
         firmaEnabled,
         firmaText,
+        firmaName,
         onVersionChange,
         onConflict: (serverState) => {
             const s = serverState?.sections?.extras ?? {};
@@ -102,7 +106,7 @@ export function ExtraInfoBuilder({
 
     // Sincronizar con el padre
     useEffect(() => {
-        onChange?.({ items: items as ExtraItem[], firmaEnabled, firmaText, prompt });
+        onChange?.({ items: items as ExtraItem[], firmaEnabled, firmaText, firmaName, prompt });
         if (values.more !== prompt) {
             const setMore = handleChange("more");
             setMore({

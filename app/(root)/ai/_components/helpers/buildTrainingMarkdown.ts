@@ -15,17 +15,17 @@ export function buildTrainingMarkdown(training: z.infer<typeof TrainingDraftSche
                 const fn = el as any;
                 switch (fn.fn) {
                     case 'captura_datos':
-                        body.push(`> función: captura_datos\n${nonEmpty(fn.prompt) || ''}\nCampos: ${(fn.fields || []).join(', ')}`);
+                        body.push(`> Función: captura_datos\n${nonEmpty(fn.prompt) || ''}\nCampos: ${(fn.fields || []).join(', ')}`);
                         break;
                     case 'ejecutar_flujo':
-                        body.push(`> función: Ejecuta el flujo '${fn.flowName || fn.flowId || ''}'`);
-                        body.push(`* **Comportamiento:** Después de ejecutar el flujo, tu única respuesta debe ser la que se te indique.`);
+                        body.push(`> Función: Ejecuta el flujo '${fn.flowName || fn.flowId || ''}'`);
+                        body.push(`* **Comportamiento:** Después de ejecutar el flujo, tu única respuesta es la que se te indique en **Regla/parámetro**.`);
                         break;
                     case 'notificar_asesor':
-                        body.push(`> función: notificar_asesor\nDestino: ${fn.notificationNumber || ''}`);
+                        body.push(`> Función: notificar_asesor\nDestino: ${fn.notificationNumber || ''}`);
                         break;
                     case 'consulta_datos':
-                        body.push(`> función: consulta_datos\n${nonEmpty(fn.prompt) || ''}`);
+                        body.push(`> Función: consulta_datos\n${nonEmpty(fn.prompt) || ''}`);
                         break;
                 }
             }
