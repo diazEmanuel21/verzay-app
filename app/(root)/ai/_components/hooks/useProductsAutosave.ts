@@ -47,7 +47,7 @@ export function useProductsAutosave(opts: {
                 const res = await patchProductsSection({
                     promptId,
                     version: versionRef.current,
-                    data: { items: payload.items },
+                    data: { steps: payload.items },
                 });
 
                 if (res?.conflict) {
