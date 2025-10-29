@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { patchExtrasSection } from "@/actions/system-prompt-actions";
-import { ExtraItemDTO } from "@/types/agentAi";
+import { ExtraItemType } from "@/types/agentAi";
 
 function createDebounced<F extends (...args: any[]) => any>(fn: F, ms = 700) {
     let t: ReturnType<typeof setTimeout> | null = null;
@@ -17,7 +17,7 @@ function createDebounced<F extends (...args: any[]) => any>(fn: F, ms = 700) {
 export function useExtrasAutosave(opts: {
     promptId: string;
     version: number;
-    items: ExtraItemDTO[];
+    items: ExtraItemType[];
     firmaEnabled: boolean;
     firmaText: string;
     firmaName: string;
@@ -42,7 +42,7 @@ export function useExtrasAutosave(opts: {
     const lastHashRef = useRef<string>("");
 
     const runSave = useMemo(() => {
-        const fn = async (payload: { items: ExtraItemDTO[]; firmaEnabled: boolean; firmaText: string, firmaName: string }) => {
+        const fn = async (payload: { items: ExtraItemType[]; firmaEnabled: boolean; firmaText: string, firmaName: string }) => {
             if (!promptId) return;
             if (!mountedRef.current) return;
 

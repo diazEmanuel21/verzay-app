@@ -13,14 +13,13 @@ import { Trash2, Plus, PenSquare, X } from "lucide-react";
 
 import { Workflow } from "@prisma/client";
 import { useProductsAutosave } from "./hooks/useProductsAutosave";
-import { FunctionSelectorInline, previewText } from "./helpers";
 import { FunctionSelector } from "./";
 import ElementRenderer from "./action-steeps/ElementRenderer";
 
 import type {
     ElementItem,
     PedidoFunctionEl,
-    ProductItemDTO,
+    ProductItemType,
     ProductBuilderProps,
 } from "@/types/agentAi";
 
@@ -41,9 +40,9 @@ export const ProductBuilder = ({
     flows = [],
     notificationNumber,
 }: ProductBuilderProps) => {
-    const [items, setItems] = useState<ProductItemDTO[]>(
+    const [items, setItems] = useState<ProductItemType[]>(
         Array.isArray(initialItems) && initialItems.length > 0
-            ? (initialItems as ProductItemDTO[])
+            ? (initialItems as ProductItemType[])
             : []
     );
 
@@ -137,9 +136,6 @@ export const ProductBuilder = ({
         ]);
 
     const removeProduct = (id: string) => setItems((prev) => prev.filter((i) => i.id !== id));
-
-    const toggleOpen = (id: string, v?: boolean) =>
-        setItems((prev) => prev.map((i) => (i.id === id ? { ...i, openPicker: v ?? !i.openPicker } : i)));
 
     const updateTitle = (id: string, v: string) =>
         setItems((prev) => prev.map((it) => (it.id === id ? { ...it, title: v } : it)));

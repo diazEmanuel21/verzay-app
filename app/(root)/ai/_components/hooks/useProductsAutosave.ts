@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { patchProductsSection } from "@/actions/system-prompt-actions";
-import { ProductItemDTO } from "@/types/agentAi";
+import { ProductItemType } from "@/types/agentAi";
 
 function createDebounced<F extends (...args: any[]) => any>(fn: F, ms = 700) {
     let t: ReturnType<typeof setTimeout> | null = null;
@@ -20,7 +20,7 @@ function createDebounced<F extends (...args: any[]) => any>(fn: F, ms = 700) {
 export function useProductsAutosave(opts: {
     promptId: string;
     version: number;
-    items: ProductItemDTO[];
+    items: ProductItemType[];
     onVersionChange: (next: number) => void;
     onConflict?: (serverState: any) => void;
 }) {
@@ -39,7 +39,7 @@ export function useProductsAutosave(opts: {
     const lastHashRef = useRef<string>("");
 
     const runSave = useMemo(() => {
-        const fn = async (payload: { items: ProductItemDTO[] }) => {
+        const fn = async (payload: { items: ProductItemType[] }) => {
             if (!promptId) return;
             if (!mountedRef.current) return;
 

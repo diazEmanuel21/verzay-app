@@ -15,7 +15,6 @@ import { FqaBuilderProps, PRESETS, QaItem } from "@/types/agentAi";
 import { Workflow } from "@prisma/client";
 
 import { useFaqAutosave } from "./hooks/useFaqAutosave";
-import { FunctionSelectorInline } from "./helpers";
 import { FunctionSelector } from "./";
 import ElementRenderer from "./action-steeps/ElementRenderer";
 

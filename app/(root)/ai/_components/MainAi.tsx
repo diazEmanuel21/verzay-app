@@ -243,17 +243,18 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
 
                     <TabsContent value="more" className="m-0">
                         <ExtraInfoBuilder
-                            notificationNumber={user.notificationNumber}
                             flows={flows}
                             values={{ more: values.more ?? "" }}
                             handleChange={handleChange}
-                            // Persistencia:
+                            notificationNumber={user.notificationNumber}
                             promptId={promptMeta.id}
                             version={promptVersion}
                             onVersionChange={setPromptVersion}
-                            onConflict={(serverState) => { /* opcional */ }}
+                            onConflict={(serverState) => {
+                                setValues((prev) => ({ ...prev, more: prev.more }));
+                            }}
                             initialExtras={{
-                                items: sections?.extras?.items ?? [],
+                                items: sections?.extras?.steps ?? [],
                                 firmaEnabled: sections?.extras?.firmaEnabled ?? false,
                                 firmaText: sections?.extras?.firmaText ?? undefined,
                                 firmaName: sections?.extras?.firmaName ?? undefined,

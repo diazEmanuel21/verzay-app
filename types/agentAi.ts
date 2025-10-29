@@ -152,7 +152,43 @@ export const ExtrasDraftSchema = z.object({
     firmaEnabled: z.boolean().optional().default(false),
     firmaText: z.string().optional().default(""),
     firmaName: z.string().optional().default(""),
-    items: z.array(z.object({ id: z.string(), title: z.string().optional().default(""), content: z.string().optional().default("") })).default([]),
+    steps: z.array(
+        z.object({
+            id: z.string(),
+            title: z.string().optional(),
+            mainMessage: z.string().optional().default(""),
+            elements: z.array(
+                z.union([
+                    z.object({
+                        id: z.string(),
+                        kind: z.literal("text"),
+                        text: z.string().optional().default(""),
+                    }),
+                    z.object({
+                        id: z.string(),
+                        kind: z.literal("function"),
+                        fn: z.enum([
+                            "captura_datos",
+                            "ejecutar_flujo",
+                            "notificar_asesor",
+                            "consulta_datos",
+                        ]),
+                        // ⬇️ refuerza el enum como en el type
+                        subtype: z
+                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas"])
+                            .optional(),
+                        prompt: z.string().optional(),
+                        fields: z.array(z.string()).optional(),
+
+                        // ⬇️ acepta null | string (coincide con tus types)
+                        flowId: z.string().nullable().optional(),
+                        flowName: z.string().nullable().optional(),
+                        notificationNumber: z.string().nullable().optional(),
+                    }),
+                ])
+            ).default([]),
+        })
+    ).default([]),
 });
 
 export const SectionsDraftSchema = z.object({
@@ -289,10 +325,19 @@ export type SectionsPromptSystem = {
         }>;
     };
     extras: {
+        steps: Array<{
+            id: string;
+            title?: string;
+            mainMessage?: string;
+            elements: Array<
+                | { id: string; kind: "text"; text: string }
+                | { id: string; kind: "function"; fn: "ejecutar_flujo"; flowId: string; flowName?: string }
+                | { id: string; kind: "function"; fn: "notificar_asesor"; notificationNumber: string }
+            >;
+        }>;
         firmaName: string;
         firmaEnabled: boolean;
         firmaText: string;
-        items: Array<{ id: string; title: string; content: string }>;
     };
 };
 
@@ -482,7 +527,7 @@ export type FqaBuilderProps = {
     initialItems?: Array<any>; // ← sections.faq.items desde BD
 };
 
-export type ProductItemDTO = {
+export type ProductItemType = {
     id: string;
     title?: string;
     mainMessage?: string;
@@ -503,29 +548,34 @@ export interface ProductBuilderProps {
     initialItems?: Array<any>;
 }
 
-export type ExtraItemDTO = { id: string; title?: string; content?: string };
+export type ExtraItemType = {
+    id: string;
+    title?: string;
+    mainMessage?: string;
+    elements: ElementItem[];
+    openPicker?: boolean;
+}
 
 export interface ExtraInfoBuilderProps {
-    notificationNumber: string;
     values: { more: string };
     handleChange: (
         key: "more"
     ) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+    flows: Workflow[];
+    notificationNumber: string;
     onChange?: (state: {
-        items: ExtraItemDTO[];
+        mainMessage: string;
+        elements: ElementItem[]
         firmaEnabled: boolean;
         firmaText: string;
         firmaName: string;
         prompt: string;
     }) => void;
-
-    // NUEVO (persistencia)
     promptId: string;
     version: number;
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
-    flows: Workflow[];
-    initialExtras?: { items?: ExtraItemDTO[]; firmaEnabled?: boolean; firmaText?: string, firmaName?: string };
+    initialExtras?: { items?: Array<any>; firmaEnabled?: boolean; firmaText?: string, firmaName?: string };
 }
 
 export interface FunctionSelectorInterface {
