@@ -4,20 +4,7 @@ import { ChangeEvent, useEffect, useMemo, useState, useCallback } from "react";
 import { nanoid } from "nanoid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-    Popover,
-    PopoverTrigger,
-    PopoverContent,
-} from "@/components/ui/popover";
-import {
-    Command,
-    CommandGroup,
-    CommandItem,
-    CommandEmpty,
-    CommandInput,
-    CommandList,
-} from "@/components/ui/command";
-import { Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { FqaBuilderProps, PRESETS, QaItem } from "@/types/agentAi";
 import { useFaqAutosave } from "./hooks/useFaqAutosave";
 import { FunctionSelectorInline, previewText } from "./helpers";
@@ -142,22 +129,20 @@ export function FqaBuilder({
                             <pre className="text-xs leading-snug whitespace-pre-wrap break-words text-foreground/80">
                                 {previewText(it.a, 80)}
                             </pre>
-
-
                         </div>
                     ))}
 
                     {/* Acciones (compactas) */}
                     <div className="flex w-full flex-row justify-end items-center gap-2">
-                            <FunctionSelectorInline<QaItem>
-                                mode="faq"
-                                items={items}
-                                addItem={(newItem) => setItems((prev) => [...prev, newItem])}
-                                flows={flows}
-                                notificationNumber={notificationNumber}
-                            />
+                        <FunctionSelectorInline<QaItem>
+                            mode="faq"
+                            items={items}
+                            addItem={(newItem) => setItems((prev) => [...prev, newItem])}
+                            flows={flows}
+                            notificationNumber={notificationNumber}
+                        />
 
-                            <Popover open={openPicker} onOpenChange={setOpenPicker}>
+                        {/* <Popover open={openPicker} onOpenChange={setOpenPicker}>
                                 <PopoverTrigger asChild>
                                     <Button size="sm" className="gap-2">
                                         <Plus className="h-4 w-4" />
@@ -187,7 +172,7 @@ export function FqaBuilder({
                                         </CommandList>
                                     </Command>
                                 </PopoverContent>
-                            </Popover>
+                            </Popover> */}
                     </div>
                 </CardContent>
             </Card>

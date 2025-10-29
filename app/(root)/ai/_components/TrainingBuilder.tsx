@@ -9,30 +9,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandGroup,
-  CommandItem,
-  CommandEmpty,
-  CommandInput,
-  CommandList,
-} from "@/components/ui/command";
 import { X, Plus, Trash2 } from "lucide-react";
 import {
   ElementItem,
-  ElementText,
   StepTraining,
   TrainingBuilderProps,
 } from "@/types/agentAi";
 import { Workflow } from "@prisma/client";
 import { useTrainingAutosave } from "./hooks/useTrainingAutosave";
 import { PedidoFunctionEl } from '../../../../types/agentAi';
-import { FunctionSelector, PedidoFieldsEditor } from './';
+import { FunctionSelector } from './';
+import ElementRenderer from "./action-steeps/ElementRenderer";
 
 /* utilidad: type-guard para pedidos */
 function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
@@ -155,7 +142,7 @@ export function TrainingBuilder({
 
   /* -------------------- Acciones por PASO -------------------- */
   const addStep = () => {
-    const nextIndex = steps.length + 1;
+    // const nextIndex = steps.length + 1;
     setSteps((prev) => [
       ...prev,
       {
@@ -336,145 +323,19 @@ export function TrainingBuilder({
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        {step.elements.map((el) => {
-                          if (el.kind === "text") {
-                            return (
-                              <Card key={el.id} className="bg-muted/30 border-muted/60">
-                                <CardHeader className="py-3 flex-row items-center justify-between">
-                                  <CardTitle className="text-sm">Regla/parámetro</CardTitle>
-                                  <Button variant="ghost" size="icon" onClick={() => removeElement(step.id, el.id)}>
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </CardHeader>
-                                <CardContent>
-                                  <Textarea
-                                    placeholder="Regla adicional para este paso…"
-                                    value={el.text}
-                                    onChange={(e) => updateText(step.id, el.id, e.target.value)}
-                                    className="min-h-[32px]"
-                                  />
-                                </CardContent>
-                              </Card>
-                            );
-                          }
-
-                          if (el.kind === "function" && el.fn === "captura_datos") {
-                            const isPedidos = (el as any).subtype === "Pedidos";
-                            return (
-                              <Card key={el.id} className="bg-muted/20 border-muted/60">
-                                <CardHeader className="py-3 flex-row items-center justify-between">
-                                  <CardTitle className="text-sm">
-                                    Formularios · Captura de datos — {(el as any).subtype}
-                                  </CardTitle>
-                                  <Button variant="ghost" size="icon" onClick={() => removeElement(step.id, el.id)}>
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </CardHeader>
-                                <CardContent className="p-0 m-0">
-                                  {/* <div className="space-y-1">
-                                    <label className="text-xs font-medium">Prompt agregado:</label>
-                                    <Textarea value={(el as any).prompt} readOnly className="min-h-[64px]" />
-                                  </div> */}
-
-                                  {/* Campos personalizados cuando subtype === "Pedidos" */}
-                                  {isPedidos && (
-                                    <div className="px-4">
-                                      <PedidoFieldsEditor
-                                        stepId={step.id}
-                                        elId={el.id}
-                                        element={el as PedidoFunctionEl}
-                                        onAdd={(field) => addPedidoField(step.id, el.id, field)}
-                                        onRemove={(field) => removePedidoField(step.id, el.id, field)}
-                                      />
-                                    </div>
-                                  )}
-                                </CardContent>
-                              </Card>
-                            );
-                          }
-
-                          if (el.kind === "function" && el.fn === "ejecutar_flujo") {
-                            return (
-                              <Card key={el.id} className="bg-muted/20 border-muted/60">
-                                <CardHeader className="py-3 flex-row items-center justify-between">
-                                  <CardTitle className="text-sm">Ejecutar flujo</CardTitle>
-                                  <Button variant="ghost" size="icon" onClick={() => removeElement(step.id, el.id)}>
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </CardHeader>
-                                <CardContent className="space-y-3">
-                                  <div className="text-sm text-muted-foreground">
-                                    {flows.length === 0
-                                      ? "No hay flujos"
-                                      : ""}
-                                  </div>
-
-                                  {flows.length > 0 && (
-                                    <Popover>
-                                      <PopoverTrigger asChild>
-                                        <Button variant="outline" className="w-full justify-between">
-                                          {(el as any).flowName ?? "Elegir flujo…"}
-                                          <Plus className="h-4 w-4 opacity-60" />
-                                        </Button>
-                                      </PopoverTrigger>
-                                      <PopoverContent align="start" className="p-0 w-[320px]">
-                                        <Command>
-                                          <CommandInput placeholder="Buscar flujo…" />
-                                          <CommandList>
-                                            <CommandEmpty>Sin resultados…</CommandEmpty>
-                                            <CommandGroup>
-                                              {flows.map((f) => (
-                                                <CommandItem
-                                                  key={f.id}
-                                                  onSelect={() => setFlowOnElement(step.id, el.id, f)}
-                                                >
-                                                  {f.name}
-                                                </CommandItem>
-                                              ))}
-                                            </CommandGroup>
-                                          </CommandList>
-                                        </Command>
-                                      </PopoverContent>
-                                    </Popover>
-                                  )}
-                                </CardContent>
-                              </Card>
-                            );
-                          }
-
-                          if (el.kind === "function" && el.fn === "notificar_asesor") {
-                            return (
-                              <Card key={el.id} className="bg-muted/20 border-muted/60">
-                                <CardHeader className="py-3 flex-row items-center justify-between">
-                                  <CardTitle className="text-sm">Notificar asesor</CardTitle>
-                                  <Button variant="ghost" size="icon" onClick={() => removeElement(step.id, el.id)}>
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </CardHeader>
-                                <CardContent className="space-y-2">
-                                  {/* <label className="text-xs font-medium">Número de notificación (perfil):</label> */}
-                                  <Input value={(el as any).notificationNumber ?? ""} readOnly placeholder="No disponible" />
-                                </CardContent>
-                              </Card>
-                            );
-                          }
-
-                          // consulta_datos
-                          return (
-                            <Card key={el.id} className="bg-muted/20 border-muted/60">
-                              <CardHeader className="py-3 flex-row items-center justify-between">
-                                <CardTitle className="text-sm">Consulta de datos</CardTitle>
-                                <Button variant="ghost" size="icon" onClick={() => removeElement(step.id, el.id)}>
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </CardHeader>
-                              {/* <CardContent className="space-y-2">
-                                <label className="text-xs font-medium">Snippet agregado:</label>
-                                <Textarea value={(el as any).prompt} readOnly className="min-h-[64px]" />
-                              </CardContent> */}
-                            </Card>
-                          );
-                        })}
+                        {step.elements.map((el) => (
+                          <ElementRenderer
+                            key={el.id}
+                            stepId={step.id}
+                            el={el}
+                            flows={flows}
+                            removeElement={removeElement}
+                            updateText={updateText}
+                            setFlowOnElement={setFlowOnElement}
+                            addPedidoField={addPedidoField}
+                            removePedidoField={removePedidoField}
+                          />
+                        ))}
                       </div>
                     )}
                   </div>

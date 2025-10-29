@@ -1,0 +1,74 @@
+// components/training/ElementRenderer.tsx
+"use client";
+
+import { FC } from "react";
+import { PropsActionSteeps } from "@/types/agentAi";
+import {
+    TextRuleCard,
+    CapturaDatosCard,
+    EjecutarFlujoCard,
+    NotificarAsesorCard,
+    ConsultaDatosCard,
+} from "./";
+
+const ElementRenderer: FC<PropsActionSteeps> = ({
+    stepId,
+    el,
+    flows,
+    removeElement,
+    updateText,
+    setFlowOnElement,
+    addPedidoField,
+    removePedidoField,
+}) => {
+    if (el.kind === "text") {
+        return (
+            <TextRuleCard
+                el={el}
+                onRemove={() => removeElement(stepId, el.id)}
+                onChange={(v) => updateText(stepId, el.id, v)}
+            />
+        );
+    }
+
+    if (el.kind === "function" && el.fn === "captura_datos") {
+        return (
+            <CapturaDatosCard
+                el={el as any}
+                onRemove={() => removeElement(stepId, el.id)}
+                onAddField={(f) => addPedidoField(stepId, el.id, f)}
+                onRemoveField={(f) => removePedidoField(stepId, el.id, f)}
+            />
+        );
+    }
+
+    if (el.kind === "function" && el.fn === "ejecutar_flujo") {
+        return (
+            <EjecutarFlujoCard
+                el={el as any}
+                flows={flows}
+                onRemove={() => removeElement(stepId, el.id)}
+                onSelectFlow={(flow) => setFlowOnElement(stepId, el.id, flow)}
+            />
+        );
+    }
+
+    if (el.kind === "function" && el.fn === "notificar_asesor") {
+        return (
+            <NotificarAsesorCard
+                el={el as any}
+                onRemove={() => removeElement(stepId, el.id)}
+            />
+        );
+    }
+
+    // consulta_datos (fallback)
+    return (
+        <ConsultaDatosCard
+            el={el as any}
+            onRemove={() => removeElement(stepId, el.id)}
+        />
+    );
+};
+
+export default ElementRenderer;

@@ -197,12 +197,9 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                     <TabsContent value="training" className="m-0">
                         <TrainingBuilder
                             flows={flows}
-                            // sigue actualizando el texto de preview si quieres
                             values={{ training: values.training ?? "" }}
                             handleChange={handleChange}
                             notificationNumber={user.notificationNumber}
-
-                            // NUEVO:
                             promptId={promptMeta.id}
                             version={promptVersion}
                             onVersionChange={setPromptVersion}
@@ -215,17 +212,17 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
 
                     <TabsContent value="faq" className="m-0">
                         <FqaBuilder
-                            notificationNumber={user.notificationNumber}
                             flows={flows}
                             values={{ faq: values.faq ?? "" }}
                             handleChange={handleChange}
+                            notificationNumber={user.notificationNumber}
                             promptId={promptMeta.id}
                             version={promptVersion}
                             onVersionChange={setPromptVersion}
                             onConflict={(serverState) => {
                                 setValues((prev) => ({ ...prev, faq: prev.faq }));
                             }}
-                            initialItems={sections?.faq?.items ?? []}
+                            initialItems={sections?.faq?.steps ?? []}
                         />
                     </TabsContent>
 

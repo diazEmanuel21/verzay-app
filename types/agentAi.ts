@@ -69,7 +69,43 @@ export const TrainingDraftSchema = z.object({
 });
 
 export const FaqDraftSchema = z.object({
-    items: z.array(z.object({ id: z.string(), q: z.string().optional().default(""), a: z.string().optional().default("") })).default([]),
+    steps: z.array(
+        z.object({
+            id: z.string(),
+            title: z.string().optional(),
+            mainMessage: z.string().optional().default(""),
+            elements: z.array(
+                z.union([
+                    z.object({
+                        id: z.string(),
+                        kind: z.literal("text"),
+                        text: z.string().optional().default(""),
+                    }),
+                    z.object({
+                        id: z.string(),
+                        kind: z.literal("function"),
+                        fn: z.enum([
+                            "captura_datos",
+                            "ejecutar_flujo",
+                            "notificar_asesor",
+                            "consulta_datos",
+                        ]),
+                        // ⬇️ refuerza el enum como en el type
+                        subtype: z
+                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas"])
+                            .optional(),
+                        prompt: z.string().optional(),
+                        fields: z.array(z.string()).optional(),
+
+                        // ⬇️ acepta null | string (coincide con tus types)
+                        flowId: z.string().nullable().optional(),
+                        flowName: z.string().nullable().optional(),
+                        notificationNumber: z.string().nullable().optional(),
+                    }),
+                ])
+            ).default([]),
+        })
+    ).default([]),
 });
 
 export const ProductsDraftSchema = z.object({
@@ -193,7 +229,18 @@ export type SectionsPromptSystem = {
         }>;
     };
     faq: {
-        items: Array<{ id: string; q: string; a: string }>;
+        steps: Array<{
+            id: string;
+            title?: string;
+            mainMessage?: string;
+            elements: Array<
+                | { id: string; kind: "text"; text: string }
+                // | { id: string; kind: "function"; fn: "captura_datos"; subtype?: string; prompt?: string; fields?: string[] }
+                | { id: string; kind: "function"; fn: "ejecutar_flujo"; flowId: string; flowName?: string }
+                | { id: string; kind: "function"; fn: "notificar_asesor"; notificationNumber: string }
+            // | { id: string; kind: "function"; fn: "consulta_datos"; prompt?: string }
+            >;
+        }>;
     };
     products: {
         items: Array<{ id: string; name: string; description?: string }>;
@@ -284,7 +331,6 @@ export interface TrainingBuilderProps extends TrainingBuilderExternalProps {
     flows: Workflow[];
     notificationNumber?: string;
     onChange?: (state: { mainMessage: string; elements: ElementItem[] }) => void;
-    // NUEVO:
     promptId: string;
     version: number;
     onVersionChange: (v: number) => void;
@@ -383,13 +429,14 @@ export interface FaqSimpleProps {
 }
 
 export type FqaBuilderProps = FaqSimpleProps & {
+    flows: Workflow[];
+    notificationNumber: string;
+    onChange?: (state: { mainMessage: string; elements: ElementItem[] }) => void;
     promptId: string;
     version: number;
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
-    initialItems?: QaItem[]; // ← sections.faq.items desde BD
-    flows: Workflow[];
-    notificationNumber: string;
+    initialItems?: Array<any>; // ← sections.faq.items desde BD
 };
 
 
@@ -460,4 +507,61 @@ export type FnSelector<T> = {
     /** Solo para casos donde quieras actualizar descripción/answer (p.ej. FAQ.a) */
     flows?: Workflow[];
     notificationNumber?: string;
+};
+
+export type PropsTextRule = {
+    el: ElementText;
+    onRemove: () => void;
+    onChange: (text: string) => void;
+};
+
+export type PropsDataCapture = {
+    el: PedidoFunctionEl | (PedidoFunctionEl & { subtype: "Solicitudes" | "Reclamos" | "Reservas" });
+    onRemove: () => void;
+    onAddField: (field: string) => void;
+    onRemoveField: (field: string) => void;
+};
+
+type ElExtFlw = {
+    id: string;
+    kind: "function";
+    fn: "ejecutar_flujo";
+    flowId?: string;
+    flowName?: string;
+};
+
+export type PropsExecuteFlow = {
+    el: ElExtFlw;
+    flows: Array<Workflow>;
+    onRemove: () => void;
+    onSelectFlow: (flow: Workflow) => void;
+};
+
+type El = {
+    id: string;
+    kind: "function";
+    fn: "notificar_asesor";
+    notificationNumber?: string;
+};
+
+
+    
+export type PropsConsultaDatos = {
+    el: El;
+    onRemove: () => void;
+};
+
+export type PropsActionSteeps = {
+    stepId: string;
+    el: ElementItem;
+    flows: Array<Workflow>;
+    // acciones comunes
+    removeElement: (stepId: string, elId: string) => void;
+    // text
+    updateText: (stepId: string, elId: string, text: string) => void;
+    // ejecutar_flujo
+    setFlowOnElement: (stepId: string, elId: string, flow: Workflow) => void;
+    // captura_datos: pedidos
+    addPedidoField: (stepId: string, elId: string, field: string) => void;
+    removePedidoField: (stepId: string, elId: string, field: string) => void;
 };
