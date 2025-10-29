@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus } from "lucide-react";
 import { useProductsAutosave } from "./hooks/useProductsAutosave";
-import { ProductBuilderProps, ProductItem, ProductItemDTO } from "@/types/agentAi";
+import { ProductBuilderProps, ProductItemDTO } from "@/types/agentAi";
 import { FunctionSelectorInline, previewText } from "./helpers";
 
 export function ProductBuilder({
@@ -20,7 +20,7 @@ export function ProductBuilder({
     onVersionChange,
     onConflict,
     initialItems = [],
-    flows = [], // 👈 lista de flujos disponibles desde BD
+    flows = [], 
     notificationNumber
 }: ProductBuilderProps) {
     const [items, setItems] = useState<ProductItemDTO[]>(
@@ -58,7 +58,7 @@ export function ProductBuilder({
 
     // Sincroniza con el padre
     useEffect(() => {
-        onChange?.({ items: items as ProductItem[], prompt });
+        onChange?.({ items: items as ProductItemDTO[], prompt });
         if (values.products !== prompt) {
             const setProducts = handleChange("products");
             setProducts({

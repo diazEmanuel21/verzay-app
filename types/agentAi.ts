@@ -109,7 +109,43 @@ export const FaqDraftSchema = z.object({
 });
 
 export const ProductsDraftSchema = z.object({
-    items: z.array(z.object({ id: z.string(), name: z.string().optional().default(""), description: z.string().optional().default("") })).default([]),
+    steps: z.array(
+        z.object({
+            id: z.string(),
+            title: z.string().optional(),
+            mainMessage: z.string().optional().default(""),
+            elements: z.array(
+                z.union([
+                    z.object({
+                        id: z.string(),
+                        kind: z.literal("text"),
+                        text: z.string().optional().default(""),
+                    }),
+                    z.object({
+                        id: z.string(),
+                        kind: z.literal("function"),
+                        fn: z.enum([
+                            "captura_datos",
+                            "ejecutar_flujo",
+                            "notificar_asesor",
+                            "consulta_datos",
+                        ]),
+                        // ⬇️ refuerza el enum como en el type
+                        subtype: z
+                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas"])
+                            .optional(),
+                        prompt: z.string().optional(),
+                        fields: z.array(z.string()).optional(),
+
+                        // ⬇️ acepta null | string (coincide con tus types)
+                        flowId: z.string().nullable().optional(),
+                        flowName: z.string().nullable().optional(),
+                        notificationNumber: z.string().nullable().optional(),
+                    }),
+                ])
+            ).default([]),
+        })
+    ).default([]),
 });
 
 export const ExtrasDraftSchema = z.object({
@@ -235,15 +271,22 @@ export type SectionsPromptSystem = {
             mainMessage?: string;
             elements: Array<
                 | { id: string; kind: "text"; text: string }
-                // | { id: string; kind: "function"; fn: "captura_datos"; subtype?: string; prompt?: string; fields?: string[] }
                 | { id: string; kind: "function"; fn: "ejecutar_flujo"; flowId: string; flowName?: string }
                 | { id: string; kind: "function"; fn: "notificar_asesor"; notificationNumber: string }
-            // | { id: string; kind: "function"; fn: "consulta_datos"; prompt?: string }
             >;
         }>;
     };
     products: {
-        items: Array<{ id: string; name: string; description?: string }>;
+        steps: Array<{
+            id: string;
+            title?: string;
+            mainMessage?: string;
+            elements: Array<
+                | { id: string; kind: "text"; text: string }
+                | { id: string; kind: "function"; fn: "ejecutar_flujo"; flowId: string; flowName?: string }
+                | { id: string; kind: "function"; fn: "notificar_asesor"; notificationNumber: string }
+            >;
+        }>;
     };
     extras: {
         firmaName: string;
@@ -320,14 +363,11 @@ export interface PromptPreviewInterface {
 }
 
 /******** TrainingBuilder **********/
-export interface TrainingBuilderExternalProps {
+export interface TrainingBuilderProps {
     values: { training: string };
     handleChange: (
         key: "training"
     ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-}
-
-export interface TrainingBuilderProps extends TrainingBuilderExternalProps {
     flows: Workflow[];
     notificationNumber?: string;
     onChange?: (state: { mainMessage: string; elements: ElementItem[] }) => void;
@@ -429,12 +469,9 @@ export const PRESETS: Array<{ title: string; answer: string }> = [
     { title: "Requisitos (para crédito o contra entrega)", answer: "Enumera los requisitos mínimos que debe cumplir el cliente para aplicar" },
 ];
 
-export interface FaqSimpleProps {
+export type FqaBuilderProps = {
     values: { faq: string };
     handleChange: (key: "faq") => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-}
-
-export type FqaBuilderProps = FaqSimpleProps & {
     flows: Workflow[];
     notificationNumber: string;
     onChange?: (state: { mainMessage: string; elements: ElementItem[] }) => void;
@@ -445,30 +482,26 @@ export type FqaBuilderProps = FaqSimpleProps & {
     initialItems?: Array<any>; // ← sections.faq.items desde BD
 };
 
-
-export type ProductItem = { id: string; name: string; description: string };
-
-export type ProductItemDTO = { id: string; name?: string; description?: string };
+export type ProductItemDTO = {
+    id: string;
+    title?: string;
+    mainMessage?: string;
+    elements: ElementItem[];
+    openPicker?: boolean;
+}
 
 export interface ProductBuilderProps {
-    values: { products: string };
-    handleChange: (
-        key: "products"
-    ) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-    onChange?: (state: { items: ProductItem[]; prompt: string }) => void;
-
-    // NUEVO (persistencia)
+    values: { products: string }
+    handleChange: (key: "products") => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+    flows: Workflow[];
+    notificationNumber: string;
+    onChange?: (state: { mainMessage: string; elements: ElementItem[] }) => void;
     promptId: string;
     version: number;
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
-    initialItems?: ProductItemDTO[]; // sections.products.items desde BD
-    flows: Workflow[];
-    notificationNumber: string;
+    initialItems?: Array<any>;
 }
-
-export type ExtraItem = { id: string; title: string; content: string };
-
 
 export type ExtraItemDTO = { id: string; title?: string; content?: string };
 
@@ -479,7 +512,7 @@ export interface ExtraInfoBuilderProps {
         key: "more"
     ) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
     onChange?: (state: {
-        items: ExtraItem[];
+        items: ExtraItemDTO[];
         firmaEnabled: boolean;
         firmaText: string;
         firmaName: string;
@@ -500,8 +533,6 @@ export interface FunctionSelectorInterface {
     setSteps: React.Dispatch<React.SetStateAction<StepTraining[]>>
     notificationNumber: string
 }
-
-// Tipos de las colecciones
 
 export type Mode = "faq" | "products" | "extras";
 
@@ -550,8 +581,6 @@ type El = {
     notificationNumber?: string;
 };
 
-
-
 export type PropsConsultaDatos = {
     el: El;
     onRemove: () => void;
@@ -561,13 +590,9 @@ export type PropsActionSteeps = {
     stepId: string;
     el: ElementItem;
     flows: Array<Workflow>;
-    // acciones comunes
     removeElement: (stepId: string, elId: string) => void;
-    // text
     updateText: (stepId: string, elId: string, text: string) => void;
-    // ejecutar_flujo
     setFlowOnElement: (stepId: string, elId: string, flow: Workflow) => void;
-    // captura_datos: pedidos
     addPedidoField: (stepId: string, elId: string, field: string) => void;
     removePedidoField: (stepId: string, elId: string, field: string) => void;
 };

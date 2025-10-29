@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus, PenSquare } from "lucide-react";
 import { useExtrasAutosave } from "./hooks/useExtrasAutosave";
-import { ExtraInfoBuilderProps, ExtraItem, ExtraItemDTO } from "@/types/agentAi";
+import { ExtraInfoBuilderProps, ExtraItemDTO } from "@/types/agentAi";
 import { FunctionSelectorInline, previewText } from "./helpers";
 
 const PROMPT_SIGNATURE_DEFAULT =
@@ -104,7 +104,7 @@ export function ExtraInfoBuilder({
 
     // Sincronizar con el padre
     useEffect(() => {
-        onChange?.({ items: items as ExtraItem[], firmaEnabled, firmaText, firmaName: signatureName, prompt });
+        onChange?.({ items: items as ExtraItemDTO[], firmaEnabled, firmaText, firmaName: signatureName, prompt });
         if (values.more !== prompt) {
             const setMore = handleChange("more");
             setMore({

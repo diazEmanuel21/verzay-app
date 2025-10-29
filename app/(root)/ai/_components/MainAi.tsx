@@ -227,16 +227,17 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
 
                     <TabsContent value="products" className="m-0">
                         <ProductBuilder
-                            notificationNumber={user.notificationNumber}
                             flows={flows}
                             values={{ products: values.products ?? "" }}
                             handleChange={handleChange}
-                            // NUEVO:
+                            notificationNumber={user.notificationNumber}
                             promptId={promptMeta.id}
                             version={promptVersion}
                             onVersionChange={setPromptVersion}
-                            onConflict={(serverState) => { /* opcional */ }}
-                            initialItems={sections?.products?.items ?? []}
+                            onConflict={(serverState) => {
+                                setValues((prev) => ({ ...prev, products: prev.products }));
+                            }}
+                            initialItems={sections?.products?.steps ?? []}
                         />
                     </TabsContent>
 
