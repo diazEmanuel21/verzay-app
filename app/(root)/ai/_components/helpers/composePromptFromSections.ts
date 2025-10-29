@@ -17,12 +17,11 @@ export function composePromptFromSections(sections: z.infer<typeof SectionsDraft
     out.push(
         `\n## INSTRUCCIÓN
 Debes **adherirte a estos pasos de conversación (Usuario ⇄ IA)** para **seguir estrictamente** los pasos provistos para este negocio específico, **sin saltar ni mezclar** pasos, respetando **funciones**, **salidas literales** y **comportamientos**. ## Parámetros de entrada (completa quien invoca) * **[Contexto breve]:** '[escenario / canal / notas]' * **[Flujo/Pasos]:** bloque con pasos **numerados** y sus reglas (incluye funciones, salidas literales, comportamientos, validaciones, fallbacks) * **[Variables requeridas]:** '[lista de variables esperadas: nombre, ciudad, producto, etc.]' * **{características}:** estilo **profesional**, tono **neutral**, ejemplo **breve y accionable** usando **exclusivamente** la información de este documento. Si falta un dato, continúa con naturalidad **sin inventarlo**. 
-`
-    );
+`);
 
     const trainingMd = buildTrainingMarkdown(sections.training);
     if (nonEmpty(trainingMd)) {
-        out.push('\n## PROCEDIMIENTO OBLIGATORIO (CHATS SIN HISTORIAL)\n');
+        out.push('## PROCEDIMIENTO OBLIGATORIO (CHATS SIN HISTORIAL)\n');
         out.push(trainingMd);
     }
 

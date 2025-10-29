@@ -293,7 +293,7 @@ export function TrainingBuilder({
                 <CardContent className="space-y-3">
                   {/* Mensaje principal del paso (vive dentro del paso) */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Objetivo principal del paso</label>
+                    <label className="text-sm font-medium">{`Objetivo principal del paso ${idx + 1}`}</label>
                     <Textarea
                       value={step.mainMessage}
                       onChange={(e) => updateStepMainMessage(step.id, e.target.value)}

@@ -408,7 +408,13 @@ export const CONSULTA_DATOS_SNIPPET = `**Consultar Productos**. Si no hay un flu
 - *Disparadores:* “imagen”, “foto”, “video”, “pdf”, “documento”, “ver”, “ver el producto”, “muéstrame”, “catálogo”.`
 
 /*****************  FQABUILDER ***********************/
-export type QaItem = { id: string; q: string; a: string };
+export type QaItem = {
+    id: string;
+    title?: string;
+    mainMessage?: string;
+    elements: ElementItem[];
+    openPicker?: boolean;
+}
 
 export const PRESETS: Array<{ title: string; answer: string }> = [
     { title: "Promociones, descuentos y ofertas", answer: "Inserta aquí la respuesta oficial sobre promociones disponibles" },
@@ -545,7 +551,7 @@ type El = {
 };
 
 
-    
+
 export type PropsConsultaDatos = {
     el: El;
     onRemove: () => void;
