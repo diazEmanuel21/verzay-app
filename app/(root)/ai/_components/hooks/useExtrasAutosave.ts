@@ -35,14 +35,20 @@ export function useExtrasAutosave(opts: {
     const mountedRef = useRef(false);
     useEffect(() => { mountedRef.current = true; }, []);
 
+    // Hash alineado a lo que realmente se envía (steps + firma*)
     const payloadHash = useMemo(
-        () => JSON.stringify({ items, firmaEnabled, firmaText, firmaName }),
+        () => JSON.stringify({ steps: items, firmaEnabled, firmaText, firmaName }),
         [items, firmaEnabled, firmaText, firmaName]
     );
     const lastHashRef = useRef<string>("");
 
     const runSave = useMemo(() => {
-        const fn = async (payload: { items: ExtraItemType[]; firmaEnabled: boolean; firmaText: string, firmaName: string }) => {
+        const fn = async (payload: {
+            steps: ExtraItemType[];
+            firmaEnabled: boolean;
+            firmaText: string;
+            firmaName: string;
+        }) => {
             if (!promptId) return;
             if (!mountedRef.current) return;
 
@@ -50,7 +56,12 @@ export function useExtrasAutosave(opts: {
                 const res = await patchExtrasSection({
                     promptId,
                     version: versionRef.current,
-                    data: payload, // { items, firmaEnabled, firmaText, firmaName }
+                    data: {
+                        steps: payload.steps,
+                        firmaEnabled: payload.firmaEnabled,
+                        firmaText: payload.firmaText,
+                        firmaName: payload.firmaName,
+                    },
                 });
 
                 if (res?.conflict) {
@@ -60,7 +71,9 @@ export function useExtrasAutosave(opts: {
                 if (res?.ok && res?.data?.version) {
                     onVersionChange(res.data.version);
                 }
-            } catch { }
+            } catch (err) {
+                console.error("patchExtrasSection error", err);
+            }
         };
         return createDebounced(fn, 700);
     }, [promptId, onVersionChange]);
@@ -70,7 +83,7 @@ export function useExtrasAutosave(opts: {
         if (lastHashRef.current === payloadHash) return;
         lastHashRef.current = payloadHash;
 
-        runSave({ items, firmaEnabled, firmaText, firmaName });
+        runSave({ steps: items, firmaEnabled, firmaText, firmaName });
         return () => runSave.cancel?.();
     }, [payloadHash, promptId, runSave, items, firmaEnabled, firmaText, firmaName]);
 }
