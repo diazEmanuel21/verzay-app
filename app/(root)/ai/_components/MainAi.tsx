@@ -5,7 +5,7 @@ import { ChangeEvent, useCallback, useMemo, useRef, useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { BusinessPromptBuilder, ExtraInfoBuilder, FqaBuilder, PromptPreview, TrainingBuilder } from "./";
 import { buildPrompt } from "./helpers";
-import { BusinessValues, ExtrasDraftSchema, FaqDraftSchema, initialValues, MainAiInterface, MainAiProps, ProductsDraftSchema, SectionsPromptSystem, TrainingDraftSchema } from "@/types/agentAi";
+import { BusinessValues, ExtrasDraftSchema, FaqDraftSchema, initialValues, MainAiProps, ProductsDraftSchema, SectionsPromptSystem, TrainingDraftSchema } from "@/types/agentAi";
 import { ProductBuilder } from "./ProductBuilder";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -25,7 +25,6 @@ export const TYPE_AI_LABELS = {
     more: "Extras",
 } as const;
 type TabKey = keyof typeof TYPE_AI_LABELS;
-
 
 export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
     const trainingMd = sections?.training
