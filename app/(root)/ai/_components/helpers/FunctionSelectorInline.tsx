@@ -30,14 +30,6 @@ export function FunctionSelectorInline<T extends QaItem | ProductItemDTO | Extra
     // Cómo crear un item (id/título/desc) a partir de un "preset"
     const adapter = useMemo(() => {
         switch (mode) {
-            case "faq":
-                return {
-                    // Para FAQ, los "items" son Q/A. Usaremos "addItem" cuando queramos crear nuevas Q/A
-                    makeItemFromPreset: (title: string, content?: string) =>
-                        ({ id: nanoid(), q: title, a: content ?? "" }) as T,
-                    displayTitle: (it: T) => (it as QaItem).q,
-                    displaySubtitle: (it: T) => (it as QaItem).a?.slice(0, 80),
-                };
             case "products":
                 return {
                     makeItemFromPreset: (title: string, content?: string) =>
