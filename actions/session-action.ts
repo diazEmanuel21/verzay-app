@@ -262,11 +262,11 @@ export async function registerSession(input: z.infer<typeof registerSessionSchem
     };
   }
 
-  const { userId, remoteJid, pushName, instanceId } = validation.data;
+  const { userId, remoteJid, pushName, instanceId } = validation.data; //TODO: ELIMINAR PARA CAMBIOS ALEXANDER. Se debe cambiar el schema
 
   try {
     const existingSession = await db.session.findFirst({
-      where: { remoteJid, instanceId },
+      where: { remoteJid, instanceId },  //TODO: ELIMINAR PARA CAMBIOS ALEXANDER. Se debe cambiar el schema
     });
 
     if (existingSession) {
@@ -290,7 +290,7 @@ export async function registerSession(input: z.infer<typeof registerSessionSchem
         userId,
         remoteJid,
         pushName,
-        instanceId,
+        instanceId, //TODO: ELIMINAR PARA CAMBIOS ALEXANDER. Se debe cambiar el schema
         status: true,
       },
     });

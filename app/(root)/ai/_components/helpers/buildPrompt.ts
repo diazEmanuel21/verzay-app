@@ -8,7 +8,7 @@ export const buildPrompt = (v: BusinessValues): string => {
     //     return `Completa al menos el nombre del negocio para generar el prompt.`;
     // }
 
-    lines.push(`## DATOS DEL NEGOCIO`);
+    lines.push(`## DATOS DEL NEGOCIO\n`);
     lines.push(`* **Nombre:** ${v.nombre.trim()}`);
 
     add(lines, "* **Sector/Rubro:**", v.sector);
@@ -29,7 +29,7 @@ export const buildPrompt = (v: BusinessValues): string => {
     }
 
     lines.push(
-`\n## INSTRUCCIÓN
+`\n## INSTRUCCIÓN\n
 Debes **adherirte a estos pasos de conversación (Usuario ⇄ IA)** para **seguir estrictamente** los pasos provistos para este negocio específico, **sin saltar ni mezclar** pasos, respetando **funciones**, **salidas literales** y **comportamientos**. ## Parámetros de entrada (completa quien invoca) * **[Contexto breve]:** '[escenario / canal / notas]' * **[Flujo/Pasos]:** bloque con pasos **numerados** y sus reglas (incluye funciones, salidas literales, comportamientos, validaciones, fallbacks) * **[Variables requeridas]:** '[lista de variables esperadas: nombre, ciudad, producto, etc.]' * **{características}:** estilo **profesional**, tono **neutral**, ejemplo **breve y accionable** usando **exclusivamente** la información de este documento. Si falta un dato, continúa con naturalidad **sin inventarlo**. 
 `);
 
