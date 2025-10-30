@@ -18,6 +18,8 @@ import { z } from 'zod'
 import { Textarea } from '@/components/ui/textarea'
 import { User, Manual, Role } from '@prisma/client'
 import { Edit2Icon, Eye, Pencil, Search, Trash2 } from 'lucide-react'
+import Header from '@/components/shared/header'
+import { GenericDeleteDialog } from '@/components/shared/GenericDeleteDialog'
 interface MainGuideProps {
   user: User
 }
@@ -45,6 +47,9 @@ export function MainGuide({ user }: MainGuideProps) {
   const [editData, setEditData] = useState<ManualClient | null>(null)
   const [open, setOpen] = useState(false)
   const [formData, setFormData] = useState({ name: '', description: '', url: '' })
+
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [templateId, setTemplateId] = useState<string>()
 
   const fetchManuals = async () => {
     setLoading(true)
@@ -109,107 +114,131 @@ export function MainGuide({ user }: MainGuideProps) {
     setOpen(true)
   }
 
+  const handleOpenDeleteModal = (templateId: string) => {
+    setTemplateId(templateId)
+    setShowDeleteDialog(true)
+  }
+
   const filtered = manuals.filter(m => m.name.toLowerCase().includes(search.toLowerCase()))
 
   return (
-    <div className="flex flex-col p-4 gap-6 overflow-hidden">
-      {/* Header y Filtro */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between overflow-hidden">
-        <div className="flex flex-1 gap-2 items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar guía..."
-              className="pl-8"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          {user.role === Role.admin &&
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  onClick={() => {
-                    setEditData(null) // ⬅️ importante
-                    setFormData({ name: '', description: '', url: '' }) // ⬅️ limpio para crear
-                  }}
-                >
-                  Crear Guía
-                </Button>
-              </DialogTrigger>
-
-              <DialogContent className="border-border">
-                <DialogHeader>
-                  <DialogTitle>{editData ? 'Editar Manual' : 'Crear Manual'}</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <Input placeholder="Nombre" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-                  <Textarea placeholder="Descripción" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
-                  <Input placeholder="https://medias3.verzay.co/verzay-documentation/..." value={formData.url} onChange={(e) => setFormData({ ...formData, url: e.target.value })} />
-                </div>
-                <DialogFooter>
-                  <Button onClick={editData ? handleUpdate : handleCreate} disabled={isPending}>
-                    {isPending ? 'Guardando...' : editData ? 'Actualizar' : 'Crear'}
+    <>
+      <div className="flex flex-col p-4 gap-6 overflow-hidden">
+        <Header
+          title="Guías"
+        />
+        {/* Header y Filtro */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between overflow-hidden">
+          <div className="flex flex-1 gap-2 items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar guía..."
+                className="pl-8"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            {user.role === Role.admin &&
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    onClick={() => {
+                      setEditData(null) // ⬅️ importante
+                      setFormData({ name: '', description: '', url: '' }) // ⬅️ limpio para crear
+                    }}
+                  >
+                    Crear Guía
                   </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          }
+                </DialogTrigger>
+
+                <DialogContent className="border-border">
+                  <DialogHeader>
+                    <DialogTitle>{editData ? 'Editar Manual' : 'Crear Manual'}</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <Input placeholder="Nombre" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                    <Textarea placeholder="Descripción" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+                    <Input placeholder="https://medias3.verzay.co/verzay-documentation/..." value={formData.url} onChange={(e) => setFormData({ ...formData, url: e.target.value })} />
+                  </div>
+                  <DialogFooter>
+                    <Button onClick={editData ? handleUpdate : handleCreate} disabled={isPending}>
+                      {isPending ? 'Guardando...' : editData ? 'Actualizar' : 'Crear'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            }
+          </div>
         </div>
-      </div>
 
 
-      {/* Cards */}
-      {loading ? (
-        <div className="flex justify-center items-center py-20">
-          <p className="text-muted-foreground">Loading manual...</p>
-        </div>
-      ) : (
-        <div className="flex-1">
-          <div className="max-h-[85vh] overflow-auto py-2">
-            <div className="flex flex-wrap flex-1 gap-2 justify-center">
-              {filtered.map((manual) => (
-                <Card
-                  key={manual.id}
-                  onClick={() => window.open(manual.url, "_blank")}
-                  className="flex flex-col border-border transition-all duration-300 hover:shadow-lg hover:scale-[1.015] hover:border-primary w-64">
-                  <CardHeader>
-                    <CardTitle>{manual.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex flex-1 justify-stretch items-center">
-                    <p className="text-sm text-muted-foreground">{manual.description}</p>
-                  </CardContent>
-                  {user.role === Role.admin &&
+        {/* Cards */}
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <p className="text-muted-foreground">Loading manual...</p>
+          </div>
+        ) : (
+          <div className="flex-1">
+            <div className="max-h-[80vh] overflow-auto py-2">
+              <div className="flex flex-wrap flex-1 gap-2 justify-center">
+                {filtered.map((manual) => (
+                  <Card
+                    key={manual.id}
+                    className="flex flex-col border-border transition-all duration-300 hover:shadow-lg hover:scale-[1.015] hover:border-primary w-64">
+                    <CardHeader>
+                      <CardTitle>{manual.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-1 justify-stretch items-center">
+                      <p className="text-sm text-muted-foreground">{manual.description}</p>
+                    </CardContent>
                     <CardFooter className="flex mt-auto gap-2 w-full">
                       <Button
                         className="w-full"
                         onClick={() => window.open(manual.url, "_blank")}
                         rel="noopener noreferrer"
                       >
-                        <Eye />
+                        {user.role === Role.admin ? <Eye /> : 'Ver'}
                       </Button>
-                      <Button
-                        variant="secondary"
-                        className="w-full"
-                        onClick={() => openEdit(manual)}
-                      >
-                        <Pencil />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        className="w-full"
-                        onClick={() => handleDelete(manual.id)}
-                      >
-                        <Trash2 />
-                      </Button>
+                      {user.role === Role.admin &&
+                        <>
+                          <Button
+                            variant="secondary"
+                            className="w-full"
+                            onClick={() => openEdit(manual)}
+                          >
+                            <Pencil />
+                          </Button>
+
+                          <Button
+                            variant="destructive"
+                            className="w-full"
+                            onClick={() => handleOpenDeleteModal(manual.id)}
+                          >
+                            <Trash2 />
+                          </Button>
+                        </>
+                      }
                     </CardFooter>
-                  }
-                </Card>
-              ))}
+                  </Card>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+
+      {templateId &&
+        <GenericDeleteDialog
+          open={showDeleteDialog}
+          itemName="Plantilla"
+          entityLabel="Plantilla"
+          setOpen={setShowDeleteDialog}
+          itemId={templateId}
+          mutationFn={() => handleDelete(templateId)}
+        />
+      }
+    </>
+
   )
 }

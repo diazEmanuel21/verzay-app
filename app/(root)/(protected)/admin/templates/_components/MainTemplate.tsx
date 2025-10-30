@@ -20,6 +20,7 @@ import { TemplateCardSkeleton, TemplateList } from './'
 import { PromptTemplate, Role } from '@prisma/client'
 import { createTemplate, deleteTemplate, getAllTemplates, updateTemplate } from '@/actions/template-actions'
 import { GenericDeleteDialog } from '@/components/shared/GenericDeleteDialog'
+import Header from '@/components/shared/header'
 
 export const MainTemplate = ({ userRole }: { userRole: Role }) => {
     const router = useRouter()
@@ -106,6 +107,9 @@ export const MainTemplate = ({ userRole }: { userRole: Role }) => {
 
     return (
         <div className="flex flex-col p-4 gap-6 overflow-hidden">
+            <Header
+                title="Plantillas"
+            />
             {/* Header y Filtro */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between overflow-hidden">
                 <div className="flex flex-1 gap-2 items-center">
@@ -123,7 +127,7 @@ export const MainTemplate = ({ userRole }: { userRole: Role }) => {
             </div>
 
             <div className="flex-1">
-                <div className="max-h-[85vh] overflow-auto py-2">
+                <div className="max-h-[80vh] overflow-auto py-2">
                     <div className="flex flex-wrap flex-1 gap-2 justify-center">
                         {isPending ? (
                             <TemplateCardSkeleton />

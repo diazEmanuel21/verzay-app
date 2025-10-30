@@ -26,7 +26,6 @@ export const TemplateList = ({ templates, onEdit, userRole, onDelete }: Template
             {templates.map((template) => (
                 <Card
                     key={template.id}
-                    onClick={() => window.open(template.content, "_blank")}
                     className="flex flex-col border-border transition-all duration-300 hover:shadow-lg hover:scale-[1.015] hover:border-primary w-64">
                     <CardHeader>
                         <CardTitle>{template.name}</CardTitle>
@@ -40,38 +39,40 @@ export const TemplateList = ({ templates, onEdit, userRole, onDelete }: Template
                         </div>
                     </CardContent>
 
-                    {
-                        userRole === 'admin' &&
-                        <CardFooter className="flex mt-auto gap-2">
+                    <CardFooter className="flex mt-auto gap-2">
+                        <>
+                            {template.content ? (
+                                <Button
+                                    className="w-full"
+                                    onClick={() => window.open(template.content, "_blank")}
+                                    rel="noopener noreferrer"
+                                >
+                                   { userRole === 'admin' ? <Eye /> : 'Ver'}
+                                </Button>
+                            ) : (
+                                <p className="text-muted-foreground">Sin descripción.</p>
+                            )}
+                        </>
+                        {
+                            userRole === 'admin' &&
                             <>
-                                {template.content ? (
-                                    <Button
-                                        className="w-full"
-                                        onClick={() => window.open(template.content, "_blank")}
-                                        rel="noopener noreferrer"
-                                    >
-                                        <Eye />
-                                    </Button>
-                                ) : (
-                                    <p className="text-muted-foreground">Sin descripción.</p>
-                                )}
+                                <Button
+                                    variant="secondary"
+                                    className="w-full"
+                                    onClick={() => onEdit(template)}
+                                >
+                                    <Pencil />
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    className="w-full"
+                                    onClick={() => onDelete(template.id)}
+                                >
+                                    <Trash2 />
+                                </Button>
                             </>
-                            <Button
-                                variant="secondary"
-                                className="w-full"
-                                onClick={() => onEdit(template)}
-                            >
-                                <Pencil />
-                            </Button>
-                            <Button
-                                variant="destructive"
-                                className="w-full"
-                                onClick={() => onDelete(template.id)}
-                            >
-                                <Trash2 />
-                            </Button>
-                        </CardFooter>
-                    }
+                        }
+                    </CardFooter>
                 </Card>
             ))}
         </>
