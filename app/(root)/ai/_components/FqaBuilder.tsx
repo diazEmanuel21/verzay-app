@@ -17,6 +17,7 @@ import { Workflow } from "@prisma/client";
 import { useFaqAutosave } from "./hooks/useFaqAutosave";
 import { FunctionSelector } from "./";
 import ElementRenderer from "./action-steeps/ElementRenderer";
+import { buildSectionedPrompt } from "./helpers";
 
 /* ---------- type-guard para función de Pedidos ---------- */
 function isPedidoFn(el: any): el is {
@@ -65,56 +66,16 @@ export function FqaBuilder({
 
     /* ------------------ PREVIEW (markdown) ------------------ */
     const prompt = useMemo(() => {
-        if (items.length === 0) return "Aún no has agregado Preguntas. Usa “Agregar Pregunta” para comenzar.";
-
-        const blocks: string[] = [];
-        items.forEach((step, i) => {
-            const n = i + 1;
-            blocks.push(`\n### Pregunta ${n} — ${step.title || "Sin título"}`);
-            if (step.mainMessage?.trim()) {
-                blocks.push(`* **Respuesta principal de la pregunta:**\n${step.mainMessage.trim()}`);
-            }
-
-            if (Array.isArray(step.elements) && step.elements.length > 0) {
-                blocks.push(`\n#### Elementos de la pregunta: ${n}`);
-                step.elements.forEach((el, idx) => {
-                    const k = idx + 1;
-                    if (el.kind === "text") {
-                        const t = (el as any).text?.trim();
-                        if (t) blocks.push(`- (${k}) **Regla/parámetro:** ${t}`);
-                        return;
-                    }
-                    if (el.kind === "function") {
-                        if ((el as any).fn === "captura_datos") {
-                            const base = `- (${k}) Captura de datos — ${(el as any).subtype ?? "—"}: ${(el as any).prompt ?? ""}`;
-                            blocks.push(base);
-                            if ((el as any).subtype === "Pedidos") {
-                                const fields = (el as any).fields as string[] | undefined;
-                                if (fields?.length) blocks.push(`  Campos: ${fields.join(", ")}`);
-                            }
-                            return;
-                        }
-                        if ((el as any).fn === "ejecutar_flujo") {
-                            blocks.push(`> Función: Ejecuta el flujo '${(el as any).flowName || (el as any).flowId || ""}'`);
-                            blocks.push(
-                                `* **Comportamiento:** Después de ejecutar el flujo, tu única respuesta es la que se te indique en **Regla/parámetro**.`
-                            );
-                            return;
-                        }
-                        if ((el as any).fn === "notificar_asesor") {
-                            blocks.push(`- (${k}) Notificar asesor: ${(el as any).notificationNumber ?? "—"}`);
-                            return;
-                        }
-                        if ((el as any).fn === "consulta_datos") {
-                            blocks.push(`- (${k}) Consulta de datos:\n${(el as any).prompt ?? ""}`);
-                            return;
-                        }
-                    }
-                });
-            }
+        return buildSectionedPrompt(items as any, {
+            emptyMessage: "Aún no has agregado Preguntas. Usa “Agregar Pregunta” para comenzar.",
+            sectionLabel: (n, step) => `Pregunta ${n} — ${step.title || "Sin título"}`,
+            elementsLabel: (n) => `Elementos de la pregunta: ${n}`,
+            mainMessageLabel: "Respuesta principal de la pregunta",
+            // En FQA usabas "... la que se te indique ..."
+            flowBehaviorText:
+                "Después de ejecutar el flujo, tu única respuesta es la que se te indique en **Regla/parámetro**.",
+            joinSeparator: "\n",
         });
-
-        return blocks.join("\n");
     }, [items]);
 
     /* -------- Sincroniza string preview con el padre (values.faq) -------- */

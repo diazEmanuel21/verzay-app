@@ -22,6 +22,7 @@ import type {
     PedidoFunctionEl,
 } from "@/types/agentAi";
 import type { Workflow } from "@prisma/client";
+import { buildSectionedPrompt } from "./helpers";
 
 /* ========= Firma por defecto ========= */
 const PROMPT_SIGNATURE_DEFAULT =
@@ -117,77 +118,19 @@ export function ExtraInfoBuilder({
 
     /* ====== PREVIEW (markdown) ====== */
     const prompt = useMemo(() => {
-        const blocks: string[] = [];
-
-        // Firma
-        if (firmaEnabled) blocks.push(firmaText.trim());
-
-        // Pasos
-        if (items.length === 0) {
-            blocks.push(
-                "Aún no has agregado información extra. Usa Agregar extra para comenzar."
-            );
-        } else {
-            const lines: string[] = [];
-            items.forEach((step, i) => {
-                const n = i + 1;
-                lines.push(`\n### Extra ${n} — ${step.title || "Sin título"}`);
-                if (step.mainMessage?.trim()) {
-                    lines.push(
-                        `* **Contenido / Mensaje principal:**\n${step.mainMessage.trim()}`
-                    );
-                }
-                if (Array.isArray(step.elements) && step.elements.length > 0) {
-                    lines.push(`\n#### Elementos del extra: ${n}`);
-                    step.elements.forEach((el, idx) => {
-                        const k = idx + 1;
-                        if (el.kind === "text") {
-                            const t = el.text?.trim();
-                            if (t) lines.push(`- (${k}) **Regla/parámetro:** ${t}`);
-                            return;
-                        }
-                        if (el.kind === "function") {
-                            if (el.fn === "captura_datos") {
-                                const base = `- (${k}) Captura de datos — ${(el as any).subtype ?? "—"
-                                    }: ${(el as any).prompt ?? ""}`;
-                                lines.push(base);
-                                if ((el as any).subtype === "Pedidos") {
-                                    const fields = (el as any).fields as string[] | undefined;
-                                    if (fields?.length) lines.push(`  Campos: ${fields.join(", ")}`);
-                                }
-                                return;
-                            }
-                            if (el.fn === "ejecutar_flujo") {
-                                lines.push(
-                                    `> Función: Ejecuta el flujo '${(el as any).flowName || (el as any).flowId || ""
-                                    }'`
-                                );
-                                lines.push(
-                                    `* **Comportamiento:** Después de ejecutar el flujo, tu única respuesta es la indicada en **Regla/parámetro**.`
-                                );
-                                return;
-                            }
-                            if (el.fn === "notificar_asesor") {
-                                lines.push(
-                                    `- (${k}) Notificar asesor: ${(el as any).notificationNumber ?? "—"
-                                    }`
-                                );
-                                return;
-                            }
-                            if (el.fn === "consulta_datos") {
-                                lines.push(
-                                    `- (${k}) Consulta de datos:\n${(el as any).prompt ?? ""}`
-                                );
-                                return;
-                            }
-                        }
-                    });
-                }
-            });
-            blocks.push(lines.join("\n"));
-        }
-
-        return blocks.join("\n\n---\n\n");
+        return buildSectionedPrompt(items as any, {
+            emptyMessage: "Aún no has agregado información extra. Usa Agregar extra para comenzar.",
+            sectionLabel: (n, step) => `Extra ${n} — ${step.title || "Sin título"}`,
+            elementsLabel: (n) => `Elementos del extra: ${n}`,
+            mainMessageLabel: "Contenido / Mensaje principal",
+            // En Extras usabas un separador especial:
+            joinSeparator: "\n\n---\n\n",
+            // El texto comportamiento aquí era "... la indicada ..."
+            flowBehaviorText:
+                "Después de ejecutar el flujo, tu única respuesta es la indicada en **Regla/parámetro**.",
+            // Firma:
+            firma: { enabled: !!firmaEnabled, text: String(firmaText || "") },
+        });
     }, [items, firmaEnabled, firmaText]);
 
     /* ====== SYNC con padre (values.more) y compat onChange ====== */
@@ -314,15 +257,52 @@ export function ExtraInfoBuilder({
         <Card className="border-muted/60">
             <CardHeader className="pb-2 flex items-center justify-between gap-2 flex-row">
                 <CardTitle className="text-base">Extras</CardTitle>
-                {items.length < 1 &&
-                    <Button size="sm" onClick={addItem} className="gap-2">
-                        <Plus className="w-4 h-4" />
-                        Agregar extra
-                    </Button>
-                }
+
             </CardHeader>
 
             <>
+                {/* ====== Bloque Firma ====== */}
+                <div className="space-y-2 px-6 pb-2">
+                    <div className="flex items-center justify-between">
+                        <label className="text-sm">Nombre en la firma</label>
+                        {firmaEnabled ? (
+                            <Button variant="ghost" onClick={() => setFirmaEnabled(false)}>
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Eliminar
+                            </Button>
+                        ) : (
+                            <Button variant="secondary" onClick={() => setFirmaEnabled(true)}>
+                                <PenSquare className="h-4 w-4" />
+                                Agregar firma
+                            </Button>
+                        )}
+                    </div>
+
+                    {firmaEnabled && (
+                        <>
+                            <Input
+                                placeholder="Ej. Asistente Virtual"
+                                value={signatureName}
+                                onChange={(e) => setSignatureName(e.target.value)}
+                            />
+
+                            <Textarea
+                                className="min-h-[32px] text-xs opacity-80 hidden"
+                                readOnly
+                                value={firmaText}
+                            />
+                        </>
+                    )}
+
+                    {items.length < 1 &&
+                        <div className="flex w-full justify-end">
+                            <Button size="sm" onClick={addItem} className="gap-2">
+                                <Plus className="w-4 h-4" />
+                                Agregar extra
+                            </Button>
+                        </div>
+                    }
+                </div>
                 {/* ====== Pasos/Items extra ====== */}
                 <CardContent className="space-y-3">
                     {items.length === 0 ? (
@@ -418,40 +398,6 @@ export function ExtraInfoBuilder({
                         </div>
                     )}
                 </CardContent>
-
-                {/* ====== Bloque Firma ====== */}
-                <div className="space-y-2 px-4 pb-2">
-                    <div className="flex items-center justify-between">
-                        <label className="text-sm">Nombre en la firma</label>
-                        {firmaEnabled ? (
-                            <Button variant="ghost" onClick={() => setFirmaEnabled(false)}>
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Eliminar
-                            </Button>
-                        ) : (
-                            <Button variant="secondary" onClick={() => setFirmaEnabled(true)}>
-                                <PenSquare className="h-4 w-4 mr-2" />
-                                Agregar firma
-                            </Button>
-                        )}
-                    </div>
-
-                    {firmaEnabled && (
-                        <>
-                            <Input
-                                placeholder="Ej. Asistente Virtual"
-                                value={signatureName}
-                                onChange={(e) => setSignatureName(e.target.value)}
-                            />
-
-                            <Textarea
-                                className="min-h-[32px] text-xs opacity-80 hidden"
-                                readOnly
-                                value={firmaText}
-                            />
-                        </>
-                    )}
-                </div>
             </>
             {items.length > 0 && <CardFooter className="pb-2 flex items-center justify-between gap-2 flex-row">
                 <CardTitle className="text-base">Extras</CardTitle>

@@ -22,6 +22,7 @@ import type {
     ProductItemType,
     ProductBuilderProps,
 } from "@/types/agentAi";
+import { buildSectionedPrompt } from "./helpers";
 
 /* type-guard: captura_datos -> Pedidos */
 function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
@@ -66,52 +67,16 @@ export const ProductBuilder = ({
 
     /* PREVIEW markdown (consistente con pasos/elementos) */
     const prompt = useMemo(() => {
-        if (items.length === 0) return "Aún no has agregado productos. Usa “Agregar producto” para comenzar.";
-
-        const lines: string[] = [];
-        items.forEach((step, i) => {
-            const n = i + 1;
-            lines.push(`\n### Producto ${n} — ${step.title || "Sin título"}`);
-            if (step.mainMessage?.trim()) {
-                lines.push(`* **Descripción / Objetivo:**\n${step.mainMessage.trim()}`);
-            }
-            if (Array.isArray(step.elements) && step.elements.length > 0) {
-                lines.push(`\n#### Elementos del producto: ${n}`);
-                step.elements.forEach((el, idx) => {
-                    const k = idx + 1;
-                    if (el.kind === "text") {
-                        const t = el.text?.trim();
-                        if (t) lines.push(`- (${k}) **Regla/parámetro:** ${t}`);
-                        return;
-                    }
-                    if (el.kind === "function") {
-                        if (el.fn === "captura_datos") {
-                            const base = `- (${k}) Captura de datos — ${el.subtype ?? "—"}: ${el.prompt ?? ""}`;
-                            lines.push(base);
-                            if ((el as any).subtype === "Pedidos") {
-                                const fields = (el as any).fields as string[] | undefined;
-                                if (fields?.length) lines.push(`  Campos: ${fields.join(", ")}`);
-                            }
-                            return;
-                        }
-                        if (el.fn === "ejecutar_flujo") {
-                            lines.push(`> Función: Ejecuta el flujo '${el.flowName || el.flowId || ""}'`);
-                            lines.push(`* **Comportamiento:** Después de ejecutar el flujo, tu única respuesta es la indicada en **Regla/parámetro**.`);
-                            return;
-                        }
-                        if (el.fn === "notificar_asesor") {
-                            lines.push(`- (${k}) Notificar asesor: ${el.notificationNumber ?? "—"}`);
-                            return;
-                        }
-                        if (el.fn === "consulta_datos") {
-                            lines.push(`- (${k}) Consulta de datos:\n${el.prompt ?? ""}`);
-                            return;
-                        }
-                    }
-                });
-            }
+        return buildSectionedPrompt(items as any, {
+            emptyMessage: "Aún no has agregado productos. Usa “Agregar producto” para comenzar.",
+            sectionLabel: (n, step) => `Producto ${n} — ${step.title || "Sin título"}`,
+            elementsLabel: (n) => `Elementos del producto: ${n}`,
+            mainMessageLabel: "Descripción / Objetivo",
+            // En Product usabas "... la indicada ..."
+            flowBehaviorText:
+                "Después de ejecutar el flujo, tu única respuesta es la indicada en **Regla/parámetro**.",
+            joinSeparator: "\n",
         });
-        return lines.join("\n");
     }, [items]);
 
     /* SYNC con parent */
