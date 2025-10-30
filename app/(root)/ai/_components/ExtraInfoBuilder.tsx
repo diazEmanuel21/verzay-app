@@ -322,41 +322,7 @@ export function ExtraInfoBuilder({
                 }
             </CardHeader>
 
-            <div>
-                {/* ====== Bloque Firma ====== */}
-                <div className="rounded-md border border-muted/60 space-y-2 px-4">
-                    <div className="flex items-center justify-between">
-                        <label className="text-sm">Nombre en la firma</label>
-                        {firmaEnabled ? (
-                            <Button variant="ghost" onClick={() => setFirmaEnabled(false)}>
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Eliminar
-                            </Button>
-                        ) : (
-                            <Button variant="secondary" onClick={() => setFirmaEnabled(true)}>
-                                <PenSquare className="h-4 w-4 mr-2" />
-                                Agregar firma
-                            </Button>
-                        )}
-                    </div>
-
-                    {firmaEnabled && (
-                        <>
-                            <Input
-                                placeholder="Ej. Asistente Virtual"
-                                value={signatureName}
-                                onChange={(e) => setSignatureName(e.target.value)}
-                            />
-
-                            <Textarea
-                                className="min-h-[32px] text-xs opacity-80 hidden"
-                                readOnly
-                                value={firmaText}
-                            />
-                        </>
-                    )}
-                </div>
-
+            <>
                 {/* ====== Pasos/Items extra ====== */}
                 <CardContent className="space-y-3">
                     {items.length === 0 ? (
@@ -452,7 +418,41 @@ export function ExtraInfoBuilder({
                         </div>
                     )}
                 </CardContent>
-            </div>
+
+                {/* ====== Bloque Firma ====== */}
+                <div className="space-y-2 px-4 pb-2">
+                    <div className="flex items-center justify-between">
+                        <label className="text-sm">Nombre en la firma</label>
+                        {firmaEnabled ? (
+                            <Button variant="ghost" onClick={() => setFirmaEnabled(false)}>
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Eliminar
+                            </Button>
+                        ) : (
+                            <Button variant="secondary" onClick={() => setFirmaEnabled(true)}>
+                                <PenSquare className="h-4 w-4 mr-2" />
+                                Agregar firma
+                            </Button>
+                        )}
+                    </div>
+
+                    {firmaEnabled && (
+                        <>
+                            <Input
+                                placeholder="Ej. Asistente Virtual"
+                                value={signatureName}
+                                onChange={(e) => setSignatureName(e.target.value)}
+                            />
+
+                            <Textarea
+                                className="min-h-[32px] text-xs opacity-80 hidden"
+                                readOnly
+                                value={firmaText}
+                            />
+                        </>
+                    )}
+                </div>
+            </>
             {items.length > 0 && <CardFooter className="pb-2 flex items-center justify-between gap-2 flex-row">
                 <CardTitle className="text-base">Extras</CardTitle>
 

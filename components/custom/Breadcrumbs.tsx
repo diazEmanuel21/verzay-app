@@ -1,15 +1,33 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { HomeIcon } from '@heroicons/react/24/solid';
 import {
   Breadcrumb,
   BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
   BreadcrumbSeparator,
+  BreadcrumbEllipsis,
 } from '@/components/ui/breadcrumb';
+import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from '../ui/sidebar';
 import { useEffect, useState } from 'react';
 import { getGuidesForPath } from '@/actions/guide-actions';
+import { Play } from 'lucide-react';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogTitle,
+  DialogHeader,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { GuidesUrl } from '@prisma/client';
+import { Button } from '../ui/button';
 
 const breadcrumbLabels: Record<string, string> = {
   flow: 'flujos',
@@ -34,9 +52,6 @@ const breadcrumbLabels: Record<string, string> = {
 export const Breadcrumbs = () => {
   const pathname = usePathname();
   const [guides, setGuides] = useState<GuidesUrl[]>([]);
-
-  const isToolRoute = pathname.startsWith('/tools');
-  const isMultiAgentRoute = pathname === '/multiagente';
 
   useEffect(() => {
     const fetchGuides = async () => {
@@ -67,31 +82,31 @@ export const Breadcrumbs = () => {
 
   return (
     <>
-      {!isToolRoute && !isMultiAgentRoute ?
-        <div className="h-18 shrink-0">
-          <header className={`sticky top-0 h-12 w-full border-border flex items-center px-4 bg-gray-100 dark:bg-transparent dark:text-white py-4`}>
+      {pathname !== "/multiagente" ?
+        <div className="h-18 shrink-0 block md:hidden lg:hidden xl:hidden">
+          <header className={`sticky top-0 w-full border-border flex items-center px-4 dark:bg-gray-900 dark:text-white`}>
             {/* <Breadcrumb className='py-4 flex flex-row flex-1 overflow-hidden bg-slate-100 text-black dark:bg-gray-900 dark:text-white border-border'> */}
-            <Breadcrumb className=' flex flex-row flex-1 overflow-hidden bg-gray-100 dark:bg-transparent dark:text-white'>
+            <Breadcrumb className='py-2 flex flex-row flex-1 overflow-hidden dark:bg-gray-900 dark:text-white'>
               {/* <BreadcrumbList> */}
               {/* <BreadcrumbList className="flex flex-wrap items-center gap-1"> */}
               <BreadcrumbList>
                 <SidebarTrigger className="-ml-1" />
-                {/* <Separator orientation="vertical" className="mr-2 h-4" /> */}
+                <Separator orientation="vertical" className="mr-2 h-4" />
                 {/* Home link */}
-                {/* <BreadcrumbItem>
+                <BreadcrumbItem>
                   <BreadcrumbLink asChild>
                     <Link href="/" className="flex items-center gap-1 text-muted-foreground hover:text-primary">
                       <HomeIcon className="h-5" />
                       <span className="sr-only">Home</span>
                     </Link>
                   </BreadcrumbLink>
-                </BreadcrumbItem> */}
+                </BreadcrumbItem>
 
                 {/* Separador inicial */}
                 {breadcrumbs.length > 0 && <BreadcrumbSeparator />}
 
                 {/* Si hay muchos segmentos, mostramos un BreadcrumbEllipsis */}
-                {/* {breadcrumbs.length > 3 && (
+                {breadcrumbs.length > 3 && (
                   <>
                     <BreadcrumbEllipsis />
                     <BreadcrumbSeparator />
@@ -112,10 +127,10 @@ export const Breadcrumbs = () => {
                       </div>
                     ))}
                   </>
-                )} */}
+                )}
 
                 {/* Si no hay muchos segmentos, mostramos todos */}
-                {/* {breadcrumbs.length <= 3 &&
+                {breadcrumbs.length <= 3 &&
                   breadcrumbs.map((breadcrumb, index) => (
                     <div key={breadcrumb.href} className="flex items-center">
                       <BreadcrumbItem>
@@ -132,11 +147,11 @@ export const Breadcrumbs = () => {
 
                       {index !== breadcrumbs.length - 1 && <BreadcrumbSeparator />}
                     </div>
-                  ))} */}
+                  ))}
               </BreadcrumbList>
 
               {/* Tutorials */}
-              {/* {guides.length > 0 && (
+              {guides.length > 0 && (
                 <div className='flex justify-end flex-1'>
                   <Dialog>
                     <DialogTrigger asChild>
@@ -165,10 +180,12 @@ export const Breadcrumbs = () => {
                               className="border rounded-lg p-5 shadow-sm transition cursor-pointer group"
                               onClick={() => window.open(guide.url, '_blank')}
                             >
+                              {/* Título destacado */}
                               <h3 className="text-base font-semibold text-foreground transition">
                                 {guide.title}
                               </h3>
 
+                              {/* Botón sutil */}
                               <Button
                                 className="mt-3 bg-[#FF0033] hover:bg-[#e60000] text-white font-semibold transition duration-200 uppercase px-4 py-2 text-sm"
                                 onClick={(e) => {
@@ -179,6 +196,7 @@ export const Breadcrumbs = () => {
                                 <Play className="w-4 h-4 text-white mr-2" />
                                 <span className="hidden sm:inline">Ver en YouTube</span>
                               </Button>
+                              {/* Descripción secundaria */}
                               <p className="text-sm text-muted-foreground mt-1">{guide.description}</p>
                             </li>
                           ))}
@@ -187,7 +205,7 @@ export const Breadcrumbs = () => {
                     </DialogContent>
                   </Dialog>
                 </div>
-              )} */}
+              )}
             </Breadcrumb>
           </header>
         </div>
