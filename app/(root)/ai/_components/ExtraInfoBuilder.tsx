@@ -23,6 +23,7 @@ import type {
 } from "@/types/agentAi";
 import type { Workflow } from "@prisma/client";
 import { buildSectionedPrompt } from "./helpers";
+import { PromptFragmentCombobox } from "./PromptFragmentCombobox";
 
 /* ========= Firma por defecto ========= */
 const PROMPT_SIGNATURE_DEFAULT =
@@ -252,6 +253,15 @@ export function ExtraInfoBuilder({
         );
     };
 
+    const appendToMain = (id: string, frag: string) =>
+        setItems((p) =>
+            p.map((x) =>
+                x.id === id
+                    ? { ...x, mainMessage: (x.mainMessage ?? "").trim().length ? `${x.mainMessage}\n\n${frag}` : frag }
+                    : x
+            )
+        );
+
     /* ====== UI ====== */
     return (
         <Card className="border-muted/60">
@@ -342,13 +352,23 @@ export function ExtraInfoBuilder({
                                         <CardContent className="space-y-3">
                                             {/* Objetivo / Mensaje principal */}
                                             <div className="space-y-2">
-                                                <label className="text-sm font-medium">{`Descripción ${idx + 1}`}</label>
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-sm font-medium">{`Descripción ${idx + 1}`}</label>
+
+                                                    {/* Combobox independiente para insertar fragmentos */}
+                                                    <PromptFragmentCombobox
+                                                        onInsert={(frag) => appendToMain(step.id, frag)}
+                                                        buttonText="Agregar fragmento"
+                                                    />
+                                                </div>
+
                                                 <Textarea
                                                     value={step.mainMessage ?? ""}
                                                     onChange={(e) => updateMain(step.id, e.target.value)}
                                                     className="min-h-[32px]"
                                                 />
                                             </div>
+
 
                                             <Separator />
 
