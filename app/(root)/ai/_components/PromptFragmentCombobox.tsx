@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils"; // si usas util de shadcn; si no, quítalo
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -29,7 +29,6 @@ export function PromptFragmentCombobox({ onInsert, buttonText = "Agregar fragmen
         const selected = PROMPT_FRAGMENTS.find((f) => f.id === id);
         if (selected) {
             onInsert(selected.value);
-            // Reseteamos estado y cerramos
             setSearch("");
             setOpen(false);
         }
@@ -46,27 +45,30 @@ export function PromptFragmentCombobox({ onInsert, buttonText = "Agregar fragmen
             </PopoverTrigger>
 
             <PopoverContent className="p-0 w-[420px]" align="end">
-                <Command shouldFilter={false}>
-                    <CommandInput
-                        value={search}
-                        onValueChange={setSearch}
-                        placeholder="Buscar fragmento…"
-                    />
-                    <CommandEmpty>No hay resultados.</CommandEmpty>
-                    <CommandGroup heading="Fragmentos de prompt">
-                        {items.map((f) => (
-                            <CommandItem
-                                key={f.id}
-                                value={f.id}
-                                className="text-xs"
-                                onSelect={handleSelect}
-                            >
-                                <Check className="mr-2 h-4 w-4 opacity-0" />
-                                {f.label}
-                            </CommandItem>
-                        ))}
-                    </CommandGroup>
-                </Command>
+                {/* Contenedor con scroll vertical */}
+                <div className="max-h-80 overflow-y-auto"> {/* <- ajusta 80 (20rem) a tu gusto */}
+                    <Command shouldFilter={false}>
+                        <CommandInput
+                            value={search}
+                            onValueChange={setSearch}
+                            placeholder="Buscar fragmento…"
+                        />
+                        <CommandEmpty>No hay resultados.</CommandEmpty>
+                        <CommandGroup heading="Fragmentos de prompt">
+                            {items.map((f) => (
+                                <CommandItem
+                                    key={f.id}
+                                    value={f.id}
+                                    className="text-xs"
+                                    onSelect={handleSelect}
+                                >
+                                    <Check className="mr-2 h-4 w-4 opacity-0" />
+                                    {f.label}
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    </Command>
+                </div>
             </PopoverContent>
         </Popover>
     );
