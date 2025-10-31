@@ -23,7 +23,7 @@ import type {
 } from "@/types/agentAi";
 import type { Workflow } from "@prisma/client";
 import { buildSectionedPrompt } from "./helpers";
-import { PromptFragmentCombobox } from "./PromptFragmentCombobox";
+import { ManagementPromptBuilder } from "./ManagementPromptBuilder";
 
 /* ========= Firma por defecto ========= */
 const PROMPT_SIGNATURE_DEFAULT =
@@ -352,7 +352,7 @@ export function ExtraInfoBuilder({
                                                     <label className="text-sm font-medium">{`Descripción ${idx + 1}`}</label>
 
                                                     {/* Combobox independiente para insertar fragmentos */}
-                                                    <PromptFragmentCombobox
+                                                    <ManagementPromptBuilder
                                                         onInsert={(frag) => appendToMain(step.id, frag)}
                                                         buttonText="Agregar fragmento"
                                                     />

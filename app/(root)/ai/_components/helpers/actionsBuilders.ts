@@ -1,7 +1,7 @@
 // builders.ts
 import { z } from "zod";
 import { buildSectionedMarkdown } from "./markdownBuilder";
-import { ExtrasDraftSchema, FaqDraftSchema, flowBehaviorText, ProductsDraftSchema, TrainingDraftSchema } from "@/types/agentAi";
+import { ExtrasDraftSchema, FaqDraftSchema, flowBehaviorText, ProductsDraftSchema, TrainingDraftSchema, ManagementDraftSchema } from "@/types/agentAi";
 
 export function buildExtrasMarkdown(extras: z.infer<typeof ExtrasDraftSchema>): string {
     return buildSectionedMarkdown(extras, {
@@ -33,4 +33,8 @@ export function buildTrainingMarkdown(training: z.infer<typeof TrainingDraftSche
         joinSeparator: "\n\n---\n\n",
         flowBehaviorText: flowBehaviorText
     });
+}
+
+export function buildManagementMarkdown(training: z.infer<typeof ManagementDraftSchema>): string {
+  return "###  Management prompt"
 }

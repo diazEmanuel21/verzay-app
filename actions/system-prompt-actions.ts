@@ -15,6 +15,7 @@ import {
     ProductsDraftSchema,
     ExtrasDraftSchema,
     SectionsStrictSchema,
+    ManagementDraftSchema,
 } from '@/types/agentAi';
 import { composePromptFromSections } from '@/app/(root)/ai/_components/helpers/composePromptFromSections';
 import { denormalizeBusiness } from '@/app/(root)/ai/_components/helpers/denormalizeBusiness';
@@ -167,6 +168,7 @@ export async function getOrCreatePrompt(opts: { userId: string; agentId?: string
             faq: { items: [] },
             products: { items: [] },
             extras: { firmaEnabled: false, firmaText: '', firmaName: '', items: [] },
+            management: ManagementDraftSchema.parse({}),
         };
 
         prompt = await db.agentPrompt.create({
@@ -227,6 +229,13 @@ export async function patchSection(input: z.infer<typeof PatchSectionSchema>) {
             case 'extras':
                 next.extras = ExtrasDraftSchema.parse({ ...parsed.extras, ...(patch || {}) });
                 break;
+            case 'management': {
+                next.management = ManagementDraftSchema.parse({
+                    ...ManagementDraftSchema.parse(parsed.management ?? {}), // defaults seguros
+                    ...(patch || {}),
+                });
+                break;
+            }
         }
 
         const updated = await tx.agentPrompt.update({
@@ -390,4 +399,29 @@ export async function revertToRevision(input: z.infer<typeof RevertSchema>) {
     } catch (e: any) {
         return { ok: false, error: e?.message ?? "Error al revertir a la revisión" } as Fail;
     }
+}
+
+export async function patchManagementSection(input: {
+    promptId: string;
+    version: number;
+    data: z.input<typeof ManagementDraftSchema>;
+}) {
+    const { promptId, version, data } = input;
+
+    // Normaliza + valida con Draft
+    const parsed = ManagementDraftSchema.parse({
+        steps: [],
+        policiesMd: "",
+        slaEnabled: false,
+        slaMinutes: 60,
+        escalateFlowId: null,
+        ...data,
+    });
+
+    return await patchSection({
+        promptId,
+        version,
+        sectionKey: "management",
+        patch: parsed, // ← sección completa (o subset) ya validada
+    });
 }

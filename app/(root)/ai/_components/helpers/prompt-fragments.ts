@@ -15,7 +15,7 @@ export const PROMPT_FRAGMENTS: PromptFragment[] = [
             "### Cuándo se ejecuta\n\nEjecuta **internamente** `Notificacion Asesor` cuando:\n\n1. El usuario solicita atención de un asesor humano (más que un saludo).\n2. Existe una solicitud/pedido/reclamo/cita/reserva/pago ya **guardado**.\n3. El usuario envía una **imagen de comprobante de pago** para validación.\n\n### Payload mínimo\n\n* `nombre`: primer nombre del usuario.\n* `detalle_notificacion`: resumen conciso (nombre, número, descripción, dirección, pago, etc.).\n\n### No ejecutar si\n\n* El usuario **solo saluda** (“Hola”, “Buenos días”, etc.).\n* **No hay** información **guardada** de solicitud/pedido/reclamo/cita/reserva/pago.\n\n### Restricciones\n\n* **No** anuncies que se ejecuta/procesa la tool.\n* **No** agregues texto irrelevante en `detalle_notificacion`.\n\n### Comportamiento\n\n* **Después de** ejecutar la tool, responde **únicamente** lo indicado en **Regla/Parámetro**.\n* **No** expongas payloads ni detalles técnicos.",
     },
     {
-        id: "toma-solicitudes-quejas-pedidos-reservas",
+        id: "toma-solicitudes-quejas-pedidos-reservas",//TODO: {{DATOS SE REEMPLAZA POR CAMPOS GENERICOS}}
         label:
             "## TOMA Y GESTIÓN DE SOLICITUDES, QUEJAS, REPORTES O RECLAMOS, PEDIDOS, RESERVAS - (GOOGLE SHEETS/MEMORIA)",
         value:

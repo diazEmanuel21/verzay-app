@@ -5,14 +5,15 @@ import { ChangeEvent, useCallback, useMemo, useRef, useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { BusinessPromptBuilder, ExtraInfoBuilder, FqaBuilder, PromptPreview, TrainingBuilder } from "./";
 import { buildPrompt } from "./helpers";
-import { BusinessValues, ExtrasDraftSchema, FaqDraftSchema, initialValues, MainAiProps, ProductsDraftSchema, SectionsPromptSystem, TrainingDraftSchema } from "@/types/agentAi";
+import { BusinessValues, ExtrasDraftSchema, FaqDraftSchema, initialValues, MainAiProps, ManagementDraftSchema, ProductsDraftSchema, TrainingDraftSchema } from "@/types/agentAi";
 import { ProductBuilder } from "./ProductBuilder";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PromptToolbar } from "./PromptToolbar";
 
-import { buildExtrasMarkdown, buildFaqMarkdown, buildProductsMarkdown, buildTrainingMarkdown } from "./helpers/actionsBuilders";
+import { buildExtrasMarkdown, buildFaqMarkdown, buildProductsMarkdown, buildTrainingMarkdown, buildManagementMarkdown } from "./helpers/actionsBuilders";
+import { ManagementBuilder } from "./ManagementBuilder";
 
 export const TYPE_AI_LABELS = {
     business: "Perfil",
@@ -20,6 +21,7 @@ export const TYPE_AI_LABELS = {
     faq: "Preguntas",
     products: "Productos",
     more: "Extras",
+    management: "Gestión",
 } as const;
 type TabKey = keyof typeof TYPE_AI_LABELS;
 
@@ -38,6 +40,10 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
 
     const extrasMd = sections?.extras
         ? buildExtrasMarkdown(ExtrasDraftSchema.parse(sections.extras))
+        : "";
+
+    const managementMd = sections?.management
+        ? buildManagementMarkdown(ManagementDraftSchema.parse(sections.management))
         : "";
     // 1) Hidrata estado local con lo que viene de BD (business)
     const hydrated: BusinessValues = {
@@ -61,6 +67,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
         faq: faqMd,
         products: productsMd,
         more: extrasMd,
+        management: managementMd,
     };
 
     const [values, setValues] = useState<BusinessValues>({ ...initialValues, ...hydrated });
@@ -102,6 +109,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
             faq: "",
             products: "",
             more: "",
+            management: "",
         });
 
     const prompt = useMemo(() => buildPrompt(values), [values]);
@@ -255,6 +263,24 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                 firmaEnabled: sections?.extras?.firmaEnabled ?? false,
                                 firmaText: sections?.extras?.firmaText ?? undefined,
                                 firmaName: sections?.extras?.firmaName ?? undefined,
+                            }}
+                        />
+                    </TabsContent>
+                    <TabsContent value="management" className="m-0">
+                        <ManagementBuilder
+                            values={{ management: values.management ?? "" }}
+                            handleChange={handleChange}
+                            promptId={promptMeta.id}
+                            version={promptVersion}
+                            onVersionChange={setPromptVersion}
+                            onConflict={(serverState) => {
+                                // Rehidrata desde el server si hay conflicto
+                                const serverMd =
+                                    serverState?.sections?.management?.markdown ??
+                                    serverState?.sections?.management ??
+                                    "";
+                                setValues((prev) => ({ ...prev, management: typeof serverMd === "string" ? serverMd : "" }));
+                                if (serverState?.version) setPromptVersion(serverState.version);
                             }}
                         />
                     </TabsContent>

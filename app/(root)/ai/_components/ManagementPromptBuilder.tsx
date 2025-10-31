@@ -1,4 +1,4 @@
-// src/components/PromptFragmentCombobox.tsx
+// src/components/ManagementPromptBuilder.tsx
 "use client";
 
 import * as React from "react";
@@ -15,7 +15,7 @@ type Props = {
     className?: string;
 };
 
-export function PromptFragmentCombobox({ onInsert, buttonText = "Agregar fragmento", className }: Props) {
+export function ManagementPromptBuilder({ onInsert, buttonText = "Agregar fragmento", className }: Props) {
     const [open, setOpen] = React.useState(false);
     const [search, setSearch] = React.useState("");
 

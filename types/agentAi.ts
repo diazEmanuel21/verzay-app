@@ -9,7 +9,7 @@ import z from "zod";
    0) Zod Schemas (payloads)
 ========================= */
 
-export const SectionKeySchema = z.enum(['business', 'training', 'faq', 'products', 'extras']);
+export const SectionKeySchema = z.enum(['business', 'training', 'faq', 'products', 'extras', 'management']);
 
 /* ---------- DRAFT (para edición/autosave) ---------- */
 export const BusinessDraftSchema = z.object({
@@ -191,12 +191,56 @@ export const ExtrasDraftSchema = z.object({
     ).default([]),
 });
 
+// ManagementDraftSchema — estructura paralela a training/faq/products
+export const ManagementDraftSchema = z.object({
+    steps: z.array(
+        z.object({
+            id: z.string(),
+            title: z.string().optional(),
+            mainMessage: z.string().optional().default(""),
+            elements: z.array(
+                z.union([
+                    z.object({
+                        id: z.string(),
+                        kind: z.literal("text"),
+                        text: z.string().optional().default(""),
+                    }),
+                    z.object({
+                        id: z.string(),
+                        kind: z.literal("function"),
+                        fn: z.literal("ejecutar_flujo"),
+                        flowId: z.string(),
+                        flowName: z.string().optional(),
+                    }),
+                    z.object({
+                        id: z.string(),
+                        kind: z.literal("function"),
+                        fn: z.literal("notificar_asesor"),
+                        notificationNumber: z.string(),
+                    }),
+                ])
+            ),
+        })
+    ).optional().default([]),
+
+    // Opcional: bloque de políticas/operación para construir el Markdown de gestión
+    policiesMd: z.string().optional().default(""),
+
+    // Opcional: configuración de SLA y escalado
+    slaEnabled: z.boolean().default(false),
+    slaMinutes: z.number().int().min(1).max(10080).default(60), // 1 min – 7 días
+    escalateFlowId: z.string().nullable().optional(),           // n8n/flow para escalar si se incumple SLA
+    notifyNumber: z.string().optional(),                        // override de notificationNumber si aplica
+});
+
+
 export const SectionsDraftSchema = z.object({
     business: BusinessDraftSchema,
     training: TrainingDraftSchema,
     faq: FaqDraftSchema,
     products: ProductsDraftSchema,
     extras: ExtrasDraftSchema,
+    management: ManagementDraftSchema,
 });
 
 /* ---------- STRICT (para publicar/validación fuerte) ---------- */
@@ -220,6 +264,7 @@ export const TrainingStrictSchema = TrainingDraftSchema;
 export const FaqStrictSchema = FaqDraftSchema;
 export const ProductsStrictSchema = ProductsDraftSchema;
 export const ExtrasStrictSchema = ExtrasDraftSchema;
+export const ManagementStrictSchema = ManagementDraftSchema;
 
 export const SectionsStrictSchema = z.object({
     business: BusinessStrictSchema,
@@ -227,6 +272,7 @@ export const SectionsStrictSchema = z.object({
     faq: FaqStrictSchema,
     products: ProductsStrictSchema,
     extras: ExtrasStrictSchema,
+    management: ManagementStrictSchema,
 });
 
 /* ---------- Schemas de acciones ---------- */
@@ -339,6 +385,23 @@ export type SectionsPromptSystem = {
         firmaEnabled: boolean;
         firmaText: string;
     };
+    management: {
+        steps?: Array<{
+            id: string;
+            title?: string;
+            mainMessage?: string;
+            elements: Array<
+                | { id: string; kind: "text"; text: string }
+                | { id: string; kind: "function"; fn: "ejecutar_flujo"; flowId: string; flowName?: string }
+                | { id: string; kind: "function"; fn: "notificar_asesor"; notificationNumber: string }
+            >;
+        }>;
+        policiesMd?: string;
+        slaEnabled?: boolean;
+        slaMinutes?: number;
+        escalateFlowId?: string | null;
+        notifyNumber?: string;
+    };
 };
 
 export interface MainAiInterface {
@@ -367,6 +430,7 @@ export interface BusinessValues {
     faq?: string;
     products?: string;
     more?: string;
+    management?: string;
 }
 
 export const initialValues: BusinessValues = {
@@ -386,6 +450,7 @@ export const initialValues: BusinessValues = {
     training: "",
     faq: "",
     products: "",
+    management: "",
 };
 
 export interface BusinessBuilderInterface {
@@ -693,6 +758,15 @@ export type BuildCfg = {
     includeSignature?: boolean; // default: false
     /** Separador entre firma y pasos */
     signatureSeparator?: string; // default: "\n\n---\n\n"
+};
+
+export type ManagementBuilderProps = {
+    values: Pick<BusinessValues, "management">;
+    handleChange: (key: keyof BusinessValues) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+    promptId: string;
+    version: number;
+    onVersionChange: (next: number) => void;
+    onConflict?: (serverState: any) => void;
 };
 
 export const flowBehaviorText = "*Comportamiento:* *Después de* ejecutar el flujo, responde *únicamente* lo indicado en *Regla/Parámetro*.\n *Si no hay una orden clara en Regla/Parámetro:* haz una *pregunta contextual mínima* para guiar al usuario al siguiente paso. *No añadas texto innecesario.*";
