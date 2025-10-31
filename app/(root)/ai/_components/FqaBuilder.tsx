@@ -71,9 +71,6 @@ export function FqaBuilder({
             sectionLabel: (n, step) => `Pregunta ${n} — ${step.title || "Sin título"}`,
             elementsLabel: (n) => `Elementos de la pregunta: ${n}`,
             mainMessageLabel: "Respuesta principal de la pregunta",
-            // En FQA usabas "... la que se te indique ..."
-            flowBehaviorText:
-                "Después de ejecutar el flujo, tu única respuesta es la que se te indique en **Regla/parámetro**.",
             joinSeparator: "\n",
         });
     }, [items]);

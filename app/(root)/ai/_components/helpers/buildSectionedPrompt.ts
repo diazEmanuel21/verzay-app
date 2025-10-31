@@ -1,10 +1,11 @@
 // /lib/promptBuilder.ts
 
+import { notifyPrompt } from "@/types/agentAi";
+
 export type AnyEl = {
     kind: "text" | "function";
     text?: string;
     fn?: "captura_datos" | "ejecutar_flujo" | "notificar_asesor" | "consulta_datos";
-    // Campos comunes que se usan en tu código actual
     subtype?: string;
     prompt?: string;
     fields?: string[];
@@ -69,12 +70,12 @@ function formatElement(el: AnyEl, k: number, flowBehaviorText: string): string[]
                 out.push(
                     `> Función: Ejecuta el flujo '${el.flowName || el.flowId || ""}'`,
                 );
-                out.push(`* **Comportamiento:** ${flowBehaviorText}`);
+                out.push(`${flowBehaviorText}`);
                 return out;
             }
             case "notificar_asesor": {
                 // out.push(`- (${k}) Notificar asesor: ${el.notificationNumber ?? "—"}`);
-                out.push(`- (${k}) > Función: Ejecuta la tool 'Notificacion Asesor'\n* **Comportamiento:** Después de ejecutar la tool, tu única respuesta es la que se te indique en **Regla/parámetro**.`);
+                out.push(`- (${k}) ${notifyPrompt}`);
                 return out;
             }
             case "consulta_datos": {
@@ -100,7 +101,7 @@ export function buildSectionedPrompt(
     const joinSep = cfg.joinSeparator ?? "\n";
     const flowBehaviorText =
         cfg.flowBehaviorText ??
-        "Después de ejecutar el flujo, tu única respuesta es la indicada en **Regla/parámetro**.";
+        "*Después de* ejecutar el flujo, responde *únicamente* lo indicado en *Regla/Parámetro*.\n*Si no hay una orden clara en Regla/Parámetro:* haz una *pregunta contextual mínima* para guiar al usuario al siguiente paso. *No añadas texto innecesario.*";
 
     // Firma (opcional, solo se añade si está habilitada y hay texto)
     if (cfg.firma?.enabled) {

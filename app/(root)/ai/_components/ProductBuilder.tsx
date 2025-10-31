@@ -72,9 +72,6 @@ export const ProductBuilder = ({
             sectionLabel: (n, step) => `Producto ${n} — ${step.title || "Sin título"}`,
             elementsLabel: (n) => `Elementos del producto: ${n}`,
             mainMessageLabel: "Descripción / Objetivo",
-            // En Product usabas "... la indicada ..."
-            flowBehaviorText:
-                "Después de ejecutar el flujo, tu única respuesta es la indicada en **Regla/parámetro**.",
             joinSeparator: "\n",
         });
     }, [items]);

@@ -75,9 +75,6 @@ export function TrainingBuilder({
       sectionLabel: (n, step) => `Paso ${n} — ${step.title || "Sin título"}`,
       elementsLabel: (n) => `Elementos del paso: ${n}`,
       mainMessageLabel: "Objetivo principal del paso",
-      // En Training usabas "... la que se te indique ..."
-      flowBehaviorText:
-        "Después de ejecutar el flujo, tu única respuesta es la que se te indique en **Regla/parámetro**.",
       joinSeparator: "\n",
     });
   }, [steps]);

@@ -30,7 +30,16 @@ export const buildPrompt = (v: BusinessValues): string => {
 
     lines.push(
 `\n## INSTRUCCIÓN\n
-Debes **adherirte a estos pasos de conversación (Usuario ⇄ IA)** para **seguir estrictamente** los pasos provistos para este negocio específico, **sin saltar ni mezclar** pasos, respetando **funciones**, **salidas literales** y **comportamientos**. ## Parámetros de entrada (completa quien invoca) * **[Contexto breve]:** '[escenario / canal / notas]' * **[Flujo/Pasos]:** bloque con pasos **numerados** y sus reglas (incluye funciones, salidas literales, comportamientos, validaciones, fallbacks) * **[Variables requeridas]:** '[lista de variables esperadas: nombre, ciudad, producto, etc.]' * **{características}:** estilo **profesional**, tono **neutral**, ejemplo **breve y accionable** usando **exclusivamente** la información de este documento. Si falta un dato, continúa con naturalidad **sin inventarlo**. 
+Adhiérete *estrictamente* a los *pasos de conversación (Usuario ⇄ IA)* provistos para este negocio, *sin saltar ni mezclar* pasos, respetando *funciones, **salidas literales* y *comportamientos*.
+
+*Parámetros de entrada (los provee quien invoca):*
+
+* *[Contexto breve]:* ‘escenario / canal / notas’.
+* *[Flujo/Pasos]:* bloque con pasos *numerados* y sus reglas (puede incluir *funciones, **salidas literales, **comportamientos, **validaciones, **fallbacks*).
+* *[Variables requeridas]:* ‘lista de variables esperadas: nombre, ciudad, producto, etc.’
+* *{características}:* estilo *profesional, tono **neutral, y ejemplo **breve y accionable* usando *exclusivamente* la información de este documento.
+
+Si falta un dato, *solicita la mínima aclaración necesaria* y continúa con naturalidad; *no inventes*.
 `);
 
     if (v.training?.trim()) {

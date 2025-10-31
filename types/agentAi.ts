@@ -646,3 +646,54 @@ export type PropsActionSteeps = {
     addPedidoField: (stepId: string, elId: string, field: string) => void;
     removePedidoField: (stepId: string, elId: string, field: string) => void;
 };
+
+export type TextElement = {
+    id: string;
+    kind: "text";
+    text?: string;
+};
+
+export type FnCommon = {
+    id: string;
+    kind: "function";
+    fn: "captura_datos" | "ejecutar_flujo" | "notificar_asesor" | "consulta_datos";
+    subtype?: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
+    prompt?: string;
+    fields?: string[];
+    flowId?: string | null;
+    flowName?: string | null;
+    notificationNumber?: string | null;
+};
+
+export type AnyElement = TextElement | FnCommon;
+
+export type Step = {
+    id: string;
+    title?: string;
+    mainMessage?: string;
+    elements?: AnyElement[];
+};
+
+export type DraftLike = {
+    steps?: Step[];
+    // Solo Extras:
+    firmaEnabled?: boolean;
+    firmaText?: string;
+    firmaName?: string;
+};
+
+export type BuildCfg = {
+    /** Prefijo del encabezado por sección */
+    sectionPrefix?: string; // Ej: "Paso", "Extra", "Producto", "Pregunta"
+    /** Separador entre secciones */
+    joinSeparator?: string; // default: "\n\n---\n\n"
+    /** Texto para comportamiento de ejecutar_flujo */
+    flowBehaviorText?: string;
+    /** Inyectar bloque de firma al inicio (si hay firma en draft) */
+    includeSignature?: boolean; // default: false
+    /** Separador entre firma y pasos */
+    signatureSeparator?: string; // default: "\n\n---\n\n"
+};
+
+export const flowBehaviorText = "*Comportamiento:* *Después de* ejecutar el flujo, responde *únicamente* lo indicado en *Regla/Parámetro*.\n *Si no hay una orden clara en Regla/Parámetro:* haz una *pregunta contextual mínima* para guiar al usuario al siguiente paso. *No añadas texto innecesario.*";
+export const notifyPrompt = "> Función: Ejecuta la tool 'Notificacion Asesor'\n* **Comportamiento:** Después de ejecutar la tool, tu única respuesta es la que se te indique en **Regla/parámetro**."

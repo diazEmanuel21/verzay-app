@@ -12,10 +12,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PromptToolbar } from "./PromptToolbar";
 
-import { buildTrainingMarkdown } from "./helpers/buildTrainingMarkdown";
-import { buildFaqMarkdown } from "./helpers/buildFaqMarkdown";
-import { buildProductsMarkdown } from "./helpers/buildProductsMarkdown";
-import { buildExtrasMarkdown } from "./helpers/buildExtrasMarkdown";
+import { buildExtrasMarkdown, buildFaqMarkdown, buildProductsMarkdown, buildTrainingMarkdown } from "./helpers/actionsBuilders";
 
 export const TYPE_AI_LABELS = {
     business: "Perfil",

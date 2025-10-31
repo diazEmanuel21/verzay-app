@@ -124,11 +124,7 @@ export function ExtraInfoBuilder({
             sectionLabel: (n, step) => `Extra ${n} — ${step.title || "Sin título"}`,
             elementsLabel: (n) => `Elementos del extra: ${n}`,
             mainMessageLabel: "Contenido / Mensaje principal",
-            // En Extras usabas un separador especial:
             joinSeparator: "\n\n---\n\n",
-            // El texto comportamiento aquí era "... la indicada ..."
-            flowBehaviorText:
-                "Después de ejecutar el flujo, tu única respuesta es la indicada en **Regla/parámetro**.",
             // Firma:
             firma: { enabled: !!firmaEnabled, text: String(firmaText || "") },
         });
