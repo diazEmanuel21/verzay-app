@@ -35,6 +35,12 @@ model User {
   meetingDuration               Int?
   onFacebook                    Boolean               @default(false)
   onInstagram                   Boolean               @default(false)
+
+  defaultAiModelId              String?
+  defaultProviderId             String?
+  aiModelId                     String? // campo extra solicitado; no reemplaza nada
+  defaultAiModel                AiModel?               @relation("DefaultAiModel", fields: [defaultAiModelId], references: [id])
+
   accounts                      Account[]
   agentPrompts                  AgentPrompt[]         @relation("UserAgentPrompts")
   publishedAgentPromptRevisions AgentPromptRevision[] @relation("UserPublishedRevisions")
@@ -51,7 +57,7 @@ model User {
   iaCredit                      IaCredit?
   clientesAsignados             reseller[]            @relation("RevendedorAsignador")
   esClienteDe                   reseller[]            @relation("ClienteAsignado")
-  aiConfig                      UserAiConfig[]
+  aiConfig                      UserAiConfig[] 
   modules                       Module[]              @relation("UserModules")
   product                       Product[]
 }
@@ -81,15 +87,24 @@ model AiProvider {
   aiModels    AiModel[]
   configs     UserAiConfig[]
 
+  aiModel String
+
+
   @@map("ai_providers")
 }
 
 model AiModel {
   id          String     @id @default(cuid())
   providerId  String
-  name        String
+  name        String 
   description String?
   provider    AiProvider @relation(fields: [providerId], references: [id])
+
+  modelName    String?  @unique
+  costPerToken Float?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  users        User[]   @relation("DefaultAiModel")
 
   @@unique([providerId, name])
   @@map("ai_models")
