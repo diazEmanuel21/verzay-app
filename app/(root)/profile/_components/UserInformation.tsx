@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Header from '@/components/shared/header';
 import { toast } from "sonner";
 import { getClientDataByUserId, updateClientDataByField, updateAbrirPhrase } from "@/actions/userClientDataActions";
@@ -15,6 +15,7 @@ import { useResellerStore } from "@/stores/resellers/resellerStore";
 import { Role } from "@prisma/client";
 import { ApiKeyConfigurator, NotificationPhoneInput } from "./";
 import { Country } from "@/components/custom/CountryCodeSelect";
+import Image from "next/image";
 
 // ============================
 // Tipado
@@ -64,24 +65,25 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
     // ============================
     // Cargar datos de cliente
     // ============================
-    const fetchClientData = async () => {
-        if (!userId) return toast.error('El usuario no existe.');
+    const fetchClientData = useCallback(async () => {
+        if (!userId) return toast.error("El usuario no existe.");
 
         try {
             const result = await getClientDataByUserId(userId);
             if (!result) return;
-            if (!result.success || !result.data) return toast.error(result.message || 'Error al cargar los datos.');
-            if (Object.keys(result.data).length === 0) return toast.error('No se encontraron datos asociados al usuario.');
+            if (!result.success || !result.data)
+                return toast.error(result.message || "Error al cargar los datos.");
+            if (Object.keys(result.data).length === 0)
+                return toast.error("No se encontraron datos asociados al usuario.");
 
             const data = result.data;
-            const openMsg = data.pausar.filter(p => p.tipo === 'abrir')[0]?.mensaje || '';
+            const openMsg = data.pausar.find((p) => p.tipo === "abrir")?.mensaje || "";
             setUser({ ...data, openMsg });
             setOriginalUser({ ...data, openMsg });
-
         } catch (error) {
-            toast.error('Error al obtener data.' + error);
+            toast.error("Error al obtener data." + error);
         }
-    };
+    }, [userId]);
 
     useEffect(() => {
         fetchClientData();
@@ -292,7 +294,7 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                                         className="relative w-16 h-16 rounded-full overflow-hidden border-border shadow-sm cursor-pointer hover:ring-2 hover:ring-primary"
                                         onClick={() => fileRef.current?.click()}
                                     >
-                                        <img
+                                        <Image
                                             src={user?.image as string ?? defaultImgUrl}
                                             alt="avatar-preview"
                                             className="w-full h-full object-cover"
@@ -326,6 +328,7 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                             ].map(({ key, label, type }) => (
                                 key === 'apiUrl' ? (
                                     <ApiKeyConfigurator
+                                        key={key}
                                         value={user.apiUrl || ""}
                                         onSave={(apiKey) => {
                                             // Actualiza el estado local
