@@ -13,7 +13,7 @@ import { UserWithPausar } from "@/lib/types";
 import { BrandSelector } from "../../../../components/custom";
 import { useResellerStore } from "@/stores/resellers/resellerStore";
 import { Role } from "@prisma/client";
-import { NotificationPhoneInput } from "./";
+import { ApiKeyConfigurator, NotificationPhoneInput } from "./";
 import { Country } from "@/components/custom/CountryCodeSelect";
 
 // ============================
@@ -324,16 +324,18 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                                 { key: 'openMsg', label: 'Frase de reactivación' },
                                 { key: 'del_seguimiento', label: 'Eliminar seguimiento' },
                             ].map(({ key, label, type }) => (
-                                // key === 'notificationNumber' ? (
-                                //     <NotificationPhoneInput
-                                //         key={key}
-                                //         countries={countries}
-                                //         value={user.notificationNumber || ''}
-                                //         onChange={(val) => handleChange('notificationNumber', val)}
-                                //         onBlur={() => handleBlur('notificationNumber')}
-                                //         disabled={loadingField === 'notificationNumber'}
-                                //     />
-                                // ) : (
+                                key === 'apiUrl' ? (
+                                    <ApiKeyConfigurator
+                                        value={user.apiUrl || ""}
+                                        onSave={(apiKey) => {
+                                            // Actualiza el estado local
+                                            handleChange("apiUrl", apiKey);
+                                            // Opcional: persiste al backend reutilizando tu flujo actual
+                                            // (si quieres que persista inmediatamente)
+                                            // handleBlur("apiUrl");
+                                        }}
+                                    />
+                                ) : (
                                     <div key={key} className="space-y-2">
                                         <Label htmlFor={key} className="text-muted-foreground">{label}</Label>
                                         <Input
@@ -347,7 +349,7 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                                             className="bg-background border-border focus-visible:ring-2 focus-visible:ring-primary"
                                         />
                                     </div>
-                                // )
+                                )
                             ))}
                             {/* 
                             ].map(({key, label, type}) => (
