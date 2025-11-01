@@ -35,6 +35,10 @@ export function buildTrainingMarkdown(training: z.infer<typeof TrainingDraftSche
     });
 }
 
-export function buildManagementMarkdown(training: z.infer<typeof ManagementDraftSchema>): string {
-  return "###  Management prompt"
+export function buildManagementMarkdown(management: z.infer<typeof ManagementDraftSchema>): string {
+    return buildSectionedMarkdown(management, {
+        sectionPrefix: "Paso",
+        joinSeparator: "\n\n---\n\n",
+        flowBehaviorText: flowBehaviorText
+    });
 }

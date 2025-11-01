@@ -1,78 +1,166 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { nanoid } from "nanoid";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import type { ManagementBuilderProps } from "@/types/agentAi";
-import { ManagementPromptBuilder } from "./ManagementPromptBuilder";
+import { Plus, Trash2 } from "lucide-react";
 import { useManagementAutosave } from "./hooks/useManagementAutosave";
+import type { ElementItem, ManagementBuilderProps, ManagementItem } from "@/types/agentAi";
+import { ManagementPromptBuilder } from "./ManagementPromptBuilder";
 
-export function ManagementBuilder({
+function extractTitle(txt: string) {
+    const firstLine = (txt || "").split(/\r?\n/).find(Boolean) || "";
+    const h1 = firstLine.replace(/^#+\s*/, "").trim();
+    if (h1) return h1.slice(0, 80);
+    const short = txt.replace(/\s+/g, " ").trim().slice(0, 80);
+    return short || "Fragmento";
+}
+
+function firstText(elms: ElementItem[]): string {
+    const t = elms.find((e) => e.kind === "text") as { id: string; kind: "text"; text?: string } | undefined;
+    return (t?.text ?? "").trim();
+}
+
+function preview(txt: string) {
+    return (txt || "").replace(/\s+/g, " ").trim().slice(0, 160);
+}
+
+export const ManagementBuilder = ({
     values,
     handleChange,
+    onChange,
     promptId,
     version,
     onVersionChange,
     onConflict,
-}: ManagementBuilderProps) {
-    const [text, setText] = useState<string>(values.management ?? "");
+    initialItems = [], // ← ahora esperamos steps desde BD
+}: ManagementBuilderProps) => {
+    // Estado interno: steps (cada card = 1 step con 1 text element)
+    const [steps, setSteps] = useState<ManagementItem[]>(
+        Array.isArray(initialItems) && initialItems.length > 0
+            ? (initialItems as ManagementItem[])
+            : []
+    );
 
-    // Mantén "values.management" sincronizado hacia arriba (como TrainingBuilder hace con values.training)
-    useEffect(() => {
-        if ((values.management ?? "") !== text) {
-            const setManagement = handleChange("management");
-            setManagement({ target: { value: text } } as any);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [text]);
+    // Conflicto: rehidrata steps desde servidor
+    const stableOnConflict = useCallback(
+        (serverState: any) => {
+            const serverSteps = serverState?.sections?.management?.steps ?? [];
+            setSteps(serverSteps);
+            onConflict?.(serverState);
+        },
+        [onConflict]
+    );
 
-    // AUTOSAVE — guarda { managementMd: string } en sections.management (libre) o como texto plano
+    // AUTOSAVE: sections.management.steps
     useManagementAutosave({
         promptId,
         version,
-        text,
+        steps,
         onVersionChange,
-        onConflict,
+        onConflict: stableOnConflict,
     });
 
-    const insertAtCursor = (snippet: string) => {
-        setText((prev) => {
-            // Inserta con salto si el textarea no está vacío
-            return prev?.trim().length ? `${prev}\n\n${snippet}` : snippet;
-        });
+    // Construye un preview string (como products) para values.management
+    const managementPreview = useMemo(() => {
+        if (!steps?.length) return "";
+        return steps
+            .map((s) => {
+                const text = firstText(s.elements);
+                const header = s.title?.trim() ? `### ${s.title.trim()}\n` : "";
+                return `${header}${text}`;
+            })
+            .join("\n\n");
+    }, [steps]);
+
+    // SYNC con parent (igual patrón que ProductBuilder)
+    useEffect(() => {
+        if (onChange) {
+            const first = steps[0];
+            onChange({
+                mainMessage: first ? firstText(first.elements) : "",
+                elements: (first?.elements ?? []) as ElementItem[],
+            });
+        }
+
+        if (values.management !== managementPreview) {
+            handleChange("management")({
+                target: { value: managementPreview },
+            } as ChangeEvent<HTMLTextAreaElement>);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [managementPreview, steps]);
+
+    // Mutadores
+    const addFragment = (snippet = "Nuevo fragmento de gestión…") =>
+        setSteps((prev) => [
+            ...prev,
+            {
+                id: nanoid(),
+                title: extractTitle(snippet),
+                mainMessage: "",
+                elements: [
+                    { id: nanoid(), kind: "text", text: snippet } as ElementItem,
+                ],
+            },
+        ]);
+
+    const removeFragment = (id: string) =>
+        setSteps((prev) => prev.filter((s) => s.id !== id));
+
+    const handleInsertFromPicker = (snippet: string) => {
+        addFragment(snippet);
     };
 
     return (
         <Card className="border-muted/60">
             <CardHeader className="pb-2 flex items-center justify-between gap-2 flex-row">
                 <CardTitle className="text-base">Gestión</CardTitle>
-                <ManagementPromptBuilder onInsert={insertAtCursor} />
+                <div className="flex items-center gap-2">
+                    {typeof ManagementPromptBuilder !== "undefined" && (
+                        <ManagementPromptBuilder onInsert={handleInsertFromPicker} />
+                    )}
+                </div>
             </CardHeader>
 
             <CardContent className="space-y-3">
-                <div className="grid gap-2">
-                    <Label className="text-sm font-medium">Bloque de Gestión (Markdown)</Label>
-                    <Textarea
-                        className="min-h-[320px]"
-                        placeholder="Pega o construye aquí tus reglas y procedimientos de gestión (herramientas, notificaciones, estados, SLA, etc.)…"
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                    />
-                </div>
+                {steps.length === 0 ? (
+                    <div className="text-center text-sm text-muted-foreground py-8">
+                        No has agregado fragmentos. Usa “Agregar fragmento” para comenzar.
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                        {steps.map((s) => {
+                            const text = firstText(s.elements);
+                            return (
+                                <Card key={s.id} className="bg-muted/10 border-muted/60">
+                                    <CardHeader className="py-3">
+                                        <CardTitle className="text-sm line-clamp-1">
+                                            {s.title || "Fragmento"}
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="pt-0">
+                                        <p className="text-xs text-muted-foreground line-clamp-3">
+                                            {preview(text)}
+                                        </p>
+                                        <div className="mt-3 flex justify-end">
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => removeFragment(s.id)}
+                                            >
+                                                <Trash2 className="h-4 w-4 mr-1" />
+                                                Eliminar
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                )}
             </CardContent>
-
-            <CardFooter className="pb-2 flex items-center justify-end gap-2">
-                <ManagementPromptBuilder onInsert={insertAtCursor} buttonText="Insertar fragmento" />
-                <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => setText("")}
-                >
-                    Limpiar
-                </Button>
-            </CardFooter>
         </Card>
     );
-}
+};

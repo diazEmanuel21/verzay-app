@@ -274,14 +274,13 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                             version={promptVersion}
                             onVersionChange={setPromptVersion}
                             onConflict={(serverState) => {
-                                // Rehidrata desde el server si hay conflicto
-                                const serverMd =
-                                    serverState?.sections?.management?.markdown ??
-                                    serverState?.sections?.management ??
-                                    "";
-                                setValues((prev) => ({ ...prev, management: typeof serverMd === "string" ? serverMd : "" }));
-                                if (serverState?.version) setPromptVersion(serverState.version);
+                                // rehidrata items del server en conflicto
+                                const serverItems = serverState?.sections?.management?.items ?? [];
+                                // si guardas un state global `sections`, actualízalo allí;
+                                // si solo mantienes `values`, basta con dejar el values.management tal cual,
+                                // autosave ya volverá a lanzar con la nueva versión.
                             }}
+                            initialItems={sections?.management?.steps ?? []}
                         />
                     </TabsContent>
                     <div className="h-6" />

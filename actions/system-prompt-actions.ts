@@ -20,6 +20,7 @@ import {
 import { composePromptFromSections } from '@/app/(root)/ai/_components/helpers/composePromptFromSections';
 import { denormalizeBusiness } from '@/app/(root)/ai/_components/helpers/denormalizeBusiness';
 import { nextRevisionNumber } from '@/app/(root)/ai/_components/helpers/nextRevisionNumber';
+import { normalizeAsDraft, normalizeAsStrict } from '@/app/(root)/ai/_components/helpers/normalizeOldPrompt';
 
 type Ok<T> = { ok: true; data: T };
 type Conflict<T = any> = { ok: false; conflict: true; data: T };
@@ -168,7 +169,7 @@ export async function getOrCreatePrompt(opts: { userId: string; agentId?: string
             faq: { items: [] },
             products: { items: [] },
             extras: { firmaEnabled: false, firmaText: '', firmaName: '', items: [] },
-            management: ManagementDraftSchema.parse({}),
+            management: { items: [] },
         };
 
         prompt = await db.agentPrompt.create({
@@ -207,9 +208,10 @@ export async function patchSection(input: z.infer<typeof PatchSectionSchema>) {
             return { ok: false as const, conflict: true as const, data: current };
         }
 
-        // Validar + merge en JS (más seguro que depender de operadores JSONB en Prisma)
-        const sections = current.sections as unknown as z.infer<typeof SectionsDraftSchema>;
-        const parsed = SectionsDraftSchema.parse(sections);
+        // ⬇️ Fallback para registros viejos sin "management"
+        const sectionsRaw = (current.sections ?? {}) as Record<string, any>;
+        if (!sectionsRaw.management) sectionsRaw.management = {};  // 👈 clave
+        const parsed = SectionsDraftSchema.parse(sectionsRaw);
 
         // Aplica patch validando contra el schema específico
         const next = { ...parsed };
@@ -230,10 +232,7 @@ export async function patchSection(input: z.infer<typeof PatchSectionSchema>) {
                 next.extras = ExtrasDraftSchema.parse({ ...parsed.extras, ...(patch || {}) });
                 break;
             case 'management': {
-                next.management = ManagementDraftSchema.parse({
-                    ...ManagementDraftSchema.parse(parsed.management ?? {}), // defaults seguros
-                    ...(patch || {}),
-                });
+                next.management = ManagementDraftSchema.parse({ ...parsed.management, ...(patch || {}) });
                 break;
             }
         }
@@ -258,20 +257,17 @@ export async function savePrompt(input: z.infer<typeof SaveSchema>) {
     try {
         const { promptId, version, revalidate } = SaveSchema.parse(input);
 
-        const current = await db.agentPrompt.findUnique({
-            where: { id: promptId },
-        });
+        const current = await db.agentPrompt.findUnique({ where: { id: promptId } });
         if (!current) return { ok: false, error: "Prompt no encontrado" } as Fail;
 
-        // Control de concurrencia optimista
         if (current.version !== version) {
             return { ok: false, conflict: true, data: current } as Conflict<typeof current>;
         }
 
-        // Normaliza con Draft (limpia UI-only keys si tus DraftSchemas así lo hacen)
-        const draft = SectionsDraftSchema.parse(current.sections);
-        const promptText = composePromptFromSections(draft);
+        // ✅ Normaliza (upgrade + defaults Draft)
+        const draft = normalizeAsDraft(current.sections);
 
+        const promptText = composePromptFromSections(draft);
         const { businessName, businessSector } = denormalizeBusiness(draft);
 
         const updated = await db.agentPrompt.update({
@@ -288,9 +284,12 @@ export async function savePrompt(input: z.infer<typeof SaveSchema>) {
 
         return { ok: true, data: updated } as Ok<typeof updated>;
     } catch (e: any) {
-        return { ok: false, error: e?.message ?? "Error al guardar prompt" } as Fail;
+        // expone más signal si viene de Zod
+        const msg = e?.errors ? JSON.stringify(e.errors) : (e?.message ?? "Error al guardar prompt");
+        return { ok: false, error: msg } as Fail;
     }
 }
+
 
 /** Publica (crea revisión) + deja el draft sincronizado. */
 export async function publishPrompt(input: z.infer<typeof PublishSchema>) {
@@ -301,32 +300,31 @@ export async function publishPrompt(input: z.infer<typeof PublishSchema>) {
             const current = await tx.agentPrompt.findUnique({ where: { id: promptId } });
             if (!current) return { ok: false, error: "Prompt no encontrado" } as Fail;
 
-            // Concurrencia
             if (current.version !== version) {
                 return { ok: false, conflict: true, data: current } as Conflict<typeof current>;
             }
 
-            // Validación estricta antes de publicar
-            const strict = SectionsStrictSchema.parse(current.sections);
-            const normalizedForCompose = SectionsDraftSchema.parse(strict);
+            // ✅ Strict sobre datos "upgraded"
+            const strict = normalizeAsStrict(current.sections);
+
+            // Para componer, usa Draft (por si tu composer espera defaults del Draft)
+            const normalizedForCompose = normalizeAsDraft(strict);
             const promptTextStrict = composePromptFromSections(normalizedForCompose);
 
             const { businessName, businessSector } = denormalizeBusiness(strict);
 
-            // Crea revisión (snapshot)
             const revNumber = await nextRevisionNumber(promptId);
             const revision = await tx.agentPromptRevision.create({
                 data: {
                     promptId,
                     revisionNumber: revNumber,
-                    sectionsSnapshot: strict,            // snapshot exacto publicado
+                    sectionsSnapshot: strict,
                     promptTextSnapshot: promptTextStrict,
-                    publishedBy: publishedBy,
+                    publishedBy,
                     notes: note ?? null,
                 },
             });
 
-            // Marca prompt como publicado y actualiza promptText + denormalizados
             const updated = await tx.agentPrompt.update({
                 where: { id: promptId },
                 data: {
@@ -347,7 +345,8 @@ export async function publishPrompt(input: z.infer<typeof PublishSchema>) {
 
         return result;
     } catch (e: any) {
-        return { ok: false, error: e?.message ?? "Error al publicar prompt" } as Fail;
+        const msg = e?.errors ? JSON.stringify(e.errors) : (e?.message ?? "Error al publicar prompt");
+        return { ok: false, error: msg } as Fail;
     }
 }
 
@@ -359,7 +358,6 @@ export async function listRevisions(promptId: string) {
         orderBy: { revisionNumber: 'desc' },
     });
 }
-
 
 export async function revertToRevision(input: z.infer<typeof RevertSchema>) {
     try {
@@ -409,12 +407,8 @@ export async function patchManagementSection(input: {
     const { promptId, version, data } = input;
 
     // Normaliza + valida con Draft
-    const parsed = ManagementDraftSchema.parse({
-        steps: [],
-        policiesMd: "",
-        slaEnabled: false,
-        slaMinutes: 60,
-        escalateFlowId: null,
+    const parsed = ProductsDraftSchema.parse({
+        items: [],
         ...data,
     });
 

@@ -2,7 +2,7 @@ import z from "zod";
 import { buildBusinessHeader } from "./buildBusinessHeader";
 import { nonEmpty } from "./nonEmpty";
 import { SectionsDraftSchema } from "@/types/agentAi";
-import { buildExtrasMarkdown, buildFaqMarkdown, buildProductsMarkdown, buildTrainingMarkdown } from "./actionsBuilders";
+import { buildExtrasMarkdown, buildFaqMarkdown, buildManagementMarkdown, buildProductsMarkdown, buildTrainingMarkdown } from "./actionsBuilders";
 
 export function composePromptFromSections(sections: z.infer<typeof SectionsDraftSchema>): string {
     if (!nonEmpty(sections.business?.nombre)) {
@@ -47,6 +47,14 @@ Si falta un dato, *solicita la mínima aclaración necesaria* y continúa con na
     if (nonEmpty(extrasMd)) {
         out.push('\n## EXTRAS\n');
         out.push(extrasMd);
+    }
+
+    const managementMd = buildManagementMarkdown(sections.management);
+    if (nonEmpty(managementMd)) {
+        if (sections.management?.steps?.length) {
+            out.push('\n## GESTIÓN\n');
+            out.push(managementMd);
+        }
     }
 
     return out.join('\n');

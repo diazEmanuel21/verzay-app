@@ -191,7 +191,6 @@ export const ExtrasDraftSchema = z.object({
     ).default([]),
 });
 
-// ManagementDraftSchema — estructura paralela a training/faq/products
 export const ManagementDraftSchema = z.object({
     steps: z.array(
         z.object({
@@ -208,29 +207,28 @@ export const ManagementDraftSchema = z.object({
                     z.object({
                         id: z.string(),
                         kind: z.literal("function"),
-                        fn: z.literal("ejecutar_flujo"),
-                        flowId: z.string(),
-                        flowName: z.string().optional(),
-                    }),
-                    z.object({
-                        id: z.string(),
-                        kind: z.literal("function"),
-                        fn: z.literal("notificar_asesor"),
-                        notificationNumber: z.string(),
+                        fn: z.enum([
+                            "captura_datos",
+                            "ejecutar_flujo",
+                            "notificar_asesor",
+                            "consulta_datos",
+                        ]),
+                        // ⬇️ refuerza el enum como en el type
+                        subtype: z
+                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas"])
+                            .optional(),
+                        prompt: z.string().optional(),
+                        fields: z.array(z.string()).optional(),
+
+                        // ⬇️ acepta null | string (coincide con tus types)
+                        flowId: z.string().nullable().optional(),
+                        flowName: z.string().nullable().optional(),
+                        notificationNumber: z.string().nullable().optional(),
                     }),
                 ])
-            ),
+            ).default([]),
         })
-    ).optional().default([]),
-
-    // Opcional: bloque de políticas/operación para construir el Markdown de gestión
-    policiesMd: z.string().optional().default(""),
-
-    // Opcional: configuración de SLA y escalado
-    slaEnabled: z.boolean().default(false),
-    slaMinutes: z.number().int().min(1).max(10080).default(60), // 1 min – 7 días
-    escalateFlowId: z.string().nullable().optional(),           // n8n/flow para escalar si se incumple SLA
-    notifyNumber: z.string().optional(),                        // override de notificationNumber si aplica
+    ).default([]),
 });
 
 
@@ -760,14 +758,26 @@ export type BuildCfg = {
     signatureSeparator?: string; // default: "\n\n---\n\n"
 };
 
+export type ManagementItem = {
+    id: string;
+    title?: string;
+    mainMessage?: string;
+    elements: ElementItem[];
+    openPicker?: boolean;
+};
+
 export type ManagementBuilderProps = {
-    values: Pick<BusinessValues, "management">;
-    handleChange: (key: keyof BusinessValues) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+    values: { management: string };
+    handleChange: (key: "management") => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+    onChange?: (state: { mainMessage: string; elements: ElementItem[] }) => void;
     promptId: string;
     version: number;
-    onVersionChange: (next: number) => void;
+    onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
+    initialItems?: Array<any>; // ← sections.faq.items desde BD
+    debounceMs?: number;
 };
+
 
 export const flowBehaviorText = "*Comportamiento:* *Después de* ejecutar el flujo, responde *únicamente* lo indicado en *Regla/Parámetro*.\n *Si no hay una orden clara en Regla/Parámetro:* haz una *pregunta contextual mínima* para guiar al usuario al siguiente paso. *No añadas texto innecesario.*";
 export const notifyPrompt = "> Función: Ejecuta la tool 'Notificacion Asesor'\n* **Comportamiento:** Después de ejecutar la tool, tu única respuesta es la que se te indique en **Regla/parámetro**."

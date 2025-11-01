@@ -5,7 +5,7 @@ export const buildPrompt = (v: BusinessValues): string => {
     const lines: string[] = [];
 
     // if (!v.nombre?.trim()) {
-    //     return `Completa al menos el nombre del negocio para generar el prompt.`;
+    //   return `Completa al menos el nombre del negocio para generar el prompt.`;
     // }
 
     lines.push(`## DATOS DEL NEGOCIO\n`);
@@ -29,7 +29,7 @@ export const buildPrompt = (v: BusinessValues): string => {
     }
 
     lines.push(
-`\n## INSTRUCCIÓN\n
+        `\n## INSTRUCCIÓN\n
 Adhiérete *estrictamente* a los *pasos de conversación (Usuario ⇄ IA)* provistos para este negocio, *sin saltar ni mezclar* pasos, respetando *funciones, **salidas literales* y *comportamientos*.
 
 *Parámetros de entrada (los provee quien invoca):*
@@ -39,8 +39,9 @@ Adhiérete *estrictamente* a los *pasos de conversación (Usuario ⇄ IA)* provi
 * *[Variables requeridas]:* ‘lista de variables esperadas: nombre, ciudad, producto, etc.’
 * *{características}:* estilo *profesional, tono **neutral, y ejemplo **breve y accionable* usando *exclusivamente* la información de este documento.
 
-Si falta un dato, *solicita la mínima aclaración necesaria* y continúa con naturalidad; *no inventes*.
-`);
+Si falta un dato, *solicita la mínima aclaración necesaria* y continúa con naturalidad; *no inventes*.
+`
+    );
 
     if (v.training?.trim()) {
         lines.push("## PROCEDIMIENTO OBLIGATORIO (CHATS SIN HISTORIAL)\n");
@@ -62,5 +63,10 @@ Si falta un dato, *solicita la mínima aclaración necesaria* y continúa con na
         lines.push(v.more.trim());
     }
 
+    if (v.management?.trim()) {
+        lines.push("\n## GESTIÓN\n");
+        lines.push(v.management.trim());
+    }
+    
     return lines.join("\n");
-}
+};

@@ -2,68 +2,73 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { patchManagementSection } from "@/actions/system-prompt-actions";
+import type { ElementItem, ManagementItem } from "@/types/agentAi";
 
-type UseManagementAutosaveOpts = {
+function createDebounced<F extends (...args: any[]) => any>(fn: F, ms = 700) {
+    let t: ReturnType<typeof setTimeout> | null = null;
+    const debounced = (...args: Parameters<F>) => {
+        if (t) clearTimeout(t);
+        t = setTimeout(() => fn(...args), ms);
+    };
+    (debounced as any).cancel = () => {
+        if (t) clearTimeout(t);
+        t = null;
+    };
+    return debounced as F & { cancel: () => void };
+}
+
+
+export function useManagementAutosave(opts: {
     promptId: string;
     version: number;
-    text: string; // markdown plano (guardado en policiesMd)
+    steps: ManagementItem[];
     onVersionChange: (next: number) => void;
     onConflict?: (serverState: any) => void;
-    debounceMs?: number;
-};
+}) {
+    const { promptId, version, steps, onVersionChange, onConflict } = opts;
 
-export function useManagementAutosave({
-    promptId,
-    version,
-    text,
-    onVersionChange,
-    onConflict,
-    debounceMs = 700,
-}: UseManagementAutosaveOpts) {
-    const tRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const versionRef = useRef(version);
+    useEffect(() => { versionRef.current = version; }, [version]);
 
-    const payload = useMemo(
-        () => ({
-            version,
-            data: {
-                // si tu editor guarda texto libre, usaré policiesMd como campo
-                // (ajusta a 'markdown' si así definiste tu schema)
-                policiesMd: text,
-            },
-        }),
-        [text, version]
-    );
+    const conflictRef = useRef<typeof onConflict>();
+    useEffect(() => { conflictRef.current = onConflict; }, [onConflict]);
 
-    useEffect(() => {
-        if (tRef.current) clearTimeout(tRef.current);
-        tRef.current = setTimeout(async () => {
+    const mountedRef = useRef(false);
+    useEffect(() => { mountedRef.current = true; }, []);
+
+    const stepsHash = useMemo(() => JSON.stringify(steps), [steps]);
+    const lastHashRef = useRef<string>("");
+
+    const runSave = useMemo(() => {
+        const fn = async (payload: { steps: ManagementItem[] }) => {
+            if (!promptId) return;
+            if (!mountedRef.current) return;
             try {
                 const res = await patchManagementSection({
                     promptId,
-                    version: payload.version,
-                    data: payload.data,
+                    version: versionRef.current,
+                    data: { steps: payload.steps }, // 👈 ManagementDraftSchema.steps
                 });
 
-                // res: { ok: true, data } | { ok: false, conflict: true, data }
-                if (!res.ok && res.conflict) {
-                    onConflict?.(res.data);
-                    // la versión está en res.data.version
-                    if (typeof (res.data as any)?.version === "number") {
-                        onVersionChange((res.data as any).version);
-                    }
-                } else if (res.ok) {
-                    // versión nueva en res.data.version
-                    if (typeof (res.data as any)?.version === "number") {
-                        onVersionChange((res.data as any).version);
-                    }
+                if (res?.conflict) {
+                    conflictRef.current?.(res.data);
+                    return;
                 }
-            } catch {
-                // opcional: toast de error
-            }
-        }, debounceMs);
-
-        return () => {
-            if (tRef.current) clearTimeout(tRef.current);
+                if (res?.ok && res?.data?.version) {
+                    onVersionChange(res.data.version);
+                }
+            } catch { /* opcional: toast/log */ }
         };
-    }, [promptId, payload, onConflict, onVersionChange, debounceMs]);
+        return createDebounced(fn, 700);
+    }, [promptId, onVersionChange]);
+
+    useEffect(() => {
+        if (!promptId) return;
+        if (lastHashRef.current === stepsHash) return;
+
+        lastHashRef.current = stepsHash;
+        runSave({ steps });
+
+        return () => runSave.cancel?.();
+    }, [stepsHash, promptId, runSave, steps]);
 }
