@@ -24,7 +24,7 @@ export const buildPrompt = (v: BusinessValues): string => {
     add(lines, "* **YouTube:**", v.youtube);
 
     if (v.notas?.trim()) {
-        lines.push("\n### NOTAS ADICIONALES");
+        lines.push("\n### NOTAS ADICIONALES\n");
         lines.push(v.notas.trim());
     }
 

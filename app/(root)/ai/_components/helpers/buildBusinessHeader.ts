@@ -19,7 +19,7 @@ export function buildBusinessHeader(business: z.infer<typeof BusinessDraftSchema
     if (nonEmpty(business.youtube)) lines.push(`* **YouTube:** ${business.youtube}`);
     if (nonEmpty(business.notas)) {
         lines.push('');
-        lines.push('### NOTAS ADICIONALES');
+        lines.push('### NOTAS ADICIONALES\n');
         lines.push(business.notas ? business.notas.trim() : '');
     }
     return lines.join('\n');

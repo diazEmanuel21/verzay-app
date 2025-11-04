@@ -1,6 +1,6 @@
 // /lib/promptBuilder.ts
 
-import { notifyPrompt } from "@/types/agentAi";
+import { flowBehaviorText as initialFlowBehaviorText, notifyPrompt } from "@/types/agentAi";
 
 export type AnyEl = {
     kind: "text" | "function";
@@ -100,8 +100,7 @@ export function buildSectionedPrompt(
     const blocks: string[] = [];
     const joinSep = cfg.joinSeparator ?? "\n";
     const flowBehaviorText =
-        cfg.flowBehaviorText ??
-        "*Después de* ejecutar el flujo, responde *únicamente* lo indicado en *Regla/Parámetro*.\n*Si no hay una orden clara en Regla/Parámetro:* haz una *pregunta contextual mínima* para guiar al usuario al siguiente paso. *No añadas texto innecesario.*";
+        cfg.flowBehaviorText ?? initialFlowBehaviorText
 
     // Firma (opcional, solo se añade si está habilitada y hay texto)
     if (cfg.firma?.enabled) {
