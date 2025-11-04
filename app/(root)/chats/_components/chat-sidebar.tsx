@@ -244,7 +244,7 @@ export function ChatSidebar({ result, onSelectRemoteJid, selectedJid }: ChatSide
 
 
     return (
-        <aside className="flex w-[320px] min-w-[280px] max-w-[360px] flex-col border-r bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/50">
+        <aside className="flex w-full xs:min-w-[200px] max-w-[700px] flex-col border-r bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/50">
             {/* Top bar, Search, y Tabs (Mismo código) */}
             <div className="sticky top-0 z-10 space-y-3 border-b bg-background/70 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/50">
                 <div className="flex items-center justify-between">

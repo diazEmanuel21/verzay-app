@@ -92,6 +92,9 @@ export function ChatsClient({
   );
 
   const [loading, setLoading] = useState(false);
+  
+  // 🆕 ESTADO: Controla si la barra lateral (Sidebar) es visible
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
 
   // --- Control del polling del chat
   const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -128,8 +131,15 @@ export function ChatsClient({
       setSelectedJid(first);
       setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid: first, apiKeyData }));
       if (!initialSelectedJid) setMessages([]);
+      // 🆕 En la autoselección inicial, si hay un JID inicial, oculta la sidebar (comportamiento de móvil)
+      if (initialSelectedJid) setIsSidebarVisible(false);
     }
   }, [contacts, selectedJid, instanceName, initialSelectedJid, apiKeyData]);
+
+  // 🆕 HANDLER: Alterna la visibilidad de la barra lateral
+  const toggleSidebarVisibility = useCallback(() => {
+    setIsSidebarVisible((prev) => !prev);
+  }, []);
 
   const pollAndCompareMessages = useCallback(
     async (remoteJid: string) => {
@@ -174,6 +184,9 @@ export function ChatsClient({
     async (remoteJid: string) => {
       if (selectedJid !== remoteJid) setSelectedJid(remoteJid);
 
+      // 🆕 LÓGICA DE VISIBILIDAD: Oculta la Sidebar al seleccionar un chat (para móvil)
+      if (isSidebarVisible) setIsSidebarVisible(false);
+
       setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid, apiKeyData }));
       setLoading(true);
       setMessages([]);
@@ -202,7 +215,7 @@ export function ChatsClient({
         setLoading(false);
       }
     },
-    [selectedJid, warmMessages, instanceName, apiKeyData]
+    [selectedJid, warmMessages, instanceName, apiKeyData, isSidebarVisible]
   );
 
   const handleSendAny = useCallback(
@@ -318,20 +331,54 @@ export function ChatsClient({
 
   
   return (
-    <div className="flex h-full">
-      <ChatSidebar
-        result={currentChatsResult}
-        onSelectRemoteJid={handleSelectFromSidebar}
-        selectedJid={selectedJid}
-      />
-      <ChatMain
-        key={selectedJid || "no-jid"}
-        header={header}
-        messages={messages}
-        info={info}
-        loading={loading}
-        onSend={handleSendAny}
-      />
+    <div className="flex h-full overflow-hidden">
+      {/* LOGICA RESPONSIVE:
+        - Si isSidebarVisible es TRUE: 
+          - En móvil: Muestra la Sidebar (w-full) y oculta ChatMain (ocupa todo el espacio).
+          - En escritorio (sm+): Muestra ambas. Sidebar con ancho fijo, ChatMain con flex-1.
+        - Si isSidebarVisible es FALSE:
+          - En móvil: Oculta la Sidebar y muestra ChatMain (w-full).
+          - En escritorio (sm+): Muestra ambas.
+      */}
+
+      {/* CHAT SIDEBAR */}
+      <div 
+        className={`${
+          isSidebarVisible ? 'w-full sm:w-80 md:w-96' : 'hidden md:block sm:w-80 md:w-96'
+        } flex-shrink-0 h-full border-r transition-all duration-300 ${
+          !isSidebarVisible ? 'hidden' : '' // Ocultar totalmente en móvil si el chat principal está activo
+        }`}
+      >
+        <ChatSidebar
+          result={currentChatsResult}
+          onSelectRemoteJid={handleSelectFromSidebar}
+          selectedJid={selectedJid}
+        />
+      </div>
+
+      {/* CHAT MAIN */}
+      <div 
+        className={`${
+          !isSidebarVisible ? 'flex-1 w-full' : 'hidden sm:flex-1'
+        } h-full transition-all duration-300`}
+      >
+        {selectedJid ? (
+          <ChatMain
+            key={selectedJid || "no-jid"}
+            header={header}
+            messages={messages}
+            info={info}
+            loading={loading}
+            onSend={handleSendAny}
+            // 🆕 PROP: Función para volver a la lista (usada en un botón dentro de ChatMain)
+            onBackToList={toggleSidebarVisibility}
+          />
+        ) : (
+          <div className="flex flex-1 items-center justify-center h-full text-gray-500">
+            {isSidebarVisible ? "Selecciona un chat." : "Cargando chats..."}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
