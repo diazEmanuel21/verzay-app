@@ -86,8 +86,9 @@ type ChatMainProps = {
   info?: ChatInfoMeta;
   loading?: boolean;
   onSend: (payload: OutgoingMessagePayload) => void | Promise<void>;
+  onBackToList: () => void; 
+  
 };
-
 // Estado de previsualización de audio
 type RecordedAudioData = {
   base64Pure: string; // Base64 PURO
@@ -394,7 +395,7 @@ const ChatMessageList: React.FC<{
 };
 
 /* -------- Componente principal -------- */
-export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, loading, onSend }) => {
+export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, loading, onSend,onBackToList }) => {
   const [input, setInput] = useState('');
   const [composeMedia, setComposeMedia] = useState<ComposeMedia | null>(null);
   const [isSending, setIsSending] = useState(false);
@@ -695,14 +696,26 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
   const isSendButtonVisible = isInputActive && (input.trim().length > 0 || !!composeMedia);
 
   return (
-    <div className="flex flex-col h-full w-full bg-white dark:bg-gray-800 border-l border-r">
+    <div className="flex flex-col h-full w-full min-w-[300px] bg-white dark:bg-gray-800 border-l border-r">
       {/* Header */}
       <div className="flex items-center justify-between p-2 border-b dark:border-gray-700 shadow-md bg-white dark:bg-gray-800 z-10">
         <div className="flex items-center gap-3">
+            {/* FIN BOTÓN DE REGRESO */}
+            <Button 
+                onClick={onBackToList}
+                size="icon"
+                variant="ghost"
+                className="md:hidden p-2 hover:bg-gray-200 dark:hover:bg-gray-700 mr-1"
+                title="Volver a la lista de chats"
+                aria-label="Volver a la lista de chats"
+            >              
+                <ArrowRight className="w-5 h-5 rotate-180" /> {/* Usa la misma flecha, rotada 180 grados */}
+            </Button>
           <Avatar className="w-10 h-10">
             <AvatarImage src={header.avatarSrc || '/default-avatar.png'} />
             <AvatarFallback>{initialFromName(header.name)}</AvatarFallback>
           </Avatar>
+          {/* ◀️ BOTÓN DE REGRESO A LA LISTA (VISIBLE SOLO EN MÓVIL) */}
           <div>
             <p className="font-semibold text-md dark:text-white">{header.name}</p>
           </div>
@@ -828,7 +841,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
 
           <Textarea
             ref={textareaRef}
-            placeholder={composeMedia ? 'Añade un pie de foto…' : 'Escribe un mensaje...'}
+            placeholder={composeMedia ? '...' : '...'}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyPress}
