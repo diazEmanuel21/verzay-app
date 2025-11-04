@@ -1,7 +1,7 @@
 import z from "zod";
 import { buildBusinessHeader } from "./buildBusinessHeader";
 import { nonEmpty } from "./nonEmpty";
-import { SectionsDraftSchema } from "@/types/agentAi";
+import { instructionPrompt, SectionsDraftSchema } from "@/types/agentAi";
 import { buildExtrasMarkdown, buildFaqMarkdown, buildManagementMarkdown, buildProductsMarkdown, buildTrainingMarkdown } from "./actionsBuilders";
 
 export function composePromptFromSections(sections: z.infer<typeof SectionsDraftSchema>): string {
@@ -11,19 +11,7 @@ export function composePromptFromSections(sections: z.infer<typeof SectionsDraft
 
     const out: string[] = [];
     out.push(buildBusinessHeader(sections.business));
-    out.push(
-        `\n## INSTRUCCIÓN\n
-Adhiérete *estrictamente* a los *pasos de conversación (Usuario ⇄ IA)* provistos para este negocio, *sin saltar ni mezclar* pasos, respetando *funciones, **salidas literales* y *comportamientos*.
-
-*Parámetros de entrada (los provee quien invoca):*
-
-* *[Contexto breve]:* ‘escenario / canal / notas’.
-* *[Flujo/Pasos]:* bloque con pasos *numerados* y sus reglas (puede incluir *funciones, **salidas literales, **comportamientos, **validaciones, **fallbacks*).
-* *[Variables requeridas]:* ‘lista de variables esperadas: nombre, ciudad, producto, etc.’
-* *{características}:* estilo *profesional, tono **neutral, y ejemplo **breve y accionable* usando *exclusivamente* la información de este documento.
-
-Si falta un dato, *solicita la mínima aclaración necesaria* y continúa con naturalidad; *no inventes*.
-`);
+    out.push(instructionPrompt);
 
     const trainingMd = buildTrainingMarkdown(sections.training);
     if (nonEmpty(trainingMd)) {

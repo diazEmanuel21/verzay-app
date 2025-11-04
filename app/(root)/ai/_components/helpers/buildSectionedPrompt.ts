@@ -68,7 +68,7 @@ function formatElement(el: AnyEl, k: number, flowBehaviorText: string): string[]
             }
             case "ejecutar_flujo": {
                 out.push(
-                    `> Función: Ejecuta el flujo '${el.flowName || el.flowId || ""}'`,
+                    `> **Función**: Ejecuta el flujo '${el.flowName || el.flowId || ""}'`,
                 );
                 out.push(`${flowBehaviorText}`);
                 return out;

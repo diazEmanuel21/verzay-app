@@ -29,12 +29,12 @@ function renderElement(el: AnyElement, behaviorText: string): string[] {
         case "captura_datos": {
             const prompt = trim(el.prompt);
             const fields = el.fields ?? [];
-            out.push(`> Función: captura_datos\n${prompt || ""}\nCampos: ${fields.join(", ")}`);
+            out.push(`> **Función**: captura_datos\n${prompt || ""}\nCampos: ${fields.join(", ")}`);
             return out;
         }
         case "ejecutar_flujo": {
             const flow = el.flowName || el.flowId || "";
-            out.push(`> Función: Ejecuta el flujo '${flow}'`, behaviorText);
+            out.push(`> **Función**: Ejecuta el flujo '${flow}'`, behaviorText);
             return out;
         }
         case "notificar_asesor": {
@@ -43,7 +43,7 @@ function renderElement(el: AnyElement, behaviorText: string): string[] {
         }
         case "consulta_datos": {
             const prompt = trim(el.prompt);
-            out.push(`> Función: consulta_datos\n${prompt || ""}`);
+            out.push(`> **Función**: consulta_datos\n${prompt || ""}`);
             return out;
         }
         default:

@@ -130,35 +130,28 @@ export const ManagementBuilder = ({
                         No has agregado fragmentos. Usa “Agregar fragmento” para comenzar.
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                        {steps.map((s) => {
-                            const text = firstText(s.elements);
-                            return (
-                                <Card key={s.id} className="bg-muted/10 border-muted/60">
-                                    <CardHeader className="py-3">
-                                        <CardTitle className="text-sm line-clamp-1">
-                                            {s.title || "Fragmento"}
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="pt-0">
-                                        <p className="text-xs text-muted-foreground line-clamp-3">
-                                            {preview(text)}
-                                        </p>
-                                        <div className="mt-3 flex justify-end">
-                                            <Button
-                                                size="sm"
-                                                variant="ghost"
-                                                onClick={() => removeFragment(s.id)}
-                                            >
-                                                <Trash2 className="h-4 w-4 mr-1" />
-                                                Eliminar
-                                            </Button>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            );
-                        })}
-                    </div>
+                    <ul className="w-full rounded-xl border border-border bg-card/60 divide-y divide-border">
+                        {steps.map((s) => (
+                            <li key={s.id} className="flex items-center justify-between gap-3 p-3 hover:bg-muted/60">
+                                <span className="truncate text-sm font-medium">
+                                    {s.title?.trim() || "Fragmento"}
+                                </span>
+
+                                <Button
+                                    aria-label="Eliminar"
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => removeFragment(s.id)}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </li>
+                        ))}
+
+                        {steps.length === 0 && (
+                            <li className="p-3 text-sm text-muted-foreground">Sin elementos</li>
+                        )}
+                    </ul>
                 )}
             </CardContent>
         </Card>
