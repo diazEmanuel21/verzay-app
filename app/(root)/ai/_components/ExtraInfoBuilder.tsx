@@ -103,18 +103,16 @@ export function ExtraInfoBuilder({
         [onConflict]
     );
 
-    // useExtrasAutosave({
-    //     promptId,
-    //     version,
-    //     // guardamos con los nombres esperados por tu backend:
-    //     // steps + firmaEnabled + firmaText + firmaName
-    //     items, // <-- tu hook ya lo usaba; internamente debe mapear a "steps"
-    //     firmaEnabled,
-    //     firmaText,
-    //     firmaName: signatureName,
-    //     onVersionChange,
-    //     onConflict: stableOnConflict,
-    // });
+    useExtrasAutosave({
+        promptId,
+        version,
+        items,
+        firmaEnabled,
+        firmaText,
+        firmaName: signatureName,
+        onVersionChange,
+        onConflict: stableOnConflict,
+    });
 
     /* ====== PREVIEW (markdown) ====== */
     const prompt = useMemo(() => {

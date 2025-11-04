@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Trash2, Plus, PenSquare, X } from "lucide-react";
 
 import { Workflow } from "@prisma/client";
-// import { useProductsAutosave } from "./hooks/useProductsAutosave";
+import { useProductsAutosave } from "./hooks/useProductsAutosave";
 import { FunctionSelector } from "./";
 import ElementRenderer from "./action-steeps/ElementRenderer";
 
@@ -57,13 +57,13 @@ export const ProductBuilder = ({
         [onConflict]
     );
 
-    // useProductsAutosave({
-    //     promptId,
-    //     version,
-    //     items,
-    //     onVersionChange,
-    //     onConflict: stableOnConflict,
-    // });
+    useProductsAutosave({
+        promptId,
+        version,
+        items,
+        onVersionChange,
+        onConflict: stableOnConflict,
+    });
 
     /* PREVIEW markdown (consistente con pasos/elementos) */
     const prompt = useMemo(() => {

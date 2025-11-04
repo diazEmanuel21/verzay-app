@@ -5,7 +5,7 @@ import { nanoid } from "nanoid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
-// import { useManagementAutosave } from "./hooks/useManagementAutosave";
+import { useManagementAutosave } from "./hooks/useManagementAutosave";
 import type { ElementItem, ManagementBuilderProps, ManagementItem } from "@/types/agentAi";
 import { ManagementPromptBuilder } from "./ManagementPromptBuilder";
 import { PromptFragment } from "./helpers/prompt-fragments";
@@ -55,13 +55,13 @@ export const ManagementBuilder = ({
     );
 
     // AUTOSAVE: sections.management.steps
-    // useManagementAutosave({
-    //     promptId,
-    //     version,
-    //     steps,
-    //     onVersionChange,
-    //     onConflict: stableOnConflict,
-    // });
+    useManagementAutosave({
+        promptId,
+        version,
+        steps,
+        onVersionChange,
+        onConflict: stableOnConflict,
+    });
 
     // Construye un preview string (como products) para values.management
     const managementPreview = useMemo(() => {

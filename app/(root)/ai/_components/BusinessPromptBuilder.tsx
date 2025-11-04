@@ -37,7 +37,7 @@ import {
     FormValues,
     promptSchema,
 } from "@/types/agentAi";
-// import { useBusinessAutosave } from "./hooks/useBusinessAutosave";
+import { useBusinessAutosave } from "./hooks/useBusinessAutosave";
 
 /* ---------- CAMPOS ADICIONALES DISPONIBLES ---------- */
 const optionalFields = [
@@ -81,13 +81,13 @@ export const BusinessPromptBuilder = ({
     });
 
     // 🔁 AUTOSAVE
-    // useBusinessAutosave({
-    //     form,
-    //     promptId,
-    //     version,
-    //     onVersionChange,
-    //     onConflict,
-    // });
+    useBusinessAutosave({
+        form,
+        promptId,
+        version,
+        onVersionChange,
+        onConflict,
+    });
 
     const toggleField = (field: string) => {
         setSelectedFields((prev) =>
