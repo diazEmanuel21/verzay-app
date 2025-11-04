@@ -41,6 +41,7 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber }: Functio
             )
         );
     };
+    
 
     const addFunctionCaptura = (stepId: string) => {
         const subtype = "Pedidos" //TODO: ESTO NO DEBE IR QUEMADO
