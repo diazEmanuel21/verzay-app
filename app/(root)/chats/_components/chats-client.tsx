@@ -11,6 +11,7 @@ import type {
   SendMessageResult,
 } from "@/actions/chat-actions";
 import type { OutgoingMessagePayload } from "./chat-main";
+import { number } from "zod";
 
 /* -------------------------------------
    Helpers de comparación y polling
@@ -38,6 +39,7 @@ type ApiKeyData = { url: string; key: string };
    Props del componente
 -------------------------------------- */
 interface ChatsClientProps {
+  userId :string;
   chatsResult: FetchChatsResult;
   initialSelectedJid: string;
   initialMessages: EvolutionMessage[];
@@ -70,6 +72,7 @@ export function ChatsClient({
   refetchChats,
   instanceName,
   apiKeyData,
+  userId
 }: ChatsClientProps) {
   const [selectedJid, setSelectedJid] = useState(initialSelectedJid || "");
   const [currentChatsResult, setCurrentChatsResult] = useState(initialChatsResult);
@@ -372,6 +375,7 @@ export function ChatsClient({
             onSend={handleSendAny}
             // 🆕 PROP: Función para volver a la lista (usada en un botón dentro de ChatMain)
             onBackToList={toggleSidebarVisibility}
+            userId = {userId}
           />
         ) : (
           <div className="flex flex-1 items-center justify-center h-full text-gray-500">

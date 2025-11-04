@@ -11,6 +11,12 @@ interface SessionResponse<T = Session[]> {
   data?: T;
 };
 
+interface SessionResponseSingle {
+  success: boolean;
+  message: string;
+  data?: Session; // Solo un objeto Session, no un array
+}
+
 export async function getSessionsCountByUserId(userId: string) {
   try {
     const total = await db.session.count({
@@ -308,3 +314,50 @@ export async function registerSession(input: z.infer<typeof registerSessionSchem
     };
   }
 };
+
+/**
+* 🔎 Obtiene una única sesión por su remoteJid asociado a un userId.
+*/
+export async function getSessionByRemoteJid(userId: string, remoteJid: string): Promise<SessionResponseSingle> {
+  try {
+    if (!userId || !remoteJid) return {
+      success: false,
+      message: 'Se requieren userId y remoteJid.',
+      data: {} as Session // Aseguramos el tipo de retorno aunque esté vacío
+    };
+
+    const session = await db.session.findFirst({
+      where: {
+        userId,
+        remoteJid,
+      },
+    });
+
+    if (!session) {
+      return {
+        success: false,
+        message: `No se encontró sesión para el JID ${remoteJid} en el usuario ${userId}.`,
+        data: {} as Session
+      };
+    }
+
+    return {
+      success: true,
+      message: 'Sesión obtenida correctamente.',
+      data: session 
+    };
+
+  } catch (error) {
+    console.error('Error al obtener la sesión por remoteJid:', error);
+
+    let errorMessage = 'Error interno al buscar la sesión.';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
+    return {
+      success: false,
+      message: errorMessage
+    };
+  }
+}
