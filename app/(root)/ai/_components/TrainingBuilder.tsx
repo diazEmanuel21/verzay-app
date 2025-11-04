@@ -16,7 +16,7 @@ import {
   TrainingBuilderProps,
 } from "@/types/agentAi";
 import { Workflow } from "@prisma/client";
-import { useTrainingAutosave } from "./hooks/useTrainingAutosave";
+// import { useTrainingAutosave } from "./hooks/useTrainingAutosave";
 import { PedidoFunctionEl } from '../../../../types/agentAi';
 import { FunctionSelector } from './';
 import ElementRenderer from "./action-steeps/ElementRenderer";
@@ -57,13 +57,13 @@ export function TrainingBuilder({
   }, [setSteps]);
 
   // 🔁 AUTOSAVE con debounce (guarda { steps } en sections.training)
-  useTrainingAutosave({
-    promptId,
-    version,
-    steps,
-    onVersionChange,
-    onConflict: handleConflict,
-  });
+  // useTrainingAutosave({
+  //   promptId,
+  //   version,
+  //   steps,
+  //   onVersionChange,
+  //   onConflict: handleConflict,
+  // });
 
   // Para compatibilidad con tu API onChange antigua, usamos el primer paso
   const firstStep = steps[0];

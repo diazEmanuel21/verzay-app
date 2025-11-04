@@ -14,7 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { FqaBuilderProps, PRESETS, QaItem } from "@/types/agentAi";
 import { Workflow } from "@prisma/client";
 
-import { useFaqAutosave } from "./hooks/useFaqAutosave";
+// import { useFaqAutosave } from "./hooks/useFaqAutosave";
 import { FunctionSelector } from "./";
 import ElementRenderer from "./action-steeps/ElementRenderer";
 import { buildSectionedPrompt } from "./helpers";
@@ -56,13 +56,13 @@ export function FqaBuilder({
         [onConflict]
     );
 
-    useFaqAutosave({
-        promptId,
-        version,
-        items,
-        onVersionChange,
-        onConflict: stableOnConflict,
-    });
+    // useFaqAutosave({
+    //     promptId,
+    //     version,
+    //     items,
+    //     onVersionChange,
+    //     onConflict: stableOnConflict,
+    // });
 
     /* ------------------ PREVIEW (markdown) ------------------ */
     const prompt = useMemo(() => {

@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { PROMPT_FRAGMENTS } from "./helpers/prompt-fragments";
+import { PROMPT_FRAGMENTS, PromptFragment } from "./helpers/prompt-fragments";
 
 type Props = {
-    onInsert: (value: string) => void;
+    onInsert: ({ id, label, value }: PromptFragment) => void;
     buttonText?: string;
     className?: string;
 };
@@ -28,7 +28,7 @@ export function ManagementPromptBuilder({ onInsert, buttonText = "Agregar fragme
     const handleSelect = (id: string) => {
         const selected = PROMPT_FRAGMENTS.find((f) => f.id === id);
         if (selected) {
-            onInsert(selected.value);
+            onInsert({ id: selected.id, label: selected.label, value: selected.value });
             setSearch("");
             setOpen(false);
         }

@@ -5,9 +5,10 @@ import { nanoid } from "nanoid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
-import { useManagementAutosave } from "./hooks/useManagementAutosave";
+// import { useManagementAutosave } from "./hooks/useManagementAutosave";
 import type { ElementItem, ManagementBuilderProps, ManagementItem } from "@/types/agentAi";
 import { ManagementPromptBuilder } from "./ManagementPromptBuilder";
+import { PromptFragment } from "./helpers/prompt-fragments";
 
 function extractTitle(txt: string) {
     const firstLine = (txt || "").split(/\r?\n/).find(Boolean) || "";
@@ -54,13 +55,13 @@ export const ManagementBuilder = ({
     );
 
     // AUTOSAVE: sections.management.steps
-    useManagementAutosave({
-        promptId,
-        version,
-        steps,
-        onVersionChange,
-        onConflict: stableOnConflict,
-    });
+    // useManagementAutosave({
+    //     promptId,
+    //     version,
+    //     steps,
+    //     onVersionChange,
+    //     onConflict: stableOnConflict,
+    // });
 
     // Construye un preview string (como products) para values.management
     const managementPreview = useMemo(() => {
@@ -93,15 +94,15 @@ export const ManagementBuilder = ({
     }, [managementPreview, steps]);
 
     // Mutadores
-    const addFragment = (snippet = "Nuevo fragmento de gestión…") =>
+    const addFragment = (snippet: PromptFragment) =>
         setSteps((prev) => [
             ...prev,
             {
                 id: nanoid(),
-                title: extractTitle(snippet),
-                mainMessage: "",
+                title: extractTitle(snippet.label),
+                mainMessage: snippet.value,
                 elements: [
-                    { id: nanoid(), kind: "text", text: snippet } as ElementItem,
+                    { id: nanoid(), kind: "text", text: snippet.value } as ElementItem,
                 ],
             },
         ]);
@@ -109,8 +110,8 @@ export const ManagementBuilder = ({
     const removeFragment = (id: string) =>
         setSteps((prev) => prev.filter((s) => s.id !== id));
 
-    const handleInsertFromPicker = (snippet: string) => {
-        addFragment(snippet);
+    const handleInsertFromPicker = ({ id, label, value }: PromptFragment) => {
+        addFragment({ id, label, value });
     };
 
     return (
