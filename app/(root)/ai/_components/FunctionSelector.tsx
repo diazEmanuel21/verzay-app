@@ -43,7 +43,7 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber }: Functio
     };
 
     // const addFunctionCaptura = (stepId: string) => {
-    // const subtype = "Pedidos" //TODO: ESTO NO DEBE IR QUEMADO
+    //     const subtype = "Pedidos" //TODO: ESTO NO DEBE IR QUEMADO
     const addFunctionCaptura = (stepId: string, subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas") => {
         setSteps((prev) =>
             prev.map((s) => {
@@ -153,44 +153,30 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber }: Functio
                         <CommandList>
                             <CommandEmpty>Sin coincidencias…</CommandEmpty>
 
-                            <CommandGroup heading="OPCIÓN #1 · Ejecutar flujo">
+                            <CommandGroup heading="Acciónes">
                                 <CommandItem onSelect={() => addFunctionEjecutarFlujo(step.id)}>
-                                    Seleccionar flujo
+                                    OPCIÓN #1 · Ejecutar flujo
                                 </CommandItem>
-                            </CommandGroup>
-
-                            <CommandSeparator />
-
-                            <CommandGroup heading="OPCIÓN #2 · Consulta de datos">
-                                <CommandItem onSelect={() => addFunctionConsultaDatos(step.id)}>
-                                    Consultar datos del cliente
-                                </CommandItem>
-                            </CommandGroup>
-
-                            <CommandSeparator />
-
-                            <CommandGroup heading="OPCIÓN #3 · Captura de datos">
+                                OPCIÓN #2 · Captura de datos
                                 {(["Solicitudes", "Reclamos", "Pedidos", "Reservas"] as const).map((opt) => (
-                                    <CommandItem key={opt} onSelect={() => addFunctionCaptura(step.id, opt)}>
-                                        {/* <CommandItem onSelect={() => addFunctionCaptura(step.id)}> */}
-                                        {opt}
-                                        {/* Capturar parámetros/data del usuario */}
-                                    </CommandItem>
+                                        <CommandItem key={opt} onSelect={() => addFunctionCaptura(step.id, opt)}>
+                                            {opt}
+                                        </CommandItem>
                                 ))}
-                            </CommandGroup>
-
-                            <CommandSeparator />
-
-                            <CommandGroup heading="OPCIÓN #4 · Notificar asesor">
+                                <CommandItem onSelect={() => addFunctionConsultaDatos(step.id)}>
+                                    OPCIÓN #3 · Consulta de datos
+                                </CommandItem>
+                                <CommandItem >
+                                    OPCIÓN #4 · Actualizar datos
+                                </CommandItem>
                                 <CommandItem onSelect={() => addFunctionNotificar(step.id)}>
-                                    Usar número de notificación del perfil
+                                    OPCIÓN #5 · Notificar asesor
                                 </CommandItem>
                             </CommandGroup>
-
                         </CommandList>
                     </Command>
                 </PopoverContent>
-            </Popover>
+            </Popover >
 
 
             <Button onClick={() => addText(step.id)} variant={"outline"}>

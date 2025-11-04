@@ -780,4 +780,21 @@ export type ManagementBuilderProps = {
 
 export const flowBehaviorText = "* **Comportamiento:** Tras ejecutar un flujo, responde **únicamente** lo indicado en **Regla/parámetro**.\n Si **no hay una orden clara**, formula una **pregunta contextual** para guiar al usuario al siguiente paso lógico de la conversación. **No añadas texto innecesario.**"
 export const notifyPrompt = "> **Función**: Ejecuta la tool 'Notificacion Asesor'\n* **Comportamiento:** Después de ejecutar la tool, tu única respuesta es la que se te indique en **Regla/parámetro**."
-export const instructionPrompt = '\n## INSTRUCCIÓN\n\nAdhiérete **estrictamente** a los **pasos numerados** de conversación (Usuario ⇄ IA), provistos para este negocio, **sin saltar ni mezclar** pasos, respetando sus **funciones**, **salidas literales** y **comportamientos**. Respetando los pasos uno a uno y **emitiendo una salida 100% en JSON válido**, sin texto extra. **Nunca** avances de paso si faltan variables requeridas. **Nunca** combines pasos.\n\n**Parámetros de entrada (los provee quien invoca):**\n\n* **[Contexto breve]:** ‘escenario / canal / notas’.\n* **[Flujo/Pasos]:** listado/bloque con pasos **numerados** (1., 2., 3., …) y sus reglas (puede incluir **funciones**, **salidas literales**, **comportamientos**, **validaciones**, **fallbacks**).\n* **[Variables requeridas]:** ‘lista exacta de variables esperadas: nombre, ciudad, producto, etc.’\n* **{características}:** estilo **profesional**, tono **neutral**, y ejemplo **breve y accionable** usando **exclusivamente** la información de este documento.\n* **[Estado]:** `current_step` (número), `collected` (objeto con variables ya capturadas).\n* **ltimo_usuario:**  último mensaje puro del usuario.\n* **Una sola cosa por turno:** Pregunta (`ask`), emite (`emit`), ejecuta herramienta (`tool`), salta (`jump`), o finaliza (`halt`).\n\n**Formato de salida (obligatorio, JSON único):**\n\n```json\n{\n  \"step\": <numero_del_paso_en_uso>,\n  \"action\": \"ask|emit|tool|jump|halt\",\n  \"message\": \"texto_para_el_usuario_o_literal_del_paso\",\n  \"missing\": [\"var1\",\"var2\"],\n  \"next_step\": <numero_propuesto_para_seguir>,\n  \"collected\": { \"variable\": \"valor\" },\n  \"tool\": { \"name\": \"NombreTool\", \"args\": { } }\n}\n```\n\nSi falta un dato, **solicita la mínima aclaración necesaria** y continúa con naturalidad; **no inventes**.';
+export const instructionPrompt = `
+## INSTRUCCIÓN
+
+Adhiérete **estrictamente** a los **pasos numerados** de conversación (Usuario ⇄ IA), provistos para este negocio, **sin saltar ni mezclar** pasos, respetando sus **funciones**, **salidas literales** y **comportamientos**. Respetando los pasos uno a uno, sin texto extra. **Nunca** avances de paso si faltan variables requeridas. **Nunca** combines pasos.
+
+**Parámetros de entrada (los provee quien invoca):**
+
+* **[Contexto breve]:** ‘escenario / canal / notas’.
+* **[Flujo/Pasos]:** listado/bloque con pasos **numerados** (1., 2., 3., …) y sus reglas (puede incluir **funciones**, **salidas literales**, **comportamientos**, **validaciones**, **fallbacks**).
+* **[Variables requeridas]:** ‘lista exacta de variables esperadas: nombre, ciudad, producto, etc.’
+* **{características}:** estilo **profesional**, tono **neutral**, y ejemplo **breve y accionable** usando **exclusivamente** la información de este documento.
+* **[Estado]:** \`current_step\` (número), \`collected\` (objeto con variables ya capturadas).
+* **ltimo_usuario:**  último mensaje puro del usuario.
+* **Una sola cosa por turno:** Pregunta (\`ask\`), emite (\`emit\`), ejecuta herramienta (\`tool\`), salta (\`jump\`), o finaliza (\`halt\`).
+
+Si falta un dato, **solicita la mínima aclaración necesaria** y continúa con naturalidad; **no inventes**.
+`;
+;
