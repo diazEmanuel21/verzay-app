@@ -770,7 +770,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
   const isSendButtonVisible = isInputActive && (input.trim().length > 0 || !!composeMedia);
 
   return (
-    <div className="flex flex-col h-full w-full min-w-[300px] bg-white dark:bg-gray-800 border-l border-r">
+    <div className="flex flex-col h-screen w-full min-w-[200px] bg-white dark:bg-gray-800 border-l border-r">
       {/* Header */}
       <div className="flex items-center justify-between p-2 border-b dark:border-gray-700 shadow-md bg-white dark:bg-gray-800 z-10">
         <div className="flex items-center gap-3">
