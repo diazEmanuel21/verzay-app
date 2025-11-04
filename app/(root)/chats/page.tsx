@@ -174,6 +174,7 @@ export default async function ChatsPage({
       refetchChats={refetchChatsAction}
       instanceName={whatsappInstancia?.instanceName}
       apiKeyData={apiKey ? { url: apiKey.url, key: apiKey.key } : undefined} /* ⬅️ clave para media cifrada */
+      userId={user.id}
     />
   );
 }

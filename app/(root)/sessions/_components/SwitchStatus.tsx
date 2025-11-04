@@ -55,6 +55,7 @@ export const SwitchStatus = ({ sessionId, checked, mutateSessions }: Props) => {
       checked={localChecked}
       disabled={isLoading}
       onCheckedChange={handleUpdateClientStatus}
+      className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-400" // Esto sobrescribiría primary
     />
   );
 };

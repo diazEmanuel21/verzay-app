@@ -14,11 +14,44 @@ import { ArrowRight, Mic, Send, Trash2, X, Clock, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { AttachmentMenu, type ComposeMedia, type MediaType } from './attachment-menu';
+import { SwitchStatus } from '../../sessions/_components';
 
-/* ✅ Importa la función que SÍ existe en tu action */
+/* ✅ Importaciones de Acciones y Tipos de Servidor */
 import { getMediaBase64FromMessage } from '@/actions/chat-actions';
+import { getSessionByRemoteJid } from '@/actions/session-action';
+// 🚨 NUEVA IMPORTACIÓN ASUMIDA (DEBE SER CREADA POR TI)
+import { currentUser } from '@/lib/auth';
+
+// ⚠️ Asumo esta interfaz para el tipo de respuesta de UNA SOLA SESIÓN
+interface Session {
+  id: number;
+  remoteJid: string;
+  status: boolean; // El campo que necesitas para el switch
+  userId: string;
+  // ... otras propiedades
+}
+
+interface SessionResponseSingle {
+  success: boolean;
+  message: string;
+  data?: Session;
+}
+
+type ChatMainProps = {
+  userId: string;
+  header: ChatHeader;
+  messages: EvolutionMessage[];
+  info?: ChatInfoMeta;
+  loading?: boolean;
+  onSend: (payload: OutgoingMessagePayload) => void | Promise<void>;
+  onBackToList: () => void;
+
+};
+
+
 
 /* -------- Outgoing payload unificado -------- */
+// ... (El resto de tipos se mantienen igual) ...
 export type OutgoingTextPayload = {
   kind: 'text';
   text: string;
@@ -80,15 +113,6 @@ type UIBubble = {
   status?: 'sending';
 };
 
-type ChatMainProps = {
-  header: ChatHeader;
-  messages: EvolutionMessage[];
-  info?: ChatInfoMeta;
-  loading?: boolean;
-  onSend: (payload: OutgoingMessagePayload) => void | Promise<void>;
-  onBackToList: () => void; 
-  
-};
 // Estado de previsualización de audio
 type RecordedAudioData = {
   base64Pure: string; // Base64 PURO
@@ -189,7 +213,7 @@ function toUIMessages(
   });
 }
 
-/* -------- Subcomponentes -------- */
+/* -------- Subcomponentes (mantengo tu código original) -------- */
 const ExpandableText: React.FC<{ message: string; isUserMessage: boolean }> = ({
   message,
   isUserMessage,
@@ -299,7 +323,7 @@ const MediaRenderer: React.FC<{ media: MediaData | undefined }> = React.memo(({ 
             type === 'document' ? 'text-gray-600 dark:text-gray-300' : 'text-gray-800 dark:text-gray-100'
           )}
         >
-          
+
         </div>
       )}
     </div>
@@ -390,12 +414,13 @@ const ChatMessageList: React.FC<{
           />
         )
       )}
+
     </div>
   );
 };
 
-/* -------- Componente principal -------- */
-export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, loading, onSend,onBackToList }) => {
+/* -------- Componente principal con lógica de SwitchStatus corregida -------- */
+export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, loading, onSend, onBackToList, userId }) => {
   const [input, setInput] = useState('');
   const [composeMedia, setComposeMedia] = useState<ComposeMedia | null>(null);
   const [isSending, setIsSending] = useState(false);
@@ -404,7 +429,12 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const userJid = info?.remoteJid;
 
-  // Grabación de audio
+
+
+  // ESTADOS PARA EL SWITCH: Almacena la sesión
+  const [session, setSession] = useState<Session | null>(null);
+
+  // Grabación de audio (resto de tu código de grabación...)
   const [isRecording, setIsRecording] = useState(false);
   const [recordSecs, setRecordSecs] = useState(0);
   const [recordedAudio, setRecordedAudio] = useState<RecordedAudioData | null>(null);
@@ -431,7 +461,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
   }, []);
   const getMessageId = useCallback((m: EvolutionMessage) => m.key?.id || m.id || null, []);
 
-  /* 🔌 Resolver base64 usando TU action existente (sin depender del Map como estado) */
+  /* 🔌 Resolver base64 usando TU action existente */
   useEffect(() => {
     const instanceName = info?.instanceName;
     const apiKeyData = info?.apiKeyData;
@@ -476,6 +506,50 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
       cancelled = true;
     };
   }, [messages, info?.instanceName, info?.apiKeyData, isMediaMsg, hasRemoteOnly, getMessageId]);
+
+
+  /* 🚀 Lógica para obtener el estado de la sesión (SwitchStatus) */
+  const fetchSessionStatus = useCallback(async () => {
+    // Utilizamos userId y info?.remoteJid directamente en el cuerpo del useCallback
+    console.log('ahora se obtiene la session', userId, 'con userid')
+    if (!userId || !info?.remoteJid) {
+      setSession(null);
+      return;
+    }
+
+    try {
+      // Asumo que getSessionByRemoteJid recibe el userId
+      const result: SessionResponseSingle = await getSessionByRemoteJid(userId, info.remoteJid);
+      console.log('obtuve como resultado...', JSON.stringify(result), 'fueron...')
+
+      if (result.success && result.data) {
+        setSession(result.data);
+        // ✅ CORRECCIÓN: Imprimimos el dato que acabamos de guardar
+        console.log('ahora el session es...', JSON.stringify(result.data))
+      } else {
+        setSession(null);
+        console.warn("No se encontró la sesión o hubo un error:", result.message);
+        // Para consistencia en el log de error
+        console.log('ahora el session es...', JSON.stringify(null))
+      }
+    } catch (error) {
+      setSession(null);
+      console.error("Error al obtener el estado de la sesión:", JSON.stringify(error));
+      console.log('ahora el session es...', JSON.stringify(null))
+    }
+
+    // ✅ CORRECCIÓN: Asegurar que userId y info?.remoteJid estén en las dependencias
+  }, [userId, info?.remoteJid]);
+
+  // Llama a la función de obtención de estado cuando cambie el JID o el usuario
+  useEffect(() => {
+    // Solo llama si el usuario ha sido cargado y no está nulo
+    console.log('ejecutando/// para obtener session')
+    if (userId && info?.remoteJid) { // También verifica que remoteJid esté presente
+      void fetchSessionStatus();
+    }
+  }, [fetchSessionStatus, userId, info?.remoteJid]);
+
 
   /* Construye UI con caché */
   const reversed = useMemo(() => messages.slice().reverse(), [messages]);
@@ -590,7 +664,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
       setTempMessage(tempMsg);
       setIsSending(true);
       try {
-       await onSend(payload);
+        await onSend(payload);
       } catch (error) {
         console.error('Error al enviar mensaje:', error);
       } finally {
@@ -624,7 +698,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
     if (rec) {
       try {
         if (rec.state !== 'inactive') rec.stop();
-      } catch {}
+      } catch { }
       mediaRecorderRef.current = null;
     }
     stopMicrophoneStream();
@@ -700,17 +774,18 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
       {/* Header */}
       <div className="flex items-center justify-between p-2 border-b dark:border-gray-700 shadow-md bg-white dark:bg-gray-800 z-10">
         <div className="flex items-center gap-3">
-            {/* FIN BOTÓN DE REGRESO */}
-            <Button 
-                onClick={onBackToList}
-                size="icon"
-                variant="ghost"
-                className="md:hidden p-2 hover:bg-gray-200 dark:hover:bg-gray-700 mr-1"
-                title="Volver a la lista de chats"
-                aria-label="Volver a la lista de chats"
-            >              
-                <ArrowRight className="w-5 h-5 rotate-180" /> {/* Usa la misma flecha, rotada 180 grados */}
-            </Button>
+
+          {/* FIN BOTÓN DE REGRESO */}
+          <Button
+            onClick={onBackToList}
+            size="icon"
+            variant="ghost"
+            className="md:hidden p-2 hover:bg-gray-200 dark:hover:bg-gray-700 mr-1"
+            title="Volver a la lista de chats"
+            aria-label="Volver a la lista de chats"
+          >
+            <ArrowRight className="w-5 h-5 rotate-180" /> {/* Usa la misma flecha, rotada 180 grados */}
+          </Button>
           <Avatar className="w-10 h-10">
             <AvatarImage src={header.avatarSrc || '/default-avatar.png'} />
             <AvatarFallback>{initialFromName(header.name)}</AvatarFallback>
@@ -719,13 +794,26 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
           <div>
             <p className="font-semibold text-md dark:text-white">{header.name}</p>
           </div>
+
+          {/* 🟢 SWITCH DE ESTADO DE SESIÓN CORREGIDO 🟢 */}
+          {/* Ahora solo se renderiza si el usuario ha sido cargado */}
+          {(
+            session &&
+            <SwitchStatus
+              key={`${session?.id}-${session?.status ? 'on' : 'off'}`}
+              checked={session?.status ?? false} // Usamos el status de la sesión
+              sessionId={session?.id ?? -1} // Usamos el JID del chat como ID de sesión
+              mutateSessions={fetchSessionStatus} // Función para refrescar el estado de la sesión
+            ></SwitchStatus>
+          )}
+
         </div>
       </div>
 
       {/* Mensajes */}
       <ChatMessageList
         uiMessages={uiMessages}
-        loading={loading}
+        loading={loading} // Incluye la carga del usuario
         listRef={listRef}
         tempMessage={tempMessage}
       />
@@ -810,7 +898,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
               type="button"
             >
               <Trash2 className="w-5 h-5" />
-            </Button> 
+            </Button>
             <audio src={recordedAudio.dataUrlWithPrefix} controls className="flex-1 h-8" />
             <span className="text-sm tabular-nums text-gray-600 dark:text-gray-300 flex-shrink-0">
               {formatSecs(recordedAudio.durationSecs)}
@@ -831,7 +919,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         {/* Input + botones */}
         <div className="relative flex ">
           <div className="absolute left-1 bottom-1 top-50 z-10 ">
-            { (
+            {(
               <AttachmentMenu
                 onComposeMediaChange={handleComposeMediaChange}
                 maxBase64MB={8}
@@ -841,11 +929,11 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
 
           <Textarea
             ref={textareaRef}
-            placeholder={composeMedia ? '...' : '...'}
+            placeholder={composeMedia ? 'Añade un texto o pie de foto (opcional)...' : 'Escribe un mensaje...'}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyPress}
-            
+
             rows={1}
             aria-label="Escribe tu mensaje"
             className={cn(
@@ -870,7 +958,6 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
                 <Mic className={cn('w-5 h-5', isRecording ? 'text-white' : 'text-black dark:text-white')} />
               </Button>
             )}
-
             {(
               <Button
                 onClick={() => void sendNow()}
@@ -883,17 +970,9 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
                 <ArrowRight className="w-5 h-5 text-white" />
               </Button>
             )}
-
-            {/* {isSending && (
-              <div className="p-2 bg-blue-500 rounded-full animate-spin" aria-label="Enviando">
-                <Clock className="w-5 h-5 text-white" />
-              </div>
-            )} */}
           </div>
         </div>
       </div>
     </div>
   );
 };
-
-export default ChatMain;
