@@ -42,9 +42,9 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber }: Functio
         );
     };
 
-    // const addFunctionCaptura = (stepId: string) => {
-    //     const subtype = "Pedidos" //TODO: ESTO NO DEBE IR QUEMADO
-    const addFunctionCaptura = (stepId: string, subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas") => {
+    const addFunctionCaptura = (stepId: string) => {
+        const subtype = "Pedidos" //TODO: ESTO NO DEBE IR QUEMADO
+        // const addFunctionCaptura = (stepId: string, subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas") => {
         setSteps((prev) =>
             prev.map((s) => {
                 if (s.id !== stepId) return s;
@@ -157,12 +157,12 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber }: Functio
                                 <CommandItem onSelect={() => addFunctionEjecutarFlujo(step.id)}>
                                     OPCIÓN #1 · Ejecutar flujo
                                 </CommandItem>
-                                OPCIÓN #2 · Captura de datos
-                                {(["Solicitudes", "Reclamos", "Pedidos", "Reservas"] as const).map((opt) => (
-                                        <CommandItem key={opt} onSelect={() => addFunctionCaptura(step.id, opt)}>
-                                            {opt}
-                                        </CommandItem>
-                                ))}
+                                {/* {(["Solicitudes", "Reclamos", "Pedidos", "Reservas"] as const).map((opt) => ( */}
+                                <CommandItem onSelect={() => addFunctionCaptura(step.id)}>
+                                    {/* {opt} */}
+                                    OPCIÓN #2 · Captura de datos
+                                </CommandItem>
+                                {/* ))} */}
                                 <CommandItem onSelect={() => addFunctionConsultaDatos(step.id)}>
                                     OPCIÓN #3 · Consulta de datos
                                 </CommandItem>
