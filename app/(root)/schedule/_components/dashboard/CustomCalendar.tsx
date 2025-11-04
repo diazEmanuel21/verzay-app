@@ -78,7 +78,7 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
 
         const res = await updateAppointmentStatus(id, status);
         if (res.success) {
-            toast.success("📌 Estado actualizado correctamente", { id: toastId });
+            toast.success("Estado actualizado correctamente", { id: toastId });
 
             await notifyChangeStatus();
             await loadAppointments();
@@ -121,18 +121,9 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
         }
     };
 
-    // const minHour = events.length > 0
-    //     ? Math.min(...events.map(e => new Date(e.start).getHours()))
-    //     : 7;
-
-    // const maxHour = events.length > 0
-    //     ? Math.max(...events.map(e => new Date(e.end).getHours()))
-    //     : 22;
-
     return (
         <>
             <FullCalendar plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                // timeZone={user.timezone || "local"} // 👈 aquí le pasas tu zona horaria
                 initialView="timeGridDay"
                 events={events}
                 headerToolbar={{
@@ -143,8 +134,10 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                 editable={true}
                 height="auto"
                 allDaySlot={false}
-                // slotMinTime={`${minHour}:00:00`}
-                // slotMaxTime={`${maxHour + 1}:00:00`}
+                slotMinTime="07:00:00"     // <— oculta 00:00–04:00
+                slotMaxTime="19:00:00"  // (opcional) recorta por el final
+                // slotMinTime={}
+                // slotMaxTime={}
                 eventClick={(info) => {
                     setSelectedEventId(info.event.id);
                     const currentStatus = appointments.find((a) => a.id === info.event.id)?.status;

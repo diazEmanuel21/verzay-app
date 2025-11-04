@@ -18,6 +18,6 @@ export function normalizeAppointmentsToEvents(appointments: AppointmentWithSessi
                 ? "bg-green-400 hover:bg-green-300 border-none transition-all"
                 : a.status === "CANCELADA"
                     ? "bg-red-400 hover:bg-red-300 border-none transition-all"
-                    : "bg-yellow-400 hover:bg-yellow-300 border-none transition-all",
+                    : "bg-yellow-600 hover:bg-yellow-500 border-none transition-all",
     }));
 }
