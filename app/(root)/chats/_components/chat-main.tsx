@@ -797,15 +797,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
 
           {/* 🟢 SWITCH DE ESTADO DE SESIÓN CORREGIDO 🟢 */}
           {/* Ahora solo se renderiza si el usuario ha sido cargado */}
-          {(
-            session &&
-            <SwitchStatus
-              key={`${session?.id}-${session?.status ? 'on' : 'off'}`}
-              checked={session?.status ?? false} // Usamos el status de la sesión
-              sessionId={session?.id ?? -1} // Usamos el JID del chat como ID de sesión
-              mutateSessions={fetchSessionStatus} // Función para refrescar el estado de la sesión
-            ></SwitchStatus>
-          )}
+          
 
         </div>
       </div>
@@ -917,8 +909,17 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         )}
 
         {/* Input + botones */}
-        <div className="relative flex ">
-          <div className="absolute left-1 bottom-1 top-50 z-10 ">
+        <div className="relative flex flex-nowrap  ">
+          <div className="relative  flex flex-nowrap z-10 items-center justify-center ">
+          {(
+            session &&
+            <SwitchStatus
+              key={`${session?.id}-${session?.status ? 'on' : 'off'}`}
+              checked={session?.status ?? false} // Usamos el status de la sesión
+              sessionId={session?.id ?? -1} // Usamos el JID del chat como ID de sesión
+              mutateSessions={fetchSessionStatus} // Función para refrescar el estado de la sesión
+            ></SwitchStatus>
+          )}
             {(
               <AttachmentMenu
                 onComposeMediaChange={handleComposeMediaChange}
