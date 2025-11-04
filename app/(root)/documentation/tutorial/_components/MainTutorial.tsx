@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { Pencil, Trash2, Plus, Search, Eye } from 'lucide-react';
 import { useModuleStore } from '@/stores/modules/useModuleStore';
 import { GenericDeleteDialog } from '@/components/shared/GenericDeleteDialog';
+import Header from '@/components/shared/header';
 
 export const MainTutorial = ({ user }: { user: User }) => {
     const { modules } = useModuleStore();
@@ -98,6 +99,9 @@ export const MainTutorial = ({ user }: { user: User }) => {
 
     return (
         <div className="flex flex-col p-4 gap-6 overflow-hidden">
+            <Header
+                title="Tutoriales"
+            />
             {/* Header y Filtro */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between overflow-hidden">
                 <div className="flex flex-1 gap-2 items-center">
@@ -172,12 +176,11 @@ export const MainTutorial = ({ user }: { user: User }) => {
                 </div>
             ) : (
                 <div className="flex-1">
-                    <div className="max-h-[85vh] overflow-auto py-2">
+                    <div className="max-h-[80vh] overflow-auto py-2">
                         <div className="flex flex-wrap flex-1 gap-2 justify-center">
                             {filteredGuides.length > 0 ? (
                                 filteredGuides.map(guide => (
                                     <Card key={guide.id}
-                                        onClick={() => window.open(guide.url, "_blank")}
                                         className="
                                         flex
                                         flex-col
@@ -196,34 +199,34 @@ export const MainTutorial = ({ user }: { user: User }) => {
                                             <p className="text-sm text-muted-foreground">{guide.description}</p>
                                             {/* <p className="text-xs text-muted-foreground mb-2">Module: {guide.path}</p> */}
                                         </CardContent>
-                                        {
-                                            user?.role === 'admin' &&
-                                            <CardFooter className="flex mt-auto gap-2 w-full">
-                                                <Button
-                                                    className="w-full"
-                                                    onClick={() => window.open(guide.url, "_blank")}
-                                                    rel="noopener noreferrer"
-                                                >
-                                                    <Eye />
-                                                </Button>
+                                        <CardFooter className="flex mt-auto gap-2 w-full">
+                                            <Button
+                                                className="w-full"
+                                                onClick={() => window.open(guide.url, "_blank")}
+                                                rel="noopener noreferrer"
+                                            >
+                                                {user?.role === 'admin' ? <Eye /> : 'Ver'}
+                                            </Button>
+                                            {user?.role === 'admin' &&
+                                                <>
+                                                    <Button
+                                                        variant="secondary"
+                                                        className="w-full"
+                                                        onClick={() => handleEdit(guide)}
+                                                    >
+                                                        <Pencil />
+                                                    </Button>
 
-                                                <Button
-                                                    variant="secondary"
-                                                    className="w-full"
-                                                    onClick={() => handleEdit(guide)}
-                                                >
-                                                    <Pencil />
-                                                </Button>
-
-                                                <Button
-                                                    variant="destructive"
-                                                    className="w-full"
-                                                    onClick={() => onDeleteTutorial(guide, true)}
-                                                >
-                                                    <Trash2 />
-                                                </Button>
-                                            </CardFooter>
-                                        }
+                                                    <Button
+                                                        variant="destructive"
+                                                        className="w-full"
+                                                        onClick={() => onDeleteTutorial(guide, true)}
+                                                    >
+                                                        <Trash2 />
+                                                    </Button>
+                                                </>
+                                            }
+                                        </CardFooter>
                                     </Card>
                                 ))
                             ) : (

@@ -48,7 +48,7 @@ export function useFaqAutosave(opts: {
                 const res = await patchFaqSection({
                     promptId,
                     version: versionRef.current,
-                    data: { items: payload.items },
+                    data: { steps: payload.items },
                 });
 
                 if (res?.conflict) {

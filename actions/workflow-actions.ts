@@ -66,7 +66,7 @@ export const createWorkflow = async (form: createWorkflowSchemaType) => {
         data: {
             userId: user?.id!, // Asegurarse de que userId no sea undefined
             status: WorkflowStatus.DRAFT,
-            definition: "TODO",
+            definition: "workflow",
             ...data,
         },
     });

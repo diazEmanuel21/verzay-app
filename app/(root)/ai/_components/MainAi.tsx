@@ -5,27 +5,25 @@ import { ChangeEvent, useCallback, useMemo, useRef, useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { BusinessPromptBuilder, ExtraInfoBuilder, FqaBuilder, PromptPreview, TrainingBuilder } from "./";
 import { buildPrompt } from "./helpers";
-import { BusinessValues, ExtrasDraftSchema, FaqDraftSchema, initialValues, MainAiInterface, MainAiProps, ProductsDraftSchema, SectionsPromptSystem, TrainingDraftSchema } from "@/types/agentAi";
+import { BusinessValues, ExtrasDraftSchema, FaqDraftSchema, initialValues, MainAiProps, ManagementDraftSchema, ProductsDraftSchema, TrainingDraftSchema } from "@/types/agentAi";
 import { ProductBuilder } from "./ProductBuilder";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PromptToolbar } from "./PromptToolbar";
 
-import { buildTrainingMarkdown } from "./helpers/buildTrainingMarkdown";
-import { buildFaqMarkdown } from "./helpers/buildFaqMarkdown";
-import { buildProductsMarkdown } from "./helpers/buildProductsMarkdown";
-import { buildExtrasMarkdown } from "./helpers/buildExtrasMarkdown";
+import { buildExtrasMarkdown, buildFaqMarkdown, buildProductsMarkdown, buildTrainingMarkdown, buildManagementMarkdown } from "./helpers/actionsBuilders";
+import { ManagementBuilder } from "./ManagementBuilder";
 
 export const TYPE_AI_LABELS = {
-    business: "Inicio",
-    training: "Pasos",
+    business: "Perfil",
+    training: "Inicio",
     faq: "Preguntas",
     products: "Productos",
     more: "Extras",
+    management: "Gestión",
 } as const;
 type TabKey = keyof typeof TYPE_AI_LABELS;
-
 
 export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
     const trainingMd = sections?.training
@@ -42,6 +40,10 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
 
     const extrasMd = sections?.extras
         ? buildExtrasMarkdown(ExtrasDraftSchema.parse(sections.extras))
+        : "";
+
+    const managementMd = sections?.management
+        ? buildManagementMarkdown(ManagementDraftSchema.parse(sections.management))
         : "";
     // 1) Hidrata estado local con lo que viene de BD (business)
     const hydrated: BusinessValues = {
@@ -65,6 +67,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
         faq: faqMd,
         products: productsMd,
         more: extrasMd,
+        management: managementMd,
     };
 
     const [values, setValues] = useState<BusinessValues>({ ...initialValues, ...hydrated });
@@ -106,6 +109,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
             faq: "",
             products: "",
             more: "",
+            management: "",
         });
 
     const prompt = useMemo(() => buildPrompt(values), [values]);
@@ -197,12 +201,9 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                     <TabsContent value="training" className="m-0">
                         <TrainingBuilder
                             flows={flows}
-                            // sigue actualizando el texto de preview si quieres
                             values={{ training: values.training ?? "" }}
                             handleChange={handleChange}
                             notificationNumber={user.notificationNumber}
-
-                            // NUEVO:
                             promptId={promptMeta.id}
                             version={promptVersion}
                             onVersionChange={setPromptVersion}
@@ -215,51 +216,71 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
 
                     <TabsContent value="faq" className="m-0">
                         <FqaBuilder
-                            notificationNumber={user.notificationNumber}
                             flows={flows}
                             values={{ faq: values.faq ?? "" }}
                             handleChange={handleChange}
+                            notificationNumber={user.notificationNumber}
                             promptId={promptMeta.id}
                             version={promptVersion}
                             onVersionChange={setPromptVersion}
                             onConflict={(serverState) => {
                                 setValues((prev) => ({ ...prev, faq: prev.faq }));
                             }}
-                            initialItems={sections?.faq?.items ?? []}
+                            initialItems={sections?.faq?.steps ?? []}
                         />
                     </TabsContent>
 
                     <TabsContent value="products" className="m-0">
                         <ProductBuilder
-                            notificationNumber={user.notificationNumber}
                             flows={flows}
                             values={{ products: values.products ?? "" }}
                             handleChange={handleChange}
-                            // NUEVO:
+                            notificationNumber={user.notificationNumber}
                             promptId={promptMeta.id}
                             version={promptVersion}
                             onVersionChange={setPromptVersion}
-                            onConflict={(serverState) => { /* opcional */ }}
-                            initialItems={sections?.products?.items ?? []}
+                            onConflict={(serverState) => {
+                                setValues((prev) => ({ ...prev, products: prev.products }));
+                            }}
+                            initialItems={sections?.products?.steps ?? []}
                         />
                     </TabsContent>
 
                     <TabsContent value="more" className="m-0">
                         <ExtraInfoBuilder
-                            notificationNumber={user.notificationNumber}
                             flows={flows}
                             values={{ more: values.more ?? "" }}
                             handleChange={handleChange}
-                            // Persistencia:
+                            notificationNumber={user.notificationNumber}
                             promptId={promptMeta.id}
                             version={promptVersion}
                             onVersionChange={setPromptVersion}
-                            onConflict={(serverState) => { /* opcional */ }}
+                            onConflict={(serverState) => {
+                                setValues((prev) => ({ ...prev, more: prev.more }));
+                            }}
                             initialExtras={{
-                                items: sections?.extras?.items ?? [],
+                                items: sections?.extras?.steps ?? [],
                                 firmaEnabled: sections?.extras?.firmaEnabled ?? false,
                                 firmaText: sections?.extras?.firmaText ?? undefined,
+                                firmaName: sections?.extras?.firmaName ?? undefined,
                             }}
+                        />
+                    </TabsContent>
+                    <TabsContent value="management" className="m-0">
+                        <ManagementBuilder
+                            values={{ management: values.management ?? "" }}
+                            handleChange={handleChange}
+                            promptId={promptMeta.id}
+                            version={promptVersion}
+                            onVersionChange={setPromptVersion}
+                            onConflict={(serverState) => {
+                                // rehidrata items del server en conflicto
+                                const serverItems = serverState?.sections?.management?.items ?? [];
+                                // si guardas un state global `sections`, actualízalo allí;
+                                // si solo mantienes `values`, basta con dejar el values.management tal cual,
+                                // autosave ya volverá a lanzar con la nueva versión.
+                            }}
+                            initialItems={sections?.management?.steps ?? []}
                         />
                     </TabsContent>
                     <div className="h-6" />

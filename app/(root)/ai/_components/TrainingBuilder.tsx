@@ -9,30 +9,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandGroup,
-  CommandItem,
-  CommandEmpty,
-  CommandInput,
-  CommandList,
-} from "@/components/ui/command";
 import { X, Plus, Trash2 } from "lucide-react";
 import {
   ElementItem,
-  ElementText,
   StepTraining,
   TrainingBuilderProps,
 } from "@/types/agentAi";
 import { Workflow } from "@prisma/client";
 import { useTrainingAutosave } from "./hooks/useTrainingAutosave";
 import { PedidoFunctionEl } from '../../../../types/agentAi';
-import { FunctionSelector, PedidoFieldsEditor } from './';
+import { FunctionSelector } from './';
+import ElementRenderer from "./action-steeps/ElementRenderer";
+import { buildSectionedPrompt } from "./helpers";
 
 /* utilidad: type-guard para pedidos */
 function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
@@ -82,60 +70,13 @@ export function TrainingBuilder({
 
   /* -------------------- Construcción del trainingPrompt -------------------- */
   const trainingPrompt = useMemo(() => {
-    const lines: string[] = [];
-
-    if (steps.length === 0) {
-      // Mensaje de ayuda si aún no agregan pasos
-      return "Aún no has agregado pasos de entrenamiento. Usa “Agregar paso” para comenzar.";
-    }
-
-    steps.forEach((step, i) => {
-      const n = i + 1;
-      lines.push(`\n### Paso ${n} — ${step.title || "Sin título"}`);
-      if (step.mainMessage?.trim()) {
-        lines.push(`* **Orden principal del paso:**\n${step.mainMessage.trim()}`);
-      }
-
-      if (step.elements.length > 0) {
-        lines.push("\n#### Elementos del paso:");
-        step.elements.forEach((el, idx) => {
-          const k = idx + 1;
-          if (el.kind === "text") {
-            const t = el.text?.trim();
-            if (t) lines.push(`- (${k})  **Regla/parámetro:** ${t}`);
-            return;
-          }
-          if (el.kind === "function") {
-            if (el.fn === "captura_datos") {
-              const base = `- (${k}) Captura de datos — ${el.subtype}: ${el.prompt}`;
-              lines.push(base);
-              if ((el as any).subtype === "Pedidos") {
-                const fields = (el as any).fields as string[] | undefined;
-                if (fields && fields.length > 0) {
-                  lines.push(`  Campos: ${fields.join(", ")}`);
-                }
-              }
-              return;
-            }
-            if (el.fn === "ejecutar_flujo") {
-              lines.push(`> función: Ejecuta el flujo '${el.flowName || el.flowId || ''}'`);
-              lines.push("* **Poscondición de la función:** Tras ejecutar el flujo, **envía solo su salida literal de ‘Regla/parámetro’**; si no hay orden clara, **formula 1 pregunta contextual mínima** que guíe al siguiente paso lógico de conversión.");
-              return;
-            }
-            if (el.fn === "notificar_asesor") {
-              lines.push(`- (${k}) Notificar asesor: ${el.notificationNumber ?? "—"}`);
-              return;
-            }
-            if (el.fn === "consulta_datos") {
-              lines.push(`- (${k}) Consulta de datos:\n${el.prompt}`);
-              return;
-            }
-          }
-        });
-      }
+    return buildSectionedPrompt(steps as any, {
+      emptyMessage: "Aún no has agregado pasos de entrenamiento. Usa “Agregar paso” para comenzar.",
+      sectionLabel: (n, step) => `Paso ${n} — ${step.title || "Sin título"}`,
+      elementsLabel: (n) => `Elementos del paso: ${n}`,
+      mainMessageLabel: "Objetivo principal del paso",
+      joinSeparator: "\n",
     });
-
-    return lines.join("\n");
   }, [steps]);
 
   /* --------- Propagar cambios: onChange (compat) + values.training --------- */
@@ -155,7 +96,7 @@ export function TrainingBuilder({
 
   /* -------------------- Acciones por PASO -------------------- */
   const addStep = () => {
-    const nextIndex = steps.length + 1;
+    // const nextIndex = steps.length + 1;
     setSteps((prev) => [
       ...prev,
       {
@@ -259,14 +200,15 @@ export function TrainingBuilder({
   /* --------------------------------- UI --------------------------------- */
   return (
     <Card className="border-muted/60">
-      {steps.length < 1 && <CardHeader className="pb-2 flex items-center justify-between gap-2 flex-row">
+      <CardHeader className="pb-2 flex items-center justify-between gap-2 flex-row">
         <CardTitle className="text-base">Entrenamiento</CardTitle>
-        <Button size="sm" onClick={addStep} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Agregar paso
-        </Button>
+        {steps.length < 1 &&
+          <Button size="sm" onClick={addStep} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Agregar paso
+          </Button>
+        }
       </CardHeader>
-      }
 
       <CardContent className="space-y-4">
         {steps.length === 0 ? (
@@ -305,7 +247,7 @@ export function TrainingBuilder({
                 <CardContent className="space-y-3">
                   {/* Mensaje principal del paso (vive dentro del paso) */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Orden principal del paso</label>
+                    <label className="text-sm font-medium">{`Objetivo principal del paso ${idx + 1}`}</label>
                     <Textarea
                       value={step.mainMessage}
                       onChange={(e) => updateStepMainMessage(step.id, e.target.value)}
@@ -335,145 +277,19 @@ export function TrainingBuilder({
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        {step.elements.map((el) => {
-                          if (el.kind === "text") {
-                            return (
-                              <Card key={el.id} className="bg-muted/30 border-muted/60">
-                                <CardHeader className="py-3 flex-row items-center justify-between">
-                                  <CardTitle className="text-sm">Regla/parámetro</CardTitle>
-                                  <Button variant="ghost" size="icon" onClick={() => removeElement(step.id, el.id)}>
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </CardHeader>
-                                <CardContent>
-                                  <Textarea
-                                    placeholder="Regla adicional para este paso…"
-                                    value={el.text}
-                                    onChange={(e) => updateText(step.id, el.id, e.target.value)}
-                                    className="min-h-[32px]"
-                                  />
-                                </CardContent>
-                              </Card>
-                            );
-                          }
-
-                          if (el.kind === "function" && el.fn === "captura_datos") {
-                            const isPedidos = (el as any).subtype === "Pedidos";
-                            return (
-                              <Card key={el.id} className="bg-muted/20 border-muted/60">
-                                <CardHeader className="py-3 flex-row items-center justify-between">
-                                  <CardTitle className="text-sm">
-                                    Formularios · Captura de datos — {(el as any).subtype}
-                                  </CardTitle>
-                                  <Button variant="ghost" size="icon" onClick={() => removeElement(step.id, el.id)}>
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </CardHeader>
-                                <CardContent className="p-0 m-0">
-                                  {/* <div className="space-y-1">
-                                    <label className="text-xs font-medium">Prompt agregado:</label>
-                                    <Textarea value={(el as any).prompt} readOnly className="min-h-[64px]" />
-                                  </div> */}
-
-                                  {/* Campos personalizados cuando subtype === "Pedidos" */}
-                                  {isPedidos && (
-                                    <div className="px-4">
-                                      <PedidoFieldsEditor
-                                        stepId={step.id}
-                                        elId={el.id}
-                                        element={el as PedidoFunctionEl}
-                                        onAdd={(field) => addPedidoField(step.id, el.id, field)}
-                                        onRemove={(field) => removePedidoField(step.id, el.id, field)}
-                                      />
-                                    </div>
-                                  )}
-                                </CardContent>
-                              </Card>
-                            );
-                          }
-
-                          if (el.kind === "function" && el.fn === "ejecutar_flujo") {
-                            return (
-                              <Card key={el.id} className="bg-muted/20 border-muted/60">
-                                <CardHeader className="py-3 flex-row items-center justify-between">
-                                  <CardTitle className="text-sm">Ejecutar flujo</CardTitle>
-                                  <Button variant="ghost" size="icon" onClick={() => removeElement(step.id, el.id)}>
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </CardHeader>
-                                <CardContent className="space-y-3">
-                                  <div className="text-sm text-muted-foreground">
-                                    {flows.length === 0
-                                      ? "No hay flujos"
-                                      : ""}
-                                  </div>
-
-                                  {flows.length > 0 && (
-                                    <Popover>
-                                      <PopoverTrigger asChild>
-                                        <Button variant="outline" className="w-full justify-between">
-                                          {(el as any).flowName ?? "Elegir flujo…"}
-                                          <Plus className="h-4 w-4 opacity-60" />
-                                        </Button>
-                                      </PopoverTrigger>
-                                      <PopoverContent align="start" className="p-0 w-[320px]">
-                                        <Command>
-                                          <CommandInput placeholder="Buscar flujo…" />
-                                          <CommandList>
-                                            <CommandEmpty>Sin resultados…</CommandEmpty>
-                                            <CommandGroup>
-                                              {flows.map((f) => (
-                                                <CommandItem
-                                                  key={f.id}
-                                                  onSelect={() => setFlowOnElement(step.id, el.id, f)}
-                                                >
-                                                  {f.name}
-                                                </CommandItem>
-                                              ))}
-                                            </CommandGroup>
-                                          </CommandList>
-                                        </Command>
-                                      </PopoverContent>
-                                    </Popover>
-                                  )}
-                                </CardContent>
-                              </Card>
-                            );
-                          }
-
-                          if (el.kind === "function" && el.fn === "notificar_asesor") {
-                            return (
-                              <Card key={el.id} className="bg-muted/20 border-muted/60">
-                                <CardHeader className="py-3 flex-row items-center justify-between">
-                                  <CardTitle className="text-sm">Notificar asesor</CardTitle>
-                                  <Button variant="ghost" size="icon" onClick={() => removeElement(step.id, el.id)}>
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </CardHeader>
-                                <CardContent className="space-y-2">
-                                  {/* <label className="text-xs font-medium">Número de notificación (perfil):</label> */}
-                                  <Input value={(el as any).notificationNumber ?? ""} readOnly placeholder="No disponible" />
-                                </CardContent>
-                              </Card>
-                            );
-                          }
-
-                          // consulta_datos
-                          return (
-                            <Card key={el.id} className="bg-muted/20 border-muted/60">
-                              <CardHeader className="py-3 flex-row items-center justify-between">
-                                <CardTitle className="text-sm">Consulta de datos</CardTitle>
-                                <Button variant="ghost" size="icon" onClick={() => removeElement(step.id, el.id)}>
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </CardHeader>
-                              {/* <CardContent className="space-y-2">
-                                <label className="text-xs font-medium">Snippet agregado:</label>
-                                <Textarea value={(el as any).prompt} readOnly className="min-h-[64px]" />
-                              </CardContent> */}
-                            </Card>
-                          );
-                        })}
+                        {step.elements.map((el) => (
+                          <ElementRenderer
+                            key={el.id}
+                            stepId={step.id}
+                            el={el}
+                            flows={flows}
+                            removeElement={removeElement}
+                            updateText={updateText}
+                            setFlowOnElement={setFlowOnElement}
+                            addPedidoField={addPedidoField}
+                            removePedidoField={removePedidoField}
+                          />
+                        ))}
                       </div>
                     )}
                   </div>

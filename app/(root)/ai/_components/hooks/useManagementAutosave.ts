@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { patchProductsSection } from "@/actions/system-prompt-actions";
-import { ProductItemType } from "@/types/agentAi";
+import { patchManagementSection } from "@/actions/system-prompt-actions";
+import type { ElementItem, ManagementItem } from "@/types/agentAi";
 
 function createDebounced<F extends (...args: any[]) => any>(fn: F, ms = 700) {
     let t: ReturnType<typeof setTimeout> | null = null;
@@ -17,14 +17,15 @@ function createDebounced<F extends (...args: any[]) => any>(fn: F, ms = 700) {
     return debounced as F & { cancel: () => void };
 }
 
-export function useProductsAutosave(opts: {
+
+export function useManagementAutosave(opts: {
     promptId: string;
     version: number;
-    items: ProductItemType[];
+    steps: ManagementItem[];
     onVersionChange: (next: number) => void;
     onConflict?: (serverState: any) => void;
 }) {
-    const { promptId, version, items, onVersionChange, onConflict } = opts;
+    const { promptId, version, steps, onVersionChange, onConflict } = opts;
 
     const versionRef = useRef(version);
     useEffect(() => { versionRef.current = version; }, [version]);
@@ -35,19 +36,18 @@ export function useProductsAutosave(opts: {
     const mountedRef = useRef(false);
     useEffect(() => { mountedRef.current = true; }, []);
 
-    const itemsHash = useMemo(() => JSON.stringify(items), [items]);
+    const stepsHash = useMemo(() => JSON.stringify(steps), [steps]);
     const lastHashRef = useRef<string>("");
 
     const runSave = useMemo(() => {
-        const fn = async (payload: { items: ProductItemType[] }) => {
+        const fn = async (payload: { steps: ManagementItem[] }) => {
             if (!promptId) return;
             if (!mountedRef.current) return;
-
             try {
-                const res = await patchProductsSection({
+                const res = await patchManagementSection({
                     promptId,
                     version: versionRef.current,
-                    data: { steps: payload.items },
+                    data: { steps: payload.steps }, // 👈 ManagementDraftSchema.steps
                 });
 
                 if (res?.conflict) {
@@ -57,18 +57,18 @@ export function useProductsAutosave(opts: {
                 if (res?.ok && res?.data?.version) {
                     onVersionChange(res.data.version);
                 }
-            } catch {/* opcional: toast/log */ }
+            } catch { /* opcional: toast/log */ }
         };
         return createDebounced(fn, 700);
     }, [promptId, onVersionChange]);
 
     useEffect(() => {
         if (!promptId) return;
-        if (lastHashRef.current === itemsHash) return;
+        if (lastHashRef.current === stepsHash) return;
 
-        lastHashRef.current = itemsHash;
-        runSave({ items });
+        lastHashRef.current = stepsHash;
+        runSave({ steps });
 
         return () => runSave.cancel?.();
-    }, [itemsHash, promptId, runSave, items]);
+    }, [stepsHash, promptId, runSave, steps]);
 }

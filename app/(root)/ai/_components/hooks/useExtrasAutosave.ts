@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { patchExtrasSection } from "@/actions/system-prompt-actions";
-import { ExtraItemDTO } from "@/types/agentAi";
+import { ExtraItemType } from "@/types/agentAi";
 
 function createDebounced<F extends (...args: any[]) => any>(fn: F, ms = 700) {
     let t: ReturnType<typeof setTimeout> | null = null;
@@ -17,13 +17,14 @@ function createDebounced<F extends (...args: any[]) => any>(fn: F, ms = 700) {
 export function useExtrasAutosave(opts: {
     promptId: string;
     version: number;
-    items: ExtraItemDTO[];
+    items: ExtraItemType[];
     firmaEnabled: boolean;
     firmaText: string;
+    firmaName: string;
     onVersionChange: (next: number) => void;
     onConflict?: (serverState: any) => void;
 }) {
-    const { promptId, version, items, firmaEnabled, firmaText, onVersionChange, onConflict } = opts;
+    const { promptId, version, items, firmaEnabled, firmaText, firmaName, onVersionChange, onConflict } = opts;
 
     const versionRef = useRef(version);
     useEffect(() => { versionRef.current = version; }, [version]);
@@ -34,14 +35,20 @@ export function useExtrasAutosave(opts: {
     const mountedRef = useRef(false);
     useEffect(() => { mountedRef.current = true; }, []);
 
+    // Hash alineado a lo que realmente se envía (steps + firma*)
     const payloadHash = useMemo(
-        () => JSON.stringify({ items, firmaEnabled, firmaText }),
-        [items, firmaEnabled, firmaText]
+        () => JSON.stringify({ steps: items, firmaEnabled, firmaText, firmaName }),
+        [items, firmaEnabled, firmaText, firmaName]
     );
     const lastHashRef = useRef<string>("");
 
     const runSave = useMemo(() => {
-        const fn = async (payload: { items: ExtraItemDTO[]; firmaEnabled: boolean; firmaText: string }) => {
+        const fn = async (payload: {
+            steps: ExtraItemType[];
+            firmaEnabled: boolean;
+            firmaText: string;
+            firmaName: string;
+        }) => {
             if (!promptId) return;
             if (!mountedRef.current) return;
 
@@ -49,7 +56,12 @@ export function useExtrasAutosave(opts: {
                 const res = await patchExtrasSection({
                     promptId,
                     version: versionRef.current,
-                    data: payload, // { items, firmaEnabled, firmaText }
+                    data: {
+                        steps: payload.steps,
+                        firmaEnabled: payload.firmaEnabled,
+                        firmaText: payload.firmaText,
+                        firmaName: payload.firmaName,
+                    },
                 });
 
                 if (res?.conflict) {
@@ -59,7 +71,9 @@ export function useExtrasAutosave(opts: {
                 if (res?.ok && res?.data?.version) {
                     onVersionChange(res.data.version);
                 }
-            } catch { }
+            } catch (err) {
+                console.error("patchExtrasSection error", err);
+            }
         };
         return createDebounced(fn, 700);
     }, [promptId, onVersionChange]);
@@ -69,7 +83,7 @@ export function useExtrasAutosave(opts: {
         if (lastHashRef.current === payloadHash) return;
         lastHashRef.current = payloadHash;
 
-        runSave({ items, firmaEnabled, firmaText });
+        runSave({ steps: items, firmaEnabled, firmaText, firmaName });
         return () => runSave.cancel?.();
-    }, [payloadHash, promptId, runSave, items, firmaEnabled, firmaText]);
+    }, [payloadHash, promptId, runSave, items, firmaEnabled, firmaText, firmaName]);
 }

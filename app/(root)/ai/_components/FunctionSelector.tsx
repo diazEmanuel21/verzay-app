@@ -24,7 +24,7 @@ import {
 } from "@/types/agentAi";
 
 import { Button } from "@/components/ui/button";
-import { Zap } from "lucide-react";
+import { Plus, Zap } from "lucide-react";
 import { nanoid } from "nanoid";
 
 export const FunctionSelector = ({ step, setSteps, notificationNumber }: FunctionSelectorInterface) => {
@@ -42,6 +42,8 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber }: Functio
         );
     };
 
+    // const addFunctionCaptura = (stepId: string) => {
+    // const subtype = "Pedidos" //TODO: ESTO NO DEBE IR QUEMADO
     const addFunctionCaptura = (stepId: string, subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas") => {
         setSteps((prev) =>
             prev.map((s) => {
@@ -139,10 +141,11 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber }: Functio
         <>
             <Popover open={!!step.openPicker} onOpenChange={(o) => toggleStepPicker(step.id, o)}>
                 <PopoverTrigger asChild>
-                    <Button size="sm" variant="default" className="gap-2">
-                        <Zap className="h-4 w-4" />
-                        Agregar Función
+
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                        <Zap /> Agregar acción
                     </Button>
+
                 </PopoverTrigger>
                 <PopoverContent className="p-0 w-[320px]" align="end">
                     <Command>
@@ -160,7 +163,7 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber }: Functio
 
                             <CommandGroup heading="OPCIÓN #2 · Consulta de datos">
                                 <CommandItem onSelect={() => addFunctionConsultaDatos(step.id)}>
-                                    Agregar “Consultar Productos”
+                                    Consultar datos del cliente
                                 </CommandItem>
                             </CommandGroup>
 
@@ -169,7 +172,9 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber }: Functio
                             <CommandGroup heading="OPCIÓN #3 · Captura de datos">
                                 {(["Solicitudes", "Reclamos", "Pedidos", "Reservas"] as const).map((opt) => (
                                     <CommandItem key={opt} onSelect={() => addFunctionCaptura(step.id, opt)}>
+                                        {/* <CommandItem onSelect={() => addFunctionCaptura(step.id)}> */}
                                         {opt}
+                                        {/* Capturar parámetros/data del usuario */}
                                     </CommandItem>
                                 ))}
                             </CommandGroup>
