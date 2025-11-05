@@ -791,13 +791,25 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
             <AvatarFallback>{initialFromName(header.name)}</AvatarFallback>
           </Avatar>
           {/* ◀️ BOTÓN DE REGRESO A LA LISTA (VISIBLE SOLO EN MÓVIL) */}
+          
           <div>
             <p className="font-semibold text-md dark:text-white">{header.name}</p>
+          </div>
+          <div className='md:hidden'>
+            {(
+              session &&
+              <SwitchStatus
+                key={`${session?.id}-${session?.status ? 'on' : 'off'}`}
+                checked={session?.status ?? false} // Usamos el status de la sesión
+                sessionId={session?.id ?? -1} // Usamos el JID del chat como ID de sesión
+                mutateSessions={fetchSessionStatus} // Función para refrescar el estado de la sesión
+              ></SwitchStatus>
+            )}
           </div>
 
           {/* 🟢 SWITCH DE ESTADO DE SESIÓN CORREGIDO 🟢 */}
           {/* Ahora solo se renderiza si el usuario ha sido cargado */}
-          
+
 
         </div>
       </div>
@@ -911,15 +923,19 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         {/* Input + botones */}
         <div className="relative flex flex-nowrap  ">
           <div className="relative  flex flex-nowrap z-10 items-center justify-center ">
-          {(
-            session &&
-            <SwitchStatus
-              key={`${session?.id}-${session?.status ? 'on' : 'off'}`}
-              checked={session?.status ?? false} // Usamos el status de la sesión
-              sessionId={session?.id ?? -1} // Usamos el JID del chat como ID de sesión
-              mutateSessions={fetchSessionStatus} // Función para refrescar el estado de la sesión
-            ></SwitchStatus>
-          )}
+            <div className='hidden md:block'>
+
+              {(
+                session &&
+                <SwitchStatus
+                  key={`${session?.id}-${session?.status ? 'on' : 'off'}`}
+                  checked={session?.status ?? false} // Usamos el status de la sesión
+                  sessionId={session?.id ?? -1} // Usamos el JID del chat como ID de sesión
+                  mutateSessions={fetchSessionStatus} // Función para refrescar el estado de la sesión
+                ></SwitchStatus>
+              )}
+            </div>
+
             {(
               <AttachmentMenu
                 onComposeMediaChange={handleComposeMediaChange}
@@ -939,7 +955,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
             aria-label="Escribe tu mensaje"
             className={cn(
               'min-h-[44px] max-h-40 h-auto bg-white dark:bg-gray-800 dark:text-white rounded-lg border-none w-full',
-              'pl-10 pr-24 resize-none overflow-y-auto',
+              'pl-4 pr-24 resize-none overflow-y-auto text-sm md:text-base',
             )}
           />
 
