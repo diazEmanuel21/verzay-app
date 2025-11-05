@@ -27,6 +27,11 @@ import { Button } from "@/components/ui/button";
 import { Plus, Zap } from "lucide-react";
 import { nanoid } from "nanoid";
 
+export interface CaptureFunctionIF {
+    stepId: string
+    subtype?: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | null
+}
+
 export const FunctionSelector = ({ step, setSteps, notificationNumber }: FunctionSelectorInterface) => {
     const toggleStepPicker = (stepId: string, open: boolean) => {
         setSteps((prev) => prev.map((s) => (s.id === stepId ? { ...s, openPicker: open } : s)));
@@ -41,11 +46,11 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber }: Functio
             )
         );
     };
-    
 
-    const addFunctionCaptura = (stepId: string) => {
-        const subtype = "Pedidos" //TODO: ESTO NO DEBE IR QUEMADO
-        // const addFunctionCaptura = (stepId: string, subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas") => {
+
+    const addFunctionCaptura = ({ stepId, subtype }: CaptureFunctionIF) => {
+        const tempSubtype = subtype ?? 'Pedidos';
+
         setSteps((prev) =>
             prev.map((s) => {
                 if (s.id !== stepId) return s;
@@ -53,8 +58,8 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber }: Functio
                     id: nanoid(),
                     kind: "function",
                     fn: "captura_datos",
-                    subtype,
-                    prompt: CAPTURE_SNIPPETS[subtype],
+                    subtype: tempSubtype,
+                    prompt: CAPTURE_SNIPPETS[tempSubtype],
                 };
                 const el: ElementItem =
                     subtype === "Pedidos"
@@ -68,6 +73,7 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber }: Functio
                 };
             })
         );
+
     };
 
     const addFunctionEjecutarFlujo = (stepId: string) => {
@@ -159,7 +165,7 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber }: Functio
                                     OPCIÓN #1 · Ejecutar flujo
                                 </CommandItem>
                                 {/* {(["Solicitudes", "Reclamos", "Pedidos", "Reservas"] as const).map((opt) => ( */}
-                                <CommandItem onSelect={() => addFunctionCaptura(step.id)}>
+                                <CommandItem onSelect={() => addFunctionCaptura({ stepId: step.id })}>
                                     {/* {opt} */}
                                     OPCIÓN #2 · Captura de datos
                                 </CommandItem>

@@ -497,7 +497,7 @@ export type StepTraining = {
 
 export type PedidoFunctionEl = ElementFunction & {
     fn: "captura_datos";
-    subtype: "Pedidos";
+    subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
     prompt: string;
     fields?: string[]; // ← campos adicionales (cc, name, etc.)
 };
