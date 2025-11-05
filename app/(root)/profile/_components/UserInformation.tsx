@@ -16,6 +16,7 @@ import { Role } from "@prisma/client";
 import { ApiKeyConfigurator, NotificationPhoneInput } from "./";
 import { Country } from "@/components/custom/CountryCodeSelect";
 import Image from "next/image";
+import { randomUUID } from "crypto";
 
 // ============================
 // Tipado
@@ -328,6 +329,7 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                             ].map(({ key, label, type }) => (
                                 key === 'apiUrl' ? (
                                     <ApiKeyConfigurator
+                                        key={crypto.randomUUID()}
                                         userId={userId}
                                         onSaved={() => {
                                             // si deseas refrescar la tarjeta del usuario u otros datos:
