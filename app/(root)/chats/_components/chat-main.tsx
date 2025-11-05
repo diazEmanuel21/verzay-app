@@ -793,9 +793,9 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
           {/* ◀️ BOTÓN DE REGRESO A LA LISTA (VISIBLE SOLO EN MÓVIL) */}
           
           <div>
-            <p className="font-semibold text-md dark:text-white">{header.name}</p>
+            <p className="font-semibold text-md dark:text-white max-w-36 text-nowrap overflow-auto">{header.name}</p>
           </div>
-          <div className='md:hidden'>
+          <div className='sm:hidden'>
             {(
               session &&
               <SwitchStatus
@@ -923,7 +923,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         {/* Input + botones */}
         <div className="relative flex flex-nowrap  ">
           <div className="relative  flex flex-nowrap z-10 items-center justify-center ">
-            <div className='hidden md:block'>
+            <div className='hidden sm:block'>
 
               {(
                 session &&
