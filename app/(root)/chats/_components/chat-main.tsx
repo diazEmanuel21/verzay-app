@@ -793,7 +793,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
           {/* ◀️ BOTÓN DE REGRESO A LA LISTA (VISIBLE SOLO EN MÓVIL) */}
           
           <div>
-            <p className="font-semibold text-md dark:text-white max-w-36 text-nowrap overflow-auto">{header.name}</p>
+            <p className="font-semibold text-md dark:text-white max-w-36 text-nowrap overflow-auto text-sm sm:text-base">{header.name}</p>
           </div>
           <div className='sm:hidden'>
             {(

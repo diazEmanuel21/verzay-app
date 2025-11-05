@@ -52,7 +52,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
 
                     const intervalId = setInterval(() => {
                         fetchQRCode(instanceName);
-                    }, 10000);
+                    }, 40000);
 
                     return () => clearInterval(intervalId);
                 } else {
