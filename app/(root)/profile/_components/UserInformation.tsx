@@ -15,6 +15,7 @@ import { useResellerStore } from "@/stores/resellers/resellerStore";
 import { Role } from "@prisma/client";
 import { ApiKeyConfigurator, NotificationPhoneInput } from "./";
 import { Country } from "@/components/custom/CountryCodeSelect";
+import Image from "next/image";
 
 // ============================
 // Tipado
@@ -47,7 +48,7 @@ const clientSchema = z.object({
     autoReactivate: z.string(),
 });
 
-const defaultImgUrl = 'https://medias3.verzay.co/verzay/default_profile_verzay.jpeg';
+const defaultImgUrl = 'https://images.pexels.com/photos/133356/pexels-photo-133356.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
 
 // ============================
 // Componente Principal
@@ -294,7 +295,7 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                                         onClick={() => fileRef.current?.click()}
                                     >
                                         <img
-                                            src={defaultImgUrl}
+                                            src={user?.image as string ?? defaultImgUrl}
                                             alt="avatar-preview"
                                             className="w-full h-full object-cover"
                                         />
@@ -327,14 +328,10 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                             ].map(({ key, label, type }) => (
                                 key === 'apiUrl' ? (
                                     <ApiKeyConfigurator
-                                        key={key}
-                                        value={user.apiUrl || ""}
-                                        onSave={(apiKey) => {
-                                            // Actualiza el estado local
-                                            handleChange("apiUrl", apiKey);
-                                            // Opcional: persiste al backend reutilizando tu flujo actual
-                                            // (si quieres que persista inmediatamente)
-                                            // handleBlur("apiUrl");
+                                        userId={userId}
+                                        onSaved={() => {
+                                            // si deseas refrescar la tarjeta del usuario u otros datos:
+                                            // fetchClientData();
                                         }}
                                     />
                                 ) : (
