@@ -8,8 +8,8 @@ import { useMutation } from "@tanstack/react-query";
 import { updateUserMeetingDuration } from "@/actions/userClientDataActions";
 
 // Componente para actualizar la duración de la reunión
-export const UpdateMeetingDuration = ({ userId }: { userId: string }) => {
-    const [duration, setDuration] = useState<number | string>(""); // Estado para la duración
+export const UpdateMeetingDuration = ({ userId, meetingDuration }: { userId: string, meetingDuration: number }) => {
+    const [duration, setDuration] = useState<number>(meetingDuration); // Estado para la duración
     const [loading, setLoading] = useState(false);
 
     // Mutación para actualizar la duración
@@ -36,7 +36,7 @@ export const UpdateMeetingDuration = ({ userId }: { userId: string }) => {
 
     // Manejar el cambio de la duración
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setDuration(e.target.value);
+        setDuration(parseInt(e.target.value));
     };
 
     // Manejar el envío del formulario

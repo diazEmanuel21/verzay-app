@@ -15,7 +15,6 @@ import { useResellerStore } from "@/stores/resellers/resellerStore";
 import { Role } from "@prisma/client";
 import { ApiKeyConfigurator, NotificationPhoneInput } from "./";
 import { Country } from "@/components/custom/CountryCodeSelect";
-import Image from "next/image";
 
 // ============================
 // Tipado
@@ -48,7 +47,7 @@ const clientSchema = z.object({
     autoReactivate: z.string(),
 });
 
-const defaultImgUrl = 'https://images.pexels.com/photos/133356/pexels-photo-133356.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
+const defaultImgUrl = 'https://medias3.verzay.co/verzay/default_profile_verzay.jpeg';
 
 // ============================
 // Componente Principal
@@ -294,8 +293,8 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                                         className="relative w-16 h-16 rounded-full overflow-hidden border-border shadow-sm cursor-pointer hover:ring-2 hover:ring-primary"
                                         onClick={() => fileRef.current?.click()}
                                     >
-                                        <Image
-                                            src={user?.image as string ?? defaultImgUrl}
+                                        <img
+                                            src={defaultImgUrl}
                                             alt="avatar-preview"
                                             className="w-full h-full object-cover"
                                         />
