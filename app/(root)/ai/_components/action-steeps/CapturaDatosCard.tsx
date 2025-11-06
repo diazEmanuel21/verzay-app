@@ -1,12 +1,12 @@
 // components/training/cards/CapturaDatosCard.tsx
 "use client";
 
-import { FC } from "react";
+import { FC, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { PedidoFieldsEditor } from "../"; // ajusta la ruta según tu barrel/index
-import { PropsDataCapture } from "@/types/agentAi";
+import { PedidoFieldsEditor } from "../";
+import { CapturaDatosCardProps, DataSubtype, SUBTYPE_OPTIONS } from "@/types/agentAi";
 
 // shadcn/ui Select
 import {
@@ -17,14 +17,6 @@ import {
     SelectItem,
 } from "@/components/ui/select";
 
-const SUBTYPE_OPTIONS = ["Pedidos", "Solicitudes", "Reclamos", "Reservas"] as const;
-type DataSubtype = (typeof SUBTYPE_OPTIONS)[number];
-
-type CapturaDatosCardProps = PropsDataCapture & {
-    /** Opcional: si lo pasas, actualiza el subtipo en el padre */
-    onSubtypeChange?: (subtype: DataSubtype, elId: string) => void;
-};
-
 export const CapturaDatosCard: FC<CapturaDatosCardProps> = ({
     el,
     onRemove,
@@ -32,7 +24,21 @@ export const CapturaDatosCard: FC<CapturaDatosCardProps> = ({
     onRemoveField,
     onSubtypeChange,
 }) => {
-    const isPedidos = el.subtype === "Pedidos";
+    // Estado local para manejar el subtipo
+    const [localSubtype, setLocalSubtype] = useState<DataSubtype>(el.subtype as DataSubtype);
+
+    // Cuando el valor de el.subtype cambie, actualizamos el estado local
+    useEffect(() => {
+        setLocalSubtype(el.subtype as DataSubtype);
+    }, [el.subtype]);
+
+    // Función que maneja el cambio del subtipo
+    const handleSubtypeChange = (v: string) => {
+        const newSubtype = v as DataSubtype;
+        setLocalSubtype(newSubtype);
+        // Llamamos a onSubtypeChange para propagar el cambio al padre
+        onSubtypeChange(newSubtype); // Aquí también pasas el subtype correctamente
+    };
 
     return (
         <Card className="bg-muted/20 border-muted/60">
@@ -42,8 +48,8 @@ export const CapturaDatosCard: FC<CapturaDatosCardProps> = ({
 
                     {/* Selector de subtipo */}
                     <Select
-                        value={el.subtype as DataSubtype}
-                        onValueChange={(v) => onSubtypeChange?.(v as DataSubtype, el.id)}
+                        value={localSubtype}
+                        onValueChange={handleSubtypeChange}  // Usamos handleSubtypeChange para manejar el cambio
                     >
                         <SelectTrigger className="h-8 w-[148px] text-xs">
                             <SelectValue placeholder="Selecciona tipo" />
@@ -64,23 +70,15 @@ export const CapturaDatosCard: FC<CapturaDatosCardProps> = ({
             </CardHeader>
 
             <CardContent className="p-0 m-0">
-                {/* Si alguna vez quieres mostrar el prompt fijo:
-        <div className="space-y-1 px-4 py-2">
-          <label className="text-xs font-medium">Prompt agregado:</label>
-          <Textarea value={el.prompt} readOnly className="min-h-[64px]" />
-        </div> */}
-
-                {isPedidos && (
-                    <div className="px-4 pb-3">
-                        <PedidoFieldsEditor
-                            stepId={(el as any).stepId ?? ""} // si no lo tienes, puedes omitir
-                            elId={el.id}
-                            element={el}
-                            onAdd={onAddField}
-                            onRemove={onRemoveField}
-                        />
-                    </div>
-                )}
+                <div className="px-4 pb-3">
+                    <PedidoFieldsEditor
+                        stepId={(el as any).stepId ?? ""}
+                        elId={el.id}
+                        element={el}
+                        onAdd={onAddField}
+                        onRemove={onRemoveField}
+                    />
+                </div>
             </CardContent>
         </Card>
     );

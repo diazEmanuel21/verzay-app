@@ -161,7 +161,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
             </div>
 
             {/* layout */}
-            <div className="flex flex-row w-full gap-2 max-h-[87vh]">
+            <div className="flex flex-row w-full gap-2 max-h-[78vh]">
                 <div className="flex flex-1 flex-col min-h-0 overflow-y-auto pr-1 ">
                     <TabsContent value="business" className="m-0">
                         <BusinessPromptBuilder

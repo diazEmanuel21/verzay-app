@@ -21,6 +21,7 @@ import type {
     PedidoFunctionEl,
     ProductItemType,
     ProductBuilderProps,
+    DataSubtype,
 } from "@/types/agentAi";
 import { buildSectionedPrompt } from "./helpers";
 
@@ -175,6 +176,17 @@ export const ProductBuilder = ({
         );
     };
 
+    const onSubtypeChange = (stepId: string, elementId: string, subtype: DataSubtype) => {
+        setItems((prev) =>
+            prev.map((product) => ({
+                ...product,
+                elements: product.elements.map((el) =>
+                    el.id === elementId ? { ...el, subtype } : el // Cambiar el subtipo del elemento
+                ),
+            }))
+        );
+    };
+
     return (
         <Card className="border-muted/60">
             <CardHeader className="pb-2 flex items-center justify-between gap-2 flex-row">
@@ -268,6 +280,7 @@ export const ProductBuilder = ({
                                                             setFlowOnElement={setFlowOnElement}
                                                             addPedidoField={addPedidoField}
                                                             removePedidoField={removePedidoField}
+                                                            onSubtypeChange={onSubtypeChange}
                                                         />
                                                     ))}
                                                 </div>

@@ -4,6 +4,14 @@ import { ChangeEvent } from "react";
 import z from "zod";
 
 
+export const SUBTYPE_OPTIONS = ["Pedidos", "Solicitudes", "Reclamos", "Reservas"] as const;
+
+export type DataSubtype = (typeof SUBTYPE_OPTIONS)[number];
+
+export type CapturaDatosCardProps = PropsDataCapture & {
+    /** Opcional: si lo pasas, actualiza el subtipo en el padre */
+    onSubtypeChange: (subtype: DataSubtype) => void;
+};
 
 /* =========================
    0) Zod Schemas (payloads)
@@ -708,6 +716,7 @@ export type PropsActionSteeps = {
     setFlowOnElement: (stepId: string, elId: string, flow: Workflow) => void;
     addPedidoField: (stepId: string, elId: string, field: string) => void;
     removePedidoField: (stepId: string, elId: string, field: string) => void;
+    onSubtypeChange: (stepId: string, elId: string, subtype: DataSubtype) => void;
 };
 
 export type TextElement = {
@@ -777,6 +786,8 @@ export type ManagementBuilderProps = {
     initialItems?: Array<any>; // ← sections.faq.items desde BD
     debounceMs?: number;
 };
+
+
 export const flowBehaviorText = "* **Comportamiento:** Tras ejecutar un flujo, responde **únicamente** lo indicado en **Regla/parámetro**.\n Si **no hay una orden clara**, formula una **pregunta contextual** para guiar al usuario al siguiente paso lógico de la conversación. **No añadas texto innecesario.**"
 export const notifyPrompt = "> **Función**: Ejecuta la tool 'Notificacion Asesor'\n* **Comportamiento:** Después de ejecutar la tool, tu única respuesta es la que se te indique en **Regla/parámetro**."
 export const instructionPrompt = `

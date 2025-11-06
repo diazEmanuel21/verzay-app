@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
-import { FqaBuilderProps, PRESETS, QaItem } from "@/types/agentAi";
+import { DataSubtype, FqaBuilderProps, PRESETS, QaItem } from "@/types/agentAi";
 import { Workflow } from "@prisma/client";
 
 import { useFaqAutosave } from "./hooks/useFaqAutosave";
@@ -45,7 +45,6 @@ export function FqaBuilder({
     const [items, setItems] = useState<QaItem[]>(
         Array.isArray(initialItems) && initialItems.length > 0 ? initialItems : []
     );
-
     /* ------------------------- AUTOSAVE ------------------------- */
     const stableOnConflict = useCallback(
         (serverState: any) => {
@@ -191,6 +190,17 @@ export function FqaBuilder({
         );
     };
 
+    const onSubtypeChange = (stepId: string, elementId: string, subtype: DataSubtype) => {
+        setItems((prev) =>
+            prev.map((step) => ({
+                ...step,
+                elements: step.elements.map((el) =>
+                    el.id === elementId ? { ...el, subtype } : el // Cambiar el subtipo del elemento
+                ),
+            }))
+        );
+    };
+
     return (
         <div className="gap-2 flex flex-col">
             <Card className="border-muted/60">
@@ -285,6 +295,7 @@ export function FqaBuilder({
                                                             setFlowOnElement={setFlowOnElement}
                                                             addPedidoField={addPedidoField}
                                                             removePedidoField={removePedidoField}
+                                                            onSubtypeChange={onSubtypeChange}
                                                         />
                                                     ))}
                                                 </div>

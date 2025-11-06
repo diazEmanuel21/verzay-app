@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { X, Plus, Trash2 } from "lucide-react";
 import {
+  DataSubtype,
   ElementItem,
   StepTraining,
   TrainingBuilderProps,
@@ -197,6 +198,24 @@ export function TrainingBuilder({
     );
   };
 
+
+  // dentro de TrainingBuilder, junto a tus mutadores:
+  const onSubtypeChange = (stepId: string, elId: string, subtype: DataSubtype) => {
+    setSteps(prev =>
+      prev.map(s =>
+        s.id === stepId
+          ? {
+            ...s,
+            elements: s.elements.map(e =>
+              e.id === elId ? { ...e, subtype } : e
+            ),
+          }
+          : s
+      )
+    );
+  };
+
+
   /* --------------------------------- UI --------------------------------- */
   return (
     <Card className="border-muted/60">
@@ -288,6 +307,8 @@ export function TrainingBuilder({
                             setFlowOnElement={setFlowOnElement}
                             addPedidoField={addPedidoField}
                             removePedidoField={removePedidoField}
+                            onSubtypeChange={onSubtypeChange}
+
                           />
                         ))}
                       </div>

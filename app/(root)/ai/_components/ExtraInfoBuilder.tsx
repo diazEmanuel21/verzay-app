@@ -16,6 +16,7 @@ import { FunctionSelector } from "./FunctionSelector";
 import ElementRenderer from "./action-steeps/ElementRenderer";
 
 import type {
+    DataSubtype,
     ElementItem,
     ExtraInfoBuilderProps,
     ExtraItemType,
@@ -255,6 +256,19 @@ export function ExtraInfoBuilder({
             )
         );
 
+    const onSubtypeChange = (stepId: string, elementId: string, subtype: DataSubtype) => {
+        // Actualizamos el subtipo del elemento correspondiente
+        setItems((prev) =>
+            prev.map((step) => ({
+                ...step,
+                elements: step.elements.map((el) =>
+                    el.id === elementId ? { ...el, subtype } : el // Cambiar el subtipo del elemento
+                ),
+            }))
+        );
+    };
+
+
     /* ====== UI ====== */
     return (
         <Card className="border-muted/60">
@@ -393,6 +407,7 @@ export function ExtraInfoBuilder({
                                                                 setFlowOnElement={setFlowOnElement}
                                                                 addPedidoField={addPedidoField}
                                                                 removePedidoField={removePedidoField}
+                                                                onSubtypeChange={onSubtypeChange}
                                                             />
                                                         ))}
                                                     </div>
