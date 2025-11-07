@@ -81,9 +81,9 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             image: null,
             emailVerified: null,
             autoReactivate: '30',
-            aiModelId: 'eros_changes',
-            defaultAiModelId: 'eros_changes',
-            defaultProviderId: 'eros_changes'
+            aiModelId: null,
+            defaultAiModelId: null,
+            defaultProviderId: null
         });
 
         if (result.success) {
