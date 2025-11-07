@@ -81,9 +81,9 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             image: null,
             emailVerified: null,
             autoReactivate: '30',
-            aiModelId: '',
-            defaultAiModelId: '',
-            defaultProviderId: ''
+            aiModelId: null,
+            defaultAiModelId: null,
+            defaultProviderId: null
         });
 
         if (result.success) {
