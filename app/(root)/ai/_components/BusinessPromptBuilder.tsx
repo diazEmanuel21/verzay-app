@@ -89,11 +89,26 @@ export const BusinessPromptBuilder = ({
         onConflict,
     });
 
+    // 👇 Mostrar campos ocultos si ya tienen valor (con typings seguros)
+    const watchAll = form.watch() as Partial<Record<keyof FormValues, unknown>>;
+
+    const hasValue = (name: keyof FormValues) => {
+        const v = watchAll[name];
+        if (typeof v === "string") return v.trim().length > 0;
+        if (Array.isArray(v)) return v.length > 0;
+        return v != null && v !== "";
+    };
+
+    const shouldShow = (name: keyof FormValues) =>
+        selectedFields.includes(name) || hasValue(name);
+
+    // ✅ Considerar "agregado" si está seleccionado o si ya tiene valor
+    const isAdded = (name: keyof FormValues) =>
+        selectedFields.includes(name) || hasValue(name);
+
     const toggleField = (field: string) => {
         setSelectedFields((prev) =>
-            prev.includes(field)
-                ? prev.filter((f) => f !== field)
-                : [...prev, field]
+            prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
         );
     };
 
@@ -101,9 +116,7 @@ export const BusinessPromptBuilder = ({
         <div className="gap-2 flex flex-col">
             <Card className="border-muted/60">
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-base">
-                        Información del Negocio
-                    </CardTitle>
+                    <CardTitle className="text-base">Información del Negocio</CardTitle>
                 </CardHeader>
 
                 <CardContent className="space-y-4">
@@ -157,27 +170,6 @@ export const BusinessPromptBuilder = ({
                                         </FormItem>
                                     )}
                                 />
-
-                                {/* <FormField
-                                    control={form.control}
-                                    name="maps"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>maps</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    placeholder="Ej. Stickers y etiquetas"
-                                                    {...field}
-                                                    onChange={(e) => {
-                                                        field.onChange(e);
-                                                        handleChange?.("maps")(e);
-                                                    }}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                /> */}
 
                                 {/* Ubicación */}
                                 <FormField
@@ -245,6 +237,7 @@ export const BusinessPromptBuilder = ({
                                     )}
                                 />
 
+                                {/* Sitio */}
                                 <FormField
                                     control={form.control}
                                     name="sitio"
@@ -267,8 +260,8 @@ export const BusinessPromptBuilder = ({
                                     )}
                                 />
 
-                                {/* Campos dinámicos */}
-                                {selectedFields.includes("email") && (
+                                {/* Campos dinámicos: se muestran si están seleccionados o si ya tienen valor */}
+                                {shouldShow("email") && (
                                     <FormField
                                         control={form.control}
                                         name="email"
@@ -292,7 +285,7 @@ export const BusinessPromptBuilder = ({
                                     />
                                 )}
 
-                                {selectedFields.includes("facebook") && (
+                                {shouldShow("facebook") && (
                                     <FormField
                                         control={form.control}
                                         name="facebook"
@@ -316,7 +309,7 @@ export const BusinessPromptBuilder = ({
                                     />
                                 )}
 
-                                {selectedFields.includes("instagram") && (
+                                {shouldShow("instagram") && (
                                     <FormField
                                         control={form.control}
                                         name="instagram"
@@ -340,7 +333,7 @@ export const BusinessPromptBuilder = ({
                                     />
                                 )}
 
-                                {selectedFields.includes("tiktok") && (
+                                {shouldShow("tiktok") && (
                                     <FormField
                                         control={form.control}
                                         name="tiktok"
@@ -364,7 +357,7 @@ export const BusinessPromptBuilder = ({
                                     />
                                 )}
 
-                                {selectedFields.includes("youtube") && (
+                                {shouldShow("youtube") && (
                                     <FormField
                                         control={form.control}
                                         name="youtube"
@@ -390,7 +383,7 @@ export const BusinessPromptBuilder = ({
                             </div>
 
                             {/* Notas */}
-                            {selectedFields.includes("notas") && (
+                            {shouldShow("notas") && (
                                 <>
                                     <Separator />
                                     <FormField
@@ -429,9 +422,7 @@ export const BusinessPromptBuilder = ({
                                             role="combobox"
                                             className="justify-between"
                                         >
-                                            {selectedFields.length > 0
-                                                ? `${selectedFields.length} seleccionados`
-                                                : "Seleccionar campos..."}
+                                            Seleccionar campos...
                                             <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
                                         </Button>
                                     </PopoverTrigger>
@@ -440,22 +431,24 @@ export const BusinessPromptBuilder = ({
                                             <CommandInput placeholder="Buscar campo..." />
                                             <CommandList>
                                                 <CommandGroup>
-                                                    {optionalFields.map((field) => (
-                                                        <CommandItem
-                                                            key={field.value}
-                                                            onSelect={() => toggleField(field.value)}
-                                                        >
-                                                            <Check
-                                                                className={cn(
-                                                                    "mr-2 h-4 w-4",
-                                                                    selectedFields.includes(field.value)
-                                                                        ? "opacity-100"
-                                                                        : "opacity-0"
-                                                                )}
-                                                            />
-                                                            {field.label}
-                                                        </CommandItem>
-                                                    ))}
+                                                    {optionalFields.map((field) => {
+                                                        const added = isAdded(field.value as keyof FormValues);
+                                                        return (
+                                                            <CommandItem
+                                                                key={field.value}
+                                                                onSelect={() => toggleField(field.value)}
+                                                                aria-selected={added}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        added ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                {field.label}
+                                                            </CommandItem>
+                                                        );
+                                                    })}
                                                 </CommandGroup>
                                             </CommandList>
                                         </Command>
