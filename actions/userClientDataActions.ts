@@ -398,87 +398,190 @@ export async function deleteUserOld(id: string): Promise<ClientResponse> {
 
 export async function deleteUser(id: string) {
   if (!id) {
-    return {
-      success: false,
-      message: 'User ID is required.',
-    };
+    return { success: false, message: 'User ID is required.' };
   }
+
+  const t0 = Date.now();
+  const elapsed = () => Date.now() - t0;
+  let currentStep = 'init';
+  const trace: Array<{ time: string; step: string; info?: any }> = [];
+  const push = (step: string, info?: any) => {
+    currentStep = step;
+    const entry = { time: new Date().toISOString(), step: `${step} (+${elapsed()}ms)`, info };
+    trace.push(entry);
+    // consola
+    if (step.startsWith('error')) console.error('[deleteUser]', entry);
+    else console.log('[deleteUser]', entry);
+  };
 
   try {
     await db.$transaction(async (tx) => {
-      // 1. Borrar relaciones explícitas no cubiertas por onDelete: Cascade
+      push('load_user.start', { userId: id });
+      const user = await tx.user.findUnique({
+        where: { id },
+        select: { email: true, apiKeyId: true },
+      });
+      push('load_user.done', { email: user?.email, hasApiKey: !!user?.apiKeyId });
 
-      await tx.reseller.deleteMany({ where: { userId: id } });       // cliente
-      await tx.reseller.deleteMany({ where: { resellerid: id } });   // revendedor
-
-      // 2. Desvincular al usuario de los módulos (UserModules es una relación N:N)
-      // await tx.module.updateMany({
-      //   where: {
-      //     users: {
-      //       some: { id },
-      //     },
-      //   },
-      //   data: {
-      //     users: {
-      //       disconnect: { id },
-      //     },
-      //   },
-      // });
-
-      // 3. Borrar workflows y nodos relacionados (por userId)
-      const workflows = await tx.workflow.findMany({ where: { userId: id } });
-      const workflowIds = workflows.map(w => w.id);
-
-      if (workflowIds.length > 0) {
-        await tx.workflowNode.deleteMany({
-          where: {
-            workflowId: { in: workflowIds }
-          }
+      let userApiKey: { key: string } | null = null;
+      if (user?.apiKeyId) {
+        push('load_api_key.start');
+        userApiKey = await tx.apiKey.findUnique({
+          where: { id: user.apiKeyId },
+          select: { key: true },
         });
-        await tx.rr.deleteMany({ where: { workflowId: { in: workflowIds } } });
+        push('load_api_key.done', { hasKey: !!userApiKey?.key });
       }
 
-      await tx.workflow.deleteMany({ where: { userId: id } });
+      push('load_sessions.start');
+      const sessions = await tx.session.findMany({
+        where: { userId: id },
+        select: { id: true, instanceId: true, remoteJid: true },
+      });
+      const instanceIds = sessions.map(s => s.instanceId).filter(Boolean);
+      const remoteJids = sessions.map(s => s.remoteJid).filter(Boolean);
+      push('load_sessions.done', { sessions: sessions.length, instanceIds: instanceIds.length, remoteJids: remoteJids.length });
 
-      // 4. Eliminar Reminders, SessionTrigger, n8n_chat_histories, seguimientos
-      await tx.reminders.deleteMany({ where: { userId: id } });
-      await tx.sessionTrigger.deleteMany({
-        where: {
-          sessionId: {
-            in: (await tx.session.findMany({ where: { userId: id }, select: { instanceId: true } }))
-              .map(s => s.instanceId)
-          }
-        }
+      push('load_instancias.start');
+      const instancias = await tx.instancias.findMany({
+        where: { userId: id },
+        select: { instanceName: true },
       });
-      await tx.n8n_chat_histories.deleteMany({
-        where: {
-          session_id: {
-            in: (await tx.session.findMany({ where: { userId: id }, select: { instanceId: true } }))
-              .map(s => s.instanceId)
-          }
-        }
-      });
-      await tx.seguimientos.deleteMany({
-        where: {
-          apikey: id // o usar campo relacionado, según tu implementación real
-        }
-      });
+      const instanceNames = instancias.map(i => i.instanceName).filter(Boolean);
+      push('load_instancias.done', { instanceNames: instanceNames.length });
 
-      // 5. Finalmente, eliminar al usuario (esto también borra onDelete: Cascade)
-      await tx.user.delete({ where: { id } });
+      // Resellers
+      push('delete_reseller.as_client.start');
+      const delResClient = await tx.reseller.deleteMany({ where: { userId: id } });
+      push('delete_reseller.as_client.done', { count: delResClient.count });
+
+      push('delete_reseller.as_reseller.start');
+      const delResReseller = await tx.reseller.deleteMany({ where: { resellerid: id } });
+      push('delete_reseller.as_reseller.done', { count: delResReseller.count });
+
+      // Workflows + Nodes + rr
+      push('workflows.fetch.start');
+      const workflows = await tx.workflow.findMany({ where: { userId: id } });
+      const workflowIds = workflows.map(w => w.id);
+      push('workflows.fetch.done', { count: workflowIds.length });
+
+      if (workflowIds.length > 0) {
+        push('workflow_nodes.delete.start');
+        const dNodes = await tx.workflowNode.deleteMany({ where: { workflowId: { in: workflowIds } } });
+        push('workflow_nodes.delete.done', { count: dNodes.count });
+
+        push('rr.by_workflow.delete.start');
+        const dRrWf = await tx.rr.deleteMany({ where: { workflowId: { in: workflowIds } } });
+        push('rr.by_workflow.delete.done', { count: dRrWf.count });
+      }
+
+      push('rr.by_user.delete.start');
+      const dRrUser = await tx.rr.deleteMany({ where: { userId: id } });
+      push('rr.by_user.delete.done', { count: dRrUser.count });
+
+      // Triggers / Histories by instanceIds
+      if (instanceIds.length > 0) {
+        push('sessionTrigger.delete.start');
+        const dTrig = await tx.sessionTrigger.deleteMany({ where: { sessionId: { in: instanceIds } } });
+        push('sessionTrigger.delete.done', { count: dTrig.count });
+
+        push('n8n_chat_histories.delete.start');
+        const dHist = await tx.n8n_chat_histories.deleteMany({ where: { session_id: { in: instanceIds } } });
+        push('n8n_chat_histories.delete.done', { count: dHist.count });
+      } else {
+        push('sessionTrigger/n8n_chat_histories.skip', { reason: 'no instanceIds' });
+      }
+
+      // Reminders
+      push('reminders.delete.start');
+      const dRem = await tx.reminders.deleteMany({ where: { userId: id } });
+      push('reminders.delete.done', { count: dRem.count });
+
+      // VerificationToken por email
+      if (user?.email) {
+        push('verification_tokens.delete.start', { identifier: user.email });
+        const dVer = await tx.verificationToken.deleteMany({ where: { identifier: user.email } });
+        push('verification_tokens.delete.done', { count: dVer.count });
+      } else {
+        push('verification_tokens.skip', { reason: 'no user.email' });
+      }
+
+      // PromptInstance (sin cascade)
+      push('promptInstance.delete.start');
+      const dPI = await tx.promptInstance.deleteMany({ where: { userId: id } });
+      push('promptInstance.delete.done', { count: dPI.count });
+
+      // Appointment (antes de Service para no violar FK hacia serviceId)
+      push('appointments.delete.start');
+      const dApp = await tx.appointment.deleteMany({ where: { userId: id } });
+      push('appointments.delete.done', { count: dApp.count });
+
+      // Services (sin cascade en schema actual)
+      push('services.delete.start');
+      const dSrv = await tx.service.deleteMany({ where: { userId: id } });
+      push('services.delete.done', { count: dSrv.count });
+
+      // Seguimientos (sin FK; borra por señales)
+      push('seguimientos.delete.start');
+      const orSeguimientos: any[] = [];
+      if (remoteJids.length) orSeguimientos.push({ remoteJid: { in: remoteJids } });
+      if (instanceNames.length) orSeguimientos.push({ instancia: { in: instanceNames } });
+      if (userApiKey?.key) orSeguimientos.push({ apikey: userApiKey.key });
+
+      if (orSeguimientos.length) {
+        const dSeg = await tx.seguimientos.deleteMany({ where: { OR: orSeguimientos } });
+        push('seguimientos.delete.done', { count: dSeg.count });
+      } else {
+        push('seguimientos.skip', { reason: 'no signals (remoteJids/instanceNames/apiKey)' });
+      }
+
+      // Usuario al final (activará cascadas existentes)
+      push('user.delete.start');
+      const dUser = await tx.user.delete({ where: { id } });
+      push('user.delete.done', { deletedUserId: dUser.id });
+
+      // Limpieza ApiKey huérfana (si procede)
+      if (user?.apiKeyId) {
+        push('apikey.cleanup.start');
+        const dApi = await tx.apiKey.deleteMany({
+          where: { id: user.apiKeyId, Users: { none: {} } },
+        });
+        push('apikey.cleanup.done', { count: dApi.count });
+      } else {
+        push('apikey.cleanup.skip', { reason: 'no user.apiKeyId' });
+      }
+    });
+
+    // Log persistente (fuera de la transacción)
+    await db.log.create({
+      data: {
+        level: 'info',
+        message: `deleteUser completed`,
+        context: JSON.stringify({ userId: id, trace }),
+      },
     });
 
     revalidatePath("/admin/clientes");
+    return { success: true, message: 'User and all related data deleted successfully.', debugStep: currentStep };
+  } catch (error: any) {
+    const errMsg = error?.message || String(error);
+    const payload = { userId: id, step: currentStep, error: errMsg, trace };
 
-    return {
-      success: true,
-      message: 'User and all related data deleted successfully.',
-    };
-  } catch (error) {
-    console.error('❌ Error deleting user and related data:', error);
-    return {
-      success: false,
-      message: 'Failed to delete user and related data.',
-    };
+    console.error('[deleteUser] ERROR', payload);
+
+    // Intentar guardar log persistente del error
+    try {
+      await db.log.create({
+        data: {
+          level: 'error',
+          message: `deleteUser failed at step ${currentStep}: ${errMsg}`,
+          context: JSON.stringify(payload),
+        },
+      });
+    } catch (logErr) {
+      console.error('[deleteUser] failed to persist error log', logErr);
+    }
+
+    return { success: false, message: 'Failed to delete user and related data.', debugStep: currentStep };
   }
 }
