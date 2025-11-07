@@ -18,6 +18,8 @@ import { getResellerProfileForUser } from '@/actions/reseller-action';
 import { getAllModules } from '@/actions/module-actions';
 import AppSkeleton from '@/components/custom/AppSkeleton';
 import { Breadcrumbs } from '@/components/custom';
+import { ChunkRecovery } from '@/components/chunk-recovery';
+import ErrorBoundary from '@/components/error-bundary';
 // import { CommunityBanner } from '@/components/shared/CommunityBanner';
 
 // Fuente
@@ -66,30 +68,33 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${poppins.className} overflow-hidden`}>
-        <AppProviders>
-          <ThemeProvider>
-            <AppInitializer onReseller={onReseller} modules={modules} user={user} />
-            {/* <CommunityBanner /> */}
-            {isAuthenticated ? (
-              <SidebarProvider defaultOpen={defaultOpen}>
-                <AppSidebar user={user} />
-                <SidebarInset className="h-screen flex flex-col">
-                  {/* Header fijo, pero ocupa espacio */}
-                  <Breadcrumbs />
-                  <main className={`flex-1 overflow-auto p-4 ${themeClass}`}>
-                    {children}
-                  </main>
-                </SidebarInset>
-              </SidebarProvider>
-            ) : (
-              // PUBLIC / AUTH LAYOUT
-              <main className={`flex min-h-screen w-full items-center justify-center ${themeClass}`}>
-                {children}
-              </main>
-            )}
-            <Toaster position="bottom-right" richColors />
-          </ThemeProvider>
-        </AppProviders>
+        <ErrorBoundary>
+          <ChunkRecovery />
+          <AppProviders>
+            <ThemeProvider>
+              <AppInitializer onReseller={onReseller} modules={modules} user={user} />
+              {/* <CommunityBanner /> */}
+              {isAuthenticated ? (
+                <SidebarProvider defaultOpen={defaultOpen}>
+                  <AppSidebar user={user} />
+                  <SidebarInset className="h-screen flex flex-col">
+                    {/* Header fijo, pero ocupa espacio */}
+                    <Breadcrumbs />
+                    <main className={`flex-1 overflow-auto p-4 ${themeClass}`}>
+                      {children}
+                    </main>
+                  </SidebarInset>
+                </SidebarProvider>
+              ) : (
+                // PUBLIC / AUTH LAYOUT
+                <main className={`flex min-h-screen w-full items-center justify-center ${themeClass}`}>
+                  {children}
+                </main>
+              )}
+              <Toaster position="bottom-right" richColors />
+            </ThemeProvider>
+          </AppProviders>
+        </ErrorBoundary>
       </body>
     </html >
   );
