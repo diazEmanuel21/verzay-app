@@ -17,9 +17,6 @@ export const PROMPT_FRAGMENTS: PromptFragment[] = [
       "1. El usuario solicita atención de un asesor humano (más que un saludo).\n" +
       "2. Existe una solicitud/pedido/reclamo/cita/reserva/pago ya **guardado**.\n" +
       "3. El usuario envía una **imagen de comprobante de pago** para validación.\n\n" +
-      "### Payload mínimo\n\n" +
-      "* `nombre`: primer nombre del usuario.\n" +
-      "* `detalle_notificacion`: resumen conciso (nombre, número, descripción, dirección, pago, etc.).\n\n" +
       "### No ejecutar si\n\n" +
       "* El usuario **solo saluda** (“Hola”, “Buenos días”, etc.).\n" +
       "* **No hay** información **guardada** de solicitud/pedido/reclamo/cita/reserva/pago.\n\n" +
@@ -27,8 +24,7 @@ export const PROMPT_FRAGMENTS: PromptFragment[] = [
       "* **No** anuncies que se ejecuta/procesa la .\n" +
       "* **No** agregues texto irrelevante en `detalle_notificacion`.\n\n" +
       "### Comportamiento\n\n" +
-      "* **Después de** ejecutar la , responde **únicamente** lo indicado en **Regla/Parámetro**.\n" +
-      "* **No** expongas payloads ni detalles técnicos."
+      "* **Después de** ejecutar la , responde **únicamente** lo indicado en **Regla/Parámetro**.\n"
   },
   {
     id: "toma-solicitudes-quejas-pedidos-reservas",
@@ -117,7 +113,6 @@ export const PROMPT_FRAGMENTS: PromptFragment[] = [
       "Si no se encuentra registro para ese número (o id):\n\n" +
       "> No encontramos un `tipo_registro` para actualizar asociado a tu número. Si deseas, puedo **registrarlo ahora**.\n\n" +
       "## 6) Restricciones y comportamiento\n\n" +
-      "* **No** anuncies ejecución/proceso de  ni expongas payloads.\n" +
       "* **No** restaures `estado=\\\"Pendiente\\\"` por defecto (solo si el usuario/flujo lo pide).\n" +
       "* **No** repitas datos ya proporcionados.\n" +
       "* **Después de** ejecutar/guardar, responde **únicamente** lo indicado en **Regla/parámetro**.\n\n" +
@@ -197,8 +192,6 @@ export const PROMPT_FRAGMENTS: PromptFragment[] = [
       "| pedido            | Actualizar Pedidos     | Pedidos     |\n" +
       "| reserva           | Actualizar Reservas    | Reservas    |\n\n" +
       "> **Notas de implementación**\n\n" +
-      "> * Selección del registro: `WHERE whatsapp = :numero ORDER BY fecha DESC LIMIT 1` (o por `id/referencia` si se aporta).\n" +
-      "> * Construye el **payload solo con campos presentes** en la petición del usuario (+ `whatsapp`, `fecha_actualizacion`).\n" +
       "> * Mantén el **casing** de  y hojas exactamente como en la tabla."
   }
 ];
