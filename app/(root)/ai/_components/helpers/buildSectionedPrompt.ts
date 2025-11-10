@@ -41,6 +41,15 @@ export type PromptBuildConfig = {
     /** Opción para anteponer firma */
     firma?: FirmaOpts;
 };
+const transformSubtype = (subtype?: string): string | undefined => {
+    const transformMap: Record<string, string> = {
+        "Solicitudes": "solicitud",
+        "Reclamos": "reclamo",
+        "Pedidos": "pedido",
+        "Reservas": "reserva"
+    };
+    return subtype ? transformMap[subtype] : undefined;
+};
 
 function trimOrUndefined(s?: string) {
     const t = (s ?? "").trim();
@@ -59,11 +68,14 @@ function formatElement(el: AnyEl, k: number, flowBehaviorText: string): string[]
     if (el.kind === "function") {
         switch (el.fn) {
             case "captura_datos": {
-                const base = `- (${k}) Captura de datos — ${el.subtype ?? "—"}: ${el.prompt ?? ""}`;
+                const newSubtype = transformSubtype(el.subtype);
+
+                const base = `- (${k}) Para procesar tu *${newSubtype ?? "—"}*, ${el.prompt ?? ""}`;
                 out.push(base);
                 // if (el.subtype === "Pedidos" && el.fields?.length) {
+                //Aquí se setean los campos dinámicos de pedidos, solicitudes, reclamos,  reservas
                 if (el.fields?.length) {
-                    out.push(`  Campos: ${el.fields.join(", ")}`);
+                    out.push(`${el.fields.join("\n")}`);
                 }
                 return out;
             }

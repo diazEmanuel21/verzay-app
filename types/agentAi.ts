@@ -550,14 +550,10 @@ export const CAPTURE_SNIPPETS: Record<
     "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas",
     string
 > = {
-    Solicitudes:
-        "**Captura de Solicitudes**: Pide al usuario su requerimiento, contexto, prioridad y datos de contacto. Confirma si necesita seguimiento.",
-    Reclamos:
-        "**Captura de Reclamos**: Registra descripción, evidencia (foto/video), fecha, número de pedido (si aplica) y nivel de urgencia. Genera acuse.",
-    Pedidos:
-        "**Captura de Pedidos**: Toma producto/servicio, cantidad, variante, precio acordado (si aplica), datos de entrega y método de pago.",
-    Reservas:
-        "**Captura de Reservas**: Recolecta fecha, hora, sede, cantidad de personas/ítems, nombre y teléfono. Confirma disponibilidad y condiciones.",
+    Solicitudes: "por favor indicame los siguientes datos",
+    Reclamos: "por favor indicame los siguientes datos",
+    Pedidos: "por favor indicame los siguientes datos",
+    Reservas: "por favor indicame los siguientes datos",
 };
 
 export const CONSULTA_DATOS_SNIPPET = `**Consultar Productos**. Si no hay un flujo activo y el usuario pregunta por un producto, ejecuta esta herramienta.
