@@ -28,7 +28,7 @@ export const PedidoFieldsEditor = ({
 
     return (
         <div className="space-y-2 pb-3">
-            <label className="text-xs font-medium">Campos de pedido (texto plano):</label>
+            <label className="text-xs font-medium">Campos/datos:</label>
             <div className="flex gap-2">
                 <Input
                     placeholder="Ej.: cc, name, direccion…"
