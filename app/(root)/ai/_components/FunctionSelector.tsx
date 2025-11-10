@@ -10,7 +10,6 @@ import {
     CommandEmpty,
     CommandInput,
     CommandList,
-    CommandSeparator,
 } from "@/components/ui/command";
 
 import {

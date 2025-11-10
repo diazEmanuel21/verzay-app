@@ -27,8 +27,8 @@ import { buildSectionedPrompt } from "./helpers";
 function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
   return (
     el.kind === "function" &&
-    (el as any).fn === "captura_datos" &&
-    (el as any).subtype === "Pedidos"
+    (el as any).fn === "captura_datos" 
+    // && (el as any).subtype === "Pedidos"
   );
 }
 

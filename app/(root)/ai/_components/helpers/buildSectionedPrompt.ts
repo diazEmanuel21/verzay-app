@@ -61,7 +61,8 @@ function formatElement(el: AnyEl, k: number, flowBehaviorText: string): string[]
             case "captura_datos": {
                 const base = `- (${k}) Captura de datos — ${el.subtype ?? "—"}: ${el.prompt ?? ""}`;
                 out.push(base);
-                if (el.subtype === "Pedidos" && el.fields?.length) {
+                // if (el.subtype === "Pedidos" && el.fields?.length) {
+                if (el.fields?.length) {
                     out.push(`  Campos: ${el.fields.join(", ")}`);
                 }
                 return out;
