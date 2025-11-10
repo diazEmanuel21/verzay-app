@@ -269,7 +269,9 @@ export async function fetchChatsFromEvolution(
   const baseURL = normalizeBaseUrl(baseUrlRaw);
   const endpoint = `${baseURL}/chat/findChats/${encodeURIComponent(instanceName)}`;
   const ctrl = new AbortController();
-  const timeoutMs = options?.timeoutMs ?? 2000;
+  // const timeoutMs = options?.timeoutMs ?? 2000;
+  const timeoutMs = 15000;
+
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
 
 
