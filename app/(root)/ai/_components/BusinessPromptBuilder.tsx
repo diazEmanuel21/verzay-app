@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -60,15 +60,15 @@ export const BusinessPromptBuilder = ({
 }: BusinessPromptBuilderProps) => {
     const [selectedFields, setSelectedFields] = useState<string[]>([]);
 
-    const form = useForm<FormValues>({
-        resolver: zodResolver(promptSchema),
-        defaultValues: {
+    // Defaults memorizados a partir de props externas
+    const defaults = useMemo<FormValues>(() => {
+        return {
             nombre: user?.company ?? values.nombre ?? "",
             sector: values.sector ?? "",
             ubicacion: values.ubicacion ?? "",
             horarios: values.horarios ?? "",
             maps: user?.mapsUrl ?? values.maps ?? "",
-            telefono: values.telefono ?? values.telefono ?? "",
+            telefono: values.telefono ?? "",
             email: values.email ?? "",
             sitio: values.sitio ?? "",
             facebook: values.facebook ?? "",
@@ -76,11 +76,32 @@ export const BusinessPromptBuilder = ({
             tiktok: values.tiktok ?? "",
             youtube: values.youtube ?? "",
             notas: values.notas ?? "",
-        },
+        };
+    }, [
+        user?.company,
+        user?.mapsUrl,
+        values.nombre,
+        values.sector,
+        values.ubicacion,
+        values.horarios,
+        values.maps,
+        values.telefono,
+        values.email,
+        values.sitio,
+        values.facebook,
+        values.instagram,
+        values.tiktok,
+        values.youtube,
+        values.notas,
+    ]);
+
+    const form = useForm<FormValues>({
+        resolver: zodResolver(promptSchema),
+        defaultValues: defaults,
         mode: "onChange",
     });
 
-    // 🔁 AUTOSAVE
+    // 🔁 AUTOSAVE (usa el form como fuente de verdad)
     useBusinessAutosave({
         form,
         promptId,
@@ -88,6 +109,11 @@ export const BusinessPromptBuilder = ({
         onVersionChange,
         onConflict,
     });
+
+    // Si cambian los valores externos, resetea sin pisar campos sucios
+    useEffect(() => {
+        form.reset(defaults, { keepDirtyValues: true });
+    }, [form, defaults]);
 
     // 👇 Mostrar campos ocultos si ya tienen valor (con typings seguros)
     const watchAll = form.watch() as Partial<Record<keyof FormValues, unknown>>;
@@ -138,8 +164,9 @@ export const BusinessPromptBuilder = ({
                                                 <Input
                                                     placeholder="Ej. Holi Print RD"
                                                     {...field}
-                                                    onChange={(e) => {
-                                                        field.onChange(e);
+                                                    onChange={field.onChange}
+                                                    onBlur={(e) => {
+                                                        field.onBlur();
                                                         handleChange?.("nombre")(e);
                                                     }}
                                                 />
@@ -160,8 +187,9 @@ export const BusinessPromptBuilder = ({
                                                 <Input
                                                     placeholder="Ej. Stickers y etiquetas"
                                                     {...field}
-                                                    onChange={(e) => {
-                                                        field.onChange(e);
+                                                    onChange={field.onChange}
+                                                    onBlur={(e) => {
+                                                        field.onBlur();
                                                         handleChange?.("sector")(e);
                                                     }}
                                                 />
@@ -182,8 +210,9 @@ export const BusinessPromptBuilder = ({
                                                 <Input
                                                     placeholder="Ej. Av. Siempre Viva 742, Quito"
                                                     {...field}
-                                                    onChange={(e) => {
-                                                        field.onChange(e);
+                                                    onChange={field.onChange}
+                                                    onBlur={(e) => {
+                                                        field.onBlur();
                                                         handleChange?.("ubicacion")(e);
                                                     }}
                                                 />
@@ -204,8 +233,9 @@ export const BusinessPromptBuilder = ({
                                                 <Input
                                                     placeholder="Ej. Lun–Sáb 9:00 a 18:00"
                                                     {...field}
-                                                    onChange={(e) => {
-                                                        field.onChange(e);
+                                                    onChange={field.onChange}
+                                                    onBlur={(e) => {
+                                                        field.onBlur();
                                                         handleChange?.("horarios")(e);
                                                     }}
                                                 />
@@ -226,8 +256,9 @@ export const BusinessPromptBuilder = ({
                                                 <Input
                                                     placeholder="Ej. +57 300 123 4567"
                                                     {...field}
-                                                    onChange={(e) => {
-                                                        field.onChange(e);
+                                                    onChange={field.onChange}
+                                                    onBlur={(e) => {
+                                                        field.onBlur();
                                                         handleChange?.("telefono")(e);
                                                     }}
                                                 />
@@ -249,8 +280,9 @@ export const BusinessPromptBuilder = ({
                                                     type="url"
                                                     placeholder="https://negocio.com"
                                                     {...field}
-                                                    onChange={(e) => {
-                                                        field.onChange(e);
+                                                    onChange={field.onChange}
+                                                    onBlur={(e) => {
+                                                        field.onBlur();
                                                         handleChange?.("sitio")(e);
                                                     }}
                                                 />
@@ -273,8 +305,9 @@ export const BusinessPromptBuilder = ({
                                                         type="email"
                                                         placeholder="ventas@negocio.com"
                                                         {...field}
-                                                        onChange={(e) => {
-                                                            field.onChange(e);
+                                                        onChange={field.onChange}
+                                                        onBlur={(e) => {
+                                                            field.onBlur();
                                                             handleChange?.("email")(e);
                                                         }}
                                                     />
@@ -297,8 +330,9 @@ export const BusinessPromptBuilder = ({
                                                         type="url"
                                                         placeholder="https://facebook.com/tu-negocio"
                                                         {...field}
-                                                        onChange={(e) => {
-                                                            field.onChange(e);
+                                                        onChange={field.onChange}
+                                                        onBlur={(e) => {
+                                                            field.onBlur();
                                                             handleChange?.("facebook")(e);
                                                         }}
                                                     />
@@ -321,8 +355,9 @@ export const BusinessPromptBuilder = ({
                                                         type="url"
                                                         placeholder="https://instagram.com/tu_negocio"
                                                         {...field}
-                                                        onChange={(e) => {
-                                                            field.onChange(e);
+                                                        onChange={field.onChange}
+                                                        onBlur={(e) => {
+                                                            field.onBlur();
                                                             handleChange?.("instagram")(e);
                                                         }}
                                                     />
@@ -345,8 +380,9 @@ export const BusinessPromptBuilder = ({
                                                         type="url"
                                                         placeholder="https://tiktok.com/@tu_negocio"
                                                         {...field}
-                                                        onChange={(e) => {
-                                                            field.onChange(e);
+                                                        onChange={field.onChange}
+                                                        onBlur={(e) => {
+                                                            field.onBlur();
                                                             handleChange?.("tiktok")(e);
                                                         }}
                                                     />
@@ -369,8 +405,9 @@ export const BusinessPromptBuilder = ({
                                                         type="url"
                                                         placeholder="https://youtube.com/@tu_negocio"
                                                         {...field}
-                                                        onChange={(e) => {
-                                                            field.onChange(e);
+                                                        onChange={field.onChange}
+                                                        onBlur={(e) => {
+                                                            field.onBlur();
                                                             handleChange?.("youtube")(e);
                                                         }}
                                                     />
@@ -397,8 +434,9 @@ export const BusinessPromptBuilder = ({
                                                         className="min-h-[64px]"
                                                         placeholder="Aclaraciones, tono, restricciones..."
                                                         {...field}
-                                                        onChange={(e) => {
-                                                            field.onChange(e);
+                                                        onChange={field.onChange}
+                                                        onBlur={(e) => {
+                                                            field.onBlur();
                                                             handleChange?.("notas")(e);
                                                         }}
                                                     />
@@ -417,11 +455,7 @@ export const BusinessPromptBuilder = ({
                                 <FormLabel>Campos adicionales</FormLabel>
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            role="combobox"
-                                            className="justify-between"
-                                        >
+                                        <Button variant="outline" role="combobox" className="justify-between">
                                             Seleccionar campos...
                                             <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
                                         </Button>
