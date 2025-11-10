@@ -249,7 +249,7 @@ export const ProductBuilder = ({
                                         {/* Header elementos */}
                                         <div className="flex items-center justify-between flex-wrap gap-2">
                                             <div className="flex items-center gap-2">
-                                                <span className="text-sm font-medium">Elementos de la Producto</span>
+                                                <span className="text-sm font-medium">Elementos del Producto</span>
                                                 <Badge variant="secondary">{idx + 1}</Badge>
                                             </div>
                                             <div className="flex gap-2">

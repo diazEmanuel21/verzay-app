@@ -2,29 +2,34 @@
 
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { nanoid } from "nanoid";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { Plus, Trash2 } from "lucide-react";
+
+import { Workflow } from "@prisma/client";
 import { useManagementAutosave } from "./hooks/useManagementAutosave";
-import type { ElementItem, ManagementBuilderProps, ManagementItem } from "@/types/agentAi";
+import ElementRenderer from "./action-steeps/ElementRenderer";
+import { FunctionSelector } from "./FunctionSelector";
 import { ManagementPromptBuilder } from "./ManagementPromptBuilder";
 import { PromptFragment } from "./helpers/prompt-fragments";
+import { buildSectionedPrompt } from "./helpers";
 
-function extractTitle(txt: string) {
-    const firstLine = (txt || "").split(/\r?\n/).find(Boolean) || "";
-    const h1 = firstLine.replace(/^#+\s*/, "").trim();
-    if (h1) return h1.slice(0, 80);
-    const short = txt.replace(/\s+/g, " ").trim().slice(0, 80);
-    return short || "Fragmento";
-}
+import type {
+    ElementItem,
+    ManagementBuilderProps,
+    ManagementItem,
+    PedidoFunctionEl,
+    DataSubtype,
+} from "@/types/agentAi";
 
-function firstText(elms: ElementItem[]): string {
-    const t = elms.find((e) => e.kind === "text") as { id: string; kind: "text"; text?: string } | undefined;
-    return (t?.text ?? "").trim();
-}
-
-function preview(txt: string) {
-    return (txt || "").replace(/\s+/g, " ").trim().slice(0, 160);
+/* type-guard: captura_datos -> Pedidos */
+function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
+    return el.kind === "function" && (el as any).fn === "captura_datos" && (el as any).subtype === "Pedidos";
 }
 
 export const ManagementBuilder = ({
@@ -35,16 +40,16 @@ export const ManagementBuilder = ({
     version,
     onVersionChange,
     onConflict,
-    initialItems = [], // ← ahora esperamos steps desde BD
+    initialItems = [],
+    flows = [],
+    notificationNumber,
 }: ManagementBuilderProps) => {
-    // Estado interno: steps (cada card = 1 step con 1 text element)
+    // Estado interno: cada card = un "bloque" de gestión
     const [steps, setSteps] = useState<ManagementItem[]>(
-        Array.isArray(initialItems) && initialItems.length > 0
-            ? (initialItems as ManagementItem[])
-            : []
+        Array.isArray(initialItems) && initialItems.length > 0 ? (initialItems as ManagementItem[]) : []
     );
 
-    // Conflicto: rehidrata steps desde servidor
+    // Conflicto: rehidrata desde servidor
     const stableOnConflict = useCallback(
         (serverState: any) => {
             const serverSteps = serverState?.sections?.management?.steps ?? [];
@@ -54,7 +59,7 @@ export const ManagementBuilder = ({
         [onConflict]
     );
 
-    // AUTOSAVE: sections.management.steps
+    // AUTOSAVE
     useManagementAutosave({
         promptId,
         version,
@@ -63,25 +68,24 @@ export const ManagementBuilder = ({
         onConflict: stableOnConflict,
     });
 
-    // Construye un preview string (como products) para values.management
+    // PREVIEW markdown (mismo patrón que ProductBuilder usando buildSectionedPrompt)
     const managementPreview = useMemo(() => {
-        if (!steps?.length) return "";
-        return steps
-            .map((s) => {
-                const text = firstText(s.elements);
-                const header = s.title?.trim() ? `### ${s.title.trim()}\n` : "";
-                return `${header}${text}`;
-            })
-            .join("\n\n");
+        return buildSectionedPrompt(steps as any, {
+            emptyMessage: "Aún no has agregado bloques de gestión. Usa “Agregar bloque” para comenzar.",
+            sectionLabel: (n, step) => `Bloque ${n} — ${step.title || "Sin título"}`,
+            elementsLabel: (n) => `Elementos del bloque: ${n}`,
+            mainMessageLabel: "Descripción / Objetivo",
+            joinSeparator: "\n",
+        });
     }, [steps]);
 
-    // SYNC con parent (igual patrón que ProductBuilder)
+    // SYNC con parent (como ProductBuilder)
     useEffect(() => {
-        if (onChange) {
-            const first = steps[0];
+        const first = steps[0];
+        if (first && onChange) {
             onChange({
-                mainMessage: first ? firstText(first.elements) : "",
-                elements: (first?.elements ?? []) as ElementItem[],
+                mainMessage: first.mainMessage ?? "",
+                elements: (first.elements ?? []) as ElementItem[],
             });
         }
 
@@ -93,7 +97,13 @@ export const ManagementBuilder = ({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [managementPreview, steps]);
 
-    // Mutadores
+    /* Mutadores de STEP (bloque) */
+    const addEmptyStep = () =>
+        setSteps((prev) => [
+            ...prev,
+            { id: nanoid(), title: "", mainMessage: "", elements: [], openPicker: true },
+        ]);
+
     const addFragment = (snippet: PromptFragment) =>
         setSteps((prev) => [
             ...prev,
@@ -101,14 +111,100 @@ export const ManagementBuilder = ({
                 id: nanoid(),
                 title: extractTitle(snippet.label),
                 mainMessage: snippet.value,
-                elements: [
-                    { id: nanoid(), kind: "text", text: snippet.value } as ElementItem,
-                ],
+                elements: [{ id: nanoid(), kind: "text", text: snippet.value } as ElementItem],
             },
         ]);
 
-    const removeFragment = (id: string) =>
-        setSteps((prev) => prev.filter((s) => s.id !== id));
+    const removeStep = (id: string) => setSteps((prev) => prev.filter((s) => s.id !== id));
+
+    const updateTitle = (id: string, v: string) =>
+        setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, title: v } : s)));
+
+    const updateMain = (id: string, v: string) =>
+        setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, mainMessage: v } : s)));
+
+    /* Mutadores de ELEMENTS (por step) */
+    const removeElement = (stepId: string, elId: string) => {
+        setSteps((prev) =>
+            prev.map((s) => (s.id === stepId ? { ...s, elements: s.elements.filter((e) => e.id !== elId) } : s))
+        );
+    };
+
+    const updateText = (stepId: string, elId: string, text: string) => {
+        setSteps((prev) =>
+            prev.map((s) =>
+                s.id === stepId
+                    ? {
+                        ...s,
+                        elements: s.elements.map((e) => (e.id === elId && e.kind === "text" ? { ...e, text } : e)),
+                    }
+                    : s
+            )
+        );
+    };
+
+    const setFlowOnElement = (stepId: string, elId: string, flow: Workflow) => {
+        setSteps((prev) =>
+            prev.map((s) =>
+                s.id === stepId
+                    ? {
+                        ...s,
+                        elements: s.elements.map((e) =>
+                            e.id === elId && e.kind === "function" && (e as any).fn === "ejecutar_flujo"
+                                ? { ...(e as any), flowId: flow.id, flowName: flow.name }
+                                : e
+                        ),
+                    }
+                    : s
+            )
+        );
+    };
+
+    const addPedidoField = (stepId: string, elId: string, field: string) => {
+        const name = field.trim();
+        if (!name) return;
+        setSteps((prev) =>
+            prev.map((s) => {
+                if (s.id !== stepId) return s;
+                return {
+                    ...s,
+                    elements: s.elements.map((e) => {
+                        if (e.id !== elId || !isPedidoFn(e)) return e;
+                        const next = new Set([...(e.fields ?? []), name]);
+                        return { ...e, fields: Array.from(next) };
+                    }),
+                };
+            })
+        );
+    };
+
+    const removePedidoField = (stepId: string, elId: string, field: string) => {
+        setSteps((prev) =>
+            prev.map((s) => {
+                if (s.id !== stepId) return s;
+                return {
+                    ...s,
+                    elements: s.elements.map((e) => {
+                        if (e.id !== elId || !isPedidoFn(e)) return e;
+                        return { ...e, fields: (e.fields ?? []).filter((f) => f !== field) };
+                    }),
+                };
+            })
+        );
+    };
+
+    const onSubtypeChange = (stepId: string, elementId: string, subtype: DataSubtype) => {
+        setSteps((prev) =>
+            prev.map((s) =>
+                s.id === stepId
+                    ? {
+                        ...s,
+                        elements: s.elements.map((el) => (el.id === elementId ? { ...el, subtype } : el)),
+                    }
+                    : s
+            )
+        );
+    };
 
     const handleInsertFromPicker = ({ id, label, value }: PromptFragment) => {
         addFragment({ id, label, value });
@@ -119,8 +215,14 @@ export const ManagementBuilder = ({
             <CardHeader className="pb-2 flex items-center justify-between gap-2 flex-row">
                 <CardTitle className="text-base">Gestión</CardTitle>
                 <div className="flex items-center gap-2">
-                    {typeof ManagementPromptBuilder !== "undefined" && (
+                    {/* {typeof ManagementPromptBuilder !== "undefined" && (
                         <ManagementPromptBuilder onInsert={handleInsertFromPicker} />
+                    )} */}
+                    {steps.length < 1 && (
+                        <Button size="sm" onClick={addEmptyStep} className="gap-2">
+                            <Plus className="w-4 h-4" />
+                            Agregar Gestión
+                        </Button>
                     )}
                 </div>
             </CardHeader>
@@ -128,33 +230,116 @@ export const ManagementBuilder = ({
             <CardContent className="space-y-3">
                 {steps.length === 0 ? (
                     <div className="text-center text-sm text-muted-foreground py-8">
-                        No has agregado fragmentos. Usa “Agregar fragmento” para comenzar.
+                        No has agregado bloques de gestión. Usa “Agregar bloque” para comenzar.
                     </div>
                 ) : (
-                    <ul className="w-full rounded-xl border border-border bg-card/60 divide-y divide-border">
-                        {steps.map((s) => (
-                            <li key={s.id} className="flex items-center justify-between gap-3 p-3 hover:bg-muted/60">
-                                <span className="truncate text-sm font-medium">
-                                    {s.title?.trim() || "Fragmento"}
-                                </span>
+                    <div className="space-y-4">
+                        {steps.map((step, idx) => (
+                            <Card key={step.id} className="bg-muted/10 border-muted/60">
+                                <CardHeader className="py-3">
+                                    <div className="flex items-center gap-2">
+                                        {/* <div className="grid w-full max-w-sm items-center gap-3">
+                                            <Label htmlFor={step.id}>{`Bloque ${idx + 1}`}</Label>
+                                            <Input
+                                                id={step.id}
+                                                value={step.title ?? ""}
+                                                onChange={(e) => updateTitle(step.id, e.target.value)}
+                                                className="h-8"
+                                                placeholder="Título del bloque"
+                                            />
+                                        </div> */}
 
-                                <Button
-                                    aria-label="Eliminar"
-                                    size="icon"
-                                    variant="ghost"
-                                    onClick={() => removeFragment(s.id)}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </li>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => removeStep(step.id)}
+                                            title="Eliminar bloque"
+                                            className="ml-auto"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </CardHeader>
+
+                                <CardContent className="space-y-3">
+                                    {/* Descripción / Mensaje principal */}
+                                    {/* <div className="space-y-2">
+                                        <label className="text-sm font-medium">{`Descripción ${idx + 1}`}</label>
+                                        <Textarea
+                                            value={step.mainMessage ?? ""}
+                                            onChange={(e) => updateMain(step.id, e.target.value)}
+                                            className="min-h-[32px]"
+                                        />
+                                    </div>
+
+                                    <Separator /> */}
+
+                                    {/* Header elementos */}
+                                    <div className="flex items-center justify-between flex-wrap gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-medium">Elementos del bloque</span>
+                                            <Badge variant="secondary">{idx + 1}</Badge>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <FunctionSelector
+                                                step={step as any}
+                                                setSteps={setSteps as any}
+                                                notificationNumber={notificationNumber ?? ""}
+                                                isManagement={true}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Lista de elementos */}
+                                    <div className="rounded-lg border border-dashed border-muted/60 p-1">
+                                        {!step.elements || step.elements.length === 0 ? (
+                                            <div className="text-center text-sm text-muted-foreground">
+                                                No hay elementos. Agrega funciones o textos con los botones de arriba.
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {step.elements.map((el) => (
+                                                    <ElementRenderer
+                                                        key={el.id}
+                                                        stepId={step.id}
+                                                        el={el as any}
+                                                        flows={flows}
+                                                        removeElement={removeElement}
+                                                        updateText={updateText}
+                                                        setFlowOnElement={setFlowOnElement}
+                                                        addPedidoField={addPedidoField}
+                                                        removePedidoField={removePedidoField}
+                                                        onSubtypeChange={onSubtypeChange}
+                                                    />
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
                         ))}
-
-                        {steps.length === 0 && (
-                            <li className="p-3 text-sm text-muted-foreground">Sin elementos</li>
-                        )}
-                    </ul>
+                    </div>
                 )}
             </CardContent>
+
+            {steps.length > 0 && (
+                <CardFooter className="pb-2 flex items-center justify-between gap-2 flex-row">
+                    <CardTitle className="text-base">Gestión</CardTitle>
+                    <Button size="sm" onClick={addEmptyStep} className="gap-2">
+                        <Plus className="w-4 h-4" />
+                        Agregar Gestión
+                    </Button>
+                </CardFooter>
+            )}
         </Card>
     );
 };
+
+/* Utils locales */
+function extractTitle(txt: string) {
+    const firstLine = (txt || "").split(/\r?\n/).find(Boolean) || "";
+    const h1 = firstLine.replace(/^#+\s*/, "").trim();
+    if (h1) return h1.slice(0, 80);
+    const short = txt.replace(/\s+/g, " ").trim().slice(0, 80);
+    return short || "Bloque";
+}

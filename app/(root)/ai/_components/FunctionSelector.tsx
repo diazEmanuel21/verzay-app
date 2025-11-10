@@ -31,7 +31,7 @@ export interface CaptureFunctionIF {
     subtype?: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | null
 }
 
-export const FunctionSelector = ({ step, setSteps, notificationNumber }: FunctionSelectorInterface) => {
+export const FunctionSelector = ({ step, setSteps, notificationNumber, isManagement = false }: FunctionSelectorInterface) => {
     const toggleStepPicker = (stepId: string, open: boolean) => {
         setSteps((prev) => prev.map((s) => (s.id === stepId ? { ...s, openPicker: open } : s)));
     };
@@ -45,7 +45,6 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber }: Functio
             )
         );
     };
-
 
     const addFunctionCaptura = ({ stepId, subtype }: CaptureFunctionIF) => {
         const tempSubtype = subtype ?? 'Pedidos';
@@ -160,24 +159,30 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber }: Functio
                             <CommandEmpty>Sin coincidencias…</CommandEmpty>
 
                             <CommandGroup heading="Acciónes">
-                                <CommandItem onSelect={() => addFunctionEjecutarFlujo(step.id)}>
-                                    OPCIÓN #1 · Ejecutar flujo
-                                </CommandItem>
+                                {!isManagement &&
+                                    <CommandItem onSelect={() => addFunctionEjecutarFlujo(step.id)}>
+                                        Ejecutar flujo
+                                    </CommandItem>
+                                }
                                 {/* {(["Solicitudes", "Reclamos", "Pedidos", "Reservas"] as const).map((opt) => ( */}
-                                <CommandItem onSelect={() => addFunctionCaptura({ stepId: step.id })}>
-                                    {/* {opt} */}
-                                    OPCIÓN #2 · Captura de datos
-                                </CommandItem>
-                                {/* ))} */}
-                                <CommandItem onSelect={() => addFunctionConsultaDatos(step.id)}>
-                                    OPCIÓN #3 · Consulta de datos
-                                </CommandItem>
-                                <CommandItem >
-                                    OPCIÓN #4 · Actualizar datos
-                                </CommandItem>
-                                <CommandItem onSelect={() => addFunctionNotificar(step.id)}>
-                                    OPCIÓN #5 · Notificar asesor
-                                </CommandItem>
+                                {isManagement && <>
+                                    <CommandItem onSelect={() => addFunctionCaptura({ stepId: step.id })}>
+                                        {/* {opt} */}
+                                        Captura de datos
+                                    </CommandItem>
+                                    {/* ))} */}
+                                    <CommandItem onSelect={() => addFunctionConsultaDatos(step.id)}>
+                                        Consulta de datos
+                                    </CommandItem>
+                                    <CommandItem >
+                                        Actualizar datos
+                                    </CommandItem>
+                                </>}
+                                {!isManagement &&
+                                    <CommandItem onSelect={() => addFunctionNotificar(step.id)}>
+                                        Notificar asesor
+                                    </CommandItem>
+                                }
                             </CommandGroup>
                         </CommandList>
                     </Command>

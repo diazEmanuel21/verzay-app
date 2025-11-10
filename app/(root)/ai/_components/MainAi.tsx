@@ -268,8 +268,10 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                     </TabsContent>
                     <TabsContent value="management" className="m-0">
                         <ManagementBuilder
+                            flows={flows}
                             values={{ management: values.management ?? "" }}
                             handleChange={handleChange}
+                            notificationNumber={user.notificationNumber}
                             promptId={promptMeta.id}
                             version={promptVersion}
                             onVersionChange={setPromptVersion}

@@ -649,6 +649,7 @@ export interface FunctionSelectorInterface {
     step: StepTraining
     setSteps: React.Dispatch<React.SetStateAction<StepTraining[]>>
     notificationNumber: string
+    isManagement?: boolean
 }
 
 export type Mode = "faq" | "products" | "extras";
@@ -781,6 +782,8 @@ export type ManagementBuilderProps = {
     onConflict?: (serverState: any) => void;
     initialItems?: Array<any>; // ← sections.faq.items desde BD
     debounceMs?: number;
+    flows?: Workflow[];
+    notificationNumber?: string
 };
 
 
