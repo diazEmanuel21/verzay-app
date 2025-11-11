@@ -6,7 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { PedidoFieldsEditor } from "../";
-import { DataSubtype, PropsConsultaDatos, SUBTYPE_OPTIONS } from "@/types/agentAi";
+import { CapturaDatosCardProps, DataSubtype, SUBTYPE_OPTIONS } from "@/types/agentAi";
+
+// shadcn/ui Select
 import {
     Select,
     SelectTrigger,
@@ -15,12 +17,13 @@ import {
     SelectItem,
 } from "@/components/ui/select";
 
-export const ConsultaDatosCard: FC<PropsConsultaDatos> = ({
+export const ActualizarDatosCard: FC<CapturaDatosCardProps> = ({
     el,
     onRemove,
     onAddField,
     onRemoveField,
-    onSubtypeChange }) => {
+    onSubtypeChange,
+}) => {
     // Estado local para manejar el subtipo
     const [localSubtype, setLocalSubtype] = useState<DataSubtype>(el.subtype as DataSubtype);
 
@@ -41,7 +44,7 @@ export const ConsultaDatosCard: FC<PropsConsultaDatos> = ({
         <Card className="bg-muted/20 border-muted/60">
             <CardHeader className="py-3 flex-row items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                    <CardTitle className="text-sm">Formularios · Consulta de datos</CardTitle>
+                    <CardTitle className="text-sm">Formularios · Actualizar datos</CardTitle>
 
                     {/* Selector de subtipo */}
                     <Select

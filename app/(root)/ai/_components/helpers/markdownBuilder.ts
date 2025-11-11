@@ -46,6 +46,11 @@ function renderElement(el: AnyElement, behaviorText: string): string[] {
             out.push(`> **Función**: consulta_datos\n${prompt || ""}`);
             return out;
         }
+        case "actualizar_datos": {
+            const prompt = trim(el.prompt);
+            out.push(`> **Función**: actualizar_datos\n${prompt || ""}`);
+            return out;
+        }
         default:
             return out;
     }

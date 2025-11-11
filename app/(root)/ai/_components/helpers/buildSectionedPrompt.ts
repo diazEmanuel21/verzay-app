@@ -5,7 +5,7 @@ import { flowBehaviorText as initialFlowBehaviorText, notifyPrompt } from "@/typ
 export type AnyEl = {
     kind: "text" | "function";
     text?: string;
-    fn?: "captura_datos" | "ejecutar_flujo" | "notificar_asesor" | "consulta_datos";
+    fn?: "captura_datos" | "ejecutar_flujo" | "notificar_asesor" | "consulta_datos" | "actualizar_datos";
     subtype?: string;
     prompt?: string;
     fields?: string[];
@@ -69,8 +69,18 @@ function formatElement(el: AnyEl, k: number, flowBehaviorText: string): string[]
         switch (el.fn) {
             case "captura_datos": {
                 const newSubtype = transformSubtype(el.subtype);
-
-                const base = `- (${k}) Para procesar tu *${newSubtype ?? "—"}*, ${el.prompt ?? ""}`;
+                const base = `\n### Captura de datos\n**(${k}) Toma de ${newSubtype ?? ""}**\n- (${k}) Para procesar tu *${newSubtype ?? "—"}*, ${el.prompt ?? ""}:`;
+                out.push(base);
+                // if (el.subtype === "Pedidos" && el.fields?.length) {
+                //Aquí se setean los campos dinámicos de pedidos, solicitudes, reclamos,  reservas
+                if (el.fields?.length) {
+                    out.push(`${el.fields.join("\n")}`);
+                }
+                return out;
+            }
+            case "actualizar_datos": {
+                const newSubtype = transformSubtype(el.subtype);
+                const base = `\n### Actualizar datos\n**(${k}) Toma de ${newSubtype ?? ""}**\n- (${k}) Para procesar tu *${newSubtype ?? "—"}*, ${el.prompt ?? ""}:`;
                 out.push(base);
                 // if (el.subtype === "Pedidos" && el.fields?.length) {
                 //Aquí se setean los campos dinámicos de pedidos, solicitudes, reclamos,  reservas
@@ -92,7 +102,14 @@ function formatElement(el: AnyEl, k: number, flowBehaviorText: string): string[]
                 return out;
             }
             case "consulta_datos": {
-                out.push(`- (${k}) Consulta de datos:\n${el.prompt ?? ""}`);
+                const newSubtype = transformSubtype(el.subtype);
+                const base = `\n### Consulta de datos\n**(${k}) Toma de ${newSubtype ?? ""}**\n- (${k}) Para procesar tu *${newSubtype ?? "—"}*, ${el.prompt ?? ""}:`;
+                out.push(base);
+                // if (el.subtype === "Pedidos" && el.fields?.length) {
+                //Aquí se setean los campos dinámicos de pedidos, solicitudes, reclamos,  reservas
+                if (el.fields?.length) {
+                    out.push(`${el.fields.join("\n")}`);
+                }
                 return out;
             }
             default:
@@ -132,7 +149,7 @@ export function buildSectionedPrompt(
         const n = i + 1;
 
         // Título de sección
-        blocks.push(`\n### ${cfg.sectionLabel(n, step)}`);
+        // blocks.push(`\n### ${cfg.sectionLabel(n, step)}`);
 
         // Mensaje principal
         const main = trimOrUndefined(step.mainMessage);
@@ -143,7 +160,8 @@ export function buildSectionedPrompt(
         // Elementos
         const els = Array.isArray(step.elements) ? step.elements : [];
         if (els.length > 0) {
-            blocks.push(`\n#### ${cfg.elementsLabel(n)}`);
+            // blocks.push(`\n#### ${cfg.elementsLabel(n)}`);
+            blocks.push(`${cfg.elementsLabel(n)}`);
             els.forEach((el, idx) => {
                 const k = idx + 1;
                 blocks.push(...formatElement(el, k, flowBehaviorText));

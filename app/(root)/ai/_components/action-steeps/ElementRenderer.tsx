@@ -6,6 +6,7 @@ import { DataSubtype, PropsActionSteeps } from "@/types/agentAi";
 import {
     TextRuleCard,
     CapturaDatosCard,
+    ActualizarDatosCard,
     EjecutarFlujoCard,
     NotificarAsesorCard,
     ConsultaDatosCard,
@@ -40,7 +41,18 @@ const ElementRenderer: FC<PropsActionSteeps> = ({
                 onAddField={(f) => addPedidoField(stepId, el.id, f)}
                 onRemoveField={(f) => removePedidoField(stepId, el.id, f)}
                 onSubtypeChange={(subtype: DataSubtype) => onSubtypeChange(stepId, el.id, subtype)} // Pasando stepId
+            />
+        );
+    }
 
+    if (el.kind === "function" && el.fn === "actualizar_datos") {
+        return (
+            <ActualizarDatosCard
+                el={el as any}
+                onRemove={() => removeElement(stepId, el.id)}
+                onAddField={(f) => addPedidoField(stepId, el.id, f)}
+                onRemoveField={(f) => removePedidoField(stepId, el.id, f)}
+                onSubtypeChange={(subtype: DataSubtype) => onSubtypeChange(stepId, el.id, subtype)} // Pasando stepId
             />
         );
     }
@@ -70,6 +82,9 @@ const ElementRenderer: FC<PropsActionSteeps> = ({
         <ConsultaDatosCard
             el={el as any}
             onRemove={() => removeElement(stepId, el.id)}
+            onAddField={(f) => addPedidoField(stepId, el.id, f)}
+            onRemoveField={(f) => removePedidoField(stepId, el.id, f)}
+            onSubtypeChange={(subtype: DataSubtype) => onSubtypeChange(stepId, el.id, subtype)} // Pasando stepId
         />
     );
 };

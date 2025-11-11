@@ -57,6 +57,7 @@ export const TrainingDraftSchema = z.object({
                             "ejecutar_flujo",
                             "notificar_asesor",
                             "consulta_datos",
+                            "actualizar_datos",
                         ]),
                         // ⬇️ refuerza el enum como en el type
                         subtype: z
@@ -97,6 +98,7 @@ export const FaqDraftSchema = z.object({
                             "ejecutar_flujo",
                             "notificar_asesor",
                             "consulta_datos",
+                            "actualizar_datos",
                         ]),
                         // ⬇️ refuerza el enum como en el type
                         subtype: z
@@ -137,6 +139,7 @@ export const ProductsDraftSchema = z.object({
                             "ejecutar_flujo",
                             "notificar_asesor",
                             "consulta_datos",
+                            "actualizar_datos",
                         ]),
                         // ⬇️ refuerza el enum como en el type
                         subtype: z
@@ -180,6 +183,7 @@ export const ExtrasDraftSchema = z.object({
                             "ejecutar_flujo",
                             "notificar_asesor",
                             "consulta_datos",
+                            "actualizar_datos",
                         ]),
                         // ⬇️ refuerza el enum como en el type
                         subtype: z
@@ -220,6 +224,7 @@ export const ManagementDraftSchema = z.object({
                             "ejecutar_flujo",
                             "notificar_asesor",
                             "consulta_datos",
+                            "actualizar_datos",
                         ]),
                         // ⬇️ refuerza el enum como en el type
                         subtype: z
@@ -349,6 +354,7 @@ export type SectionsPromptSystem = {
                 | { id: string; kind: "function"; fn: "ejecutar_flujo"; flowId: string; flowName?: string }
                 | { id: string; kind: "function"; fn: "notificar_asesor"; notificationNumber: string }
             // | { id: string; kind: "function"; fn: "consulta_datos"; prompt?: string }
+            // | { id: string; kind: "function"; fn: "actualizar_datos"; prompt?: string }
             >;
         }>;
     };
@@ -510,6 +516,20 @@ export type PedidoFunctionEl = ElementFunction & {
     fields?: string[]; // ← campos adicionales (cc, name, etc.)
 };
 
+export type CapturePedidoFunctionEl = ElementFunction & {
+    fn: "consulta_datos";
+    subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
+    prompt: string;
+    fields?: string[]; // ← campos adicionales (cc, name, etc.)
+};
+
+export type UpdatePedidoFunctionEl = ElementFunction & {
+    fn: "actualizar_datos";
+    subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
+    prompt: string;
+    fields?: string[]; // ← campos adicionales (cc, name, etc.)
+};
+
 export type ElementText = {
     id: string;
     kind: "text";
@@ -521,6 +541,13 @@ export type ElementFunction =
         id: string;
         kind: "function";
         fn: "captura_datos";
+        subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
+        prompt: string;
+    }
+    | {
+        id: string;
+        kind: "function";
+        fn: "actualizar_datos";
         subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
         prompt: string;
     }
@@ -541,6 +568,7 @@ export type ElementFunction =
         id: string;
         kind: "function";
         fn: "consulta_datos";
+        subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
         prompt: string;
     };
 
@@ -700,9 +728,17 @@ type El = {
 };
 
 export type PropsConsultaDatos = {
-    el: El;
+    el: PedidoFunctionEl | (PedidoFunctionEl & { subtype: "Solicitudes" | "Reclamos" | "Reservas" });
     onRemove: () => void;
+    onAddField: (field: string) => void;
+    onRemoveField: (field: string) => void;
+    onSubtypeChange: (subtype: DataSubtype) => void;
 };
+
+export type PropsNotifyAsesor = {
+    el: El
+    onRemove: () => void;
+}
 
 export type PropsActionSteeps = {
     stepId: string;
@@ -725,7 +761,7 @@ export type TextElement = {
 export type FnCommon = {
     id: string;
     kind: "function";
-    fn: "captura_datos" | "ejecutar_flujo" | "notificar_asesor" | "consulta_datos";
+    fn: "captura_datos" | "ejecutar_flujo" | "notificar_asesor" | "consulta_datos" | "actualizar_datos";
     subtype?: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
     prompt?: string;
     fields?: string[];

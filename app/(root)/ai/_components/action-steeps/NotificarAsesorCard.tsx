@@ -6,9 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { PropsConsultaDatos } from "@/types/agentAi";
+import { PropsNotifyAsesor } from "@/types/agentAi";
 
-export const NotificarAsesorCard: FC<PropsConsultaDatos> = ({ el, onRemove }) => {
+export const NotificarAsesorCard: FC<PropsNotifyAsesor> = ({ el, onRemove }) => {
     return (
         <Card className="bg-muted/20 border-muted/60">
             <CardHeader className="py-3 flex-row items-center justify-between">

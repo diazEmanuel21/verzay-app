@@ -127,9 +127,10 @@ export default function ErrorScreen({
                                 <Bug className="h-5 w-5" />
                             </div>
                             <div className="space-y-1">
-                                <p className="font-medium">Estamos actualizando o hubo un pequeño imprevisto.</p>
+                                {/* <p className="font-medium">Estamos actualizando o hubo un pequeño imprevisto.</p> */}
                                 <p className="text-sm text-muted-foreground">
-                                    Puedes intentar nuevamente o volver al inicio. Si el problema persiste, compártenos el ID del evento.
+                                    {/* Puedes intentar nuevamente o volver al inicio. Si el problema persiste, compártenos el ID del evento. */}
+                                    Estamos en mantenimiento de actualizaciones por favor ingresar de nuevo en unos 5 minutos.
                                 </p>
                             </div>
                         </div>

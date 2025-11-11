@@ -14,12 +14,14 @@ import {
 
 import {
     CAPTURE_SNIPPETS,
+    CapturePedidoFunctionEl,
     CONSULTA_DATOS_SNIPPET,
     ElementFunction,
     ElementItem,
     ElementText,
     FunctionSelectorInterface,
-    PedidoFunctionEl
+    PedidoFunctionEl,
+    UpdatePedidoFunctionEl
 } from "@/types/agentAi";
 
 import { Button } from "@/components/ui/button";
@@ -119,38 +121,79 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber, isManagem
         );
     };
 
-    const addFunctionConsultaDatos = (stepId: string) => {
+    const addFunctionConsultaDatos = ({ stepId, subtype }: CaptureFunctionIF) => {
+        const tempSubtype = subtype ?? 'Pedidos';
+
         setSteps((prev) =>
-            prev.map((s) =>
-                s.id === stepId
-                    ? {
-                        ...s,
-                        elements: [
-                            ...s.elements,
-                            {
-                                id: nanoid(),
-                                kind: "function",
-                                fn: "consulta_datos",
-                                prompt: CONSULTA_DATOS_SNIPPET,
-                            } as ElementFunction,
-                        ],
-                        openPicker: false,
-                    }
-                    : s
-            )
+            prev.map((s) => {
+                if (s.id !== stepId) return s;
+                const base: ElementFunction = {
+                    id: nanoid(),
+                    kind: "function",
+                    fn: "consulta_datos",
+                    subtype: tempSubtype,
+                    prompt: CAPTURE_SNIPPETS[tempSubtype],
+                };
+                const el: ElementItem =
+                    subtype === "Pedidos"
+                        ? ({ ...base, fields: [] } as CapturePedidoFunctionEl)
+                        : base;
+
+                return {
+                    ...s,
+                    elements: [...s.elements, el],
+                    openPicker: false,
+                };
+            })
         );
+
     };
 
+    const addFunctionActualizarDatos = ({ stepId, subtype }: CaptureFunctionIF) => {
+        const tempSubtype = subtype ?? 'Pedidos';
+
+        setSteps((prev) =>
+            prev.map((s) => {
+                if (s.id !== stepId) return s;
+                const base: ElementFunction = {
+                    id: nanoid(),
+                    kind: "function",
+                    fn: "actualizar_datos",
+                    subtype: tempSubtype,
+                    prompt: CAPTURE_SNIPPETS[tempSubtype],
+                };
+                const el: ElementItem =
+                    subtype === "Pedidos"
+                        ? ({ ...base, fields: [] } as UpdatePedidoFunctionEl)
+                        : base;
+
+                return {
+                    ...s,
+                    elements: [...s.elements, el],
+                    openPicker: false,
+                };
+            })
+        );
+
+    };
 
     return (
         <>
             <Popover open={!!step.openPicker} onOpenChange={(o) => toggleStepPicker(step.id, o)}>
                 <PopoverTrigger asChild>
-
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                        <Zap /> Agregar acción
-                    </Button>
-
+                    {isManagement ? (
+                        // Trigger fantasma: no visible, no clickeable, pero mantiene el ancla del Popover
+                        <Button
+                            type="button"
+                            disabled
+                            aria-hidden
+                            className="sr-only pointer-events-none h-0 w-0 p-0 m-0"
+                        />
+                    ) : (
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                            <Zap /> Agregar acción
+                        </Button>
+                    )}
                 </PopoverTrigger>
                 <PopoverContent className="p-0 w-[320px]" align="end">
                     <Command>
@@ -171,10 +214,10 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber, isManagem
                                         Captura de datos
                                     </CommandItem>
                                     {/* ))} */}
-                                    <CommandItem onSelect={() => addFunctionConsultaDatos(step.id)}>
+                                    <CommandItem onSelect={() => addFunctionConsultaDatos({ stepId: step.id })}>
                                         Consulta de datos
                                     </CommandItem>
-                                    <CommandItem >
+                                    <CommandItem onSelect={() => addFunctionActualizarDatos({ stepId: step.id })}>
                                         Actualizar datos
                                     </CommandItem>
                                 </>}

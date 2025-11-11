@@ -29,7 +29,20 @@ import type {
 
 /* type-guard: captura_datos -> Pedidos */
 function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
-    return el.kind === "function" && (el as any).fn === "captura_datos" && (el as any).subtype === "Pedidos";
+    return el.kind === "function";
+}
+
+/* === NUEVO: inferir label legible del elemento seleccionado para titular el bloque === */
+function getElementLabel(el?: ElementItem): string {
+    if (!el) return "";
+    const anyEl = el as any;
+    return (
+        anyEl.label ||
+        anyEl.name ||
+        anyEl.flowName ||
+        anyEl.fn ||
+        (el.kind === "text" ? "Texto" : "Acción")
+    );
 }
 
 export const ManagementBuilder = ({
@@ -48,6 +61,33 @@ export const ManagementBuilder = ({
     const [steps, setSteps] = useState<ManagementItem[]>(
         Array.isArray(initialItems) && initialItems.length > 0 ? (initialItems as ManagementItem[]) : []
     );
+
+    // === NUEVO: proxy para setSteps que completa título automáticamente tras elegir acción ===
+    const setStepsAuto: React.Dispatch<React.SetStateAction<ManagementItem[]>> = (updater) => {
+        setSteps((prev) => {
+            const next = typeof updater === "function" ? (updater as (p: ManagementItem[]) => ManagementItem[])(prev) : updater;
+
+            let changed = false;
+            const patched = next.map((s) => {
+                // Si no hay título y ya tiene al menos un elemento, usamos el label del primero.
+                if (!s.title?.trim() && (s.elements?.length ?? 0) > 0) {
+                    const label = getElementLabel(s.elements[0]);
+                    if (label) {
+                        changed = true;
+                        return { ...s, title: String(label), openPicker: false };
+                    }
+                }
+                // Al seleccionar algo desde el picker, cerramos el picker si estaba abierto
+                if (s.openPicker && (s.elements?.length ?? 0) > 0) {
+                    changed = true;
+                    return { ...s, openPicker: false };
+                }
+                return s;
+            });
+
+            return changed ? patched : next;
+        });
+    };
 
     // Conflicto: rehidrata desde servidor
     const stableOnConflict = useCallback(
@@ -68,12 +108,13 @@ export const ManagementBuilder = ({
         onConflict: stableOnConflict,
     });
 
-    // PREVIEW markdown (mismo patrón que ProductBuilder usando buildSectionedPrompt)
+    // PREVIEW markdown
     const managementPreview = useMemo(() => {
         return buildSectionedPrompt(steps as any, {
-            emptyMessage: "Aún no has agregado bloques de gestión. Usa “Agregar bloque” para comenzar.",
+            emptyMessage: "Aún no has agregado bloques de gestión. Usa “Agregar acción” para comenzar.",
             sectionLabel: (n, step) => `Bloque ${n} — ${step.title || "Sin título"}`,
-            elementsLabel: (n) => `Elementos del bloque: ${n}`,
+            // elementsLabel: (n) => `Elementos del bloque: ${n}`,
+            elementsLabel: (n) => ``,
             mainMessageLabel: "Descripción / Objetivo",
             joinSeparator: "\n",
         });
@@ -210,18 +251,31 @@ export const ManagementBuilder = ({
         addFragment({ id, label, value });
     };
 
+    const openActionPickerFor = (stepId: string) => {
+        setSteps((prev) =>
+            prev.map((s) => ({ ...s, openPicker: s.id === stepId })) // abre ese y cierra los demás
+        );
+    };
+
     return (
         <Card className="border-muted/60">
             <CardHeader className="pb-2 flex items-center justify-between gap-2 flex-row">
                 <CardTitle className="text-base">Gestión</CardTitle>
                 <div className="flex items-center gap-2">
                     {/* {typeof ManagementPromptBuilder !== "undefined" && (
-                        <ManagementPromptBuilder onInsert={handleInsertFromPicker} />
-                    )} */}
+            <ManagementPromptBuilder onInsert={handleInsertFromPicker} />
+          )} */}
                     {steps.length < 1 && (
-                        <Button size="sm" onClick={addEmptyStep} className="gap-2">
-                            <Plus className="w-4 h-4" />
-                            Agregar Gestión
+                        <Button
+                            size="sm"
+                            onClick={() =>
+                                steps.length
+                                    ? openActionPickerFor(steps[steps.length - 1].id)
+                                    : addEmptyStep() // ya crea con openPicker: true
+                            }
+                            className="gap-2"
+                        >
+                            + Agregar acción
                         </Button>
                     )}
                 </div>
@@ -230,52 +284,15 @@ export const ManagementBuilder = ({
             <CardContent className="space-y-3">
                 {steps.length === 0 ? (
                     <div className="text-center text-sm text-muted-foreground py-8">
-                        No has agregado bloques de gestión. Usa “Agregar bloque” para comenzar.
+                        No has agregado bloques de gestión. Usa “Agregar acción” para comenzar.
                     </div>
                 ) : (
                     <div className="space-y-4">
                         {steps.map((step, idx) => (
                             <Card key={step.id} className="bg-muted/10 border-muted/60">
-                                <CardHeader className="py-3">
-                                    <div className="flex items-center gap-2">
-                                        <div className="grid w-full max-w-sm items-center gap-3">
-                                            <Label htmlFor={step.id}>{`Bloque ${idx + 1}`}</Label>
-                                            <Input
-                                                id={step.id}
-                                                value={step.title ?? ""}
-                                                onChange={(e) => updateTitle(step.id, e.target.value)}
-                                                className="h-8"
-                                                placeholder="Título del bloque"
-                                            />
-                                        </div>
-
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => removeStep(step.id)}
-                                            title="Eliminar bloque"
-                                            className="ml-auto"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </CardHeader>
-
-                                <CardContent className="space-y-3">
-                                    {/* Descripción / Mensaje principal */}
-                                    {/* <div className="space-y-2">
-                                        <label className="text-sm font-medium">{`Descripción ${idx + 1}`}</label>
-                                        <Textarea
-                                            value={step.mainMessage ?? ""}
-                                            onChange={(e) => updateMain(step.id, e.target.value)}
-                                            className="min-h-[32px]"
-                                        />
-                                    </div>
-
-                                    <Separator /> */}
-
+                                <CardContent className="space-y-3 pt-4">
                                     {/* Header elementos */}
-                                    <div className="flex items-center justify-between flex-wrap gap-2">
+                                    <div className="flex items-center justify-between flex-row gap-2">
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm font-medium">Elementos del bloque</span>
                                             <Badge variant="secondary">{idx + 1}</Badge>
@@ -283,7 +300,7 @@ export const ManagementBuilder = ({
                                         <div className="flex gap-2">
                                             <FunctionSelector
                                                 step={step as any}
-                                                setSteps={setSteps as any}
+                                                setSteps={setStepsAuto as any}
                                                 notificationNumber={notificationNumber ?? ""}
                                                 isManagement={true}
                                             />
@@ -325,9 +342,16 @@ export const ManagementBuilder = ({
             {steps.length > 0 && (
                 <CardFooter className="pb-2 flex items-center justify-between gap-2 flex-row">
                     <CardTitle className="text-base">Gestión</CardTitle>
-                    <Button size="sm" onClick={addEmptyStep} className="gap-2">
-                        <Plus className="w-4 h-4" />
-                        Agregar Gestión
+                    <Button
+                        size="sm"
+                        onClick={() =>
+                            steps.length
+                                ? openActionPickerFor(steps[steps.length - 1].id)
+                                : addEmptyStep() // ya crea con openPicker: true
+                        }
+                        className="gap-2"
+                    >
+                        + Agregar acción
                     </Button>
                 </CardFooter>
             )}
