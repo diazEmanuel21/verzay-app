@@ -134,7 +134,8 @@ export const ManagementBuilder = ({
             emptyMessage:
                 "Aún no has agregado bloques de gestión. Usa “Agregar acción” para comenzar.",
             sectionLabel: (n, step) => `Bloque ${n} — ${step.title || "Sin título"}`,
-            elementsLabel: (n) => `\nElementos de la gestión: ${n}`,
+            // elementsLabel: (n) => `\nElementos de la gestión: ${n}`,
+            elementsLabel: (n) => `\n---`,
             mainMessageLabel: "Descripción / Objetivo",
             joinSeparator: "\n",
         });
@@ -337,13 +338,13 @@ export const ManagementBuilder = ({
                                                 placeholder="Título del bloque de gestión"
                                             />
                                         </div> */}
-                                        <div className="flex items-center gap-2">
+                                        {/* <div className="flex items-center gap-2">
                                             <span className="text-sm font-medium">Elementos de la gestión</span>
                                             <Badge variant="secondary">
                                                 {step.elements?.length ?? 0}
                                             </Badge>
-                                        </div>
-                                        <Button
+                                        </div> */}
+                                        {/* <Button
                                             variant="ghost"
                                             size="icon"
                                             onClick={() => removeStep(step.id)}
@@ -351,7 +352,7 @@ export const ManagementBuilder = ({
                                             className="ml-auto"
                                         >
                                             <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                        </Button> */}
                                     </div>
                                 </CardHeader>
 
@@ -368,20 +369,6 @@ export const ManagementBuilder = ({
 
                                     <Separator /> */}
 
-                                    {/* Header elementos */}
-                                    <div className="flex items-center justify-end flex-wrap gap-2">
-                                        <div className="flex gap-2">
-                                            <FunctionSelector
-                                                step={step as any}
-                                                setSteps={setStepsAuto as any}
-                                                notificationNumber={notificationNumber ?? ""}
-                                                isManagement={true}
-                                                showRule={true}
-                                                showAction={false}
-                                            />
-                                        </div>
-                                    </div>
-
                                     {/* Lista de elementos */}
                                     <div className="rounded-lg border border-dashed border-muted/60 p-1">
                                         {!step.elements || step.elements.length === 0 ? (
@@ -396,7 +383,7 @@ export const ManagementBuilder = ({
                                                         stepId={step.id}
                                                         el={el as any}
                                                         flows={flows}
-                                                        removeElement={removeElement}
+                                                        removeElement={removeStep}
                                                         updateText={updateText}
                                                         setFlowOnElement={setFlowOnElement}
                                                         addPedidoField={addPedidoField}
@@ -404,12 +391,27 @@ export const ManagementBuilder = ({
                                                         onSubtypeChange={(_sid, eid, subtype) =>
                                                             onSubtypeChange(step.id, eid, subtype)
                                                         }
-                                                        isManagement={true}
                                                     />
                                                 ))}
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* Header elementos */}
+                                    <div className="flex items-center justify-end flex-wrap gap-2">
+                                        <div className="flex gap-2">
+                                            <FunctionSelector
+                                                step={step as any}
+                                                setSteps={setStepsAuto as any}
+                                                notificationNumber={notificationNumber ?? ""}
+                                                isManagement={true}
+                                                showRule={true}
+                                                showAction={false}
+                                            />
+                                        </div>
+                                    </div>
+
+
                                 </CardContent>
                             </Card>
                         ))}
