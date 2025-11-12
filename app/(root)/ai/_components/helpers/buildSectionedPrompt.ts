@@ -74,7 +74,7 @@ function formatElement(el: AnyEl, k: number, flowBehaviorText: string): string[]
                 // if (el.subtype === "Pedidos" && el.fields?.length) {
                 //Aquí se setean los campos dinámicos de pedidos, solicitudes, reclamos,  reservas
                 if (el.fields?.length) {
-                    out.push(`${el.fields.join("\n")}`);
+                    out.push(` * ${el.fields.join("\n")}`);
                 }
                 return out;
             }
@@ -108,7 +108,7 @@ function formatElement(el: AnyEl, k: number, flowBehaviorText: string): string[]
                 // if (el.subtype === "Pedidos" && el.fields?.length) {
                 //Aquí se setean los campos dinámicos de pedidos, solicitudes, reclamos,  reservas
                 if (el.fields?.length) {
-                    out.push(`${el.fields.join("\n")}`);
+                    out.push(` * ${el.fields.join("\n")}`);
                 }
                 return out;
             }

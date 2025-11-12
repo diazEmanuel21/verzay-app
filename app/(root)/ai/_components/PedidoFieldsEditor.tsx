@@ -23,7 +23,7 @@ export const PedidoFieldsEditor = ({
     const [input, setInput] = useState("");
 
     const add = () => {
-        onAdd(input);
+        onAdd(` * ${input}`);
         setInput("");
     };
 
@@ -43,7 +43,7 @@ export const PedidoFieldsEditor = ({
                     }}
                 />
                 <Button type="button" variant="secondary" onClick={add}>
-                    <SaveIcon/>
+                    <SaveIcon />
                     {/* Guardar campo */}
                 </Button>
             </div>
