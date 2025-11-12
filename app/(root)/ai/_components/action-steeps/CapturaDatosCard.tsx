@@ -44,7 +44,7 @@ export const CapturaDatosCard: FC<CapturaDatosCardProps> = ({
         <Card className="bg-muted/20 border-muted/60">
             <CardHeader className="py-3 flex-row items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                    <CardTitle className="text-sm">Formularios · Captura de datos</CardTitle>
+                    <CardTitle className="text-sm">Captura de datos</CardTitle>
 
                     {/* Selector de subtipo */}
                     <Select

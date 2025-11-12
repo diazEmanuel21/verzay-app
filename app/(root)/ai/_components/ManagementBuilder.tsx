@@ -292,19 +292,13 @@ export const ManagementBuilder = ({
                             <Card key={step.id} className="bg-muted/10 border-muted/60">
                                 <CardContent className="space-y-3 pt-4">
                                     {/* Header elementos */}
-                                    <div className="flex items-center justify-between flex-row gap-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium">Elementos del bloque</span>
-                                            <Badge variant="secondary">{idx + 1}</Badge>
-                                        </div>
-                                        <div className="flex gap-2">
+                                    <div className="flex items-center flex-row gap-2 justify-end">
                                             <FunctionSelector
                                                 step={step as any}
                                                 setSteps={setStepsAuto as any}
                                                 notificationNumber={notificationNumber ?? ""}
                                                 isManagement={true}
                                             />
-                                        </div>
                                     </div>
 
                                     {/* Lista de elementos */}
