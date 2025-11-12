@@ -2,14 +2,28 @@
 
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { nanoid } from "nanoid";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Trash2, Plus } from "lucide-react";
+
 import { Workflow } from "@prisma/client";
 import { useManagementAutosave } from "./hooks/useManagementAutosave";
 import ElementRenderer from "./action-steeps/ElementRenderer";
 import { FunctionSelector } from "./FunctionSelector";
 import { PromptFragment } from "./helpers/prompt-fragments";
 import { buildSectionedPrompt } from "./helpers";
+import { ManagementPromptBuilder } from "./ManagementPromptBuilder";
 
 import type {
     ElementItem,
@@ -19,12 +33,12 @@ import type {
     DataSubtype,
 } from "@/types/agentAi";
 
-/* type-guard: captura_datos -> Pedidos */
+/* type-guard genérico para funciones (Gestión puede incluir varias) */
 function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
     return el.kind === "function";
 }
 
-/* === NUEVO: inferir label legible del elemento seleccionado para titular el bloque === */
+/* Inferir label legible del primer elemento para titular el bloque */
 function getElementLabel(el?: ElementItem): string {
     if (!el) return "";
     const anyEl = el as any;
@@ -35,6 +49,15 @@ function getElementLabel(el?: ElementItem): string {
         anyEl.fn ||
         (el.kind === "text" ? "Texto" : "Acción")
     );
+}
+
+/* Utils locales */
+function extractTitle(txt: string) {
+    const firstLine = (txt || "").split(/\r?\n/).find(Boolean) || "";
+    const h1 = firstLine.replace(/^#+\s*/, "").trim();
+    if (h1) return h1.slice(0, 80);
+    const short = txt.replace(/\s+/g, " ").trim().slice(0, 80);
+    return short || "Bloque";
 }
 
 export const ManagementBuilder = ({
@@ -49,19 +72,25 @@ export const ManagementBuilder = ({
     flows = [],
     notificationNumber,
 }: ManagementBuilderProps) => {
-    // Estado interno: cada card = un "bloque" de gestión
+    // cada card = un "bloque" de gestión
     const [steps, setSteps] = useState<ManagementItem[]>(
-        Array.isArray(initialItems) && initialItems.length > 0 ? (initialItems as ManagementItem[]) : []
+        Array.isArray(initialItems) && initialItems.length > 0
+            ? (initialItems as ManagementItem[])
+            : []
     );
 
-    // === NUEVO: proxy para setSteps que completa título automáticamente tras elegir acción ===
-    const setStepsAuto: React.Dispatch<React.SetStateAction<ManagementItem[]>> = (updater) => {
+    // proxy que completa título y cierra picker tras elegir acción
+    const setStepsAuto: React.Dispatch<React.SetStateAction<ManagementItem[]>> = (
+        updater
+    ) => {
         setSteps((prev) => {
-            const next = typeof updater === "function" ? (updater as (p: ManagementItem[]) => ManagementItem[])(prev) : updater;
+            const next =
+                typeof updater === "function"
+                    ? (updater as (p: ManagementItem[]) => ManagementItem[])(prev)
+                    : updater;
 
             let changed = false;
             const patched = next.map((s) => {
-                // Si no hay título y ya tiene al menos un elemento, usamos el label del primero.
                 if (!s.title?.trim() && (s.elements?.length ?? 0) > 0) {
                     const label = getElementLabel(s.elements[0]);
                     if (label) {
@@ -69,7 +98,6 @@ export const ManagementBuilder = ({
                         return { ...s, title: String(label), openPicker: false };
                     }
                 }
-                // Al seleccionar algo desde el picker, cerramos el picker si estaba abierto
                 if (s.openPicker && (s.elements?.length ?? 0) > 0) {
                     changed = true;
                     return { ...s, openPicker: false };
@@ -81,7 +109,7 @@ export const ManagementBuilder = ({
         });
     };
 
-    // Conflicto: rehidrata desde servidor
+    // Conflicto: rehidratar desde servidor
     const stableOnConflict = useCallback(
         (serverState: any) => {
             const serverSteps = serverState?.sections?.management?.steps ?? [];
@@ -103,16 +131,16 @@ export const ManagementBuilder = ({
     // PREVIEW markdown
     const managementPreview = useMemo(() => {
         return buildSectionedPrompt(steps as any, {
-            emptyMessage: "Aún no has agregado bloques de gestión. Usa “Agregar acción” para comenzar.",
+            emptyMessage:
+                "Aún no has agregado bloques de gestión. Usa “Agregar acción” para comenzar.",
             sectionLabel: (n, step) => `Bloque ${n} — ${step.title || "Sin título"}`,
-            // elementsLabel: (n) => `Elementos del bloque: ${n}`,
-            elementsLabel: (n) => ``,
+            elementsLabel: (n) => `\nElementos de la gestión: ${n}`,
             mainMessageLabel: "Descripción / Objetivo",
             joinSeparator: "\n",
         });
     }, [steps]);
 
-    // SYNC con parent (como ProductBuilder)
+    // SYNC con parent
     useEffect(() => {
         const first = steps[0];
         if (first && onChange) {
@@ -130,13 +158,21 @@ export const ManagementBuilder = ({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [managementPreview, steps]);
 
-    /* Mutadores de STEP (bloque) */
-    const addEmptyStep = () =>
-        setSteps((prev) => [
-            ...prev,
-            { id: nanoid(), title: "", mainMessage: "", elements: [], openPicker: true },
-        ]);
+    /* Crear bloque a partir de una acción seleccionada (sin step vacío) */
+    const createStepFromElement = (el: ElementItem) => {
+        const element: ElementItem = { ...el, id: el.id ?? nanoid() };
+        const title = getElementLabel(element) || "Bloque";
+        const newStep: ManagementItem = {
+            id: nanoid(),
+            title,
+            mainMessage: "",
+            elements: [element],
+            openPicker: false,
+        };
+        setStepsAuto((prev) => [...prev, newStep]);
+    };
 
+    /* Mutadores de STEP (bloque) */
     const addFragment = (snippet: PromptFragment) =>
         setSteps((prev) => [
             ...prev,
@@ -148,7 +184,8 @@ export const ManagementBuilder = ({
             },
         ]);
 
-    const removeStep = (id: string) => setSteps((prev) => prev.filter((s) => s.id !== id));
+    const removeStep = (id: string) =>
+        setSteps((prev) => prev.filter((s) => s.id !== id));
 
     const updateTitle = (id: string, v: string) =>
         setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, title: v } : s)));
@@ -159,7 +196,11 @@ export const ManagementBuilder = ({
     /* Mutadores de ELEMENTS (por step) */
     const removeElement = (stepId: string, elId: string) => {
         setSteps((prev) =>
-            prev.map((s) => (s.id === stepId ? { ...s, elements: s.elements.filter((e) => e.id !== elId) } : s))
+            prev.map((s) =>
+                s.id === stepId
+                    ? { ...s, elements: s.elements.filter((e) => e.id !== elId) }
+                    : s
+            )
         );
     };
 
@@ -169,7 +210,9 @@ export const ManagementBuilder = ({
                 s.id === stepId
                     ? {
                         ...s,
-                        elements: s.elements.map((e) => (e.id === elId && e.kind === "text" ? { ...e, text } : e)),
+                        elements: s.elements.map((e) =>
+                            e.id === elId && e.kind === "text" ? { ...e, text } : e
+                        ),
                     }
                     : s
             )
@@ -183,7 +226,9 @@ export const ManagementBuilder = ({
                     ? {
                         ...s,
                         elements: s.elements.map((e) =>
-                            e.id === elId && e.kind === "function" && (e as any).fn === "ejecutar_flujo"
+                            e.id === elId &&
+                                e.kind === "function" &&
+                                (e as any).fn === "ejecutar_flujo"
                                 ? { ...(e as any), flowId: flow.id, flowName: flow.name }
                                 : e
                         ),
@@ -226,13 +271,19 @@ export const ManagementBuilder = ({
         );
     };
 
-    const onSubtypeChange = (stepId: string, elementId: string, subtype: DataSubtype) => {
+    const onSubtypeChange = (
+        stepId: string,
+        elementId: string,
+        subtype: DataSubtype
+    ) => {
         setSteps((prev) =>
             prev.map((s) =>
                 s.id === stepId
                     ? {
                         ...s,
-                        elements: s.elements.map((el) => (el.id === elementId ? { ...el, subtype } : el)),
+                        elements: s.elements.map((el) =>
+                            el.id === elementId ? { ...el, subtype } : el
+                        ),
                     }
                     : s
             )
@@ -243,37 +294,29 @@ export const ManagementBuilder = ({
         addFragment({ id, label, value });
     };
 
-    const openActionPickerFor = (stepId: string) => {
-        setSteps((prev) =>
-            prev.map((s) => ({ ...s, openPicker: s.id === stepId })) // abre ese y cierra los demás
-        );
-    };
-
     return (
         <Card className="border-muted/60">
             <CardHeader className="pb-2 flex items-center justify-between gap-2 flex-row">
                 <CardTitle className="text-base">Gestión</CardTitle>
                 <div className="flex items-center gap-2">
                     {/* {typeof ManagementPromptBuilder !== "undefined" && (
-            <ManagementPromptBuilder onInsert={handleInsertFromPicker} />
-          )} */}
+                        <ManagementPromptBuilder onInsert={handleInsertFromPicker} />
+                    )} */}
+
+                    {/* ⤵️ MODO RAÍZ: sin crear bloque vacío, abre lista y al elegir crea el bloque */}
                     {steps.length < 1 && (
-                        <Button
-                            size="sm"
-                            onClick={() =>
-                                steps.length
-                                    ? openActionPickerFor(steps[steps.length - 1].id)
-                                    : addEmptyStep() // ya crea con openPicker: true
-                            }
-                            className="gap-2"
-                        >
-                            + Agregar acción
-                        </Button>
+                        <FunctionSelector
+                            notificationNumber={notificationNumber ?? ""}
+                            isManagement={true}
+                            onCreateBlock={(el) => createStepFromElement(el)}
+                            showRule={false}
+                            showAction={true}
+                        />
                     )}
                 </div>
             </CardHeader>
 
-            <CardContent>
+            <CardContent className="space-y-3">
                 {steps.length === 0 ? (
                     <div className="text-center text-sm text-muted-foreground py-8">
                         No has agregado bloques de gestión. Usa “Agregar acción” para comenzar.
@@ -281,23 +324,69 @@ export const ManagementBuilder = ({
                 ) : (
                     <div className="space-y-4">
                         {steps.map((step, idx) => (
-                            <Card key={step.id} className="border-none">
-                                <div>
+                            <Card key={step.id} className="bg-muted/10 border-muted/60">
+                                <CardHeader className="py-3">
+                                    <div className="flex items-center gap-2">
+                                        {/* <div className="grid w-full max-w-sm items-center gap-3">
+                                            <Label htmlFor={step.id}>{`Gestión ${idx + 1}`}</Label>
+                                            <Input
+                                                id={step.id}
+                                                value={step.title ?? ""}
+                                                onChange={(e) => updateTitle(step.id, e.target.value)}
+                                                className="h-8"
+                                                placeholder="Título del bloque de gestión"
+                                            />
+                                        </div> */}
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-medium">Elementos de la gestión</span>
+                                            <Badge variant="secondary">
+                                                {step.elements?.length ?? 0}
+                                            </Badge>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => removeStep(step.id)}
+                                            title="Eliminar bloque"
+                                            className="ml-auto"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </CardHeader>
+
+                                <CardContent className="space-y-3">
+                                    {/* Objetivo / Mensaje principal */}
+                                    {/* <div className="space-y-2">
+                                        <label className="text-sm font-medium">{`Descripción ${idx + 1}`}</label>
+                                        <Textarea
+                                            value={step.mainMessage ?? ""}
+                                            onChange={(e) => updateMain(step.id, e.target.value)}
+                                            className="min-h-[32px]"
+                                        />
+                                    </div>
+
+                                    <Separator /> */}
+
                                     {/* Header elementos */}
-                                    <div className="flex items-center flex-row gap-2 justify-end">
+                                    <div className="flex items-center justify-end flex-wrap gap-2">
+                                        <div className="flex gap-2">
                                             <FunctionSelector
                                                 step={step as any}
                                                 setSteps={setStepsAuto as any}
                                                 notificationNumber={notificationNumber ?? ""}
                                                 isManagement={true}
+                                                showRule={true}
+                                                showAction={false}
                                             />
+                                        </div>
                                     </div>
 
                                     {/* Lista de elementos */}
-                                    <div>
+                                    <div className="rounded-lg border border-dashed border-muted/60 p-1">
                                         {!step.elements || step.elements.length === 0 ? (
                                             <div className="text-center text-sm text-muted-foreground">
-                                                No hay elementos. Click en crear gestión para comenzar.
+                                                No hay elementos. Agrega funciones o textos con los botones de arriba.
                                             </div>
                                         ) : (
                                             <div className="space-y-3">
@@ -312,13 +401,16 @@ export const ManagementBuilder = ({
                                                         setFlowOnElement={setFlowOnElement}
                                                         addPedidoField={addPedidoField}
                                                         removePedidoField={removePedidoField}
-                                                        onSubtypeChange={onSubtypeChange}
+                                                        onSubtypeChange={(_sid, eid, subtype) =>
+                                                            onSubtypeChange(step.id, eid, subtype)
+                                                        }
+                                                        isManagement={true}
                                                     />
                                                 ))}
                                             </div>
                                         )}
                                     </div>
-                                </div>
+                                </CardContent>
                             </Card>
                         ))}
                     </div>
@@ -327,29 +419,15 @@ export const ManagementBuilder = ({
 
             {steps.length > 0 && (
                 <CardFooter className="pb-2 flex items-center gap-2 flex-row justify-end">
-                    {/* <CardTitle className="text-base">Gestión</CardTitle> */}
-                    <Button
-                        size="sm"
-                        onClick={() =>
-                            steps.length
-                                ? openActionPickerFor(steps[steps.length - 1].id)
-                                : addEmptyStep() // ya crea con openPicker: true
-                        }
-                        className="gap-2"
-                    >
-                        Crear gestión
-                    </Button>
+                    <FunctionSelector
+                        notificationNumber={notificationNumber ?? ""}
+                        isManagement={true}
+                        onCreateBlock={(el) => createStepFromElement(el)}
+                        showRule={false}
+                        showAction={true}
+                    />
                 </CardFooter>
             )}
         </Card>
     );
 };
-
-/* Utils locales */
-function extractTitle(txt: string) {
-    const firstLine = (txt || "").split(/\r?\n/).find(Boolean) || "";
-    const h1 = firstLine.replace(/^#+\s*/, "").trim();
-    if (h1) return h1.slice(0, 80);
-    const short = txt.replace(/\s+/g, " ").trim().slice(0, 80);
-    return short || "Bloque";
-}

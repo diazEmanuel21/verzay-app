@@ -22,6 +22,7 @@ const ElementRenderer: FC<PropsActionSteeps> = ({
     addPedidoField,
     removePedidoField,
     onSubtypeChange,
+    isManagement
 }) => {
     if (el.kind === "text") {
         return (
@@ -29,6 +30,7 @@ const ElementRenderer: FC<PropsActionSteeps> = ({
                 el={el}
                 onRemove={() => removeElement(stepId, el.id)}
                 onChange={(v) => updateText(stepId, el.id, v)}
+                isManagement={isManagement}
             />
         );
     }
@@ -41,6 +43,7 @@ const ElementRenderer: FC<PropsActionSteeps> = ({
                 onAddField={(f) => addPedidoField(stepId, el.id, f)}
                 onRemoveField={(f) => removePedidoField(stepId, el.id, f)}
                 onSubtypeChange={(subtype: DataSubtype) => onSubtypeChange(stepId, el.id, subtype)} // Pasando stepId
+                isManagement={isManagement}
             />
         );
     }
@@ -53,6 +56,7 @@ const ElementRenderer: FC<PropsActionSteeps> = ({
                 onAddField={(f) => addPedidoField(stepId, el.id, f)}
                 onRemoveField={(f) => removePedidoField(stepId, el.id, f)}
                 onSubtypeChange={(subtype: DataSubtype) => onSubtypeChange(stepId, el.id, subtype)} // Pasando stepId
+                isManagement={isManagement}
             />
         );
     }
@@ -64,6 +68,7 @@ const ElementRenderer: FC<PropsActionSteeps> = ({
                 flows={flows}
                 onRemove={() => removeElement(stepId, el.id)}
                 onSelectFlow={(flow) => setFlowOnElement(stepId, el.id, flow)}
+                isManagement={isManagement}
             />
         );
     }
@@ -73,6 +78,7 @@ const ElementRenderer: FC<PropsActionSteeps> = ({
             <NotificarAsesorCard
                 el={el as any}
                 onRemove={() => removeElement(stepId, el.id)}
+                isManagement={isManagement}
             />
         );
     }
@@ -80,6 +86,7 @@ const ElementRenderer: FC<PropsActionSteeps> = ({
     // consulta_datos (fallback)
     return (
         <ConsultaDatosCard
+            isManagement={isManagement}
             el={el as any}
             onRemove={() => removeElement(stepId, el.id)}
             onAddField={(f) => addPedidoField(stepId, el.id, f)}

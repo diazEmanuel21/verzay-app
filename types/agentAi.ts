@@ -674,10 +674,11 @@ export interface ExtraInfoBuilderProps {
 }
 
 export interface FunctionSelectorInterface {
-    step: StepTraining
-    setSteps: React.Dispatch<React.SetStateAction<StepTraining[]>>
-    notificationNumber: string
-    isManagement?: boolean
+    step?: any; // existente (bloque destino)
+    setSteps?: React.Dispatch<React.SetStateAction<StepTraining[]>>
+    notificationNumber: string;
+    isManagement?: boolean;
+    onCreateBlock?: (el: ElementItem) => void;
 }
 
 export type Mode = "faq" | "products" | "extras";
@@ -696,6 +697,7 @@ export type PropsTextRule = {
     el: ElementText;
     onRemove: () => void;
     onChange: (text: string) => void;
+    isManagement?: boolean;
 };
 
 export type PropsDataCapture = {
@@ -703,6 +705,7 @@ export type PropsDataCapture = {
     onRemove: () => void;
     onAddField: (field: string) => void;
     onRemoveField: (field: string) => void;
+    isManagement?: boolean;
 };
 
 type ElExtFlw = {
@@ -718,6 +721,7 @@ export type PropsExecuteFlow = {
     flows: Array<Workflow>;
     onRemove: () => void;
     onSelectFlow: (flow: Workflow) => void;
+    isManagement?: boolean;
 };
 
 type El = {
@@ -733,11 +737,13 @@ export type PropsConsultaDatos = {
     onAddField: (field: string) => void;
     onRemoveField: (field: string) => void;
     onSubtypeChange: (subtype: DataSubtype) => void;
+    isManagement?: boolean;
 };
 
 export type PropsNotifyAsesor = {
     el: El
     onRemove: () => void;
+    isManagement?: boolean;
 }
 
 export type PropsActionSteeps = {
@@ -750,6 +756,7 @@ export type PropsActionSteeps = {
     addPedidoField: (stepId: string, elId: string, field: string) => void;
     removePedidoField: (stepId: string, elId: string, field: string) => void;
     onSubtypeChange: (stepId: string, elId: string, subtype: DataSubtype) => void;
+    isManagement?: boolean
 };
 
 export type TextElement = {

@@ -13,13 +13,15 @@ import {
 import { Plus, Trash2 } from "lucide-react";
 import { PropsExecuteFlow } from "@/types/agentAi";
 
-export const EjecutarFlujoCard: FC<PropsExecuteFlow> = ({ el, flows, onRemove, onSelectFlow }) => {
+export const EjecutarFlujoCard: FC<PropsExecuteFlow> = ({ el, flows, onRemove, onSelectFlow, isManagement }) => {
     return (
         <Card className="bg-muted/20 border-muted/60">
             <CardHeader className="py-3 flex-row items-center justify-between">
                 <CardTitle className="text-md uppercase">Ejecutar flujo</CardTitle>
                 <Button variant="ghost" size="icon" onClick={onRemove}>
-                    <Trash2 className="h-4 w-4" />
+                    {!isManagement &&
+                        <Trash2 className="h-4 w-4" />
+                    }
                 </Button>
             </CardHeader>
 

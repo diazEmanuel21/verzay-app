@@ -23,6 +23,7 @@ export const CapturaDatosCard: FC<CapturaDatosCardProps> = ({
     onAddField,
     onRemoveField,
     onSubtypeChange,
+    isManagement
 }) => {
     // Estado local para manejar el subtipo
     const [localSubtype, setLocalSubtype] = useState<DataSubtype>(el.subtype as DataSubtype);
@@ -65,7 +66,9 @@ export const CapturaDatosCard: FC<CapturaDatosCardProps> = ({
                 </div>
 
                 <Button variant="ghost" size="icon" onClick={onRemove}>
-                    <Trash2 className="h-4 w-4" />
+                    {!isManagement &&
+                        <Trash2 className="h-4 w-4" />
+                    }
                 </Button>
             </CardHeader>
 
