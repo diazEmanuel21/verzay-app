@@ -232,7 +232,7 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber, isManagem
                 </PopoverContent>
             </Popover >
 
-            {isManagement ? (
+            {/* {isManagement ? (
                 // Trigger fantasma: no visible, no clickeable, pero mantiene el ancla del Popover
                 <Button
                     type="button"
@@ -240,11 +240,11 @@ export const FunctionSelector = ({ step, setSteps, notificationNumber, isManagem
                     aria-hidden
                     className="sr-only pointer-events-none h-0 w-0 p-0 m-0"
                 />
-            ) : (
-                <Button onClick={() => addText(step.id)} variant={"outline"}>
-                    Agregar regla
-                </Button>
-            )}
+            ) : ( */}
+            <Button onClick={() => addText(step.id)} variant={"outline"}>
+                Agregar regla
+            </Button>
+            {/* )} */}
         </>
 
     )
