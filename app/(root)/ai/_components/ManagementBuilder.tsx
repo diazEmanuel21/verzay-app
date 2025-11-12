@@ -273,7 +273,7 @@ export const ManagementBuilder = ({
                 </div>
             </CardHeader>
 
-            <CardContent className="space-y-3">
+            <CardContent>
                 {steps.length === 0 ? (
                     <div className="text-center text-sm text-muted-foreground py-8">
                         No has agregado bloques de gestión. Usa “Agregar acción” para comenzar.
@@ -281,8 +281,8 @@ export const ManagementBuilder = ({
                 ) : (
                     <div className="space-y-4">
                         {steps.map((step, idx) => (
-                            <Card key={step.id} className="bg-muted/10 border-muted/60">
-                                <CardContent className="space-y-3 pt-4">
+                            <Card key={step.id} className="border-none">
+                                <div>
                                     {/* Header elementos */}
                                     <div className="flex items-center flex-row gap-2 justify-end">
                                             <FunctionSelector
@@ -318,7 +318,7 @@ export const ManagementBuilder = ({
                                             </div>
                                         )}
                                     </div>
-                                </CardContent>
+                                </div>
                             </Card>
                         ))}
                     </div>

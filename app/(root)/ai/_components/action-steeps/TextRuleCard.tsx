@@ -12,7 +12,7 @@ export const TextRuleCard: FC<PropsTextRule> = ({ el, onRemove, onChange }) => {
     return (
         <Card className="bg-muted/30 border-muted/60">
             <CardHeader className="py-3 flex-row items-center justify-between">
-                <CardTitle className="text-lg uppercase">Regla/parámetro</CardTitle>
+                <CardTitle className="text-md uppercase">Regla/parámetro</CardTitle>
                 <Button variant="ghost" size="icon" onClick={onRemove}>
                     <Trash className="h-4 w-4" />
                 </Button>

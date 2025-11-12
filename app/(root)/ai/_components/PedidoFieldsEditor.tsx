@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PedidoFunctionEl } from "@/types/agentAi";
 import { useState } from "react";
+import { PlusIcon } from 'lucide-react';
 
 
 /* ----------------- Editor de campos para "Pedidos" ----------------- */
@@ -42,7 +43,7 @@ export const PedidoFieldsEditor = ({
                     }}
                 />
                 <Button type="button" variant="secondary" onClick={add}>
-                    Agregar
+                    <PlusIcon/>
                 </Button>
             </div>
 

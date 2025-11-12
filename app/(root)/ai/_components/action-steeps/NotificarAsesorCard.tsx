@@ -12,7 +12,7 @@ export const NotificarAsesorCard: FC<PropsNotifyAsesor> = ({ el, onRemove }) => 
     return (
         <Card className="bg-muted/20 border-muted/60">
             <CardHeader className="py-3 flex-row items-center justify-between">
-                <CardTitle className="text-lg uppercase">Notificar asesor</CardTitle>
+                <CardTitle className="text-md uppercase">Notificar asesor</CardTitle>
                 <Button variant="ghost" size="icon" onClick={onRemove}>
                     <Trash className="h-4 w-4" />
                 </Button>
