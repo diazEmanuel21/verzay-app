@@ -297,7 +297,7 @@ export const ManagementBuilder = ({
                                     <div>
                                         {!step.elements || step.elements.length === 0 ? (
                                             <div className="text-center text-sm text-muted-foreground">
-                                                No hay elementos. Agrega funciones o textos con los botones de arriba.
+                                                No hay elementos. Click en crear gestión para comenzar.
                                             </div>
                                         ) : (
                                             <div className="space-y-3">
@@ -326,8 +326,8 @@ export const ManagementBuilder = ({
             </CardContent>
 
             {steps.length > 0 && (
-                <CardFooter className="pb-2 flex items-center justify-between gap-2 flex-row">
-                    <CardTitle className="text-base">Gestión</CardTitle>
+                <CardFooter className="pb-2 flex items-center gap-2 flex-row justify-end">
+                    {/* <CardTitle className="text-base">Gestión</CardTitle> */}
                     <Button
                         size="sm"
                         onClick={() =>
@@ -337,7 +337,7 @@ export const ManagementBuilder = ({
                         }
                         className="gap-2"
                     >
-                        + Agregar acción
+                        Crear gestión
                     </Button>
                 </CardFooter>
             )}

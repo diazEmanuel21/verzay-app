@@ -4,7 +4,7 @@
 import { FC, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash, X } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import { PedidoFieldsEditor } from "../";
 import { DataSubtype, PropsConsultaDatos, SUBTYPE_OPTIONS } from "@/types/agentAi";
 import {
@@ -62,7 +62,7 @@ export const ConsultaDatosCard: FC<PropsConsultaDatos> = ({
                 </div>
 
                 <Button variant="ghost" size="icon" onClick={onRemove}>
-                    <Trash className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" />
                 </Button>
             </CardHeader>
 
