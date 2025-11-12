@@ -4,7 +4,7 @@
 import { FC, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { Trash, X } from "lucide-react";
 import { PedidoFieldsEditor } from "../";
 import { DataSubtype, PropsConsultaDatos, SUBTYPE_OPTIONS } from "@/types/agentAi";
 import {
@@ -41,7 +41,7 @@ export const ConsultaDatosCard: FC<PropsConsultaDatos> = ({
         <Card className="bg-muted/20 border-muted/60">
             <CardHeader className="py-3 flex-row items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                    <CardTitle className="text-sm">Consulta de datos</CardTitle>
+                    <CardTitle className="text-lg uppercase">Consulta de datos</CardTitle>
 
                     {/* Selector de subtipo */}
                     <Select
@@ -62,7 +62,7 @@ export const ConsultaDatosCard: FC<PropsConsultaDatos> = ({
                 </div>
 
                 <Button variant="ghost" size="icon" onClick={onRemove}>
-                    <X className="h-4 w-4" />
+                    <Trash className="h-4 w-4" />
                 </Button>
             </CardHeader>
 

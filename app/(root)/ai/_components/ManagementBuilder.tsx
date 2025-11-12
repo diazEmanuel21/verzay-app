@@ -4,18 +4,10 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { nanoid } from "nanoid";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2 } from "lucide-react";
-
 import { Workflow } from "@prisma/client";
 import { useManagementAutosave } from "./hooks/useManagementAutosave";
 import ElementRenderer from "./action-steeps/ElementRenderer";
 import { FunctionSelector } from "./FunctionSelector";
-import { ManagementPromptBuilder } from "./ManagementPromptBuilder";
 import { PromptFragment } from "./helpers/prompt-fragments";
 import { buildSectionedPrompt } from "./helpers";
 
@@ -302,7 +294,7 @@ export const ManagementBuilder = ({
                                     </div>
 
                                     {/* Lista de elementos */}
-                                    <div className="rounded-lg border border-dashed border-muted/60 p-1">
+                                    <div>
                                         {!step.elements || step.elements.length === 0 ? (
                                             <div className="text-center text-sm text-muted-foreground">
                                                 No hay elementos. Agrega funciones o textos con los botones de arriba.

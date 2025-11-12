@@ -10,16 +10,16 @@ import {
 import {
     Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
-import { X, Plus } from "lucide-react";
+import { Plus, Trash } from "lucide-react";
 import { PropsExecuteFlow } from "@/types/agentAi";
 
 export const EjecutarFlujoCard: FC<PropsExecuteFlow> = ({ el, flows, onRemove, onSelectFlow }) => {
     return (
         <Card className="bg-muted/20 border-muted/60">
             <CardHeader className="py-3 flex-row items-center justify-between">
-                <CardTitle className="text-sm">Ejecutar flujo</CardTitle>
+                <CardTitle className="text-lg uppercase">Ejecutar flujo</CardTitle>
                 <Button variant="ghost" size="icon" onClick={onRemove}>
-                    <X className="h-4 w-4" />
+                    <Trash className="h-4 w-4" />
                 </Button>
             </CardHeader>
 
