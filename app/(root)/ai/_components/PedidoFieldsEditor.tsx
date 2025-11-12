@@ -42,7 +42,18 @@ export const PedidoFieldsEditor = ({
                         }
                     }}
                 />
-                <Button type="button" variant="secondary" onClick={add}>
+                <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={add}
+                    aria-label="Guardar"
+                    className="
+                gap-0 sm:gap-2 px-2 sm:px-3 h-9
+                bg-emerald-600 text-white
+                hover:bg-emerald-700
+                focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2
+                disabled:bg-emerald-600/60 disabled:text-white/80"
+                >
                     <SaveIcon />
                     {/* Guardar campo */}
                 </Button>

@@ -4,7 +4,7 @@ import { ChangeEvent } from "react";
 import z from "zod";
 
 
-export const SUBTYPE_OPTIONS = ["Pedidos", "Solicitudes", "Reclamos", "Reservas"] as const;
+export const SUBTYPE_OPTIONS = ["Solicitudes", "Pedidos", "Reservas", "Reclamos"] as const;
 
 export type DataSubtype = (typeof SUBTYPE_OPTIONS)[number];
 
