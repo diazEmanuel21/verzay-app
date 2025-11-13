@@ -21,11 +21,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 
 import { Pencil, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner"; // Asegúrate de tener el toast importado para mostrar los mensajes
 import { optimizeFile } from "../../flow/[workflowId]/helpers";
+import { nanoid } from "nanoid"; // Importar nanoid para generar el SKU automáticamente
 
 export const ProductForm = ({
     userId,
@@ -44,7 +44,7 @@ export const ProductForm = ({
             title: product?.title ?? "",
             description: product?.description ?? "",
             price: (product?.price as any) ?? 0,
-            sku: product?.sku ?? "",
+            sku: product?.sku ?? nanoid(),  // Autogenerar SKU si no existe
             stock: product?.stock ?? 0,
             isActive: product?.isActive ?? true,
             images: (product?.images ?? []) as string[],
@@ -77,7 +77,7 @@ export const ProductForm = ({
             title: product?.title ?? "",
             description: product?.description ?? "",
             price: (product?.price as any) ?? 0,
-            sku: product?.sku ?? "",
+            sku: product?.sku ?? nanoid(),  // Aseguramos la generación automática del SKU
             stock: product?.stock ?? 0,
             isActive: product?.isActive ?? true,
             images: (product?.images ?? []) as string[],
@@ -210,18 +210,29 @@ export const ProductForm = ({
                                 })}
                             />
                         </div>
-                        {/* <div>
+                        {/* Campo SKU oculto */}
+                        <div className="hidden">
                             <Label>SKU</Label>
                             <Input
                                 {...form.register("sku")}
-                                placeholder="SKU opcional"
+                                placeholder="SKU autogenerado"
                             />
                             {isSkuDuplicate && (
                                 <p className="text-red-500 text-sm">
                                     Este SKU ya está registrado
                                 </p>
                             )}
-                        </div> */}
+                        </div>
+                        {/* Campo de stock oculto */}
+                        <div className="hidden">
+                            <Label>Stock</Label>
+                            <Input
+                                type="number"
+                                {...form.register("stock", {
+                                    valueAsNumber: true,
+                                })}
+                            />
+                        </div>
                         <div>
                             <Label>Categoría</Label>
                             <Input
@@ -229,7 +240,8 @@ export const ProductForm = ({
                                 placeholder="Categoría del producto"
                             />
                         </div>
-                        {/* <div>
+                        {/* Campo de etiquetas oculto */}
+                        <div className="hidden">
                             <Label>Etiquetas</Label>
                             <select
                                 multiple
@@ -242,7 +254,7 @@ export const ProductForm = ({
                                     </option>
                                 ))}
                             </select>
-                        </div> */}
+                        </div>
                         <div>
                             <Label>Imagen</Label>
                             <Input
