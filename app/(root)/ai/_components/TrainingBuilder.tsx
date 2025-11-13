@@ -73,7 +73,7 @@ export function TrainingBuilder({
   const trainingPrompt = useMemo(() => {
     return buildSectionedPrompt(steps as any, {
       emptyMessage: "Aún no has agregado pasos de entrenamiento. Usa “Agregar paso” para comenzar.",
-      sectionLabel: (n, step) => `Paso ${n} — ${step.title || "Sin título"}`,
+      sectionLabel: (n, step) => `### Paso ${n} — ${step.title || "Sin título"}`,
       elementsLabel: (n) => `Elementos del paso: ${n}`,
       mainMessageLabel: "Objetivo principal del paso",
       joinSeparator: "\n",

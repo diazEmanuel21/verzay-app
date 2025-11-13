@@ -130,7 +130,7 @@ export function buildSectionedPrompt(
     const blocks: string[] = [];
     const joinSep = cfg.joinSeparator ?? "\n";
     const flowBehaviorText =
-        cfg.flowBehaviorText ?? initialFlowBehaviorText
+        cfg.flowBehaviorText ?? initialFlowBehaviorText;
 
     // Firma (opcional, solo se añade si está habilitada y hay texto)
     if (cfg.firma?.enabled) {
@@ -149,12 +149,12 @@ export function buildSectionedPrompt(
         const n = i + 1;
 
         // Título de sección
-        // blocks.push(`\n### ${cfg.sectionLabel(n, step)}`);
+        blocks.push(`\n${cfg.sectionLabel(n, step)}`);
 
         // Mensaje principal
         const main = trimOrUndefined(step.mainMessage);
         if (main) {
-            blocks.push(`* **${cfg.mainMessageLabel}:**\n${main}`);
+            blocks.push(`* **${cfg.mainMessageLabel}:**${main}`);
         }
 
         // Elementos
@@ -166,6 +166,9 @@ export function buildSectionedPrompt(
                 const k = idx + 1;
                 blocks.push(...formatElement(el, k, flowBehaviorText));
             });
+
+            // Aquí añadimos el separador "---"
+            blocks.push('\n---'); // El separador debajo de cada bloque de elementos
         }
     });
 

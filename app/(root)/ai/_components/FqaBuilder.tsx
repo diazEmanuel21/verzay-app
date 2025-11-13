@@ -67,7 +67,7 @@ export function FqaBuilder({
     const prompt = useMemo(() => {
         return buildSectionedPrompt(items as any, {
             emptyMessage: "Aún no has agregado Preguntas. Usa “Agregar Pregunta” para comenzar.",
-            sectionLabel: (n, step) => `Pregunta ${n} — ${step.title || "Sin título"}`,
+            sectionLabel: (n, step) => `### Pregunta ${n} — ${step.title || "Sin título"}`,
             elementsLabel: (n) => `Elementos de la pregunta: ${n}`,
             mainMessageLabel: "Respuesta principal de la pregunta",
             joinSeparator: "\n",

@@ -119,7 +119,7 @@ export function ExtraInfoBuilder({
     const prompt = useMemo(() => {
         return buildSectionedPrompt(items as any, {
             emptyMessage: "Aún no has agregado información extra. Usa Agregar extra para comenzar.",
-            sectionLabel: (n, step) => `Extra ${n} — ${step.title || "Sin título"}`,
+            sectionLabel: (n, step) => `### Extra ${n} — ${step.title || "Sin título"}`,
             elementsLabel: (n) => `Elementos del extra: ${n}`,
             mainMessageLabel: "Contenido / Mensaje principal",
             joinSeparator: "\n\n---\n\n",
