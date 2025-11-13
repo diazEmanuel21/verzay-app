@@ -70,6 +70,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             apiUrl,
             timezone,
             meetingDuration: 60,//tiempo en minutos
+            delayTimeGPT: '12',//tiempo en minutos
             muteAgentResponses: false,
             onFacebook: false,
             onInstagram: false,
