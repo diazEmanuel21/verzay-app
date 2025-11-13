@@ -44,9 +44,30 @@ export async function listProducts(raw: z.input<typeof listParams>) {
 
 export async function createProduct(raw: unknown) {
     const input = productSchema.omit({ id: true }).parse(raw);
-    const product = await db.product.create({ data: input });
-    revalidatePath("/products");
-    return product;
+
+    // 1️⃣ Verificar si el SKU ya existe
+    const existingProduct = await db.product.findFirst({
+        where: { sku: input.sku, userId: input.userId },
+    });
+
+    if (existingProduct) {
+        // Si ya existe el SKU, lanzar un error o mensaje
+        throw new Error("El SKU ya está registrado");
+    }
+
+    try {
+        // 2️⃣ Crear el producto
+        const product = await db.product.create({ data: input });
+
+        // 3️⃣ Realizar la revalidación de la ruta
+        revalidatePath("/products");
+
+        return product;
+    } catch (error) {
+        // Capturamos cualquier error inesperado de la base de datos
+        console.error("Error al crear el producto:", error);
+        throw new Error("Hubo un error al crear el producto");
+    }
 }
 
 export async function updateProduct(id: string, raw: unknown) {
@@ -70,4 +91,11 @@ export async function deleteProduct(id: string, userId: string) {
     await db.product.delete({ where: { id } });
     revalidatePath("/products");
     return { ok: true };
+}
+
+export async function checkIfSkuExists(sku: string, userId: string) {
+    const existingProduct = await db.product.findFirst({
+        where: { sku, userId },
+    });
+    return existingProduct !== null;
 }

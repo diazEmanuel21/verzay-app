@@ -1,5 +1,4 @@
-// components/products/ProductForm.tsx
-"use client";
+'use client'
 
 import { useEffect, useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,7 +9,7 @@ import {
     type ProductInput,
 } from "@/lib/validators/product";
 
-import { createProduct, updateProduct } from "@/actions/products-actions";
+import { createProduct, updateProduct, checkIfSkuExists } from "@/actions/products-actions"; // Asegúrate de importar la nueva acción para verificar SKU
 import {
     Dialog,
     DialogContent,
@@ -25,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 
 import { Pencil, Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner"; // Asegúrate de tener el toast importado para mostrar los mensajes
 
 export const ProductForm = ({
     userId,
@@ -33,6 +33,7 @@ export const ProductForm = ({
 }: ProductFormInterface) => {
     const [open, setOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
+    const [isSkuDuplicate, setIsSkuDuplicate] = useState(false); // Estado para manejar el error de SKU duplicado
 
     const form = useForm<ProductInput>({
         resolver: zodResolver(productSchema),
@@ -49,8 +50,21 @@ export const ProductForm = ({
         },
     });
 
-    // 🔧 Resetear valores cada vez que se abre el modal,
-    // diferenciando entre crear (sin product) y editar (con product)
+    // Verificación del SKU cuando se ingresa o modifica el campo SKU
+    useEffect(() => {
+        const checkSku = async (sku: string | null | undefined) => {
+            if (sku && sku.trim() !== "") {  // Asegúrate de que el SKU no sea vacío ni nulo
+                const isDuplicate = await checkIfSkuExists(sku, userId);
+                setIsSkuDuplicate(isDuplicate);
+            } else {
+                setIsSkuDuplicate(false);  // Si el SKU es nulo o vacío, lo tratamos como no duplicado
+            }
+        };
+
+        checkSku(form.watch("sku"));  // Usamos el valor de SKU directamente
+    }, [form.watch("sku"), userId]);
+
+    // Resetear valores del formulario cuando se abre el modal
     useEffect(() => {
         if (!open) return;
 
@@ -67,14 +81,18 @@ export const ProductForm = ({
         });
     }, [open, product, userId, form]);
 
-    const onSubmit = form.handleSubmit((values) => {
+    const onSubmit = form.handleSubmit(async (values) => {
         startTransition(async () => {
-            if (values.id) {
-                await updateProduct(values.id, values);
-            } else {
-                await createProduct(values);
+            try {
+                if (values.id) {
+                    await updateProduct(values.id, values);
+                } else {
+                    await createProduct(values);
+                }
+                setOpen(false);
+            } catch (error) {
+                toast.error("¡Este SKU ya está registrado!");
             }
-            setOpen(false);
         });
     });
 
@@ -105,9 +123,9 @@ export const ProductForm = ({
             open={open}
             onOpenChange={(nextOpen) => {
                 setOpen(nextOpen);
-                // Opcional: si cierras, limpias errores
                 if (!nextOpen) {
                     form.clearErrors();
+                    setIsSkuDuplicate(false); // Limpiamos el estado de SKU duplicado cuando cerramos el modal
                 }
             }}
         >
@@ -144,6 +162,11 @@ export const ProductForm = ({
                                 {...form.register("sku")}
                                 placeholder="SKU opcional"
                             />
+                            {isSkuDuplicate && (
+                                <p className="text-red-500 text-sm">
+                                    Este SKU ya está registrado
+                                </p>
+                            )}
                         </div>
                         <div>
                             <Label>Stock</Label>
