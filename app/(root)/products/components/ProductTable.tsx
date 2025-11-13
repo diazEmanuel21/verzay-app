@@ -1,4 +1,3 @@
-// components/products/ProductTable.tsx
 "use client";
 
 import { useMemo } from "react";
@@ -24,6 +23,8 @@ type Product = {
     stock: number;
     isActive: boolean;
     images: string[];
+    category: string;  // Nueva propiedad para la categoría
+    tags: string[];    // Nueva propiedad para las etiquetas
     userId: string;
     createdAt: Date;
     updatedAt: Date;
@@ -36,67 +37,93 @@ export const ProductTable = ({
     data: { items: Product[]; total: number; page: number; pages: number };
     userId: string;
 }) => {
-    const columns = useMemo<ColumnDef<Product>[]>(
-        () => [
-            { header: "Título", accessorKey: "title" },
-            {
-                header: "Descripción",
-                accessorKey: "description",
-                cell: ({ getValue }) => {
-                    const value = getValue() as string | null;
-                    if (!value) return "—";
-                    const text = value.trim();
-                    if (!text) return "—";
-                    return text.length > 80 ? `${text.slice(0, 80)}…` : text;
-                },
+    const columns = useMemo<ColumnDef<Product>[]>(() => [
+        { header: "Nombre", accessorKey: "title" },
+        {
+            header: "Detalles",
+            accessorKey: "description",
+            cell: ({ getValue }) => {
+                const value = getValue() as string | null;
+                if (!value) return "—";
+                const text = value.trim();
+                if (!text) return "—";
+                return text.length > 80 ? `${text.slice(0, 80)}…` : text;
             },
-            {
-                header: "SKU",
-                accessorKey: "sku",
-                cell: ({ getValue }) => getValue() || "—",
-            },
-            {
-                header: "Precio",
-                accessorKey: "price",
-                cell: ({ getValue }) =>
-                    `$${Number(getValue()).toFixed(2)}`,
-            },
-            { header: "Stock", accessorKey: "stock" },
-            {
-                header: "Estado",
-                accessorKey: "isActive",
-                cell: ({ getValue }) => (
-                    <Badge variant={getValue() ? "default" : "secondary"}>
-                        {getValue() ? "Activo" : "Inactivo"}
-                    </Badge>
-                ),
-            },
-            {
-                id: "actions",
-                header: "",
-                cell: ({ row }) => (
-                    <div className="flex gap-2 justify-end">
-                        <ProductForm
-                            product={row.original}
-                            userId={userId}
-                            variant="icon"
+        },
+        // {
+        //     header: "SKU",
+        //     accessorKey: "sku",
+        //     cell: ({ getValue }) => getValue() || "—",
+        // },
+        {
+            header: "Precio",
+            accessorKey: "price",
+            cell: ({ getValue }) =>
+                `$${Number(getValue()).toFixed(2)}`,
+        },
+        // { header: "Stock", accessorKey: "stock" },
+        // {
+        //     header: "Estado",
+        //     accessorKey: "isActive",
+        //     cell: ({ getValue }) => (
+        //         <Badge variant={getValue() ? "default" : "secondary"}>
+        //             {getValue() ? "Activo" : "Inactivo"}
+        //         </Badge>
+        //     ),
+        // },
+        {
+            header: "Categoría", // Nueva columna para la categoría
+            accessorKey: "category",
+            cell: ({ getValue }) => getValue() || "—",
+        },
+        // {
+        //     header: "Etiquetas", // Nueva columna para las etiquetas
+        //     accessorKey: "tags",
+        //     cell: ({ getValue }) => {
+        //         const tags = getValue() as string[]; // Hacemos un type assertion a string[]
+        //         return tags && tags.length > 0 ? tags.join(", ") : "—";
+        //     },
+        // },
+        {
+            header: "Imagen",
+            cell: ({ row }) => (
+                <div>
+                    {row.original.images.length > 0 ? (
+                        <img
+                            src={row.original.images[0]}
+                            alt="Product"
+                            className="w-16 h-16 object-cover"
                         />
-                        <Button
-                            variant="destructive"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={async () => {
-                                await deleteProduct(row.original.id, userId);
-                            }}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </div>
-                ),
-            },
-        ],
-        [userId],
-    );
+                    ) : (
+                        "—"
+                    )}
+                </div>
+            ),
+        },
+        {
+            id: "actions",
+            header: "",
+            cell: ({ row }) => (
+                <div className="flex gap-2 justify-end">
+                    <ProductForm
+                        product={row.original}
+                        userId={userId}
+                        variant="icon"
+                    />
+                    <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={async () => {
+                            await deleteProduct(row.original.id, userId);
+                        }}
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </div>
+            ),
+        },
+    ], [userId]);
 
     const table = useReactTable({
         data: data.items,

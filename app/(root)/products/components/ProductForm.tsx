@@ -25,6 +25,7 @@ import { Switch } from "@/components/ui/switch";
 
 import { Pencil, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner"; // Asegúrate de tener el toast importado para mostrar los mensajes
+import { optimizeFile } from "../../flow/[workflowId]/helpers";
 
 export const ProductForm = ({
     userId,
@@ -34,6 +35,7 @@ export const ProductForm = ({
     const [open, setOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
     const [isSkuDuplicate, setIsSkuDuplicate] = useState(false); // Estado para manejar el error de SKU duplicado
+    const [imagePreview, setImagePreview] = useState<string | null>(null); // Para mostrar la vista previa de la imagen subida
 
     const form = useForm<ProductInput>({
         resolver: zodResolver(productSchema),
@@ -47,6 +49,8 @@ export const ProductForm = ({
             isActive: product?.isActive ?? true,
             images: (product?.images ?? []) as string[],
             userId,
+            category: product?.category ?? "",  // Se añade para la categoría
+            tags: product?.tags ?? [],  // Se añaden etiquetas
         },
     });
 
@@ -78,8 +82,58 @@ export const ProductForm = ({
             isActive: product?.isActive ?? true,
             images: (product?.images ?? []) as string[],
             userId,
+            category: product?.category ?? "",
+            tags: product?.tags ?? [],
         });
     }, [open, product, userId, form]);
+
+    // Función para manejar la carga de imágenes
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !userId) {
+            toast.error('No hay archivo seleccionado');
+            return;
+        }
+
+        const toastId = toast.loading('Subiendo imagen...');
+        try {
+            const content = await file.arrayBuffer();
+
+            const plainFile = {
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                content: Array.from(new Uint8Array(content))
+            };
+
+            // Si tienes optimización (por ejemplo con sharp en backend o alguna lib en frontend)
+            const optimizedFile = await optimizeFile(plainFile); // 👈 debes tener esta función en tu proyecto
+            const optimizedBuffer = new Uint8Array(optimizedFile.buffer);
+            const blob = new Blob([optimizedBuffer], { type: optimizedFile.type });
+
+            const formData = new FormData();
+            formData.append('file', blob); // usamos el blob optimizado
+            formData.append('userID', userId);
+
+            const res = await fetch('/api/upload-products', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!res.ok) throw new Error(await res.text());
+
+            const { url } = await res.json();
+
+            // Actualizamos la imagen en el formulario
+            form.setValue("images", [url]);
+            setImagePreview(url);
+
+            toast.success('Imagen cargada', { id: toastId });
+
+        } catch (error: any) {
+            toast.error(error?.message || 'Error al subir la imagen', { id: toastId });
+        }
+    };
 
     const onSubmit = form.handleSubmit(async (values) => {
         startTransition(async () => {
@@ -138,9 +192,9 @@ export const ProductForm = ({
                 </DialogHeader>
 
                 <form onSubmit={onSubmit} className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="flex gap-2 flex-col">
                         <div className="col-span-2">
-                            <Label>Título</Label>
+                            <Label>Nombre</Label>
                             <Input
                                 {...form.register("title")}
                                 placeholder="Nombre del producto"
@@ -156,7 +210,7 @@ export const ProductForm = ({
                                 })}
                             />
                         </div>
-                        <div>
+                        {/* <div>
                             <Label>SKU</Label>
                             <Input
                                 {...form.register("sku")}
@@ -167,27 +221,39 @@ export const ProductForm = ({
                                     Este SKU ya está registrado
                                 </p>
                             )}
+                        </div> */}
+                        <div>
+                            <Label>Categoría</Label>
+                            <Input
+                                {...form.register("category")}
+                                placeholder="Categoría del producto"
+                            />
+                        </div>
+                        {/* <div>
+                            <Label>Etiquetas</Label>
+                            <select
+                                multiple
+                                {...form.register("tags")}
+                                className="w-full p-2 border"
+                            >
+                                {["Electrónica", "Ropa", "Alimentos", "Muebles"].map(tag => (
+                                    <option key={tag} value={tag}>
+                                        {tag}
+                                    </option>
+                                ))}
+                            </select>
+                        </div> */}
+                        <div>
+                            <Label>Imagen</Label>
+                            <Input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                            />
+                            {imagePreview && <img src={imagePreview} alt="Vista previa" className="mt-2 w-32" />}
                         </div>
                         <div>
-                            <Label>Stock</Label>
-                            <Input
-                                type="number"
-                                {...form.register("stock", {
-                                    valueAsNumber: true,
-                                })}
-                            />
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Switch
-                                checked={form.watch("isActive")}
-                                onCheckedChange={(v) =>
-                                    form.setValue("isActive", v)
-                                }
-                            />
-                            <Label>Activo</Label>
-                        </div>
-                        <div className="col-span-2">
-                            <Label>Descripción</Label>
+                            <Label>Detalles</Label>
                             <Textarea
                                 rows={4}
                                 {...form.register("description")}

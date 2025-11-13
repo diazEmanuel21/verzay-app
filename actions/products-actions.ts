@@ -39,7 +39,6 @@ export async function listProducts(raw: z.input<typeof listParams>) {
         perPage,
         pages: Math.ceil(total / perPage),
     };
-
 }
 
 export async function createProduct(raw: unknown) {
@@ -57,7 +56,13 @@ export async function createProduct(raw: unknown) {
 
     try {
         // 2️⃣ Crear el producto
-        const product = await db.product.create({ data: input });
+        const product = await db.product.create({
+            data: {
+                ...input,
+                tags: input.tags || [], // Aseguramos que `tags` sea un array vacío si no se proporciona
+                category: input.category || "", // Aseguramos que `category` esté presente
+            },
+        });
 
         // 3️⃣ Realizar la revalidación de la ruta
         revalidatePath("/products");
@@ -77,10 +82,17 @@ export async function updateProduct(id: string, raw: unknown) {
     // 2️⃣ Excluir userId del update (no se debe tocar el FK)
     const { id: _omit, userId: _ignore, ...data } = input;
 
+    // Aseguramos que los campos tags y category estén correctamente formateados
+    const updatedData = {
+        ...data,
+        tags: data.tags || [], // Si no hay tags, se establece un array vacío
+        category: data.category || "", // Si no hay category, se establece como cadena vacía
+    };
+
     // 3️⃣ Ejecutar el update limpio
     const product = await db.product.update({
         where: { id },
-        data,
+        data: updatedData,
     });
 
     revalidatePath("/products");

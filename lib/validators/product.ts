@@ -13,9 +13,10 @@ export const productSchema = z.object({
     stock: z.number().int().min(0).default(0),
     isActive: z.boolean().default(true),
     images: z.array(z.string().url()).max(10).default([]),
-    userId: z.string()
+    userId: z.string(),
+    category: z.string().min(1, "La categoría es obligatoria").max(100),  // Nueva validación para la categoría
+    tags: z.array(z.string().max(50)).max(10).default([]),  // Nueva validación para las etiquetas (máximo 10)
 });
-
 
 export const listParams = z.object({
     userId: z.string(),
