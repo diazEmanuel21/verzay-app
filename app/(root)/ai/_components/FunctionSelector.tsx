@@ -194,12 +194,12 @@ export const FunctionSelector = ({
                                             <CommandItem onSelect={() => addFunctionCaptura()}>
                                                 Captura de datos
                                             </CommandItem>
-                                            <CommandItem onSelect={() => addFunctionConsultaDatos()}>
+                                            {/* <CommandItem onSelect={() => addFunctionConsultaDatos()}>
                                                 Consulta de datos
                                             </CommandItem>
                                             <CommandItem onSelect={() => addFunctionActualizarDatos()}>
                                                 Actualizar datos
-                                            </CommandItem>
+                                            </CommandItem> */}
                                         </>
                                     )}
 

@@ -195,14 +195,35 @@ export const ManagementBuilder = ({
         setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, mainMessage: v } : s)));
 
     /* Mutadores de ELEMENTS (por step) */
+
     const removeElement = (stepId: string, elId: string) => {
-        setSteps((prev) =>
-            prev.map((s) =>
-                s.id === stepId
-                    ? { ...s, elements: s.elements.filter((e) => e.id !== elId) }
-                    : s
-            )
-        );
+        setSteps((prev) => {
+            // 0) localizar el step y el elemento objetivo
+            const step = prev.find((s) => s.id === stepId);
+            if (!step) return prev;
+
+            const target = (step.elements ?? []).find((e) => e.id === elId);
+            if (!target) return prev;
+
+            const isFnElement =
+                (target as any)?.kind === "function" || typeof (target as any)?.fn === "string";
+
+            // 1) si el elemento a eliminar es la fn -> eliminar TODO el step
+            if (isFnElement) {
+                return prev.filter((s) => s.id !== stepId);
+            }
+
+            // 2) si no es fn -> quitar solo ese elemento y, si queda vacío, eliminar el step
+            const next = prev.map((s) => {
+                if (s.id !== stepId) return s;
+                const elements = (s.elements ?? []).filter((e) => e.id !== elId);
+                return { ...s, elements };
+            });
+
+            return next.filter((s) =>
+                s.id === stepId ? ((s.elements?.length ?? 0) > 0) : true
+            );
+        });
     };
 
     const updateText = (stepId: string, elId: string, text: string) => {
@@ -383,7 +404,7 @@ export const ManagementBuilder = ({
                                                         stepId={step.id}
                                                         el={el as any}
                                                         flows={flows}
-                                                        removeElement={removeStep}
+                                                        removeElement={removeElement}
                                                         updateText={updateText}
                                                         setFlowOnElement={setFlowOnElement}
                                                         addPedidoField={addPedidoField}
