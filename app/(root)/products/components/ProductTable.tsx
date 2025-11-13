@@ -2,12 +2,18 @@
 "use client";
 
 import { useMemo } from "react";
-import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import {
+    ColumnDef,
+    flexRender,
+    getCoreRowModel,
+    useReactTable,
+} from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProductForm } from "./ProductForm";
 import { deleteProduct } from "@/actions/products-actions";
+import { Trash2 } from "lucide-react";
 
 type Product = {
     id: string;
@@ -23,31 +29,74 @@ type Product = {
     updatedAt: Date;
 };
 
-export const ProductTable = ({ data }: { data: { items: Product[]; total: number; page: number; pages: number } }) => {
-    const columns = useMemo<ColumnDef<Product>[]>(() => [
-        { header: "Título", accessorKey: "title" },
-        { header: "SKU", accessorKey: "sku", cell: ({ getValue }) => getValue() || "—" },
-        { header: "Precio", accessorKey: "price", cell: ({ getValue }) => `$${Number(getValue()).toFixed(2)}` },
-        { header: "Stock", accessorKey: "stock" },
-        {
-            header: "Estado", accessorKey: "isActive", cell: ({ getValue }) => (
-                <Badge variant={getValue() ? "default" : "secondary"}>{getValue() ? "Activo" : "Inactivo"}</Badge>
-            )
-        },
-        {
-            id: "actions",
-            header: "",
-            cell: ({ row }) => (
-                <div className="flex gap-2 justify-end">
-                    <ProductForm product={row.original} userId={"REEMPLAZAR_USER_ID"} variant="icon" />
-                    <Button variant="destructive" size="icon" className="h-8 w-8"
-                        onClick={async () => { await deleteProduct(row.original.id, "REEMPLAZAR_USER_ID"); }}>
-                        🗑️
-                    </Button>
-                </div>
-            ),
-        },
-    ], []);
+export const ProductTable = ({
+    data,
+    userId,
+}: {
+    data: { items: Product[]; total: number; page: number; pages: number };
+    userId: string;
+}) => {
+    const columns = useMemo<ColumnDef<Product>[]>(
+        () => [
+            { header: "Título", accessorKey: "title" },
+            {
+                header: "Descripción",
+                accessorKey: "description",
+                cell: ({ getValue }) => {
+                    const value = getValue() as string | null;
+                    if (!value) return "—";
+                    const text = value.trim();
+                    if (!text) return "—";
+                    return text.length > 80 ? `${text.slice(0, 80)}…` : text;
+                },
+            },
+            {
+                header: "SKU",
+                accessorKey: "sku",
+                cell: ({ getValue }) => getValue() || "—",
+            },
+            {
+                header: "Precio",
+                accessorKey: "price",
+                cell: ({ getValue }) =>
+                    `$${Number(getValue()).toFixed(2)}`,
+            },
+            { header: "Stock", accessorKey: "stock" },
+            {
+                header: "Estado",
+                accessorKey: "isActive",
+                cell: ({ getValue }) => (
+                    <Badge variant={getValue() ? "default" : "secondary"}>
+                        {getValue() ? "Activo" : "Inactivo"}
+                    </Badge>
+                ),
+            },
+            {
+                id: "actions",
+                header: "",
+                cell: ({ row }) => (
+                    <div className="flex gap-2 justify-end">
+                        <ProductForm
+                            product={row.original}
+                            userId={userId}
+                            variant="icon"
+                        />
+                        <Button
+                            variant="destructive"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={async () => {
+                                await deleteProduct(row.original.id, userId);
+                            }}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                ),
+            },
+        ],
+        [userId],
+    );
 
     const table = useReactTable({
         data: data.items,
@@ -61,33 +110,59 @@ export const ProductTable = ({ data }: { data: { items: Product[]; total: number
                 <div className="w-full overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
-                            {table.getHeaderGroups().map(hg => (
+                            {table.getHeaderGroups().map((hg) => (
                                 <tr key={hg.id} className="text-xs">
-                                    {hg.headers.map(h => (
-                                        <th key={h.id} className="text-left py-2 px-2 font-medium">{h.isPlaceholder ? null : h.column.columnDef.header as any}</th>
+                                    {hg.headers.map((h) => (
+                                        <th
+                                            key={h.id}
+                                            className="text-left py-2 px-2 font-medium"
+                                        >
+                                            {h.isPlaceholder
+                                                ? null
+                                                : h.column.columnDef.header as any}
+                                        </th>
                                     ))}
                                 </tr>
                             ))}
                         </thead>
                         <tbody>
-                            {table.getRowModel().rows.map(r => (
+                            {table.getRowModel().rows.map((r) => (
                                 <tr key={r.id} className="border-t">
-                                    {r.getVisibleCells().map(c => (
-                                        <td key={c.id} className="py-2 px-2">
-                                            {flexRender(c.column.columnDef.cell, c.getContext())}
+                                    {r.getVisibleCells().map((c) => (
+                                        <td
+                                            key={c.id}
+                                            className="py-2 px-2 align-top"
+                                        >
+                                            {flexRender(
+                                                c.column.columnDef.cell,
+                                                c.getContext(),
+                                            )}
                                         </td>
                                     ))}
                                 </tr>
                             ))}
+
+                            {data.items.length === 0 && (
+                                <tr>
+                                    <td
+                                        colSpan={columns.length}
+                                        className="py-4 px-2 text-center text-xs text-muted-foreground"
+                                    >
+                                        No hay productos para mostrar.
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
 
                 {/* Paginación simple */}
                 <div className="flex items-center justify-end gap-2 p-2">
-                    <span className="text-xs">Página {data.page} de {data.pages}</span>
+                    <span className="text-xs">
+                        Página {data.page} de {data.pages}
+                    </span>
                 </div>
             </CardContent>
         </Card>
     );
-}
+};

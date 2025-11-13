@@ -35,7 +35,7 @@ export default async function ProductsPage({
             </div>
 
             <Suspense fallback={<div>Cargando…</div>}>
-                <ProductTable data={data} />
+                <ProductTable data={data} userId={user.id} />
             </Suspense>
         </div>
     );
