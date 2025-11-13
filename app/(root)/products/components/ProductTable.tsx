@@ -59,7 +59,7 @@ export const ProductTable = ({
             header: "Precio",
             accessorKey: "price",
             cell: ({ getValue }) =>
-                `$${Number(getValue()).toFixed(2)}`,
+                `$${getValue()}`,
         },
         // { header: "Stock", accessorKey: "stock" },
         // {

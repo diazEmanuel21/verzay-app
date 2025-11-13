@@ -30,6 +30,7 @@ type EditableFields = {
     lng: string;
     mapsUrl: string;
     autoReactivate: number;
+    delayTimeGPT: number;
     // Excluyendo campos no editables:
     // id, createdAt, updatedAt, pausar, etc.
 };
@@ -47,6 +48,7 @@ const clientSchema = z.object({
     mapsUrl: z.string().url({ message: 'La URL de Google Maps no es válida' }),
     openMsg: z.string().min(3).max(45),
     autoReactivate: z.string(),
+    delayTimeGPT: z.string(),
 });
 
 const defaultImgUrl = 'https://images.pexels.com/photos/133356/pexels-photo-133356.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
@@ -330,6 +332,7 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                                 { key: 'autoReactivate', label: 'Tiempo de reactivación(minutos)', type: 'number' },
                                 { key: 'openMsg', label: 'Frase de reactivación' },
                                 { key: 'del_seguimiento', label: 'Eliminar seguimiento' },
+                                { key: 'delayTimeGPT', label: 'Tiempo de retraso GPT' },
                             ].map(({ key, label, type }) => (
                                 key === 'apiUrl' ? (
                                     <ApiKeyConfigurator

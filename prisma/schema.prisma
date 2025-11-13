@@ -58,6 +58,7 @@ model User {
   clientesAsignados             reseller[]            @relation("RevendedorAsignador")
   esClienteDe                   reseller[]            @relation("ClienteAsignado")
   aiConfig                      UserAiConfig[]
+  delayTimeGPT                  String?
 }
 
 model Product {
@@ -65,15 +66,15 @@ model Product {
   userId      String
   title       String
   description String?
-  price       Decimal
+  price       Decimal  @db.Decimal(65, 2)
   sku         String?  @unique
   stock       Int      @default(0)
   isActive    Boolean  @default(true)
   images      String[]
-  category    String
-  tags        String[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  category    String
+  tags        String[]
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, title])

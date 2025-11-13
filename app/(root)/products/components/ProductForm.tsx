@@ -148,9 +148,9 @@ export const ProductForm = ({
         ) : (
             <Button
                 onClick={() => setOpen(true)}
+                className="uppercase"
             >
-                <Plus className="h-4 w-4" />
-                <span>Crear producto</span>
+                Crear producto
             </Button>
         );
 
