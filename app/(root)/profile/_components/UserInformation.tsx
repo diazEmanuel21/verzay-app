@@ -8,7 +8,7 @@ import { optimizeFile } from "../../flow/[workflowId]/helpers";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { z } from 'zod';
-import { Camera, ExternalLinkIcon } from "lucide-react";
+import { Camera /*, ExternalLinkIcon*/ } from "lucide-react";
 import { UserWithPausar } from "@/lib/types";
 import { BrandSelector } from "../../../../components/custom";
 import { useResellerStore } from "@/stores/resellers/resellerStore";
@@ -60,9 +60,10 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
     /* Se extiende el user para poder utilizar openMsg from Pausar cómo un field nativo del User */
     const [user, setUser] = useState<(UserWithPausar & { openMsg?: string })>();
     const [originalUser, setOriginalUser] = useState<(UserWithPausar & { openMsg?: string })>();
-    const [saveMapsUrl, setSaveMapsUrl] = useState(false);
+    // const [saveMapsUrl, setSaveMapsUrl] = useState(false); // ⬅️ MAPS DESACTIVADO
     const [loadingField, setLoadingField] = useState<string | null>(null);
     const fileRef = useRef<HTMLInputElement | null>(null);
+
     // ============================
     // Cargar datos de cliente
     // ============================
@@ -101,7 +102,7 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
 
         if (newValue === currentValue) return;
         /* Valida que la URL tenga el formato deseado */
-        if (field === 'mapsUrl' && !saveMapsUrl) return;
+        // if (field === 'mapsUrl' && !saveMapsUrl) return; // ⬅️ MAPS DESACTIVADO
 
         try {
             let result;
@@ -151,10 +152,10 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
         });
     };
 
-
     // ============================
-    // Extraer lat/lng de Google Maps
+    // Extraer lat/lng de Google Maps (DESACTIVADO)
     // ============================
+    /*
     const handleMapsUrlChange = (value: string) => {
         setSaveMapsUrl(false);
         setUser(prev => {
@@ -203,10 +204,12 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
         saveCoordenates('lat', lat);
         saveCoordenates('lng', lng);
     };
+    */
 
     // ============================
-    // Guardar campo en onBlur
+    // Guardar coordenadas (DESACTIVADO)
     // ============================
+    /*
     const saveCoordenates = async (field: keyof UserWithPausar, valueFied?: string) => {
         try {
             setLoadingField(field);
@@ -226,6 +229,7 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
             toast.error(message, { id: field });
         }
     };
+    */
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -352,22 +356,6 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                                     </div>
                                 )
                             ))}
-                            {/* 
-                            ].map(({key, label, type}) => (
-                            <div key={key} className="space-y-2">
-                                <Label htmlFor={key} className="text-muted-foreground">{label}</Label>
-                                <Input
-                                    id={key}
-                                    name={key}
-                                    type={type || 'text'}
-                                    value={user[key as keyof EditableFields] as string}
-                                    disabled={loadingField === key}
-                                    onChange={(e) => handleChange(key as keyof UserWithPausar, e.target.value)}
-                                    onBlur={() => handleBlur(key as keyof UserWithPausar)}
-                                    className="bg-background border-border focus-visible:ring-2 focus-visible:ring-primary"
-                                />
-                            </div>
-                            ))} */}
 
                             {/* Selector de color(theme) */}
                             {user.role === Role.reseller &&
@@ -383,7 +371,8 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                                 </div>
                             } */}
 
-                            {/* URL Google Maps */}
+                            {/* URL Google Maps (OCULTADO) */}
+                            {/*
                             <div className="space-y-2 md:col-span-2">
                                 <Label htmlFor="mapsUrl" className="text-muted-foreground">
                                     URL de Google Maps
@@ -400,8 +389,10 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                                     className="bg-background border-border focus-visible:ring-2 focus-visible:ring-primary"
                                 />
                             </div>
+                            */}
 
-                            {/* Latitud y Longitud */}
+                            {/* Latitud y Longitud (OCULTADO) */}
+                            {/*
                             {['lat', 'lng'].map(coord => (
                                 <div key={coord} className="space-y-2">
                                     <Label htmlFor={coord} className="text-muted-foreground">
@@ -418,9 +409,11 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                                     />
                                 </div>
                             ))}
+                            */}
                         </div>
 
-                        {/* Vista previa del mapa */}
+                        {/* Vista previa del mapa (OCULTADO) */}
+                        {/*
                         <div className="space-y-4">
                             <h3 className="text-sm font-medium text-muted-foreground">
                                 Vista previa de ubicación
@@ -441,6 +434,7 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                                 </p>
                             )}
                         </div>
+                        */}
                     </div>
                 )
             }
