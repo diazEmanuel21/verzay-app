@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Popover,
     PopoverTrigger,
@@ -164,10 +164,16 @@ export const FunctionSelector = ({
         else if (step) toggleStepPicker(step.id, o);
     };
 
+    /** 👇 NUEVO: si es Gestión, al abrir el popover emulamos click en "Captura de datos" */
+    useEffect(() => {
+        if (isManagement && open) {
+            insertOrCreate(makeCaptura());
+        }
+    }, [isManagement, open]);
+
     return (
         <>
-            {
-                showAction &&
+            {showAction && (
                 <Popover open={open} onOpenChange={onOpenChange}>
                     <PopoverTrigger asChild>
                         {/* Botón visible en ambos modos */}
@@ -224,15 +230,14 @@ export const FunctionSelector = ({
                         </Command>
                     </PopoverContent>
                 </Popover>
-            }
+            )}
 
             {/* Botón extra para “regla” solo cuando hay step */}
-            {
-                showRule &&
+            {showRule && (
                 <Button onClick={addText} variant={"outline"} className="ml-2">
                     Agregar regla
                 </Button>
-            }
+            )}
         </>
     );
 };
