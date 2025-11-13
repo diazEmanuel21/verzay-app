@@ -122,7 +122,7 @@ export function ExtraInfoBuilder({
             sectionLabel: (n, step) => `### Extra ${n} — ${step.title || "Sin título"}`,
             elementsLabel: (n) => `Elementos del extra: ${n}`,
             mainMessageLabel: "Contenido / Mensaje principal",
-            joinSeparator: "\n\n---\n\n",
+            joinSeparator: "\n",
             // Firma:
             firma: { enabled: !!firmaEnabled, text: String(firmaText || "") },
         });
