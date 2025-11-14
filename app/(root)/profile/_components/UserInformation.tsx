@@ -327,12 +327,12 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {[
                                 { key: 'apiUrl', label: 'API key OpenAI', type: 'password' },
-                                { key: 'company', label: 'Empresa' },
                                 { key: 'notificationNumber', label: 'Número de notificación' },
+                                // { key: 'company', label: 'Empresa' },
                                 { key: 'autoReactivate', label: 'Tiempo de reactivación(minutos)', type: 'number' },
+                                { key: 'delayTimeGPT', label: 'Tiempo de retraso GPT(segundos)' },
                                 { key: 'openMsg', label: 'Frase de reactivación' },
                                 { key: 'del_seguimiento', label: 'Eliminar seguimiento' },
-                                { key: 'delayTimeGPT', label: 'Tiempo de retraso GPT' },
                             ].map(({ key, label, type }) => (
                                 key === 'apiUrl' ? (
                                     <ApiKeyConfigurator
