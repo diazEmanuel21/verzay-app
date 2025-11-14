@@ -16,6 +16,8 @@ import { Role } from "@prisma/client";
 import { ApiKeyConfigurator } from "./";
 import { UserInformationProps } from "../page";
 import { ConnectionMain } from "../../connection/_components";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@radix-ui/react-select";
 
 // ============================
 // Tipado
@@ -284,167 +286,177 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
         }
     };
 
-
     return (
         <>
-            {
-                user && (
-                    <div className="flex flex-col gap-4">
-                        <div className="flex flex-row justify-between">
-                            <Header
-                                title="Ajustes de perfil"
-                            />
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-4">
-                                    <div
-                                        className="relative w-16 h-16 rounded-full overflow-hidden border-border shadow-sm cursor-pointer hover:ring-2 hover:ring-primary"
-                                        onClick={() => fileRef.current?.click()}
-                                    >
-                                        <img
-                                            src={user?.image as string ?? defaultImgUrl}
-                                            alt="avatar-preview"
-                                            className="w-full h-full object-cover"
-                                        />
-                                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition">
-                                            <Camera className="text-white h-4 w-4" />
-                                        </div>
-                                    </div>
-                                </div>
+            {user && (
+                <div className="flex flex-col gap-6">
+                    {/* Barra superior: título + avatar */}
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <Header title="Ajustes de perfil" />
 
-                                <Input
-                                    id="avatar"
-                                    type="file"
-                                    accept="image/*"
-                                    ref={fileRef}
-                                    onChange={(e) => handleImageUpload(e)}
-                                    className="hidden"
+                        <div className="flex items-center gap-3 rounded-xl border bg-card px-3 py-2 shadow-sm">
+                            <button
+                                type="button"
+                                className="relative w-14 h-14 rounded-full overflow-hidden border border-border cursor-pointer hover:ring-2 hover:ring-primary transition"
+                                onClick={() => fileRef.current?.click()}
+                            >
+                                <img
+                                    src={(user?.image as string) ?? defaultImgUrl}
+                                    alt="avatar-preview"
+                                    className="w-full h-full object-cover"
                                 />
+                                <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition">
+                                    <Camera className="text-white h-4 w-4" />
+                                </div>
+                            </button>
+
+                            <div className="space-y-0.5">
+                                <p className="text-sm font-medium">
+                                    {user.name ?? "Tu perfil"}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Haz clic en la foto para actualizar tu avatar.
+                                </p>
                             </div>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <ConnectionMain
-                                user={user}
-                                instance={instancesData["Whatsapp"].instance}
-                                instanceInfo={instancesData["Whatsapp"].info}
-                                instanceType={"Whatsapp"}
-                                prompts={instancesData["Whatsapp"].prompts}
-                            />
-                            {[
-                                { key: 'apiUrl', label: 'API key OpenAI', type: 'password' },
-                                { key: 'notificationNumber', label: 'Número de notificación' },
-                                // { key: 'company', label: 'Empresa' },
-                                { key: 'autoReactivate', label: 'Tiempo de reactivación(minutos)', type: 'number' },
-                                { key: 'delayTimeGPT', label: 'Tiempo de retraso GPT(segundos)' },
-                                { key: 'openMsg', label: 'Frase de reactivación' },
-                                { key: 'del_seguimiento', label: 'Eliminar seguimiento' },
-                            ].map(({ key, label, type }) => (
-                                key === 'apiUrl' ? (
+
+                        <Input
+                            id="avatar"
+                            type="file"
+                            accept="image/*"
+                            ref={fileRef}
+                            onChange={(e) => handleImageUpload(e)}
+                            className="hidden"
+                        />
+                    </div>
+
+                    {/* Contenido principal */}
+                    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+                        <Card className="h-full">
+                            <CardHeader>
+                                <CardTitle>Preferencias del agente</CardTitle>
+                                <CardDescription>
+                                    Configura notificaciones, tiempos de respuesta y frases
+                                    automáticas.
+                                </CardDescription>
+                            </CardHeader>
+
+                            <CardContent className="space-y-4">
+                                {/* API Key */}
+                                <div className="space-y-1">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <Label className="text-sm">API key OpenAI</Label>
+                                        <span className="text-[11px] text-muted-foreground">
+                                            Gestiona la conexión con tu proveedor de IA.
+                                        </span>
+                                    </div>
                                     <ApiKeyConfigurator
-                                        key={crypto.randomUUID()}
                                         userId={userId}
                                         onSaved={() => {
                                             // si deseas refrescar la tarjeta del usuario u otros datos:
                                             // fetchClientData();
                                         }}
                                     />
-                                ) : (
-                                    <div key={key} className="space-y-2">
-                                        <Label htmlFor={key} className="text-muted-foreground">{label}</Label>
+                                </div>
+
+                                <Separator />
+
+                                {/* Campos de texto / números */}
+                                {[
+                                    {
+                                        key: "notificationNumber",
+                                        label: "Número de notificación",
+                                        placeholder: "Ej: 573233246305",
+                                    },
+                                    {
+                                        key: "autoReactivate",
+                                        label: "Tiempo de reactivación (minutos)",
+                                        type: "number",
+                                        placeholder: "Ej: 300",
+                                    },
+                                    {
+                                        key: "delayTimeGPT",
+                                        label: "Tiempo de retraso GPT (segundos)",
+                                        type: "number",
+                                        placeholder: "Ej: 12",
+                                    },
+                                    {
+                                        key: "openMsg",
+                                        label: "Frase de reactivación",
+                                        placeholder: "Ej: Fue un gusto ayudarle.",
+                                    },
+                                    {
+                                        key: "del_seguimiento",
+                                        label: "Eliminar seguimiento",
+                                        placeholder: "Texto que se enviará al cerrar el seguimiento.",
+                                    },
+                                ].map(({ key, label, type, placeholder }) => (
+                                    <div key={key} className="space-y-1.5">
+                                        <Label htmlFor={key} className="text-sm">
+                                            {label}
+                                        </Label>
                                         <Input
                                             id={key}
                                             name={key}
-                                            type={type || 'text'}
+                                            type={type || "text"}
+                                            placeholder={placeholder}
                                             value={user[key as keyof EditableFields] as string}
                                             disabled={loadingField === key}
-                                            onChange={(e) => handleChange(key as keyof UserWithPausar, e.target.value)}
+                                            onChange={(e) =>
+                                                handleChange(
+                                                    key as keyof UserWithPausar,
+                                                    e.target.value
+                                                )
+                                            }
                                             onBlur={() => handleBlur(key as keyof UserWithPausar)}
-                                            className="bg-background border-border focus-visible:ring-2 focus-visible:ring-primary"
+                                            className="bg-background border-border h-9 text-sm focus-visible:ring-2 focus-visible:ring-primary"
                                         />
                                     </div>
-                                )
-                            ))}
+                                ))}
+                            </CardContent>
+                        </Card>
 
-                            {/* Selector de color(theme) */}
-                            {user.role === Role.reseller &&
-                                <div className="space-y-2">
-                                    <BrandSelector />
-                                </div>
-                            }
-
-                            {/* Selector de modulos */}
-                            {/* {user.role === Role.reseller &&
-                                <div className="space-y-2">
-                                    <ModulesSelector />
-                                </div>
-                            } */}
-
-                            {/* URL Google Maps (OCULTADO) */}
-                            {/*
-                            <div className="space-y-2 md:col-span-2">
-                                <Label htmlFor="mapsUrl" className="text-muted-foreground">
-                                    URL de Google Maps
-                                </Label>
-                                <Input
-                                    id="mapsUrl"
-                                    name="mapsUrl"
-                                    type="text"
-                                    placeholder="Pega aquí la URL de Google Maps"
-                                    value={user?.mapsUrl}
-                                    disabled={loadingField === 'mapsUrl'}
-                                    onChange={(e) => handleMapsUrlChange(e.target.value)}
-                                    onBlur={() => handleBlur('mapsUrl')}
-                                    className="bg-background border-border focus-visible:ring-2 focus-visible:ring-primary"
+                        <Card className="h-full">
+                            <CardHeader>
+                                <CardTitle>Conexión de WhatsApp</CardTitle>
+                                <CardDescription>
+                                    Administra la instancia conectada y el estado del bot.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex justify-center items-center w-full">
+                                <ConnectionMain
+                                    user={user}
+                                    instance={instancesData["Whatsapp"].instance}
+                                    instanceInfo={instancesData["Whatsapp"].info}
+                                    instanceType={"Whatsapp"}
+                                    prompts={instancesData["Whatsapp"].prompts}
                                 />
-                            </div>
-                            */}
 
-                            {/* Latitud y Longitud (OCULTADO) */}
-                            {/*
-                            {['lat', 'lng'].map(coord => (
-                                <div key={coord} className="space-y-2">
-                                    <Label htmlFor={coord} className="text-muted-foreground">
-                                        {coord === 'lat' ? 'Latitud' : 'Longitud'}
-                                    </Label>
-                                    <Input
-                                        id={coord}
-                                        name={coord}
-                                        type="text"
-                                        value={user[coord as keyof EditableFields] as string}
-                                        disabled
-                                        readOnly
-                                        className="bg-muted border-border text-muted-foreground cursor-not-allowed"
-                                    />
-                                </div>
-                            ))}
-                            */}
-                        </div>
+                                {/* Selector de color (solo reseller) */}
+                                {user.role === Role.reseller && (
+                                    <div className="pt-2 border-t">
+                                        <Label className="text-xs text-muted-foreground mb-2 block">
+                                            Tema visual del panel
+                                        </Label>
+                                        <BrandSelector />
+                                    </div>
+                                )}
 
-                        {/* Vista previa del mapa (OCULTADO) */}
-                        {/*
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-medium text-muted-foreground">
-                                Vista previa de ubicación
-                            </h3>
-                            {user?.lat && user?.lng ? (
-                                <div className="rounded-md overflow-hidden border-border">
-                                    <iframe
-                                        src={`https://www.google.com/maps?q=${user.lat},${user.lng}&output=embed`}
-                                        width="100%"
-                                        height="300"
-                                        loading="lazy"
-                                        className="w-full h-72"
-                                    />
-                                </div>
-                            ) : (
-                                <p className="text-sm text-muted-foreground">
-                                    Ingresa una URL válida de Google Maps para ver la ubicación.
-                                </p>
-                            )}
-                        </div>
-                        */}
+                                {/* Selector de módulos (si lo vuelves a activar) */}
+                                {/* {user.role === Role.reseller && (
+                <div className="pt-2 border-t">
+                  <Label className="text-xs text-muted-foreground mb-2 block">
+                    Módulos activos
+                  </Label>
+                  <ModulesSelector />
+                </div>
+              )} */}
+                            </CardContent>
+                        </Card>
+
                     </div>
-                )
-            }
+                </div>
+            )}
         </>
     );
 };
