@@ -289,12 +289,12 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
     return (
         <>
             {user && (
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-2">
                     {/* Barra superior: título + avatar */}
-                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                         <Header title="Ajustes de perfil" />
 
-                        <div className="flex items-center gap-3 rounded-xl border bg-card px-3 py-2 shadow-sm">
+                        <div className="flex items-center gap-3 rounded-xl border bg-card p-2 shadow-sm">
                             <button
                                 type="button"
                                 className="relative w-14 h-14 rounded-full overflow-hidden border border-border cursor-pointer hover:ring-2 hover:ring-primary transition"
@@ -335,10 +335,10 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                         <Card className="h-full">
                             <CardHeader>
                                 <CardTitle>Preferencias del agente</CardTitle>
-                                <CardDescription>
+                                {/* <CardDescription>
                                     Configura notificaciones, tiempos de respuesta y frases
                                     automáticas.
-                                </CardDescription>
+                                </CardDescription> */}
                             </CardHeader>
 
                             <CardContent className="space-y-4">
@@ -361,67 +361,76 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
 
                                 <Separator />
 
-                                {/* Campos de texto / números */}
-                                {[
-                                    {
-                                        key: "notificationNumber",
-                                        label: "Número de notificación",
-                                        placeholder: "Ej: 573233246305",
-                                    },
-                                    {
-                                        key: "autoReactivate",
-                                        label: "Tiempo de reactivación (minutos)",
-                                        type: "number",
-                                        placeholder: "Ej: 300",
-                                    },
-                                    {
-                                        key: "delayTimeGPT",
-                                        label: "Tiempo de retraso GPT (segundos)",
-                                        type: "number",
-                                        placeholder: "Ej: 12",
-                                    },
-                                    {
-                                        key: "openMsg",
-                                        label: "Frase de reactivación",
-                                        placeholder: "Ej: Fue un gusto ayudarle.",
-                                    },
-                                    {
-                                        key: "del_seguimiento",
-                                        label: "Eliminar seguimiento",
-                                        placeholder: "Texto que se enviará al cerrar el seguimiento.",
-                                    },
-                                ].map(({ key, label, type, placeholder }) => (
-                                    <div key={key} className="space-y-1.5">
-                                        <Label htmlFor={key} className="text-sm">
-                                            {label}
-                                        </Label>
-                                        <Input
-                                            id={key}
-                                            name={key}
-                                            type={type || "text"}
-                                            placeholder={placeholder}
-                                            value={user[key as keyof EditableFields] as string}
-                                            disabled={loadingField === key}
-                                            onChange={(e) =>
-                                                handleChange(
-                                                    key as keyof UserWithPausar,
-                                                    e.target.value
-                                                )
-                                            }
-                                            onBlur={() => handleBlur(key as keyof UserWithPausar)}
-                                            className="bg-background border-border h-9 text-sm focus-visible:ring-2 focus-visible:ring-primary"
-                                        />
-                                    </div>
-                                ))}
+                                {/* Campos de texto / números en grid */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {[
+                                        {
+                                            key: "notificationNumber",
+                                            label: "Número de notificación",
+                                            placeholder: "Ej: 573233246305",
+                                            colSpan: "md:col-span-2", // full width
+                                        },
+                                        {
+                                            key: "autoReactivate",
+                                            label: "Tiempo de reactivación (minutos)",
+                                            type: "number",
+                                            placeholder: "Ej: 300",
+                                        },
+                                        {
+                                            key: "delayTimeGPT",
+                                            label: "Tiempo de retraso GPT (segundos)",
+                                            type: "number",
+                                            placeholder: "Ej: 12",
+                                        },
+                                        {
+                                            key: "openMsg",
+                                            label: "Frase de reactivación",
+                                            placeholder: "Ej: Fue un gusto ayudarle.",
+                                            colSpan: "md:col-span-2", // full width
+                                        },
+                                        {
+                                            key: "del_seguimiento",
+                                            label: "Eliminar seguimiento",
+                                            placeholder: "Texto que se enviará al cerrar el seguimiento.",
+                                            colSpan: "md:col-span-2", // full width
+                                        },
+                                    ].map(({ key, label, type, placeholder, colSpan }) => (
+                                        <div
+                                            key={key}
+                                            className={`space-y-1.5 ${colSpan ?? ""}`}
+                                        >
+                                            <Label htmlFor={key} className="text-sm">
+                                                {label}
+                                            </Label>
+                                            <Input
+                                                id={key}
+                                                name={key}
+                                                type={type || "text"}
+                                                placeholder={placeholder}
+                                                value={user[key as keyof EditableFields] as string}
+                                                disabled={loadingField === key}
+                                                onChange={(e) =>
+                                                    handleChange(
+                                                        key as keyof UserWithPausar,
+                                                        e.target.value
+                                                    )
+                                                }
+                                                onBlur={() => handleBlur(key as keyof UserWithPausar)}
+                                                className="bg-background border-border h-9 text-sm focus-visible:ring-2 focus-visible:ring-primary"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
                             </CardContent>
                         </Card>
+
 
                         <Card className="h-full">
                             <CardHeader>
                                 <CardTitle>Conexión de WhatsApp</CardTitle>
-                                <CardDescription>
+                                {/* <CardDescription>
                                     Administra la instancia conectada y el estado del bot.
-                                </CardDescription>
+                                </CardDescription> */}
                             </CardHeader>
                             <CardContent className="flex justify-center items-center w-full">
                                 <ConnectionMain
