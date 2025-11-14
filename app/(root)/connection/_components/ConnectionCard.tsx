@@ -110,7 +110,8 @@ export const ConnectionCard = ({
     // Renderizado Condicional: Tarjeta de Bloqueo con Tema Dual
     if (isFacebookOrInstagram && !isChannelEnabled) {
         return (
-            <Card className="border-border max-w-60 text-center shadow-lg">
+            // <Card className="border-border max-w-60 text-center shadow-lg">
+            <Card className="border-border w-full">
                 <CardHeader className="flex flex-col items-start justify-center p-6 space-y-3">
                     <div className="flex items-center gap-2">
                         <SocialIconSelector instanceType={instanceType} />
@@ -148,7 +149,7 @@ export const ConnectionCard = ({
 
     // Renderizado Condicional: Tarjeta de Formulario
     return (
-        <Card className="border-border max-w-96">
+        <Card className="border-border w-full">
             <CardHeader className="flex flex-row items-center justify-center p-6">
                 <CardTitle className="text-center text-2xl font-bold flex items-center gap-2">
                     <SocialIconSelector instanceType={instanceType} />

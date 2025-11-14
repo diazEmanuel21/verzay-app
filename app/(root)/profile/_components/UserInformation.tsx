@@ -18,6 +18,7 @@ import { UserInformationProps } from "../page";
 import { ConnectionMain } from "../../connection/_components";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@radix-ui/react-select";
+import { Button } from "react-day-picker";
 
 // ============================
 // Tipado
@@ -294,7 +295,7 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                         <Header title="Ajustes de perfil" />
 
-                        <div className="flex items-center gap-3 rounded-xl border bg-card p-2 shadow-sm">
+                        <div className="flex items-center gap-3 rounded-xl border-border bg-card p-2 shadow-sm">
                             <button
                                 type="button"
                                 className="relative w-14 h-14 rounded-full overflow-hidden border border-border cursor-pointer hover:ring-2 hover:ring-primary transition"
@@ -309,15 +310,6 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                     <Camera className="text-white h-4 w-4" />
                                 </div>
                             </button>
-
-                            <div className="space-y-0.5">
-                                <p className="text-sm font-medium">
-                                    {user.name ?? "Tu perfil"}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                    Haz clic en la foto para actualizar tu avatar.
-                                </p>
-                            </div>
                         </div>
 
                         <Input
@@ -331,114 +323,22 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                     </div>
 
                     {/* Contenido principal */}
-                    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-                        <Card className="h-full">
-                            <CardHeader>
-                                <CardTitle>Preferencias del agente</CardTitle>
-                                {/* <CardDescription>
-                                    Configura notificaciones, tiempos de respuesta y frases
-                                    automáticas.
-                                </CardDescription> */}
-                            </CardHeader>
-
-                            <CardContent className="space-y-4">
-                                {/* API Key */}
-                                <div className="space-y-1">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <Label className="text-sm">API key OpenAI</Label>
-                                        <span className="text-[11px] text-muted-foreground">
-                                            Gestiona la conexión con tu proveedor de IA.
-                                        </span>
-                                    </div>
-                                    <ApiKeyConfigurator
-                                        userId={userId}
-                                        onSaved={() => {
-                                            // si deseas refrescar la tarjeta del usuario u otros datos:
-                                            // fetchClientData();
-                                        }}
-                                    />
-                                </div>
-
-                                <Separator />
-
-                                {/* Campos de texto / números en grid */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {[
-                                        {
-                                            key: "notificationNumber",
-                                            label: "Número de notificación",
-                                            placeholder: "Ej: 573233246305",
-                                            colSpan: "md:col-span-2", // full width
-                                        },
-                                        {
-                                            key: "autoReactivate",
-                                            label: "Tiempo de reactivación (minutos)",
-                                            type: "number",
-                                            placeholder: "Ej: 300",
-                                        },
-                                        {
-                                            key: "delayTimeGPT",
-                                            label: "Tiempo de retraso GPT (segundos)",
-                                            type: "number",
-                                            placeholder: "Ej: 12",
-                                        },
-                                        {
-                                            key: "openMsg",
-                                            label: "Frase de reactivación",
-                                            placeholder: "Ej: Fue un gusto ayudarle.",
-                                            colSpan: "md:col-span-2", // full width
-                                        },
-                                        {
-                                            key: "del_seguimiento",
-                                            label: "Eliminar seguimiento",
-                                            placeholder: "Texto que se enviará al cerrar el seguimiento.",
-                                            colSpan: "md:col-span-2", // full width
-                                        },
-                                    ].map(({ key, label, type, placeholder, colSpan }) => (
-                                        <div
-                                            key={key}
-                                            className={`space-y-1.5 ${colSpan ?? ""}`}
-                                        >
-                                            <Label htmlFor={key} className="text-sm">
-                                                {label}
-                                            </Label>
-                                            <Input
-                                                id={key}
-                                                name={key}
-                                                type={type || "text"}
-                                                placeholder={placeholder}
-                                                value={user[key as keyof EditableFields] as string}
-                                                disabled={loadingField === key}
-                                                onChange={(e) =>
-                                                    handleChange(
-                                                        key as keyof UserWithPausar,
-                                                        e.target.value
-                                                    )
-                                                }
-                                                onBlur={() => handleBlur(key as keyof UserWithPausar)}
-                                                className="bg-background border-border h-9 text-sm focus-visible:ring-2 focus-visible:ring-primary"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </CardContent>
-                        </Card>
-
-
-                        <Card className="h-full">
-                            <CardHeader>
-                                <CardTitle>Conexión de WhatsApp</CardTitle>
-                                {/* <CardDescription>
-                                    Administra la instancia conectada y el estado del bot.
-                                </CardDescription> */}
-                            </CardHeader>
-                            <CardContent className="flex justify-center items-center w-full">
+                    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
+                        <div className="h-full">
+                            <div className="flex justify-between items-center w-full flex-col gap-2">
                                 <ConnectionMain
                                     user={user}
                                     instance={instancesData["Whatsapp"].instance}
                                     instanceInfo={instancesData["Whatsapp"].info}
                                     instanceType={"Whatsapp"}
                                     prompts={instancesData["Whatsapp"].prompts}
+                                />
+                                <ConnectionMain
+                                    user={user}
+                                    instance={instancesData["Instagram"].instance}
+                                    instanceInfo={instancesData["Instagram"].info}
+                                    instanceType={"Instagram"}
+                                    prompts={instancesData["Instagram"].prompts}
                                 />
 
                                 {/* Selector de color (solo reseller) */}
@@ -460,12 +360,182 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                   <ModulesSelector />
                 </div>
               )} */}
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
+                        <div className="flex gap-2 flex-col">
+                            {/* CARD 1: Integraciones */}
+                            <Card className="border-border">
+                                {/* <CardHeader>
+                                    <CardTitle className="text-base">Integraciones</CardTitle>
+                                    <CardDescription>
+                                        Conecta tus proveedores de IA y notificaciones.
+                                    </CardDescription>
+                                </CardHeader> */}
+
+                                <CardContent className="space-y-3 pt-4">
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                                        <div className="flex-1">
+                                            {/* Aquí usas tu componente en lugar de un input plano */}
+                                            <div className="mt-1">
+                                                <ApiKeyConfigurator
+                                                    userId={userId}
+                                                    onSaved={() => {
+                                                        // si deseas refrescar la tarjeta del usuario u otros datos:
+                                                        // fetchClientData?.();
+                                                    }}
+                                                />
+                                            </div>
+
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                Gestiona tu API key de OpenAI, Google u otros proveedores.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Número de notificación */}
+                                    <div>
+                                        <Label htmlFor="notificationNumber">Número de notificación</Label>
+                                        <Input
+                                            id="notificationNumber"
+                                            name="notificationNumber"
+                                            placeholder="Ej: 573233246305"
+                                            className="mt-1"
+                                            value={(user.notificationNumber as string) ?? ""}
+                                            disabled={loadingField === "notificationNumber"}
+                                            onChange={(e) =>
+                                                handleChange("notificationNumber", e.target.value)
+                                            }
+                                            onBlur={() => handleBlur("notificationNumber")}
+                                        />
+                                        <p className="mt-1 text-xs text-muted-foreground">
+                                            WhatsApp al que se enviarán las alertas del asistente.
+                                        </p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* CARD 2: Tiempos de respuesta */}
+                            <Card className="border-border">
+                                {/* <CardHeader>
+                                    <CardTitle className="text-base">Tiempos de respuesta</CardTitle>
+                                    <CardDescription>
+                                        Controla cada cuánto se reactiva el bot y el retraso de las respuestas.
+                                    </CardDescription>
+                                </CardHeader> */}
+
+                                <CardContent className="space-y-4 pt-4">
+                                    {/* Primera fila: reactivación y delay GPT */}
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        {/* Tiempo de reactivación */}
+                                        <div>
+                                            <Label htmlFor="autoReactivate">Tiempo de reactivación</Label>
+                                            <div className="mt-1 flex items-center gap-2">
+                                                <Input
+                                                    id="autoReactivate"
+                                                    name="autoReactivate"
+                                                    type="number"
+                                                    min={0}
+                                                    className="flex-1"
+                                                    value={
+                                                        user.autoReactivate !== null &&
+                                                            user.autoReactivate !== undefined
+                                                            ? String(user.autoReactivate)
+                                                            : ""
+                                                    }
+                                                    disabled={loadingField === "autoReactivate"}
+                                                    onChange={(e) =>
+                                                        handleChange("autoReactivate", e.target.value)
+                                                    }
+                                                    onBlur={() => handleBlur("autoReactivate")}
+                                                />
+                                                <span className="text-xs text-muted-foreground">min</span>
+                                            </div>
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                Después de este tiempo sin mensajes, el bot puede volver a escribir.
+                                            </p>
+                                        </div>
+
+                                        {/* Tiempo de retraso GPT */}
+                                        <div>
+                                            <Label htmlFor="delayTimeGPT">Tiempo de retraso GPT</Label>
+                                            <div className="mt-1 flex items-center gap-2">
+                                                <Input
+                                                    id="delayTimeGPT"
+                                                    name="delayTimeGPT"
+                                                    type="number"
+                                                    min={0}
+                                                    className="flex-1"
+                                                    value={
+                                                        user.delayTimeGPT !== null &&
+                                                            user.delayTimeGPT !== undefined
+                                                            ? String(user.delayTimeGPT)
+                                                            : ""
+                                                    }
+                                                    disabled={loadingField === "delayTimeGPT"}
+                                                    onChange={(e) =>
+                                                        handleChange("delayTimeGPT", e.target.value)
+                                                    }
+                                                    onBlur={() => handleBlur("delayTimeGPT")}
+                                                />
+                                                <span className="text-xs text-muted-foreground">seg</span>
+                                            </div>
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                Retraso antes de enviar la respuesta generada por IA.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <Separator />
+
+                                    {/* Segunda fila: frases */}
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        {/* Frase de reactivación */}
+                                        <div>
+                                            <Label htmlFor="openMsg">Frase de reactivación</Label>
+                                            <Input
+                                                id="openMsg"
+                                                name="openMsg"
+                                                placeholder="Fue un gusto ayudarle."
+                                                className="mt-1"
+                                                value={(user.openMsg as string) ?? ""}
+                                                disabled={loadingField === "openMsg"}
+                                                onChange={(e) => handleChange("openMsg", e.target.value)}
+                                                onBlur={() => handleBlur("openMsg")}
+                                            />
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                Mensaje que se enviará al reactivar una conversación.
+                                            </p>
+                                        </div>
+
+                                        {/* Eliminar seguimiento */}
+                                        <div>
+                                            <Label htmlFor="del_seguimiento">Eliminar seguimiento</Label>
+                                            <Input
+                                                id="del_seguimiento"
+                                                name="del_seguimiento"
+                                                placeholder="Fue un gusto ayudarle."
+                                                className="mt-1"
+                                                value={(user.del_seguimiento as string) ?? ""}
+                                                disabled={loadingField === "del_seguimiento"}
+                                                onChange={(e) =>
+                                                    handleChange("del_seguimiento", e.target.value)
+                                                }
+                                                onBlur={() => handleBlur("del_seguimiento")}
+                                            />
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                Frase final cuando finalizas el seguimiento del cliente.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
                     </div>
                 </div>
             )}
         </>
     );
 };
+
+
