@@ -7,7 +7,6 @@ import { getInstancesByUserId } from "@/actions/instances-actions";
 import { getApiKeyById } from "@/actions/api-action";
 import { fetchInstanceAction } from "@/actions/fetch-intance-action";
 import { getPromptsByUserId } from "@/actions/prompt-actions";
-
 interface ActionResponse<T> {
   success: boolean;
   message: string;

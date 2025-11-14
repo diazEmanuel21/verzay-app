@@ -320,10 +320,8 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                     className="hidden"
                                 />
                             </div>
-
                         </div>
-
-                        <div className="flex flex-1 flex-wrap gap-4 items-center justify-center">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <ConnectionMain
                                 user={user}
                                 instance={instancesData["Whatsapp"].instance}
@@ -331,10 +329,6 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                 instanceType={"Whatsapp"}
                                 prompts={instancesData["Whatsapp"].prompts}
                             />
-
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {[
                                 { key: 'apiUrl', label: 'API key OpenAI', type: 'password' },
                                 { key: 'notificationNumber', label: 'Número de notificación' },
