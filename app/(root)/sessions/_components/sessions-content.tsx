@@ -16,6 +16,7 @@ import { columns } from "./Columns";
 import { DataTable } from "./data-table";
 import { BulkActionsDropdown } from "./BulkActionsDropdown";
 import { cn } from "@/lib/utils";
+import { deleteRemindersByInstanceName } from "@/actions/reminders-actions";
 
 interface SessionsContentProps {
   userId: string;
@@ -267,6 +268,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
             onDeactivateAll={deactivateAllSessions}
             onDeleteAll={deleteAllSessions}
             onClearHistory={clearAllHistory}
+            onClearReminders={deleteRemindersByInstanceName}
             onSuccess={() => router.refresh()}
           />
         </div>

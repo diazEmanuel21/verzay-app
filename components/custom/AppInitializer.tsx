@@ -32,7 +32,7 @@ export default function AppInitializer({ onReseller, modules, user }: AppInitial
     useEffect(() => {
         if (!user) return;
         const access = canAccessRoute({
-            route: pathname,
+            route: pathname ?? '/',
             userRole: user.role,
             userPlan: user.plan,
             modules,

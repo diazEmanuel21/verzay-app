@@ -50,7 +50,8 @@ const breadcrumbLabels: Record<string, string> = {
 };
 
 export const Breadcrumbs = () => {
-  const pathname = usePathname();
+  const rawPathname = usePathname();
+  const pathname = rawPathname ?? '/';
   const [guides, setGuides] = useState<GuidesUrl[]>([]);
 
   useEffect(() => {
@@ -84,7 +85,7 @@ export const Breadcrumbs = () => {
     <>
       {pathname !== "/multiagente" ?
         <div className="h-18 shrink-0 block">
-        {/* <div className="h-18 shrink-0 block md:hidden lg:hidden xl:hidden"> */}
+          {/* <div className="h-18 shrink-0 block md:hidden lg:hidden xl:hidden"> */}
           <header className={`sticky top-0 w-full border-border flex items-center px-4 dark:bg-gray-900 dark:text-white`}>
             {/* <Breadcrumb className='py-4 flex flex-row flex-1 overflow-hidden bg-slate-100 text-black dark:bg-gray-900 dark:text-white border-border'> */}
             <Breadcrumb className='py-2 flex flex-row flex-1 overflow-hidden dark:bg-gray-900 dark:text-white'>

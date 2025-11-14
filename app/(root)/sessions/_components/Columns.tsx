@@ -27,6 +27,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { deleteReminderByInstanceUserRemote } from "@/actions/reminders-actions";
 
 export type Session = {
   id: number;
@@ -44,6 +45,7 @@ export type Session = {
 function ActionsCell({ session, onDeleteSuccess }: { session: Session, onDeleteSuccess: (deletedId: number) => void }) {
   const [openDeleteCliente, setOpenDeleteCliente] = useState(false);
   const [openDeleteHistorial, setOpenDeleteHistorial] = useState(false);
+  const [openDeleteReminders, setOpenDeleteReminders] = useState(false);
 
   const handleDeleteCliente = async () => {
     try {
@@ -78,6 +80,24 @@ function ActionsCell({ session, onDeleteSuccess }: { session: Session, onDeleteS
     }
   };
 
+  const handleDeleteSeguimientos = async () => {
+    try {
+      const reminderRes = await deleteReminderByInstanceUserRemote(
+        session.instanceId,
+        session.userId,
+        session.remoteJid
+      )
+      if (reminderRes.success) {
+        toast.success("Seguimientos eliminados correctamente.");
+      } else {
+        toast.error(reminderRes.message || "Error al eliminar seguimientos.");
+      }
+    } catch (error) {
+      toast.error("Error inesperado al eliminar seguimientos.");
+      console.error(error);
+    }
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -107,6 +127,15 @@ function ActionsCell({ session, onDeleteSuccess }: { session: Session, onDeleteS
           >
             Eliminar sesión
           </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              setOpenDeleteReminders(true);
+            }}
+            className="text-red-600"
+          >
+            Eliminar seguimientos
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -131,8 +160,8 @@ function ActionsCell({ session, onDeleteSuccess }: { session: Session, onDeleteS
       <AlertDialog open={openDeleteCliente} onOpenChange={setOpenDeleteCliente}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar sesión?</AlertDialogTitle>
-            <AlertDialogDescription>Eliminará la sesión y su historial. ¿Deseas continuar?</AlertDialogDescription>
+            <AlertDialogTitle>¿Eliminar seguimientos?</AlertDialogTitle>
+            <AlertDialogDescription>Eliminará todos los seguimientos asociados al cliente. ¿Deseas continuar?</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -141,6 +170,24 @@ function ActionsCell({ session, onDeleteSuccess }: { session: Session, onDeleteS
               onClick={handleDeleteCliente}
             >
               Eliminar sesión
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={openDeleteReminders} onOpenChange={setOpenDeleteReminders}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar sesión?</AlertDialogTitle>
+            <AlertDialogDescription>Eliminará la sesión y su historial. ¿Deseas continuar?</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={handleDeleteSeguimientos}
+            >
+              Eliminar seguimientos
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

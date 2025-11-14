@@ -35,7 +35,7 @@ import {
 import { Session } from '@prisma/client'
 import { useReactTable } from '@tanstack/react-table'
 
-type BulkActionType = 'activate' | 'deactivate' | 'deleteAll' | 'clearHistory'
+type BulkActionType = 'activate' | 'deactivate' | 'deleteAll' | 'clearHistory' | 'clearReminders'
 // type BulkActionType = 'activate' | 'deactivate' | 'deleteAll'
 
 interface BulkActionsDropdownProps {
@@ -44,6 +44,7 @@ interface BulkActionsDropdownProps {
     onDeactivateAll: (userId: string) => Promise<any>
     onDeleteAll: (userId: string) => Promise<any>
     onClearHistory: (userId: string) => Promise<any>
+    onClearReminders: (userId: string) => Promise<any>
     onSuccess?: () => void
 }
 
@@ -53,6 +54,7 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
     onDeactivateAll,
     onDeleteAll,
     onClearHistory,
+    onClearReminders,
     onSuccess,
 }) => {
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -92,6 +94,13 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
             confirmPhrase: 'si',
             handler: onClearHistory,
             toastId: 'clear-history',
+        },
+        clearReminders: {
+            label: 'Borrar seguimientos de todos',
+            // confirmPhrase: 'Borrar historial de todos',
+            confirmPhrase: 'si',
+            handler: onClearReminders,
+            toastId: 'clear-reminders',
         },
     };
 
@@ -193,6 +202,13 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
                     >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Eliminar clientes
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        onClick={() => openDialog('clearReminders')}
+                        className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/40"
+                    >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Eliminar seguimientos
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>

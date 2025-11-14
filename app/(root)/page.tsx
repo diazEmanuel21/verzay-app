@@ -109,7 +109,7 @@ const Home = async ({ searchParams }: SearchParamProps) => {
         instanceType={"Whatsapp"}
         prompts={instancesData["Whatsapp"].prompts}
       />
-      <ConnectionMain
+      {/* <ConnectionMain
         user={user}
         instance={instancesData["Instagram"].instance}
         instanceInfo={instancesData["Instagram"].info}
@@ -122,7 +122,7 @@ const Home = async ({ searchParams }: SearchParamProps) => {
         instanceInfo={instancesData["Facebook"].info}
         instanceType={"Facebook"}
         prompts={instancesData["Facebook"].prompts}
-      />
+      /> */}
       {/* No se muestra la tarjeta “Desconocido” */}
     </div>
   );
