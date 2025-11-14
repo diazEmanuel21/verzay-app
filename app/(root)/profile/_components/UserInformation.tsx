@@ -13,10 +13,9 @@ import { UserWithPausar } from "@/lib/types";
 import { BrandSelector } from "../../../../components/custom";
 import { useResellerStore } from "@/stores/resellers/resellerStore";
 import { Role } from "@prisma/client";
-import { ApiKeyConfigurator, NotificationPhoneInput } from "./";
-import { Country } from "@/components/custom/CountryCodeSelect";
-import Image from "next/image";
-import { randomUUID } from "crypto";
+import { ApiKeyConfigurator } from "./";
+import { UserInformationProps } from "../page";
+import { ConnectionMain } from "../../connection/_components";
 
 // ============================
 // Tipado
@@ -56,7 +55,7 @@ const defaultImgUrl = 'https://images.pexels.com/photos/133356/pexels-photo-1333
 // ============================
 // Componente Principal
 // ============================
-export const UserInformation = ({ userId, countries }: { userId: string, countries: Country[] }) => {
+export const UserInformation = ({ userId, countries, instancesData }: UserInformationProps) => {
     const reseller = useResellerStore((state) => state.reseller);
 
     /* Se extiende el user para poder utilizar openMsg from Pausar cómo un field nativo del User */
@@ -321,6 +320,17 @@ export const UserInformation = ({ userId, countries }: { userId: string, countri
                                     className="hidden"
                                 />
                             </div>
+
+                        </div>
+
+                        <div className="flex flex-1 flex-wrap gap-4 items-center justify-center">
+                            <ConnectionMain
+                                user={user}
+                                instance={instancesData["Whatsapp"].instance}
+                                instanceInfo={instancesData["Whatsapp"].info}
+                                instanceType={"Whatsapp"}
+                                prompts={instancesData["Whatsapp"].prompts}
+                            />
 
                         </div>
 
