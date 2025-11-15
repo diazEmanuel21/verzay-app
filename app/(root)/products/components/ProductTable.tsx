@@ -13,31 +13,14 @@ import { Badge } from "@/components/ui/badge";
 import { ProductForm } from "./ProductForm";
 import { deleteProduct } from "@/actions/products-actions";
 import { Trash2 } from "lucide-react";
+import { ProductTableInterface, ProductType } from "@/types/products";
 
-type Product = {
-    id: string;
-    title: string;
-    description: string | null;
-    price: number;
-    sku: string | null;
-    stock: number;
-    isActive: boolean;
-    images: string[];
-    category: string;  // Nueva propiedad para la categoría
-    tags: string[];    // Nueva propiedad para las etiquetas
-    userId: string;
-    createdAt: Date;
-    updatedAt: Date;
-};
 
 export const ProductTable = ({
     data,
     userId,
-}: {
-    data: { items: Product[]; total: number; page: number; pages: number };
-    userId: string;
-}) => {
-    const columns = useMemo<ColumnDef<Product>[]>(() => [
+}: ProductTableInterface) => {
+    const columns = useMemo<ColumnDef<ProductType>[]>(() => [
         { header: "Nombre", accessorKey: "title" },
         {
             header: "Detalles",
@@ -158,7 +141,7 @@ export const ProductTable = ({
                                     {r.getVisibleCells().map((c) => (
                                         <td
                                             key={c.id}
-                                            className="py-2 px-2 align-top"
+                                            className="py-2 px-2 align-center"
                                         >
                                             {flexRender(
                                                 c.column.columnDef.cell,
