@@ -1,18 +1,31 @@
-import { UnderConstruction } from "@/components/custom"
-import { currentUser } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import { redirect } from 'next/navigation';
+import { UserInformation } from '@/app/(root)/profile/_components/UserInformation';
+import { currentUser } from '@/lib/auth';
+import { getCountryCodes } from '@/actions/get-country-action';
 import { ApiKey, Instancias, PromptInstance } from "@prisma/client";
 import { getInstancesByUserId } from "@/actions/instances-actions";
 import { getApiKeyById } from "@/actions/api-action";
 import { fetchInstanceAction } from "@/actions/fetch-intance-action";
 import { getPromptsByUserId } from "@/actions/prompt-actions";
-import { ConnectionMain } from "./connection/_components";
-
-// Tipo de la respuesta esperada
 interface ActionResponse<T> {
   success: boolean;
   message: string;
   data?: T;
+}
+export interface InstanceInterfaceConn {
+  instance?: Instancias;
+  info?: any;
+  prompts: PromptInstance[]; // mejor que sea siempre array
+}
+
+export type InstanceKind = "Whatsapp" | "Instagram" | "Facebook" | "Desconocido";
+
+type InstancesData = Record<InstanceKind, InstanceInterfaceConn>;
+
+export interface UserInformationProps {
+  userId: string;
+  countries: any[];
+  instancesData: InstancesData;
 }
 
 // Adapta las funciones de tipo para manejar arrays
@@ -27,18 +40,28 @@ function hasPrompts(result: { data?: PromptInstance[] | null }): result is { dat
 }
 
 // Normaliza el tipo (null/undefined -> "Desconocido")
-const normalizeType = (t?: string | null): string => {
-  const valid = ["Whatsapp", "Instagram", "Facebook"];
+const normalizeType = (t?: string | null): InstanceKind => {
   if (!t) return "Desconocido";
   const normalized = t.trim();
-  return valid.includes(normalized) ? normalized : "Desconocido";
+
+  if (
+    normalized === "Whatsapp" ||
+    normalized === "Instagram" ||
+    normalized === "Facebook"
+  ) {
+    return normalized as InstanceKind;
+  }
+
+  return "Desconocido";
 };
 
-const Home = async ({ searchParams }: SearchParamProps) => {
+const Home = async () => {
   const user = await currentUser();
+
   if (!user) {
-    redirect("/login");
-  }
+    redirect('/login');
+  };
+
 
   // Obtener instancias, API key y prompts en paralelo
   const [resInstancias, resApikey, resPrompts] = await Promise.all([
@@ -51,12 +74,8 @@ const Home = async ({ searchParams }: SearchParamProps) => {
   const apiKey = hasApikey(resApikey) ? resApikey.data : null;
   const prompts = hasPrompts(resPrompts) ? resPrompts.data : [];
 
-  // Inicialización flexible (incluye “Desconocido”)
-  const instancesData: Record<string, {
-    instance?: Instancias;
-    info?: any;
-    prompts?: PromptInstance[];
-  }> = {
+
+  const instancesData: InstancesData = {
     Whatsapp: { prompts: [] },
     Instagram: { prompts: [] },
     Facebook: { prompts: [] },
@@ -64,19 +83,17 @@ const Home = async ({ searchParams }: SearchParamProps) => {
   };
 
   // Asignar instancias sin sobrescribir otras
-  instancias.forEach(instancia => {
+  instancias.forEach((instancia) => {
     const type = normalizeType(instancia.instanceType);
-    if (!instancesData[type]) instancesData[type] = { prompts: [] };
     if (!instancesData[type].instance) {
       instancesData[type].instance = instancia;
     }
   });
 
   // Asignar prompts al tipo correspondiente
-  prompts.forEach(prompt => {
+  prompts.forEach((prompt) => {
     const type = normalizeType(prompt.instanceType);
-    if (!instancesData[type]) instancesData[type] = { prompts: [] };
-    instancesData[type].prompts?.push(prompt);
+    instancesData[type].prompts.push(prompt);
   });
 
   // Consultar Evolution solo para WhatsApp
@@ -99,33 +116,13 @@ const Home = async ({ searchParams }: SearchParamProps) => {
     await Promise.all(fetchPromises);
   }
 
-  // Render
+  const countries = await getCountryCodes();
+
   return (
-    <div className="flex flex-1 flex-wrap gap-4 items-center justify-center">
-      <ConnectionMain
-        user={user}
-        instance={instancesData["Whatsapp"].instance}
-        instanceInfo={instancesData["Whatsapp"].info}
-        instanceType={"Whatsapp"}
-        prompts={instancesData["Whatsapp"].prompts}
-      />
-      {/* <ConnectionMain
-        user={user}
-        instance={instancesData["Instagram"].instance}
-        instanceInfo={instancesData["Instagram"].info}
-        instanceType={"Instagram"}
-        prompts={instancesData["Instagram"].prompts}
-      />
-      <ConnectionMain
-        user={user}
-        instance={instancesData["Facebook"].instance}
-        instanceInfo={instancesData["Facebook"].info}
-        instanceType={"Facebook"}
-        prompts={instancesData["Facebook"].prompts}
-      /> */}
-      {/* No se muestra la tarjeta “Desconocido” */}
-    </div>
+    <>
+      <UserInformation userId={user.id} countries={countries} instancesData={instancesData} />
+    </>
   );
-};
+}
 
 export default Home;

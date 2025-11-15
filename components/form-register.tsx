@@ -40,7 +40,7 @@ const FormRegister = () => {
       if (response.error) {
         setError(response.error);
       } else {
-        router.push("/connection");
+        router.push("/profile");
       }
     });
   }
