@@ -293,8 +293,8 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                 <div className="flex flex-col gap-2">
                     {/* Barra superior: título + avatar */}
                     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                        {/* <Header title="Ajustes de perfil" /> */}
-                        <div></div>
+                        <Header title="Ajustes de perfil" />
+                        {/* <div></div> */}
 
                         <div className="flex items-center gap-3 rounded-xl border-border bg-card p-2 shadow-sm">
                             <button
@@ -312,14 +312,14 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                 </div>
                             </button>
 
-                            <div className="space-y-0.5">
+                            {/* <div className="space-y-0.5">
                                 <p className="text-sm font-medium">
                                     {user.name ?? "Tu perfil"}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                     Haz clic en la foto para actualizar tu avatar.
                                 </p>
-                            </div>
+                            </div> */}
                         </div>
 
                         <Input
