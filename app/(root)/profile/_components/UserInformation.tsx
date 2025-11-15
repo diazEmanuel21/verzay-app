@@ -293,7 +293,8 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                 <div className="flex flex-col gap-2">
                     {/* Barra superior: título + avatar */}
                     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                        <Header title="Ajustes de perfil" />
+                        {/* <Header title="Ajustes de perfil" /> */}
+                        <div></div>
 
                         <div className="flex items-center gap-3 rounded-xl border-border bg-card p-2 shadow-sm">
                             <button
@@ -310,6 +311,15 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                     <Camera className="text-white h-4 w-4" />
                                 </div>
                             </button>
+
+                            <div className="space-y-0.5">
+                                <p className="text-sm font-medium">
+                                    {user.name ?? "Tu perfil"}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Haz clic en la foto para actualizar tu avatar.
+                                </p>
+                            </div>
                         </div>
 
                         <Input
@@ -363,7 +373,7 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                             </div>
                         </div>
 
-                        <div className="flex gap-2 flex-col">
+                        <div className="flex gap-2 flex-col justify-between">
                             {/* CARD 1: Integraciones */}
                             <Card className="border-border">
                                 {/* <CardHeader>
@@ -387,9 +397,9 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                                 />
                                             </div>
 
-                                            <p className="mt-1 text-xs text-muted-foreground">
+                                            {/* <p className="mt-1 text-xs text-muted-foreground">
                                                 Gestiona tu API key de OpenAI, Google u otros proveedores.
-                                            </p>
+                                            </p> */}
                                         </div>
                                     </div>
 
@@ -408,9 +418,9 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                             }
                                             onBlur={() => handleBlur("notificationNumber")}
                                         />
-                                        <p className="mt-1 text-xs text-muted-foreground">
+                                        {/* <p className="mt-1 text-xs text-muted-foreground">
                                             WhatsApp al que se enviarán las alertas del asistente.
-                                        </p>
+                                        </p> */}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -451,9 +461,9 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                                 />
                                                 <span className="text-xs text-muted-foreground">min</span>
                                             </div>
-                                            <p className="mt-1 text-xs text-muted-foreground">
+                                            {/* <p className="mt-1 text-xs text-muted-foreground">
                                                 Después de este tiempo sin mensajes, el bot puede volver a escribir.
-                                            </p>
+                                            </p> */}
                                         </div>
 
                                         {/* Tiempo de retraso GPT */}
@@ -480,9 +490,9 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                                 />
                                                 <span className="text-xs text-muted-foreground">seg</span>
                                             </div>
-                                            <p className="mt-1 text-xs text-muted-foreground">
+                                            {/* <p className="mt-1 text-xs text-muted-foreground">
                                                 Retraso antes de enviar la respuesta generada por IA.
-                                            </p>
+                                            </p> */}
                                         </div>
                                     </div>
 
@@ -503,9 +513,9 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                                 onChange={(e) => handleChange("openMsg", e.target.value)}
                                                 onBlur={() => handleBlur("openMsg")}
                                             />
-                                            <p className="mt-1 text-xs text-muted-foreground">
+                                            {/* <p className="mt-1 text-xs text-muted-foreground">
                                                 Mensaje que se enviará al reactivar una conversación.
-                                            </p>
+                                            </p> */}
                                         </div>
 
                                         {/* Eliminar seguimiento */}
@@ -523,9 +533,9 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                                 }
                                                 onBlur={() => handleBlur("del_seguimiento")}
                                             />
-                                            <p className="mt-1 text-xs text-muted-foreground">
+                                            {/* <p className="mt-1 text-xs text-muted-foreground">
                                                 Frase final cuando finalizas el seguimiento del cliente.
-                                            </p>
+                                            </p> */}
                                         </div>
                                     </div>
                                 </CardContent>
