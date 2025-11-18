@@ -59,45 +59,10 @@ export const BusinessPromptBuilder = ({
     onConflict,
 }: BusinessPromptBuilderProps) => {
     const [selectedFields, setSelectedFields] = useState<string[]>([]);
-
-    // Defaults memorizados a partir de props externas
-    const defaults = useMemo<FormValues>(() => {
-        return {
-            nombre: user?.company ?? values.nombre ?? "",
-            sector: values.sector ?? "",
-            ubicacion: values.ubicacion ?? "",
-            horarios: values.horarios ?? "",
-            maps: user?.mapsUrl ?? values.maps ?? "",
-            telefono: values.telefono ?? "",
-            email: values.email ?? "",
-            sitio: values.sitio ?? "",
-            facebook: values.facebook ?? "",
-            instagram: values.instagram ?? "",
-            tiktok: values.tiktok ?? "",
-            youtube: values.youtube ?? "",
-            notas: values.notas ?? "",
-        };
-    }, [
-        user?.company,
-        user?.mapsUrl,
-        values.nombre,
-        values.sector,
-        values.ubicacion,
-        values.horarios,
-        values.maps,
-        values.telefono,
-        values.email,
-        values.sitio,
-        values.facebook,
-        values.instagram,
-        values.tiktok,
-        values.youtube,
-        values.notas,
-    ]);
-
+ 
     const form = useForm<FormValues>({
         resolver: zodResolver(promptSchema),
-        defaultValues: defaults,
+        defaultValues: values,
         mode: "onChange",
     });
 
@@ -112,8 +77,8 @@ export const BusinessPromptBuilder = ({
 
     // Si cambian los valores externos, resetea sin pisar campos sucios
     useEffect(() => {
-        form.reset(defaults, { keepDirtyValues: true });
-    }, [form, defaults]);
+        form.reset(values, { keepDirtyValues: true });
+    }, [form, values]);
 
     // 👇 Mostrar campos ocultos si ya tienen valor (con typings seguros)
     const watchAll = form.watch() as Partial<Record<keyof FormValues, unknown>>;
@@ -147,7 +112,10 @@ export const BusinessPromptBuilder = ({
 
                 <CardContent className="space-y-4">
                     <Form {...form}>
-                        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                        <form
+                            className="space-y-4"
+                            onSubmit={(e) => e.preventDefault()}
+                        >
                             {/* Campos Principales */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {/* Nombre */}
@@ -167,6 +135,7 @@ export const BusinessPromptBuilder = ({
                                                     onChange={field.onChange}
                                                     onBlur={(e) => {
                                                         field.onBlur();
+                                                        // 👉 handleChange recibe el evento completo
                                                         handleChange?.("nombre")(e);
                                                     }}
                                                 />
@@ -292,7 +261,8 @@ export const BusinessPromptBuilder = ({
                                     )}
                                 />
 
-                                {/* Campos dinámicos: se muestran si están seleccionados o si ya tienen valor */}
+                                {/* Campos dinámicos */}
+
                                 {shouldShow("email") && (
                                     <FormField
                                         control={form.control}

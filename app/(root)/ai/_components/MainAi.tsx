@@ -48,12 +48,12 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
     // 1) Hidrata estado local con lo que viene de BD (business)
     const hydrated: BusinessValues = {
         // Business
-        nombre: user?.company ?? sections?.business?.nombre ?? "",
+        nombre: sections?.business?.nombre ?? "",
         sector: sections?.business?.sector ?? "",
         ubicacion: sections?.business?.ubicacion ?? "",
         horarios: sections?.business?.horarios ?? "",
-        maps: user?.mapsUrl ?? sections?.business?.maps ?? "",
-        telefono: user?.notificationNumber ?? sections?.business?.telefono ?? "",
+        maps: sections?.business?.maps ?? "",
+        telefono: sections?.business?.telefono ?? "",
         email: sections?.business?.email ?? "",
         sitio: sections?.business?.sitio ?? "",
         facebook: sections?.business?.facebook ?? "",
@@ -178,12 +178,12 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                 const s = serverState?.sections?.business ?? {};
                                 setValues((prev) => ({
                                     ...prev,
-                                    nombre: user?.company ?? s?.nombre ?? prev.nombre,
+                                    nombre: s.nombre ?? prev.nombre,
                                     sector: s?.sector ?? prev.sector,
                                     ubicacion: s?.ubicacion ?? prev.ubicacion,
                                     horarios: s?.horarios ?? prev.horarios,
-                                    maps: user?.mapsUrl ?? s?.maps ?? prev.maps,
-                                    telefono: user?.notificationNumber ?? s?.telefono ?? prev.telefono,
+                                    maps: s?.maps ?? prev.maps,
+                                    telefono: s?.telefono ?? prev.telefono,
                                     email: s?.email ?? prev.email,
                                     sitio: s?.sitio ?? prev.sitio,
                                     facebook: s?.facebook ?? prev.facebook,
