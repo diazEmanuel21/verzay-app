@@ -4,6 +4,12 @@
 import { db } from "@/lib/db"
 import { seguimientosSchema } from "@/schema/seguimientos"
 
+export interface SeguimientosResponse {
+  success: boolean
+  message: string
+  data?: any
+}
+
 export const createSeguimiento = async (input: unknown) => {
   const validated = seguimientosSchema.safeParse(input)
 
@@ -30,6 +36,106 @@ export const createSeguimiento = async (input: unknown) => {
     return {
       success: false,
       message: "Ocurrió un error al guardar el seguimiento",
+    }
+  }
+}
+
+
+/**
+ * 1) Eliminar TODOS los recordatorios asociados a un instanceName
+ */
+export async function deleteRemindersByInstanceName(userId: string): Promise<SeguimientosResponse> {
+  if (!userId) {
+    return {
+      success: false,
+      message: "El userId es obligatorio.",
+    }
+  }
+
+  try {
+    // Buscar la instancia del usuario con instanceType = "Whatsapp"
+    const instancia = await db.instancias.findFirst({
+      where: {
+        userId,
+        instanceType: "Whatsapp",
+      },
+      orderBy: {
+        id: "desc", // por si tiene varias, toma la más reciente
+      },
+    })
+
+    if (!instancia) {
+      return {
+        success: false,
+        message: "No se encontró ninguna instancia Whatsapp para este usuario.",
+      }
+    }
+
+    const result = await db.seguimientos.deleteMany({
+      where: {
+        // userId,
+        instancia: instancia.instanceName,
+      },
+    })
+
+    return {
+      success: true,
+      message:
+        result.count > 0
+          ? `Se eliminaron ${result.count} seguimientos para la instancia ${instancia.instanceName}.`
+          : "No se encontraron seguimientos para esa instancia.",
+      data: {
+        count: result.count,
+        instanceName: instancia.instanceName,
+      },
+    }
+  } catch (error) {
+    console.error("[DELETE_REMINDERS_BY_INSTANCE_NAME]", error)
+    return {
+      success: false,
+      message: "Error al eliminar los recordatorios por instancia del usuario.",
+    }
+  }
+}
+
+/**
+ * 2) Eliminar SOLO el/los recordatorio(s) que coincidan con:
+ *    instanceName && userId && remoteJid
+ */
+export async function deleteReminderByInstanceUserRemote(
+  instanceName: string,
+  userId: string,
+  remoteJid: string
+): Promise<SeguimientosResponse> {
+  if (!instanceName || !userId || !remoteJid) {
+    return {
+      success: false,
+      message: "instanceName, userId y remoteJid son obligatorios.",
+    }
+  }
+
+  try {
+    const result = await db.seguimientos.deleteMany({
+      where: {
+        instancia: instanceName,
+        // userId,
+        remoteJid,
+      },
+    })
+
+    return {
+      success: true,
+      message:
+        result.count > 0
+          ? `Recordatorio(s) eliminado(s) correctamente. Total: ${result.count}.`
+          : "No se encontró ningún recordatorio con esos datos.",
+      data: { count: result.count },
+    }
+  } catch (error) {
+    console.error("[DELETE_REMINDER_BY_INSTANCE_USER_REMOTE]", error)
+    return {
+      success: false,
+      message: "Error al eliminar el recordatorio por instanceName, userId y remoteJid.",
     }
   }
 }

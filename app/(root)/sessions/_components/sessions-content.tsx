@@ -16,7 +16,7 @@ import { columns } from "./Columns";
 import { DataTable } from "./data-table";
 import { BulkActionsDropdown } from "./BulkActionsDropdown";
 import { cn } from "@/lib/utils";
-import { deleteRemindersByInstanceName } from "@/actions/reminders-actions";
+import { deleteRemindersByInstanceName } from "@/actions/seguimientos-actions";
 
 interface SessionsContentProps {
   userId: string;
@@ -58,6 +58,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
 
 
       const response = await getSessionsByUserId(userId, page * PAGE_SIZE, PAGE_SIZE, status);
+      console.log({ responseSession: response })
       if (!response.success) throw new Error(response.message);
       return response.data || [];
     },

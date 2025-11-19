@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown, MoreHorizontal } from "lucide-react";
+import { ArrowUpDown, BadgeCheckIcon, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deleteSession } from "@/actions/session-action";
 import { deleteConversationN8N } from "@/actions/n8n-chat-historial-action";
@@ -27,7 +27,8 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { deleteReminderByInstanceUserRemote } from "@/actions/reminders-actions";
+import { Badge } from "@/components/ui/badge";
+import { deleteReminderByInstanceUserRemote } from "@/actions/seguimientos-actions";
 
 export type Session = {
   id: number;
@@ -227,15 +228,30 @@ export const columns = ({ onDeleteSuccess, mutateSessions }: { onDeleteSuccess: 
     cell: ({ row }) => new Date(row.getValue("updatedAt")).toLocaleDateString(),
   },
   {
-    accessorKey: "seguimientos",
+    accessorKey: "flujos",
     header: "Flujos",
-    cell: ({ row }) => <div>{row.getValue("seguimientos") || "-"}</div>,
+    cell: ({ row }) => {
+      const flows = row.getValue("flujos") || "-";
+      return (<Badge
+        className="bg-blue-500 text-white dark:bg-blue-600"
+      >
+        {JSON.stringify(flows)}
+      </Badge>)
+    },
   },
-  // {
-  //   accessorKey: "flujos",
-  //   header: "Seguimientos",
-  //   cell: ({ row }) => <div>{row.getValue("flujos") || "-"}</div>,
-  // },
+  {
+    accessorKey: "seguimientos",
+    header: "Seguimientos",
+    cell: ({ row }) => {
+      const reminders = row.getValue("seguimientos") || "-";
+      const sizeReminders = Object.keys(reminders).length;
+      return (<Badge
+        className="bg-blue-500 text-white dark:bg-blue-600"
+      >
+        {sizeReminders}
+      </Badge>)
+    },
+  },
   {
     accessorKey: "acciones",
     header: "Acciones",
