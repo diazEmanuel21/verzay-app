@@ -153,7 +153,24 @@ model ModuleItem {
   module    Module   @relation("ParentModule", fields: [moduleId], references: [id])
 }
 
+enum ClienteEstado {
+  ACTIVO
+  INACTIVO
+  PROSPECTO
+  VIP
+}
+
+enum TipoRegistro {
+  REPORTE
+  SOLICITUD
+  PEDIDO
+  RECLAMO
+  PAGO
+  RESERVA
+}
+
 model Session {
+  id           Int           @id @default(autoincrement())
   userId       String
   remoteJid    String
   pushName     String
@@ -161,7 +178,6 @@ model Session {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   status       Boolean
-  id           Int           @id @default(autoincrement())
   seguimientos String?       @default("")
   inactividad  String?       @default("")
   sessionDelay String?
@@ -169,6 +185,52 @@ model Session {
   remoteJidAlt String?
   Appointment  Appointment[]
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // CRM
+  registros Registro[] // 👈 historial de interacción del lead (reporte, solicitud, etc.)
+  cliente   Cliente? // 👈 si este lead fue "promovido" a Cliente de CRM
+
+  @@index([userId, remoteJid])
+}
+
+model Cliente {
+  id String @id @default(cuid())
+  // 1:1 con el lead original
+  sessionId Int     @unique
+  session   Session @relation(fields: [sessionId], references: [id])
+  // Campos extra / curados respecto a Session
+  // Si quieres, estos pueden ser overrides de lo que viene en Session
+  nombre   String? // si es null, usas session.pushName
+  whatsapp String? // si es null, lo calculas desde session.remoteJid
+  empresa  String?
+  correo   String?
+  detalles String?
+  estado   ClienteEstado @default(ACTIVO)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Registro {
+  id String @id @default(cuid())
+  // Tipo lógico del registro
+  tipo TipoRegistro
+  fecha  DateTime
+  estado String
+  // Para Reportes (hoja "Reportes")
+  resumen String? // RESUMEN
+  lead    Boolean? // LEAD (si era lead o no)
+  nombre  String? // snapshot del nombre en el momento del reporte (opcional)
+  // Para Solicitudes / Pedidos / Reclamos / Pagos / Reservas (DETALLES)
+  detalles String?
+  // Campo flexible para futuro (monto, referencia, etc.)
+  meta Json?
+  // Siempre asociado a un lead (Session)
+  sessionId Int
+  session   Session @relation(fields: [sessionId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sessionId, tipo, fecha])
+  @@index([tipo, fecha])
 }
 
 model Pausar {
