@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { MainCrm } from './components/MainCrm';
 import { db } from '@/lib/db';
 import { ClientManagement, LeadsManagement } from './components';
+import { SeedPage } from './components/SeedPage';
 
 interface PageProps {
     params: { id?: string };

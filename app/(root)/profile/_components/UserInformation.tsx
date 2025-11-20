@@ -17,8 +17,7 @@ import { ApiKeyConfigurator } from "./";
 import { UserInformationProps } from "../page";
 import { ConnectionMain } from "../../connection/_components";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@radix-ui/react-select";
-import { Button } from "react-day-picker";
+import { Separator } from "@/components/ui/separator";
 
 // ============================
 // Tipado
