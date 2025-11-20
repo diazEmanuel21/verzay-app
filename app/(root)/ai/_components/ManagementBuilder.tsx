@@ -129,7 +129,7 @@ export const ManagementBuilder = ({
             // sectionLabel: (n, step) => ``,
             elementsLabel: (n) => `\nElementos gestión: ${n}`,
             // elementsLabel: (n) => ``,
-            mainMessageLabel: "Descripción / Objetivo",
+            mainMessageLabel: "Descripción / Objetivo\n",
             joinSeparator: "\n",
         });
     }, [steps]);
