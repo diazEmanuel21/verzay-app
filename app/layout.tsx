@@ -66,7 +66,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="en">
+    <html lang="es">
       <body className={`${poppins.className} overflow-hidden`}>
         <ErrorBoundary>
           <ChunkRecovery />
