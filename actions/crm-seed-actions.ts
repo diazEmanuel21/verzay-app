@@ -107,3 +107,23 @@ export const seedCrmDataAction = async (userId: string, data?: CrmSeedData) => {
         registrosSeeded: seed.registros.length,
     };
 }
+
+export async function updateRegistroEstado(registroId: string, nuevoEstado: string) {
+    try {
+        await db.registro.update({
+            where: { id: registroId },
+            data: { estado: nuevoEstado },
+        });
+
+        return {
+            success: true,
+            message: "Estado actualizado correctamente",
+        };
+    } catch (error) {
+        console.error("[UPDATE_REGISTRO_ESTADO]", error);
+        return {
+            success: false,
+            message: "No se pudo actualizar el estado del registro",
+        };
+    }
+}

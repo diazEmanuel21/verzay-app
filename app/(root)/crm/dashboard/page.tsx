@@ -2,7 +2,7 @@
 import { currentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { CrmDashboard } from "./components/CrmDashboard";
+import { MainDashboard } from "./components/MainDashboard";
 
 const CrmDashboardPage = async () => {
     const user = await currentUser();
@@ -20,7 +20,7 @@ const CrmDashboardPage = async () => {
         orderBy: { fecha: "desc" },
     });
 
-    return <CrmDashboard registros={registros} />;
+    return <MainDashboard registros={registros} />;
 };
 
 export default CrmDashboardPage;

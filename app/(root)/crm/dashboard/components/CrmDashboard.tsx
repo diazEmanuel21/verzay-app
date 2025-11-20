@@ -8,11 +8,17 @@ import {
     CardDescription,
     CardContent,
 } from "@/components/ui/card";
+import {
+    Select,
+    SelectTrigger,
+    SelectContent,
+    SelectItem,
+    SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import {
     Table,
     TableHeader,
@@ -47,12 +53,11 @@ import {
 
 type TipoRegistro = PrismaTipoRegistro;
 
-type RegistroWithSession = PrismaRegistro & {
+export type RegistroWithSession = PrismaRegistro & {
     session: PrismaSession & {
         cliente?: PrismaCliente | null;
     };
 };
-
 /* ===== HELPERS ===== */
 
 function toDate(v: Date | string): Date {
@@ -90,6 +95,50 @@ function getTipoLabel(tipo: TipoRegistro) {
     }
 }
 
+const ESTADOS_POR_TIPO: Record<TipoRegistro, string[]> = {
+    REPORTE: [
+        "Habilitado",
+        "Inhabilitado",
+    ],
+    SOLICITUD: [
+        "Pendiente",
+        "Procesando",
+        "Confirmado",
+        "Cancelado",
+    ],
+    PEDIDO: [
+        "Pendiente",
+        "Procesando",
+        "Despachado",
+        "En tránsito",
+        "Entregado",
+        "Cancelado",
+    ],
+    RESERVA: [
+        "Pendiente",
+        "Procesando",
+        "Confirmada",
+        "Cancelada",
+    ],
+    RECLAMO: [
+        "Pendiente",
+        "Procesando",
+        "Solucionado",
+        "Cancelado",
+    ],
+    PAGO: [
+        "Pendiente",
+        "Procesando",
+        "Confirmado",
+        "Cancelado",
+    ],
+};
+
+function getEstadoOptions(tipo: TipoRegistro): string[] {
+    return ESTADOS_POR_TIPO[tipo] ?? [];
+}
+
+
 function getDisplayWhatsappFromSession(session: PrismaSession) {
     const base = session.remoteJidAlt || session.remoteJid;
     return base.includes("@") ? base.split("@")[0] : base;
@@ -108,8 +157,10 @@ function getDisplayNombreFromRegistro(r: RegistroWithSession) {
 
 export const CrmDashboard = ({
     registros,
+    onChangeEstado
 }: {
     registros: RegistroWithSession[];
+    onChangeEstado?: (registroId: string, nuevoEstado: string) => void;
 }) => {
     const [activeTab, setActiveTab] = useState<
         "TODOS" | TipoRegistro
@@ -214,7 +265,7 @@ export const CrmDashboard = ({
                 <MetricCard
                     icon={<Activity className="h-4 w-4" />}
                     label="Leads con movimientos"
-                    value={leadsConMovimientos}
+                    value={(leadsConMovimientos - clientesConMovimientos)}
                     helper="Sessiones que tienen al menos un registro"
                 />
                 <MetricCard
@@ -349,17 +400,17 @@ export const CrmDashboard = ({
                                     <TableHeader>
                                         <TableRow className="hover:bg-transparent">
                                             <TableHead className="h-8 py-1.5 whitespace-nowrap">
-                                                Fecha
-                                            </TableHead>
-                                            <TableHead className="h-8 py-1.5 whitespace-nowrap">
-                                                Tipo
-                                            </TableHead>
-                                            <TableHead className="h-8 py-1.5 whitespace-nowrap">
                                                 WhatsApp
                                             </TableHead>
                                             <TableHead className="h-8 py-1.5 whitespace-nowrap">
                                                 Nombre
                                             </TableHead>
+                                            <TableHead className="h-8 py-1.5 whitespace-nowrap">
+                                                Fecha
+                                            </TableHead>
+                                            {/* <TableHead className="h-8 py-1.5 whitespace-nowrap">
+                                                Tipo
+                                            </TableHead> */}
                                             <TableHead className="h-8 py-1.5">Detalle</TableHead>
                                             <TableHead className="h-8 py-1.5 text-right">
                                                 Estado
@@ -390,32 +441,48 @@ export const CrmDashboard = ({
                                             return (
                                                 <TableRow key={r.id} className="hover:bg-accent/40">
                                                     <TableCell className="py-1.5 align-top whitespace-nowrap">
-                                                        {formatFecha(r.fecha)}
+                                                        {whatsapp}
                                                     </TableCell>
                                                     <TableCell className="py-1.5 align-top whitespace-nowrap">
+                                                        {nombre}
+                                                    </TableCell>
+                                                    <TableCell className="py-1.5 align-top whitespace-nowrap">
+                                                        {formatFecha(r.fecha)}
+                                                    </TableCell>
+                                                    {/* <TableCell className="py-1.5 align-top whitespace-nowrap">
                                                         <Badge
                                                             variant="outline"
                                                             className="text-[10px] px-2 py-0"
                                                         >
                                                             {tipoLabel}
                                                         </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="py-1.5 align-top whitespace-nowrap">
-                                                        {whatsapp}
-                                                    </TableCell>
-                                                    <TableCell className="py-1.5 align-top whitespace-nowrap">
-                                                        {nombre}
-                                                    </TableCell>
+                                                    </TableCell> */}
                                                     <TableCell className="py-1.5 align-top max-w-[280px]">
                                                         <span className="line-clamp-2">{detalle}</span>
                                                     </TableCell>
                                                     <TableCell className="py-1.5 align-top text-right">
-                                                        <Badge
-                                                            variant="outline"
-                                                            className="text-[10px] px-2 py-0 capitalize"
+                                                        <Select
+                                                            value={r.estado}
+                                                            onValueChange={(value) => {
+                                                                if (value === r.estado) return;
+                                                                onChangeEstado?.(r.id, value);
+                                                            }}
                                                         >
-                                                            {r.estado}
-                                                        </Badge>
+                                                            <SelectTrigger className="h-7 w-[150px] text-[10px] justify-between">
+                                                                <SelectValue placeholder="Seleccionar estado" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {getEstadoOptions(r.tipo).map((estado) => (
+                                                                    <SelectItem
+                                                                        key={estado}
+                                                                        value={estado}
+                                                                        className="text-[11px]"
+                                                                    >
+                                                                        {estado}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
                                                     </TableCell>
                                                 </TableRow>
                                             );
