@@ -28,7 +28,7 @@ import { buildSectionedPrompt } from "./helpers";
 
 /* ========= Firma por defecto ========= */
 const PROMPT_SIGNATURE_DEFAULT =
-    "###  FIRMA EN LAS RESPUESTAS\n\n" +
+    "### Extra - FIRMA EN LAS RESPUESTAS\n" +
     "Debes poner siempre la firma *“*@signature_name”* al inicio de cada mensaje o respuesta que le des al usuario, **nunca al final*. Esto permite mantener una identidad clara del agente y una conversación ordenada.\n\n" +
     "### Ejemplo de uso real:\n\n" +
     "*Usuario:*\n" +
