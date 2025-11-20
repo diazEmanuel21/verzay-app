@@ -20,16 +20,20 @@ const getPromptsSchema = z.object({
   userId: z.string().min(1, "El userId es obligatorio"),
 });
 
- const updatePromptSchema = promptInstanciaSchema.partial().extend({
+const updatePromptSchema = promptInstanciaSchema.partial().extend({
   id: z.coerce.number().int().min(1, "El id es obligatorio"),
 });
 
- const deletePromptSchema = z.object({
+const deletePromptSchema = z.object({
   id: z.coerce.number().int().min(1, "El id es obligatorio"),
+});
+
+const deleteAgentDataByUserSchema = z.object({
+  userId: z.string().min(1, 'El userId es obligatorio'),
 });
 
 // Interfaz de respuesta consistente
- interface ActionResponse<T> {
+interface ActionResponse<T> {
   success: boolean;
   message: string;
   data?: T;
@@ -180,6 +184,53 @@ export async function deletePromptInstancia(id: number): Promise<ActionResponse<
     return {
       success: false,
       message: "Error al eliminar el prompt de instancia.",
+    };
+  }
+}
+
+export async function deleteAgentPromptsByUserId(
+  userId: string
+): Promise<ActionResponse<{ deletedPrompts: number; deletedRevisionsAsPublisher: number }>> {
+  const validation = deleteAgentDataByUserSchema.safeParse({ userId });
+
+  if (!validation.success) {
+    return {
+      success: false,
+      message: 'User ID inválido.',
+    };
+  }
+
+  try {
+    const result = await db.$transaction(async (tx) => {
+      // 1) Revisions donde el usuario fue quien publicó (pueden ser de prompts de otros usuarios)
+      const revisionsAsPublisher = await tx.agentPromptRevision.deleteMany({
+        where: { publishedBy: userId },
+      });
+
+      // 2) AgentPrompts del usuario (sus revisiones se borran por CASCADE)
+      const prompts = await tx.agentPrompt.deleteMany({
+        where: { userId },
+      });
+
+      return {
+        deletedPrompts: prompts.count,
+        deletedRevisionsAsPublisher: revisionsAsPublisher.count,
+      };
+    });
+
+    // Ajusta la ruta que quieras refrescar según tu UI
+    // revalidatePath('/dashboard/agents');
+
+    return {
+      success: true,
+      message: 'Prompts y revisiones del usuario eliminados correctamente.',
+      data: result,
+    };
+  } catch (error) {
+    console.error('[DELETE_AGENT_PROMPTS_BY_USER_ERROR]', error);
+    return {
+      success: false,
+      message: 'Error al eliminar los prompts y revisiones del usuario.',
     };
   }
 }

@@ -18,6 +18,18 @@ import { useFaqAutosave } from "./hooks/useFaqAutosave";
 import { FunctionSelector } from "./";
 import ElementRenderer from "./action-steeps/ElementRenderer";
 import { buildSectionedPrompt } from "./helpers";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 
 /* ---------- type-guard para función de Pedidos ---------- */
 function isPedidoFn(el: any): el is {
@@ -111,7 +123,8 @@ export function FqaBuilder({
         ]);
     };
 
-    const removeItem = (id: string) => setItems((prev) => prev.filter((i) => i.id !== id));
+    const removeItem = (id: string) =>
+        setItems((prev) => prev.filter((i) => i.id !== id));
 
     const updateTitle = (id: string, v: string) =>
         setItems((prev) => prev.map((it) => (it.id === id ? { ...it, title: v } : it)));
@@ -235,15 +248,40 @@ export function FqaBuilder({
                                                 />
                                             </div>
 
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => removeItem(step.id)}
-                                                title="Eliminar Pregunta"
-                                                className="ml-auto"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        title="Eliminar Pregunta"
+                                                        className="ml-auto"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>
+                                                            Eliminar Pregunta
+                                                        </AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            ¿Seguro que quieres eliminar esta Pregunta?
+                                                            Esta acción no se puede deshacer.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                        <AlertDialogAction
+                                                            className="bg-red-600 hover:bg-red-700"
+                                                            onClick={() => removeItem(step.id)}
+                                                        >
+                                                            Eliminar
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         </div>
                                     </CardHeader>
 

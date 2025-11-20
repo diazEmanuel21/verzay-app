@@ -546,5 +546,3 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
         </>
     );
 };
-
-
