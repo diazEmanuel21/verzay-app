@@ -24,6 +24,7 @@ import type {
     DataSubtype,
 } from "@/types/agentAi";
 import { buildSectionedPrompt } from "./helpers";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 /* type-guard: captura_datos -> Pedidos */
 function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
@@ -221,15 +222,40 @@ export const ProductBuilder = ({
                                                 />
                                             </div>
 
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => removeProduct(step.id)}
-                                                title="Eliminar Producto"
-                                                className="ml-auto"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        title="Eliminar Pregunta"
+                                                        className="ml-auto"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>
+                                                            Eliminar producto
+                                                        </AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            ¿Seguro que quieres eliminar este producto?
+                                                            Esta acción no se puede deshacer.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                        <AlertDialogAction
+                                                            className="bg-red-600 hover:bg-red-700"
+                                                            onClick={() => removeProduct(step.id)}
+                                                        >
+                                                            Eliminar
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         </div>
                                     </CardHeader>
 

@@ -274,6 +274,7 @@ export function FqaBuilder({
                                                     <AlertDialogFooter>
                                                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                                         <AlertDialogAction
+                                                            className="bg-red-600 hover:bg-red-700"
                                                             onClick={() => removeItem(step.id)}
                                                         >
                                                             Eliminar

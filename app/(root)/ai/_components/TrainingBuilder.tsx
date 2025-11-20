@@ -22,12 +22,12 @@ import { PedidoFunctionEl } from '../../../../types/agentAi';
 import { FunctionSelector } from './';
 import ElementRenderer from "./action-steeps/ElementRenderer";
 import { buildSectionedPrompt } from "./helpers";
-
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 /* utilidad: type-guard para pedidos */
 function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
   return (
     el.kind === "function" &&
-    (el as any).fn === "captura_datos" 
+    (el as any).fn === "captura_datos"
     // && (el as any).subtype === "Pedidos"
   );
 }
@@ -251,15 +251,40 @@ export function TrainingBuilder({
                       />
                     </div>
 
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeStep(step.id)}
-                      title="Eliminar paso"
-                      className="ml-auto"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Eliminar Pregunta"
+                          className="ml-auto"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Eliminar entrenamiento
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            ¿Seguro que quieres eliminar este entrenamiento?
+                            Esta acción no se puede deshacer.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-red-600 hover:bg-red-700"
+                            onClick={() => removeStep(step.id)}
+                          >
+                            Eliminar
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </CardHeader>
 

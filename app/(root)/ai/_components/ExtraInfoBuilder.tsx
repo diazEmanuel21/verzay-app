@@ -14,6 +14,7 @@ import { Trash2, Plus, PenSquare, X } from "lucide-react";
 import { useExtrasAutosave } from "./hooks/useExtrasAutosave";
 import { FunctionSelector } from "./FunctionSelector";
 import ElementRenderer from "./action-steeps/ElementRenderer";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 import type {
     DataSubtype,
@@ -274,7 +275,6 @@ export function ExtraInfoBuilder({
         <Card className="border-muted/60">
             <CardHeader className="pb-2 flex items-center justify-between gap-2 flex-row">
                 <CardTitle className="text-base">Extras</CardTitle>
-
             </CardHeader>
 
             <>
@@ -344,15 +344,40 @@ export function ExtraInfoBuilder({
                                                     />
                                                 </div>
 
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => removeItem(step.id)}
-                                                    title="Eliminar extra"
-                                                    className="ml-auto"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            title="Eliminar Pregunta"
+                                                            className="ml-auto"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>
+                                                                Eliminar extra
+                                                            </AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                ¿Seguro que quieres eliminar esta información?
+                                                                Esta acción no se puede deshacer.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                            <AlertDialogAction
+                                                                className="bg-red-600 hover:bg-red-700"
+                                                                onClick={() => removeItem(step.id)}
+                                                            >
+                                                                Eliminar
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
                                             </div>
                                         </CardHeader>
 
