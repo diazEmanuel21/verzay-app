@@ -830,7 +830,7 @@ export type ManagementBuilderProps = {
 };
 
 
-export const flowBehaviorText = "* **Comportamiento:** Tras ejecutar un flujo, responde **únicamente** lo indicado en **Regla/parámetro**.\n Si **no hay una orden clara**, formula una **pregunta contextual** para guiar al usuario al siguiente paso lógico de la conversación. **No añadas texto innecesario.**"
+export const flowBehaviorText = "* **Comportamiento obligatorio:** Tras ejecutar un flujo, responde **únicamente** lo indicado en **Regla/parámetro**.\n Si **no hay una orden clara**, formula una **pregunta contextual** para guiar al usuario al siguiente paso lógico de la conversación. **No añadas texto innecesario.**"
 export const notifyPrompt = "> **Función**: Ejecuta la tool 'Notificacion Asesor'\n* **Comportamiento:** Después de ejecutar la tool, tu única respuesta es la que se te indique en **Regla/parámetro**."
 export const instructionPrompt = `
 ## INSTRUCCIÓN

@@ -23,7 +23,7 @@ export const PROMPT_FRAGMENTS: PromptFragment[] = [
       "### Restricciones\n\n" +
       "* **No** anuncies que se ejecuta/procesa la .\n" +
       "* **No** agregues texto irrelevante en `detalle_notificacion`.\n\n" +
-      "### Comportamiento\n\n" +
+      "### Comportamiento obligatorio\n\n" +
       "* **Después de** ejecutar la , responde **únicamente** lo indicado en **Regla/Parámetro**.\n"
   },
   {
@@ -47,7 +47,7 @@ export const PROMPT_FRAGMENTS: PromptFragment[] = [
       "   * **Fecha:** se toma automáticamente de la **zona horaria del sistema** (no solicitar).\n" +
       "   * Asegúrate de incluir todos los datos provistos por el usuario.\n" +
       "* **Notificación**: tras registrar, ejecuta la ****: `Notificacion Asesor`.\n" +
-      "* **Comportamiento:** Tras ejecutar la , responde **únicamente** lo indicado en **Regla/parámetro**. \n" +
+      "* **Comportamiento obligatorio:** Tras ejecutar la , responde **únicamente** lo indicado en **Regla/parámetro**. \n" +
       "Si **no hay una orden clara**, envia el siguiente **mensaje de confirmacion** al usuario:\n" +
       "> 📝 ¡He **registrado ** tu **tipo_registro**! 👨🏻‍💻 Un asesor se pondrá en contacto a la brevedad posible. ⏰\n\n" +
       "**3) Datos faltantes**\n" +
@@ -73,7 +73,7 @@ export const PROMPT_FRAGMENTS: PromptFragment[] = [
       "* **Campos a registrar:** `whatsapp` (auto), `nombre`, `documento`, `banco`, `referencia`, `fecha`, `monto`, `estado=\\\"Pendiente\\\"`.\n" +
       "* Extrae e incluye los datos **disponibles** del comprobante.\n" +
       "* **Después**, ejecuta la  `Notificacion Asesor`.\n\n" +
-      "* **Comportamiento:** Tras ejecutar la , responde **únicamente** lo indicado en **Regla/parámetro**. \n" +
+      "* **Comportamiento obligatorio:** Tras ejecutar la , responde **únicamente** lo indicado en **Regla/parámetro**. \n" +
       "Si **no hay una orden clara**, envia el siguiente **mensaje de confirmacion** al usuario:\n" +
       "> ✅ Tu pago de $[MONTO] ha sido registrado exitosamente.\n" +
       "> 👨🏻‍💻 Un asesor se comunicará contigo a la brevedad o recibirás un mensaje de confirmación."
@@ -106,13 +106,13 @@ export const PROMPT_FRAGMENTS: PromptFragment[] = [
       "  * `fecha_actualizacion` → **automática** (TZ del sistema)\n" +
       "  * `whatsapp` → **automático** (no solicitar)\n" +
       "* **Después**, ejecuta la  `Notificacion Asesor`.\n\n" +
-      "* **Comportamiento:** Tras ejecutar la , responde **únicamente** lo indicado en **Regla/parámetro**. \n" +
+      "* **Comportamiento obligatorio:** Tras ejecutar la , responde **únicamente** lo indicado en **Regla/parámetro**. \n" +
       "Si **no hay una orden clara**, envia el siguiente **mensaje de confirmacion** al usuario:\n" +
       "> 📝 ¡He **consultado** tu **`tipo_registro`**! 👨🏻‍💻 Un asesor se pondrá en contacto a la brevedad posible. ⏰\n\n" +
       "## 5) Sin coincidencias\n\n" +
       "Si no se encuentra registro para ese número (o id):\n\n" +
       "> No encontramos un `tipo_registro` para actualizar asociado a tu número. Si deseas, puedo **registrarlo ahora**.\n\n" +
-      "## 6) Restricciones y comportamiento\n\n" +
+      "## 6) Restricciones y comportamiento obligatorio\n\n" +
       "* **No** restaures `estado=\\\"Pendiente\\\"` por defecto (solo si el usuario/flujo lo pide).\n" +
       "* **No** repitas datos ya proporcionados.\n" +
       "* **Después de** ejecutar/guardar, responde **únicamente** lo indicado en **Regla/parámetro**.\n\n" +
@@ -172,13 +172,13 @@ export const PROMPT_FRAGMENTS: PromptFragment[] = [
       "  * `fecha_actualizacion` → **automática** (TZ del sistema)\n" +
       "  * `whatsapp` → **automático** (no solicitar)\n" +
       "* **Después**, ejecuta la  `Notificacion Asesor`.\n\n" +
-      "* **Comportamiento:** Tras ejecutar la , responde **únicamente** lo indicado en **Regla/parámetro**. \n" +
+      "* **Comportamiento obligatorio:** Tras ejecutar la , responde **únicamente** lo indicado en **Regla/parámetro**. \n" +
       "Si **no hay una orden clara**, envia el siguiente **mensaje de confirmacion** al usuario:\n" +
       "> 📝 ¡He **actualizado** tu **`tipo_registro`**! 👨🏻‍💻 Un asesor se pondrá en contacto a la brevedad posible. ⏰\n\n" +
       "## 5) Sin coincidencias\n\n" +
       "Si no se encuentra registro para ese número (o id):\n\n" +
       "> No encontramos un `tipo_registro` para actualizar asociado a tu número. Si deseas, puedo **registrarlo ahora**.\n\n" +
-      "## 6) Restricciones y comportamiento\n\n" +
+      "## 6) Restricciones y comportamiento obligatorio\n\n" +
       "* **No** anuncies ejecución/proceso de  ni expongas payloads.\n" +
       "* **No** restaures `estado=\\\"Pendiente\\\"` por defecto (solo si el usuario/flujo lo pide).\n" +
       "* **No** repitas datos ya proporcionados.\n" +
