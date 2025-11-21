@@ -31,7 +31,7 @@ import { BarChart3, Activity, Users, Filter } from "lucide-react";
 import type {
     Registro as PrismaRegistro,
     Session as PrismaSession,
-    Cliente as PrismaCliente,
+    // Cliente as PrismaCliente,
     TipoRegistro as PrismaTipoRegistro,
 } from "@prisma/client";
 
@@ -53,11 +53,7 @@ import {
 
 type TipoRegistro = PrismaTipoRegistro;
 
-export type RegistroWithSession = PrismaRegistro & {
-    session: PrismaSession & {
-        cliente?: PrismaCliente | null;
-    };
-};
+export type RegistroWithSession = PrismaRegistro
 /* ===== HELPERS ===== */
 
 function toDate(v: Date | string): Date {
@@ -146,9 +142,8 @@ function getDisplayWhatsappFromSession(session: PrismaSession) {
 
 function getDisplayNombreFromRegistro(r: RegistroWithSession) {
     return (
-        r.session.cliente?.nombre ||
+        // r.session.cliente?.nombre ||
         r.nombre || // snapshot en Registro
-        r.session.pushName ||
         "Sin nombre"
     );
 }
@@ -175,13 +170,13 @@ export const CrmDashboard = ({
         return set.size;
     }, [registros]);
 
-    const clientesConMovimientos = useMemo(() => {
-        const set = new Set<string>();
-        for (const r of registros) {
-            if (r.session.cliente?.id) set.add(r.session.cliente.id);
-        }
-        return set.size;
-    }, [registros]);
+    // const clientesConMovimientos = useMemo(() => {
+    //     const set = new Set<string>();
+    //     for (const r of registros) {
+    //         if (r.session.cliente?.id) set.add(r.session.cliente.id);
+    //     }
+    //     return set.size;
+    // }, [registros]);
 
     // --- Registros por tipo ---
     const countsByTipo = useMemo(() => {
@@ -265,15 +260,17 @@ export const CrmDashboard = ({
                 <MetricCard
                     icon={<Activity className="h-4 w-4" />}
                     label="Leads con movimientos"
-                    value={(leadsConMovimientos - clientesConMovimientos)}
+                    // value={(leadsConMovimientos - clientesConMovimientos)}
+                    value={(leadsConMovimientos)}
                     helper="Sessiones que tienen al menos un registro"
                 />
-                <MetricCard
+                <h1>clientes  con movimientos, se calcula con el tag</h1>
+                {/* <MetricCard
                     icon={<Users className="h-4 w-4" />}
                     label="Clientes con movimientos"
                     value={clientesConMovimientos}
                     helper="Clientes vinculados a sessiones con registros"
-                />
+                /> */}
             </div>
 
             {/* Gráficos */}
@@ -430,9 +427,9 @@ export const CrmDashboard = ({
                                         )}
 
                                         {registrosFiltrados.map((r) => {
-                                            const whatsapp = getDisplayWhatsappFromSession(
-                                                r.session
-                                            );
+                                            // const whatsapp = getDisplayWhatsappFromSession(
+                                            //     r.session
+                                            // );
                                             const nombre = getDisplayNombreFromRegistro(r);
                                             const tipoLabel = getTipoLabel(r.tipo);
                                             const detalle =
@@ -441,7 +438,8 @@ export const CrmDashboard = ({
                                             return (
                                                 <TableRow key={r.id} className="hover:bg-accent/40">
                                                     <TableCell className="py-1.5 align-top whitespace-nowrap">
-                                                        {whatsapp}
+                                                        {/* {whatsapp} - corregir consulta */}
+                                                        corregir consulta
                                                     </TableCell>
                                                     <TableCell className="py-1.5 align-top whitespace-nowrap">
                                                         {nombre}

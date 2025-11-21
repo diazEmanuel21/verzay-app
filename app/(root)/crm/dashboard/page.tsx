@@ -13,7 +13,7 @@ const CrmDashboardPage = async () => {
         include: {
             session: {
                 include: {
-                    cliente: true,
+                    registros: true,
                 },
             },
         },

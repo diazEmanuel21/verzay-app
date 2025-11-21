@@ -3,8 +3,7 @@ import { currentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { MainCrm } from './components/MainCrm';
 import { db } from '@/lib/db';
-import { ClientManagement, LeadsManagement } from './components';
-import { SeedPage } from './components/SeedPage';
+import { LeadsManagement } from './components';
 
 interface PageProps {
     params: { id?: string };
@@ -34,7 +33,7 @@ const CrmPage = async ({ params, searchParams }: PageProps) => {
         where: { userId: user.id },
         include: {
             registros: true,
-            cliente: true, // para saber si ya está vinculado a Cliente
+            // cliente: true, // para saber si ya está vinculado a Cliente
         },
         orderBy: { createdAt: "desc" },
     });

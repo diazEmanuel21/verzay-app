@@ -26,7 +26,7 @@ import { Search, Plus, MessageCircleMore } from "lucide-react";
 import type {
     Session as PrismaSession,
     Registro as PrismaRegistro,
-    Cliente as PrismaCliente,
+    // Cliente as PrismaCliente,
     TipoRegistro as PrismaTipoRegistro,
 } from "@prisma/client";
 
@@ -36,7 +36,7 @@ type TipoRegistro = PrismaTipoRegistro;
 
 type SessionWithRegistros = PrismaSession & {
     registros: PrismaRegistro[];
-    cliente?: PrismaCliente | null;
+    // cliente?: PrismaCliente | null;
 };
 
 /* ===== HELPERS ===== */
@@ -204,7 +204,7 @@ export const LeadsManagement = ({
                                     const isSelected = session.id === selectedSessionId;
                                     const displayNombre = getDisplayNombreFromSession(session);
                                     const displayWhatsapp = getDisplayWhatsappFromSession(session);
-                                    const hasCliente = !!session.cliente;
+                                    // const hasCliente = !!session.cliente;
 
                                     return (
                                         <button
@@ -224,14 +224,14 @@ export const LeadsManagement = ({
                                                     {displayNombre}
                                                 </span>
                                                 <div className="flex items-center gap-1">
-                                                    {hasCliente && (
+                                                    {/* {hasCliente && (
                                                         <Badge
                                                             variant="secondary"
                                                             className="text-[9px] px-1 py-0"
                                                         >
                                                             Cliente
                                                         </Badge>
-                                                    )}
+                                                    )} */}
                                                     <Badge
                                                         variant={getStatusBadgeVariant(session.status) as any}
                                                         className="text-[10px] px-1.5 py-0"
@@ -283,14 +283,14 @@ export const LeadsManagement = ({
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            {selectedSession.cliente && (
+                                            {/* {selectedSession.cliente && (
                                                 <Badge
                                                     variant="secondary"
                                                     className="text-[10px] px-1.5 py-0"
                                                 >
                                                     Vinculado a Cliente
                                                 </Badge>
-                                            )}
+                                            )} */}
                                             <Badge
                                                 variant={getStatusBadgeVariant(selectedSession.status) as any}
                                                 className="text-[10px] px-1.5 py-0"
