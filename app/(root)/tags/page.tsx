@@ -37,13 +37,11 @@ export default async function SessionsPage() {
     const initialSelectedTagIds = (sessionTagsRes.data ?? []).map((t) => t.id);
 
     return (
-        <div className="p-4">
-            <SessionTagsManager
-                userId={user.id}
-                sessionId={session.id}
-                allTags={allTags}
-                initialSelectedTagIds={initialSelectedTagIds}
-            />
-        </div>
+        <SessionTagsManager
+            userId={user.id}
+            sessionId={session.id}
+            allTags={allTags}
+            initialSelectedTagIds={initialSelectedTagIds}
+        />
     );
 }
