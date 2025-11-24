@@ -29,19 +29,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { deleteReminderByInstanceUserRemote } from "@/actions/seguimientos-actions";
-
-export type Session = {
-  id: number;
-  userId: string;
-  remoteJid: string;
-  pushName: string;
-  instanceId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  status: boolean;
-  seguimientos?: string | null;
-  inactividad?: string | null;
-};
+import { SessionTagsCombobox } from "../../tags/components";
+import { Session, SimpleTag } from "@/types/session";
 
 function ActionsCell({ session, onDeleteSuccess }: { session: Session, onDeleteSuccess: (deletedId: number) => void }) {
   const [openDeleteCliente, setOpenDeleteCliente] = useState(false);
@@ -198,65 +187,87 @@ function ActionsCell({ session, onDeleteSuccess }: { session: Session, onDeleteS
 }
 
 // --- Columns corregido ---
-export const columns = ({ onDeleteSuccess, mutateSessions }: { onDeleteSuccess: (deletedId: number) => void, mutateSessions: () => void }): ColumnDef<Session>[] => [
-  {
-    accessorKey: "remoteJid",
-    header: "Celular",
-    cell: ({ row }) => {
-      const remoteJid = row.getValue("remoteJid") as string;
-      const phone = remoteJid.split('@')[0];
-      return <div className="capitalize">{phone}</div>;
+export const columns = ({ onDeleteSuccess, mutateSessions, allTags }: {
+  onDeleteSuccess: (deletedId: number) => void,
+  mutateSessions: () => void,
+  allTags: SimpleTag[];
+}): ColumnDef<Session>[] => [
+    {
+      accessorKey: "remoteJid",
+      header: "Celular",
+      cell: ({ row }) => {
+        const remoteJid = row.getValue("remoteJid") as string;
+        const phone = remoteJid.split('@')[0];
+        return <div className="capitalize">{phone}</div>;
+      },
     },
-  },
-  {
-    accessorKey: "pushName",
-    header: "Nombre",
-    cell: ({ row }) => <div>{row.getValue("pushName") || "Sin nombre"}</div>,
-  },
-  {
-    accessorKey: "status",
-    header: "Estado",
-    cell: ({ row }) => {
-      const status = row.getValue("status") as boolean;
-      const sessionId = row.original.id;
-      return <SwitchStatus checked={status} sessionId={sessionId} mutateSessions={mutateSessions} />;
+    {
+      accessorKey: "pushName",
+      header: "Nombre",
+      cell: ({ row }) => <div>{row.getValue("pushName") || "Sin nombre"}</div>,
     },
-  },
-  {
-    accessorKey: "updatedAt",
-    header: "Creado",
-    cell: ({ row }) => new Date(row.getValue("updatedAt")).toLocaleDateString(),
-  },
-  {
-    accessorKey: "flujos",
-    header: "Flujos",
-    cell: ({ row }) => {
-      const flows = row.getValue("flujos") || "-";
-      return (<Badge
-        className="bg-blue-500 text-white dark:bg-blue-600"
-      >
-        {JSON.stringify(flows)}
-      </Badge>)
+    {
+      accessorKey: "status",
+      header: "Estado",
+      cell: ({ row }) => {
+        const status = row.getValue("status") as boolean;
+        const sessionId = row.original.id;
+        return <SwitchStatus checked={status} sessionId={sessionId} mutateSessions={mutateSessions} />;
+      },
     },
-  },
-  {
-    accessorKey: "seguimientos",
-    header: "Seguimientos",
-    cell: ({ row }) => {
-      const reminders = row.getValue("seguimientos") || "-";
-      const sizeReminders = Object.keys(reminders).length;
-      return (<Badge
-        className="bg-blue-500 text-white dark:bg-blue-600"
-      >
-        {sizeReminders}
-      </Badge>)
+    {
+      accessorKey: "updatedAt",
+      header: "Creado",
+      cell: ({ row }) => new Date(row.getValue("updatedAt")).toLocaleDateString(),
     },
-  },
-  {
-    accessorKey: "acciones",
-    header: "Acciones",
-    cell: ({ row }) => (
-      <ActionsCell session={row.original} onDeleteSuccess={onDeleteSuccess} />
-    ),
-  },
-];
+    {
+      accessorKey: "flujos",
+      header: "Flujos",
+      cell: ({ row }) => {
+        const flows = row.getValue("flujos") || "-";
+        return (<Badge
+          className="bg-blue-500 text-white dark:bg-blue-600"
+        >
+          {JSON.stringify(flows)}
+        </Badge>)
+      },
+    },
+    {
+      accessorKey: "seguimientos",
+      header: "Seguimientos",
+      cell: ({ row }) => {
+        const reminders = row.getValue("seguimientos") || "-";
+        const sizeReminders = Object.keys(reminders).length;
+        return (<Badge
+          className="bg-blue-500 text-white dark:bg-blue-600"
+        >
+          {sizeReminders}
+        </Badge>)
+      },
+    },
+    {
+      id: "tags",
+      header: "Etiquetas",
+      cell: ({ row }) => {
+        const session = row.original;
+        const initialSelectedTagIds = (session.tags ?? []).map((t) => t.id);
+
+        return (
+          <SessionTagsCombobox
+            userId={session.userId}
+            sessionId={session.id}
+            allTags={allTags}
+            initialSelectedIds={initialSelectedTagIds}
+          />
+        );
+      },
+    },
+
+    {
+      accessorKey: "acciones",
+      header: "Acciones",
+      cell: ({ row }) => (
+        <ActionsCell session={row.original} onDeleteSuccess={onDeleteSuccess} />
+      ),
+    },
+  ];

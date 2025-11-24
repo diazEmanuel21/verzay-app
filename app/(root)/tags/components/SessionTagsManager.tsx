@@ -12,13 +12,7 @@ import {
     deleteTagAction,
 } from "@/actions/tag-actions";
 import { Trash2 } from "lucide-react";
-
-type SimpleTag = {
-    id: number;
-    name: string;
-    slug?: string;
-    color?: string | null;
-};
+import { SimpleTag } from "@/types/session";
 
 interface SessionTagsManagerProps {
     userId: string;

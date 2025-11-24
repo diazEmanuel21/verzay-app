@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { registerSessionSchema } from '@/schema/session';
 import { Session } from '@prisma/client';
 import { z } from 'zod';
+import { ActionResponse } from './tag-actions';
 
 interface SessionResponse<T = Session[]> {
   success: boolean;
@@ -16,6 +17,13 @@ interface SessionResponseSingle {
   message: string;
   data?: Session; // Solo un objeto Session, no un array
 }
+
+// 👉 schema para agregar varios tags a una sesión
+const addTagsToSessionSchema = z.object({
+  userId: z.string().min(1),
+  sessionId: z.number().int().positive(),
+  tagIds: z.array(z.number().int().positive()).min(1),
+});
 
 export async function getSessionsCountByUserId(userId: string) {
   try {
@@ -53,39 +61,57 @@ export async function getSessionsByUserId(
   status?: boolean // true: activos, false: inactivos, undefined: todos
 ): Promise<SessionResponse> {
   try {
-    if (!userId) return {
-      success: false,
-      message: 'No existe el userId',
-      data: []
-    };
+    if (!userId) {
+      return {
+        success: false,
+        message: "No existe el userId",
+        data: [],
+      };
+    }
 
     const sessions = await db.session.findMany({
       where: {
         userId,
-        ...(status !== undefined && { status }), // Aplica solo si viene definido
+        ...(status !== undefined && { status }),
       },
       orderBy: { createdAt: "desc" },
       skip,
-      take
+      take,
+      include: {
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
+      },
     });
+
+    const mapped = sessions.map((s) => ({
+      ...s,
+      tags: s.tags.map((st) => ({
+        id: st.tag.id,
+        name: st.tag.name,
+        slug: st.tag.slug,
+        color: st.tag.color,
+      })),
+    }));
 
     return {
       success: true,
-      message: 'Sesiones obtenidas correctamente',
-      data: sessions
+      message: "Sesiones obtenidas correctamente",
+      data: mapped,
     };
-
   } catch (error) {
-    console.error('Error al obtener las sesiones:', error);
+    console.error("Error al obtener las sesiones:", error);
 
-    let errorMessage = 'No se pudieron cargar las sesiones';
+    let errorMessage = "No se pudieron cargar las sesiones";
     if (error instanceof Error) {
       errorMessage = error.message;
     }
 
     return {
       success: false,
-      message: errorMessage
+      message: errorMessage,
     };
   }
 }
@@ -160,39 +186,62 @@ export async function deleteSession(
 /**
  * 🔎 Nueva función para buscar sesiones por nombre o número en toda la base de datos.
  */
-export async function searchSessionsByUserId(userId: string, query: string): Promise<SessionResponse> {
+export async function searchSessionsByUserId(
+  userId: string,
+  query: string
+): Promise<SessionResponse> {
   try {
-    if (!userId) return {
-      success: false,
-      message: 'No existe el userId',
-      data: []
-    };
+    if (!userId) {
+      return {
+        success: false,
+        message: "No existe el userId",
+        data: [],
+      };
+    }
 
     const sessions = await db.session.findMany({
       where: {
         userId,
         OR: [
-          { pushName: { contains: query, mode: 'insensitive' } },
-          { remoteJid: { contains: query, mode: 'insensitive' } }
-        ]
+          { pushName: { contains: query, mode: "insensitive" } },
+          { remoteJid: { contains: query, mode: "insensitive" } },
+        ],
       },
       orderBy: { createdAt: "desc" },
-      take: 100  // puedes ajustar si quieres limitar resultados
+      take: 100,
+      include: {
+        tags: {
+          include: {
+            tag: true, // SessionTag.tag
+          },
+        },
+      },
     });
+
+    // 👇 mapeamos los tags a un array plano de { id, name, slug, color }
+    const mapped = sessions.map((s) => ({
+      ...s,
+      tags: s.tags.map((st) => ({
+        id: st.tag.id,
+        name: st.tag.name,
+        slug: st.tag.slug,
+        color: st.tag.color,
+      })),
+    }));
 
     return {
       success: true,
-      message: 'Resultados de búsqueda obtenidos correctamente',
-      data: sessions
+      message: "Resultados de búsqueda obtenidos correctamente",
+      data: mapped,
     };
   } catch (error) {
-    console.error('Error al buscar sesiones:', error);
+    console.error("Error al buscar sesiones:", error);
     return {
       success: false,
-      message: 'Error al buscar las sesiones'
+      message: "Error al buscar las sesiones",
     };
   }
-};
+}
 
 /* General actions */
 // 🟢 Activar todos los clientes de un usuario
@@ -344,7 +393,7 @@ export async function getSessionByRemoteJid(userId: string, remoteJid: string): 
     return {
       success: true,
       message: 'Sesión obtenida correctamente.',
-      data: session 
+      data: session
     };
 
   } catch (error) {
@@ -358,6 +407,70 @@ export async function getSessionByRemoteJid(userId: string, remoteJid: string): 
     return {
       success: false,
       message: errorMessage
+    };
+  }
+}
+
+// 👉 Action: agregar uno o varios tags a una Session (sin borrar los actuales)
+export async function addTagsToSessionAction(
+  input: z.infer<typeof addTagsToSessionSchema>,
+): Promise<ActionResponse<null>> {
+  try {
+    const { userId, sessionId, tagIds } = addTagsToSessionSchema.parse(input);
+
+    // 1) Validar que la sesión exista y sea del usuario
+    const session = await db.session.findUnique({
+      where: { id: sessionId },
+    });
+
+    if (!session || session.userId !== userId) {
+      return {
+        success: false,
+        message: "Sesión no encontrada o no pertenece a este usuario.",
+      };
+    }
+
+    // 2) Validar que TODOS los tags existan y pertenezcan al mismo user
+    const tags = await db.tag.findMany({
+      where: {
+        id: { in: tagIds },
+      },
+    });
+
+    if (tags.length !== tagIds.length) {
+      return {
+        success: false,
+        message: "Uno o más tags no existen.",
+      };
+    }
+
+    const allBelongToUser = tags.every((t) => t.userId === userId);
+    if (!allBelongToUser) {
+      return {
+        success: false,
+        message: "Uno o más tags no pertenecen a este usuario.",
+      };
+    }
+
+    // 3) Crear relaciones en SessionTag (sin duplicados)
+    await db.sessionTag.createMany({
+      data: tagIds.map((tagId) => ({
+        sessionId,
+        tagId,
+      })),
+      skipDuplicates: true,
+    });
+
+    return {
+      success: true,
+      message: "Tags agregados a la sesión correctamente.",
+      data: null,
+    };
+  } catch (error) {
+    console.error("addTagsToSessionAction error:", error);
+    return {
+      success: false,
+      message: "Error agregando tags a la sesión.",
     };
   }
 }

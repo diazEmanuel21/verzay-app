@@ -17,9 +17,11 @@ import { DataTable } from "./data-table";
 import { BulkActionsDropdown } from "./BulkActionsDropdown";
 import { cn } from "@/lib/utils";
 import { deleteRemindersByInstanceName } from "@/actions/seguimientos-actions";
+import { SimpleTag } from "@/types/session";
 
 interface SessionsContentProps {
   userId: string;
+  allTags: SimpleTag[]; // 👈 nuevo
 }
 
 type Session = {
@@ -35,7 +37,7 @@ type Session = {
 
 const PAGE_SIZE = 20;
 
-export function SessionsContent({ userId }: SessionsContentProps) {
+export function SessionsContent({ userId, allTags }: SessionsContentProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [stats, setStats] = useState<{ total: number; active: number; inactive: number } | null>(null);
@@ -279,7 +281,7 @@ export function SessionsContent({ userId }: SessionsContentProps) {
       <div className="flex-1 overflow-y-auto p-2">
         <div className="grid grid-cols-1 gap-4">
           <Card className="border-border">
-            <DataTable columns={columns({ onDeleteSuccess: handleDeleteFromTable, mutateSessions: mutate })} data={sessions} />
+            <DataTable columns={columns({ onDeleteSuccess: handleDeleteFromTable, mutateSessions: mutate, allTags })} data={sessions} />
           </Card>
 
           {isValidating && !search && (
