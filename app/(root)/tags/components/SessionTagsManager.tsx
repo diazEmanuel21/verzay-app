@@ -394,12 +394,12 @@ export const SessionTagsManager = ({
                                         {/* Clic en el chip asigna / desasigna a la sesión */}
                                         <button
                                             type="button"
-                                            onClick={() => handleToggleTag(tag.id)}
+                                            // onClick={() => handleToggleTag(tag.id)}
                                             className={cn(
                                                 "inline-flex min-w-[120px] flex-1 items-center gap-2 rounded-full px-3 py-1 text-left transition",
-                                                active
-                                                    ? "bg-primary text-primary-foreground"
-                                                    : "bg-background text-foreground hover:bg-muted"
+                                                // active
+                                                //     ? "bg-primary text-primary-foreground"
+                                                //     : "bg-background text-foreground hover:bg-muted"
                                             )}
                                         >
                                             {renderColorDot(tag.color)}
