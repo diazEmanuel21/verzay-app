@@ -59,6 +59,7 @@ model User {
   clientesAsignados             reseller[]            @relation("RevendedorAsignador")
   esClienteDe                   reseller[]            @relation("ClienteAsignado")
   aiConfig                      UserAiConfig[]
+  tags                          Tag[]
 }
 
 model Product {
@@ -154,6 +155,7 @@ model ModuleItem {
 }
 
 model Session {
+  id           Int           @id @default(autoincrement())
   userId       String
   remoteJid    String
   pushName     String
@@ -161,18 +163,41 @@ model Session {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   status       Boolean
-  id           Int           @id @default(autoincrement())
   seguimientos String?       @default("")
   inactividad  String?       @default("")
   sessionDelay String?
   flujos       String?       @default("")
   remoteJidAlt String?
-  tags         String?       @default("lead")
+  tags         SessionTag[]
   Appointment  Appointment[]
-  registros    Registro[]
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  registros    Registro[] // historial de interacción del lead
 
   @@index([userId, remoteJid])
+}
+
+model Tag {
+  id        Int          @id @default(autoincrement())
+  userId    String
+  name      String // Ej: "Lead"
+  slug      String // Ej: "lead" (para búsquedas / estabilidad)
+  color     String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions  SessionTag[]
+
+  @@unique([userId, slug])
+}
+
+model SessionTag {
+  sessionId Int
+  tagId     Int
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  // Clave compuesta: un tag no se repite dos veces para la misma sesión
+  @@id([sessionId, tagId])
 }
 
 model Registro {
