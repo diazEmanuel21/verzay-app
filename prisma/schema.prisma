@@ -38,6 +38,7 @@ model User {
   aiModelId                     String?
   defaultAiModelId              String?
   defaultProviderId             String?
+  delayTimeGPT                  String?
   accounts                      Account[]
   agentPrompts                  AgentPrompt[]         @relation("UserAgentPrompts")
   publishedAgentPromptRevisions AgentPromptRevision[] @relation("UserPublishedRevisions")
@@ -58,7 +59,6 @@ model User {
   clientesAsignados             reseller[]            @relation("RevendedorAsignador")
   esClienteDe                   reseller[]            @relation("ClienteAsignado")
   aiConfig                      UserAiConfig[]
-  delayTimeGPT                  String?
 }
 
 model Product {
@@ -153,17 +153,7 @@ model ModuleItem {
   module    Module   @relation("ParentModule", fields: [moduleId], references: [id])
 }
 
-enum TipoRegistro {
-  REPORTE
-  SOLICITUD
-  PEDIDO
-  RECLAMO
-  PAGO
-  RESERVA
-}
-
 model Session {
-  id           Int           @id @default(autoincrement())
   userId       String
   remoteJid    String
   pushName     String
@@ -171,6 +161,7 @@ model Session {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   status       Boolean
+  id           Int           @id @default(autoincrement())
   seguimientos String?       @default("")
   inactividad  String?       @default("")
   sessionDelay String?
@@ -178,32 +169,26 @@ model Session {
   remoteJidAlt String?
   tags         String?       @default("lead")
   Appointment  Appointment[]
+  registros    Registro[]
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // CRM
-  registros    Registro[] // 👈 historial de interacción del lead (reporte, solicitud, etc.)
 
   @@index([userId, remoteJid])
 }
 
 model Registro {
   id        String       @id @default(cuid())
-  // Tipo lógico del registro
   tipo      TipoRegistro
   fecha     DateTime
   estado    String
-  // Para Reportes (hoja "Reportes")
-  resumen   String? // RESUMEN
-  lead      Boolean? // LEAD (si era lead o no)
-  nombre    String? // snapshot del nombre en el momento del reporte (opcional)
-  // Para Solicitudes / Pedidos / Reclamos / Pagos / Reservas (DETALLES)
+  resumen   String?
+  lead      Boolean?
+  nombre    String?
   detalles  String?
-  // Campo flexible para futuro (monto, referencia, etc.)
   meta      Json?
-  // Siempre asociado a un lead (Session)
   sessionId Int
-  session   Session      @relation(fields: [sessionId], references: [id])
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
+  session   Session      @relation(fields: [sessionId], references: [id])
 
   @@index([sessionId, tipo, fecha])
   @@index([tipo, fecha])
@@ -531,6 +516,15 @@ model UserModules {
   @@id([A, B], map: "_UserModules_AB_pkey")
   @@index([B], map: "_UserModules_B_index")
   @@map("_UserModules")
+}
+
+enum TipoRegistro {
+  REPORTE
+  SOLICITUD
+  PEDIDO
+  RECLAMO
+  PAGO
+  RESERVA
 }
 
 enum PromptStatus {
