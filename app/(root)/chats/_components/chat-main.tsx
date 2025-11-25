@@ -21,15 +21,10 @@ import { getMediaBase64FromMessage } from '@/actions/chat-actions';
 import { getSessionByRemoteJid } from '@/actions/session-action';
 // 🚨 NUEVA IMPORTACIÓN ASUMIDA (DEBE SER CREADA POR TI)
 import { currentUser } from '@/lib/auth';
+import { SessionTagsCombobox } from '../../tags/components';
+import { Session, SimpleTag } from '@/types/session';
 
 // ⚠️ Asumo esta interfaz para el tipo de respuesta de UNA SOLA SESIÓN
-interface Session {
-  id: number;
-  remoteJid: string;
-  status: boolean; // El campo que necesitas para el switch
-  userId: string;
-  // ... otras propiedades
-}
 
 interface SessionResponseSingle {
   success: boolean;
@@ -45,10 +40,8 @@ type ChatMainProps = {
   loading?: boolean;
   onSend: (payload: OutgoingMessagePayload) => void | Promise<void>;
   onBackToList: () => void;
-
+  allTags: SimpleTag[];
 };
-
-
 
 /* -------- Outgoing payload unificado -------- */
 // ... (El resto de tipos se mantienen igual) ...
@@ -420,7 +413,7 @@ const ChatMessageList: React.FC<{
 };
 
 /* -------- Componente principal con lógica de SwitchStatus corregida -------- */
-export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, loading, onSend, onBackToList, userId }) => {
+export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, loading, onSend, onBackToList, userId, allTags }) => {
   const [input, setInput] = useState('');
   const [composeMedia, setComposeMedia] = useState<ComposeMedia | null>(null);
   const [isSending, setIsSending] = useState(false);
@@ -447,6 +440,8 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
   const mediaCacheRef = useRef<Map<string, { dataUrl: string; mime: string; length: number }>>(new Map());
   const [mediaCacheTick, setMediaCacheTick] = useState(0); // solo para re-render controlado cuando se actualiza la caché
   const inflightRef = useRef<Set<string>>(new Set());
+
+  const initialSelectedTagIds = session?.tags?.map((t) => t?.id).filter(Boolean) ?? [];
 
   // Detectores memoizados
   const isMediaMsg = useCallback((m: EvolutionMessage) => {
@@ -786,15 +781,27 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
           >
             <ArrowRight className="w-5 h-5 rotate-180" /> {/* Usa la misma flecha, rotada 180 grados */}
           </Button>
+
           <Avatar className="w-10 h-10">
             <AvatarImage src={header.avatarSrc || '/default-avatar.png'} />
             <AvatarFallback>{initialFromName(header.name)}</AvatarFallback>
           </Avatar>
+
+
           {/* ◀️ BOTÓN DE REGRESO A LA LISTA (VISIBLE SOLO EN MÓVIL) */}
-          
-          <div>
+
+          <div className='flex flex-row w-full justify-center items-center gap-2'>
             <p className="font-semibold text-md dark:text-white max-w-36 text-nowrap overflow-auto text-sm sm:text-base">{header.name}</p>
+          {session &&
+            <SessionTagsCombobox
+              userId={session.userId}
+              sessionId={session.id}
+              allTags={allTags}
+              initialSelectedIds={initialSelectedTagIds}
+            />
+          }
           </div>
+
           <div className='sm:hidden'>
             {(
               session &&
@@ -932,7 +939,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
                   checked={session?.status ?? false} // Usamos el status de la sesión
                   sessionId={session?.id ?? -1} // Usamos el JID del chat como ID de sesión
                   mutateSessions={fetchSessionStatus} // Función para refrescar el estado de la sesión
-                ></SwitchStatus>
+                />
               )}
             </div>
 

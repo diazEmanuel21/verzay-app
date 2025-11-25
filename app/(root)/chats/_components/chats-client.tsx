@@ -12,6 +12,7 @@ import type {
 } from "@/actions/chat-actions";
 import type { OutgoingMessagePayload } from "./chat-main";
 import { number } from "zod";
+import { SimpleTag } from "@/types/session";
 
 /* -------------------------------------
    Helpers de comparación y polling
@@ -39,7 +40,7 @@ type ApiKeyData = { url: string; key: string };
    Props del componente
 -------------------------------------- */
 interface ChatsClientProps {
-  userId :string;
+  userId: string;
   chatsResult: FetchChatsResult;
   initialSelectedJid: string;
   initialMessages: EvolutionMessage[];
@@ -58,6 +59,8 @@ interface ChatsClientProps {
 
   /** NUEVO: credenciales para que ChatMain pueda resolver media cifrada */
   apiKeyData?: ApiKeyData;
+
+  allTags: SimpleTag[];
 }
 
 /* -------------------------------------
@@ -72,21 +75,22 @@ export function ChatsClient({
   refetchChats,
   instanceName,
   apiKeyData,
-  userId
+  userId,
+  allTags
 }: ChatsClientProps) {
   const [selectedJid, setSelectedJid] = useState(initialSelectedJid || "");
   const [currentChatsResult, setCurrentChatsResult] = useState(initialChatsResult);
   const [messages, setMessages] = useState<EvolutionMessage[]>(initialMessages || []);
   const [info, setInfo] = useState<
     | {
-        total?: number;
-        pages?: number;
-        currentPage?: number;
-        nextPage?: number | null;
-        instanceName?: string;
-        remoteJid?: string;
-        apiKeyData?: ApiKeyData;
-      }
+      total?: number;
+      pages?: number;
+      currentPage?: number;
+      nextPage?: number | null;
+      instanceName?: string;
+      remoteJid?: string;
+      apiKeyData?: ApiKeyData;
+    }
     | undefined
   >(
     initialSelectedJid
@@ -95,7 +99,7 @@ export function ChatsClient({
   );
 
   const [loading, setLoading] = useState(false);
-  
+
   // 🆕 ESTADO: Controla si la barra lateral (Sidebar) es visible
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
 
@@ -332,7 +336,7 @@ export function ChatsClient({
     messages.length,
   ]);
 
-  
+
   return (
     <div className="flex h-full overflow-hidden">
       {/* LOGICA RESPONSIVE:
@@ -345,12 +349,10 @@ export function ChatsClient({
       */}
 
       {/* CHAT SIDEBAR */}
-      <div 
-        className={`${
-          isSidebarVisible ? 'w-full sm:w-80 md:w-96' : 'hidden md:block sm:w-80 md:w-96'
-        } flex-shrink-0 h-full border-r transition-all duration-300 ${
-          !isSidebarVisible ? 'hidden' : '' // Ocultar totalmente en móvil si el chat principal está activo
-        }`}
+      <div
+        className={`${isSidebarVisible ? 'w-full sm:w-80 md:w-96' : 'hidden md:block sm:w-80 md:w-96'
+          } flex-shrink-0 h-full border-r transition-all duration-300 ${!isSidebarVisible ? 'hidden' : '' // Ocultar totalmente en móvil si el chat principal está activo
+          }`}
       >
         <ChatSidebar
           result={currentChatsResult}
@@ -360,10 +362,9 @@ export function ChatsClient({
       </div>
 
       {/* CHAT MAIN */}
-      <div 
-        className={`${
-          !isSidebarVisible ? 'flex-1 w-full' : 'hidden sm:flex-1'
-        } h-full transition-all duration-300`}
+      <div
+        className={`${!isSidebarVisible ? 'flex-1 w-full' : 'hidden sm:flex-1'
+          } h-full transition-all duration-300`}
       >
         {selectedJid ? (
           <ChatMain
@@ -375,7 +376,8 @@ export function ChatsClient({
             onSend={handleSendAny}
             // 🆕 PROP: Función para volver a la lista (usada en un botón dentro de ChatMain)
             onBackToList={toggleSidebarVisibility}
-            userId = {userId}
+            userId={userId}
+            allTags={allTags}
           />
         ) : (
           <div className="flex flex-1 items-center justify-center h-full text-gray-500">

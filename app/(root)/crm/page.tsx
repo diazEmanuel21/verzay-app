@@ -40,7 +40,6 @@ const CrmPage = async ({ params, searchParams }: PageProps) => {
 
     return (
         <>
-            {/* <ClientManagement clientes={clientes} /> */}
             <LeadsManagement sessions={sessions} />
             {/* <SeedPage userId={user.id} /> */}
         </>

@@ -64,7 +64,8 @@ function getTipoLabel(tipo: TipoRegistro) {
     }
 }
 
-function formatFecha(fecha: Date) {
+function formatFecha(fecha?: Date) {
+    if (!fecha) return "-"
     try {
         return fecha.toLocaleString("es-CO", {
             dateStyle: "short",
@@ -434,8 +435,7 @@ export const LeadsManagement = ({
 
                                                 <Separator className="my-1" />
 
-{/* TODO: DESCOMENTAR FECHAAA */}
-                                                {/* <div>
+                                                <div>
                                                     <p className="font-medium mb-1">
                                                         Actividad reciente
                                                     </p>
@@ -447,9 +447,11 @@ export const LeadsManagement = ({
                                                         <ul className="flex flex-col gap-1">
                                                             {registros
                                                                 .slice()
-                                                                .sort((a, b) =>
-                                                                    a.fecha < b.fecha ? 1 : -1
-                                                                )
+                                                                .sort((a, b) => {
+                                                                    const fechaA = a.fecha ?? new Date(0);
+                                                                    const fechaB = b.fecha ?? new Date(0);
+                                                                    return fechaA < fechaB ? 1 : -1;
+                                                                })
                                                                 .slice(0, 5)
                                                                 .map((r) => (
                                                                     <li
@@ -465,13 +467,13 @@ export const LeadsManagement = ({
                                                                             </span>
                                                                         </div>
                                                                         <span className="text-[10px] text-muted-foreground whitespace-nowrap ml-2">
-                                                                            {formatFecha(r.fecha)}
+                                                                            {formatFecha(r.fecha || undefined)}
                                                                         </span>
                                                                     </li>
                                                                 ))}
                                                         </ul>
                                                     )}
-                                                </div> */}
+                                                </div>
                                             </div>
                                         </ScrollArea>
                                     </TabsContent>
@@ -639,7 +641,7 @@ function RegistrosTable({
                         {registros.map((r) => (
                             <TableRow key={r.id} className="hover:bg-accent/40">
                                 <TableCell className="py-1.5 align-top whitespace-nowrap">
-                                    {/* {formatFecha(r.fecha)}  TODO: DESCOMENTAR FECHA */}
+                                    {formatFecha(r.fecha || undefined)}
                                 </TableCell>
                                 <TableCell className="py-1.5 align-top whitespace-nowrap">
                                     {whatsapp}

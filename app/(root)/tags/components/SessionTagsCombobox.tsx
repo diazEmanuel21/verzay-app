@@ -47,18 +47,6 @@ export function SessionTagsCombobox({
 
     const isSelected = (id: number) => selectedIds.includes(id);
 
-    const summaryLabel = () => {
-        if (selectedIds.length === 0) return "Sin etiquetas";
-
-        const selectedTags = allTags.filter((t) => selectedIds.includes(t.id));
-        if (selectedTags.length === 0) return "Sin etiquetas";
-
-        const names = selectedTags.map((t) => t.name);
-        if (names.length <= 2) return names.join(", ");
-
-        return `${names.slice(0, 2).join(", ")} +${names.length - 2}`;
-    };
-
     const handleToggleTag = (tagId: number) => {
         const currentlySelected = isSelected(tagId);
 
@@ -85,6 +73,55 @@ export function SessionTagsCombobox({
         });
     };
 
+    const summaryLabel = (): React.ReactNode => {
+        if (selectedIds.length === 0) {
+            return (
+                <span className="flex items-center gap-1 truncate">
+                    <TagIcon className="h-3 w-3 opacity-70" />
+                    <span className="truncate">Sin etiquetas</span>
+                </span>
+            );
+        }
+
+        const selectedTags = allTags.filter((t) => selectedIds.includes(t.id));
+        if (selectedTags.length === 0) {
+            return (
+                <span className="flex items-center gap-1 truncate">
+                    <TagIcon className="h-3 w-3 opacity-70" />
+                    <span className="truncate">Sin etiquetas</span>
+                </span>
+            );
+        }
+
+        const maxVisible = 4; // cuántos iconos mostrar
+        const visible = selectedTags.slice(0, maxVisible);
+        const remaining = selectedTags.length - visible.length;
+
+        return (
+            <span className="flex items-center truncate">
+                {visible.map((tag) => (
+                    <span
+                        key={tag.id}
+                        className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-border bg-background/60"
+                    >
+                        <TagIcon
+                            className="h-2.5 w-2.5"
+                            style={tag.color ? { color: tag.color } : undefined}
+                        />
+                        {/* accesibilidad: nombre solo para lectores de pantalla */}
+                        <span className="sr-only">{tag.name}</span>
+                    </span>
+                ))}
+
+                {remaining > 0 && (
+                    <span className="text-[10px] text-muted-foreground">
+                        +{remaining}
+                    </span>
+                )}
+            </span>
+        );
+    };
+
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -96,7 +133,6 @@ export function SessionTagsCombobox({
                     disabled={isPending || allTags.length === 0}
                 >
                     <span className="flex items-center gap-1 truncate">
-                        <TagIcon className="h-3 w-3 opacity-70" />
                         <span className="truncate">{summaryLabel()}</span>
                     </span>
                     <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
