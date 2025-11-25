@@ -150,8 +150,8 @@ function ActionsCell({ session, onDeleteSuccess }: { session: Session, onDeleteS
       <AlertDialog open={openDeleteCliente} onOpenChange={setOpenDeleteCliente}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar seguimientos?</AlertDialogTitle>
-            <AlertDialogDescription>Eliminará todos los seguimientos asociados al cliente. ¿Deseas continuar?</AlertDialogDescription>
+            <AlertDialogTitle>¿Eliminar sesión?</AlertDialogTitle>
+            <AlertDialogDescription>Eliminará la sesión y su historial. ¿Deseas continuar?</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -168,8 +168,8 @@ function ActionsCell({ session, onDeleteSuccess }: { session: Session, onDeleteS
       <AlertDialog open={openDeleteReminders} onOpenChange={setOpenDeleteReminders}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar sesión?</AlertDialogTitle>
-            <AlertDialogDescription>Eliminará la sesión y su historial. ¿Deseas continuar?</AlertDialogDescription>
+            <AlertDialogTitle>¿Eliminar seguimientos?</AlertDialogTitle>
+            <AlertDialogDescription>Eliminará todos los seguimientos asociados al cliente. ¿Deseas continuar?</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
