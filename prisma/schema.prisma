@@ -204,7 +204,7 @@ model Registro {
   id        Int          @id @default(autoincrement())
   tipo      TipoRegistro
   fecha     DateTime?
-  estado    String
+  estado    String?
   resumen   String?
   lead      Boolean?
   nombre    String?

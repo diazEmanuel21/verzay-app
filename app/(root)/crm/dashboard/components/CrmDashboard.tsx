@@ -467,7 +467,7 @@ export const CrmDashboard = ({
                                                     </TableCell>
                                                     <TableCell className="py-1.5 align-top text-right">
                                                         <Select
-                                                            value={r.estado}
+                                                            value={r.estado ?? 'pendiente'}
                                                             onValueChange={(value) => {
                                                                 if (value === r.estado) return;
                                                                 onChangeEstado?.(r.id, value);
