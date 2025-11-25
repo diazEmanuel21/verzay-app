@@ -434,7 +434,8 @@ export const LeadsManagement = ({
 
                                                 <Separator className="my-1" />
 
-                                                <div>
+{/* TODO: DESCOMENTAR FECHAAA */}
+                                                {/* <div>
                                                     <p className="font-medium mb-1">
                                                         Actividad reciente
                                                     </p>
@@ -470,7 +471,7 @@ export const LeadsManagement = ({
                                                                 ))}
                                                         </ul>
                                                     )}
-                                                </div>
+                                                </div> */}
                                             </div>
                                         </ScrollArea>
                                     </TabsContent>
@@ -638,7 +639,7 @@ function RegistrosTable({
                         {registros.map((r) => (
                             <TableRow key={r.id} className="hover:bg-accent/40">
                                 <TableCell className="py-1.5 align-top whitespace-nowrap">
-                                    {formatFecha(r.fecha)}
+                                    {/* {formatFecha(r.fecha)}  TODO: DESCOMENTAR FECHA */}
                                 </TableCell>
                                 <TableCell className="py-1.5 align-top whitespace-nowrap">
                                     {whatsapp}

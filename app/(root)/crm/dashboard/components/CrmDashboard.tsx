@@ -155,7 +155,7 @@ export const CrmDashboard = ({
     onChangeEstado
 }: {
     registros: RegistroWithSession[];
-    onChangeEstado?: (registroId: string, nuevoEstado: string) => void;
+    onChangeEstado?: (registroId: number, nuevoEstado: string) => void;
 }) => {
     const [activeTab, setActiveTab] = useState<
         "TODOS" | TipoRegistro
@@ -216,7 +216,7 @@ export const CrmDashboard = ({
         }
 
         for (const r of registros) {
-            const d = toDate(r.fecha);
+            const d = toDate(r.fecha || '');
             const key = d.toISOString().slice(0, 10);
             if (daysMap.has(key)) {
                 daysMap.set(key, (daysMap.get(key) ?? 0) + 1);
@@ -445,7 +445,7 @@ export const CrmDashboard = ({
                                                         {nombre}
                                                     </TableCell>
                                                     <TableCell className="py-1.5 align-top whitespace-nowrap">
-                                                        {formatFecha(r.fecha)}
+                                                        {formatFecha(r.fecha || '')}
                                                     </TableCell>
                                                     {/* <TableCell className="py-1.5 align-top whitespace-nowrap">
                                                         <Badge

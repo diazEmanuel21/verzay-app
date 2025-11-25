@@ -1,37 +1,147 @@
+// app/(dashboard)/crm/dashboard/components/MainDashboard.tsx
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useMemo, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import useSWRInfinite from "swr/infinite";
+
 import { CrmDashboard, RegistroWithSession } from "./CrmDashboard";
-import { updateRegistroEstado } from "@/actions/crm-seed-actions";
-// si usas toasts, aquí también importarías tu hook de toast
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { getRegistrosByUserId, updateRegistroEstado } from "@/actions/crm-seed-actions";
 
-export const MainDashboard = ({
-  registros,
-}: {
-  registros: RegistroWithSession[];
-}) => {
+type MainDashboardProps = {
+  userId: string;
+};
 
-  console.log({registros})
-  const [isPending, startTransition] = useTransition();
+const PAGE_SIZE = 50;
+
+export const MainDashboard = ({ userId }: MainDashboardProps) => {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const observerRef = useRef<HTMLDivElement | null>(null);
 
-  const handleChangeEstado = (registroId: string, nuevoEstado: string) => {
+  const getKey = (
+    pageIndex: number,
+    previousPageData: RegistroWithSession[] | null
+  ) => {
+    // si la página anterior viene con menos de PAGE_SIZE, ya no hay más
+    if (previousPageData && previousPageData.length < PAGE_SIZE) return null;
+    return `${userId}-${pageIndex}`;
+  };
+
+  const {
+    data,
+    size,
+    setSize,
+    mutate,
+    isLoading,
+    isValidating,
+    error,
+  } = useSWRInfinite<RegistroWithSession[]>(
+    getKey,
+    async (key: string) => {
+      const [, pageIndex] = key.split("-");
+      const page = parseInt(pageIndex, 10);
+
+      const res = await getRegistrosByUserId(
+        userId,
+        page * PAGE_SIZE,
+        PAGE_SIZE
+      );
+
+      if (!res.success) {
+        throw new Error(res.message || "No se pudieron cargar los registros");
+      }
+
+      return res.data || [];
+    },
+    {
+      revalidateAll: false,
+      revalidateFirstPage: false,
+    }
+  );
+
+  const registros = useMemo(
+    () => (data ? data.flat() : []),
+    [data]
+  );
+
+  const hasMore =
+    !data || (data[data.length - 1]?.length === PAGE_SIZE);
+
+  // Infinite scroll con IntersectionObserver (igual patrón que SessionsContent)
+  useEffect(() => {
+    if (!observerRef.current) return;
+    if (!hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !isValidating && hasMore) {
+          setSize((prev) => prev + 1);
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    observer.observe(observerRef.current);
+
+    return () => observer.disconnect();
+  }, [hasMore, isValidating, setSize]);
+
+  const handleChangeEstado = (registroId: number, nuevoEstado: string) => {
     startTransition(async () => {
       const res = await updateRegistroEstado(registroId, nuevoEstado);
 
-      // TODO: aquí puedes meter toast de éxito / error
-      // if (!res.success) toast({ ... })
+      // aquí podrías usar toast según res.success
+      if (!res?.success) {
+        // opcional: mostrar error
+        return;
+      }
 
-      // refrescamos datos del servidor
-      router.refresh();
+      // Revalidamos la lista sin recargar toda la página
+      await mutate();
     });
   };
 
+  if (isLoading && size === 1) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Cargando registros...
+      </p>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mt-4">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            {(error as Error).message}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
-    <CrmDashboard
-      registros={registros}
-      onChangeEstado={handleChangeEstado}
-    />
+    <div className="flex flex-col h-full">
+      <CrmDashboard
+        registros={registros}
+        onChangeEstado={handleChangeEstado}
+      />
+
+      {/* Sentinel para infinite scroll */}
+      {hasMore && <div ref={observerRef} className="h-10" />}
+
+      {isValidating && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Cargando más registros...
+        </p>
+      )}
+    </div>
   );
 };

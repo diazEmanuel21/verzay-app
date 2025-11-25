@@ -215,7 +215,9 @@ model Registro {
   updatedAt DateTime     @updatedAt
   session   Session      @relation(fields: [sessionId], references: [id])
 
-  @@index([sessionId, tipo, fecha])
+  // Este lo necesitamos para el ON CONFLICT (sessionId, tipo, fecha)
+  @@unique([sessionId], name: "Registro_session_key")
+  // Este lo dejamos para queries globales por tipo / fecha
   @@index([tipo, fecha])
 }
 

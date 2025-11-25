@@ -107,7 +107,7 @@ import { db } from "@/lib/db";
 //     };
 // }
 
-export async function updateRegistroEstado(registroId: string, nuevoEstado: string) {
+export async function updateRegistroEstado(registroId: number, nuevoEstado: string) {
     try {
         await db.registro.update({
             where: { id: registroId },
@@ -123,6 +123,44 @@ export async function updateRegistroEstado(registroId: string, nuevoEstado: stri
         return {
             success: false,
             message: "No se pudo actualizar el estado del registro",
+        };
+    }
+}
+
+export async function getRegistrosByUserId(
+    userId: string,
+    skip = 0,
+    take = 50
+) {
+    try {
+        const registros = await db.registro.findMany({
+            where: {
+                session: {
+                    userId,
+                },
+            },
+            include: {
+                session: {
+                    include: {
+                        registros: true,
+                    },
+                },
+            },
+            orderBy: { fecha: "desc" },
+            skip,
+            take,
+        });
+
+        return {
+            success: true as const,
+            data: registros,
+        };
+    } catch (error) {
+        console.error("[getRegistrosByUserId] Error:", error);
+
+        return {
+            success: false as const,
+            message: "Error al obtener registros",
         };
     }
 }
