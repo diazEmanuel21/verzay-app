@@ -28,6 +28,7 @@ import {
     TableCell,
 } from "@/components/ui/table";
 import { BarChart3, Activity, Users, Filter } from "lucide-react";
+import { TagStatsCard } from './TagStatsCard';
 import type {
     Registro as PrismaRegistro,
     Session as PrismaSession,
@@ -152,10 +153,12 @@ function getDisplayNombreFromRegistro(r: RegistroWithSession) {
 
 export const CrmDashboard = ({
     registros,
-    onChangeEstado
+    onChangeEstado,
+    userId
 }: {
     registros: RegistroWithSession[];
     onChangeEstado?: (registroId: number, nuevoEstado: string) => void;
+    userId: string
 }) => {
     const [activeTab, setActiveTab] = useState<
         "TODOS" | TipoRegistro
@@ -250,7 +253,7 @@ export const CrmDashboard = ({
             </div>
 
             {/* Métricas rápidas */}
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-2">
                 <MetricCard
                     icon={<BarChart3 className="h-4 w-4" />}
                     label="Total registros"
@@ -264,7 +267,7 @@ export const CrmDashboard = ({
                     value={(leadsConMovimientos)}
                     helper="Sessiones que tienen al menos un registro"
                 />
-                <h1>clientes  con movimientos, se calcula con el tag</h1>
+                {/* <h1>client1es con movimientos, se calcula con el tag</h1> */}
                 {/* <MetricCard
                     icon={<Users className="h-4 w-4" />}
                     label="Clientes con movimientos"
@@ -339,6 +342,10 @@ export const CrmDashboard = ({
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Tags stats */}
+            <TagStatsCard userId={userId} />
+
 
             {/* TABLAS GLOBALES */}
             <Card className="flex flex-col border-border">

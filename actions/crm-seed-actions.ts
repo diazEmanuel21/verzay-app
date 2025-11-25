@@ -151,6 +151,26 @@ export async function getRegistrosByUserId(
             take,
         });
 
+        const registrosWithTags = await db.registro.findMany({
+            where: { session: { userId: userId } },
+            include: {
+                session: {
+                    include: {
+                        registros: true,
+                        tags: {
+                            include: {
+                                tag: true, // 👈 aquí obtienes Tag.name / slug / color
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: { fecha: "desc" },
+            skip,
+            take,
+        });
+
+
         return {
             success: true as const,
             data: registros,
@@ -161,6 +181,51 @@ export async function getRegistrosByUserId(
         return {
             success: false as const,
             message: "Error al obtener registros",
+        };
+    }
+}
+
+export async function getSessionTagStatsByUserId(userId: string) {
+    try {
+        // 1) Agrupamos en la tabla pivote SessionTag
+        const grouped = await db.sessionTag.groupBy({
+            by: ["tagId"],
+            _count: { _all: true },
+            where: {
+                session: { userId }, // solo sesiones del usuario actual
+            },
+        });
+
+        if (!grouped.length) return { success: true as const, data: [] };
+
+        const tagIds = grouped.map((g) => g.tagId);
+
+        // 2) Traemos info de cada Tag
+        const tags = await db.tag.findMany({
+            where: { id: { in: tagIds } },
+        });
+
+        // 3) Combinamos
+        const stats = grouped.map((g) => {
+            const tag = tags.find((t) => t.id === g.tagId);
+            return {
+                tagId: g.tagId,
+                name: tag?.name ?? "Sin nombre",
+                slug: tag?.slug ?? "",
+                color: tag?.color ?? undefined,
+                count: g._count._all,
+            };
+        });
+
+        return {
+            success: true as const,
+            data: stats,
+        };
+    } catch (error) {
+        console.error("[getSessionTagStatsByUserId] Error:", error);
+        return {
+            success: false as const,
+            message: "Error al obtener estadísticas de tags",
         };
     }
 }

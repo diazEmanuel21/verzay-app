@@ -9,6 +9,7 @@ import { CrmDashboard, RegistroWithSession } from "./CrmDashboard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { getRegistrosByUserId, updateRegistroEstado } from "@/actions/crm-seed-actions";
+import { LoadingProgress } from "@/components/shared/LoadingProgress";
 
 type MainDashboardProps = {
   userId: string;
@@ -107,9 +108,11 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
 
   if (isLoading && size === 1) {
     return (
-      <p className="text-sm text-muted-foreground">
-        Cargando registros...
-      </p>
+      <LoadingProgress
+        fullscreen
+        label="Cargando registros"
+        description="Esto suele tardar solo unos segundos..."
+      />
     );
   }
 
@@ -130,6 +133,7 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
   return (
     <div className="flex flex-col h-full">
       <CrmDashboard
+        userId={userId}
         registros={registros}
         onChangeEstado={handleChangeEstado}
       />
