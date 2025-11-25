@@ -26,7 +26,6 @@ import { Search, Plus, MessageCircleMore } from "lucide-react";
 import type {
     Session as PrismaSession,
     Registro as PrismaRegistro,
-    // Cliente as PrismaCliente,
     TipoRegistro as PrismaTipoRegistro,
 } from "@prisma/client";
 
@@ -36,7 +35,6 @@ type TipoRegistro = PrismaTipoRegistro;
 
 type SessionWithRegistros = PrismaSession & {
     registros: PrismaRegistro[];
-    // cliente?: PrismaCliente | null;
 };
 
 /* ===== HELPERS ===== */
@@ -65,7 +63,7 @@ function getTipoLabel(tipo: TipoRegistro) {
 }
 
 function formatFecha(fecha?: Date) {
-    if (!fecha) return "-"
+    if (!fecha) return "-";
     try {
         return fecha.toLocaleString("es-CO", {
             dateStyle: "short",
@@ -77,7 +75,6 @@ function formatFecha(fecha?: Date) {
 }
 
 function getDisplayWhatsappFromSession(session: PrismaSession) {
-    // Priorizar remoteJidAlt si quieres, por ahora usamos remoteJid
     const base = session.remoteJidAlt || session.remoteJid;
     return base.includes("@") ? base.split("@")[0] : base;
 }
@@ -152,13 +149,12 @@ export const LeadsManagement = ({
                     <h1 className="text-2xl font-semibold tracking-tight">
                         Leads / Sesiones
                     </h1>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground">
                         Visualiza los leads (sessiones) y su historial de registros
                         (reportes, solicitudes, pedidos, reclamos, pagos y reservas).
                     </p>
                 </div>
-                <div className="flex gap-2 mt-2 md:mt-0">
-                    {/* Las sesiones vienen del webhook, por eso no hay botón de "Nuevo lead" */}
+                <div className="flex gap-2 mt-2 md:mt-0 md:justify-end">
                     <Button size="sm" variant="outline">
                         <Plus className="h-4 w-4 mr-1" />
                         Nuevo registro
@@ -167,12 +163,12 @@ export const LeadsManagement = ({
             </div>
 
             {/* Layout principal */}
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.5fr)] h-[calc(100vh-9rem)]">
+            <div className="grid gap-4 h-auto lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.5fr)] lg:h-[calc(100vh-9rem)]">
                 {/* Columna izquierda: Sesiones / Leads */}
                 <Card className="flex flex-col min-h-0 border-border">
                     <CardHeader className="pb-3">
                         <CardTitle className="text-base">Leads (Sesiones)</CardTitle>
-                        <CardDescription className="text-xs">
+                        <CardDescription>
                             Todas las sessiones activas/inactivas con historial de CRM.
                         </CardDescription>
                     </CardHeader>
@@ -182,7 +178,7 @@ export const LeadsManagement = ({
                             <div className="relative flex-1">
                                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    className="pl-8 h-8 text-xs"
+                                    className="pl-8 h-8"
                                     placeholder="Buscar por nombre, número o JID..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
@@ -196,7 +192,7 @@ export const LeadsManagement = ({
                         <ScrollArea className="flex-1">
                             <div className="flex flex-col gap-1 pr-2">
                                 {filteredSessions.length === 0 && (
-                                    <p className="text-xs text-muted-foreground py-4 text-center">
+                                    <p className="text-muted-foreground py-4 text-center">
                                         No se encontraron leads para &quot;{search}&quot;.
                                     </p>
                                 )}
@@ -204,8 +200,8 @@ export const LeadsManagement = ({
                                 {filteredSessions.map((session) => {
                                     const isSelected = session.id === selectedSessionId;
                                     const displayNombre = getDisplayNombreFromSession(session);
-                                    const displayWhatsapp = getDisplayWhatsappFromSession(session);
-                                    // const hasCliente = !!session.cliente;
+                                    const displayWhatsapp =
+                                        getDisplayWhatsappFromSession(session);
 
                                     return (
                                         <button
@@ -213,7 +209,7 @@ export const LeadsManagement = ({
                                             type="button"
                                             onClick={() => setSelectedSessionId(session.id)}
                                             className={[
-                                                "w-full text-left rounded-lg px-3 py-2 border flex flex-col gap-1 transition text-xs",
+                                                "w-full text-left rounded-lg px-3 py-2 border flex flex-col gap-1 transition",
                                                 "hover:bg-accent/60 hover:border-accent",
                                                 isSelected
                                                     ? "bg-accent border-accent"
@@ -225,24 +221,22 @@ export const LeadsManagement = ({
                                                     {displayNombre}
                                                 </span>
                                                 <div className="flex items-center gap-1">
-                                                    {/* {hasCliente && (
-                                                        <Badge
-                                                            variant="secondary"
-                                                            className="text-[9px] px-1 py-0"
-                                                        >
-                                                            Cliente
-                                                        </Badge>
-                                                    )} */}
                                                     <Badge
-                                                        variant={getStatusBadgeVariant(session.status) as any}
-                                                        className="text-[10px] px-1.5 py-0"
+                                                        variant={
+                                                            getStatusBadgeVariant(
+                                                                session.status
+                                                            ) as any
+                                                        }
+                                                        className="px-1.5 py-0"
                                                     >
                                                         {session.status ? "Activo" : "Inactivo"}
                                                     </Badge>
                                                 </div>
                                             </div>
-                                            <div className="flex flex-col gap-0.5 text-[11px] text-muted-foreground">
-                                                <span className="truncate">{displayWhatsapp}</span>
+                                            <div className="flex flex-col gap-0.5 text-muted-foreground">
+                                                <span className="truncate">
+                                                    {displayWhatsapp}
+                                                </span>
                                                 <span className="truncate">
                                                     {session.remoteJid}
                                                 </span>
@@ -263,7 +257,7 @@ export const LeadsManagement = ({
                                 ? getDisplayNombreFromSession(selectedSession)
                                 : "Selecciona un lead"}
                         </CardTitle>
-                        <CardDescription className="text-xs">
+                        <CardDescription>
                             {selectedSession
                                 ? "Detalle del lead (Session) y actividad de CRM asociada."
                                 : "Haz clic en un lead de la izquierda para ver el detalle."}
@@ -273,63 +267,61 @@ export const LeadsManagement = ({
                         {selectedSession ? (
                             <>
                                 {/* Info rápida del lead */}
-                                <div className="flex flex-col gap-2 rounded-lg border-border bg-muted/40 p-3 text-xs">
+                                <div className="flex flex-col gap-2 rounded-lg border-border bg-muted/40 p-3">
                                     <div className="flex flex-wrap items-center justify-between gap-2">
                                         <div className="flex flex-col gap-1">
-                                            <span className="text-xs font-medium">
+                                            <span className="font-medium">
                                                 {getDisplayNombreFromSession(selectedSession)}
                                             </span>
-                                            <span className="text-[11px] text-muted-foreground">
+                                            <span className="text-muted-foreground">
                                                 {getDisplayWhatsappFromSession(selectedSession)}
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            {/* {selectedSession.cliente && (
-                                                <Badge
-                                                    variant="secondary"
-                                                    className="text-[10px] px-1.5 py-0"
-                                                >
-                                                    Vinculado a Cliente
-                                                </Badge>
-                                            )} */}
                                             <Badge
-                                                variant={getStatusBadgeVariant(selectedSession.status) as any}
-                                                className="text-[10px] px-1.5 py-0"
+                                                variant={
+                                                    getStatusBadgeVariant(
+                                                        selectedSession.status
+                                                    ) as any
+                                                }
+                                                className="px-1.5 py-0"
                                             >
-                                                {selectedSession.status ? "Activo" : "Inactivo"}
+                                                {selectedSession.status
+                                                    ? "Activo"
+                                                    : "Inactivo"}
                                             </Badge>
                                         </div>
                                     </div>
 
                                     <div className="flex flex-wrap items-center justify-between gap-2 mt-1">
                                         <div className="flex flex-col gap-0.5">
-                                            <span className="text-[11px] text-muted-foreground">
+                                            <span className="text-muted-foreground">
                                                 remoteJid
                                             </span>
-                                            <span className="text-[11px]">
-                                                {selectedSession.remoteJid}
-                                            </span>
+                                            <span>{selectedSession.remoteJid}</span>
                                         </div>
                                         {selectedSession.remoteJidAlt && (
                                             <div className="flex flex-col gap-0.5">
-                                                <span className="text-[11px] text-muted-foreground">
+                                                <span className="text-muted-foreground">
                                                     remoteJidAlt
                                                 </span>
-                                                <span className="text-[11px]">
-                                                    {selectedSession.remoteJidAlt}
-                                                </span>
+                                                <span>{selectedSession.remoteJidAlt}</span>
                                             </div>
                                         )}
                                         <div className="flex flex-col gap-0.5">
-                                            <span className="text-[11px] text-muted-foreground">
+                                            <span className="text-muted-foreground">
                                                 Creado
                                             </span>
-                                            <span className="text-[11px]">
+                                            <span>
                                                 {formatFecha(selectedSession.createdAt)}
                                             </span>
                                         </div>
                                         <div className="flex gap-1">
-                                            <Button size="icon" variant="outline" className="h-7 w-7">
+                                            <Button
+                                                size="icon"
+                                                variant="outline"
+                                                className="h-7 w-7"
+                                            >
                                                 <MessageCircleMore className="h-3 w-3" />
                                             </Button>
                                         </div>
@@ -338,54 +330,54 @@ export const LeadsManagement = ({
 
                                 {/* Tabs de registros */}
                                 <Tabs defaultValue="RESUMEN" className="flex flex-col min-h-0">
-                                    <TabsList className="grid grid-cols-4 md:grid-cols-7 gap-1 mb-2">
-                                        <TabsTrigger value="RESUMEN" className="text-[11px] px-2">
+                                    <TabsList className="flex w-full flex-wrap gap-1 mb-2 overflow-x-auto md:grid md:grid-cols-7">
+                                        <TabsTrigger value="RESUMEN" className="px-2">
                                             Resumen
                                         </TabsTrigger>
-                                        <TabsTrigger value="REPORTE" className="text-[11px] px-2">
+                                        <TabsTrigger value="REPORTE" className="px-2">
                                             Reportes{" "}
                                             {countByTipo.REPORTE > 0 && (
-                                                <span className="ml-1 text-[10px] text-muted-foreground">
+                                                <span className="ml-1 text-muted-foreground">
                                                     ({countByTipo.REPORTE})
                                                 </span>
                                             )}
                                         </TabsTrigger>
-                                        <TabsTrigger value="SOLICITUD" className="text-[11px] px-2">
+                                        <TabsTrigger value="SOLICITUD" className="px-2">
                                             Solicitudes{" "}
                                             {countByTipo.SOLICITUD > 0 && (
-                                                <span className="ml-1 text-[10px] text-muted-foreground">
+                                                <span className="ml-1 text-muted-foreground">
                                                     ({countByTipo.SOLICITUD})
                                                 </span>
                                             )}
                                         </TabsTrigger>
-                                        <TabsTrigger value="PEDIDO" className="text-[11px] px-2">
+                                        <TabsTrigger value="PEDIDO" className="px-2">
                                             Pedidos{" "}
                                             {countByTipo.PEDIDO > 0 && (
-                                                <span className="ml-1 text-[10px] text-muted-foreground">
+                                                <span className="ml-1 text-muted-foreground">
                                                     ({countByTipo.PEDIDO})
                                                 </span>
                                             )}
                                         </TabsTrigger>
-                                        <TabsTrigger value="RECLAMO" className="text-[11px] px-2">
+                                        <TabsTrigger value="RECLAMO" className="px-2">
                                             Reclamos{" "}
                                             {countByTipo.RECLAMO > 0 && (
-                                                <span className="ml-1 text-[10px] text-muted-foreground">
+                                                <span className="ml-1 text-muted-foreground">
                                                     ({countByTipo.RECLAMO})
                                                 </span>
                                             )}
                                         </TabsTrigger>
-                                        <TabsTrigger value="PAGO" className="text-[11px] px-2">
+                                        <TabsTrigger value="PAGO" className="px-2">
                                             Pagos{" "}
                                             {countByTipo.PAGO > 0 && (
-                                                <span className="ml-1 text-[10px] text-muted-foreground">
+                                                <span className="ml-1 text-muted-foreground">
                                                     ({countByTipo.PAGO})
                                                 </span>
                                             )}
                                         </TabsTrigger>
-                                        <TabsTrigger value="RESERVA" className="text-[11px] px-2">
+                                        <TabsTrigger value="RESERVA" className="px-2">
                                             Reservas{" "}
                                             {countByTipo.RESERVA > 0 && (
-                                                <span className="ml-1 text-[10px] text-muted-foreground">
+                                                <span className="ml-1 text-muted-foreground">
                                                     ({countByTipo.RESERVA})
                                                 </span>
                                             )}
@@ -397,15 +389,17 @@ export const LeadsManagement = ({
                                         value="RESUMEN"
                                         className="flex-1 min-h-0 mt-0"
                                     >
-                                        <ScrollArea className="flex-1 rounded-md ">
-                                            {/* <ScrollArea className="h-[260px] md:h-[320px] pr-2"> */}
-                                            <div className="flex flex-col gap-3 text-xs">
+                                        <ScrollArea className="flex-1 rounded-md">
+                                            <div className="flex flex-col gap-3">
                                                 <div>
-                                                    <p className="font-medium mb-1">Resumen general</p>
-                                                    <p className="text-muted-foreground text-[11px]">
-                                                        Este lead representa una session de WhatsApp y aquí
-                                                        ves toda su actividad: reportes, solicitudes,
-                                                        pedidos, reclamos, pagos y reservas.
+                                                    <p className="font-medium mb-1">
+                                                        Resumen general
+                                                    </p>
+                                                    <p className="text-muted-foreground text-sm">
+                                                        Este lead representa una session de
+                                                        WhatsApp y aquí ves toda su actividad:
+                                                        reportes, solicitudes, pedidos, reclamos,
+                                                        pagos y reservas.
                                                     </p>
                                                 </div>
 
@@ -426,7 +420,10 @@ export const LeadsManagement = ({
                                                         label="Reclamos"
                                                         value={countByTipo.RECLAMO}
                                                     />
-                                                    <ResumeCard label="Pagos" value={countByTipo.PAGO} />
+                                                    <ResumeCard
+                                                        label="Pagos"
+                                                        value={countByTipo.PAGO}
+                                                    />
                                                     <ResumeCard
                                                         label="Reservas"
                                                         value={countByTipo.RESERVA}
@@ -440,7 +437,7 @@ export const LeadsManagement = ({
                                                         Actividad reciente
                                                     </p>
                                                     {registros.length === 0 ? (
-                                                        <p className="text-[11px] text-muted-foreground">
+                                                        <p className="text-muted-foreground">
                                                             Este lead aún no tiene registros.
                                                         </p>
                                                     ) : (
@@ -448,8 +445,10 @@ export const LeadsManagement = ({
                                                             {registros
                                                                 .slice()
                                                                 .sort((a, b) => {
-                                                                    const fechaA = a.fecha ?? new Date(0);
-                                                                    const fechaB = b.fecha ?? new Date(0);
+                                                                    const fechaA =
+                                                                        a.fecha ?? new Date(0);
+                                                                    const fechaB =
+                                                                        b.fecha ?? new Date(0);
                                                                     return fechaA < fechaB ? 1 : -1;
                                                                 })
                                                                 .slice(0, 5)
@@ -459,15 +458,19 @@ export const LeadsManagement = ({
                                                                         className="flex items-start justify-between gap-2 rounded-md border bg-background px-2 py-1.5"
                                                                     >
                                                                         <div className="flex flex-col gap-0.5">
-                                                                            <span className="text-[11px] font-medium">
+                                                                            <span className="font-medium">
                                                                                 {getTipoLabel(r.tipo)}
                                                                             </span>
-                                                                            <span className="text-[11px] text-muted-foreground line-clamp-2">
-                                                                                {r.resumen || r.detalles || "Sin detalles"}
+                                                                            <span className="text-muted-foreground line-clamp-2">
+                                                                                {r.resumen ||
+                                                                                    r.detalles ||
+                                                                                    "Sin detalles"}
                                                                             </span>
                                                                         </div>
-                                                                        <span className="text-[10px] text-muted-foreground whitespace-nowrap ml-2">
-                                                                            {formatFecha(r.fecha || undefined)}
+                                                                        <span className="text-muted-foreground whitespace-nowrap ml-2">
+                                                                            {formatFecha(
+                                                                                r.fecha || undefined
+                                                                            )}
                                                                         </span>
                                                                     </li>
                                                                 ))}
@@ -560,7 +563,7 @@ export const LeadsManagement = ({
                             </>
                         ) : (
                             <div className="flex-1 flex items-center justify-center">
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-muted-foreground">
                                     Selecciona un lead en la columna izquierda para ver el
                                     detalle.
                                 </p>
@@ -578,8 +581,8 @@ export const LeadsManagement = ({
 function ResumeCard({ label, value }: { label: string; value: number }) {
     return (
         <div className="rounded-md border bg-background px-3 py-2 flex flex-col gap-0.5">
-            <span className="text-[11px] text-muted-foreground">{label}</span>
-            <span className="text-sm font-semibold">{value}</span>
+            <span className="text-muted-foreground">{label}</span>
+            <span className="font-semibold">{value}</span>
         </div>
     );
 }
@@ -596,102 +599,108 @@ function RegistrosTable({
     const isReporte = tipo === "REPORTE";
 
     return (
-        <div className="flex flex-col gap-2 h-[260px] md:h-[320px]">
-            <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-medium">
+        <div className="flex flex-col gap-2 h-[260px] sm:h-[300px] md:h-[320px]">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-medium">
                     {getTipoLabel(tipo)} ({registros.length})
                 </p>
-                <Button variant="outline" size="sm" className="h-7 text-[11px] px-2">
+                <Button variant="outline" size="sm" className="h-7 px-2">
                     <Plus className="h-3 w-3 mr-1" />
                     Nuevo {getTipoLabel(tipo).slice(0, -1)}
                 </Button>
             </div>
 
             <ScrollArea className="flex-1 rounded-md border">
-                <Table className="text-xs">
-                    <TableHeader>
-                        <TableRow className="hover:bg-transparent">
-                            <TableHead className="h-8 py-1.5">Fecha</TableHead>
-                            <TableHead className="h-8 py-1.5">WhatsApp</TableHead>
-                            {isReporte && (
-                                <>
-                                    <TableHead className="h-8 py-1.5">Nombre</TableHead>
-                                    <TableHead className="h-8 py-1.5">Resumen</TableHead>
-                                    <TableHead className="h-8 py-1.5 text-center">Lead</TableHead>
-                                </>
-                            )}
-                            {!isReporte && (
-                                <TableHead className="h-8 py-1.5">Detalles</TableHead>
-                            )}
-                            <TableHead className="h-8 py-1.5 text-right">Estado</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {registros.length === 0 && (
-                            <TableRow>
-                                <TableCell
-                                    colSpan={isReporte ? 6 : 4}
-                                    className="h-16 text-center text-[11px] text-muted-foreground"
-                                >
-                                    No hay registros para este módulo.
-                                </TableCell>
-                            </TableRow>
-                        )}
-
-                        {registros.map((r) => (
-                            <TableRow key={r.id} className="hover:bg-accent/40">
-                                <TableCell className="py-1.5 align-top whitespace-nowrap">
-                                    {formatFecha(r.fecha || undefined)}
-                                </TableCell>
-                                <TableCell className="py-1.5 align-top whitespace-nowrap">
-                                    {whatsapp}
-                                </TableCell>
-
-                                {isReporte ? (
+                <div className="min-w-[640px]">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="hover:bg-transparent">
+                                <TableHead className="h-8 py-1.5">Fecha</TableHead>
+                                <TableHead className="h-8 py-1.5">WhatsApp</TableHead>
+                                {isReporte && (
                                     <>
-                                        <TableCell className="py-1.5 align-top whitespace-nowrap">
-                                            {r.nombre || "-"}
-                                        </TableCell>
-                                        <TableCell className="py-1.5 align-top max-w-[220px]">
+                                        <TableHead className="h-8 py-1.5">Nombre</TableHead>
+                                        <TableHead className="h-8 py-1.5">Resumen</TableHead>
+                                        <TableHead className="h-8 py-1.5 text-center">
+                                            Lead
+                                        </TableHead>
+                                    </>
+                                )}
+                                {!isReporte && (
+                                    <TableHead className="h-8 py-1.5">Detalles</TableHead>
+                                )}
+                                <TableHead className="h-8 py-1.5 text-right">
+                                    Estado
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {registros.length === 0 && (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={isReporte ? 6 : 4}
+                                        className="h-16 text-center text-muted-foreground"
+                                    >
+                                        No hay registros para este módulo.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+
+                            {registros.map((r) => (
+                                <TableRow key={r.id} className="hover:bg-accent/40">
+                                    <TableCell className="py-1.5 align-top whitespace-nowrap">
+                                        {formatFecha(r.fecha || undefined)}
+                                    </TableCell>
+                                    <TableCell className="py-1.5 align-top whitespace-nowrap">
+                                        {whatsapp}
+                                    </TableCell>
+
+                                    {isReporte ? (
+                                        <>
+                                            <TableCell className="py-1.5 align-top whitespace-nowrap">
+                                                {r.nombre || "-"}
+                                            </TableCell>
+                                            <TableCell className="py-1.5 align-top max-w-[220px]">
+                                                <span className="line-clamp-2">
+                                                    {r.resumen || "Sin resumen"}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="py-1.5 align-top text-center">
+                                                {r.lead ? (
+                                                    <Badge
+                                                        variant="default"
+                                                        className="px-2 py-0"
+                                                    >
+                                                        Sí
+                                                    </Badge>
+                                                ) : (
+                                                    <span className="text-muted-foreground">
+                                                        No
+                                                    </span>
+                                                )}
+                                            </TableCell>
+                                        </>
+                                    ) : (
+                                        <TableCell className="py-1.5 align-top max-w-[260px]">
                                             <span className="line-clamp-2">
-                                                {r.resumen || "Sin resumen"}
+                                                {r.detalles || "Sin detalles"}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="py-1.5 align-top text-center">
-                                            {r.lead ? (
-                                                <Badge
-                                                    variant="default"
-                                                    className="text-[10px] px-2 py-0"
-                                                >
-                                                    Sí
-                                                </Badge>
-                                            ) : (
-                                                <span className="text-[11px] text-muted-foreground">
-                                                    No
-                                                </span>
-                                            )}
-                                        </TableCell>
-                                    </>
-                                ) : (
-                                    <TableCell className="py-1.5 align-top max-w-[260px]">
-                                        <span className="line-clamp-2">
-                                            {r.detalles || "Sin detalles"}
-                                        </span>
-                                    </TableCell>
-                                )}
+                                    )}
 
-                                <TableCell className="py-1.5 align-top text-right">
-                                    <Badge
-                                        variant="outline"
-                                        className="text-[10px] px-2 py-0 capitalize"
-                                    >
-                                        {r.estado}
-                                    </Badge>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                                    <TableCell className="py-1.5 align-top text-right">
+                                        <Badge
+                                            variant="outline"
+                                            className="px-2 py-0 capitalize"
+                                        >
+                                            {r.estado}
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
             </ScrollArea>
         </div>
     );
