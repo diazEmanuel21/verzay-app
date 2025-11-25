@@ -201,9 +201,9 @@ model SessionTag {
 }
 
 model Registro {
-  id        String       @id @default(cuid())
+  id        Int          @id @default(autoincrement())
   tipo      TipoRegistro
-  fecha     DateTime
+  fecha     DateTime?
   estado    String
   resumen   String?
   lead      Boolean?

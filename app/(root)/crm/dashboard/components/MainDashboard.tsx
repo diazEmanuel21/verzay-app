@@ -11,6 +11,8 @@ export const MainDashboard = ({
 }: {
   registros: RegistroWithSession[];
 }) => {
+
+  console.log({registros})
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
