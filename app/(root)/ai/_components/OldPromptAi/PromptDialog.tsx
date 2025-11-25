@@ -99,10 +99,7 @@ export const PromptDialog = ({ open, setOpen, defaultValues, userId }: PromptDia
 
                     <div className="flex flex-1 flex-col gap-2">
                         <label className="block text-sm font-medium mb-1">Descripción</label>
-
-
-                        <Textarea placeholder="Ejemplo: Saluda cordialmente al usuario..."
-                            className="w-full p-3 border-border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary resize-y min-h-[200px]"
+                        <Textarea placeholder="Ejemplo: Saluda cordialmente al usuario..." className="flex-1 resize-none overflow-y-auto"
                             // className="flex-1 resize-none overflow-y-auto"
                             {...register("message")} />
                     </div>

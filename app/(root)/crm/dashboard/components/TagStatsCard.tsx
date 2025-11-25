@@ -4,7 +4,11 @@
 import useSWR from "swr";
 import { getSessionTagStatsByUserId } from "@/actions/crm-seed-actions";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { FunnelChart, RelationBarChart, TagDonutChart } from "../helpers/TagCharts";
+import {
+    FunnelChart,
+    RelationBarChart,
+    TagDonutChart,
+} from "../helpers/TagCharts";
 
 const fetcher = async (_: string, userId: string) => {
     const res = await getSessionTagStatsByUserId(userId);
@@ -20,7 +24,7 @@ export function TagStatsCard({ userId }: { userId: string }) {
 
     if (isLoading) {
         return (
-            <Card>
+            <Card className="h-full">
                 <CardHeader>
                     <CardTitle>Embudo por Tags</CardTitle>
                 </CardHeader>
@@ -33,7 +37,7 @@ export function TagStatsCard({ userId }: { userId: string }) {
 
     if (error) {
         return (
-            <Card>
+            <Card className="h-full">
                 <CardHeader>
                     <CardTitle>Embudo por Tags</CardTitle>
                 </CardHeader>
@@ -50,7 +54,7 @@ export function TagStatsCard({ userId }: { userId: string }) {
 
     if (!stats.length) {
         return (
-            <Card>
+            <Card className="h-full">
                 <CardHeader>
                     <CardTitle>Embudo por Tags</CardTitle>
                 </CardHeader>
@@ -63,14 +67,22 @@ export function TagStatsCard({ userId }: { userId: string }) {
         );
     }
 
-    // Si quieres respetar tus tags de embudo, puedes filtrar/ordenar aquí
-    const ordered = stats.sort((a: any, b: any) => a.name.localeCompare(b.name));
-
     return (
-        <>
-            <FunnelChart stats={stats} />
-            <TagDonutChart stats={stats} />
-            <RelationBarChart stats={stats} />
-        </>
+        <div className="space-y-6">
+            {/* Arriba: Funnel + Donut */}
+            <div className="grid gap-6 lg:grid-cols-2">
+                <div className="w-full">
+                    <FunnelChart stats={stats} />
+                </div>
+                <div className="w-full">
+                    <TagDonutChart stats={stats} />
+                </div>
+            </div>
+
+            {/* Abajo: barra de relación a todo el ancho */}
+            <div className="w-full">
+                <RelationBarChart stats={stats} />
+            </div>
+        </div>
     );
 }
