@@ -3,7 +3,10 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { ChevronsUpDown, Check, Tag as TagIcon } from "lucide-react";
-import { assignTagToSessionAction, removeTagFromSessionAction } from "@/actions/tag-actions";
+import {
+    assignTagToSessionAction,
+    removeTagFromSessionAction,
+} from "@/actions/tag-actions";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import {
     Command,
@@ -14,13 +17,15 @@ import {
     CommandList,
 } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 type SimpleTag = {
     id: number;
     name: string;
     slug?: string;
-    color?: string | null;
+    color?: string | null;        // ej: "#22c55e" o "hsl(var(--primary))"
+    sessionCount?: number | null; // cantidad de sesiones con esta tag
 };
 
 interface SessionTagsComboboxProps {
@@ -97,27 +102,54 @@ export function SessionTagsCombobox({
                     <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
+
             <PopoverContent className="w-60 p-0" align="start">
                 <Command>
                     <CommandInput placeholder="Buscar etiqueta..." className="h-8 text-xs" />
                     <CommandList>
-                        <CommandEmpty className="text-xs">No se encontraron etiquetas.</CommandEmpty>
+                        <CommandEmpty className="text-xs">
+                            No se encontraron etiquetas.
+                        </CommandEmpty>
                         <CommandGroup className="max-h-64 overflow-auto">
                             {allTags.map((tag) => {
                                 const active = isSelected(tag.id);
+                                const count = tag.sessionCount ?? 0;
+
                                 return (
                                     <CommandItem
                                         key={tag.id}
                                         onSelect={() => handleToggleTag(tag.id)}
-                                        className="flex items-center gap-2 text-xs"
+                                        className="flex items-center justify-between gap-2 text-xs"
                                     >
-                                        <Check
-                                            className={cn(
-                                                "h-3 w-3",
-                                                active ? "opacity-100" : "opacity-0"
-                                            )}
-                                        />
-                                        <span className="truncate">{tag.name}</span>
+                                        {/* Lado izquierdo: check + icono de color + nombre */}
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <Check
+                                                className={cn(
+                                                    "h-3 w-3",
+                                                    active ? "opacity-100" : "opacity-0"
+                                                )}
+                                            />
+
+                                            {/* Icono Tag con el color propio de la etiqueta */}
+                                            <TagIcon
+                                                className="h-3 w-3 shrink-0"
+                                                style={
+                                                    tag.color
+                                                        ? { color: tag.color }
+                                                        : undefined // fallback al color actual
+                                                }
+                                            />
+
+                                            <span className="truncate">{tag.name}</span>
+                                        </div>
+
+                                        {/* Lado derecho: badge con cantidad */}
+                                        <Badge
+                                            variant="outline"
+                                            className="shrink-0 px-1.5 py-0.5 text-[10px] leading-none"
+                                        >
+                                            {count}
+                                        </Badge>
                                     </CommandItem>
                                 );
                             })}

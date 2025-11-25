@@ -20,6 +20,8 @@ export default async function SessionsPage() {
       name: t.name,
       slug: t.slug,
       color: t.color,
+      sessionCount: t._count?.sessions ?? 0,
+
     })) ?? [];
 
   return (

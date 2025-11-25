@@ -10,6 +10,12 @@ export interface ActionResponse<T> {
     data?: T;
 }
 
+type TagWithCount = Tag & {
+    _count: {
+        sessions: number;
+    };
+};
+
 // Helper simple para normalizar el nombre a slug
 function slugify(name: string): string {
     return name
@@ -53,27 +59,35 @@ const replaceSessionTagsSchema = z.object({
  * =========================== */
 
 // Listar todos los tags de un usuario
+
 export async function listTagsAction(
     userId: string,
-): Promise<ActionResponse<Tag[]>> {
+): Promise<ActionResponse<TagWithCount[]>> {
     try {
         const parsed = z.string().min(1).parse(userId);
 
         const tags = await db.tag.findMany({
             where: { userId: parsed },
-            orderBy: { name: 'asc' },
+            orderBy: { name: "asc" },
+            include: {
+                _count: {
+                    select: {
+                        sessions: true, // 👈 cuenta cuántos SessionTag tiene cada Tag
+                    },
+                },
+            },
         });
 
         return {
             success: true,
-            message: 'Tags obtenidos correctamente.',
+            message: "Tags obtenidos correctamente.",
             data: tags,
         };
     } catch (error) {
-        console.error('listTagsAction error:', error);
+        console.error("listTagsAction error:", error);
         return {
             success: false,
-            message: 'Error obteniendo los tags.',
+            message: "Error obteniendo los tags.",
         };
     }
 }
