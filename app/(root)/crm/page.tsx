@@ -2,6 +2,7 @@
 import { currentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { MainCrm } from "./components/MainCrm";
+import { listTagsAction } from "@/actions/tag-actions";
 
 interface PageProps {
     params: { id?: string };
@@ -16,19 +17,28 @@ const CrmPage = async ({ searchParams }: PageProps) => {
     }
 
     // si quieres filtrar por ?status=true/false en la URL:
-    const rawStatus = searchParams.status;
-    const status =
-        rawStatus === "true"
-            ? true
-            : rawStatus === "false"
-                ? false
-                : undefined;
+    // const rawStatus = searchParams.status;
+    // const status =
+    //     rawStatus === "true"
+    //         ? true
+    //         : rawStatus === "false"
+    //             ? false
+    //             : undefined;
 
-    return (
-        <>
-            <MainCrm userId={user.id} status={status} />
-        </>
-    );
+    const tagsRes = await listTagsAction(user.id);
+
+    const allTags =
+        tagsRes.data?.map((t) => ({
+            id: t.id,
+            name: t.name,
+            slug: t.slug,
+            color: t.color,
+            sessionCount: t._count?.sessions ?? 0,
+
+        })) ?? [];
+
+    return <MainCrm userId={user.id} allTags={allTags} />
+
 };
 
 export default CrmPage;

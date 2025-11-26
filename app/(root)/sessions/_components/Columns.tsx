@@ -32,7 +32,7 @@ import { deleteReminderByInstanceUserRemote } from "@/actions/seguimientos-actio
 import { SessionTagsCombobox } from "../../tags/components";
 import { Session, SimpleTag } from "@/types/session";
 
-function ActionsCell({ session, onDeleteSuccess }: { session: Session, onDeleteSuccess: (deletedId: number) => void }) {
+export const ActionsCell = ({ session, onDeleteSuccess }: { session: Session, onDeleteSuccess?: (deletedId: number) => void }) => {
   const [openDeleteCliente, setOpenDeleteCliente] = useState(false);
   const [openDeleteHistorial, setOpenDeleteHistorial] = useState(false);
   const [openDeleteReminders, setOpenDeleteReminders] = useState(false);
@@ -49,7 +49,8 @@ function ActionsCell({ session, onDeleteSuccess }: { session: Session, onDeleteS
         toast.warning(conversationRes.message || "Sesión eliminada pero historial no encontrado.");
       }
       toast.success("Cliente eliminado correctamente.");
-      onDeleteSuccess(session.id);
+
+      if (onDeleteSuccess) onDeleteSuccess(session.id);
     } catch (error) {
       toast.error("Error inesperado al eliminar cliente.");
       console.error(error);

@@ -18,6 +18,7 @@ import { BulkActionsDropdown } from "./BulkActionsDropdown";
 import { cn } from "@/lib/utils";
 import { deleteRemindersByInstanceName } from "@/actions/seguimientos-actions";
 import { Session, SessionsContentProps, SimpleTag } from "@/types/session";
+import { FilterLeadsByStats } from "./FilterLeadsByStats";
 
 const PAGE_SIZE = 20;
 
@@ -156,35 +157,7 @@ export function SessionsContent({ userId, allTags }: SessionsContentProps) {
   //   );
   // }
 
-  const cardStats = [
-    {
-      key: "all",
-      title: "Total",
-      icon: <Database className="h-4 w-4 text-gray-500" />,
-      value: stats?.total,
-      description: "Leads en total",
-      color: "",
-      progress: null,
-    },
-    {
-      key: "active",
-      title: "Activos",
-      icon: <CheckCircle2 className="h-4 w-4 text-green-500" />,
-      value: stats?.active,
-      description: stats?.total ? `${Math.round((stats.active / stats.total) * 100)}% del total` : "0% del total",
-      color: "text-green-600",
-      progress: stats?.total ? (stats.active / stats.total) * 100 : 0,
-    },
-    {
-      key: "inactive",
-      title: "Inactivos",
-      icon: <XCircle className="h-4 w-4 text-red-500" />,
-      value: stats?.inactive,
-      description: stats?.total ? `${100 - Math.round((stats.active / stats.total) * 100)}% del total` : "0% del total",
-      color: "text-red-600",
-      progress: stats?.total ? 100 - (stats.active / stats.total) * 100 : 0,
-    },
-  ] as const;
+
 
   return (
     <div className="flex flex-col h-full">
@@ -192,54 +165,15 @@ export function SessionsContent({ userId, allTags }: SessionsContentProps) {
       <div className="sticky top-0 z-1">
         <div className="flex justify-between items-center">
           <div className="container-stats flex flex-1 gap-4 overflow-x-auto mb-2 p-2">
-            {cardStats.map((card, idx) => {
-              const isActive = filter === card.key;
-              return (
-                <Card
-                  key={idx}
-                  onClick={() => {
-                    setFilter(card.key);
-                    setSize(1); // Reinicia desde primera página
-                  }}
-                  className={cn(
-                    "flex-1 flex flex-col overflow-hidden cursor-pointer transition-all duration-300 ease-in-out border rounded-xl hover:shadow-md hover:-translate-y-[2px]",
-                    isActive
-                      ? "border-primary ring-primary bg-muted/20"
-                      : "border-border"
-                  )}
-                >
-                  <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
-                    <CardTitle className="flex items-center  gap-2 text-xs flex-row sm:text-sm font-medium text-muted-foreground">
-                      <div className={cn("text-lg font-bold", card.color)}>
-                        {card.value}
-                      </div>
-                      {card.title}
-                    </CardTitle>
-                    <div className="hidden sm:block">
-                      {card.icon}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {stats ? (
-                      <>
-                        {card.progress !== null && (
-                          <div className="relative mt-2">
-                            <Progress value={card.progress} className="flex items-center justify-center h-4 transition-all duration-500" />
-                            <span className="absolute inset-0 flex items-center justify-center text-[10px] sm:text-xs">
-                              {card.description}
-                            </span>
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <Skeleton className="h-8 w-24" />
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
+            <FilterLeadsByStats
+              stats={stats}
+              filter={filter}
+              onChangeFilter={(key) => {
+                setFilter(key);
+                setSize(1); // reinicia paginación
+              }}
+            />
           </div>
-
 
         </div>
         <div className="flex flex-1 justify-between p-2">

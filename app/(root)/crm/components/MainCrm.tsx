@@ -1,33 +1,37 @@
 // app/(dashboard)/crm/components/MainCrm.tsx
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import useSWRInfinite from "swr/infinite";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { LoadingProgress } from "@/components/shared/LoadingProgress";
 import { LeadsManagement } from "./LeadsManagement";
 import { getSessionsByUserIdToCRM } from "@/actions/session-action";
-import { SessionWithRegistrosAndTags } from "@/types/session";
+import { SessionWithRegistrosAndTags, SimpleTag } from "@/types/session";
 
 type MainCrmProps = {
   userId: string;
-  status?: boolean; // opcional: filtrar activos / inactivos si quieres
+  allTags: SimpleTag[];
 };
+
+type FilterKey = "all" | "active" | "inactive";
 
 const PAGE_SIZE = 50;
 
-export const MainCrm = ({ userId, status }: MainCrmProps) => {
+export const MainCrm = ({ userId, allTags }: MainCrmProps) => {
   const observerRef = useRef<HTMLDivElement | null>(null);
+  const [filter, setFilter] = useState<FilterKey>("all");
 
   const getKey = (
     pageIndex: number,
     previousPageData: SessionWithRegistrosAndTags[] | null
   ) => {
     if (previousPageData && previousPageData.length < PAGE_SIZE) return null;
-    // meto status en la key para que SWR lo tenga en cuenta
+
     const statusKey =
-      status === undefined ? "all" : status === true ? "true" : "false";
+      filter === "all" ? "all" : filter === "active" ? "true" : "false";
+
     return `${userId}-${statusKey}-${pageIndex}`;
   };
 
@@ -38,6 +42,7 @@ export const MainCrm = ({ userId, status }: MainCrmProps) => {
     isLoading,
     isValidating,
     error,
+    mutate
   } = useSWRInfinite<SessionWithRegistrosAndTags[]>(
     getKey,
     async (key: string) => {
@@ -120,8 +125,17 @@ export const MainCrm = ({ userId, status }: MainCrmProps) => {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Aquí sigues usando LeadsManagement como antes */}
-      <LeadsManagement sessions={sessions} />
+      <LeadsManagement
+        sessions={sessions}
+        userId={userId}
+        filter={filter}
+        onChangeFilter={(key) => {
+          setFilter(key);
+          setSize(1); // reinicia la paginación al cambiar de filtro
+        }}
+        mutateSessions={mutate}
+        allTags={allTags}
+      />
 
       {/* Sentinel para infinite scroll */}
       {hasMore && <div ref={observerRef} className="h-10" />}
