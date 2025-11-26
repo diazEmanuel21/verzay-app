@@ -5,11 +5,12 @@ import { useEffect, useMemo, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import useSWRInfinite from "swr/infinite";
 
-import { CrmDashboard, RegistroWithSession } from "./CrmDashboard";
+import { CrmDashboard } from "./CrmDashboard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { getRegistrosByUserId, updateRegistroEstado } from "@/actions/crm-seed-actions";
 import { LoadingProgress } from "@/components/shared/LoadingProgress";
+import { RegistroWithSession } from "@/types/session";
 
 type MainDashboardProps = {
   userId: string;
@@ -143,7 +144,11 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
 
       {isValidating && (
         <p className="mt-2 text-xs text-muted-foreground">
-          Cargando más registros...
+          <LoadingProgress
+            fullscreen
+            label="  Cargando más registros..."
+            description="Esto suele tardar solo unos segundos..."
+          />
         </p>
       )}
     </div>

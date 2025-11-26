@@ -1,47 +1,32 @@
 // app/(dashboard)/crm/page.tsx
-import { currentUser } from '@/lib/auth';
-import { redirect } from 'next/navigation';
-import { MainCrm } from './components/MainCrm';
-import { db } from '@/lib/db';
-import { LeadsManagement } from './components';
+import { currentUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { MainCrm } from "./components/MainCrm";
 
 interface PageProps {
     params: { id?: string };
     searchParams: { [key: string]: string | string[] | undefined };
 }
 
-const CrmPage = async ({ params, searchParams }: PageProps) => {
+const CrmPage = async ({ searchParams }: PageProps) => {
     const user = await currentUser();
 
     if (!user) {
-        redirect('/login');
+        redirect("/login");
     }
 
-    // const clientes = await db.cliente.findMany({
-    //     where: { session: { userId: user.id } },
-    //     include: {
-    //         session: {
-    //             include: {
-    //                 registros: true,
-    //             },
-    //         },
-    //     },
-    //     orderBy: { createdAt: 'desc' },
-    // });
-
-    const sessions = await db.session.findMany({
-        where: { userId: user.id },
-        include: {
-            registros: true,
-            // cliente: true, // para saber si ya está vinculado a Cliente
-        },
-        orderBy: { createdAt: "desc" },
-    });
+    // si quieres filtrar por ?status=true/false en la URL:
+    const rawStatus = searchParams.status;
+    const status =
+        rawStatus === "true"
+            ? true
+            : rawStatus === "false"
+                ? false
+                : undefined;
 
     return (
         <>
-            <LeadsManagement sessions={sessions} />
-            {/* <SeedPage userId={user.id} /> */}
+            <MainCrm userId={user.id} status={status} />
         </>
     );
 };

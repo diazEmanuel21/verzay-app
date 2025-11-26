@@ -5,18 +5,7 @@ import { registerSessionSchema } from '@/schema/session';
 import { Session } from '@prisma/client';
 import { z } from 'zod';
 import { ActionResponse } from './tag-actions';
-
-interface SessionResponse<T = Session[]> {
-  success: boolean;
-  message: string;
-  data?: T;
-};
-
-interface SessionResponseSingle {
-  success: boolean;
-  message: string;
-  data?: Session; // Solo un objeto Session, no un array
-}
+import { SessionResponse, SessionResponseCrm, SessionsListResponse, SessionWithRegistrosAndTags, SingleSessionResponse } from '@/types/session';
 
 // 👉 schema para agregar varios tags a una sesión
 const addTagsToSessionSchema = z.object({
@@ -59,7 +48,7 @@ export async function getSessionsByUserId(
   skip: number = 0,
   take: number = 20,
   status?: boolean // true: activos, false: inactivos, undefined: todos
-): Promise<SessionResponse> {
+): Promise<SessionsListResponse> {
   try {
     if (!userId) {
       return {
@@ -116,7 +105,7 @@ export async function getSessionsByUserId(
   }
 }
 
-export async function updateSessionStatus(sessionId: number, status: boolean): Promise<SessionResponse> {
+export async function updateSessionStatus(sessionId: number, status: boolean): Promise<SessionsListResponse> {
   try {
     await db.session.update({
       where: { id: sessionId },
@@ -147,7 +136,7 @@ export async function deleteSession(
   userId: string,
   sessionId: number,
   remoteJid: string
-): Promise<SessionResponse> {
+): Promise<SessionsListResponse> {
   try {
     const session = await db.session.findFirst({
       where: {
@@ -189,7 +178,7 @@ export async function deleteSession(
 export async function searchSessionsByUserId(
   userId: string,
   query: string
-): Promise<SessionResponse> {
+): Promise<SessionsListResponse> {
   try {
     if (!userId) {
       return {
@@ -245,7 +234,7 @@ export async function searchSessionsByUserId(
 
 /* General actions */
 // 🟢 Activar todos los clientes de un usuario
-export async function activateAllSessions(userId: string): Promise<SessionResponse> {
+export async function activateAllSessions(userId: string): Promise<SessionsListResponse> {
   try {
     await db.session.updateMany({
       where: { userId },
@@ -266,7 +255,7 @@ export async function activateAllSessions(userId: string): Promise<SessionRespon
 };
 
 // 🔴 Desactivar todos los clientes de un usuario
-export async function deactivateAllSessions(userId: string): Promise<SessionResponse> {
+export async function deactivateAllSessions(userId: string): Promise<SessionsListResponse> {
   try {
     await db.session.updateMany({
       where: { userId },
@@ -287,7 +276,7 @@ export async function deactivateAllSessions(userId: string): Promise<SessionResp
 };
 
 // 🗑️ Eliminar todos los clientes de un usuario
-export async function deleteAllSessions(userId: string): Promise<SessionResponse> {
+export async function deleteAllSessions(userId: string): Promise<SessionsListResponse> {
   try {
     await db.session.deleteMany({
       where: { userId },
@@ -367,7 +356,7 @@ export async function registerSession(input: z.infer<typeof registerSessionSchem
 /**
 * 🔎 Obtiene una única sesión por su remoteJid asociado a un userId.
 */
-export async function getSessionByRemoteJid(userId: string, remoteJid: string): Promise<SessionResponseSingle> {
+export async function getSessionByRemoteJid(userId: string, remoteJid: string): Promise<SingleSessionResponse> {
   try {
     if (!userId || !remoteJid) return {
       success: false,
@@ -471,6 +460,70 @@ export async function addTagsToSessionAction(
     return {
       success: false,
       message: "Error agregando tags a la sesión.",
+    };
+  }
+}
+
+export async function getSessionsByUserIdToCRM(
+  userId: string,
+  skip: number = 0,
+  take: number = 20,
+  status?: boolean // true: activos, false: inactivos, undefined: todos
+): Promise<SessionResponseCrm> {
+  try {
+    if (!userId) {
+      return {
+        success: false,
+        message: "No existe el userId",
+        data: [],
+      };
+    }
+
+    const sessions = await db.session.findMany({
+      where: {
+        userId,
+        ...(status !== undefined && { status }),
+      },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take,
+      include: {
+        registros: true,
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
+      },
+    });
+
+    const mapped: SessionWithRegistrosAndTags[] = sessions.map((s) => ({
+      ...s,
+      // reemplazamos SessionTag[] por SimpleTag[]
+      tags: s.tags.map((st) => ({
+        id: st.tag.id,
+        name: st.tag.name,
+        slug: st.tag.slug,
+        color: st.tag.color,
+      })),
+    }));
+
+    return {
+      success: true,
+      message: "Sesiones obtenidas correctamente",
+      data: mapped,
+    };
+  } catch (error) {
+    console.error("Error al obtener las sesiones:", error);
+
+    let errorMessage = "No se pudieron cargar las sesiones";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
+    return {
+      success: false,
+      message: errorMessage,
     };
   }
 }

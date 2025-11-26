@@ -17,23 +17,7 @@ import { DataTable } from "./data-table";
 import { BulkActionsDropdown } from "./BulkActionsDropdown";
 import { cn } from "@/lib/utils";
 import { deleteRemindersByInstanceName } from "@/actions/seguimientos-actions";
-import { SimpleTag } from "@/types/session";
-
-interface SessionsContentProps {
-  userId: string;
-  allTags: SimpleTag[]; // 👈 nuevo
-}
-
-type Session = {
-  id: number;
-  userId: string;
-  remoteJid: string;
-  pushName: string;
-  instanceId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  status: boolean;
-};
+import { Session, SessionsContentProps, SimpleTag } from "@/types/session";
 
 const PAGE_SIZE = 20;
 

@@ -30,10 +30,7 @@ import {
 import { BarChart3, Activity, Users, Filter } from "lucide-react";
 import { TagStatsCard } from './TagStatsCard';
 import type {
-    Registro as PrismaRegistro,
     Session as PrismaSession,
-    // Cliente as PrismaCliente,
-    TipoRegistro as PrismaTipoRegistro,
 } from "@prisma/client";
 
 // Si usas Recharts:
@@ -49,12 +46,8 @@ import {
     LineChart,
     Line,
 } from "recharts";
+import { RegistroWithSession, TipoRegistro } from "@/types/session";
 
-/* ===== TIPOS ALINEADOS A PRISMA ===== */
-
-type TipoRegistro = PrismaTipoRegistro;
-
-export type RegistroWithSession = PrismaRegistro
 /* ===== HELPERS ===== */
 
 function toDate(v: Date | string): Date {
