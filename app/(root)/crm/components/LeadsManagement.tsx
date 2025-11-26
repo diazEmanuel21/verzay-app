@@ -149,10 +149,6 @@ export const LeadsManagement = ({
                     <h1 className="text-2xl font-semibold tracking-tight">
                         Leads / Sesiones
                     </h1>
-                    <p className="text-muted-foreground">
-                        Visualiza los leads (sessiones) y su historial de registros
-                        (reportes, solicitudes, pedidos, reclamos, pagos y reservas).
-                    </p>
                 </div>
                 <div className="flex gap-2 mt-2 md:mt-0 md:justify-end">
                     <Button size="sm" variant="outline">
@@ -165,89 +161,84 @@ export const LeadsManagement = ({
             {/* Layout principal */}
             <div className="grid gap-4 h-auto lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.5fr)] lg:h-[calc(100vh-9rem)]">
                 {/* Columna izquierda: Sesiones / Leads */}
-                <Card className="flex flex-col min-h-0 border-border">
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-base">Leads (Sesiones)</CardTitle>
-                        <CardDescription>
-                            Todas las sessiones activas/inactivas con historial de CRM.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex flex-col gap-3 min-h-0">
-                        {/* Buscador */}
-                        <div className="flex items-center gap-2">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    className="pl-8 h-8"
-                                    placeholder="Buscar por nombre, número o JID..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                />
-                            </div>
+                <div className="flex flex-col gap-3 min-h-0">
+                    {/* Buscador */}
+                    <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                className="pl-8 h-8"
+                                placeholder="Buscar por nombre, número o JID..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
                         </div>
+                    </div>
 
-                        <Separator />
+                    <Separator />
 
-                        {/* Lista de leads */}
-                        <ScrollArea className="flex-1">
-                            <div className="flex flex-col gap-1 pr-2">
-                                {filteredSessions.length === 0 && (
-                                    <p className="text-muted-foreground py-4 text-center">
-                                        No se encontraron leads para &quot;{search}&quot;.
-                                    </p>
-                                )}
+                    {/* Lista de leads */}
+                    <ScrollArea className="flex-1">
+                        <div className="flex flex-col gap-1 pr-2">
+                            {filteredSessions.length === 0 && (
+                                <p className="text-muted-foreground py-4 text-center">
+                                    No se encontraron leads para &quot;{search}&quot;.
+                                </p>
+                            )}
 
-                                {filteredSessions.map((session) => {
-                                    const isSelected = session.id === selectedSessionId;
-                                    const displayNombre = getDisplayNombreFromSession(session);
-                                    const displayWhatsapp =
-                                        getDisplayWhatsappFromSession(session);
+                            {filteredSessions.map((session) => {
+                                const isSelected = session.id === selectedSessionId;
+                                const displayNombre = getDisplayNombreFromSession(session);
+                                const displayWhatsapp =
+                                    getDisplayWhatsappFromSession(session);
 
-                                    return (
-                                        <button
-                                            key={session.id}
-                                            type="button"
-                                            onClick={() => setSelectedSessionId(session.id)}
-                                            className={[
-                                                "w-full text-left rounded-lg px-3 py-2 border flex flex-col gap-1 transition",
-                                                "hover:bg-accent/60 hover:border-accent",
-                                                isSelected
-                                                    ? "bg-accent border-accent"
-                                                    : "bg-background border-border",
-                                            ].join(" ")}
-                                        >
-                                            <div className="flex items-center justify-between gap-2">
-                                                <span className="font-medium truncate">
-                                                    {displayNombre}
-                                                </span>
-                                                <div className="flex items-center gap-1">
-                                                    <Badge
-                                                        variant={
-                                                            getStatusBadgeVariant(
-                                                                session.status
-                                                            ) as any
-                                                        }
-                                                        className="px-1.5 py-0"
-                                                    >
-                                                        {session.status ? "Activo" : "Inactivo"}
-                                                    </Badge>
-                                                </div>
+                                return (
+                                    <button
+                                        key={session.id}
+                                        type="button"
+                                        onClick={() => setSelectedSessionId(session.id)}
+                                        className={[
+                                            "w-full text-left rounded-lg px-3 py-2 border flex flex-col gap-1 transition",
+                                            "hover:bg-accent/60 hover:border-accent",
+                                            isSelected
+                                                ? "bg-accent border-accent"
+                                                : "bg-background border-border",
+                                        ].join(" ")}
+                                    >
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="font-medium truncate">
+                                                {displayNombre}
+                                            </span>
+                                            <div className="flex items-center gap-1">
+                                                <Badge
+                                                    variant={
+                                                        getStatusBadgeVariant(
+                                                            session.status
+                                                        ) as any
+                                                    }
+                                                    className="px-1.5 py-0"
+                                                >
+                                                    {session.status ? "Activo" : "Inactivo"}
+                                                </Badge>
                                             </div>
-                                            <div className="flex flex-col gap-0.5 text-muted-foreground">
-                                                <span className="truncate">
-                                                    {displayWhatsapp}
-                                                </span>
-                                                <span className="truncate">
-                                                    {session.remoteJid}
-                                                </span>
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </ScrollArea>
-                    </CardContent>
-                </Card>
+                                        </div>
+                                        <div className="flex flex-col gap-0.5 text-muted-foreground">
+                                            <span className="truncate">
+                                                {displayWhatsapp}
+                                            </span>
+                                            {/* <span className="truncate">
+                                                Seguimientos {JSON.stringify(session.seguimientos)}
+                                            </span>
+                                            <span className="truncate">
+                                                Flujos {JSON.stringify(session.flujos)}
+                                            </span> */}
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </ScrollArea>
+                </div>
 
                 {/* Columna derecha: Detalle de lead + registros */}
                 <Card className="flex flex-col border-border">
