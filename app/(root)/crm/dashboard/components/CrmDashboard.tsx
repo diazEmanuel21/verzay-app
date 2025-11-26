@@ -301,7 +301,10 @@ export const CrmDashboard = ({
                                         cursor={{ opacity: 0.1 }}
                                         contentStyle={{ fontSize: 11 }}
                                     />
-                                    <Bar dataKey="cantidad" />
+                                    <Bar
+                                        dataKey="cantidad"
+                                        fill="hsl(var(--primary))"
+                                    />
                                 </BarChart>
                             </ResponsiveContainer>
                         )}

@@ -72,16 +72,17 @@ export function TagStatsCard({ userId }: { userId: string }) {
             {/* Arriba: Funnel + Donut */}
             <div className="grid gap-6 lg:grid-cols-2">
                 <div className="w-full">
-                    <FunnelChart stats={stats} />
+                    <RelationBarChart stats={stats} />
+
                 </div>
                 <div className="w-full">
-                    <TagDonutChart stats={stats} />
+                    <FunnelChart stats={stats} />
                 </div>
             </div>
 
             {/* Abajo: barra de relación a todo el ancho */}
             <div className="w-full">
-                <RelationBarChart stats={stats} />
+                <TagDonutChart stats={stats} />
             </div>
         </div>
     );
