@@ -16,7 +16,7 @@ import { activateAllSessions, deactivateAllSessions, deleteAllSessions, getSessi
 import { deleteRemindersByInstanceName } from "@/actions/seguimientos-actions";
 import { useRouter } from "next/navigation";
 import { ActionsCell } from "../../sessions/_components/Columns";
-import { SessionTagsCombobox } from "../../tags/components";
+import { SessionTagsCombobox, TagFilterBar } from "../../tags/components";
 import { ResumeCard } from "./ResumeCard";
 import { RegistrosTable } from "./RegistrosTable";
 import { formatFecha, getTipoLabel } from "../helpers";
@@ -58,6 +58,7 @@ export const LeadsManagement = ({
         sessions[0]?.id ?? null
     );
     const [stats, setStats] = useState<{ total: number; active: number; inactive: number } | null>(null);
+    const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
 
     const selectedSession = useMemo(
         () => sessions.find((s) => s.id === selectedSessionId) ?? null,
@@ -65,13 +66,26 @@ export const LeadsManagement = ({
     );
 
     const filteredSessions = useMemo(() => {
-        if (!search.trim()) return sessions;
-        const term = search.toLowerCase();
+        const term = search.toLowerCase().trim();
+
         return sessions.filter((s) => {
+            // 1) Filtro por etiquetas
+            if (selectedTagIds.length > 0) {
+                const sessionTagIds = s.tags?.map((t) => t.id) ?? [];
+                const hasAnySelectedTag = sessionTagIds.some((id) =>
+                    selectedTagIds.includes(id),
+                );
+                if (!hasAnySelectedTag) return false;
+            }
+
+            // 2) Filtro por texto (nombre / whatsapp / JID)
+            if (!term) return true;
+
             const nombre = getDisplayNombreFromSession(s).toLowerCase();
             const whatsapp = getDisplayWhatsappFromSession(s);
             const remoteJid = s.remoteJid.toLowerCase();
             const remoteJidAlt = s.remoteJidAlt?.toLowerCase() || "";
+
             return (
                 nombre.includes(term) ||
                 whatsapp.includes(search) ||
@@ -79,7 +93,7 @@ export const LeadsManagement = ({
                 remoteJidAlt.includes(term)
             );
         });
-    }, [search, sessions]);
+    }, [sessions, search, selectedTagIds]);
 
     const registros = useMemo(() => {
         if (!selectedSession) return [] as Registro[];
@@ -135,7 +149,11 @@ export const LeadsManagement = ({
                 </div>
 
                 <div className="flex flex-1 justify-between p-2">
-                    filtros por etiquetas
+                    <TagFilterBar
+                        allTags={allTags}
+                        selectedTagIds={selectedTagIds}
+                        onChangeSelected={setSelectedTagIds}
+                    />
                 </div>
             </div>
 
@@ -175,7 +193,7 @@ export const LeadsManagement = ({
                                 <div className="flex flex-col gap-1 pr-2">
                                     {filteredSessions.length === 0 && (
                                         <p className="text-muted-foreground py-4 text-center">
-                                            No se encontraron leads para &quot;{search}&quot;.
+                                            No se encontraron leads asociados a la consulta.
                                         </p>
                                     )}
 
