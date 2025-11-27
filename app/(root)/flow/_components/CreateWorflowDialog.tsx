@@ -77,25 +77,25 @@ function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
                 )}
 
               />
-              {/* <FormField
+              <FormField
                 control={form.control}
                 name='description'
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className='flex gap-1 items-center'>
-                      Descripción
+                      Palabra clave
                       <p className="text-xs text-muted-foreground">(opcional)</p>
                     </FormLabel>
                     <FormControl>
-                      <Textarea className='resize-none' {...field} />
+                      <Input {...field} />
                     </FormControl>
                     <FormDescription>
-                      Por favor colocar una descripción breve
+                      Por favor colocar una palabra clave
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
-              /> */}
+              />
               <Button type='submit' className='w-full' disabled={isPending}>
                 {!isPending && "Iniciar"}
                 {isPending && <Loader2 className='animate-spin' ></Loader2>}

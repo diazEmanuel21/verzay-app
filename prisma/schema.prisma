@@ -50,6 +50,7 @@ model User {
   Service                       Service[]
   sessions                      Session[]
   systemMessages                SystemMessage[]
+  tags                          Tag[]
   tools                         Tools[]
   apiKey                        ApiKey?               @relation(fields: [apiKeyId], references: [id])
   defaultAiModel                AiModel?              @relation("DefaultAiModel", fields: [defaultAiModelId], references: [id])
@@ -59,7 +60,6 @@ model User {
   clientesAsignados             reseller[]            @relation("RevendedorAsignador")
   esClienteDe                   reseller[]            @relation("ClienteAsignado")
   aiConfig                      UserAiConfig[]
-  tags                          Tag[]
 }
 
 model Product {
@@ -155,7 +155,6 @@ model ModuleItem {
 }
 
 model Session {
-  id           Int           @id @default(autoincrement())
   userId       String
   remoteJid    String
   pushName     String
@@ -163,15 +162,16 @@ model Session {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   status       Boolean
+  id           Int           @id @default(autoincrement())
   seguimientos String?       @default("")
   inactividad  String?       @default("")
   sessionDelay String?
   flujos       String?       @default("")
   remoteJidAlt String?
-  tags         SessionTag[]
   Appointment  Appointment[]
+  registros    Registro?
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  registros    Registro[] // historial de interacción del lead
+  tags         SessionTag[]
 
   @@index([userId, remoteJid])
 }
@@ -179,13 +179,13 @@ model Session {
 model Tag {
   id        Int          @id @default(autoincrement())
   userId    String
-  name      String // Ej: "Lead"
-  slug      String // Ej: "lead" (para búsquedas / estabilidad)
+  name      String
+  slug      String
   color     String?
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   sessions  SessionTag[]
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, slug])
 }
@@ -196,12 +196,10 @@ model SessionTag {
   session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
-  // Clave compuesta: un tag no se repite dos veces para la misma sesión
   @@id([sessionId, tagId])
 }
 
 model Registro {
-  id        Int          @id @default(autoincrement())
   tipo      TipoRegistro
   fecha     DateTime?
   estado    String?
@@ -210,14 +208,12 @@ model Registro {
   nombre    String?
   detalles  String?
   meta      Json?
-  sessionId Int
+  sessionId Int          @unique
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
+  id        Int          @id @default(autoincrement())
   session   Session      @relation(fields: [sessionId], references: [id])
 
-  // Este lo necesitamos para el ON CONFLICT (sessionId, tipo, fecha)
-  @@unique([sessionId], name: "Registro_session_key")
-  // Este lo dejamos para queries globales por tipo / fecha
   @@index([tipo, fecha])
 }
 
