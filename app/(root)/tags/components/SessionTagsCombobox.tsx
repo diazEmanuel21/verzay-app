@@ -78,7 +78,6 @@ export function SessionTagsCombobox({
             return (
                 <span className="flex items-center gap-1 truncate">
                     <TagIcon className="h-3 w-3 opacity-70" />
-                    <span className="truncate">Sin etiquetas</span>
                 </span>
             );
         }
@@ -88,7 +87,7 @@ export function SessionTagsCombobox({
             return (
                 <span className="flex items-center gap-1 truncate">
                     <TagIcon className="h-3 w-3 opacity-70" />
-                    <span className="truncate">Sin etiquetas</span>
+                    
                 </span>
             );
         }
@@ -129,13 +128,13 @@ export function SessionTagsCombobox({
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="h-8 w-full justify-between px-2 text-xs"
+                    className="h-8 justify-between px-2 text-xs"
                     disabled={isPending || allTags.length === 0}
                 >
                     <span className="flex items-center gap-1 truncate">
                         <span className="truncate">{summaryLabel()}</span>
                     </span>
-                    <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+                    <ChevronsUpDown className="" />
                 </Button>
             </PopoverTrigger>
 

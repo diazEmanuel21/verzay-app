@@ -95,9 +95,17 @@ export const LeadsManagement = ({
         });
     }, [sessions, search, selectedTagIds]);
 
-    const registros = useMemo(() => {
-        if (!selectedSession) return [] as Registro[];
-        return selectedSession.registros ?? [];
+    const registros = useMemo<Registro[]>(() => {
+        if (!selectedSession) return [];
+
+        const maybeRegistros = (selectedSession as any).registros;
+
+        // Normalizamos: si NO es array, devolvemos []
+        if (!Array.isArray(maybeRegistros)) {
+            return [];
+        }
+
+        return maybeRegistros as Registro[];
     }, [selectedSession]);
 
     const countByTipo = useMemo(() => {
@@ -221,16 +229,7 @@ export const LeadsManagement = ({
                                                         {displayNombre}
                                                     </span>
                                                     <div className="flex items-center gap-1">
-                                                        <Badge
-                                                            variant={
-                                                                getStatusBadgeVariant(
-                                                                    session.status
-                                                                ) as any
-                                                            }
-                                                            className={`px-1.5 py-0 ${session.status ? 'bg-green-500' : ''}`}
-                                                        >
-                                                            {session.status ? "Activo" : "Inactivo"}
-                                                        </Badge>
+
                                                         <SwitchStatus checked={session.status} sessionId={session.id} mutateSessions={mutateSessions} />
                                                         <ActionsCell session={session} />
                                                     </div>
@@ -254,16 +253,36 @@ export const LeadsManagement = ({
                                     {/* Info rápida del lead */}
                                     <div className="flex flex-col gap-2 rounded-lg border-border bg-muted/40 p-3">
                                         <div className="flex flex-wrap items-center justify-between gap-2">
-                                            <div className="flex flex-col gap-1">
+                                            <div className="flex flex-col gap-0.5">
+                                                <span className="text-muted-foreground">
+                                                    Creado
+                                                </span>
+                                                <span>
+                                                    {formatFecha(selectedSession.createdAt)}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex flex-col gap-0.5">
                                                 <span className="text-muted-foreground">
                                                     Flujos
                                                 </span>
                                                 <div className="flex w-full flex-wrap gap-2">
-                                                    <Badge>
+                                                    <Badge className="text-xs font-semibold">
                                                         {JSON.stringify(selectedSession.flujos)}
                                                     </Badge>
                                                 </div>
                                             </div>
+
+                                            <div className="flex flex-col gap-0.5">
+                                                <span className="text-muted-foreground">
+                                                    Seguimientos
+                                                </span>
+                                                <div className="flex w-full flex-wrap gap-2">
+                                                    <Badge
+                                                    >{sizeReminders}</Badge>
+                                                </div>
+                                            </div>
+
                                             <div className="flex items-center gap-2">
                                                 <Badge
                                                     variant={
@@ -283,19 +302,21 @@ export const LeadsManagement = ({
                                                     allTags={allTags}
                                                     initialSelectedIds={initialSelectedTagIds}
                                                 />
+                                                <div className="flex gap-1">
+                                                    <Button
+                                                        size="icon"
+                                                        variant="outline"
+                                                        className="h-7 w-7"
+                                                    >
+                                                        <MessageCircleMore className="h-3 w-3" />
+                                                    </Button>
+                                                </div>
                                             </div>
+
                                         </div>
 
                                         <div className="flex flex-wrap items-center justify-between gap-2 mt-1">
-                                            <div className="flex flex-col gap-0.5">
-                                                <span className="text-muted-foreground">
-                                                    Seguimientos
-                                                </span>
-                                                <div className="flex w-full flex-wrap gap-2">
-                                                    <Badge
-                                                    >{sizeReminders}</Badge>
-                                                </div>
-                                            </div>
+
                                             {selectedSession.remoteJidAlt && (
                                                 <div className="flex flex-col gap-0.5">
                                                     <span className="text-muted-foreground">
@@ -304,24 +325,19 @@ export const LeadsManagement = ({
                                                     <span>{selectedSession.remoteJidAlt}</span>
                                                 </div>
                                             )}
-                                            <div className="flex flex-col gap-0.5">
-                                                <span className="text-muted-foreground">
-                                                    Creado
-                                                </span>
-                                                <span>
-                                                    {formatFecha(selectedSession.createdAt)}
-                                                </span>
-                                            </div>
-                                            <div className="flex gap-1">
-                                                <Button
-                                                    size="icon"
-                                                    variant="outline"
-                                                    className="h-7 w-7"
-                                                >
-                                                    <MessageCircleMore className="h-3 w-3" />
-                                                </Button>
-                                            </div>
+
                                         </div>
+
+                                        {/* <div className="flex flex-wrap items-center justify-between gap-2 mt-1">
+                                            {selectedSession.remoteJidAlt && (
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className="text-muted-foreground">
+                                                        remoteJidAlt
+                                                    </span>
+                                                    <span>{selectedSession.remoteJidAlt}</span>
+                                                </div>
+                                            )}
+                                        </div> */}
                                     </div>
 
                                     {/* Tabs de registros */}
@@ -387,17 +403,7 @@ export const LeadsManagement = ({
                                         >
                                             <ScrollArea className="flex-1 rounded-md">
                                                 <div className="flex flex-col gap-3">
-                                                    <div>
-                                                        <p className="font-medium mb-1">
-                                                            Resumen general
-                                                        </p>
-                                                        <p className="text-muted-foreground text-sm">
-                                                            Este lead representa una session de
-                                                            WhatsApp y aquí ves toda su actividad:
-                                                            reportes, solicitudes, pedidos, reclamos,
-                                                            pagos y reservas.
-                                                        </p>
-                                                    </div>
+
 
                                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                                                         <ResumeCard

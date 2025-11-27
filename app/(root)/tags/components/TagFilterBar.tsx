@@ -34,9 +34,9 @@ export const TagFilterBar = ({
                 type="button"
                 onClick={clear}
                 className={cn(
-                    "px-2 py-1 rounded-full border transition",
+                    "px-2 py-1 rounded-full border transition text-xs font-semibold",
                     selectedTagIds.length === 0
-                        ? "bg-primary text-primary-foreground border-primary"
+                        ? "bg-primary text-white border-primary"
                         : "bg-background text-muted-foreground border-border hover:bg-muted"
                 )}
             >
