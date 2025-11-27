@@ -71,6 +71,8 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const baseType = nodeType.startsWith('seguimiento-')
     ? nodeType.split('-')[1] as Action['type']
     : nodeType;
+  const isPauseNode = nodeType === 'node_pause';
+  const isNotifyNode = nodeType === 'nodo-notify';
   const hasContent = nodeType === 'text' ? !!message : !!nodes.url;
   const allActions = [...baseActions, ...seguimientoActions];
   const currentAction = allActions.find(
@@ -311,6 +313,23 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   };
 
   const renderContent = () => {
+    if (isPauseNode) {
+      return (
+        <TimeInput
+          className="text-xs text-muted-foreground"
+          onChange={handleTimeChange}
+          onBlur={handleOnBlurTime}
+          currentValue={nodes.delay || 'minutes-0'}
+        />
+      )
+    }
+
+    if (isNotifyNode) {
+      return (
+        <></>
+      )
+    }
+
     if (baseType === 'text') {
       return (
         <GenericTextarea
@@ -465,7 +484,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
         </CardHeader>
         <CardContent className="p-4">
           {renderContent()}
-          {baseType !== 'text' && baseType !== 'document' && baseType !== 'audio' &&
+          {!isNotifyNode && !isPauseNode && baseType !== 'text' && baseType !== 'document' && baseType !== 'audio' &&
             <div className="flex w-full mt-2">
               <GenericTextarea
                 fileType={baseType}
