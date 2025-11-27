@@ -1,4 +1,5 @@
 import type {
+  Prisma,
   Registro as PrismaRegistro,
   TipoRegistro as PrismaTipoRegistro,
   Session as PrismaSession,
@@ -6,7 +7,7 @@ import type {
 
 export interface SessionsContentProps {
   userId: string;
-  allTags: SimpleTag[]; 
+  allTags: SimpleTag[];
 }
 
 /* ===== TAGS ===== */
@@ -18,10 +19,8 @@ export type SimpleTag = {
   color?: string | null;
 };
 
-/* ===== SESSION (EXTENDIENDO PRISMA SI QUIERES) ===== */
+/* ===== SESSION (EXTENDIENDO PRISMA) ===== */
 
-// Si prefieres no depender de Prisma aquí, puedes dejar tu definición manual.
-// Aquí te muestro cómo sería extendiendo PrismaSession:
 export type Session = PrismaSession & {
   tags?: SimpleTag[];       // opcional si no siempre los cargas
 };
@@ -43,12 +42,31 @@ export type SessionResponseCrm = SessionResponse<SessionWithRegistrosAndTags[]>;
 
 export type TipoRegistro = PrismaTipoRegistro;
 
+// Sesión con registros (sin tocar todavía tags simplificados)
 export type SessionWithRegistros = Session & {
   registros: PrismaRegistro[];
 };
 
-export type SessionWithRegistrosAndTags = SessionWithRegistros;
-// Alias por si quieres un nombre más explícito
+// ==== NUEVO: tipo EXACTO que devuelve Prisma con include { registros, tags: { tag } } ====
+
+export type PrismaSessionWithRegistrosAndTags = Prisma.SessionGetPayload<{
+  include: {
+    registros: true;
+    tags: {
+      include: {
+        tag: true;
+      };
+    };
+  };
+}>;
+
+// Nuestro tipo final para el CRM:
+// - Mantiene todo lo que Prisma devuelve
+// - Pero transformamos "tags" a SimpleTag[]
+export type SessionWithRegistrosAndTags =
+  Omit<PrismaSessionWithRegistrosAndTags, "tags"> & {
+    tags: SimpleTag[];
+  };
 
 // Solo defínelo así si REALMENTE incluyes la sesión
 export type RegistroWithSession = PrismaRegistro & {

@@ -8,7 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Search, Plus, MessageCircleMore } from "lucide-react";
-import { SessionWithRegistros, SimpleTag, TipoRegistro } from "@/types/session";
+import {
+    SessionWithRegistrosAndTags,
+    SimpleTag,
+    TipoRegistro,
+} from "@/types/session";
+
 import { Registro, Session } from "@prisma/client";
 import { BulkActionsDropdown, FilterKey, FilterLeadsByStats, SwitchStatus } from "../../sessions/_components";
 import { clearAllHistory } from "@/actions/n8n-chat-historial-action";
@@ -45,7 +50,7 @@ export const LeadsManagement = ({
     mutateSessions,
     allTags
 }: {
-    sessions: SessionWithRegistros[];
+    sessions: SessionWithRegistrosAndTags[];
     userId: string;
     filter: FilterKey;
     onChangeFilter: (value: FilterKey) => void;
