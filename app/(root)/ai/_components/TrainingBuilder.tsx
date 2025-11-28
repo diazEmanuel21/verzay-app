@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { nanoid } from "nanoid";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { X, Plus, Trash2 } from "lucide-react";
@@ -17,12 +17,23 @@ import {
   TrainingBuilderProps,
 } from "@/types/agentAi";
 import { Workflow } from "@prisma/client";
-import { useTrainingAutosave } from "./hooks/useTrainingAutosave";
-import { PedidoFunctionEl } from '../../../../types/agentAi';
-import { FunctionSelector } from './';
+import { useTrainingAutosave, AutosaveStatus } from "./hooks/useTrainingAutosave"; // 👈 import status
+import { PedidoFunctionEl } from "../../../../types/agentAi";
+import { FunctionSelector } from "./";
 import ElementRenderer from "./action-steeps/ElementRenderer";
 import { buildSectionedPrompt } from "./helpers";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 /* utilidad: type-guard para pedidos */
 function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
   return (
@@ -44,18 +55,22 @@ export function TrainingBuilder({
   initialSteps = [],
 }: TrainingBuilderProps) {
   const [steps, setSteps] = useState<StepTraining[]>(() => {
-    // Hidrata desde BD si hay datos; si no, arranca vacío
     if (Array.isArray(initialSteps) && initialSteps.length > 0) {
       return initialSteps as StepTraining[];
     }
     return [];
   });
 
-  const handleConflict = useCallback((serverState: any) => {
-    const serverSteps = serverState?.sections?.training?.steps ?? [];
-    setSteps(serverSteps);
-    // si quieres hacer algo más aquí…
-  }, [setSteps]);
+  // 🔹 Estado de autosave
+  const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>("idle");
+
+  const handleConflict = useCallback(
+    (serverState: any) => {
+      const serverSteps = serverState?.sections?.training?.steps ?? [];
+      setSteps(serverSteps);
+    },
+    [setSteps]
+  );
 
   // 🔁 AUTOSAVE con debounce (guarda { steps } en sections.training)
   useTrainingAutosave({
@@ -64,7 +79,16 @@ export function TrainingBuilder({
     steps,
     onVersionChange,
     onConflict: handleConflict,
+    onStatusChange: setAutosaveStatus, // 👈 NUEVO
   });
+
+  // Reset visual de "Cambios guardados" después de un rato
+  useEffect(() => {
+    if (autosaveStatus === "saved") {
+      const t = setTimeout(() => setAutosaveStatus("idle"), 1500);
+      return () => clearTimeout(t);
+    }
+  }, [autosaveStatus]);
 
   // Para compatibilidad con tu API onChange antigua, usamos el primer paso
   const firstStep = steps[0];
@@ -72,7 +96,8 @@ export function TrainingBuilder({
   /* -------------------- Construcción del trainingPrompt -------------------- */
   const trainingPrompt = useMemo(() => {
     return buildSectionedPrompt(steps as any, {
-      emptyMessage: "Aún no has agregado pasos de entrenamiento. Usa “Agregar paso” para comenzar.",
+      emptyMessage:
+        "Aún no has agregado pasos de entrenamiento. Usa “Agregar paso” para comenzar.",
       sectionLabel: (n, step) => `### Paso ${n} — ${step.title || "Sin título"}`,
       elementsLabel: (n) => `Elementos del paso: ${n}`,
       mainMessageLabel: "Objetivo principal del paso\n",
@@ -82,10 +107,13 @@ export function TrainingBuilder({
 
   /* --------- Propagar cambios: onChange (compat) + values.training --------- */
   useEffect(() => {
-    // Compatibilidad: emite el primer paso si existe
-    if (firstStep) onChange?.({ mainMessage: firstStep.mainMessage ?? '', elements: firstStep.elements });
+    if (firstStep) {
+      onChange?.({
+        mainMessage: firstStep.mainMessage ?? "",
+        elements: firstStep.elements,
+      });
+    }
 
-    // Actualiza values.training en el padre usando tu handleChange
     if (values.training !== trainingPrompt) {
       const setTraining = handleChange("training");
       setTraining({
@@ -97,12 +125,10 @@ export function TrainingBuilder({
 
   /* -------------------- Acciones por PASO -------------------- */
   const addStep = () => {
-    // const nextIndex = steps.length + 1;
     setSteps((prev) => [
       ...prev,
       {
         id: nanoid(),
-        // title: `Paso ${nextIndex}`,
         title: ``,
         mainMessage: "",
         elements: [],
@@ -120,13 +146,17 @@ export function TrainingBuilder({
   };
 
   const updateStepMainMessage = (stepId: string, mainMessage: string) => {
-    setSteps((prev) => prev.map((s) => (s.id === stepId ? { ...s, mainMessage } : s)));
+    setSteps((prev) =>
+      prev.map((s) => (s.id === stepId ? { ...s, mainMessage } : s))
+    );
   };
 
   const removeElement = (stepId: string, elId: string) => {
     setSteps((prev) =>
       prev.map((s) =>
-        s.id === stepId ? { ...s, elements: s.elements.filter((e) => e.id !== elId) } : s
+        s.id === stepId
+          ? { ...s, elements: s.elements.filter((e) => e.id !== elId) }
+          : s
       )
     );
   };
@@ -153,7 +183,9 @@ export function TrainingBuilder({
           ? {
             ...s,
             elements: s.elements.map((e) =>
-              e.id === elId && e.kind === "function" && e.fn === "ejecutar_flujo"
+              e.id === elId &&
+                e.kind === "function" &&
+                e.fn === "ejecutar_flujo"
                 ? { ...e, flowId: flow.id, flowName: flow.name }
                 : e
             ),
@@ -198,15 +230,13 @@ export function TrainingBuilder({
     );
   };
 
-
-  // dentro de TrainingBuilder, junto a tus mutadores:
   const onSubtypeChange = (stepId: string, elId: string, subtype: DataSubtype) => {
-    setSteps(prev =>
-      prev.map(s =>
+    setSteps((prev) =>
+      prev.map((s) =>
         s.id === stepId
           ? {
             ...s,
-            elements: s.elements.map(e =>
+            elements: s.elements.map((e) =>
               e.id === elId ? { ...e, subtype } : e
             ),
           }
@@ -215,18 +245,40 @@ export function TrainingBuilder({
     );
   };
 
-
   /* --------------------------------- UI --------------------------------- */
   return (
     <Card className="border-muted/60">
       <CardHeader className="pb-2 flex items-center justify-between gap-2 flex-row">
-        <CardTitle className="text-base">Entrenamiento</CardTitle>
-        {steps.length < 1 &&
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-base">Entrenamiento</CardTitle>
+
+          {/* 🔹 Indicador de autosave */}
+          {autosaveStatus !== "idle" && (
+            <span
+              className={
+                "text-xs " +
+                (autosaveStatus === "saving"
+                  ? "text-muted-foreground"
+                  : autosaveStatus === "saved"
+                    ? "text-emerald-500"
+                    : autosaveStatus === "error"
+                      ? "text-destructive"
+                      : "")
+              }
+            >
+              {autosaveStatus === "saving" && "Guardando..."}
+              {autosaveStatus === "saved" && "Cambios guardados"}
+              {autosaveStatus === "error" && "Error al guardar"}
+            </span>
+          )}
+        </div>
+
+        {steps.length < 1 && (
           <Button size="sm" onClick={addStep} className="gap-2">
             <Plus className="w-4 h-4" />
             Agregar paso
           </Button>
-        }
+        )}
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -265,12 +317,10 @@ export function TrainingBuilder({
 
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>
-                            Eliminar entrenamiento
-                          </AlertDialogTitle>
+                          <AlertDialogTitle>Eliminar entrenamiento</AlertDialogTitle>
                           <AlertDialogDescription>
-                            ¿Seguro que quieres eliminar este entrenamiento?
-                            Esta acción no se puede deshacer.
+                            ¿Seguro que quieres eliminar este entrenamiento? Esta
+                            acción no se puede deshacer.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
 
@@ -289,12 +339,14 @@ export function TrainingBuilder({
                 </CardHeader>
 
                 <CardContent className="space-y-3">
-                  {/* Mensaje principal del paso (vive dentro del paso) */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">{`Objetivo principal del paso ${idx + 1}`}</label>
+                    <label className="text-sm font-medium">{`Objetivo principal del paso ${idx + 1
+                      }`}</label>
                     <Textarea
                       value={step.mainMessage}
-                      onChange={(e) => updateStepMainMessage(step.id, e.target.value)}
+                      onChange={(e) =>
+                        updateStepMainMessage(step.id, e.target.value)
+                      }
                       placeholder="Escribe el mensaje inicial para este paso…"
                       className="min-h-[32px]"
                     />
@@ -302,22 +354,27 @@ export function TrainingBuilder({
 
                   <Separator />
 
-                  {/* Header de elementos */}
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">Elementos del paso</span>
+                      <span className="text-sm font-medium">
+                        Elementos del paso
+                      </span>
                       <Badge variant="secondary">{idx + 1}</Badge>
                     </div>
                     <div className="flex gap-2">
-                      <FunctionSelector step={step} setSteps={setSteps} notificationNumber={notificationNumber ?? ''} />
+                      <FunctionSelector
+                        step={step}
+                        setSteps={setSteps}
+                        notificationNumber={notificationNumber ?? ""}
+                      />
                     </div>
                   </div>
 
-                  {/* Lista de elementos del paso */}
                   <div className="rounded-lg border border-dashed border-muted/60 p-1">
                     {step.elements.length === 0 ? (
                       <div className="text-center text-sm text-muted-foreground">
-                        No hay elementos en este paso. Agrega funciones o textos usando los botones de arriba.
+                        No hay elementos en este paso. Agrega funciones o textos
+                        usando los botones de arriba.
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -333,7 +390,6 @@ export function TrainingBuilder({
                             addPedidoField={addPedidoField}
                             removePedidoField={removePedidoField}
                             onSubtypeChange={onSubtypeChange}
-
                           />
                         ))}
                       </div>
@@ -345,15 +401,17 @@ export function TrainingBuilder({
           </div>
         )}
       </CardContent>
-      {steps.length > 0 && <CardFooter className="pb-2 flex items-center justify-between gap-2 flex-row">
-        <CardTitle className="text-base">Entrenamiento</CardTitle>
 
-        <Button size="sm" onClick={addStep} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Agregar paso
-        </Button>
-      </CardFooter>
-      }
+      {steps.length > 0 && (
+        <CardFooter className="pb-2 flex items-center justify-between gap-2 flex-row">
+          <CardTitle className="text-base">Entrenamiento</CardTitle>
+
+          <Button size="sm" onClick={addStep} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Agregar paso
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 }

@@ -1,8 +1,12 @@
+// app/(root)/ai/_components/hooks/useExtrasAutosave.ts
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
 import { patchExtrasSection } from "@/actions/system-prompt-actions";
 import { ExtraItemType } from "@/types/agentAi";
+import { toast } from "sonner";
+
+export type AutosaveStatus = "idle" | "saving" | "saved" | "error";
 
 function createDebounced<F extends (...args: any[]) => any>(fn: F, ms = 700) {
     let t: ReturnType<typeof setTimeout> | null = null;
@@ -23,8 +27,19 @@ export function useExtrasAutosave(opts: {
     firmaName: string;
     onVersionChange: (next: number) => void;
     onConflict?: (serverState: any) => void;
+    onStatusChange?: (status: AutosaveStatus) => void; // 👈 NUEVO
 }) {
-    const { promptId, version, items, firmaEnabled, firmaText, firmaName, onVersionChange, onConflict } = opts;
+    const {
+        promptId,
+        version,
+        items,
+        firmaEnabled,
+        firmaText,
+        firmaName,
+        onVersionChange,
+        onConflict,
+        onStatusChange,
+    } = opts;
 
     const versionRef = useRef(version);
     useEffect(() => { versionRef.current = version; }, [version]);
@@ -35,12 +50,15 @@ export function useExtrasAutosave(opts: {
     const mountedRef = useRef(false);
     useEffect(() => { mountedRef.current = true; }, []);
 
-    // Hash alineado a lo que realmente se envía (steps + firma*)
     const payloadHash = useMemo(
         () => JSON.stringify({ steps: items, firmaEnabled, firmaText, firmaName }),
         [items, firmaEnabled, firmaText, firmaName]
     );
     const lastHashRef = useRef<string>("");
+
+    const notifyStatus = (status: AutosaveStatus) => {
+        onStatusChange?.(status);
+    };
 
     const runSave = useMemo(() => {
         const fn = async (payload: {
@@ -51,6 +69,8 @@ export function useExtrasAutosave(opts: {
         }) => {
             if (!promptId) return;
             if (!mountedRef.current) return;
+
+            notifyStatus("saving");
 
             try {
                 const res = await patchExtrasSection({
@@ -65,18 +85,29 @@ export function useExtrasAutosave(opts: {
                 });
 
                 if (res?.conflict) {
+                    notifyStatus("error");
+                    toast.error(
+                        "La sección de extras se actualizó en otro lugar. Se cargará la última versión."
+                    );
                     conflictRef.current?.(res.data);
                     return;
                 }
+
                 if (res?.ok && res?.data?.version) {
                     onVersionChange(res.data.version);
+                    notifyStatus("saved");
+                } else {
+                    notifyStatus("error");
+                    toast.error("No se pudo guardar los cambios de extras.");
                 }
             } catch (err) {
                 console.error("patchExtrasSection error", err);
+                notifyStatus("error");
+                toast.error("Error al guardar automáticamente la sección de extras.");
             }
         };
         return createDebounced(fn, 700);
-    }, [promptId, onVersionChange]);
+    }, [promptId, onVersionChange, onStatusChange]);
 
     useEffect(() => {
         if (!promptId) return;

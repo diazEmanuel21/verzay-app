@@ -10,7 +10,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Workflow } from "@prisma/client";
-import { useManagementAutosave } from "./hooks/useManagementAutosave";
+import { useManagementAutosave, AutosaveStatus } from "./hooks/useManagementAutosave";
 import ElementRenderer from "./action-steeps/ElementRenderer";
 import { FunctionSelector } from "./FunctionSelector";
 import { PromptFragment } from "./helpers/prompt-fragments";
@@ -70,6 +70,7 @@ export const ManagementBuilder = ({
             ? (initialItems as ManagementItem[])
             : []
     );
+    const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>("idle");
 
     // proxy que completa título y cierra picker tras elegir acción
     const setStepsAuto: React.Dispatch<React.SetStateAction<ManagementItem[]>> = (
@@ -118,7 +119,17 @@ export const ManagementBuilder = ({
         steps,
         onVersionChange,
         onConflict: stableOnConflict,
+        onStatusChange: setAutosaveStatus,
     });
+
+    // Reset visual de "Cambios guardados"
+    useEffect(() => {
+        if (autosaveStatus === "saved") {
+            const t = setTimeout(() => setAutosaveStatus("idle"), 1500);
+            return () => clearTimeout(t);
+        }
+    }, [autosaveStatus]);
+
 
     // PREVIEW markdown
     const managementPreview = useMemo(() => {
@@ -317,7 +328,24 @@ export const ManagementBuilder = ({
                     {/* {typeof ManagementPromptBuilder !== "undefined" && (
                         <ManagementPromptBuilder onInsert={handleInsertFromPicker} />
                     )} */}
-
+                    {autosaveStatus !== "idle" && (
+                        <span
+                            className={
+                                "text-xs " +
+                                (autosaveStatus === "saving"
+                                    ? "text-muted-foreground"
+                                    : autosaveStatus === "saved"
+                                        ? "text-emerald-500"
+                                        : autosaveStatus === "error"
+                                            ? "text-destructive"
+                                            : "")
+                            }
+                        >
+                            {autosaveStatus === "saving" && "Guardando..."}
+                            {autosaveStatus === "saved" && "Cambios guardados"}
+                            {autosaveStatus === "error" && "Error al guardar"}
+                        </span>
+                    )}
                     {/* ⤵️ MODO RAÍZ: sin crear bloque vacío, abre lista y al elegir crea el bloque */}
                     {steps.length < 1 && (
                         <FunctionSelector

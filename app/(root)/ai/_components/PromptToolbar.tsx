@@ -1,8 +1,15 @@
+// app/(root)/ai/_components/PromptToolbar.tsx
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useTransition } from "react"; // 👈 useTransition
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { UploadCloud, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { usePromptActions } from "./hooks/usePromptActions";
@@ -18,6 +25,8 @@ export function PromptToolbar(props: {
 }) {
     const { promptId, version, userId, onVersionChange, onConflict, revalidatePath } = props;
 
+    const router = useRouter();
+
     const { loading, error, publish } = usePromptActions({
         promptId,
         version,
@@ -27,16 +36,27 @@ export function PromptToolbar(props: {
         revalidatePath,
     });
 
-    const isSaving = !!loading;
+    // 👇 trackeamos el estado del router.refresh()
+    const [isPending, startTransition] = useTransition();
+
+    // loading => guardando en servidor
+    // isPending => refrescando la UI (router.refresh)
+    const isSaving = !!loading || isPending;
 
     const handlePublish = useCallback(async () => {
         try {
             await publish();
+
+            // Lanzamos el refresh dentro de un transition, así isPending refleja el progreso
+            startTransition(() => {
+                router.refresh();
+            });
+
             toast.success("Guardado correctamente");
         } catch (e: any) {
             toast.error(e?.message ?? "No se pudo guardar");
         }
-    }, [publish]);
+    }, [publish, router, startTransition]);
 
     useEffect(() => {
         if (error) toast.error(error);

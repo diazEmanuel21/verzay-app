@@ -160,13 +160,73 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                 version={promptVersion}
                                 userId={user.id}
                                 onVersionChange={setPromptVersion}
-                                onConflict={(server) => {
-                                    // Rehidrata si quieres: sections, tabs, etc.
-                                    // setSections(server.sections); setPromptVersion(server.version);
+                                onConflict={(serverState) => {
+                                    // Si el servidor no trae sections, no hacemos nada raro
+                                    const s = serverState?.sections;
+                                    if (!s) {
+                                        if (serverState?.version) setPromptVersion(serverState.version);
+                                        return;
+                                    }
+
+                                    // 🔁 Reconstruimos los markdowns igual que al inicio
+                                    const trainingMdServer = s.training
+                                        ? buildTrainingMarkdown(TrainingDraftSchema.parse(s.training))
+                                        : "";
+
+                                    const faqMdServer = s.faq
+                                        ? buildFaqMarkdown(FaqDraftSchema.parse(s.faq))
+                                        : "";
+
+                                    const productsMdServer = s.products
+                                        ? buildProductsMarkdown(ProductsDraftSchema.parse(s.products))
+                                        : "";
+
+                                    const extrasMdServer = s.extras
+                                        ? buildExtrasMarkdown(ExtrasDraftSchema.parse(s.extras))
+                                        : "";
+
+                                    const managementMdServer = s.management
+                                        ? buildManagementMarkdown(ManagementDraftSchema.parse(s.management))
+                                        : "";
+
+                                    // 🧠 Rehidratamos todos los valores desde lo que dice el servidor
+                                    setValues((prev) => ({
+                                        ...prev,
+                                        // Business
+                                        nombre: s.business?.nombre ?? prev.nombre,
+                                        sector: s.business?.sector ?? prev.sector,
+                                        ubicacion: s.business?.ubicacion ?? prev.ubicacion,
+                                        horarios: s.business?.horarios ?? prev.horarios,
+                                        maps: s.business?.maps ?? prev.maps,
+                                        telefono: s.business?.telefono ?? prev.telefono,
+                                        email: s.business?.email ?? prev.email,
+                                        sitio: s.business?.sitio ?? prev.sitio,
+                                        facebook: s.business?.facebook ?? prev.facebook,
+                                        instagram: s.business?.instagram ?? prev.instagram,
+                                        tiktok: s.business?.tiktok ?? prev.tiktok,
+                                        youtube: s.business?.youtube ?? prev.youtube,
+                                        notas: s.business?.notas ?? prev.notas,
+
+                                        // Resto de secciones (markdown ya armado)
+                                        training: trainingMdServer,
+                                        faq: faqMdServer,
+                                        products: productsMdServer,
+                                        more: extrasMdServer,
+                                        management: managementMdServer,
+                                    }));
+
+                                    // 🔀 Sincronizamos versión local con la del servidor
+                                    if (serverState?.version) {
+                                        setPromptVersion(serverState.version);
+                                    }
+
+                                    // (Opcional) Si quieres, aquí podrías lanzar un toast:
+                                    // toast.warning("Se detectaron cambios en otra sesión. Se cargó la última versión del servidor.");
                                 }}
                                 revalidatePath={"/ia"}
                                 revisions={[]}
                             />
+
                             <DropdownMenu modal={false}>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" aria-label="Open menu" size="icon">
