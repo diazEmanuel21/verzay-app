@@ -315,12 +315,22 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const renderContent = () => {
     if (isPauseNode) {
       return (
-        <TimeInput
-          className="text-xs text-muted-foreground"
-          onChange={handleTimeChange}
-          onBlur={handleOnBlurTime}
-          currentValue={nodes.delay || 'minutes-0'}
-        />
+        <div className="flex gap-2 flex-col">
+          <TimeInput
+            className="text-xs text-muted-foreground"
+            onChange={handleTimeChange}
+            onBlur={handleOnBlurTime}
+            currentValue={nodes.delay || 'minutes-0'}
+          />
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="airplane-mode"
+              className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-400" // Esto sobrescribiría primary
+            />
+            <Label htmlFor="airplane-mode">Activar IA</Label>
+          </div>
+        </div>
       )
     }
 

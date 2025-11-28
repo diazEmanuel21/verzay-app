@@ -21,6 +21,7 @@ export function useBusinessAutosave(opts: {
     onVersionChange: (nextVersion: number) => void;
     onConflict?: (serverState: any) => void;
 }) {
+    console.log('se  guardó')
     const { form, promptId, version, onVersionChange, onConflict } = opts;
     const versionRef = useRef(version);
 
