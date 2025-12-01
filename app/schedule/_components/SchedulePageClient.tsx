@@ -227,7 +227,10 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
             await handleConfirmAppointment();
             const result = await sendingMessages({ url, apikey, remoteJid, text });
             if (result.success) toast.success(result.message);
-            else toast.warning(`No se pudo enviar el mensaje: ${result.message}`);
+            else {
+                toast.info(`No se envió el mensaje de notificación`);
+                console.error(`Error SchedulePageClient line: 232 ${result.message}`)
+            }
         } catch (error) {
             console.error("Error en notificación:", error);
             toast.error("Ocurrió un error al intentar notificar la cita.");

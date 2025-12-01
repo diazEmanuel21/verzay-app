@@ -112,7 +112,8 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
             if (result.success) {
                 toast.success(result.message);
             } else {
-                toast.warning(`No se pudo enviar el mensaje: ${result.message}`);
+                toast.info(`No se envió el mensaje de notificación`);
+                console.error(`Error SchedulePageClient line: 232 ${result.message}`)
             }
 
         } catch (error) {
