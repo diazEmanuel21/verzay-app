@@ -478,6 +478,7 @@ export type BusinessPromptBuilderProps = BusinessBuilderInterface & {
     version: number;
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
+    registerSaveHandler?: (fn: () => Promise<void>) => void;
 };
 
 export interface PromptPreviewInterface {
@@ -498,6 +499,7 @@ export interface TrainingBuilderProps {
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
     initialSteps?: Array<any>; // steps desde BD (sections.training.steps)
+    registerSaveHandler?: (fn: () => Promise<void>) => void;
 }
 
 /* -------------------- Tipos locales para PASOS -------------------- */
@@ -620,6 +622,7 @@ export type FqaBuilderProps = {
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
     initialItems?: Array<any>; // ← sections.faq.items desde BD
+    registerSaveHandler?: (fn: () => Promise<void>) => void;
 };
 
 export type ProductItemType = {
@@ -640,6 +643,7 @@ export interface ProductBuilderProps {
     version: number;
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
+    registerSaveHandler?: (fn: () => Promise<void>) => void;
     initialItems?: Array<any>;
 }
 
@@ -670,6 +674,7 @@ export interface ExtraInfoBuilderProps {
     version: number;
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
+    registerSaveHandler?: (fn: () => Promise<void>) => void;
     initialExtras?: { items?: Array<any>; firmaEnabled?: boolean; firmaText?: string, firmaName?: string };
 }
 
@@ -826,6 +831,7 @@ export type ManagementBuilderProps = {
     initialItems?: Array<any>; // ← sections.faq.items desde BD
     debounceMs?: number;
     flows?: Workflow[];
+    registerSaveHandler?: (fn: () => Promise<void>) => void;
     notificationNumber?: string
 };
 

@@ -57,6 +57,7 @@ export const BusinessPromptBuilder = ({
     version,
     onVersionChange,
     onConflict,
+    registerSaveHandler
 }: BusinessPromptBuilderProps) => {
     const [selectedFields, setSelectedFields] = useState<string[]>([]);
     const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>("idle");
@@ -67,15 +68,20 @@ export const BusinessPromptBuilder = ({
         mode: "onChange",
     });
 
-    // 🔁 AUTOSAVE (usa el form como fuente de verdad)
-    useBusinessAutosave({
+    const { forceSave } = useBusinessAutosave({
         form,
         promptId,
         version,
         onVersionChange,
         onConflict,
         onStatusChange: setAutosaveStatus,
+        mode: "manual",
     });
+
+    useEffect(() => {
+        if (!registerSaveHandler) return;
+        registerSaveHandler(forceSave);
+    }, [registerSaveHandler, forceSave]);
 
     useEffect(() => {
         if (autosaveStatus === "saved") {

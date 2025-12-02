@@ -87,6 +87,30 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
     const [activeTab, setActiveTab] = useState<TabKey>("business");
     const [promptVersion, setPromptVersion] = useState<number>(promptMeta.version); // ← versión viva
     const scrollRef = useRef<HTMLDivElement>(null);
+    const saveHandlersRef = useRef<Record<string, () => Promise<void>>>({});
+
+    const registerSaveHandler = useCallback(
+        (key: string, handler: () => Promise<void>) => {
+            saveHandlersRef.current[key] = handler;
+        },
+        []
+    );
+
+    const handleManualSaveAll = useCallback(async () => {
+        const handlers = Object.values(saveHandlersRef.current);
+
+        if (handlers.length === 0) return;
+
+        // Ejecutamos cada handler
+        const results = await Promise.allSettled(
+            handlers.map((fn) => fn())   // 👈 AQUÍ las llamamos
+        );
+
+        const hasError = results.some((r) => r.status === "rejected");
+        if (hasError) {
+            throw new Error("Al menos una sección no se pudo guardar.");
+        }
+    }, []);
 
     const handleChange = useCallback(
         (key: keyof BusinessValues) =>
@@ -225,6 +249,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                 }}
                                 revalidatePath={"/ia"}
                                 revisions={[]}
+                                onManualSave={handleManualSaveAll}
                             />
 
                             <DropdownMenu modal={false}>
@@ -285,6 +310,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                     }));
                                     if (serverState?.version) setPromptVersion(serverState.version);
                                 }}
+                                registerSaveHandler={(fn) => registerSaveHandler("business", fn)}
                             />
                         </TabsContent>
 
@@ -302,6 +328,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                     setValues((prev) => ({ ...prev, training: prev.training }));
                                 }}
                                 initialSteps={sections?.training?.steps ?? []}
+                                registerSaveHandler={(fn) => registerSaveHandler("training", fn)}
                             />
                         </TabsContent>
 
@@ -318,6 +345,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                     setValues((prev) => ({ ...prev, faq: prev.faq }));
                                 }}
                                 initialItems={sections?.faq?.steps ?? []}
+                                registerSaveHandler={(fn) => registerSaveHandler("faq", fn)}
                             />
                         </TabsContent>
 
@@ -334,6 +362,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                     setValues((prev) => ({ ...prev, products: prev.products }));
                                 }}
                                 initialItems={sections?.products?.steps ?? []}
+                                registerSaveHandler={(fn) => registerSaveHandler("products", fn)}
                             />
                         </TabsContent>
 
@@ -355,8 +384,10 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                     firmaText: sections?.extras?.firmaText ?? undefined,
                                     firmaName: sections?.extras?.firmaName ?? undefined,
                                 }}
+                                registerSaveHandler={(fn) => registerSaveHandler("more", fn)}
                             />
                         </TabsContent>
+
                         <TabsContent value="management" className="m-0">
                             <ManagementBuilder
                                 flows={flows}
@@ -374,6 +405,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                     // autosave ya volverá a lanzar con la nueva versión.
                                 }}
                                 initialItems={sections?.management?.steps ?? []}
+                                registerSaveHandler={(fn) => registerSaveHandler("management", fn)}
                             />
                         </TabsContent>
                         <div className="h-6" />

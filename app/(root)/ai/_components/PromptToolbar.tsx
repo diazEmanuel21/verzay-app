@@ -22,8 +22,9 @@ export function PromptToolbar(props: {
     onConflict?: (serverState: any) => void;
     revalidatePath?: string;
     revisions?: Array<{ revisionNumber: number; label?: string }>;
+    onManualSave?: () => Promise<void>;
 }) {
-    const { promptId, version, userId, onVersionChange, onConflict, revalidatePath } = props;
+    const { promptId, version, userId, onVersionChange, onConflict, revalidatePath, onManualSave } = props;
 
     const router = useRouter();
 
@@ -45,9 +46,14 @@ export function PromptToolbar(props: {
 
     const handlePublish = useCallback(async () => {
         try {
+            // 1) Guardar todas las secciones (manual)
+            if (onManualSave) {
+                await onManualSave();
+            }
+
+            // 2) Ejecutar lógica actual de publish
             await publish();
 
-            // Lanzamos el refresh dentro de un transition, así isPending refleja el progreso
             startTransition(() => {
                 router.refresh();
             });
@@ -56,7 +62,8 @@ export function PromptToolbar(props: {
         } catch (e: any) {
             toast.error(e?.message ?? "No se pudo guardar");
         }
-    }, [publish, router, startTransition]);
+    }, [publish, router, startTransition, onManualSave]);
+
 
     useEffect(() => {
         if (error) toast.error(error);

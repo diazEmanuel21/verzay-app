@@ -3,6 +3,7 @@
 
 import { useCallback, useState } from "react";
 import { savePrompt, publishPrompt, revertToRevision } from "@/actions/system-prompt-actions";
+import { toast } from "sonner";
 
 type ConflictPayload = any;
 
@@ -20,9 +21,19 @@ export function usePromptActions(opts: {
     const [error, setError] = useState<string | null>(null);
 
     const handleConflict = useCallback((serverState: any) => {
+        // 1) Rehidratar la UI con lo que diga el servidor
         onConflict?.(serverState);
-        setError("Conflicto de versión: se detectaron cambios en el servidor.");
+
+        // 2) Avisar al usuario que recargamos con la última versión
+        // toast.warning(
+        //     "Se detectaron cambios en otra ventana o sesión. Actualizamos el contenido con la última versión del servidor. Revisa los cambios y vuelve a guardar."
+        // );
+
+        // 3) No tratamos esto como 'error' persistente debajo del botón
+        //    (si quisieras mostrar un textito pequeño, podrías poner otro mensaje aquí)
+        setError(null);
     }, [onConflict]);
+
 
     const handleOk = useCallback((nextVersion?: number) => {
         if (typeof nextVersion === "number") onVersionChange(nextVersion);

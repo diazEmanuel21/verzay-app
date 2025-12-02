@@ -1,7 +1,6 @@
-// app/(root)/ai/_components/hooks/useTrainingAutosave.ts
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { patchTrainingSection } from "@/actions/system-prompt-actions";
 import { StepTraining } from "@/types/agentAi";
 import { toast } from "sonner";
@@ -27,22 +26,31 @@ export function useTrainingAutosave(opts: {
     steps: StepTraining[];
     onVersionChange: (next: number) => void;
     onConflict?: (serverState: any) => void;
-    onStatusChange?: (status: AutosaveStatus) => void; // 👈 NUEVO
+    onStatusChange?: (status: AutosaveStatus) => void;
+    mode?: "auto" | "manual";
 }) {
-    const { promptId, version, steps, onVersionChange, onConflict, onStatusChange } = opts;
+    const {
+        promptId,
+        version,
+        steps,
+        onVersionChange,
+        onConflict,
+        onStatusChange,
+        mode = "auto",
+    } = opts;
 
     const versionRef = useRef(version);
     useEffect(() => {
         versionRef.current = version;
     }, [version]);
 
-    // onConflict estable vía ref (para no ser dep de runSave)
+    // onConflict estable vía ref
     const conflictRef = useRef<typeof onConflict>();
     useEffect(() => {
         conflictRef.current = onConflict;
     }, [onConflict]);
 
-    // Evita autosave inicial tras hidratar desde BD (aunque realmente el hash ya te protege bastante)
+    // Evita autosave inicial tras hidratar
     const mountedRef = useRef(false);
     useEffect(() => {
         mountedRef.current = true;
@@ -56,8 +64,9 @@ export function useTrainingAutosave(opts: {
         onStatusChange?.(status);
     };
 
-    const runSave = useMemo(() => {
-        const fn = async (payload: { steps: StepTraining[] }) => {
+    // Lógica de guardado REAL (sin debounce)
+    const saveFn = useCallback(
+        async (payload: { steps: StepTraining[] }) => {
             if (!promptId) return;
             if (!mountedRef.current) return; // seguridad extra
 
@@ -72,9 +81,9 @@ export function useTrainingAutosave(opts: {
 
                 if (res?.conflict) {
                     notifyStatus("error");
-                    toast.error(
-                        "Este entrenamiento se actualizó en otro lugar. Vamos a cargar la última versión."
-                    );
+                    // toast.error(
+                    //     "Este entrenamiento se actualizó en otro lugar. Vamos a cargar la última versión."
+                    // );
                     conflictRef.current?.(res.data);
                     return;
                 }
@@ -91,12 +100,18 @@ export function useTrainingAutosave(opts: {
                 notifyStatus("error");
                 toast.error("Error al guardar el entrenamiento automáticamente.");
             }
-        };
-        return createDebounced(fn, 700);
-        // se recrea solo si cambian estas referencias clave
-    }, [promptId, onVersionChange, onStatusChange]);
+        },
+        [promptId, onVersionChange] // notifyStatus usa onStatusChange directamente
+    );
 
+    // Versión con debounce para AUTO
+    const runSave = useMemo(() => {
+        return createDebounced(saveFn, 700);
+    }, [saveFn]);
+
+    // Autosave solo si mode === "auto"
     useEffect(() => {
+        if (mode === "manual") return;
         if (!promptId) return;
 
         // No re-guardar si el contenido no cambió
@@ -109,5 +124,17 @@ export function useTrainingAutosave(opts: {
         return () => {
             runSave.cancel?.();
         };
-    }, [stepsHash, promptId, runSave, steps]);
+    }, [stepsHash, promptId, runSave, mode, steps]);
+
+    // Guardado forzado (sin debounce), para usar desde el botón Guardar
+    const forceSave = useCallback(async () => {
+        if (!promptId) return;
+
+        // Actualizamos hash para mantener coherencia con el autosave
+        lastHashRef.current = stepsHash;
+
+        await saveFn({ steps });
+    }, [promptId, steps, stepsHash, saveFn]);
+
+    return { forceSave };
 }

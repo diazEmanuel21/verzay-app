@@ -53,6 +53,7 @@ export function TrainingBuilder({
   version,
   onVersionChange,
   initialSteps = [],
+  registerSaveHandler
 }: TrainingBuilderProps) {
   const [steps, setSteps] = useState<StepTraining[]>(() => {
     if (Array.isArray(initialSteps) && initialSteps.length > 0) {
@@ -72,15 +73,20 @@ export function TrainingBuilder({
     [setSteps]
   );
 
-  // 🔁 AUTOSAVE con debounce (guarda { steps } en sections.training)
-  useTrainingAutosave({
+  const { forceSave } = useTrainingAutosave({
     promptId,
     version,
     steps,
     onVersionChange,
     onConflict: handleConflict,
-    onStatusChange: setAutosaveStatus, // 👈 NUEVO
+    onStatusChange: setAutosaveStatus,
+    mode: "manual",
   });
+
+  useEffect(() => {
+    if (!registerSaveHandler) return;
+    registerSaveHandler(forceSave);
+  }, [registerSaveHandler, forceSave]);
 
   // Reset visual de "Cambios guardados" después de un rato
   useEffect(() => {
