@@ -212,7 +212,7 @@ export const ManagementBuilder = ({
             const isFnElement =
                 (target as any)?.kind === "function" || typeof (target as any)?.fn === "string";
 
-            // 1) si el elemento a eliminar es la fn -> eliminar TODO el step
+            // 1) si el elemento a eliminar es la fn -> eliminar tarea el step
             if (isFnElement) {
                 return prev.filter((s) => s.id !== stepId);
             }

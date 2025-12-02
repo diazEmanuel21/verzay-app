@@ -458,6 +458,7 @@ model Reminders {
   title        String
   description  String?
   time         String?
+  // contactTZ    String? // Zona horaria del contacto/cliente que recibe el recordatorio
   repeatType   RepeatType? @default(NONE)
   repeatEvery  Int?
   endsAt       DateTime?

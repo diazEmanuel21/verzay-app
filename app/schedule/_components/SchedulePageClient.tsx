@@ -22,6 +22,8 @@ import { es } from "date-fns/locale";
 import { DateHourComponent, EmployeesComponent, ScheduleForm, ServiceComponent, SummaryComponent } from "./steps";
 import { SummaryItem } from "./";
 
+const serverTimeZone = 'America/Bogota';
+
 export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInterface) => {
     // ── UI Steeps
     const [step, setStep] = useState(0);
@@ -50,9 +52,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
     const [phone, setPhone] = useState("");
     const [loading, setLoading] = useState(false);
     const [openDialog, setOpenDialog] = useState(false);
-
     const canContinueStep2 = Boolean(nameClient.trim() && phone.trim() && areaCode && selectedService);
-
 
     // ── Seguimientos
     const mutationSeguimiento = useMutation({
@@ -69,7 +69,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
     useEffect(() => {
         if (!user.id || !selectedDateYmd) return;
         (async () => {
-            const res = await getAvailableSlots(user.id as string, selectedDateYmd, slotDuration);
+            const res = await getAvailableSlots(user.id as string, selectedDateYmd, slotDuration, serverTimeZone);
             if (res.success) setSlots(res.data || []);
             else toast.error(res.message);
         })();
@@ -121,7 +121,8 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
             /* Utiliza sendingMessages posterior a la generación de reminders */
             secondsReminders.forEach((rem) => {
                 if (!rem.normalizedSeconds) return;
-                const startLocal = toZonedTime(new Date(startTime), timezone);
+                // const startLocal = toZonedTime(new Date(startTime), timezone);
+                const startLocal = toZonedTime(new Date(startTime), serverTimeZone);
                 const seguimientoTime = subtractSecondsFromTime(startLocal, rem.normalizedSeconds);
                 const dataSeguimiento: SeguimientoInput = {
                     idNodo: "",
@@ -317,8 +318,8 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                                 selectedService={selectedService}
                                 selectedSlot={selectedSlot}
                                 setSlots={setSlots}
-                                getAvailableSlots={getAvailableSlots}
                                 timezone={timezone}
+                                serverTimeZone={serverTimeZone}
                                 slots={slots}
                                 selectedDate={selectedDate}
                                 slotDuration={slotDuration}
