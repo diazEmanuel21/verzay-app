@@ -1,7 +1,7 @@
 // app/(root)/ai/_components/hooks/useFaqAutosave.ts
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { patchFaqSection } from "@/actions/system-prompt-actions";
 import type { QaItem } from "@/types/agentAi";
 import { toast } from "sonner";
@@ -27,9 +27,18 @@ export function useFaqAutosave(opts: {
     items: QaItem[];
     onVersionChange: (next: number) => void;
     onConflict?: (serverState: any) => void;
-    onStatusChange?: (status: AutosaveStatus) => void; // 👈 NUEVO
+    onStatusChange?: (status: AutosaveStatus) => void;
+    mode?: "auto" | "manual";
 }) {
-    const { promptId, version, items, onVersionChange, onConflict, onStatusChange } = opts;
+    const {
+        promptId,
+        version,
+        items,
+        onVersionChange,
+        onConflict,
+        onStatusChange,
+        mode = "auto",
+    } = opts;
 
     const versionRef = useRef(version);
     useEffect(() => {
@@ -46,15 +55,19 @@ export function useFaqAutosave(opts: {
         mountedRef.current = true;
     }, []);
 
-    const itemsHash = useMemo(() => JSON.stringify(items), [items]);
     const lastHashRef = useRef<string>("");
+    const itemsHash = useMemo(() => JSON.stringify(items), [items]);
 
-    const notifyStatus = (status: AutosaveStatus) => {
-        onStatusChange?.(status);
-    };
+    const notifyStatus = useCallback(
+        (status: AutosaveStatus) => {
+            onStatusChange?.(status);
+        },
+        [onStatusChange]
+    );
 
-    const runSave = useMemo(() => {
-        const fn = async (payload: { items: QaItem[] }) => {
+    // 👉 Guardado REAL (sin debounce)
+    const saveFn = useCallback(
+        async (payload: { items: QaItem[] }) => {
             if (!promptId) return;
             if (!mountedRef.current) return;
 
@@ -64,14 +77,14 @@ export function useFaqAutosave(opts: {
                 const res = await patchFaqSection({
                     promptId,
                     version: versionRef.current,
-                    data: { steps: payload.items }, // 👈 se mantiene igual
+                    data: { steps: payload.items }, // se mantiene igual
                 });
 
                 if (res?.conflict) {
                     notifyStatus("error");
-                    toast.error(
-                        "Estas preguntas se actualizaron en otro lugar. Se cargará la última versión."
-                    );
+                    // toast.warning(
+                    //     "Las preguntas frecuentes se actualizaron en otra ventana o sesión. Cargamos la última versión del servidor. Revisa los cambios antes de seguir editando."
+                    // );
                     conflictRef.current?.(res.data);
                     return;
                 }
@@ -86,19 +99,36 @@ export function useFaqAutosave(opts: {
             } catch (err) {
                 console.error("[useFaqAutosave] Error al guardar:", err);
                 notifyStatus("error");
-                toast.error("Error al guardar automáticamente las Preguntas.");
+                toast.error("Error al guardar automáticamente las Preguntas frecuentes.");
             }
-        };
-        return createDebounced(fn, 700);
-    }, [promptId, onVersionChange, onStatusChange]);
+        },
+        [promptId, onVersionChange, notifyStatus]
+    );
 
+    // 👉 Versión con debounce, usada solo en modo "auto"
+    const runSave = useMemo(() => createDebounced(saveFn, 700), [saveFn]);
+
+    // Autosave solo si mode === "auto"
     useEffect(() => {
+        if (mode === "manual") return;
         if (!promptId) return;
-        if (lastHashRef.current === itemsHash) return;
 
+        if (lastHashRef.current === itemsHash) return;
         lastHashRef.current = itemsHash;
+
         runSave({ items });
 
-        return () => runSave.cancel?.();
-    }, [itemsHash, promptId, runSave, items]);
+        return () => {
+            runSave.cancel?.();
+        };
+    }, [itemsHash, items, mode, promptId, runSave]);
+
+    // 👉 Guardado forzado para el botón Guardar
+    const forceSave = useCallback(async () => {
+        if (!promptId) return;
+        lastHashRef.current = itemsHash;
+        await saveFn({ items });
+    }, [promptId, items, itemsHash, saveFn]);
+
+    return { forceSave };
 }

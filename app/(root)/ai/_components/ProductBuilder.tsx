@@ -53,6 +53,7 @@ export const ProductBuilder = ({
     initialItems = [],
     flows = [],
     notificationNumber,
+    registerSaveHandler
 }: ProductBuilderProps) => {
     const [items, setItems] = useState<ProductItemType[]>(
         Array.isArray(initialItems) && initialItems.length > 0
@@ -73,14 +74,19 @@ export const ProductBuilder = ({
         [onConflict]
     );
 
-    useProductsAutosave({
+    const { forceSave } = useProductsAutosave({
         promptId,
         version,
         items,
         onVersionChange,
         onConflict: stableOnConflict,
-        onStatusChange: setAutosaveStatus, // 👈 NUEVO
+        onStatusChange: setAutosaveStatus,
+        mode: "manual",
     });
+
+    useEffect(() => {
+        registerSaveHandler?.(forceSave);
+    }, [registerSaveHandler, forceSave]);
 
     // Reset visual de "Cambios guardados"
     useEffect(() => {

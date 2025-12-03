@@ -1,7 +1,7 @@
 // app/(root)/ai/_components/hooks/useExtrasAutosave.ts
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { patchExtrasSection } from "@/actions/system-prompt-actions";
 import { ExtraItemType } from "@/types/agentAi";
 import { toast } from "sonner";
@@ -14,7 +14,10 @@ function createDebounced<F extends (...args: any[]) => any>(fn: F, ms = 700) {
         if (t) clearTimeout(t);
         t = setTimeout(() => fn(...args), ms);
     };
-    (debounced as any).cancel = () => { if (t) clearTimeout(t); t = null; };
+    (debounced as any).cancel = () => {
+        if (t) clearTimeout(t);
+        t = null;
+    };
     return debounced as F & { cancel: () => void };
 }
 
@@ -27,7 +30,8 @@ export function useExtrasAutosave(opts: {
     firmaName: string;
     onVersionChange: (next: number) => void;
     onConflict?: (serverState: any) => void;
-    onStatusChange?: (status: AutosaveStatus) => void; // 👈 NUEVO
+    onStatusChange?: (status: AutosaveStatus) => void;
+    mode?: "auto" | "manual";
 }) {
     const {
         promptId,
@@ -39,16 +43,23 @@ export function useExtrasAutosave(opts: {
         onVersionChange,
         onConflict,
         onStatusChange,
+        mode = "auto",
     } = opts;
 
     const versionRef = useRef(version);
-    useEffect(() => { versionRef.current = version; }, [version]);
+    useEffect(() => {
+        versionRef.current = version;
+    }, [version]);
 
     const conflictRef = useRef<typeof onConflict>();
-    useEffect(() => { conflictRef.current = onConflict; }, [onConflict]);
+    useEffect(() => {
+        conflictRef.current = onConflict;
+    }, [onConflict]);
 
     const mountedRef = useRef(false);
-    useEffect(() => { mountedRef.current = true; }, []);
+    useEffect(() => {
+        mountedRef.current = true;
+    }, []);
 
     const payloadHash = useMemo(
         () => JSON.stringify({ steps: items, firmaEnabled, firmaText, firmaName }),
@@ -56,12 +67,16 @@ export function useExtrasAutosave(opts: {
     );
     const lastHashRef = useRef<string>("");
 
-    const notifyStatus = (status: AutosaveStatus) => {
-        onStatusChange?.(status);
-    };
+    const notifyStatus = useCallback(
+        (status: AutosaveStatus) => {
+            onStatusChange?.(status);
+        },
+        [onStatusChange]
+    );
 
-    const runSave = useMemo(() => {
-        const fn = async (payload: {
+    // 👉 Guardado REAL (sin debounce)
+    const saveFn = useCallback(
+        async (payload: {
             steps: ExtraItemType[];
             firmaEnabled: boolean;
             firmaText: string;
@@ -86,8 +101,8 @@ export function useExtrasAutosave(opts: {
 
                 if (res?.conflict) {
                     notifyStatus("error");
-                    toast.error(
-                        "La sección de extras se actualizó en otro lugar. Se cargará la última versión."
+                    toast.warning(
+                        "La sección de extras se actualizó en otra ventana o sesión. Cargamos la última versión del servidor. Revisa los cambios antes de seguir editando."
                     );
                     conflictRef.current?.(res.data);
                     return;
@@ -101,20 +116,39 @@ export function useExtrasAutosave(opts: {
                     toast.error("No se pudo guardar los cambios de extras.");
                 }
             } catch (err) {
-                console.error("patchExtrasSection error", err);
+                console.error("[useExtrasAutosave] Error al guardar:", err);
                 notifyStatus("error");
                 toast.error("Error al guardar automáticamente la sección de extras.");
             }
-        };
-        return createDebounced(fn, 700);
-    }, [promptId, onVersionChange, onStatusChange]);
+        },
+        [promptId, onVersionChange, notifyStatus]
+    );
 
+    // 👉 Versión con debounce, usada solo en modo "auto"
+    const runSave = useMemo(() => createDebounced(saveFn, 700), [saveFn]);
+
+    // Autosave solo si mode === "auto"
     useEffect(() => {
+        if (mode === "manual") return;
         if (!promptId) return;
+
         if (lastHashRef.current === payloadHash) return;
         lastHashRef.current = payloadHash;
 
         runSave({ steps: items, firmaEnabled, firmaText, firmaName });
-        return () => runSave.cancel?.();
-    }, [payloadHash, promptId, runSave, items, firmaEnabled, firmaText, firmaName]);
+
+        return () => {
+            runSave.cancel?.();
+        };
+    }, [mode, promptId, payloadHash, items, firmaEnabled, firmaText, firmaName, runSave]);
+
+    // 👉 Guardado forzado para el botón Guardar
+    const forceSave = useCallback(async () => {
+        if (!promptId) return;
+        lastHashRef.current = payloadHash;
+
+        await saveFn({ steps: items, firmaEnabled, firmaText, firmaName });
+    }, [promptId, payloadHash, items, firmaEnabled, firmaText, firmaName, saveFn]);
+
+    return { forceSave };
 }

@@ -87,9 +87,9 @@ export function useBusinessAutosave(opts: {
 
                 if (res?.conflict) {
                     notifyStatus("error");
-                    toast.warning(
-                        "Este bloque de negocio se actualizó en otra ventana o sesión. Cargamos la última versión del servidor. Revisa los cambios antes de seguir editando."
-                    );
+                    // toast.warning(
+                    //     "Este bloque de negocio se actualizó en otra ventana o sesión. Cargamos la última versión del servidor. Revisa los cambios antes de seguir editando."
+                    // );
                     onConflict?.(res.data);
                     return;
                 }

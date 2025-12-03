@@ -1,7 +1,7 @@
 // app/(root)/ai/_components/hooks/useProductsAutosave.ts
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { patchProductsSection } from "@/actions/system-prompt-actions";
 import { ProductItemType } from "@/types/agentAi";
 import { toast } from "sonner";
@@ -27,9 +27,18 @@ export function useProductsAutosave(opts: {
     items: ProductItemType[];
     onVersionChange: (next: number) => void;
     onConflict?: (serverState: any) => void;
-    onStatusChange?: (status: AutosaveStatus) => void; // 👈 NUEVO
+    onStatusChange?: (status: AutosaveStatus) => void;
+    mode?: "auto" | "manual";
 }) {
-    const { promptId, version, items, onVersionChange, onConflict, onStatusChange } = opts;
+    const {
+        promptId,
+        version,
+        items,
+        onVersionChange,
+        onConflict,
+        onStatusChange,
+        mode = "auto",
+    } = opts;
 
     const versionRef = useRef(version);
     useEffect(() => {
@@ -46,15 +55,19 @@ export function useProductsAutosave(opts: {
         mountedRef.current = true;
     }, []);
 
-    const itemsHash = useMemo(() => JSON.stringify(items), [items]);
     const lastHashRef = useRef<string>("");
+    const itemsHash = useMemo(() => JSON.stringify(items), [items]);
 
-    const notifyStatus = (status: AutosaveStatus) => {
-        onStatusChange?.(status);
-    };
+    const notifyStatus = useCallback(
+        (status: AutosaveStatus) => {
+            onStatusChange?.(status);
+        },
+        [onStatusChange]
+    );
 
-    const runSave = useMemo(() => {
-        const fn = async (payload: { items: ProductItemType[] }) => {
+    // 👉 Guardado REAL (sin debounce)
+    const saveFn = useCallback(
+        async (payload: { items: ProductItemType[] }) => {
             if (!promptId) return;
             if (!mountedRef.current) return;
 
@@ -69,8 +82,8 @@ export function useProductsAutosave(opts: {
 
                 if (res?.conflict) {
                     notifyStatus("error");
-                    toast.error(
-                        "Los productos se actualizaron en otro lugar. Se cargará la última versión."
+                    toast.warning(
+                        "Los productos se actualizaron en otra ventana o sesión. Cargamos la última versión del servidor. Revisa los cambios antes de seguir editando."
                     );
                     conflictRef.current?.(res.data);
                     return;
@@ -88,17 +101,34 @@ export function useProductsAutosave(opts: {
                 notifyStatus("error");
                 toast.error("Error al guardar automáticamente los productos.");
             }
-        };
-        return createDebounced(fn, 700);
-    }, [promptId, onVersionChange, onStatusChange]);
+        },
+        [promptId, onVersionChange, notifyStatus]
+    );
 
+    // 👉 Versión con debounce, usada solo en modo "auto"
+    const runSave = useMemo(() => createDebounced(saveFn, 700), [saveFn]);
+
+    // Autosave solo si mode === "auto"
     useEffect(() => {
+        if (mode === "manual") return;
         if (!promptId) return;
-        if (lastHashRef.current === itemsHash) return;
 
+        if (lastHashRef.current === itemsHash) return;
         lastHashRef.current = itemsHash;
+
         runSave({ items });
 
-        return () => runSave.cancel?.();
-    }, [itemsHash, promptId, runSave, items]);
+        return () => {
+            runSave.cancel?.();
+        };
+    }, [mode, promptId, itemsHash, items, runSave]);
+
+    // 👉 Guardado forzado para el botón Guardar
+    const forceSave = useCallback(async () => {
+        if (!promptId) return;
+        lastHashRef.current = itemsHash;
+        await saveFn({ items });
+    }, [promptId, items, itemsHash, saveFn]);
+
+    return { forceSave };
 }

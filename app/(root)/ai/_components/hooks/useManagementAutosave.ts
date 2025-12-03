@@ -1,7 +1,7 @@
 // app/(root)/ai/_components/hooks/useManagementAutosave.ts
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { patchManagementSection } from "@/actions/system-prompt-actions";
 import type { ManagementItem } from "@/types/agentAi";
 import { toast } from "sonner";
@@ -27,28 +27,47 @@ export function useManagementAutosave(opts: {
     steps: ManagementItem[];
     onVersionChange: (next: number) => void;
     onConflict?: (serverState: any) => void;
-    onStatusChange?: (status: AutosaveStatus) => void; // 👈 NUEVO
+    onStatusChange?: (status: AutosaveStatus) => void;
+    mode?: "auto" | "manual";
 }) {
-    const { promptId, version, steps, onVersionChange, onConflict, onStatusChange } = opts;
+    const {
+        promptId,
+        version,
+        steps,
+        onVersionChange,
+        onConflict,
+        onStatusChange,
+        mode = "auto",
+    } = opts;
 
     const versionRef = useRef(version);
-    useEffect(() => { versionRef.current = version; }, [version]);
+    useEffect(() => {
+        versionRef.current = version;
+    }, [version]);
 
     const conflictRef = useRef<typeof onConflict>();
-    useEffect(() => { conflictRef.current = onConflict; }, [onConflict]);
+    useEffect(() => {
+        conflictRef.current = onConflict;
+    }, [onConflict]);
 
     const mountedRef = useRef(false);
-    useEffect(() => { mountedRef.current = true; }, []);
+    useEffect(() => {
+        mountedRef.current = true;
+    }, []);
 
     const stepsHash = useMemo(() => JSON.stringify(steps), [steps]);
     const lastHashRef = useRef<string>("");
 
-    const notifyStatus = (status: AutosaveStatus) => {
-        onStatusChange?.(status);
-    };
+    const notifyStatus = useCallback(
+        (status: AutosaveStatus) => {
+            onStatusChange?.(status);
+        },
+        [onStatusChange]
+    );
 
-    const runSave = useMemo(() => {
-        const fn = async (payload: { steps: ManagementItem[] }) => {
+    // 👉 Guardado REAL (sin debounce)
+    const saveFn = useCallback(
+        async (payload: { steps: ManagementItem[] }) => {
             if (!promptId) return;
             if (!mountedRef.current) return;
 
@@ -58,13 +77,13 @@ export function useManagementAutosave(opts: {
                 const res = await patchManagementSection({
                     promptId,
                     version: versionRef.current,
-                    data: { steps: payload.steps }, // 👈 ManagementDraftSchema.steps
+                    data: { steps: payload.steps }, // ManagementDraftSchema.steps
                 });
 
                 if (res?.conflict) {
                     notifyStatus("error");
-                    toast.error(
-                        "La sección de gestión se actualizó en otro lugar. Se cargará la última versión."
+                    toast.warning(
+                        "La sección de gestión se actualizó en otra ventana o sesión. Cargamos la última versión del servidor. Revisa los cambios antes de seguir editando."
                     );
                     conflictRef.current?.(res.data);
                     return;
@@ -78,21 +97,38 @@ export function useManagementAutosave(opts: {
                     toast.error("No se pudo guardar los cambios de gestión.");
                 }
             } catch (err) {
-                console.error("patchManagementSection error", err);
+                console.error("[useManagementAutosave] Error al guardar:", err);
                 notifyStatus("error");
                 toast.error("Error al guardar automáticamente la sección de gestión.");
             }
-        };
-        return createDebounced(fn, 700);
-    }, [promptId, onVersionChange, onStatusChange]);
+        },
+        [promptId, onVersionChange, notifyStatus]
+    );
 
+    // 👉 Versión con debounce, usada solo en modo "auto"
+    const runSave = useMemo(() => createDebounced(saveFn, 700), [saveFn]);
+
+    // Autosave solo si mode === "auto"
     useEffect(() => {
+        if (mode === "manual") return;
         if (!promptId) return;
-        if (lastHashRef.current === stepsHash) return;
 
+        if (lastHashRef.current === stepsHash) return;
         lastHashRef.current = stepsHash;
+
         runSave({ steps });
 
-        return () => runSave.cancel?.();
-    }, [stepsHash, promptId, runSave, steps]);
+        return () => {
+            runSave.cancel?.();
+        };
+    }, [mode, promptId, stepsHash, steps, runSave]);
+
+    // 👉 Guardado forzado para el botón Guardar
+    const forceSave = useCallback(async () => {
+        if (!promptId) return;
+        lastHashRef.current = stepsHash;
+        await saveFn({ steps });
+    }, [promptId, steps, stepsHash, saveFn]);
+
+    return { forceSave };
 }

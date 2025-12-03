@@ -63,6 +63,7 @@ export const ManagementBuilder = ({
     initialItems = [],
     flows = [],
     notificationNumber,
+    registerSaveHandler
 }: ManagementBuilderProps) => {
     // cada card = un "bloque" de gestión
     const [steps, setSteps] = useState<ManagementItem[]>(
@@ -113,14 +114,19 @@ export const ManagementBuilder = ({
     );
 
     // AUTOSAVE
-    useManagementAutosave({
+    const { forceSave } = useManagementAutosave({
         promptId,
         version,
         steps,
         onVersionChange,
         onConflict: stableOnConflict,
         onStatusChange: setAutosaveStatus,
+        mode: "manual",
     });
+
+    useEffect(() => {
+        registerSaveHandler?.(forceSave);
+    }, [registerSaveHandler, forceSave]);
 
     // Reset visual de "Cambios guardados"
     useEffect(() => {

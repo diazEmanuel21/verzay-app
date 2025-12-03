@@ -68,6 +68,7 @@ export function ExtraInfoBuilder({
     initialExtras,
     flows = [],
     notificationNumber,
+    registerSaveHandler
 }: ExtraInfoBuilderProps & { flows?: Workflow[] }) {
     /* ====== Estado: pasos (antes "items") ====== */
     const [items, setItems] = useState<ExtraItemType[]>(
@@ -116,7 +117,7 @@ export function ExtraInfoBuilder({
         [onConflict]
     );
 
-    useExtrasAutosave({
+    const { forceSave } = useExtrasAutosave({
         promptId,
         version,
         items,
@@ -126,7 +127,12 @@ export function ExtraInfoBuilder({
         onVersionChange,
         onConflict: stableOnConflict,
         onStatusChange: setAutosaveStatus, // 👈 NUEVO
+        mode: "manual"
     });
+
+    useEffect(() => {
+        registerSaveHandler?.(forceSave);
+    }, [registerSaveHandler, forceSave]);
 
     // Reset visual “Cambios guardados”
     useEffect(() => {

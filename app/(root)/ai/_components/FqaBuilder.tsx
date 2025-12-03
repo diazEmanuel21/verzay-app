@@ -53,6 +53,7 @@ export function FqaBuilder({
     initialItems = [],
     flows = [],
     notificationNumber,
+    registerSaveHandler
 }: FqaBuilderProps) {
     const [items, setItems] = useState<QaItem[]>(
         Array.isArray(initialItems) && initialItems.length > 0 ? initialItems : []
@@ -71,14 +72,21 @@ export function FqaBuilder({
         [onConflict]
     );
 
-    useFaqAutosave({
+    const { forceSave } = useFaqAutosave({
         promptId,
         version,
         items,
         onVersionChange,
         onConflict: stableOnConflict,
-        onStatusChange: setAutosaveStatus, // 👈 NUEVO
+        onStatusChange: setAutosaveStatus,
+        mode: "manual",
     });
+
+    useEffect(() => {
+        if (!registerSaveHandler) return;
+        registerSaveHandler(forceSave);
+    }, [registerSaveHandler, forceSave]);
+
 
     // Reset visual de "Cambios guardados"
     useEffect(() => {
