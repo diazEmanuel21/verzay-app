@@ -79,7 +79,7 @@ export const ActionsCell = ({ session, onDeleteSuccess }: { session: Session, on
         session.remoteJid
       )
       if (reminderRes.success) {
-        toast.success("Seguimientos eliminados correctamente.");
+        toast.success(reminderRes.message);
       } else {
         toast.error(reminderRes.message || "Error al eliminar seguimientos.");
       }

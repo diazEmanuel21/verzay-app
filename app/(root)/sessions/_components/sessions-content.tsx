@@ -16,7 +16,7 @@ import { columns } from "./Columns";
 import { DataTable } from "./data-table";
 import { BulkActionsDropdown } from "./BulkActionsDropdown";
 import { cn } from "@/lib/utils";
-import { deleteRemindersByInstanceName } from "@/actions/seguimientos-actions";
+import { deleteSeguimientosByInstanceName } from "@/actions/seguimientos-actions";
 import { Session, SessionsContentProps, SimpleTag } from "@/types/session";
 import { FilterLeadsByStats } from "./FilterLeadsByStats";
 
@@ -189,7 +189,7 @@ export function SessionsContent({ userId, allTags }: SessionsContentProps) {
             onDeactivateAll={deactivateAllSessions}
             onDeleteAll={deleteAllSessions}
             onClearHistory={clearAllHistory}
-            onClearReminders={deleteRemindersByInstanceName}
+            onClearSeguimientos={deleteSeguimientosByInstanceName}
             onSuccess={() => router.refresh()}
           />
         </div>

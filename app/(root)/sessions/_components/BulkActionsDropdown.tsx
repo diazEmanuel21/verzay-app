@@ -32,10 +32,8 @@ import {
     History,
     MoreHorizontal
 } from 'lucide-react'
-import { Session } from '@prisma/client'
-import { useReactTable } from '@tanstack/react-table'
 
-type BulkActionType = 'activate' | 'deactivate' | 'deleteAll' | 'clearHistory' | 'clearReminders'
+type BulkActionType = 'activate' | 'deactivate' | 'deleteAll' | 'clearHistory' | 'clearSeguimientos'
 // type BulkActionType = 'activate' | 'deactivate' | 'deleteAll'
 
 interface BulkActionsDropdownProps {
@@ -44,7 +42,7 @@ interface BulkActionsDropdownProps {
     onDeactivateAll: (userId: string) => Promise<any>
     onDeleteAll: (userId: string) => Promise<any>
     onClearHistory: (userId: string) => Promise<any>
-    onClearReminders: (userId: string) => Promise<any>
+    onClearSeguimientos: (userId: string) => Promise<any>
     onSuccess?: () => void
 }
 
@@ -54,7 +52,7 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
     onDeactivateAll,
     onDeleteAll,
     onClearHistory,
-    onClearReminders,
+    onClearSeguimientos,
     onSuccess,
 }) => {
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -95,11 +93,11 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
             handler: onClearHistory,
             toastId: 'clear-history',
         },
-        clearReminders: {
+        clearSeguimientos: {
             label: 'Borrar seguimientos de todos',
             // confirmPhrase: 'Borrar historial de todos',
             confirmPhrase: 'si',
-            handler: onClearReminders,
+            handler: onClearSeguimientos,
             toastId: 'clear-reminders',
         },
     };
@@ -204,7 +202,7 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
                         Eliminar clientes
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                        onClick={() => openDialog('clearReminders')}
+                        onClick={() => openDialog('clearSeguimientos')}
                         className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/40"
                     >
                         <Trash2 className="mr-2 h-4 w-4" />

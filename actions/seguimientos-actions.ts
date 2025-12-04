@@ -44,7 +44,7 @@ export const createSeguimiento = async (input: unknown) => {
 /**
  * 1) Eliminar TODOS los recordatorios asociados a un instanceName
  */
-export async function deleteRemindersByInstanceName(userId: string): Promise<SeguimientosResponse> {
+export async function deleteSeguimientosByInstanceName(userId: string): Promise<SeguimientosResponse> {
   if (!userId) {
     return {
       success: false,
@@ -54,7 +54,7 @@ export async function deleteRemindersByInstanceName(userId: string): Promise<Seg
 
   try {
     // Buscar la instancia del usuario con instanceType = "Whatsapp"
-    const instancia = await db.instancias.findFirst({
+    const instancias = await db.instancias.findMany({
       where: {
         userId,
         instanceType: "Whatsapp",
@@ -64,17 +64,21 @@ export async function deleteRemindersByInstanceName(userId: string): Promise<Seg
       },
     })
 
-    if (!instancia) {
+    if (!instancias.length) {
       return {
         success: false,
         message: "No se encontró ninguna instancia Whatsapp para este usuario.",
       }
     }
 
+    const posiblesInstancias = [
+      ...instancias.map(i => i.instanceName),
+      ...instancias.map(i => i.instanceId),
+    ]
+
     const result = await db.seguimientos.deleteMany({
       where: {
-        // userId,
-        instancia: instancia.instanceName,
+        instancia: { in: posiblesInstancias },
       },
     })
 
@@ -82,11 +86,11 @@ export async function deleteRemindersByInstanceName(userId: string): Promise<Seg
       success: true,
       message:
         result.count > 0
-          ? `Se eliminaron ${result.count} seguimientos para la instancia ${instancia.instanceName}.`
+          ? `Se eliminaron ${result.count} seguimientos.`
           : "No se encontraron seguimientos para esa instancia.",
       data: {
         count: result.count,
-        instanceName: instancia.instanceName,
+        instanceNames: instancias.map(i => i.instanceName),
       },
     }
   } catch (error) {
@@ -98,6 +102,10 @@ export async function deleteRemindersByInstanceName(userId: string): Promise<Seg
   }
 }
 
+/**
+ * 2) Eliminar SOLO el/los recordatorio(s) que coincidan con:
+ *    instanceName && userId && remoteJid
+ */
 /**
  * 2) Eliminar SOLO el/los recordatorio(s) que coincidan con:
  *    instanceName && userId && remoteJid
@@ -115,10 +123,26 @@ export async function deleteReminderByInstanceUserRemote(
   }
 
   try {
+    // 1) Verificar que esa instancia pertenezca a ese userId
+    const instancia = await db.instancias.findFirst({
+      where: {
+        userId,
+        instanceName,
+        instanceType: "Whatsapp",
+      },
+    })
+
+    if (!instancia) {
+      return {
+        success: false,
+        message: "No se encontró una instancia Whatsapp con ese nombre para este usuario.",
+      }
+    }
+
+    // 2) Eliminar seguimientos SOLO de esa instancia y ese remoteJid
     const result = await db.seguimientos.deleteMany({
       where: {
-        instancia: instanceName,
-        // userId,
+        instancia: instancia.instanceName,
         remoteJid,
       },
     })
@@ -127,7 +151,7 @@ export async function deleteReminderByInstanceUserRemote(
       success: true,
       message:
         result.count > 0
-          ? `Recordatorio(s) eliminado(s) correctamente. Total: ${result.count}.`
+          ? `seguimientos(s) eliminado(s) correctamente. Total: ${result.count}.`
           : "No se encontró ningún recordatorio con esos datos.",
       data: { count: result.count },
     }
