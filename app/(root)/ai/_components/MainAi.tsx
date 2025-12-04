@@ -96,21 +96,13 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
         []
     );
 
-    const handleManualSaveAll = useCallback(async () => {
-        const handlers = Object.values(saveHandlersRef.current);
+    const handleManualSaveCurrent = useCallback(async () => {
+        const handler = saveHandlersRef.current[activeTab];
+        if (!handler) return;
 
-        if (handlers.length === 0) return;
+        await handler(); // solo guarda la sección activa (Extras, Products, etc.)
+    }, [activeTab]);
 
-        // Ejecutamos cada handler
-        const results = await Promise.allSettled(
-            handlers.map((fn) => fn())   // 👈 AQUÍ las llamamos
-        );
-
-        const hasError = results.some((r) => r.status === "rejected");
-        if (hasError) {
-            throw new Error("Al menos una sección no se pudo guardar.");
-        }
-    }, []);
 
     const handleChange = useCallback(
         (key: keyof BusinessValues) =>
@@ -249,7 +241,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                 }}
                                 revalidatePath={"/ia"}
                                 revisions={[]}
-                                onManualSave={handleManualSaveAll}
+                                onManualSave={handleManualSaveCurrent}
                             />
 
                             <DropdownMenu modal={false}>

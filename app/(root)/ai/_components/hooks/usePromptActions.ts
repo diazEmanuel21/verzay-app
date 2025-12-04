@@ -1,7 +1,7 @@
 // app/(root)/ai/_components/hooks/usePromptActions.ts
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { savePrompt, publishPrompt, revertToRevision } from "@/actions/system-prompt-actions";
 import { toast } from "sonner";
 
@@ -9,51 +9,35 @@ type ConflictPayload = any;
 
 export function usePromptActions(opts: {
     promptId: string;
-    version: number;                        // versión local actual
-    publishedBy?: string;                   // user.id (cuid)
+    version: number;
+    publishedBy?: string;
     onVersionChange: (next: number) => void;
-    onConflict?: (serverState: ConflictPayload) => void; // rehidratar UI si hay conflicto
-    revalidatePath?: string;                // opcional
+    onConflict?: (serverState: ConflictPayload) => void;
+    revalidatePath?: string;
 }) {
     const { promptId, version, publishedBy, onVersionChange, onConflict, revalidatePath } = opts;
 
     const [loading, setLoading] = useState<null | "saving" | "publishing" | "reverting">(null);
     const [error, setError] = useState<string | null>(null);
 
+    // 👇 mantener la versión viva en un ref
+    const versionRef = useRef(version);
+    useEffect(() => {
+        versionRef.current = version;
+    }, [version]);
+
     const handleConflict = useCallback((serverState: any) => {
-        // 1) Rehidratar la UI con lo que diga el servidor
         onConflict?.(serverState);
-
-        // 2) Avisar al usuario que recargamos con la última versión
-        // toast.warning(
-        //     "Se detectaron cambios en otra ventana o sesión. Actualizamos el contenido con la última versión del servidor. Revisa los cambios y vuelve a guardar."
+        // toast.info(
+        //     "Este prompt se actualizó en otra pestaña o usuario. Cargamos la última versión del servidor."
         // );
-
-        // 3) No tratamos esto como 'error' persistente debajo del botón
-        //    (si quisieras mostrar un textito pequeño, podrías poner otro mensaje aquí)
-        setError(null);
+        // setError("Conflicto de versión: se detectaron cambios en el servidor.");
     }, [onConflict]);
-
 
     const handleOk = useCallback((nextVersion?: number) => {
         if (typeof nextVersion === "number") onVersionChange(nextVersion);
         setError(null);
     }, [onVersionChange]);
-
-    const save = useCallback(async () => {
-        if (!promptId) return;
-        setLoading("saving"); setError(null);
-        try {
-            const res = await savePrompt({ promptId, version, revalidate: revalidatePath });
-            if ('conflict' in res && res.conflict) return handleConflict(res.data);
-            if (!res.ok) return setError("No se pudo guardar.");
-            handleOk(res.data?.version);
-        } catch (e: any) {
-            setError(e?.message ?? "Error al guardar.");
-        } finally {
-            setLoading(null);
-        }
-    }, [promptId, version, revalidatePath, handleConflict, handleOk]);
 
     const publish = useCallback(async (note?: string) => {
         if (!promptId || !publishedBy) return;
@@ -61,15 +45,15 @@ export function usePromptActions(opts: {
         try {
             const res = await publishPrompt({
                 promptId,
-                version,
+                version: versionRef.current,    // 👈 aquí también
                 publishedBy,
                 note,
                 revalidate: revalidatePath,
             });
 
-            // ✅ Narrowing correcto
-            if ('conflict' in res && res.conflict) {
-                return handleConflict(res.data);
+            if ("conflict" in res && res.conflict) {
+                handleConflict(res.data);
+                return;
             }
             if (!res.ok) {
                 return setError("No se pudo publicar.");
@@ -81,8 +65,7 @@ export function usePromptActions(opts: {
         } finally {
             setLoading(null);
         }
-    }, [promptId, version, publishedBy, revalidatePath, handleConflict, handleOk]);
-
+    }, [promptId, publishedBy, revalidatePath, handleConflict, handleOk]);
 
     const revert = useCallback(async (revisionNumber: number) => {
         if (!promptId) return;
@@ -105,7 +88,10 @@ export function usePromptActions(opts: {
     }, [promptId, revalidatePath, onConflict, handleOk]);
 
     return {
-        loading, error,
-        save, publish, revert,
+        loading,
+        error,
+        // save,
+        publish,
+        revert,
     };
 }

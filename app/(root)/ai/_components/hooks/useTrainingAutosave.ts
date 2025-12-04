@@ -81,14 +81,15 @@ export function useTrainingAutosave(opts: {
 
                 if (res?.conflict) {
                     notifyStatus("error");
-                    // toast.error(
-                    //     "Este entrenamiento se actualizó en otro lugar. Vamos a cargar la última versión."
-                    // );
+                    toast.error(
+                        "Este entrenamiento se actualizó en otro lugar. Vamos a cargar la última versión."
+                    );
                     conflictRef.current?.(res.data);
                     return;
                 }
 
                 if (res?.ok && res?.data?.version) {
+                    versionRef.current = res.data.version;
                     onVersionChange(res.data.version);
                     notifyStatus("saved");
                 } else {

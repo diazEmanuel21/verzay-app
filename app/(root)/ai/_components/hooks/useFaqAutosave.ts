@@ -90,6 +90,7 @@ export function useFaqAutosave(opts: {
                 }
 
                 if (res?.ok && res?.data?.version) {
+                    versionRef.current = res.data.version;
                     onVersionChange(res.data.version);
                     notifyStatus("saved");
                 } else {

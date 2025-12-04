@@ -40,8 +40,6 @@ export function PromptToolbar(props: {
     // 👇 trackeamos el estado del router.refresh()
     const [isPending, startTransition] = useTransition();
 
-    // loading => guardando en servidor
-    // isPending => refrescando la UI (router.refresh)
     const isSaving = !!loading || isPending;
 
     const handlePublish = useCallback(async () => {
