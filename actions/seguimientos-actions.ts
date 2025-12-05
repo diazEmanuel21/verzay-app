@@ -106,10 +106,6 @@ export async function deleteSeguimientosByInstanceName(userId: string): Promise<
  * 2) Eliminar SOLO el/los recordatorio(s) que coincidan con:
  *    instanceName && userId && remoteJid
  */
-/**
- * 2) Eliminar SOLO el/los recordatorio(s) que coincidan con:
- *    instanceName && userId && remoteJid
- */
 export async function deleteReminderByInstanceUserRemote(
   instanceName: string,
   userId: string,

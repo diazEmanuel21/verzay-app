@@ -48,9 +48,13 @@ export const ActionsCell = ({ session, onDeleteSuccess }: { session: Session, on
       if (!conversationRes.success) {
         toast.warning(conversationRes.message || "Sesión eliminada pero historial no encontrado.");
       }
-      toast.success("Cliente eliminado correctamente.");
 
-      if (onDeleteSuccess) onDeleteSuccess(session.id);
+      await handleDeleteSeguimientos();
+      if (onDeleteSuccess) {
+        onDeleteSuccess(session.id);
+        toast.success("Cliente eliminado correctamente.");
+      }
+
     } catch (error) {
       toast.error("Error inesperado al eliminar cliente.");
       console.error(error);
