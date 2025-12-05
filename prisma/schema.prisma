@@ -155,24 +155,24 @@ model ModuleItem {
 }
 
 model Session {
-  userId       String
-  remoteJid    String
-  pushName     String
-  instanceId   String
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  status       Boolean
-  id           Int           @id @default(autoincrement())
-  seguimientos String?       @default("")
-  inactividad  String?       @default("")
-  sessionDelay String?
-  flujos       String?       @default("")
-  remoteJidAlt String?
-  Appointment  Appointment[]
-  registros    Registro?
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tags         SessionTag[]
-
+  userId         String
+  remoteJid      String
+  pushName       String
+  instanceId     String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  status         Boolean
+  id             Int             @id @default(autoincrement())
+  seguimientos   String?         @default("")
+  inactividad    String?         @default("")
+  sessionDelay   String?
+  flujos         String?         @default("")
+  remoteJidAlt   String?
+  Appointment    Appointment[]
+  registros      Registro?
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags           SessionTag[]
+  SessionTrigger SessionTrigger?
   @@index([userId, remoteJid])
 }
 
@@ -458,7 +458,6 @@ model Reminders {
   title        String
   description  String?
   time         String?
-  // contactTZ    String? // Zona horaria del contacto/cliente que recibe el recordatorio
   repeatType   RepeatType? @default(NONE)
   repeatEvery  Int?
   endsAt       DateTime?
@@ -528,7 +527,8 @@ model SessionTrigger {
   time      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  sessionId String
+  sessionId Int      @unique
+  Session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
 
 model UserModules {
