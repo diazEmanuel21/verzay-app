@@ -4,7 +4,7 @@ import { ChangeEvent } from "react";
 import z from "zod";
 
 
-export const SUBTYPE_OPTIONS = ["Solicitudes", "Pedidos", "Reservas", "Reclamos"] as const;
+export const SUBTYPE_OPTIONS = ["Solicitudes", "Pedidos", "Reservas", "Reclamos", "Citas"] as const;
 
 export type DataSubtype = (typeof SUBTYPE_OPTIONS)[number];
 
@@ -61,7 +61,7 @@ export const TrainingDraftSchema = z.object({
                         ]),
                         // ⬇️ refuerza el enum como en el type
                         subtype: z
-                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas"])
+                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas", "Citas"])
                             .optional(),
                         prompt: z.string().optional(),
                         fields: z.array(z.string()).optional(),
@@ -102,7 +102,7 @@ export const FaqDraftSchema = z.object({
                         ]),
                         // ⬇️ refuerza el enum como en el type
                         subtype: z
-                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas"])
+                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas", "Citas"])
                             .optional(),
                         prompt: z.string().optional(),
                         fields: z.array(z.string()).optional(),
@@ -143,7 +143,7 @@ export const ProductsDraftSchema = z.object({
                         ]),
                         // ⬇️ refuerza el enum como en el type
                         subtype: z
-                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas"])
+                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas", "Citas"])
                             .optional(),
                         prompt: z.string().optional(),
                         fields: z.array(z.string()).optional(),
@@ -187,7 +187,7 @@ export const ExtrasDraftSchema = z.object({
                         ]),
                         // ⬇️ refuerza el enum como en el type
                         subtype: z
-                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas"])
+                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas", "Citas"])
                             .optional(),
                         prompt: z.string().optional(),
                         fields: z.array(z.string()).optional(),
@@ -228,7 +228,7 @@ export const ManagementDraftSchema = z.object({
                         ]),
                         // ⬇️ refuerza el enum como en el type
                         subtype: z
-                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas"])
+                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas", "Citas"])
                             .optional(),
                         prompt: z.string().optional(),
                         fields: z.array(z.string()).optional(),
@@ -513,21 +513,21 @@ export type StepTraining = {
 
 export type PedidoFunctionEl = ElementFunction & {
     fn: "captura_datos";
-    subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
+    subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas";
     prompt: string;
     fields?: string[]; // ← campos adicionales (cc, name, etc.)
 };
 
 export type CapturePedidoFunctionEl = ElementFunction & {
     fn: "consulta_datos";
-    subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
+    subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas";
     prompt: string;
     fields?: string[]; // ← campos adicionales (cc, name, etc.)
 };
 
 export type UpdatePedidoFunctionEl = ElementFunction & {
     fn: "actualizar_datos";
-    subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
+    subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas";
     prompt: string;
     fields?: string[]; // ← campos adicionales (cc, name, etc.)
 };
@@ -543,14 +543,14 @@ export type ElementFunction =
         id: string;
         kind: "function";
         fn: "captura_datos";
-        subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
+        subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas";
         prompt: string;
     }
     | {
         id: string;
         kind: "function";
         fn: "actualizar_datos";
-        subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
+        subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas";
         prompt: string;
     }
     | {
@@ -570,20 +570,21 @@ export type ElementFunction =
         id: string;
         kind: "function";
         fn: "consulta_datos";
-        subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
+        subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas";
         prompt: string;
     };
 
 export type ElementItem = ElementText | ElementFunction;
 
 export const CAPTURE_SNIPPETS: Record<
-    "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas",
+    "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas",
     string
 > = {
     Solicitudes: "por favor indicame los siguientes datos",
     Reclamos: "por favor indicame los siguientes datos",
     Pedidos: "por favor indicame los siguientes datos",
     Reservas: "por favor indicame los siguientes datos",
+    Citas: "URL de agendamiento",
 };
 
 export const CONSULTA_DATOS_SNIPPET = `**Consultar Productos**. Si no hay un flujo activo y el usuario pregunta por un producto, ejecuta esta herramienta.
@@ -706,7 +707,7 @@ export type PropsTextRule = {
 };
 
 export type PropsDataCapture = {
-    el: PedidoFunctionEl | (PedidoFunctionEl & { subtype: "Solicitudes" | "Reclamos" | "Reservas" });
+    el: PedidoFunctionEl | (PedidoFunctionEl & { subtype: "Solicitudes" | "Reclamos" | "Reservas" | "Citas"});
     onRemove: () => void;
     onAddField: (field: string) => void;
     onRemoveField: (field: string) => void;
@@ -737,7 +738,7 @@ type El = {
 };
 
 export type PropsConsultaDatos = {
-    el: PedidoFunctionEl | (PedidoFunctionEl & { subtype: "Solicitudes" | "Reclamos" | "Reservas" });
+    el: PedidoFunctionEl | (PedidoFunctionEl & { subtype: "Solicitudes" | "Reclamos" | "Reservas" | "Citas" });
     onRemove: () => void;
     onAddField: (field: string) => void;
     onRemoveField: (field: string) => void;
@@ -774,7 +775,7 @@ export type FnCommon = {
     id: string;
     kind: "function";
     fn: "captura_datos" | "ejecutar_flujo" | "notificar_asesor" | "consulta_datos" | "actualizar_datos";
-    subtype?: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
+    subtype?: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas";
     prompt?: string;
     fields?: string[];
     flowId?: string | null;

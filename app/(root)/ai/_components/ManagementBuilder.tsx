@@ -15,6 +15,7 @@ import ElementRenderer from "./action-steeps/ElementRenderer";
 import { FunctionSelector } from "./FunctionSelector";
 import { PromptFragment } from "./helpers/prompt-fragments";
 import { buildSectionedPrompt } from "./helpers";
+import { getUserAppointmentUrl } from "@/actions/userClientDataActions"; // 👈 NUEVO
 // import { ManagementPromptBuilder } from "./ManagementPromptBuilder";
 
 import type {
@@ -72,6 +73,30 @@ export const ManagementBuilder = ({
             : []
     );
     const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>("idle");
+    const [appointmentUrl, setAppointmentUrl] = useState<string>(""); // 👈 NUEVO
+
+    // Obtener la URL de agenda una sola vez
+    useEffect(() => {
+        let cancelled = false;
+
+        const fetchUrl = async () => {
+            try {
+                const url = await getUserAppointmentUrl();
+                if (!cancelled) {
+                    setAppointmentUrl(url || "");
+                }
+            } catch (error) {
+                console.error("[ManagementBuilder] Error obteniendo appointmentUrl:", error);
+                if (!cancelled) setAppointmentUrl("");
+            }
+        };
+
+        fetchUrl();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     // proxy que completa título y cierra picker tras elegir acción
     const setStepsAuto: React.Dispatch<React.SetStateAction<ManagementItem[]>> = (
@@ -139,17 +164,20 @@ export const ManagementBuilder = ({
 
     // PREVIEW markdown
     const managementPreview = useMemo(() => {
-        return buildSectionedPrompt(steps as any, {
-            emptyMessage:
-                "Aún no has agregado bloques de gestión. Usa “Agregar acción” para comenzar.",
-            sectionLabel: (n, step) => `Bloque ${n} — ${step.title || "Sin título"}`,
-            // sectionLabel: (n, step) => ``,
-            elementsLabel: (n) => `\nElementos gestión: ${n}`,
-            // elementsLabel: (n) => ``,
-            mainMessageLabel: "Descripción / Objetivo\n",
-            joinSeparator: "\n",
-        });
-    }, [steps]);
+        return buildSectionedPrompt(
+            steps as any,
+            {
+                emptyMessage:
+                    "Aún no has agregado bloques de gestión. Usa “Agregar acción” para comenzar.",
+                sectionLabel: (n, step) => `Bloque ${n} — ${step.title || "Sin título"}`,
+                elementsLabel: (n) => `\nElementos gestión: ${n}`,
+                mainMessageLabel: "Descripción / Objetivo\n",
+                joinSeparator: "\n",
+                appointmentUrl,
+            },
+        );
+    }, [steps, appointmentUrl]);
+
 
     // SYNC con parent
     useEffect(() => {

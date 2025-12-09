@@ -36,7 +36,7 @@ function isPedidoFn(el: any): el is {
     id: string;
     kind: "function";
     fn: "captura_datos";
-    subtype?: "Pedidos" | "Solicitudes" | "Reclamos" | "Reservas";
+    subtype?: "Pedidos" | "Solicitudes" | "Reclamos" | "Reservas" | "Citas";
     prompt?: string;
     fields?: string[];
 } {

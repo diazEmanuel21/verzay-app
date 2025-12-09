@@ -7,6 +7,7 @@ import { generateQRCode, getDataApi } from "@/actions/api-action";
 import { ClientInterface } from "@/lib/types";
 import { revalidatePath } from 'next/cache';
 import { getIaCreditByUser } from './actions-ia-credits';
+import { currentUser } from '@/lib/auth';
 
 interface ClientResponse<T = undefined> {
   success: boolean;
@@ -562,4 +563,11 @@ export async function deleteUser(id: string) {
       debugStep: currentStep,
     };
   }
+}
+
+export async function getUserAppointmentUrl() {
+  const user = await currentUser(); // lee de sesión/cache, no del cliente
+
+
+  return `https://agente.ia-app.com/schedule/${user.id}`
 }

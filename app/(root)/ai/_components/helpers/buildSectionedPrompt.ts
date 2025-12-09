@@ -40,13 +40,15 @@ export type PromptBuildConfig = {
     joinSeparator?: string; // default: "\n"
     /** Opción para anteponer firma */
     firma?: FirmaOpts;
+    appointmentUrl?: string;
 };
 const transformSubtype = (subtype?: string): string | undefined => {
     const transformMap: Record<string, string> = {
         "Solicitudes": "solicitud",
         "Reclamos": "reclamo",
         "Pedidos": "pedido",
-        "Reservas": "reserva"
+        "Reservas": "reserva",
+        "Citas": "cita"
     };
     return subtype ? transformMap[subtype] : undefined;
 };
@@ -56,7 +58,12 @@ function trimOrUndefined(s?: string) {
     return t.length ? t : undefined;
 }
 
-function formatElement(el: AnyEl, k: number, flowBehaviorText: string): string[] {
+function formatElement(
+    el: AnyEl,
+    k: number,
+    flowBehaviorText: string,
+    appointmentUrl?: string
+): string[] {
     const out: string[] = [];
 
     if (el.kind === "text") {
@@ -69,26 +76,46 @@ function formatElement(el: AnyEl, k: number, flowBehaviorText: string): string[]
         switch (el.fn) {
             case "captura_datos": {
                 const newSubtype = transformSubtype(el.subtype);
+
+                // 🔸 CASO ESPECIAL: CITA
+                if (newSubtype === "cita") {
+                    const url = appointmentUrl?.trim()
+                        ? `${appointmentUrl}`
+                        : "<https://enlace/agenda>"; // fallback por si no hay URL
+
+                    out.push(
+                        [
+                            "Cuando un usuario desee agendar una **cita** envía de forma literal los siguientes mensajes:",
+                            "",
+                            "🗓 Puedes agendar tu cita en nuestro calendario.",
+                            "",
+                            `👉 ${url}`,
+                        ].join("\n")
+                    );
+
+                    return out;
+                }
+
+                // 🔸 RESTO DE SUBTIPOS (solicitud, reclamo, pedido, reserva…)
                 const base = `\n### Captura de datos\n**(${k}) Toma de ${newSubtype ?? ""}**\n- (${k}) Para procesar tu *${newSubtype ?? "—"}*, ${el.prompt ?? ""}:`;
                 out.push(base);
-                // if (el.subtype === "Pedidos" && el.fields?.length) {
-                //Aquí se setean los campos dinámicos de pedidos, solicitudes, reclamos,  reservas
+
                 if (el.fields?.length) {
                     out.push(`${el.fields.join("\n")}`);
                 }
                 return out;
             }
+
             case "actualizar_datos": {
                 const newSubtype = transformSubtype(el.subtype);
                 const base = `\n### Actualizar datos\n**(${k}) Toma de ${newSubtype ?? ""}**\n- (${k}) Para procesar tu *${newSubtype ?? "—"}*, ${el.prompt ?? ""}:`;
                 out.push(base);
-                // if (el.subtype === "Pedidos" && el.fields?.length) {
-                //Aquí se setean los campos dinámicos de pedidos, solicitudes, reclamos,  reservas
                 if (el.fields?.length) {
                     out.push(`${el.fields.join("\n")}`);
                 }
                 return out;
             }
+
             case "ejecutar_flujo": {
                 out.push(
                     `> **Función**: Ejecuta el flujo '${el.flowName || el.flowId || ""}'`,
@@ -97,7 +124,6 @@ function formatElement(el: AnyEl, k: number, flowBehaviorText: string): string[]
                 return out;
             }
             case "notificar_asesor": {
-                // out.push(`- (${k}) Notificar asesor: ${el.notificationNumber ?? "—"}`);
                 out.push(`- (${k}) ${notifyPrompt}`);
                 return out;
             }
@@ -105,8 +131,6 @@ function formatElement(el: AnyEl, k: number, flowBehaviorText: string): string[]
                 const newSubtype = transformSubtype(el.subtype);
                 const base = `\n### Consulta de datos\n**(${k}) Toma de ${newSubtype ?? ""}**\n- (${k}) Para procesar tu *${newSubtype ?? "—"}*, ${el.prompt ?? ""}:`;
                 out.push(base);
-                // if (el.subtype === "Pedidos" && el.fields?.length) {
-                //Aquí se setean los campos dinámicos de pedidos, solicitudes, reclamos,  reservas
                 if (el.fields?.length) {
                     out.push(`${el.fields.join("\n")}`);
                 }
@@ -120,6 +144,7 @@ function formatElement(el: AnyEl, k: number, flowBehaviorText: string): string[]
     return out;
 }
 
+
 /**
  * Construye un prompt con estructura homogénea para Items/Pasos.
  */
@@ -131,7 +156,6 @@ export function buildSectionedPrompt(
     const joinSep = cfg.joinSeparator ?? "\n";
     const flowBehaviorText =
         cfg.flowBehaviorText ?? initialFlowBehaviorText;
-
     // Firma (opcional, solo se añade si está habilitada y hay texto)
     if (cfg.firma?.enabled) {
         const ft = trimOrUndefined(cfg.firma.text);
@@ -164,7 +188,7 @@ export function buildSectionedPrompt(
             blocks.push(`${cfg.elementsLabel(n)}`);
             els.forEach((el, idx) => {
                 const k = idx + 1;
-                blocks.push(...formatElement(el, k, flowBehaviorText));
+                blocks.push(...formatElement(el, k, flowBehaviorText, cfg.appointmentUrl));
             });
 
             // Aquí añadimos el separador "---"

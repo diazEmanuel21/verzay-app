@@ -31,7 +31,7 @@ import { nanoid } from "nanoid";
 
 export interface CaptureFunctionIF {
     stepId: string;
-    subtype?: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | null;
+    subtype?: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas" |null;
 }
 
 /** NUEVO: extendemos las props para admitir onCreateBlock en modo raíz */
@@ -222,9 +222,9 @@ export const FunctionSelector = ({
                                     )}
 
                                     {/* Texto/regla: solo tiene sentido si hay step; en raíz podría crear bloque con texto si lo deseas */}
-                                    {/* {step && (
-                                        <CommandItem onSelect={addText}>Agregar regla (texto)</CommandItem>
-                                    )} */}
+                                    {step && (
+                                        <CommandItem onSelect={addText}>Agregar regla</CommandItem>
+                                    )}
                                 </CommandGroup>
                             </CommandList>
                         </Command>
@@ -233,11 +233,11 @@ export const FunctionSelector = ({
             )}
 
             {/* Botón extra para “regla” solo cuando hay step */}
-            {showRule && (
+            {/* {showRule && (
                 <Button onClick={addText} variant={"outline"} className="ml-2">
                     Agregar regla
                 </Button>
-            )}
+            )} */}
         </>
     );
 };
