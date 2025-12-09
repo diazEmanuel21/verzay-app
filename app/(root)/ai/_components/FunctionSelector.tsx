@@ -31,7 +31,7 @@ import { nanoid } from "nanoid";
 
 export interface CaptureFunctionIF {
     stepId: string;
-    subtype?: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas" |null;
+    subtype?: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas" | null;
 }
 
 /** NUEVO: extendemos las props para admitir onCreateBlock en modo raíz */
@@ -233,11 +233,11 @@ export const FunctionSelector = ({
             )}
 
             {/* Botón extra para “regla” solo cuando hay step */}
-            {/* {showRule && (
+            {showRule && isManagement && (
                 <Button onClick={addText} variant={"outline"} className="ml-2">
                     Agregar regla
                 </Button>
-            )} */}
+            )}
         </>
     );
 };
