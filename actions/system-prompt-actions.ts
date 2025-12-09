@@ -252,45 +252,6 @@ export async function patchSection(input: z.infer<typeof PatchSectionSchema>) {
     });
 }
 
-/** Recompone y guarda el prompt derivado (sin publicar). */
-export async function savePrompt(input: z.infer<typeof SaveSchema>) {
-    try {
-        const { promptId, version, revalidate } = SaveSchema.parse(input);
-
-        const current = await db.agentPrompt.findUnique({ where: { id: promptId } });
-        if (!current) return { ok: false, error: "Prompt no encontrado" } as Fail;
-
-        if (current.version !== version) {
-            return { ok: false, conflict: true, data: current } as Conflict<typeof current>;
-        }
-
-        // ✅ Normaliza (upgrade + defaults Draft)
-        const draft = normalizeAsDraft(current.sections);
-
-        const promptText = composePromptFromSections(draft);
-        const { businessName, businessSector } = denormalizeBusiness(draft);
-
-        const updated = await db.agentPrompt.update({
-            where: { id: promptId },
-            data: {
-                promptText,
-                businessName,
-                businessSector,
-                version: { increment: 1 },
-            },
-        });
-
-        if (revalidate) revalidatePath(revalidate);
-
-        return { ok: true, data: updated } as Ok<typeof updated>;
-    } catch (e: any) {
-        // expone más signal si viene de Zod
-        const msg = e?.errors ? JSON.stringify(e.errors) : (e?.message ?? "Error al guardar prompt");
-        return { ok: false, error: msg } as Fail;
-    }
-}
-
-
 /** Publica (crea revisión) + deja el draft sincronizado. */
 export async function publishPrompt(input: z.infer<typeof PublishSchema>) {
     try {
@@ -299,18 +260,12 @@ export async function publishPrompt(input: z.infer<typeof PublishSchema>) {
         const result = await db.$transaction(async (tx) => {
             const current = await tx.agentPrompt.findUnique({ where: { id: promptId } });
             if (!current) return { ok: false, error: "Prompt no encontrado" } as Fail;
-
-            if (current.version !== version) {
-                return { ok: false, conflict: true, data: current } as Conflict<typeof current>;
-            }
-
             // ✅ Strict sobre datos "upgraded"
             const strict = normalizeAsStrict(current.sections);
 
             // Para componer, usa Draft (por si tu composer espera defaults del Draft)
             const normalizedForCompose = normalizeAsDraft(strict);
             const promptTextStrict = composePromptFromSections(normalizedForCompose);
-
             const { businessName, businessSector } = denormalizeBusiness(strict);
 
             const revNumber = await nextRevisionNumber(promptId);
@@ -347,55 +302,6 @@ export async function publishPrompt(input: z.infer<typeof PublishSchema>) {
     } catch (e: any) {
         const msg = e?.errors ? JSON.stringify(e.errors) : (e?.message ?? "Error al publicar prompt");
         return { ok: false, error: msg } as Fail;
-    }
-}
-
-
-/** Lista revisiones (paginable si quieres) */
-export async function listRevisions(promptId: string) {
-    return db.agentPromptRevision.findMany({
-        where: { promptId },
-        orderBy: { revisionNumber: 'desc' },
-    });
-}
-
-export async function revertToRevision(input: z.infer<typeof RevertSchema>) {
-    try {
-        const { promptId, revisionNumber, revalidate } = RevertSchema.parse(input);
-
-        const result = await db.$transaction(async (tx) => {
-            const rev = await tx.agentPromptRevision.findFirst({
-                where: { promptId, revisionNumber },
-            });
-            if (!rev) return { ok: false, error: "Revisión no encontrada" } as Fail;
-
-            // Por seguridad, valida el snapshot como Draft (o Strict si así lo prefieres)
-            const draft = SectionsDraftSchema.parse(rev.sectionsSnapshot);
-            const promptText = composePromptFromSections(draft);
-            const { businessName, businessSector } = denormalizeBusiness(draft);
-
-            const updated = await tx.agentPrompt.update({
-                where: { id: promptId },
-                data: {
-                    sections: draft,                // restauramos snapshot
-                    promptText,
-                    status: "draft",                // recomendado: vuelve a borrador
-                    businessName,
-                    businessSector,
-                    version: { increment: 1 },
-                },
-            });
-
-            return { ok: true, data: updated } as Ok<typeof updated>;
-        });
-
-        if (result.ok && revalidate) {
-            revalidatePath(revalidate);
-        }
-
-        return result;
-    } catch (e: any) {
-        return { ok: false, error: e?.message ?? "Error al revertir a la revisión" } as Fail;
     }
 }
 

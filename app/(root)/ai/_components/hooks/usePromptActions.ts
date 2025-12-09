@@ -2,8 +2,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { savePrompt, publishPrompt, revertToRevision } from "@/actions/system-prompt-actions";
-import { toast } from "sonner";
+import { publishPrompt } from "@/actions/system-prompt-actions";
 
 type ConflictPayload = any;
 
@@ -45,16 +44,12 @@ export function usePromptActions(opts: {
         try {
             const res = await publishPrompt({
                 promptId,
-                version: versionRef.current,    // 👈 aquí también
+                version: versionRef.current,
                 publishedBy,
                 note,
                 revalidate: revalidatePath,
             });
 
-            if ("conflict" in res && res.conflict) {
-                handleConflict(res.data);
-                return;
-            }
             if (!res.ok) {
                 return setError("No se pudo publicar.");
             }
@@ -67,31 +62,10 @@ export function usePromptActions(opts: {
         }
     }, [promptId, publishedBy, revalidatePath, handleConflict, handleOk]);
 
-    const revert = useCallback(async (revisionNumber: number) => {
-        if (!promptId) return;
-        setLoading("reverting"); setError(null);
-        try {
-            const res = await revertToRevision({
-                promptId,
-                revisionNumber,
-                revalidate: revalidatePath,
-            });
-            if (!res?.ok) return setError(res?.error ?? "No se pudo revertir.");
-            handleOk(res.data?.version);
-            // Nota: al revertir no hay “conflict”; tras revertir debes re-hidratar `sections` (tu onConflict puede manejarlo si quieres reutilizarlo)
-            onConflict?.({ sections: res.data?.sections, version: res.data?.version });
-        } catch (e: any) {
-            setError(e?.message ?? "Error al revertir.");
-        } finally {
-            setLoading(null);
-        }
-    }, [promptId, revalidatePath, onConflict, handleOk]);
 
     return {
         loading,
         error,
-        // save,
         publish,
-        revert,
     };
 }
