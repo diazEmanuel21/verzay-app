@@ -242,7 +242,7 @@ function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
                               Puedes agregar varias palabras o frases como:
                               &nbsp;
                               <span className="italic">
-                                "precio", "cotización", "tengo una duda", etc.
+                                {`${"'precio', 'cotización', 'tengo una duda', 'etc.'"}`}
                               </span>
                             </p>
                           )}
