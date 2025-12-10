@@ -41,8 +41,12 @@ export type PromptBuildConfig = {
     /** Opción para anteponer firma */
     firma?: FirmaOpts;
     appointmentUrl?: string;
+
+    // 🔹 NUEVO: modo especial solo para ManagementBuilder
+    mode?: "default" | "management";
 };
-const transformSubtype = (subtype?: string): string | undefined => {
+
+export const transformSubtype = (subtype?: string): string | undefined => {
     const transformMap: Record<string, string> = {
         "Solicitudes": "solicitud",
         "Reclamos": "reclamo",
@@ -62,7 +66,7 @@ function formatElement(
     el: AnyEl,
     k: number,
     flowBehaviorText: string,
-    appointmentUrl?: string
+    cfg: PromptBuildConfig
 ): string[] {
     const out: string[] = [];
 
@@ -77,10 +81,10 @@ function formatElement(
             case "captura_datos": {
                 const newSubtype = transformSubtype(el.subtype);
 
-                // 🔸 CASO ESPECIAL: CITA
+                // 🔸 CASO ESPECIAL: CITA (igual que antes)
                 if (newSubtype === "cita") {
-                    const url = appointmentUrl?.trim()
-                        ? `${appointmentUrl}`
+                    const url = cfg.appointmentUrl?.trim()
+                        ? `${cfg.appointmentUrl}`
                         : "<https://enlace/agenda>"; // fallback por si no hay URL
 
                     out.push(
@@ -89,14 +93,49 @@ function formatElement(
                             "",
                             "🗓 Puedes agendar tu cita en nuestro calendario.",
                             "",
-                            `👉 ${url}`,
+                            `👉 <${url}>\n`,
+                            "* **Comportamiento obligatorio:** Tras enviar el link de la agenda, responde **únicamente** lo indicado en **Regla/parámetro**. Si **no hay una orden clara**, adapta una **respuesta contextual** para guiar al usuario al siguiente paso lógico de la conversación. **No añadas texto innecesario.**\n",
                         ].join("\n")
                     );
 
                     return out;
                 }
 
-                // 🔸 RESTO DE SUBTIPOS (solicitud, reclamo, pedido, reserva…)
+                // 🔹 MAPA PARA ARTÍCULO Y TEXTO (solicitud, pedido, reserva, reclamo)
+                const generoMap: Record<string, { articulo: string; label: string }> = {
+                    solicitud: { articulo: "la", label: "solicitud" },
+                    reserva: { articulo: "la", label: "reserva" },
+                    cita: { articulo: "la", label: "cita" },
+                    pedido: { articulo: "el", label: "pedido" },
+                    reclamo: { articulo: "el", label: "reclamo" },
+                };
+
+                const info = newSubtype
+                    ? generoMap[newSubtype] ?? { articulo: "la", label: newSubtype }
+                    : { articulo: "la", label: "gestión" };
+
+                // 🔹 FORMATO ESPECIAL SOLO PARA MANAGEMENT
+                if (cfg.mode === "management") {
+                    const datosBlock = el.fields?.length
+                        ? el.fields.map((f) => `* ${f}`).join("\n")
+                        : "* **`Datos`** (escritos por el cliente)";
+
+                    out.push(
+                        [
+                            `**(${k}) Toma de ${info.label}**`,
+                            `- (${k}) Para procesar tu *${info.label}*, ${el.prompt ?? "por favor indícame los siguientes datos:"}`,
+                            datosBlock,
+                            "",
+                            `* **Comportamiento obligatorio:** Tras guardar los datos de ${info.articulo} ${info.label}. Ejecuta la **tool**: \`Notificacion Asesor\` y responde **únicamente** lo indicado en **Regla/parámetro**.`,
+                            `  Si **no hay una orden clara**, envia el siguiente **mensaje de confirmacion** al usuario:`,
+                            `> 📝 ¡He **registrado** tu **${info.label}**! 👨🏻‍💻 Un asesor se pondrá en contacto a la brevedad posible. ⏰\n`,
+                        ].join("\n")
+                    );
+
+                    return out;
+                }
+
+                // 🔹 FORMATO GENERAL (NO MANAGEMENT) — tal como lo tenías
                 const base = `\n### Captura de datos\n**(${k}) Toma de ${newSubtype ?? ""}**\n- (${k}) Para procesar tu *${newSubtype ?? "—"}*, ${el.prompt ?? ""}:`;
                 out.push(base);
 
@@ -144,7 +183,6 @@ function formatElement(
     return out;
 }
 
-
 /**
  * Construye un prompt con estructura homogénea para Items/Pasos.
  */
@@ -178,9 +216,40 @@ export function buildSectionedPrompt(
         // Mensaje principal
         const main = trimOrUndefined(step.mainMessage);
         if (main) {
-            blocks.push(`* **${cfg.mainMessageLabel}:**${main}`);
-        }
+            // 🔹 Comportamiento especial SOLO para Management
+            if (cfg.mode === "management") {
+                // 1) Línea del objetivo
+                blocks.push(`* ** HOLAAA ${cfg.mainMessageLabel}:** ${main}`);
 
+                // 2) Línea "Cuando un usuario desee realizar una/un ..."
+                const captura = (step.elements || []).find(
+                    (el: AnyEl) => el.kind === "function" && el.fn === "captura_datos"
+                ) as AnyEl | undefined;
+
+                const rawSubtype = captura?.subtype ?? "";
+                const newSubtype = transformSubtype(rawSubtype);
+
+                if (newSubtype) {
+                    const generoMap: Record<string, { articulo: string; label: string }> = {
+                        solicitud: { articulo: "una", label: "solicitud" },
+                        reserva: { articulo: "una", label: "reserva" },
+                        cita: { articulo: "una", label: "cita" },
+                        pedido: { articulo: "un", label: "pedido" },
+                        reclamo: { articulo: "un", label: "reclamo" },
+                    };
+
+                    const info =
+                        generoMap[newSubtype] ?? { articulo: "una", label: newSubtype };
+
+                    blocks.push(
+                        `Cuando un usuario desee realizar ${info.articulo} **${info.label}**`
+                    );
+                }
+            } else {
+                // 🔹 Resto de builders: se mantiene EXACTAMENTE igual
+                blocks.push(`* **${cfg.mainMessageLabel}:**${main}`);
+            }
+        }
         // Elementos
         const els = Array.isArray(step.elements) ? step.elements : [];
         if (els.length > 0) {
@@ -188,7 +257,7 @@ export function buildSectionedPrompt(
             blocks.push(`${cfg.elementsLabel(n)}`);
             els.forEach((el, idx) => {
                 const k = idx + 1;
-                blocks.push(...formatElement(el, k, flowBehaviorText, cfg.appointmentUrl));
+                blocks.push(...formatElement(el, k, flowBehaviorText, cfg));
             });
 
             // Aquí añadimos el separador "---"

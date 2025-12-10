@@ -14,7 +14,7 @@ import { useManagementAutosave, AutosaveStatus } from "./hooks/useManagementAuto
 import ElementRenderer from "./action-steeps/ElementRenderer";
 import { FunctionSelector } from "./FunctionSelector";
 import { PromptFragment } from "./helpers/prompt-fragments";
-import { buildSectionedPrompt } from "./helpers";
+import { AnyEl, buildSectionedPrompt, transformSubtype } from "./helpers";
 import { getUserAppointmentUrl } from "@/actions/userClientDataActions"; // 👈 NUEVO
 // import { ManagementPromptBuilder } from "./ManagementPromptBuilder";
 
@@ -161,23 +161,67 @@ export const ManagementBuilder = ({
         }
     }, [autosaveStatus]);
 
-
     // PREVIEW markdown
     const managementPreview = useMemo(() => {
-        return buildSectionedPrompt(
-            steps as any,
-            {
-                emptyMessage:
-                    "Aún no has agregado bloques de gestión. Usa “Agregar acción” para comenzar.",
-                sectionLabel: (n, step) => `Bloque ${n} — ${step.title || "Sin título"}`,
-                elementsLabel: (n) => `\nElementos gestión: ${n}`,
-                mainMessageLabel: "Descripción / Objetivo\n",
-                joinSeparator: "\n",
-                appointmentUrl,
-            },
-        );
-    }, [steps, appointmentUrl]);
+        return buildSectionedPrompt(steps as any, {
+            mode: "management",
+            emptyMessage:
+                "Aún no has agregado bloques de gestión. Usa “Agregar acción” para comenzar.",
 
+            sectionLabel: (_n, step) => {
+                // Nombre de la gestión (X)
+                const gestion = step.title || "Gestión sin nombre";
+
+                // Buscar primer elemento captura_datos para sacar el subtype
+                const captura = (step.elements || []).find(
+                    (el: AnyEl) => el.kind === "function" && el.fn === "captura_datos"
+                ) as AnyEl | undefined;
+
+                const rawSubtype = captura?.subtype ?? "";
+                const subtype = transformSubtype(rawSubtype); // "solicitud" | "pedido" | ...
+
+                // Plural para el encabezado
+                const pluralMap: Record<string, string> = {
+                    solicitud: "Solicitudes",
+                    pedido: "Pedidos",
+                    reserva: "Reservas",
+                    reclamo: "Reclamos",
+                    cita: "Citas",
+                };
+
+                const etiqueta = subtype ? pluralMap[subtype] ?? subtype : "Gestión";
+
+                // Artículo + label para la frase “Cuando un usuario…”
+                const generoMap: Record<string, { articulo: string; label: string }> = {
+                    solicitud: { articulo: "una", label: "solicitud" },
+                    reserva: { articulo: "una", label: "reserva" },
+                    cita: { articulo: "una", label: "cita" },
+                    pedido: { articulo: "un", label: "pedido" },
+                    reclamo: { articulo: "un", label: "reclamo" },
+                };
+
+                const info = subtype
+                    ? generoMap[subtype] ?? { articulo: "una", label: subtype }
+                    : { articulo: "una", label: "gestión" };
+
+                // X = objetivo principal. Como Management no tiene input propio,
+                // usamos mainMessage si en el futuro lo activas, y si no, caemos al título.
+                const objetivo =
+                    (step.mainMessage ?? "").trim() || gestion;
+
+                return [
+                    `### Gestión — ${etiqueta}`,
+                    `* **Objetivo principal de la gestión:** ${_n}`,
+                    `Cuando un usuario desee realizar ${info.articulo} **${info.label}**\n`,
+                ].join("\n");
+            },
+
+            elementsLabel: () => `#### Elementos de la gestión`,
+            mainMessageLabel: "Objetivo principal de la gestión",
+            joinSeparator: "\n",
+            appointmentUrl,
+        });
+    }, [steps, appointmentUrl]);
 
     // SYNC con parent
     useEffect(() => {
