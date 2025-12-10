@@ -1,13 +1,16 @@
 "use client";
 
-import React, { useCallback, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { Layers2Icon, Loader2 } from 'lucide-react';
-import CustomDialogHeader from '@/components/shared/CustomDialogHeader';
-import { useForm } from 'react-hook-form';
-import { createWorkflowSchema, createWorkflowSchemaType } from '@/schema/workflow';
-import { zodResolver } from '@hookform/resolvers/zod';
+import React, { useCallback, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Layers2Icon, Loader2 } from "lucide-react";
+import CustomDialogHeader from "@/components/shared/CustomDialogHeader";
+import { useForm } from "react-hook-form";
+import {
+  createWorkflowSchema,
+  createWorkflowSchemaType,
+} from "@/schema/workflow";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
@@ -15,18 +18,24 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
-import { createWorkflow } from '@/actions/workflow-actions';
+import { createWorkflow } from "@/actions/workflow-actions";
+
+const MAX_KEYWORDS = 20;
 
 function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
   const [open, setOpen] = useState(false);
 
   // Select "fantasma" para el tipo de coincidencia
   const [matchType, setMatchType] = useState<"Exacta" | "Contiene">("Exacta");
+
+  // Estado local para palabras clave (chips)
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const [keywordInput, setKeywordInput] = useState("");
 
   const form = useForm<createWorkflowSchemaType>({
     resolver: zodResolver(createWorkflowSchema),
@@ -37,51 +46,97 @@ function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
   const { mutate, isPending } = useMutation({
     mutationFn: createWorkflow,
     onSuccess: () => {
-      toast.success("Flujo Creado", { id: "create-workflow" });
+      toast.success("Flujo creado", { id: "create-workflow" });
     },
     onError: () => {
-      toast.error("Fallo la creacion del flujo", { id: "create-workflow" });
+      toast.error("Falló la creación del flujo", { id: "create-workflow" });
     },
   });
 
+  const clearState = () => {
+    form.reset();
+    setMatchType("Exacta");
+    setKeywords([]);
+    setKeywordInput("");
+  };
+
+  const handleAddKeyword = () => {
+    const raw = keywordInput.trim();
+    if (!raw) return;
+
+    if (keywords.length >= MAX_KEYWORDS) {
+      toast.error("Solo puedes agregar hasta 20 palabras clave por flujo");
+      return;
+    }
+
+    const exists = keywords.some(
+      (k) => k.toLowerCase() === raw.toLowerCase()
+    );
+    if (exists) {
+      toast.error("Esta palabra clave ya fue agregada");
+      return;
+    }
+
+    const next = [...keywords, raw];
+    setKeywords(next);
+    setKeywordInput("");
+    // Opcional: mantenemos description sincronizado con las tags (no se usa directamente)
+    form.setValue("description", next.join(", "));
+  };
+
+  const handleRemoveKeyword = (value: string) => {
+    const next = keywords.filter((k) => k !== value);
+    setKeywords(next);
+    form.setValue("description", next.join(", "));
+  };
+
+  const handleKeywordKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddKeyword();
+    }
+  };
+
   const onSubmit = useCallback(
     (values: createWorkflowSchemaType) => {
-      // Armamos el JSON que se guardará dentro de description
-      const descriptionJson = values.description
-        ? JSON.stringify({
-          matchType: matchType.toLocaleLowerCase(),          // "Exacta" | "Contiene"
-          keyword: values.description?.trim().toLocaleLowerCase() || "",
-        })
-        : "";
+      const cleanedKeywords = keywords
+        .map((k) => k.trim())
+        .filter((k) => k.length > 0);
+
+      const descriptionJson =
+        cleanedKeywords.length > 0
+          ? JSON.stringify({
+            matchType: matchType.toLocaleLowerCase(), // "exacta" | "contiene"
+            keywords: cleanedKeywords.map((k) => k.toLocaleLowerCase()),
+          })
+          : "";
 
       const payload: createWorkflowSchemaType = {
         ...values,
         description: descriptionJson,
       };
 
-      toast.loading("Creando Flujo...", { id: "create-workflow" });
+      toast.loading("Creando flujo...", { id: "create-workflow" });
       mutate(payload);
     },
-    [mutate, matchType]
+    [mutate, matchType, keywords]
   );
 
   return (
     <Dialog
       open={open}
-      onOpenChange={(open) => {
-        form.reset();
-        setMatchType("Exacta"); // Reseteamos el select al abrir/cerrar
-        setOpen(open);
+      onOpenChange={(nextOpen) => {
+        clearState();
+        setOpen(nextOpen);
       }}
     >
       <DialogTrigger asChild>
         <Button>{triggerText ?? "CREAR FLUJO"}</Button>
       </DialogTrigger>
       <DialogContent className="px-0">
-        <CustomDialogHeader
-          icon={Layers2Icon}
-          title="CREAR FLUJO"
-        />
+        <CustomDialogHeader icon={Layers2Icon} title="CREAR FLUJO" />
         <div className="p-6">
           <Form {...form}>
             <form
@@ -101,7 +156,7 @@ function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
                       <Input {...field} />
                     </FormControl>
                     <FormDescription>
-                      Escribe un nombre unico para el flujo
+                      Escribe un nombre único para el flujo.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -112,7 +167,9 @@ function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
               <div className="space-y-1">
                 <FormLabel className="flex gap-1 items-center">
                   Tipo de coincidencia
-                  <p className="text-xs text-muted-foreground">(solo para la lógica interna)</p>
+                  <p className="text-xs text-muted-foreground">
+                    (solo para la lógica interna)
+                  </p>
                 </FormLabel>
                 <select
                   value={matchType}
@@ -125,24 +182,76 @@ function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
                   <option value="Contiene">Contiene</option>
                 </select>
                 <p className="text-xs text-muted-foreground">
-                  Define si la palabra clave debe coincidir de forma exacta o si basta con que esté contenida en el mensaje.
+                  Define si la palabra clave debe coincidir de forma exacta o si
+                  basta con que esté contenida en el mensaje.
                 </p>
               </div>
 
+              {/* PALABRAS CLAVE = INPUT + CHIPS */}
               <FormField
                 control={form.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex gap-1 items-center">
-                      Palabra clave
-                      <p className="text-xs text-muted-foreground">(opcional)</p>
+                      Palabras clave
+                      <p className="text-xs text-muted-foreground">
+                        (opcional, hasta 20)
+                      </p>
                     </FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <div className="space-y-2">
+                        <Input
+                          value={keywordInput}
+                          onChange={(e) =>
+                            setKeywordInput(e.target.value)
+                          }
+                          onKeyDown={handleKeywordKeyDown}
+                          placeholder="Escribe una palabra o frase y presiona Enter"
+                        />
+
+                        {/* mantenemos el field sincronizado pero oculto */}
+                        <input
+                          type="hidden"
+                          {...field}
+                          value={keywords.join(", ")}
+                          readOnly
+                        />
+
+                        <div className="flex flex-wrap gap-2">
+                          {keywords.map((kw) => (
+                            <span
+                              key={kw}
+                              className="inline-flex items-center rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground"
+                            >
+                              {kw}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleRemoveKeyword(kw)
+                                }
+                                className="ml-1 text-[10px] opacity-70 hover:opacity-100"
+                                aria-label={`Eliminar ${kw}`}
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          ))}
+                          {keywords.length === 0 && (
+                            <p className="text-[11px] text-muted-foreground">
+                              Puedes agregar varias palabras o frases como:
+                              &nbsp;
+                              <span className="italic">
+                                "precio", "cotización", "tengo una duda", etc.
+                              </span>
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </FormControl>
                     <FormDescription>
-                      Por favor colocar una palabra clave. Se guardará junto con el tipo de coincidencia como JSON.
+                      Estas palabras activarán el flujo según el tipo de
+                      coincidencia seleccionado. Máx. 20.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

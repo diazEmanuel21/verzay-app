@@ -17,6 +17,8 @@ import { z } from "zod";
 
 type MatchType = "Exacta" | "Contiene";
 
+const MAX_KEYWORDS = 20;
+
 export const WorkflowCard = ({
     workflow,
     userId,
@@ -28,62 +30,138 @@ export const WorkflowCard = ({
     const [editing, setEditing] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    // --- Parseamos el description para obtener keyword y matchType ---
-    let initialKeyword = "";
+    // --- Parseamos description para obtener keywords[] y matchType ---
+    let initialKeywords: string[] = [];
     let initialMatchType: MatchType = "Exacta";
 
     if (workflow.description) {
         try {
             const parsed = JSON.parse(workflow.description);
-            if (parsed && typeof parsed === "object" && "keyword" in parsed) {
-                initialKeyword = parsed.keyword ?? "";
-                if (parsed.matchType === "Exacta" || parsed.matchType === "Contiene") {
-                    initialMatchType = parsed.matchType;
+            if (parsed && typeof parsed === "object") {
+                if (Array.isArray((parsed as any).keywords)) {
+                    initialKeywords = (parsed as any).keywords;
+                } else if (
+                    typeof (parsed as any).keyword === "string" &&
+                    (parsed as any).keyword.trim()
+                ) {
+                    initialKeywords = [(parsed as any).keyword];
                 }
+
+                const mt = String((parsed as any).matchType ?? "").toLowerCase();
+                if (mt === "exacta") initialMatchType = "Exacta";
+                if (mt === "contiene") initialMatchType = "Contiene";
             } else {
-                initialKeyword = workflow.description;
+                initialKeywords = [workflow.description];
             }
         } catch {
-            // No es JSON, usamos el texto tal cual
-            initialKeyword = workflow.description;
+            initialKeywords = [workflow.description];
         }
     }
 
     const [matchType, setMatchType] = useState<MatchType>(initialMatchType);
+    const [keywords, setKeywords] = useState<string[]>(initialKeywords);
+    const [keywordInput, setKeywordInput] = useState("");
 
     const form = useForm<z.infer<typeof workflowShema>>({
         resolver: zodResolver(workflowShema),
         defaultValues: {
             name: workflow.name.toUpperCase() ?? "",
-            description: initialKeyword ?? "",
+            description: initialKeywords.join(", ") ?? "",
         },
     });
 
-    // Para mostrar la palabra clave "bonita" en modo lectura
+    // Para modo lectura: mostramos las palabras clave "bonitas"
     const getDescriptionLabel = () => {
-        if (!workflow.description) return "Sin palabra clave";
+        if (!workflow.description) return "Sin palabras clave";
 
         try {
             const parsed = JSON.parse(workflow.description);
-            if (parsed && typeof parsed === "object" && "keyword" in parsed) {
-                return parsed.keyword || "Sin palabra clave";
+            if (parsed && typeof parsed === "object") {
+                if (Array.isArray((parsed as any).keywords)) {
+                    const arr = (parsed as any).keywords as string[];
+                    return arr.length ? arr.join(", ") : "Sin palabras clave";
+                }
+                if (typeof (parsed as any).keyword === "string") {
+                    return (parsed as any).keyword || "Sin palabras clave";
+                }
             }
         } catch {
-            // No es JSON, devolvemos el texto tal cual
             return workflow.description;
         }
 
-        return workflow.description;
+        return "Sin palabras clave";
+    };
+
+    const addKeyword = () => {
+        const raw = keywordInput.trim();
+        if (!raw) return;
+
+        if (keywords.length >= MAX_KEYWORDS) {
+            toast.error("Solo puedes agregar hasta 20 palabras clave por flujo");
+            return;
+        }
+
+        const exists = keywords.some(
+            (k) => k.toLowerCase() === raw.toLowerCase()
+        );
+        if (exists) {
+            toast.error("Esta palabra clave ya fue agregada");
+            return;
+        }
+
+        const next = [...keywords, raw];
+        setKeywords(next);
+        setKeywordInput("");
+        form.setValue("description", next.join(", "));
+    };
+
+    const removeKeyword = (value: string) => {
+        setKeywords((prev) => {
+            const next = prev.filter((k) => k !== value);
+
+            // Sincronizamos el form con el array actualizado
+            form.setValue("description", next.join(", "));
+
+            // 👇 Disparamos el submit usando los valores actuales del form
+            handleSubmit();
+
+            return next;
+        });
+    };
+
+    const handleKeywordKeyDown = (
+        e: React.KeyboardEvent<HTMLInputElement>
+    ) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            addKeyword();
+        }
+        if (e.key === "Escape") {
+            e.preventDefault();
+            form.reset();
+            setEditing(false);
+        }
     };
 
     const handleSubmit = form.handleSubmit(async (values) => {
-        // Armamos el JSON que se guardará en description
-        const descriptionJson = values.description
-            ? JSON.stringify({
-                matchType,
-                keyword: values.description.trim() || "",
-            })
-            : "";
+        // Sacamos las keywords a partir de description (que siempre está sync con los chips)
+        const fromForm = (values.description || "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+
+        // Normalizamos y limpiamos duplicados
+        const cleanedKeywords = Array.from(
+            new Set(fromForm.map((k) => k.toLowerCase()))
+        );
+
+        const descriptionJson =
+            cleanedKeywords.length > 0
+                ? JSON.stringify({
+                    matchType: matchType.toLocaleLowerCase(), // "exacta" | "contiene"
+                    keywords: cleanedKeywords,
+                })
+                : "";
 
         const nameChanged = values.name !== workflow.name.toUpperCase();
         const descChanged = descriptionJson !== (workflow.description ?? "");
@@ -103,7 +181,7 @@ export const WorkflowCard = ({
 
             if (!res.success) {
                 toast.error(res.message, { id: toastId });
-                form.reset(); // restore old values
+                form.reset(); // restaurar valores anteriores
             } else {
                 toast.success("Flujo actualizado correctamente", { id: toastId });
             }
@@ -117,7 +195,9 @@ export const WorkflowCard = ({
         }
     });
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleKeyDown = (
+        e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>
+    ) => {
         if (e.key === "Enter") handleSubmit();
         if (e.key === "Escape") {
             form.reset();
@@ -153,7 +233,7 @@ export const WorkflowCard = ({
                                                     <Input
                                                         {...field}
                                                         placeholder="Nombre del flujo"
-                                                        className="text-base uppercase font-semibold "
+                                                        className="text-base uppercase font-semibold"
                                                         disabled={loading}
                                                         onKeyDown={handleKeyDown}
                                                     />
@@ -162,7 +242,7 @@ export const WorkflowCard = ({
                                         )}
                                     />
 
-                                    {/* Select "Exacta / Contiene" (fantasma) */}
+                                    {/* Select "Exacta / Contiene" */}
                                     <div className="flex gap-2 items-center">
                                         <select
                                             value={matchType}
@@ -181,19 +261,56 @@ export const WorkflowCard = ({
                                         </span>
                                     </div>
 
+                                    {/* Palabras clave: input + chips */}
                                     <FormField
                                         control={form.control}
                                         name="description"
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormControl>
-                                                    <Input
-                                                        {...field}
-                                                        placeholder="Palabra clave del flujo"
-                                                        className="text-sm text-muted-foreground"
-                                                        disabled={loading}
-                                                        onKeyDown={handleKeyDown}
-                                                    />
+                                                    <div className="space-y-2">
+                                                        <Input
+                                                            value={keywordInput}
+                                                            onChange={(e) =>
+                                                                setKeywordInput(e.target.value)
+                                                            }
+                                                            onKeyDown={handleKeywordKeyDown}
+                                                            placeholder="Palabra o frase clave"
+                                                            className="text-sm text-muted-foreground"
+                                                            disabled={loading}
+                                                        />
+                                                        {/* mantenemos valor oculto para el form */}
+                                                        <input
+                                                            type="hidden"
+                                                            {...field}
+                                                            value={keywords.join(", ")}
+                                                            readOnly
+                                                        />
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {keywords.map((kw) => (
+                                                                <span
+                                                                    key={kw}
+                                                                    className="inline-flex items-center rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground"
+                                                                >
+                                                                    {kw}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => removeKeyword(kw)}
+                                                                        className="ml-1 text-[10px] opacity-70 hover:opacity-100"
+                                                                        aria-label={`Eliminar ${kw}`}
+                                                                    >
+                                                                        ✕
+                                                                    </button>
+                                                                </span>
+                                                            ))}
+                                                            {keywords.length === 0 && (
+                                                                <p className="text-[11px] text-muted-foreground">
+                                                                    Agrega una o varias palabras/frases que
+                                                                    disparen este flujo.
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </FormControl>
                                             </FormItem>
                                         )}
