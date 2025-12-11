@@ -93,8 +93,8 @@ function formatElement(
                             `- (${k}) 🗓 Puedes agendar tu cita en nuestro calendario.\n`,
                             `👉 ${url}\n`,
                             `*  **Comportamiento obligatorio:**`,
-                            ` 1. Tras enviar el link de la agenda, responde **únicamente** lo indicado en **Regla/parámetro**.`,
-                            ` 2. Si **no hay una orden clara**, adapta una **respuesta contextual** para guiar al usuario al siguiente paso lógico de la conversación. **No añadas texto innecesario.**\n`,
+                            `  1. Tras enviar el link de la agenda, responde **únicamente** lo indicado en **Regla/parámetro**.`,
+                            `  2. Si **no hay una orden clara**, adapta una **respuesta contextual** para guiar al usuario al siguiente paso lógico de la conversación. **No añadas texto innecesario.**\n`,
                         ].join("\n")
                     );
 
@@ -126,7 +126,7 @@ function formatElement(
                             `- (${k}) Para procesar tu *${info.label}*, ${el.prompt ?? "por favor indícame los siguientes datos:"}`,
                             datosBlock,
                             "",
-                            `* **Comportamiento obligatorio:**\n1. Tras guardar los datos de ${info.articulo} ${info.label}. Ejecuta la **tool**: \`Notificacion Asesor\` y responde **únicamente** lo indicado en **Regla/parámetro**.\n2. Si **no hay una orden clara**, envia el siguiente **mensaje de confirmacion** al usuario:`,
+                            `* **Comportamiento obligatorio:**\n1. Tras guardar los datos ${info.articulo} ${info.label}. Ejecuta la **tool**: \`Notificacion Asesor\` y responde **únicamente** lo indicado en **Regla/parámetro**.\n2. Si **no hay una orden clara**, envia el siguiente **mensaje de confirmacion** al usuario:`,
                             `📝 ¡He *registrado* tu *${info.label}*!`,
                             `👨🏻‍💻 Un asesor se pondrá en contacto a la brevedad posible.\n`,
                         ].join("\n")
