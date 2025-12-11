@@ -3,7 +3,7 @@
 import React, { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Layers2Icon, Loader2 } from "lucide-react";
+import { Layers2Icon, Loader2, SaveIcon } from 'lucide-react';
 import CustomDialogHeader from "@/components/shared/CustomDialogHeader";
 import { useForm } from "react-hook-form";
 import {
@@ -201,14 +201,31 @@ function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
                     </FormLabel>
                     <FormControl>
                       <div className="space-y-2">
-                        <Input
-                          value={keywordInput}
-                          onChange={(e) =>
-                            setKeywordInput(e.target.value)
-                          }
-                          onKeyDown={handleKeywordKeyDown}
-                          placeholder="Escribe una palabra o frase y presiona Enter"
-                        />
+                        <div className="flex flex-row gap-2 justify-center items-center">
+                          <Input
+                            value={keywordInput}
+                            onChange={(e) =>
+                              setKeywordInput(e.target.value)
+                            }
+                            onKeyDown={handleKeywordKeyDown}
+                            placeholder="Escribe una palabra o frase y presiona Enter"
+                          />
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={handleAddKeyword}
+                            aria-label="Guardar"
+                            className="
+            gap-0 sm:gap-2 px-2 sm:px-3 h-9
+            bg-emerald-600 text-white
+            hover:bg-emerald-700
+            focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2
+            disabled:bg-emerald-600/60 disabled:text-white/80
+          "
+                          >
+                            <SaveIcon />
+                          </Button>
+                        </div>
 
                         {/* mantenemos el field sincronizado pero oculto */}
                         <input
@@ -230,7 +247,7 @@ function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
                                 onClick={() =>
                                   handleRemoveKeyword(kw)
                                 }
-                                className="ml-1 text-[10px] opacity-70 hover:opacity-100"
+                                className="ml-1 text-xs opacity-70 hover:opacity-100"
                                 aria-label={`Eliminar ${kw}`}
                               >
                                 ✕
@@ -238,7 +255,7 @@ function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
                             </span>
                           ))}
                           {keywords.length === 0 && (
-                            <p className="text-[11px] text-muted-foreground">
+                            <p className="text-xs text-muted-foreground">
                               Puedes agregar varias palabras o frases como:
                               &nbsp;
                               <span className="italic">
@@ -249,7 +266,7 @@ function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
                         </div>
                       </div>
                     </FormControl>
-                    <FormDescription>
+                    <FormDescription className="text-xs" >
                       Estas palabras activarán el flujo según el tipo de
                       coincidencia seleccionado. Máx. 20.
                     </FormDescription>

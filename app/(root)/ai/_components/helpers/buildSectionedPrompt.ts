@@ -124,9 +124,9 @@ function formatElement(
                             `- (${k}) Para procesar tu *${info.label}*, ${el.prompt ?? "por favor indícame los siguientes datos:"}`,
                             datosBlock,
                             "",
-                            `* **Comportamiento obligatorio:** Tras guardar los datos de ${info.articulo} ${info.label}. Ejecuta la **tool**: \`Notificacion Asesor\` y responde **únicamente** lo indicado en **Regla/parámetro**.`,
-                            `  Si **no hay una orden clara**, envia el siguiente **mensaje de confirmacion** al usuario:`,
-                            `> 📝 ¡He **registrado** tu **${info.label}**! 👨🏻‍💻 Un asesor se pondrá en contacto a la brevedad posible. ⏰\n`,
+                            `* **Comportamiento obligatorio:**\n1. Tras guardar los datos de ${info.articulo} ${info.label}. Ejecuta la **tool**: \`Notificacion Asesor\` y responde **únicamente** lo indicado en **Regla/parámetro**.\n2. Si **no hay una orden clara**, envia el siguiente **mensaje de confirmacion** al usuario:`,
+                            `📝 ¡He **registrado** tu **${info.label}**!`,
+                            `👨🏻‍💻 Un asesor se pondrá en contacto a la brevedad posible.\n`,
                         ].join("\n")
                     );
 
@@ -256,7 +256,7 @@ export function buildSectionedPrompt(
             });
 
             // Aquí añadimos el separador "---"
-            blocks.push('\n---'); // El separador debajo de cada bloque de elementos
+            blocks.push('---'); // El separador debajo de cada bloque de elementos
         }
     });
 

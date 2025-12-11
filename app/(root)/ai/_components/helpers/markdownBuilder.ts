@@ -38,7 +38,8 @@ function renderElement(el: AnyElement, behaviorText: string): string[] {
             return out;
         }
         case "notificar_asesor": {
-            out.push(`${notifyPrompt}: ${el.notificationNumber || ""}`);
+            // out.push(`${notifyPrompt}: ${el.notificationNumber || ""}`);
+            out.push(`${notifyPrompt}`);
             return out;
         }
         case "consulta_datos": {
