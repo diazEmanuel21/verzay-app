@@ -31,7 +31,7 @@ export type PromptBuildConfig = {
     /** Texto del encabezado por sección (recibe índice base 1) */
     sectionLabel: (n: number, step: AnyStep) => string;
     /** Texto del bloque de elementos (recibe índice base 1) */
-    elementsLabel: (n: number) => string;
+    elementsLabel: (n: number, step: AnyStep) => string;
     /** Etiqueta del mensaje principal */
     mainMessageLabel: string;
     /** Texto para la explicación de ejecutar_flujo */
@@ -72,7 +72,7 @@ function formatElement(
 
     if (el.kind === "text") {
         const t = trimOrUndefined(el.text);
-        if (t) out.push(`- (${k}) **Regla/parámetro:** ${t}`);
+        if (t) out.push(`- (${k}) **Regla/parámetro:** ${t}\n`);
         return out;
     }
 
@@ -89,10 +89,8 @@ function formatElement(
 
                     out.push(
                         [
-                            "Cuando un usuario desee agendar una **cita** envía de forma literal los siguientes mensajes:",
-                            "",
-                            "🗓 Puedes agendar tu cita en nuestro calendario.",
-                            "",
+                            `**(${k}) Toma de cita**`,
+                            `- (${k}) 🗓 Puedes agendar tu cita en nuestro calendario.\n`,
                             `👉 ${url}\n`,
                             "* **Comportamiento obligatorio:** Tras enviar el link de la agenda, responde **únicamente** lo indicado en **Regla/parámetro**. Si **no hay una orden clara**, adapta una **respuesta contextual** para guiar al usuario al siguiente paso lógico de la conversación. **No añadas texto innecesario.**\n",
                         ].join("\n")
@@ -156,14 +154,12 @@ function formatElement(
             }
 
             case "ejecutar_flujo": {
-                out.push(
-                    `> **Función**: Ejecuta el flujo '${el.flowName || el.flowId || ""}'`,
-                );
-                out.push(`${flowBehaviorText}`);
+                out.push(`- (${k}) **Función**: Ejecuta el flujo '${el.flowName || el.flowId || ""}'`);
+                out.push(`${flowBehaviorText}\n`);
                 return out;
             }
             case "notificar_asesor": {
-                out.push(`- (${k}) ${notifyPrompt}`);
+                out.push(`- (${k}) ${notifyPrompt}\n`);
                 return out;
             }
             case "consulta_datos": {
@@ -219,7 +215,7 @@ export function buildSectionedPrompt(
             // 🔹 Comportamiento especial SOLO para Management
             if (cfg.mode === "management") {
                 // 1) Línea del objetivo
-                blocks.push(`* **${cfg.mainMessageLabel}:** ${main}`);
+                blocks.push(`* **${cfg.mainMessageLabel}** \n${main}\n`);
 
                 // 2) Línea "Cuando un usuario desee realizar una/un ..."
                 const captura = (step.elements || []).find(
@@ -246,15 +242,14 @@ export function buildSectionedPrompt(
                     );
                 }
             } else {
-                // 🔹 Resto de builders: se mantiene EXACTAMENTE igual
-                blocks.push(`* **${cfg.mainMessageLabel}:**${main}`);
+                blocks.push(`* **${cfg.mainMessageLabel}** \n${main}\n`);
             }
         }
         // Elementos
         const els = Array.isArray(step.elements) ? step.elements : [];
         if (els.length > 0) {
             // blocks.push(`\n#### ${cfg.elementsLabel(n)}`);
-            blocks.push(`${cfg.elementsLabel(n)}`);
+            blocks.push(`${cfg.elementsLabel(n, step)}`);
             els.forEach((el, idx) => {
                 const k = idx + 1;
                 blocks.push(...formatElement(el, k, flowBehaviorText, cfg));

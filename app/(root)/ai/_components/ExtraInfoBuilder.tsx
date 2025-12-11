@@ -149,7 +149,7 @@ export function ExtraInfoBuilder({
                 "Aún no has agregado información extra. Usa Agregar extra para comenzar.",
             sectionLabel: (n, step) => `### Extra ${n} — ${step.title || "Sin título"}`,
             elementsLabel: (n) => `Elementos del extra: ${n}`,
-            mainMessageLabel: "Contenido / Mensaje principal\n",
+            mainMessageLabel: "Objetivo/respuesta principal del extra:",
             joinSeparator: "\n",
             firma: { enabled: !!firmaEnabled, text: String(firmaText || "") },
         });

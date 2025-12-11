@@ -106,7 +106,7 @@ export function TrainingBuilder({
         "Aún no has agregado pasos de entrenamiento. Usa “Agregar paso” para comenzar.",
       sectionLabel: (n, step) => `### Paso ${n} — ${step.title || "Sin título"}`,
       elementsLabel: (n) => `Elementos del paso: ${n}`,
-      mainMessageLabel: "Objetivo principal del paso",
+      mainMessageLabel: "Objetivo/respuesta principal del paso:",
       joinSeparator: "\n",
     });
   }, [steps]);

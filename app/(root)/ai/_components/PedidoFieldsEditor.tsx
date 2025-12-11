@@ -144,7 +144,7 @@ export const PedidoFieldsEditor = ({
                                     Auto
                                 </Badge>
                             </p>
-                            <p className="text-[11px] text-muted-foreground">
+                            <p className="text-xs text-muted-foreground">
                                 Esta URL se genera automáticamente según la configuración del flujo de
                                 agendamiento.
                             </p>

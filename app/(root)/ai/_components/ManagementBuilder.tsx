@@ -169,18 +169,15 @@ export const ManagementBuilder = ({
                 "Aún no has agregado bloques de gestión. Usa “Agregar acción” para comenzar.",
 
             sectionLabel: (_n, step) => {
-                // Nombre de la gestión (X)
                 const gestion = step.title || "Gestión sin nombre";
 
-                // Buscar primer elemento captura_datos para sacar el subtype
                 const captura = (step.elements || []).find(
                     (el: AnyEl) => el.kind === "function" && el.fn === "captura_datos"
                 ) as AnyEl | undefined;
 
                 const rawSubtype = captura?.subtype ?? "";
-                const subtype = transformSubtype(rawSubtype); // "solicitud" | "pedido" | ...
+                const subtype = transformSubtype(rawSubtype);
 
-                // Plural para el encabezado
                 const pluralMap: Record<string, string> = {
                     solicitud: "Solicitudes",
                     pedido: "Pedidos",
@@ -191,7 +188,6 @@ export const ManagementBuilder = ({
 
                 const etiqueta = subtype ? pluralMap[subtype] ?? subtype : "Gestión";
 
-                // Artículo + label para la frase “Cuando un usuario…”
                 const generoMap: Record<string, { articulo: string; label: string }> = {
                     solicitud: { articulo: "una", label: "solicitud" },
                     reserva: { articulo: "una", label: "reserva" },
@@ -204,8 +200,6 @@ export const ManagementBuilder = ({
                     ? generoMap[subtype] ?? { articulo: "una", label: subtype }
                     : { articulo: "una", label: "gestión" };
 
-                // X = objetivo principal. Como Management no tiene input propio,
-                // usamos mainMessage si en el futuro lo activas, y si no, caemos al título.
                 const objetivo =
                     (step.mainMessage ?? "").trim() || gestion;
 
@@ -217,7 +211,7 @@ export const ManagementBuilder = ({
             },
 
             elementsLabel: (_n) => `#### Elementos de la gestión ${_n}`,
-            mainMessageLabel: "Objetivo principal de la gestión",
+            mainMessageLabel: "Objetivo/respuesta principal de la gestión:",
             joinSeparator: "\n",
             appointmentUrl,
         });
