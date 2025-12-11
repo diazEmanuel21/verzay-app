@@ -93,7 +93,7 @@ function formatElement(
                             "",
                             "🗓 Puedes agendar tu cita en nuestro calendario.",
                             "",
-                            `👉 <${url}>\n`,
+                            `👉 ${url}\n`,
                             "* **Comportamiento obligatorio:** Tras enviar el link de la agenda, responde **únicamente** lo indicado en **Regla/parámetro**. Si **no hay una orden clara**, adapta una **respuesta contextual** para guiar al usuario al siguiente paso lógico de la conversación. **No añadas texto innecesario.**\n",
                         ].join("\n")
                     );
@@ -219,7 +219,7 @@ export function buildSectionedPrompt(
             // 🔹 Comportamiento especial SOLO para Management
             if (cfg.mode === "management") {
                 // 1) Línea del objetivo
-                blocks.push(`* ** HOLAAA ${cfg.mainMessageLabel}:** ${main}`);
+                blocks.push(`* **${cfg.mainMessageLabel}:** ${main}`);
 
                 // 2) Línea "Cuando un usuario desee realizar una/un ..."
                 const captura = (step.elements || []).find(
