@@ -359,23 +359,7 @@ export function TrainingBuilder({
                   </div>
 
                   <Separator />
-
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">
-                        Elementos del paso
-                      </span>
-                      <Badge variant="secondary">{idx + 1}</Badge>
-                    </div>
-                    <div className="flex gap-2">
-                      <FunctionSelector
-                        step={step}
-                        setSteps={setSteps}
-                        notificationNumber={notificationNumber ?? ""}
-                      />
-                    </div>
-                  </div>
-
+                  
                   <div className="rounded-lg border border-dashed border-muted/60 p-1">
                     {step.elements.length === 0 ? (
                       <div className="text-center text-sm text-muted-foreground">
@@ -401,6 +385,23 @@ export function TrainingBuilder({
                       </div>
                     )}
                   </div>
+
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">
+                        Elementos del paso
+                      </span>
+                      <Badge variant="secondary">{idx + 1}</Badge>
+                    </div>
+                    <div className="flex gap-2">
+                      <FunctionSelector
+                        step={step}
+                        setSteps={setSteps}
+                        notificationNumber={notificationNumber ?? ""}
+                      />
+                    </div>
+                  </div>
+
                 </CardContent>
               </Card>
             ))}

@@ -102,7 +102,7 @@ export function FqaBuilder({
             emptyMessage:
                 "Aún no has agregado Preguntas. Usa “Agregar Pregunta” para comenzar.",
             sectionLabel: (n, step) => `### Pregunta ${n} — ${step.title || "Sin título"}`,
-            elementsLabel: (n) => `Elementos de la pregunta: ${n}`,
+            elementsLabel: (n) => `#### Elementos de la pregunta: ${n}`,
             mainMessageLabel: "Objetivo/respuesta principal de la pregunta:",
             joinSeparator: "\n",
         });
@@ -358,22 +358,6 @@ export function FqaBuilder({
 
                                         <Separator />
 
-                                        <div className="flex items-center justify-between flex-wrap gap-2">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm font-medium">
-                                                    Elementos de la Pregunta
-                                                </span>
-                                                <Badge variant="secondary">{idx + 1}</Badge>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <FunctionSelector
-                                                    step={step as any}
-                                                    setSteps={setItems as any}
-                                                    notificationNumber={notificationNumber ?? ""}
-                                                />
-                                            </div>
-                                        </div>
-
                                         <div className="rounded-lg border border-dashed border-muted/60 p-1">
                                             {!step.elements ||
                                                 step.elements.length === 0 ? (
@@ -399,6 +383,22 @@ export function FqaBuilder({
                                                     ))}
                                                 </div>
                                             )}
+                                        </div>
+
+                                        <div className="flex items-center justify-between flex-wrap gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-medium">
+                                                    Elementos de la pregunta
+                                                </span>
+                                                <Badge variant="secondary">{idx + 1}</Badge>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <FunctionSelector
+                                                    step={step as any}
+                                                    setSteps={setItems as any}
+                                                    notificationNumber={notificationNumber ?? ""}
+                                                />
+                                            </div>
                                         </div>
                                     </CardContent>
                                 </Card>

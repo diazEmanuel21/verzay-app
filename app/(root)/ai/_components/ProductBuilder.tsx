@@ -101,7 +101,7 @@ export const ProductBuilder = ({
         return buildSectionedPrompt(items as any, {
             emptyMessage: "Aún no has agregado productos. Usa “Agregar producto” para comenzar.",
             sectionLabel: (n, step) => `### Producto ${n} — ${step.title || "Sin título"}`,
-            elementsLabel: (n) => `Elementos del producto: ${n}`,
+            elementsLabel: (n) => `#### Elementos del producto: ${n}`,
             mainMessageLabel: "Objetivo/respuesta principal del producto:",
             joinSeparator: "\n",
         });
@@ -335,22 +335,6 @@ export const ProductBuilder = ({
 
                                     <Separator />
 
-                                    <div className="flex items-center justify-between flex-wrap gap-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium">
-                                                Elementos del Producto
-                                            </span>
-                                            <Badge variant="secondary">{idx + 1}</Badge>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <FunctionSelector
-                                                step={step as any}
-                                                setSteps={setItems as any}
-                                                notificationNumber={notificationNumber ?? ""}
-                                            />
-                                        </div>
-                                    </div>
-
                                     <div className="rounded-lg border border-dashed border-muted/60 p-1">
                                         {!step.elements || step.elements.length === 0 ? (
                                             <div className="text-center text-sm text-muted-foreground">
@@ -375,6 +359,22 @@ export const ProductBuilder = ({
                                                 ))}
                                             </div>
                                         )}
+                                    </div>
+
+                                    <div className="flex items-center justify-between flex-wrap gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-medium">
+                                                Elementos del producto
+                                            </span>
+                                            <Badge variant="secondary">{idx + 1}</Badge>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <FunctionSelector
+                                                step={step as any}
+                                                setSteps={setItems as any}
+                                                notificationNumber={notificationNumber ?? ""}
+                                            />
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>

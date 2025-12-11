@@ -534,7 +534,9 @@ export const ManagementBuilder = ({
             </CardContent>
 
             {steps.length > 0 && (
-                <CardFooter className="pb-2 flex items-center gap-2 flex-row justify-end">
+                <CardFooter className="pb-2 flex items-center justify-between gap-2 flex-row">
+                    <CardTitle className="text-base">Gestión</CardTitle>
+
                     <FunctionSelector
                         notificationNumber={notificationNumber ?? ""}
                         isManagement={true}

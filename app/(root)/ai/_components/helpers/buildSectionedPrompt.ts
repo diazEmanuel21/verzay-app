@@ -92,7 +92,9 @@ function formatElement(
                             `**(${k}) Toma de cita**`,
                             `- (${k}) 🗓 Puedes agendar tu cita en nuestro calendario.\n`,
                             `👉 ${url}\n`,
-                            "* **Comportamiento obligatorio:** Tras enviar el link de la agenda, responde **únicamente** lo indicado en **Regla/parámetro**. Si **no hay una orden clara**, adapta una **respuesta contextual** para guiar al usuario al siguiente paso lógico de la conversación. **No añadas texto innecesario.**\n",
+                            `*  **Comportamiento obligatorio:**`,
+                            ` 1. Tras enviar el link de la agenda, responde **únicamente** lo indicado en **Regla/parámetro**.`,
+                            ` 2. Si **no hay una orden clara**, adapta una **respuesta contextual** para guiar al usuario al siguiente paso lógico de la conversación. **No añadas texto innecesario.**\n`,
                         ].join("\n")
                     );
 
@@ -104,8 +106,8 @@ function formatElement(
                     solicitud: { articulo: "la", label: "solicitud" },
                     reserva: { articulo: "la", label: "reserva" },
                     cita: { articulo: "la", label: "cita" },
-                    pedido: { articulo: "el", label: "pedido" },
-                    reclamo: { articulo: "el", label: "reclamo" },
+                    pedido: { articulo: "del", label: "pedido" },
+                    reclamo: { articulo: "del", label: "reclamo" },
                 };
 
                 const info = newSubtype
@@ -125,7 +127,7 @@ function formatElement(
                             datosBlock,
                             "",
                             `* **Comportamiento obligatorio:**\n1. Tras guardar los datos de ${info.articulo} ${info.label}. Ejecuta la **tool**: \`Notificacion Asesor\` y responde **únicamente** lo indicado en **Regla/parámetro**.\n2. Si **no hay una orden clara**, envia el siguiente **mensaje de confirmacion** al usuario:`,
-                            `📝 ¡He **registrado** tu **${info.label}**!`,
+                            `📝 ¡He *registrado* tu *${info.label}*!`,
                             `👨🏻‍💻 Un asesor se pondrá en contacto a la brevedad posible.\n`,
                         ].join("\n")
                     );

@@ -148,7 +148,7 @@ export function ExtraInfoBuilder({
             emptyMessage:
                 "Aún no has agregado información extra. Usa Agregar extra para comenzar.",
             sectionLabel: (n, step) => `### Extra ${n} — ${step.title || "Sin título"}`,
-            elementsLabel: (n) => `Elementos del extra: ${n}`,
+            elementsLabel: (n) => `#### Elementos del extra: ${n}`,
             mainMessageLabel: "Objetivo/respuesta principal del extra:",
             joinSeparator: "\n",
             firma: { enabled: !!firmaEnabled, text: String(firmaText || "") },
@@ -454,22 +454,6 @@ export function ExtraInfoBuilder({
 
                                         <Separator />
 
-                                        <div className="flex items-center justify_between flex-wrap gap-2">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm font-medium">
-                                                    Elementos del paso adicional
-                                                </span>
-                                                <Badge variant="secondary">{idx + 1}</Badge>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <FunctionSelector
-                                                    step={step as any}
-                                                    setSteps={setItems as any}
-                                                    notificationNumber={notificationNumber ?? ""}
-                                                />
-                                            </div>
-                                        </div>
-
                                         <div className="rounded-lg border border-dashed border-muted/60 p-1">
                                             {!step.elements || step.elements.length === 0 ? (
                                                 <div className="text-center text-sm text-muted-foreground">
@@ -494,6 +478,22 @@ export function ExtraInfoBuilder({
                                                     ))}
                                                 </div>
                                             )}
+                                        </div>
+
+                                        <div className="flex items-center justify-between flex-wrap gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-medium">
+                                                    Elementos del extra adicional
+                                                </span>
+                                                <Badge variant="secondary">{idx + 1}</Badge>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <FunctionSelector
+                                                    step={step as any}
+                                                    setSteps={setItems as any}
+                                                    notificationNumber={notificationNumber ?? ""}
+                                                />
+                                            </div>
                                         </div>
                                     </CardContent>
                                 </Card>
