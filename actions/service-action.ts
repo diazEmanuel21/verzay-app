@@ -4,6 +4,12 @@ import { db } from '@/lib/db'
 import { Service } from '@prisma/client';
 import { z } from 'zod'
 
+import { getRemindersByUserId } from "@/actions/reminders-actions";
+import { createReminder } from "@/actions/reminders-actions";
+import { DEFAULT_REMINDERS_TEMPLATES } from '@/types/reminder';
+import { currentUser } from '@/lib/auth';
+
+
 interface ServiceOperationResponse {
     success: boolean;
     message: string;
@@ -38,20 +44,69 @@ const updateSchema = baseSchema.extend({
 /**
  * Crea un nuevo servicio asociado a un usuario
  */
-export async function createService(values: z.infer<typeof baseSchema>): Promise<CreateServiceResp> {
-    const validated = baseSchema.safeParse(values)
+export async function createService(
+    values: z.infer<typeof baseSchema>
+): Promise<CreateServiceResp> {
+    const validated = baseSchema.safeParse(values);
     if (!validated.success) {
-        return { success: false, message: validated.error.errors[0].message }
+        return { success: false, message: validated.error.errors[0].message };
     }
 
     try {
         const data = await db.service.create({ data: validated.data });
 
+        if (data.userId) {
+            const remindersRes = await getRemindersByUserId(data.userId);
+            const hasReminders =
+                remindersRes.success && remindersRes.data && remindersRes.data.length > 0;
 
-        return { success: true, message: 'Servicio creado correctamente', data }
+            if (!hasReminders) {
+                const user = await currentUser();
+                
+                const reminderResults = await Promise.all(
+                    DEFAULT_REMINDERS_TEMPLATES.map((tpl) =>
+                        createReminder({
+                            title: tpl.title,
+                            description: tpl.description,
+                            time: tpl.time,
+                            isSchedule: true,
+                            instanceName: user.instancias[0].instanceName,
+                            serverUrl: user.apiKey.url,
+                            apikey: user.apiKey.key,
+                            userId: user.id,
+                        })
+                    )
+                );
+
+                const allOk = reminderResults.every((r) => r.success);
+                const failed = reminderResults.filter((r) => !r.success);
+
+                if (!allOk) {
+                    console.error(
+                        "[CREATE_SERVICE_REMINDERS] Algunos recordatorios fallaron:",
+                        failed
+                    );
+                    // aquí tienes accesso a r.data con los errores de Zod
+                    return {
+                        success: true,
+                        message:
+                            "Servicio creado correctamente, pero hubo errores al crear algunos recordatorios.",
+                        data,
+                    };
+                }
+
+                return {
+                    success: true,
+                    message: "Servicio creado correctamente + recordatorios",
+                    data,
+                };
+            }
+        }
+
+        return { success: true, message: "Servicio creado correctamente", data };
     } catch (error) {
-        console.error('Error al crear servicio:', error)
-        return { success: false, message: 'Error al crear el servicio' }
+        console.error("Error al crear servicio:", error);
+        return { success: false, message: "Error al crear el servicio" };
     }
 }
 
@@ -112,3 +167,5 @@ export async function updateService(values: z.infer<typeof updateSchema>): Promi
         return { success: false, message: 'Error al actualizar el servicio' }
     }
 }
+
+

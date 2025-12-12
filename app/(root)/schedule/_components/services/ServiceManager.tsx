@@ -106,7 +106,7 @@ function ServiceFormDialog({
     const form = useForm<ServiceFormValues>({
         resolver: zodResolver(serviceSchema),
         defaultValues: {
-            name: initialData?.name ?? "Consultoría",
+            name: initialData?.name ?? "Consulta",
             messageText: initialData?.messageText ?? serviceDefaultMsg,
         },
     });
