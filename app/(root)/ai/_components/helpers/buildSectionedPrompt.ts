@@ -249,7 +249,7 @@ export function buildSectionedPrompt(
         }
         // Elementos
         const els = Array.isArray(step.elements) ? step.elements : [];
-        if (els.length > 0) {
+        if (els.length >= 0) {
             // blocks.push(`\n#### ${cfg.elementsLabel(n)}`);
             blocks.push(`${cfg.elementsLabel(n, step)}`);
             els.forEach((el, idx) => {
