@@ -11,6 +11,7 @@ import { closeDialog, openCreateDialog, useReminderDialogStore } from '@/stores'
 import { GenericDeleteDialog } from '@/components/shared/GenericDeleteDialog';
 import { deleteReminder } from '@/actions/reminders-actions';
 import { toast } from 'sonner';
+import { themeClass } from '@/types/generic';
 
 export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, workflows, instancia, isScheduleView, isSchedule }: MainReminderInterface) => {
   const { openDialog, selectedReminderId, setCampaignPage } = useReminderDialogStore();
@@ -45,7 +46,7 @@ export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, 
   return (
     <div className="flex flex-col h-full">
       {/* Header fijo */}
-      <div className="sticky top-0 z-1 mb-2">
+      <div className={`sticky -top-4 z-1 mb-2 ${themeClass}`}>
         <div className="flex flex-col overflow-hidden justify-between flex-1 gap-4">
           <div className="flex justify-between items-center">
             <Header

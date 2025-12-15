@@ -1,0 +1,1 @@
+export  const themeClass = "bg-slate-100 text-black dark:bg-black dark:text-white";

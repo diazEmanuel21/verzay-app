@@ -20,13 +20,11 @@ import AppSkeleton from '@/components/custom/AppSkeleton';
 import { Breadcrumbs } from '@/components/custom';
 import { ChunkRecovery } from '@/components/chunk-recovery';
 import ErrorBoundary from '@/components/error-bundary';
+import { themeClass } from '@/types/generic';
 // import { CommunityBanner } from '@/components/shared/CommunityBanner';
 
 // Fuente
 const poppins = Poppins({ subsets: ['latin'], weight: ['400', '700'] });
-
-//Generic class 
-const themeClass = "bg-slate-100 text-black dark:bg-black dark:text-white";
 
 export const viewport = {
   width: 'device-width',

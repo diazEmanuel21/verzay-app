@@ -59,24 +59,26 @@ export async function createService(
             const remindersRes = await getRemindersByUserId(data.userId);
             const hasReminders =
                 remindersRes.success && remindersRes.data && remindersRes.data.length > 0;
-
             if (!hasReminders) {
                 const user = await currentUser();
-                
-                const reminderResults = await Promise.all(
-                    DEFAULT_REMINDERS_TEMPLATES.map((tpl) =>
-                        createReminder({
-                            title: tpl.title,
-                            description: tpl.description,
-                            time: tpl.time,
-                            isSchedule: true,
-                            instanceName: user.instancias[0].instanceName,
-                            serverUrl: user.apiKey.url,
-                            apikey: user.apiKey.key,
-                            userId: user.id,
-                        })
-                    )
-                );
+
+                const reminderResults = [];
+
+                for (const tpl of DEFAULT_REMINDERS_TEMPLATES) {
+                    const res = await createReminder({
+                        title: tpl.title,
+                        description: tpl.description,
+                        time: tpl.time,
+                        isSchedule: true,
+                        instanceName: user.instancias[0].instanceName,
+                        serverUrl: user.apiKey.url,
+                        apikey: user.apiKey.key,
+                        userId: user.id,
+                    });
+
+                    // opcional: guardar junto al id lógico de la plantilla
+                    reminderResults.push({ templateId: tpl.id, ...res });
+                }
 
                 const allOk = reminderResults.every((r) => r.success);
                 const failed = reminderResults.filter((r) => !r.success);
@@ -86,7 +88,6 @@ export async function createService(
                         "[CREATE_SERVICE_REMINDERS] Algunos recordatorios fallaron:",
                         failed
                     );
-                    // aquí tienes accesso a r.data con los errores de Zod
                     return {
                         success: true,
                         message:
