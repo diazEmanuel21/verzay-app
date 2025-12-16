@@ -1,5 +1,5 @@
 type ReminderTemplate = {
-    id: number;         
+    id: number;
     title: string;
     description?: string;
     time: string;
@@ -9,7 +9,7 @@ type ReminderTemplate = {
 export const DEFAULT_REMINDERS_TEMPLATES: ReminderTemplate[] = [
     {
         id: 0,
-        title: "Recordatorio 1 día",
+        title: "Recordatorio 24 horas",
         time: "days-1",
         description:
             "🔔 Recordatorio\n\n@client_name, recuerda que mañana es tu consulta.\nTe recordamos que el tiempo disponible es el que se acordó previamente.",
@@ -37,7 +37,7 @@ export const DEFAULT_REMINDERS_TEMPLATES: ReminderTemplate[] = [
     },
     {
         id: 4,
-        title: "Inicio de consulta",
+        title: "Recordatorio 1 minuto (inicio)",
         time: "minutes-1",
         description: "Listo, @client_name. Comenzamos YA. ✅",
     },
