@@ -1,111 +1,87 @@
 "use server";
 
 import { db } from "@/lib/db";
-// import { ClienteEstado } from "@prisma/client";
+import { ActionResult } from "@/types/registro";
+import { TipoRegistro } from "@/types/session";
 
-/**
- * SERVER ACTION
- * Inserta/actualiza Sessions, Clientes y Registros
- * usando el JSON de arriba (o el que le pases).
- */
+export async function createRegistro(input: {
+    sessionId: number;
+    tipo: TipoRegistro;
+    fecha?: string; // ISO o datetime-local
+    estado: string;
 
-// export const seedCrmDataAction = async (userId: string, data?: CrmSeedData) => {
-//     const seed = data ?? demoCrmSeedData;
+    // Campos para REPORTE
+    nombre?: string;
+    resumen?: string;
+    lead?: boolean;
 
-//     // 1) Crear / asegurar Sessions
-//     const sessionMap = new Map<string, number>(); // remoteJid -> sessionId
+    // Campos para otros tipos
+    detalles?: string;
+}): Promise<ActionResult<unknown>> {
+    try {
+        const created = await db.registro.create({
+            data: {
+                sessionId: input.sessionId,
+                tipo: input.tipo,
+                fecha: input.fecha ? new Date(input.fecha) : new Date(),
+                estado: input.estado,
 
-//     for (const s of seed.sessions) {
-//         const existing = await db.session.findFirst({
-//             where: {
-//                 userId,
-//                 remoteJid: s.remoteJid,
-//             },
-//         });
+                nombre: input.nombre ?? null,
+                resumen: input.resumen ?? null,
+                lead: input.lead ?? false,
 
-//         let session;
-//         if (existing) {
-//             session = existing;
-//         } else {
-//             session = await db.session.create({
-//                 data: {
-//                     userId,
-//                     remoteJid: s.remoteJid,
-//                     pushName: s.pushName,
-//                     instanceId: s.instanceId,
-//                     status: s.status,
-//                     // el resto de campos opcionales quedan con sus defaults
-//                 },
-//             });
-//         }
+                detalles: input.detalles ?? null,
+            },
+        });
 
-//         sessionMap.set(s.remoteJid, session.id);
-//     }
+        return { success: true, data: created };
+    } catch (e: any) {
+        return { success: false, message: e?.message ?? "No se pudo crear el registro" };
+    }
+}
 
-//     // 2) Crear Clientes (1:1 por Session) si no existen
-//     for (const c of seed.clientes) {
-//         const sessionId = sessionMap.get(c.sessionRemoteJid);
-//         if (!sessionId) {
-//             // si por alguna razón no existe session, lo saltamos
-//             // (puedes lanzar error si prefieres)
-//             continue;
-//         }
+export async function updateRegistro(input: {
+    id: number;
+    tipo: TipoRegistro;
+    fecha?: string;
+    estado: string;
 
-//         const existingCliente = await db.cliente.findUnique({
-//             where: {
-//                 sessionId,
-//             },
-//         });
+    nombre?: string;
+    resumen?: string;
+    lead?: boolean;
 
-//         if (existingCliente) {
-//             // Si existe, lo dejamos tal cual o podrías actualizarlo aquí
-//             continue;
-//         }
+    detalles?: string;
+}): Promise<ActionResult<unknown>> {
+    try {
+        const updated = await db.registro.update({
+            where: { id: input.id },
+            data: {
+                tipo: input.tipo,
+                fecha: input.fecha ? new Date(input.fecha) : undefined,
+                estado: input.estado,
 
-//         await db.cliente.create({
-//             data: {
-//                 sessionId,
-//                 nombre: c.nombre ?? null,
-//                 whatsapp: c.whatsapp ?? null,
-//                 empresa: c.empresa ?? null,
-//                 correo: c.correo ?? null,
-//                 detalles: c.detalles ?? null,
-//                 estado: c.estado ?? ClienteEstado.ACTIVO,
-//             },
-//         });
-//     }
+                nombre: input.nombre ?? null,
+                resumen: input.resumen ?? null,
+                lead: input.lead ?? false,
 
-//     // 3) Crear Registros asociados a Session
-//     for (const r of seed.registros) {
-//         const sessionId = sessionMap.get(r.sessionRemoteJid);
-//         if (!sessionId) {
-//             continue;
-//         }
+                detalles: input.detalles ?? null,
+            },
+        });
 
-//         await db.registro.create({
-//             data: {
-//                 tipo: r.tipo,
-//                 fecha: new Date(r.fecha),
-//                 estado: r.estado,
-//                 resumen: r.resumen ?? null,
-//                 lead: r.lead ?? null,
-//                 nombre: r.nombre ?? null,
-//                 detalles: r.detalles ?? null,
-//                 meta: r.meta ?? undefined,
-//                 session: {
-//                     connect: { id: sessionId },
-//                 },
-//             },
-//         });
-//     }
+        return { success: true, data: updated };
+    } catch (e: any) {
+        return { success: false, message: e?.message ?? "No se pudo actualizar el registro" };
+    }
+}
 
-//     return {
-//         ok: true,
-//         sessionsCreatedOrUsed: seed.sessions.length,
-//         clientesSeeded: seed.clientes.length,
-//         registrosSeeded: seed.registros.length,
-//     };
-// }
+export async function deleteRegistro(id: number): Promise<ActionResult<true>> {
+    try {
+        await db.registro.delete({ where: { id } });
+        return { success: true, data: true };
+    } catch (e: any) {
+        return { success: false, message: e?.message ?? "No se pudo eliminar el registro" };
+    }
+}
 
 export async function updateRegistroEstado(registroId: number, nuevoEstado: string) {
     try {

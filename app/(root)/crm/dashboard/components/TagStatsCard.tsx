@@ -2,7 +2,7 @@
 "use client";
 
 import useSWR from "swr";
-import { getSessionTagStatsByUserId } from "@/actions/crm-seed-actions";
+import { getSessionTagStatsByUserId } from "@/actions/registro-action";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
     FunnelChart,
