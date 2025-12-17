@@ -33,7 +33,7 @@ export const DEFAULT_REMINDERS_TEMPLATES: ReminderTemplate[] = [
         title: "Recordatorio 5 minutos (consulta)",
         time: "minutes-5",
         description:
-            "👨🏻‍💻 Inicio de consulta\n\n⏱ En 5 minutos comenzaremos tu consulta.\n@client_name, por favor mantente atento/a para el ingreso.\n\n👉 https://enlace/asesoria",
+            "👨🏻‍💻 *Inicio Reunión*⏱️\n\nComenzamos *5 minutos*.",
     },
     {
         id: 4,

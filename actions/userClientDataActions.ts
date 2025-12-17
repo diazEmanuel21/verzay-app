@@ -9,6 +9,7 @@ import { revalidatePath } from 'next/cache';
 import { getIaCreditByUser } from './actions-ia-credits';
 import { currentUser } from '@/lib/auth';
 import { getRemindersByUserId } from './reminders-actions';
+import { DEFAULT_REMINDERS_TEMPLATES } from '@/types/reminder';
 
 interface ClientResponse<T = undefined> {
   success: boolean;
@@ -301,7 +302,7 @@ export async function updateUserMeetingDuration(
 
     // 5) Si hay URL, concatenarla al final del description del recordatorio minutes-5
     if (url) {
-      const newDesc = `👨🏻‍💻 *Inicio Reunión*⏱️\n\nComenzamos *5 minutos*. Este es el link de acceso.\n\n👉${url}`;
+      const newDesc = `${DEFAULT_REMINDERS_TEMPLATES[3].description} Este es el link de acceso.\n\n👉${url}`;
 
       await db.reminders.update({
         where: { id: reminderMinutes5.id },
