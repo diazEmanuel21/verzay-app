@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/collapsible"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { ActionPopoverButton } from "./ActionPopoverButton";
+import { cn } from "@/lib/utils";
 
 interface PropsCreateNodeComponent {
     workflowId: Workflow['id'];
@@ -85,29 +86,34 @@ export const CreateNodeComponent = ({ workflowId, plan }: PropsCreateNodeCompone
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button>
+                <Button type="button">
                     Agregar acción
                     <FilePlus2 />
                 </Button>
             </PopoverTrigger>
 
-            <PopoverContent className="w-64 p-4 space-y-4 bg-background border rounded-lg shadow-lg">
-                <div className="text-sm text-muted-foreground">Selecciona una acción</div>
+            <PopoverContent
+                align="center"
+                side="top"          // 👈 por defecto arriba (Radix flipa si no cabe)
+                sideOffset={8}
+                collisionPadding={12}
+                className={cn(
+                    "p-0 overflow-hidden", // 👈 importante: p-0, overflow-hidden
+                    "w-[320px]",
+                    "h-[420px] sm:h-[460px] md:h-[460px] lg:h-[460px]"
+                )}
+            >
+                {/* ✅ flexbox interno */}
+                <div className="h-full flex flex-col">
+                    {/* Header fijo */}
+                    <div className="p-4 pb-3 text-sm text-muted-foreground shrink-0">
+                        Selecciona una acción
+                    </div>
 
-                <div className="flex flex-col gap-2">
-                    {baseActions.map((action) => (
-                        <ActionPopoverButton
-                            key={action.type}
-                            action={action}
-                            onClick={() => handleActionSelect(action.type)}
-                            disabled={isPending}
-                            plan={plan}
-                        />
-                    ))}
-
-                    <Collapsible open={isOpenCollapse} onOpenChange={setIsOpenCollapse}>
-                        <CollapsibleContent className="ml-2 space-y-2">
-                            {seguimientoActions.map((action) => (
+                    {/* Body con scroll */}
+                    <div className="px-4 pb-4 flex-1 min-h-0 overflow-y-auto pr-2">
+                        <div className="flex flex-col gap-2">
+                            {baseActions.map((action) => (
                                 <ActionPopoverButton
                                     key={action.type}
                                     action={action}
@@ -116,15 +122,30 @@ export const CreateNodeComponent = ({ workflowId, plan }: PropsCreateNodeCompone
                                     plan={plan}
                                 />
                             ))}
-                        </CollapsibleContent>
-                    </Collapsible>
-                </div>
 
-                {isPending && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Creando acción...
+                            <Collapsible open={isOpenCollapse} onOpenChange={setIsOpenCollapse}>
+                                <CollapsibleContent className="ml-2 space-y-2">
+                                    {seguimientoActions.map((action) => (
+                                        <ActionPopoverButton
+                                            key={action.type}
+                                            action={action}
+                                            onClick={() => handleActionSelect(action.type)}
+                                            disabled={isPending}
+                                            plan={plan}
+                                        />
+                                    ))}
+                                </CollapsibleContent>
+                            </Collapsible>
+                        </div>
                     </div>
-                )}
+
+                    {/* Footer fijo */}
+                    {isPending && (
+                        <div className="px-4 pb-4 shrink-0 flex items-center gap-2 text-xs text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" /> Creando acción...
+                        </div>
+                    )}
+                </div>
             </PopoverContent>
         </Popover>
     );

@@ -1,6 +1,9 @@
 import { ClientsManager } from "./_components/clients-manager";
 import { getClientsPageData } from "./helpers/getClientsPageData";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function ClientesPage() {
   const res = await getClientsPageData();
 
