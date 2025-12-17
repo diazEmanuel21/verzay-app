@@ -8,6 +8,7 @@ import { ClientInterface } from "@/lib/types";
 import { revalidatePath } from 'next/cache';
 import { getIaCreditByUser } from './actions-ia-credits';
 import { currentUser } from '@/lib/auth';
+import { getRemindersByUserId } from './reminders-actions';
 
 interface ClientResponse<T = undefined> {
   success: boolean;
@@ -252,9 +253,13 @@ export const updateClientData = async (
 // Función para actualizar la duración de la reunión de un usuario
 // ==============================
 // Función para actualizar la duración de la reunión de un usuario
-export async function updateUserMeetingDuration(userId: string, meetingDuration: number): Promise<ClientResponse> {
+export async function updateUserMeetingDuration(
+  userId: string,
+  meetingDuration: number,
+  meetingUrl?: string
+): Promise<ClientResponse> {
   try {
-    // Validación para asegurarse de que la duración esté dentro del rango válido
+    // 1) Validación duración
     if (meetingDuration < 1 || meetingDuration > 480) {
       return {
         success: false,
@@ -262,21 +267,57 @@ export async function updateUserMeetingDuration(userId: string, meetingDuration:
       };
     }
 
-    // Actualiza la duración de la reunión del usuario en la base de datos
+    // Normalizamos la URL (si viene vacía, queda "")
+    const url = (meetingUrl ?? "").trim();
+
+    // 2) Validar que el usuario tenga recordatorios
+    const remindersRes = await getRemindersByUserId(userId);
+
+    if (!remindersRes.success || !remindersRes.data || remindersRes.data.length === 0) {
+      return {
+        success: false,
+        message: "Este usuario no tiene recordatorios configurados.",
+      };
+    }
+
+    // 3) Buscar recordatorio con field === "minutes-5"
+    const reminderMinutes5 = remindersRes.data.find((r: any) => r.time === "minutes-5");
+
+    if (!reminderMinutes5) {
+      return {
+        success: false,
+        message: 'No se encontró el recordatorio con field "minutes-5".',
+      };
+    }
+
+    // 4) Actualizar duración + meetingUrl del usuario
     await db.user.update({
-      where: { id: userId }, // Busca al usuario por su ID
-      data: { meetingDuration }, // Actualiza el campo 'defaultMeetingDuration'
+      where: { id: userId },
+      data: {
+        meetingDuration,
+        meetingUrl: url,
+      },
     });
+
+    // 5) Si hay URL, concatenarla al final del description del recordatorio minutes-5
+    if (url) {
+      const newDesc = `👨🏻‍💻 *Inicio Reunión*⏱️\n\nComenzamos *5 minutos*. Este es el link de acceso.\n\n👉${url}`;
+
+      await db.reminders.update({
+        where: { id: reminderMinutes5.id },
+        data: { description: newDesc },
+      });
+    }
 
     return {
       success: true,
-      message: "Duración de reunión actualizada correctamente.",
+      message: "Reunión actualizada correctamente.",
     };
   } catch (error) {
-    console.error("Error al actualizar la duración de la reunión:", error);
+    console.error("Error al actualizar la duración/URL de la reunión:", error);
     return {
       success: false,
-      message: "No se pudo actualizar la duración de la reunión.",
+      message: "No se pudo actualizar la duración/URL de la reunión.",
     };
   }
 }

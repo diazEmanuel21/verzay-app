@@ -33,6 +33,7 @@ model User {
   muteAgentResponses            Boolean               @default(false)
   timezone                      String?
   meetingDuration               Int?
+  meetingUrl                    String?
   onFacebook                    Boolean               @default(false)
   onInstagram                   Boolean               @default(false)
   aiModelId                     String?
