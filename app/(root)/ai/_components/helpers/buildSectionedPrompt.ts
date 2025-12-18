@@ -126,6 +126,7 @@ function formatElement(
                             `- (${k}) Para procesar tu *${info.label}*, ${el.prompt ?? "por favor indícame los siguientes datos:"}`,
                             datosBlock,
                             "",
+                            `**Función**: Ejecuta la tool 'Notificacion Asesor'\n`,
                             `* **Comportamiento obligatorio:**\n  1. Tras guardar los datos ${info.articulo} ${info.label}. Ejecuta la **tool**: \`Notificacion Asesor\` y responde **únicamente** lo indicado en **Regla/parámetro**.\n  2. Si **no hay una orden clara**, envia el siguiente **mensaje de confirmacion** al usuario:`,
                             `📝 ¡He *registrado* tu *${info.label}*!`,
                             `👨🏻‍💻 Un asesor se pondrá en contacto a la brevedad posible.\n`,
