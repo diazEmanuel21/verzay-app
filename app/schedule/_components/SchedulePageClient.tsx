@@ -159,8 +159,8 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                     ? user.notificationNumber
                     : `${user.notificationNumber}@s.whatsapp.net`;
 
-                // Datos de fecha/hora legibles en la TZ de la cita
-                const startLocal = toZonedTime(new Date(startTime), timezone);
+                // Datos de fecha/hora legibles en la TZ de la cita - antes era timezone ahora 
+                const startLocal = toZonedTime(new Date(startTime), serverTimeZone);
                 // const dateLabel = format(selectedDate!, "PPP");
                 const dateLabel = format(selectedDate!, "d 'de' MMMM 'de' yyyy", { locale: es });
 
@@ -169,7 +169,6 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                 const serviceName = user.Service.find((s) => s.id === selectedService)?.name ?? "Asesoría";
                 // const displayPhone = `+${fullPhone}`;
                 const displayPhone = e164;
-
 
                 const ownerText = `✅ *Tienes Nueva Cita*:
 
