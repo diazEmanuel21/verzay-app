@@ -37,6 +37,7 @@ export const TYPE_AI_LABELS = {
 type TabKey = keyof typeof TYPE_AI_LABELS;
 
 export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
+    console.log({ user })
     const [showAlertDialog, setShowAlertDialog] = useState(false)
 
     const trainingMd = sections?.training

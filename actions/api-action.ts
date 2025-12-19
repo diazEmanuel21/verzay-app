@@ -13,7 +13,7 @@ import { ClientResponse, DISCONNECT_COOLDOWN_MS, EVO_FETCH_TIMEOUT_MS, GenerateQ
    - Mantiene TUS mensajes originales.
 ========================= */
 export async function generateQRCode({ instanceName, userId }: GenerateQrInterface): Promise<QRCodeResponse> {
-  // 🔥 Buscar el usuario y su ApiKey asignada (lo necesitas para el key del cache y para notificar)
+  // Buscar el usuario y su ApiKey asignada (lo necesitas para el key del cache y para notificar)
   const user = await db.user.findUnique({
     where: { id: userId },
     include: { apiKey: true },
@@ -39,8 +39,8 @@ export async function generateQRCode({ instanceName, userId }: GenerateQrInterfa
 
   const { key: apiKey, url: serverUrl } = user.apiKey;
 
-  // ✅ cache por user+instance (puedes cambiar a user+serverUrl si prefieres)
-  const cache = getEvoCache();  
+  // cache por user+instance (puedes cambiar a user+serverUrl si prefieres)
+  const cache = getEvoCache();
   const cacheKey = `${userId}::${instanceName}`;
   const now = Date.now();
   const entry = cache.get(cacheKey) ?? { lastIsConnected: null, lastNotifiedAt: 0 };
@@ -88,7 +88,7 @@ export async function generateQRCode({ instanceName, userId }: GenerateQrInterfa
         : (error?.message || 'Error al generar el código QR.');
   }
 
-  // ✅ regla anti-spam
+  // regla anti-spam
   const transitionedToDisconnected = entry.lastIsConnected === true && apiConnectedNow === false;
   const cooldownOk = now - entry.lastNotifiedAt >= DISCONNECT_COOLDOWN_MS;
 
@@ -96,13 +96,13 @@ export async function generateQRCode({ instanceName, userId }: GenerateQrInterfa
 
   if ((transitionedToDisconnected && cooldownOk) || (entry.lastIsConnected === null && !apiConnectedNow && cooldownOk)) {
     // Intento de notificación (si está configurado)
-    // 🔸 Asumo que notificationNumber ya viene en formato remoteJid válido para tu sendingMessages
     const remoteJid = (user as any).notificationNumber as string | undefined;
 
     if (remoteJid) {
       try {
-        // ⚠️ Ajusta la ruta real de envío de texto de TU Evolution
-        const sendTextUrl = `https://${serverUrl}/message/sendText/${instanceName}`;
+        const serverUrlAdmin = "evoapi.ia-app.com";
+        const instanceNameAdmin = "Verzay Pro Atc";
+        const sendTextUrl = `https://${serverUrlAdmin}/message/sendText/${instanceNameAdmin}`;
 
         await sendingMessages({
           url: sendTextUrl,
