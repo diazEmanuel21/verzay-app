@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import React from 'react'
-import { GetNodeforUser } from '@/actions/getNodeforUser';
+import { getNodeforUser } from '@/actions/getNodeforUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { NodeCard } from './_components/NodeCard';
 import { CreateNodeComponent } from './_components/CrateNodeComponent';
@@ -17,7 +17,11 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
 
   const { workflowId } = params;
 
-  const nodes = await GetNodeforUser(workflowId);
+  const nodes = await getNodeforUser(workflowId);
+  const totalNodes = nodes.length;
+  const seguimientoNodes = nodes.filter((n: any) =>
+    (n?.tipo ?? "").toLowerCase().startsWith("seguimiento")
+  ).length;
 
   const workflow = await db.workflow.findUnique({
     where: {
@@ -32,18 +36,8 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
 
   return (
     <div className='flex flex-col items-center min-h-full'>
-      {/* <div className='flex justify-end w-full'>
-        <CreateNodeComponent workflowId={workflowId} plan={user?.plan} />
-      </div> */}
-
       {nodes.length > 0 ? (
         <div className='flex flex-col h-full w-full gap-5 px-4 text-center pt-6' >
-          {/* {nodes.map((node) => (
-            <NodeCard
-              key={node.id} nodes={node} workflowId={workflow.id} user={user}
-            />
-          ))} */}
-
           <SortableNodeList
             nodes={JSON.parse(JSON.stringify(nodes))}
             workflowId={workflow.id}
@@ -51,10 +45,14 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
           />
 
           <div className='flex items-center justify-center'>
-            <CreateNodeComponent workflowId={workflowId} plan={user?.plan} />
+            <CreateNodeComponent
+              workflowId={workflowId}
+              plan={user?.plan}
+              totalNodes={totalNodes}
+              seguimientoNodes={seguimientoNodes}
+            />
           </div>
         </div>
-
       ) : (
         <div className="flex flex-1 flex-col gap-4 h-full items-center justify-center">
           <div className='rounded-full bg-accent w-20 h-20 flex items-center justify-center'>
@@ -64,7 +62,12 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
             <p className="font-bold">No tienes ningun nodo creado</p>
             <p className="text-sm text-muted-foreground">Crea un nuevo nodo ahora mismo!</p>
           </div>
-          <CreateNodeComponent workflowId={workflowId} plan={user?.plan} />
+          <CreateNodeComponent
+            workflowId={workflowId}
+            plan={user?.plan}
+            totalNodes={totalNodes}
+            seguimientoNodes={seguimientoNodes}
+          />
         </div>
       )}
     </div>

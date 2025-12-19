@@ -20,13 +20,16 @@ import {
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { ActionPopoverButton } from "./ActionPopoverButton";
 import { cn } from "@/lib/utils";
+import { MAX_NODES_PER_WORKFLOW, MAX_SEGUIMIENTOS_PER_WORKFLOW } from "@/types/workflow";
 
 interface PropsCreateNodeComponent {
     workflowId: Workflow['id'];
     plan: Plan;
+    totalNodes: number;
+    seguimientoNodes: number;
 };
 
-export const CreateNodeComponent = ({ workflowId, plan }: PropsCreateNodeComponent) => {
+export const CreateNodeComponent = ({ workflowId, plan, totalNodes, seguimientoNodes }: PropsCreateNodeComponent) => {
     const [open, setOpen] = useState(false);
     const [isOpenCollapse, setIsOpenCollapse] = useState(false);
 
@@ -47,8 +50,12 @@ export const CreateNodeComponent = ({ workflowId, plan }: PropsCreateNodeCompone
             setOpen(false);
             form.reset();
         },
-        onError: (e) => {
-            toast.error("Error al crear la acción", { id: "create-node" });
+        onError: (e: any) => {
+            const msg =
+                e?.message ||
+                e?.toString?.() ||
+                "Error al crear la acción";
+            toast.error(msg, { id: "create-node" });
             console.error(e);
         },
     });
@@ -69,6 +76,25 @@ export const CreateNodeComponent = ({ workflowId, plan }: PropsCreateNodeCompone
                 return;
             }
 
+            // ✅ Validación UI (no reemplaza backend; solo mejora UX)
+            if (totalNodes >= MAX_NODES_PER_WORKFLOW) {
+                toast.error(
+                    `Este flujo ya alcanzó el límite de ${MAX_NODES_PER_WORKFLOW} nodos. Elimina un nodo existente para poder agregar uno nuevo.`,
+                    { id: "create-node" }
+                );
+                return;
+            }
+
+            const isSeguimiento = actionSelected.type.startsWith("seguimiento-");
+
+            if (isSeguimiento && seguimientoNodes >= MAX_SEGUIMIENTOS_PER_WORKFLOW) {
+                toast.error(
+                    `Este flujo ya tiene el máximo de ${MAX_SEGUIMIENTOS_PER_WORKFLOW} nodos de seguimiento permitidos para evitar spam.`,
+                    { id: "create-node" }
+                );
+                return;
+            }
+
             form.setValue("tipo", actionSelected.type);
             form.setValue("message", defaultMessage);
 
@@ -79,9 +105,9 @@ export const CreateNodeComponent = ({ workflowId, plan }: PropsCreateNodeCompone
                 tipo: actionSelected.type,
                 message: defaultMessage,
             });
-        },
-        [form, mutate, workflowId]
+        }, [form, mutate, workflowId, totalNodes, seguimientoNodes]
     );
+
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -108,6 +134,10 @@ export const CreateNodeComponent = ({ workflowId, plan }: PropsCreateNodeCompone
                     {/* Header fijo */}
                     <div className="p-4 pb-3 text-sm text-muted-foreground shrink-0">
                         Selecciona una acción
+                        <div className="mt-1 flex flex-wrap gap-3 text-xs">
+                            <span>{`Nodos: ${totalNodes}/${MAX_NODES_PER_WORKFLOW}`}</span>
+                            <span>{`Seguimientos: ${seguimientoNodes}/${MAX_SEGUIMIENTOS_PER_WORKFLOW}`}</span>
+                        </div>
                     </div>
 
                     {/* Body con scroll */}
