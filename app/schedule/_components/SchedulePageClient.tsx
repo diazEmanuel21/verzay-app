@@ -159,7 +159,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                     ? user.notificationNumber
                     : `${user.notificationNumber}@s.whatsapp.net`;
 
-                // Datos de fecha/hora legibles en la TZ de la cita - antes era timezone ahora 
+                // Datos de fecha/hora legibles en la TZ de la cita - antes era timezone ahora serverTimeZone
                 const startLocal = toZonedTime(new Date(startTime), serverTimeZone);
                 // const dateLabel = format(selectedDate!, "PPP");
                 const dateLabel = format(selectedDate!, "d 'de' MMMM 'de' yyyy", { locale: es });
