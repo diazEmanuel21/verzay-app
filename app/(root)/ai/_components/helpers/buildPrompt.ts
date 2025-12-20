@@ -31,7 +31,7 @@ export const buildPrompt = (v: BusinessValues): string => {
     lines.push(instructionPrompt);
 
     if (v.training?.trim()) {
-        lines.push("## PROCEDIMIENTO OBLIGATORIO (CHATS SIN HISTORIAL)\n");
+        lines.push("## INICIO\n");
         lines.push(v.training.trim());
     }
 

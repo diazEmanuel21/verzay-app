@@ -15,7 +15,7 @@ export function composePromptFromSections(sections: z.infer<typeof SectionsDraft
 
     const trainingMd = buildTrainingMarkdown(sections.training);
     if (nonEmpty(trainingMd)) {
-        out.push('## PROCEDIMIENTO OBLIGATORIO (CHATS SIN HISTORIAL)\n');
+        out.push('## INICIO\n');
         out.push(trainingMd);
     }
 
