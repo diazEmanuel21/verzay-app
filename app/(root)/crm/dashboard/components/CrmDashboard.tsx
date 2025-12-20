@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
     Table,
@@ -27,14 +26,9 @@ import {
     TableBody,
     TableCell,
 } from "@/components/ui/table";
-import { BarChart3, Activity, Users, Filter } from "lucide-react";
+import { BarChart3, Activity, Filter } from "lucide-react";
 import { TagStatsCard } from './TagStatsCard';
-import type {
-    Session as PrismaSession,
-} from "@prisma/client";
 
-// Si usas Recharts:
-// npm i recharts
 import {
     ResponsiveContainer,
     BarChart,
@@ -47,102 +41,9 @@ import {
     Line,
 } from "recharts";
 import { RegistroWithSession, TipoRegistro } from "@/types/session";
-
-/* ===== HELPERS ===== */
-
-function toDate(v: Date | string): Date {
-    return v instanceof Date ? v : new Date(v);
-}
-
-function formatFecha(v: Date | string) {
-    const d = toDate(v);
-    try {
-        return d.toLocaleString("es-CO", {
-            dateStyle: "short",
-            timeStyle: "short",
-        });
-    } catch {
-        return d.toISOString();
-    }
-}
-
-function getTipoLabel(tipo: TipoRegistro) {
-    switch (tipo) {
-        case "REPORTE":
-            return "Reportes";
-        case "SOLICITUD":
-            return "Solicitudes";
-        case "PEDIDO":
-            return "Pedidos";
-        case "RECLAMO":
-            return "Reclamos";
-        case "PAGO":
-            return "Pagos";
-        case "RESERVA":
-            return "Reservas";
-        default:
-            return tipo;
-    }
-}
-
-const ESTADOS_POR_TIPO: Record<TipoRegistro, string[]> = {
-    REPORTE: [
-        "Habilitado",
-        "Inhabilitado",
-    ],
-    SOLICITUD: [
-        "Pendiente",
-        "Procesando",
-        "Confirmado",
-        "Cancelado",
-    ],
-    PEDIDO: [
-        "Pendiente",
-        "Procesando",
-        "Despachado",
-        "En tránsito",
-        "Entregado",
-        "Cancelado",
-    ],
-    RESERVA: [
-        "Pendiente",
-        "Procesando",
-        "Confirmada",
-        "Cancelada",
-    ],
-    RECLAMO: [
-        "Pendiente",
-        "Procesando",
-        "Solucionado",
-        "Cancelado",
-    ],
-    PAGO: [
-        "Pendiente",
-        "Procesando",
-        "Confirmado",
-        "Cancelado",
-    ],
-};
-
-function getEstadoOptions(tipo: TipoRegistro): string[] {
-    return ESTADOS_POR_TIPO[tipo] ?? [];
-}
-
-
-function getDisplayWhatsappFromSession(session: PrismaSession) {
-    const base = session.remoteJidAlt || session.remoteJid;
-    return base.includes("@") ? base.split("@")[0] : base;
-}
-
-function getDisplayNombreFromRegistro(r: RegistroWithSession) {
-    return (
-        // r.session.cliente?.nombre ||
-        r.nombre || // snapshot en Registro
-        "Sin nombre"
-    );
-}
-
-/* ===== COMPONENTE PRINCIPAL ===== */
+import { formatFecha, getTipoLabel } from "../../helpers";
+import { getDisplayNombreFromRegistro, getEstadoOptions, toDate } from "../helpers";
+import { MetricCard } from "./MetricCard";
 
 export const CrmDashboard = ({
     registros,
@@ -165,14 +66,6 @@ export const CrmDashboard = ({
         for (const r of registros) set.add(r.sessionId);
         return set.size;
     }, [registros]);
-
-    // const clientesConMovimientos = useMemo(() => {
-    //     const set = new Set<string>();
-    //     for (const r of registros) {
-    //         if (r.session.cliente?.id) set.add(r.session.cliente.id);
-    //     }
-    //     return set.size;
-    // }, [registros]);
 
     // --- Registros por tipo ---
     const countsByTipo = useMemo(() => {
@@ -256,17 +149,9 @@ export const CrmDashboard = ({
                 <MetricCard
                     icon={<Activity className="h-4 w-4" />}
                     label="Leads con movimientos"
-                    // value={(leadsConMovimientos - clientesConMovimientos)}
                     value={(leadsConMovimientos)}
                     helper="Sessiones que tienen al menos un registro"
                 />
-                {/* <h1>client1es con movimientos, se calcula con el tag</h1> */}
-                {/* <MetricCard
-                    icon={<Users className="h-4 w-4" />}
-                    label="Clientes con movimientos"
-                    value={clientesConMovimientos}
-                    helper="Clientes vinculados a sessiones con registros"
-                /> */}
             </div>
 
             {/* Gráficos */}
@@ -408,9 +293,6 @@ export const CrmDashboard = ({
                                             <TableHead className="h-8 py-1.5 whitespace-nowrap">
                                                 Fecha
                                             </TableHead>
-                                            {/* <TableHead className="h-8 py-1.5 whitespace-nowrap">
-                                                Tipo
-                                            </TableHead> */}
                                             <TableHead className="h-8 py-1.5">Detalle</TableHead>
                                             <TableHead className="h-8 py-1.5 text-right">
                                                 Estado
@@ -430,9 +312,6 @@ export const CrmDashboard = ({
                                         )}
 
                                         {registrosFiltrados.map((r) => {
-                                            // const whatsapp = getDisplayWhatsappFromSession(
-                                            //     r.session
-                                            // );
                                             const nombre = getDisplayNombreFromRegistro(r);
                                             const tipoLabel = getTipoLabel(r.tipo);
                                             const detalle =
@@ -450,14 +329,6 @@ export const CrmDashboard = ({
                                                     <TableCell className="py-1.5 align-top whitespace-nowrap">
                                                         {formatFecha(r.fecha || '')}
                                                     </TableCell>
-                                                    {/* <TableCell className="py-1.5 align-top whitespace-nowrap">
-                                                        <Badge
-                                                            variant="outline"
-                                                            className="text-[10px] px-2 py-0"
-                                                        >
-                                                            {tipoLabel}
-                                                        </Badge>
-                                                    </TableCell> */}
                                                     <TableCell className="py-1.5 align-top max-w-[280px]">
                                                         <span className="line-clamp-2">{detalle}</span>
                                                     </TableCell>
@@ -498,34 +369,3 @@ export const CrmDashboard = ({
         </div>
     );
 };
-
-/* ===== SUBCOMPONENTES ===== */
-
-function MetricCard({
-    icon,
-    label,
-    value,
-    helper,
-}: {
-    icon: React.ReactNode;
-    label: string;
-    value: number | string;
-    helper?: string;
-}) {
-    return (
-        <Card className="border-border bg-background/60">
-            <CardContent className="p-3 flex flex-col gap-2">
-                <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] text-muted-foreground">{label}</span>
-                    <div className="h-7 w-7 rounded-full border flex items-center justify-center text-muted-foreground">
-                        {icon}
-                    </div>
-                </div>
-                <div className="text-xl font-semibold leading-none">{value}</div>
-                {helper && (
-                    <p className="text-[11px] text-muted-foreground">{helper}</p>
-                )}
-            </CardContent>
-        </Card>
-    );
-}

@@ -1,4 +1,3 @@
-// app/(dashboard)/crm/dashboard/components/MainDashboard.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useTransition } from "react";
@@ -8,7 +7,7 @@ import useSWRInfinite from "swr/infinite";
 import { CrmDashboard } from "./CrmDashboard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { getRegistrosByUserId, updateRegistroEstado } from "@/actions/crm-seed-actions";
+import { getRegistrosByUserId, updateRegistroEstado } from "@/actions/registro-action";
 import { LoadingProgress } from "@/components/shared/LoadingProgress";
 import { RegistroWithSession } from "@/types/session";
 
@@ -146,7 +145,7 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
         <p className="mt-2 text-xs text-muted-foreground">
           <LoadingProgress
             fullscreen
-            label="  Cargando más registros..."
+            label="Cargando más registros..."
             description="Esto suele tardar solo unos segundos..."
           />
         </p>

@@ -11,6 +11,8 @@ import { closeDialog, openCreateDialog, useReminderDialogStore } from '@/stores'
 import { GenericDeleteDialog } from '@/components/shared/GenericDeleteDialog';
 import { deleteReminder } from '@/actions/reminders-actions';
 import { toast } from 'sonner';
+import { themeClass } from '@/types/generic';
+import { convertToSeconds } from '../../flow/[workflowId]/helpers';
 
 export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, workflows, instancia, isScheduleView, isSchedule }: MainReminderInterface) => {
   const { openDialog, selectedReminderId, setCampaignPage } = useReminderDialogStore();
@@ -23,17 +25,32 @@ export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, 
   const [sortAsc, setSortAsc] = useState(true);
 
   const filteredReminders = useMemo(() => {
+    const getSeconds = (time: string | null) => {
+      if (!time) return 0;
+
+      try {
+        const [, secondsStr] = convertToSeconds(time).split("-");
+        return Number(secondsStr) || 0;
+      } catch {
+        return 0;
+      }
+    };
+
     const sorted = [...reminders].sort((a, b) => {
-      return sortAsc
-        ? new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
-        : new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    })
+      const aSec = getSeconds(a.time);
+      const bSec = getSeconds(b.time);
+
+      // sortAsc = true => mayor a menor (más “lejos” primero: days > hours > minutes)
+      // sortAsc = false => menor a mayor
+      return sortAsc ? bSec - aSec : aSec - bSec;
+    });
 
     return sorted.filter((r) => {
-      const fullText = `${r.title} ${r.description ?? ""} ${r.pushName} ${r.remoteJid}`.toLowerCase()
-      return fullText.includes(search.toLowerCase())
-    })
+      const fullText = `${r.title} ${r.description ?? ""} ${r.pushName} ${r.remoteJid}`.toLowerCase();
+      return fullText.includes(search.toLowerCase());
+    });
   }, [reminders, search, sortAsc]);
+
 
   const handleCreateReminder = () => {
     const countScheduleReminders = reminders.filter(r => r.isSchedule === true);
@@ -45,7 +62,7 @@ export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, 
   return (
     <div className="flex flex-col h-full">
       {/* Header fijo */}
-      <div className="sticky top-0 z-1 mb-2">
+      <div className={`sticky -top-4 z-1 mb-2 ${themeClass}`}>
         <div className="flex flex-col overflow-hidden justify-between flex-1 gap-4">
           <div className="flex justify-between items-center">
             <Header
@@ -75,9 +92,9 @@ export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, 
               className="flex items-center gap-2"
             >
               <ArrowDownUp className="h-4 w-4" />
-              <span className="hidden md:inline">
+              {/* <span className="hidden md:inline">
                 {sortAsc ? "Más recientes primero" : "Más antiguos primero"}
-              </span>
+              </span> */}
             </Button>
           </div>
         </div>

@@ -1,6 +1,6 @@
 
-export function formatFecha(fecha?: Date) {
-    if (!fecha) return "-";
+export function formatFecha(fecha: Date | string) {
+    if (!fecha || fecha === "") return "-";
     try {
         return fecha.toLocaleString("es-CO", {
             dateStyle: "short",

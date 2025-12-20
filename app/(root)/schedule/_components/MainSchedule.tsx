@@ -71,7 +71,11 @@ export const MainSchedule = ({ isCampaignPage, user, apiKey, reminders, leads, w
                 <TabsContent value="settings">
                     <Card className="border-none bg-transparent">
                         <CardContent className="flex flex-col gap-2 ">
-                            <UpdateMeetingDuration userId={user.id} meetingDuration={user.meetingDuration ?? 60} />
+                            <UpdateMeetingDuration
+                                userId={user.id}
+                                meetingDuration={user.meetingDuration ?? 60}
+                                meetingUrl={user.meetingUrl}
+                            />
                         </CardContent>
                     </Card>
                 </TabsContent>

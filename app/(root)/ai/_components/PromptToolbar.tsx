@@ -1,8 +1,15 @@
+// app/(root)/ai/_components/PromptToolbar.tsx
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useTransition } from "react"; // 👈 useTransition
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { UploadCloud, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { usePromptActions } from "./hooks/usePromptActions";
@@ -15,8 +22,11 @@ export function PromptToolbar(props: {
     onConflict?: (serverState: any) => void;
     revalidatePath?: string;
     revisions?: Array<{ revisionNumber: number; label?: string }>;
+    onManualSave?: () => Promise<void>;
 }) {
-    const { promptId, version, userId, onVersionChange, onConflict, revalidatePath } = props;
+    const { promptId, version, userId, onVersionChange, onConflict, revalidatePath, onManualSave } = props;
+
+    const router = useRouter();
 
     const { loading, error, publish } = usePromptActions({
         promptId,
@@ -27,16 +37,31 @@ export function PromptToolbar(props: {
         revalidatePath,
     });
 
-    const isSaving = !!loading;
+    // 👇 trackeamos el estado del router.refresh()
+    const [isPending, startTransition] = useTransition();
+
+    const isSaving = !!loading || isPending;
 
     const handlePublish = useCallback(async () => {
         try {
+            // 1) Guardar todas las secciones (manual)
+            if (onManualSave) {
+                await onManualSave();
+            }
+
+            // 2) Ejecutar lógica actual de publish
             await publish();
+
+            startTransition(() => {
+                router.refresh();
+            });
+
             toast.success("Guardado correctamente");
         } catch (e: any) {
             toast.error(e?.message ?? "No se pudo guardar");
         }
-    }, [publish]);
+    }, [publish, router, startTransition, onManualSave]);
+
 
     useEffect(() => {
         if (error) toast.error(error);

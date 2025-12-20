@@ -10,11 +10,12 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Workflow } from "@prisma/client";
-import { useManagementAutosave } from "./hooks/useManagementAutosave";
+import { useManagementAutosave, AutosaveStatus } from "./hooks/useManagementAutosave";
 import ElementRenderer from "./action-steeps/ElementRenderer";
 import { FunctionSelector } from "./FunctionSelector";
 import { PromptFragment } from "./helpers/prompt-fragments";
-import { buildSectionedPrompt } from "./helpers";
+import { AnyEl, buildSectionedPrompt, transformSubtype } from "./helpers";
+import { getUserAppointmentUrl } from "@/actions/userClientDataActions"; // 👈 NUEVO
 // import { ManagementPromptBuilder } from "./ManagementPromptBuilder";
 
 import type {
@@ -63,6 +64,7 @@ export const ManagementBuilder = ({
     initialItems = [],
     flows = [],
     notificationNumber,
+    registerSaveHandler
 }: ManagementBuilderProps) => {
     // cada card = un "bloque" de gestión
     const [steps, setSteps] = useState<ManagementItem[]>(
@@ -70,6 +72,31 @@ export const ManagementBuilder = ({
             ? (initialItems as ManagementItem[])
             : []
     );
+    const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>("idle");
+    const [appointmentUrl, setAppointmentUrl] = useState<string>(""); // 👈 NUEVO
+
+    // Obtener la URL de agenda una sola vez
+    useEffect(() => {
+        let cancelled = false;
+
+        const fetchUrl = async () => {
+            try {
+                const url = await getUserAppointmentUrl();
+                if (!cancelled) {
+                    setAppointmentUrl(url || "");
+                }
+            } catch (error) {
+                console.error("[ManagementBuilder] Error obteniendo appointmentUrl:", error);
+                if (!cancelled) setAppointmentUrl("");
+            }
+        };
+
+        fetchUrl();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     // proxy que completa título y cierra picker tras elegir acción
     const setStepsAuto: React.Dispatch<React.SetStateAction<ManagementItem[]>> = (
@@ -112,27 +139,83 @@ export const ManagementBuilder = ({
     );
 
     // AUTOSAVE
-    useManagementAutosave({
+    const { forceSave } = useManagementAutosave({
         promptId,
         version,
         steps,
         onVersionChange,
         onConflict: stableOnConflict,
+        onStatusChange: setAutosaveStatus,
+        mode: "manual",
     });
+
+    useEffect(() => {
+        registerSaveHandler?.(forceSave);
+    }, [registerSaveHandler, forceSave]);
+
+    // Reset visual de "Cambios guardados"
+    useEffect(() => {
+        if (autosaveStatus === "saved") {
+            const t = setTimeout(() => setAutosaveStatus("idle"), 1500);
+            return () => clearTimeout(t);
+        }
+    }, [autosaveStatus]);
 
     // PREVIEW markdown
     const managementPreview = useMemo(() => {
         return buildSectionedPrompt(steps as any, {
+            mode: "management",
             emptyMessage:
                 "Aún no has agregado bloques de gestión. Usa “Agregar acción” para comenzar.",
-            sectionLabel: (n, step) => `Bloque ${n} — ${step.title || "Sin título"}`,
-            // sectionLabel: (n, step) => ``,
-            elementsLabel: (n) => `\nElementos gestión: ${n}`,
-            // elementsLabel: (n) => ``,
-            mainMessageLabel: "Descripción / Objetivo\n",
+
+            sectionLabel: (_n, step) => {
+                const gestion = step.title || "Gestión sin nombre";
+
+                const captura = (step.elements || []).find(
+                    (el: AnyEl) => el.kind === "function" && el.fn === "captura_datos"
+                ) as AnyEl | undefined;
+
+                const rawSubtype = captura?.subtype ?? "";
+                const subtype = transformSubtype(rawSubtype);
+
+                const pluralMap: Record<string, string> = {
+                    solicitud: "Solicitudes",
+                    pedido: "Pedidos",
+                    reserva: "Reservas",
+                    reclamo: "Reclamos",
+                    cita: "Citas",
+                };
+
+                const etiqueta = subtype ? pluralMap[subtype] ?? subtype : "Gestión";
+
+                const generoMap: Record<string, { articulo: string; label: string }> = {
+                    solicitud: { articulo: "una", label: "solicitud" },
+                    reserva: { articulo: "una", label: "reserva" },
+                    cita: { articulo: "una", label: "cita" },
+                    pedido: { articulo: "un", label: "pedido" },
+                    reclamo: { articulo: "un", label: "reclamo" },
+                };
+
+                const info = subtype
+                    ? generoMap[subtype] ?? { articulo: "una", label: subtype }
+                    : { articulo: "una", label: "gestión" };
+
+                const objetivo =
+                    (step.mainMessage ?? "").trim() || gestion;
+
+                return [
+                    `### Gestión ${_n} — ${etiqueta}`,
+                    `* **Objetivo principal de la gestión:** ${_n}`,
+                    `Cuando un usuario desee realizar ${info.articulo} **${info.label}**\n`,
+                ].join("\n");
+            },
+
+            elementsLabel: (_n) => `#### Elementos de la gestión ${_n}`,
+            mainMessageLabel: "Objetivo/respuesta principal de la gestión:",
             joinSeparator: "\n",
+            appointmentUrl,
         });
-    }, [steps]);
+    }, [steps, appointmentUrl]);
 
     // SYNC con parent
     useEffect(() => {
@@ -201,7 +284,7 @@ export const ManagementBuilder = ({
             const isFnElement =
                 (target as any)?.kind === "function" || typeof (target as any)?.fn === "string";
 
-            // 1) si el elemento a eliminar es la fn -> eliminar TODO el step
+            // 1) si el elemento a eliminar es la fn -> eliminar tarea el step
             if (isFnElement) {
                 return prev.filter((s) => s.id !== stepId);
             }
@@ -317,7 +400,24 @@ export const ManagementBuilder = ({
                     {/* {typeof ManagementPromptBuilder !== "undefined" && (
                         <ManagementPromptBuilder onInsert={handleInsertFromPicker} />
                     )} */}
-
+                    {autosaveStatus !== "idle" && (
+                        <span
+                            className={
+                                "text-xs " +
+                                (autosaveStatus === "saving"
+                                    ? "text-muted-foreground"
+                                    : autosaveStatus === "saved"
+                                        ? "text-emerald-500"
+                                        : autosaveStatus === "error"
+                                            ? "text-destructive"
+                                            : "")
+                            }
+                        >
+                            {autosaveStatus === "saving" && "Guardando..."}
+                            {autosaveStatus === "saved" && "Cambios guardados"}
+                            {autosaveStatus === "error" && "Error al guardar"}
+                        </span>
+                    )}
                     {/* ⤵️ MODO RAÍZ: sin crear bloque vacío, abre lista y al elegir crea el bloque */}
                     {steps.length < 1 && (
                         <FunctionSelector
@@ -434,7 +534,9 @@ export const ManagementBuilder = ({
             </CardContent>
 
             {steps.length > 0 && (
-                <CardFooter className="pb-2 flex items-center gap-2 flex-row justify-end">
+                <CardFooter className="pb-2 flex items-center justify-between gap-2 flex-row">
+                    <CardTitle className="text-base">Gestión</CardTitle>
+
                     <FunctionSelector
                         notificationNumber={notificationNumber ?? ""}
                         isManagement={true}

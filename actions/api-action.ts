@@ -4,49 +4,8 @@ import { db } from "@/lib/db";
 import { ApiKey } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
-
-/* =========================
-   Tipos
-========================= */
-interface GenerateQrInterface {
-  instanceName: string
-  userId: string
-}
-interface ClientResponse<T = undefined> {
-  success: boolean
-  message: string
-  data?: T
-}
-interface WhatsAppConnectionStatus {
-  qr?: {
-    code: string; // Código QR en formato base64
-    pairingCode: string; // Código de emparejamiento
-  };
-  connectionState?: {
-    instance: {
-      state: string; // Estado de la conexión (e.g. 'open', 'closed')
-    };
-  };
-  success: boolean; // Indica si la conexión fue exitosa
-}
-interface QRCodeResponse {
-  qr?: {
-    code: string; // Código QR en formato base64
-    pairingCode?: string; // Código de emparejamiento (opcional)
-  };
-  connectionState?: {
-    instance: {
-      state: string; // Estado de la conexión (e.g. 'open', 'closed')
-    };
-  };
-  success: boolean; // Indica si la operación fue exitosa
-  message?: string; // Mensaje opcional para el usuario
-}
-
-/* =========================
-   Helper
-========================= */
-const isWhatsappLike = (t?: string | null) => (!t || t.trim().toLowerCase() === "whatsapp");
+import { sendingMessages } from "./sending-messages-actions";
+import { ClientResponse, DISCONNECT_COOLDOWN_MS, EVO_FETCH_TIMEOUT_MS, GenerateQrInterface, getEvoCache, isApiConnected, isWhatsappLike, QRCodeResponse } from "@/types/evo-api";
 
 /* =========================
    Server-Action: Generar QR
@@ -54,65 +13,165 @@ const isWhatsappLike = (t?: string | null) => (!t || t.trim().toLowerCase() === 
    - Mantiene TUS mensajes originales.
 ========================= */
 export async function generateQRCode({ instanceName, userId }: GenerateQrInterface): Promise<QRCodeResponse> {
+  // Buscar el usuario y su ApiKey asignada (lo necesitas para el key del cache y para notificar)
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    include: { apiKey: true },
+  });
+
+  if (!user) {
+    return { success: false, message: "El userId no existe." };
+  }
+  if (!user.apiKey) {
+    return { success: false, message: "El usuario no tiene una ApiKey asignada." };
+  }
+
+  // Detectar tipo de instancia (si existe en BD)
+  const inst = await db.instancias.findFirst({
+    where: { userId, instanceName },
+    select: { instanceType: true },
+  });
+  const instanceType = inst?.instanceType ?? null;
+
+  if (!isWhatsappLike(instanceType)) {
+    return { success: false, message: 'No se pudo generar el código QR.' };
+  }
+
+  const { key: apiKey, url: serverUrl } = user.apiKey;
+
+  // cache por user+instance (puedes cambiar a user+serverUrl si prefieres)
+  const cache = getEvoCache();
+  const cacheKey = `${userId}::${instanceName}`;
+  const now = Date.now();
+  const entry = cache.get(cacheKey) ?? { lastIsConnected: null, lastNotifiedAt: 0 };
+
+  let qr: { code: string; pairingCode?: string } | undefined;
+  let connectionState: { instance: { state: string } } | undefined;
+
+  // 🔽 esto es el estado de CONEXIÓN a la API (Evolution alive / dead)
+  let apiConnectedNow = false;
+
+  // para devolver mensaje si algo falla
+  let failMessage: string | null = null;
+
   try {
-    // Detectar tipo de instancia (si existe en BD)
-    const inst = await db.instancias.findFirst({
-      where: { userId, instanceName },
-      select: { instanceType: true },
-    });
-    const instanceType = inst?.instanceType ?? null;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), EVO_FETCH_TIMEOUT_MS);
 
-    if (!isWhatsappLike(instanceType)) {
-      // Reutilizamos tu mensaje existente para casos donde no se puede generar QR
-      return { success: false, message: 'No se pudo generar el código QR.' };
-    }
-
-    // 🔥 Buscar el usuario y su ApiKey asignada
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      include: { apiKey: true },
-    });
-
-    if (!user) {
-      throw new Error("El userId no existe.");
-    }
-    if (!user.apiKey) {
-      throw new Error("El usuario no tiene una ApiKey asignada.");
-    }
-
-    const { key: apiKey, url: serverUrl } = user.apiKey;
-
-    // Lógica para obtener el código QR desde tu API (Evolution)
     const response = await fetch(`https://${serverUrl}/instance/connect/${instanceName}`, {
       method: 'GET',
       headers: { apikey: apiKey },
-    });
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timeout));
+
+    apiConnectedNow = isApiConnected(response.ok);
 
     if (!response.ok) {
-      throw new Error('Error al conectar con la instancia.');
-    }
-
-    const data = await response.json();
-
-    if (data.base64) {
-      return {
-        success: true,
-        qr: {
-          code: data.base64,
-          pairingCode: data.pairingCode,
-        },
-      };
-    } else if (data.instance?.state === 'open') {
-      return {
-        success: true,
-        connectionState: { instance: { state: 'open' } },
-      };
+      failMessage = `Error al conectar con la instancia. HTTP ${response.status}`;
     } else {
-      return { success: false, message: 'No se pudo generar el código QR.' };
+      const data = await response.json();
+
+      if (data.base64) {
+        qr = { code: data.base64, pairingCode: data.pairingCode };
+      } else if (data.instance?.state === 'open') {
+        connectionState = { instance: { state: 'open' } };
+      } else {
+        // API respondió OK pero no hay QR ni open (caso normal de “no listo”)
+        // lo manejamos abajo con mensaje genérico
+      }
     }
   } catch (error: any) {
-    return { success: false, message: error.message || 'Error al generar el código QR.' };
+    apiConnectedNow = false;
+    failMessage =
+      error?.name === 'AbortError'
+        ? 'Timeout al conectar con Evolution.'
+        : (error?.message || 'Error al generar el código QR.');
   }
+
+  // regla anti-spam
+  const transitionedToDisconnected = entry.lastIsConnected === true && apiConnectedNow === false;
+  const cooldownOk = now - entry.lastNotifiedAt >= DISCONNECT_COOLDOWN_MS;
+
+  let justNotified = false;
+
+  if ((transitionedToDisconnected && cooldownOk) || (entry.lastIsConnected === null && !apiConnectedNow && cooldownOk)) {
+    // Intento de notificación (si está configurado)
+    const remoteJid = (user as any).notificationNumber as string | undefined;
+
+    if (remoteJid) {
+      try {
+        const serverUrlAdmin = "evoapi.ia-app.com";
+        const instanceNameAdmin = "Verzay Pro Atc";
+        const sendTextUrl = `https://${serverUrlAdmin}/message/sendText/${instanceNameAdmin}`;
+
+        await sendingMessages({
+          url: sendTextUrl,
+          apikey: apiKey,
+          remoteJid,
+          text: "Tu API de Evolution se encuentra desconectada. Por favor revisa tu configuración para restablecer la conexión.",
+        });
+      } catch {
+        // best-effort: aunque falle el envío, evitamos spam
+      }
+    }
+
+    entry.lastNotifiedAt = now;
+    justNotified = true;
+  }
+
+  entry.lastIsConnected = apiConnectedNow;
+  cache.set(cacheKey, entry);
+
+  // ✅ respuestas finales, conservando tu lógica original
+  if (!apiConnectedNow) {
+    return {
+      success: false,
+      message: failMessage || 'Error al conectar con Evolution.',
+      evo: {
+        isConnected: false,
+        status: "disconnected",
+        justNotified,
+        cooldownMs: DISCONNECT_COOLDOWN_MS,
+      },
+    };
+  }
+
+  if (qr) {
+    return {
+      success: true,
+      qr,
+      evo: {
+        isConnected: true,
+        status: "connected",
+        justNotified: false,
+        cooldownMs: DISCONNECT_COOLDOWN_MS,
+      },
+    };
+  }
+
+  if (connectionState?.instance?.state === 'open') {
+    return {
+      success: true,
+      connectionState,
+      evo: {
+        isConnected: true,
+        status: "connected",
+        justNotified: false,
+        cooldownMs: DISCONNECT_COOLDOWN_MS,
+      },
+    };
+  }
+
+  return {
+    success: false,
+    message: 'No se pudo generar el código QR.',
+    evo: {
+      isConnected: true, // API está viva, pero no se pudo generar QR/open
+      status: "connected",
+      justNotified: false,
+      cooldownMs: DISCONNECT_COOLDOWN_MS,
+    },
+  };
 }
 
 /* =========================
@@ -354,7 +413,7 @@ export async function getInstances(userId: string) {
   try {
     const instance = await db.instancias.findMany({
       where: { userId: userId },
-      select: { instanceName: true, instanceId: true,instanceType:true },
+      select: { instanceName: true, instanceId: true, instanceType: true },
     });
 
     // 🔥 Buscar el usuario y su ApiKey asignada

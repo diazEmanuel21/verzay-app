@@ -1,26 +1,30 @@
 import { Registro, TipoRegistro } from "@prisma/client";
 import {
-    Table,
-    TableHeader,
-    TableRow,
-    TableHead,
-    TableBody,
-    TableCell,
+    Table, TableHeader, TableRow, TableHead, TableBody, TableCell,
 } from "@/components/ui/table";
-import { Plus } from "lucide-react";
+import { Plus, MoreHorizontal, Pencil, Trash } from "lucide-react";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { formatFecha, getTipoLabel } from "../helpers";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-export const RegistrosTable =({
+export const RegistrosTable = ({
     tipo,
     registros,
     whatsapp,
+    onNew,
+    onEdit,
+    onDelete,
 }: {
     tipo: TipoRegistro;
     registros: Registro[];
     whatsapp: string;
+    onNew: (tipo: TipoRegistro) => void;
+    onEdit: (registro: Registro) => void;
+    onDelete: (registro: Registro) => void;
 }) => {
     const isReporte = tipo === "REPORTE";
 
@@ -30,41 +34,46 @@ export const RegistrosTable =({
                 <p className="font-medium">
                     {getTipoLabel(tipo)} ({registros.length})
                 </p>
-                <Button variant="outline" size="sm" className="h-7 px-2">
+
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2"
+                    onClick={() => onNew(tipo)}
+                >
                     <Plus className="h-3 w-3 mr-1" />
                     Nuevo {getTipoLabel(tipo).slice(0, -1)}
                 </Button>
             </div>
 
             <ScrollArea className="flex-1 rounded-md border">
-                <div className="min-w-[640px]">
+                <div className="min-w-[720px]">
                     <Table>
                         <TableHeader>
                             <TableRow className="hover:bg-transparent">
                                 <TableHead className="h-8 py-1.5">Fecha</TableHead>
                                 <TableHead className="h-8 py-1.5">WhatsApp</TableHead>
-                                {isReporte && (
+
+                                {isReporte ? (
                                     <>
                                         <TableHead className="h-8 py-1.5">Nombre</TableHead>
                                         <TableHead className="h-8 py-1.5">Resumen</TableHead>
-                                        <TableHead className="h-8 py-1.5 text-center">
-                                            Lead
-                                        </TableHead>
+                                        <TableHead className="h-8 py-1.5 text-center">Lead</TableHead>
                                     </>
-                                )}
-                                {!isReporte && (
+                                ) : (
                                     <TableHead className="h-8 py-1.5">Detalles</TableHead>
                                 )}
-                                <TableHead className="h-8 py-1.5 text-right">
-                                    Estado
-                                </TableHead>
+
+                                <TableHead className="h-8 py-1.5 text-right">Estado</TableHead>
+                                <TableHead className="h-8 py-1.5 text-right">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
+
                         <TableBody>
                             {registros.length === 0 && (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={isReporte ? 6 : 4}
+                                        colSpan={isReporte ? 8 : 6}
                                         className="h-16 text-center text-muted-foreground"
                                     >
                                         No hay registros para este módulo.
@@ -75,7 +84,7 @@ export const RegistrosTable =({
                             {registros.map((r) => (
                                 <TableRow key={r.id} className="hover:bg-accent/40">
                                     <TableCell className="py-1.5 align-top whitespace-nowrap">
-                                        {formatFecha(r.fecha || undefined)}
+                                        {formatFecha(r.fecha || "")}
                                     </TableCell>
                                     <TableCell className="py-1.5 align-top whitespace-nowrap">
                                         {whatsapp}
@@ -93,16 +102,11 @@ export const RegistrosTable =({
                                             </TableCell>
                                             <TableCell className="py-1.5 align-top text-center">
                                                 {r.lead ? (
-                                                    <Badge
-                                                        variant="default"
-                                                        className="px-2 py-0"
-                                                    >
+                                                    <Badge variant="default" className="px-2 py-0">
                                                         Sí
                                                     </Badge>
                                                 ) : (
-                                                    <span className="text-muted-foreground">
-                                                        No
-                                                    </span>
+                                                    <span className="text-muted-foreground">No</span>
                                                 )}
                                             </TableCell>
                                         </>
@@ -115,12 +119,30 @@ export const RegistrosTable =({
                                     )}
 
                                     <TableCell className="py-1.5 align-top text-right">
-                                        <Badge
-                                            variant="outline"
-                                            className="px-2 py-0 capitalize"
-                                        >
+                                        <Badge variant="outline" className="px-2 py-0 capitalize">
                                             {r.estado}
                                         </Badge>
+                                    </TableCell>
+
+                                    <TableCell className="py-1.5 align-top text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => onEdit(r)}>
+                                                    <Pencil className="h-4 w-4 mr-2" />
+                                                    Editar
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => onDelete(r)}>
+                                                    <Trash className="h-4 w-4 mr-2" />
+                                                    Eliminar
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -130,4 +152,4 @@ export const RegistrosTable =({
             </ScrollArea>
         </div>
     );
-}
+};

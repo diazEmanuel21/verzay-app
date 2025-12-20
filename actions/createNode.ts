@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { minioClient } from "@/lib/minio";
 import { createNodeflowSchema, createNodeflowSchemaType } from "@/schema/nodeflow";
+import { MAX_NODES_PER_WORKFLOW, MAX_SEGUIMIENTOS_PER_WORKFLOW } from "@/types/workflow";
 import { redirect } from "next/navigation";
 
 export async function CreateNode(form: createNodeflowSchemaType) {
@@ -24,6 +25,36 @@ export async function CreateNode(form: createNodeflowSchemaType) {
 
   if (!success) {
     throw new Error("Datos del formulario inválidos.");
+  }
+
+  const totalNodes = await db.workflowNode.count({
+    where: { workflowId: data.workflowId },
+  });
+
+  // Si el flujo ya está en 10 (o más), no permitir agregar más (incluye flujos antiguos > 10)
+  if (totalNodes >= MAX_NODES_PER_WORKFLOW) {
+    throw new Error(
+      `Este flujo ya alcanzó el límite de ${MAX_NODES_PER_WORKFLOW} nodos. Elimina un nodo existente para poder agregar uno nuevo.`
+    );
+  }
+  const requestedTipo = (data.tipo ?? "").toLowerCase();
+  const isSeguimiento =
+    requestedTipo === "seguimiento" || requestedTipo.startsWith("seguimiento-");
+  if (isSeguimiento) {
+    const seguimientosCount = await db.workflowNode.count({
+      where: {
+        workflowId: data.workflowId,
+        OR: [
+          { tipo: { equals: "seguimiento" } },
+          { tipo: { startsWith: "seguimiento" } },
+        ],
+      },
+    });
+    if (seguimientosCount >= MAX_SEGUIMIENTOS_PER_WORKFLOW) {
+      throw new Error(
+        `Este flujo ya tiene el máximo de ${MAX_SEGUIMIENTOS_PER_WORKFLOW} nodos de seguimiento permitidos para evitar spam.`
+      );
+    }
   }
 
   const maxOrder = await db.workflowNode.aggregate({

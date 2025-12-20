@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { Appointment, AppointmentStatus } from '@prisma/client';
 import { parseISO, isBefore } from 'date-fns';
 import { registerSession } from './session-action';
+import { deleteReminderByInstanceUserRemote } from './seguimientos-actions';
 
 interface AppointmentOperationResponse {
     success: boolean;
@@ -142,26 +143,69 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
 
 
 // ✅ Actualizar estado de cita
-export async function updateAppointmentStatus(id: string, status: AppointmentStatus): Promise<AppointmentOperationResponse> {
+export async function updateAppointmentStatus(
+    id: string,
+    status: AppointmentStatus
+): Promise<AppointmentOperationResponse> {
     try {
         const updated = await db.appointment.update({
             where: { id },
             data: { status },
+            include: {
+                session: true
+            }
         });
+
+        if (status === "CANCELADA") {
+            const userId = updated.userId;
+            const instanceName = updated.session.instanceId;
+            const remoteJid = updated.session.remoteJid;
+
+            // Solo invocar si están los 3 datos
+            if (instanceName && userId && remoteJid) {
+                const del = await deleteReminderByInstanceUserRemote(
+                    instanceName,
+                    userId,
+                    remoteJid
+                );
+
+                // Si falla el borrado, NO rompemos la actualización de estado
+                if (!del.success) {
+                    console.warn("[updateAppointmentStatus] No se pudieron eliminar seguimientos:", del.message);
+
+                    return {
+                        success: false,
+                        message: " No se pudieron eliminar seguimientos.",
+                    };
+                }
+            } else {
+                console.warn(
+                    "[updateAppointmentStatus] Faltan datos para eliminar seguimientos:",
+                    { instanceName, userId, remoteJid }
+                );
+
+                return {
+                    success: false,
+                    message: "Faltan datos para eliminar seguimientos.",
+                };
+            }
+        }
 
         return {
             success: true,
-            message: 'Estado actualizado correctamente.',
+            message: "Estado actualizado correctamente.",
             data: updated,
         };
+
     } catch (error) {
-        console.error('Error al actualizar estado de la cita:', error);
+        console.error("Error al actualizar estado de la cita:", error);
         return {
             success: false,
-            message: 'No se pudo actualizar el estado.',
+            message: "No se pudo actualizar el estado.",
         };
     }
 }
+
 
 // ✅ Eliminar una cita
 export async function deleteAppointment(id: string): Promise<AppointmentOperationResponse> {

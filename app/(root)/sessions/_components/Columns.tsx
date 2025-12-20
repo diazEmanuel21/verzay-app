@@ -48,9 +48,13 @@ export const ActionsCell = ({ session, onDeleteSuccess }: { session: Session, on
       if (!conversationRes.success) {
         toast.warning(conversationRes.message || "Sesión eliminada pero historial no encontrado.");
       }
-      toast.success("Cliente eliminado correctamente.");
 
-      if (onDeleteSuccess) onDeleteSuccess(session.id);
+      await handleDeleteSeguimientos();
+      if (onDeleteSuccess) {
+        onDeleteSuccess(session.id);
+        toast.success("Cliente eliminado correctamente.");
+      }
+
     } catch (error) {
       toast.error("Error inesperado al eliminar cliente.");
       console.error(error);
@@ -79,7 +83,7 @@ export const ActionsCell = ({ session, onDeleteSuccess }: { session: Session, on
         session.remoteJid
       )
       if (reminderRes.success) {
-        toast.success("Seguimientos eliminados correctamente.");
+        toast.success(reminderRes.message);
       } else {
         toast.error(reminderRes.message || "Error al eliminar seguimientos.");
       }

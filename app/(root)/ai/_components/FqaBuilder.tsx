@@ -1,3 +1,4 @@
+// app/(root)/ai/_components/FqaBuilder.tsx
 "use client";
 
 import { ChangeEvent, useEffect, useMemo, useState, useCallback } from "react";
@@ -14,7 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { DataSubtype, FqaBuilderProps, PRESETS, QaItem } from "@/types/agentAi";
 import { Workflow } from "@prisma/client";
 
-import { useFaqAutosave } from "./hooks/useFaqAutosave";
+import { useFaqAutosave, AutosaveStatus } from "./hooks/useFaqAutosave"; // 👈 import ampliado
 import { FunctionSelector } from "./";
 import ElementRenderer from "./action-steeps/ElementRenderer";
 import { buildSectionedPrompt } from "./helpers";
@@ -30,13 +31,12 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-
 /* ---------- type-guard para función de Pedidos ---------- */
 function isPedidoFn(el: any): el is {
     id: string;
     kind: "function";
     fn: "captura_datos";
-    subtype?: "Pedidos" | "Solicitudes" | "Reclamos" | "Reservas";
+    subtype?: "Pedidos" | "Solicitudes" | "Reclamos" | "Reservas" | "Citas";
     prompt?: string;
     fields?: string[];
 } {
@@ -53,10 +53,15 @@ export function FqaBuilder({
     initialItems = [],
     flows = [],
     notificationNumber,
+    registerSaveHandler
 }: FqaBuilderProps) {
     const [items, setItems] = useState<QaItem[]>(
         Array.isArray(initialItems) && initialItems.length > 0 ? initialItems : []
     );
+
+    // 🔹 Estado de autosave
+    const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>("idle");
+
     /* ------------------------- AUTOSAVE ------------------------- */
     const stableOnConflict = useCallback(
         (serverState: any) => {
@@ -67,21 +72,38 @@ export function FqaBuilder({
         [onConflict]
     );
 
-    useFaqAutosave({
+    const { forceSave } = useFaqAutosave({
         promptId,
         version,
         items,
         onVersionChange,
         onConflict: stableOnConflict,
+        onStatusChange: setAutosaveStatus,
+        mode: "manual",
     });
+
+    useEffect(() => {
+        if (!registerSaveHandler) return;
+        registerSaveHandler(forceSave);
+    }, [registerSaveHandler, forceSave]);
+
+
+    // Reset visual de "Cambios guardados"
+    useEffect(() => {
+        if (autosaveStatus === "saved") {
+            const t = setTimeout(() => setAutosaveStatus("idle"), 1500);
+            return () => clearTimeout(t);
+        }
+    }, [autosaveStatus]);
 
     /* ------------------ PREVIEW (markdown) ------------------ */
     const prompt = useMemo(() => {
         return buildSectionedPrompt(items as any, {
-            emptyMessage: "Aún no has agregado Preguntas. Usa “Agregar Pregunta” para comenzar.",
+            emptyMessage:
+                "Aún no has agregado Preguntas. Usa “Agregar Pregunta” para comenzar.",
             sectionLabel: (n, step) => `### Pregunta ${n} — ${step.title || "Sin título"}`,
-            elementsLabel: (n) => `Elementos de la pregunta: ${n}`,
-            mainMessageLabel: "Respuesta principal de la pregunta\n",
+            elementsLabel: (n) => `#### Elementos de la pregunta: ${n}`,
+            mainMessageLabel: "Objetivo/respuesta principal de la pregunta:",
             joinSeparator: "\n",
         });
     }, [items]);
@@ -117,7 +139,7 @@ export function FqaBuilder({
             {
                 id: nanoid(),
                 title: preset.title,
-                mainMessage: preset.answer, // puedes moverlo a un elemento de texto si prefieres
+                mainMessage: preset.answer,
                 elements: [],
             },
         ]);
@@ -135,7 +157,11 @@ export function FqaBuilder({
     /* ------------------ Helpers de Elements dentro del Pregunta ------------------ */
     const removeElement = (faqId: string, elId: string) => {
         setItems((prev) =>
-            prev.map((s) => (s.id === faqId ? { ...s, elements: s.elements.filter((e) => e.id !== elId) } : s))
+            prev.map((s) =>
+                s.id === faqId
+                    ? { ...s, elements: s.elements.filter((e) => e.id !== elId) }
+                    : s
+            )
         );
     };
 
@@ -145,7 +171,9 @@ export function FqaBuilder({
                 s.id === faqId
                     ? {
                         ...s,
-                        elements: s.elements.map((e) => (e.id === elId && e.kind === "text" ? { ...e, text } : e)),
+                        elements: s.elements.map((e) =>
+                            e.id === elId && e.kind === "text" ? { ...e, text } : e
+                        ),
                     }
                     : s
             )
@@ -159,7 +187,9 @@ export function FqaBuilder({
                     ? {
                         ...s,
                         elements: s.elements.map((e) =>
-                            e.id === elId && e.kind === "function" && (e as any).fn === "ejecutar_flujo"
+                            e.id === elId &&
+                                e.kind === "function" &&
+                                (e as any).fn === "ejecutar_flujo"
                                 ? { ...(e as any), flowId: flow.id, flowName: flow.name }
                                 : e
                         ),
@@ -208,7 +238,7 @@ export function FqaBuilder({
             prev.map((step) => ({
                 ...step,
                 elements: step.elements.map((el) =>
-                    el.id === elementId ? { ...el, subtype } : el // Cambiar el subtipo del elemento
+                    el.id === elementId ? { ...el, subtype } : el
                 ),
             }))
         );
@@ -218,18 +248,41 @@ export function FqaBuilder({
         <div className="gap-2 flex flex-col">
             <Card className="border-muted/60">
                 <CardHeader className="pb-2 flex items-center justify-between gap-2 flex-row">
-                    <CardTitle className="text-base">Preguntas</CardTitle>
-                    {items.length < 1 &&
+                    <div className="flex items-center gap-2">
+                        <CardTitle className="text-base">Preguntas</CardTitle>
+
+                        {/* 🔹 Indicador de autosave */}
+                        {autosaveStatus !== "idle" && (
+                            <span
+                                className={
+                                    "text-xs " +
+                                    (autosaveStatus === "saving"
+                                        ? "text-muted-foreground"
+                                        : autosaveStatus === "saved"
+                                            ? "text-emerald-500"
+                                            : autosaveStatus === "error"
+                                                ? "text-destructive"
+                                                : "")
+                                }
+                            >
+                                {autosaveStatus === "saving" && "Guardando..."}
+                                {autosaveStatus === "saved" && "Cambios guardados"}
+                                {autosaveStatus === "error" && "Error al guardar"}
+                            </span>
+                        )}
+                    </div>
+
+                    {items.length < 1 && (
                         <Button size="sm" onClick={addFaq}>
                             <Plus className="w-4 h-4" />
                             Agregar Pregunta
                         </Button>
-                    }
+                    )}
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {items.length === 0 ? (
                         <div className="text-center text-sm text-muted-foreground py-8">
-                            No has creado Preguntas. Crea tu primera Pregunta con “Agregar Preguntas.
+                            No has creado Preguntas. Crea tu primera Pregunta con “Agregar Pregunta”.
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -242,7 +295,9 @@ export function FqaBuilder({
                                                 <Input
                                                     id={step.id}
                                                     value={step.title ?? ""}
-                                                    onChange={(e) => updateTitle(step.id, e.target.value)}
+                                                    onChange={(e) =>
+                                                        updateTitle(step.id, e.target.value)
+                                                    }
                                                     className="h-8"
                                                     placeholder="Título de la Pregunta"
                                                 />
@@ -272,7 +327,9 @@ export function FqaBuilder({
                                                     </AlertDialogHeader>
 
                                                     <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                        <AlertDialogCancel>
+                                                            Cancelar
+                                                        </AlertDialogCancel>
                                                         <AlertDialogAction
                                                             className="bg-red-600 hover:bg-red-700"
                                                             onClick={() => removeItem(step.id)}
@@ -286,12 +343,14 @@ export function FqaBuilder({
                                     </CardHeader>
 
                                     <CardContent className="space-y-3">
-                                        {/* Objetivo / Mensaje principal */}
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium">{`Respuesta ${idx + 1}`}</label>
+                                            <label className="text-sm font-medium">{`Respuesta ${idx + 1
+                                                }`}</label>
                                             <Textarea
                                                 value={step.mainMessage ?? ""}
-                                                onChange={(e) => updateMain(step.id, e.target.value)}
+                                                onChange={(e) =>
+                                                    updateMain(step.id, e.target.value)
+                                                }
                                                 placeholder="Describe la respuesta principal de esta pregunta…"
                                                 className="min-h-[32px]"
                                             />
@@ -299,26 +358,12 @@ export function FqaBuilder({
 
                                         <Separator />
 
-                                        {/* Header elementos */}
-                                        <div className="flex items-center justify-between flex-wrap gap-2">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm font-medium">Elementos de la Pregunta</span>
-                                                <Badge variant="secondary">{idx + 1}</Badge>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <FunctionSelector
-                                                    step={step as any}
-                                                    setSteps={setItems as any}
-                                                    notificationNumber={notificationNumber ?? ""}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Lista de elementos */}
                                         <div className="rounded-lg border border-dashed border-muted/60 p-1">
-                                            {(!step.elements || step.elements.length === 0) ? (
+                                            {!step.elements ||
+                                                step.elements.length === 0 ? (
                                                 <div className="text-center text-sm text-muted-foreground">
-                                                    No hay elementos. Agrega funciones o textos con los botones de arriba.
+                                                    No hay elementos. Agrega funciones o textos con
+                                                    los botones de arriba.
                                                 </div>
                                             ) : (
                                                 <div className="space-y-3">
@@ -339,6 +384,22 @@ export function FqaBuilder({
                                                 </div>
                                             )}
                                         </div>
+
+                                        <div className="flex items-center justify-between flex-wrap gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-medium">
+                                                    Elementos de la pregunta
+                                                </span>
+                                                <Badge variant="secondary">{idx + 1}</Badge>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <FunctionSelector
+                                                    step={step as any}
+                                                    setSteps={setItems as any}
+                                                    notificationNumber={notificationNumber ?? ""}
+                                                />
+                                            </div>
+                                        </div>
                                     </CardContent>
                                 </Card>
                             ))}
@@ -346,15 +407,16 @@ export function FqaBuilder({
                     )}
                 </CardContent>
 
-                {items.length > 0 && <CardFooter className="pb-2 flex items-center justify-between gap-2 flex-row">
-                    <CardTitle className="text-base">Preguntas</CardTitle>
+                {items.length > 0 && (
+                    <CardFooter className="pb-2 flex items-center justify-between gap-2 flex-row">
+                        <CardTitle className="text-base">Preguntas</CardTitle>
 
-                    <Button size="sm" onClick={addFaq} className="gap-2">
-                        <Plus className="w-4 h-4" />
-                        Agregar Pregunta
-                    </Button>
-                </CardFooter>
-                }
+                        <Button size="sm" onClick={addFaq} className="gap-2">
+                            <Plus className="w-4 h-4" />
+                            Agregar Pregunta
+                        </Button>
+                    </CardFooter>
+                )}
             </Card>
         </div>
     );

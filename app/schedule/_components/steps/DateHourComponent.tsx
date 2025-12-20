@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { formatDateLabel } from "../../helpers";
 import { DateHourInterface } from "@/types/schedule";
+import { getAvailableSlots } from "@/actions/getAvailableSlots-actions";
 
 export const DateHourComponent = ({
   setSelectedDate,
@@ -17,8 +18,8 @@ export const DateHourComponent = ({
   selectedService,
   selectedSlot,
   setSlots,
-  getAvailableSlots,
   timezone,
+  serverTimeZone,
   slots,
   selectedDate,
   slotDuration,
@@ -71,7 +72,7 @@ export const DateHourComponent = ({
               const ymd = d ? format(d, "yyyy-MM-dd") : "";
               setSelectedDateYmd(ymd);
               if (ymd) {
-                getAvailableSlots(user.id as string, ymd, slotDuration).then((res) => {
+                getAvailableSlots(user.id as string, ymd, slotDuration, serverTimeZone).then((res) => {
                   if (res.success) setSlots(res.data || []);
                   else toast.error(res.message);
                 });

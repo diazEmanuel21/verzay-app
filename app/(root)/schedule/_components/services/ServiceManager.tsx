@@ -59,6 +59,7 @@ import {
 // ✅ Types (Prisma)
 import type { Service } from "@prisma/client";
 import Header from "@/components/shared/header";
+import { serviceDefaultMsg } from "./defaultServiceValues";
 
 // ------------------------------------------------------
 // Schema & Types
@@ -105,12 +106,8 @@ function ServiceFormDialog({
     const form = useForm<ServiceFormValues>({
         resolver: zodResolver(serviceSchema),
         defaultValues: {
-            name: initialData?.name ?? "",
-            messageText: initialData?.messageText ?? "",
-        },
-        values: {
-            name: initialData?.name ?? "",
-            messageText: initialData?.messageText ?? "",
+            name: initialData?.name ?? "Consulta",
+            messageText: initialData?.messageText ?? serviceDefaultMsg,
         },
     });
 

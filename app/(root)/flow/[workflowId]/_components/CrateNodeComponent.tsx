@@ -19,13 +19,17 @@ import {
 } from "@/components/ui/collapsible"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { ActionPopoverButton } from "./ActionPopoverButton";
+import { cn } from "@/lib/utils";
+import { MAX_NODES_PER_WORKFLOW, MAX_SEGUIMIENTOS_PER_WORKFLOW } from "@/types/workflow";
 
 interface PropsCreateNodeComponent {
     workflowId: Workflow['id'];
     plan: Plan;
+    totalNodes: number;
+    seguimientoNodes: number;
 };
 
-export const CreateNodeComponent = ({ workflowId, plan }: PropsCreateNodeComponent) => {
+export const CreateNodeComponent = ({ workflowId, plan, totalNodes, seguimientoNodes }: PropsCreateNodeComponent) => {
     const [open, setOpen] = useState(false);
     const [isOpenCollapse, setIsOpenCollapse] = useState(false);
 
@@ -46,8 +50,12 @@ export const CreateNodeComponent = ({ workflowId, plan }: PropsCreateNodeCompone
             setOpen(false);
             form.reset();
         },
-        onError: (e) => {
-            toast.error("Error al crear la acción", { id: "create-node" });
+        onError: (e: any) => {
+            const msg =
+                e?.message ||
+                e?.toString?.() ||
+                "Error al crear la acción";
+            toast.error(msg, { id: "create-node" });
             console.error(e);
         },
     });
@@ -68,6 +76,25 @@ export const CreateNodeComponent = ({ workflowId, plan }: PropsCreateNodeCompone
                 return;
             }
 
+            // ✅ Validación UI (no reemplaza backend; solo mejora UX)
+            if (totalNodes >= MAX_NODES_PER_WORKFLOW) {
+                toast.error(
+                    `Este flujo ya alcanzó el límite de ${MAX_NODES_PER_WORKFLOW} nodos. Elimina un nodo existente para poder agregar uno nuevo.`,
+                    { id: "create-node" }
+                );
+                return;
+            }
+
+            const isSeguimiento = actionSelected.type.startsWith("seguimiento-");
+
+            if (isSeguimiento && seguimientoNodes >= MAX_SEGUIMIENTOS_PER_WORKFLOW) {
+                toast.error(
+                    `Este flujo ya tiene el máximo de ${MAX_SEGUIMIENTOS_PER_WORKFLOW} nodos de seguimiento permitidos para evitar spam.`,
+                    { id: "create-node" }
+                );
+                return;
+            }
+
             form.setValue("tipo", actionSelected.type);
             form.setValue("message", defaultMessage);
 
@@ -78,36 +105,45 @@ export const CreateNodeComponent = ({ workflowId, plan }: PropsCreateNodeCompone
                 tipo: actionSelected.type,
                 message: defaultMessage,
             });
-        },
-        [form, mutate, workflowId]
+        }, [form, mutate, workflowId, totalNodes, seguimientoNodes]
     );
+
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button>
+                <Button type="button">
                     Agregar acción
                     <FilePlus2 />
                 </Button>
             </PopoverTrigger>
 
-            <PopoverContent className="w-64 p-4 space-y-4 bg-background border rounded-lg shadow-lg">
-                <div className="text-sm text-muted-foreground">Selecciona una acción</div>
+            <PopoverContent
+                align="center"
+                side="top"          // 👈 por defecto arriba (Radix flipa si no cabe)
+                sideOffset={8}
+                collisionPadding={12}
+                className={cn(
+                    "p-0 overflow-hidden", // 👈 importante: p-0, overflow-hidden
+                    "w-[320px]",
+                    "h-[420px] sm:h-[460px] md:h-[460px] lg:h-[460px]"
+                )}
+            >
+                {/* ✅ flexbox interno */}
+                <div className="h-full flex flex-col">
+                    {/* Header fijo */}
+                    <div className="p-4 pb-3 text-sm text-muted-foreground shrink-0">
+                        Selecciona una acción
+                        <div className="mt-1 flex flex-wrap gap-3 text-xs">
+                            <span>{`Nodos: ${totalNodes}/${MAX_NODES_PER_WORKFLOW}`}</span>
+                            <span>{`Seguimientos: ${seguimientoNodes}/${MAX_SEGUIMIENTOS_PER_WORKFLOW}`}</span>
+                        </div>
+                    </div>
 
-                <div className="flex flex-col gap-2">
-                    {baseActions.map((action) => (
-                        <ActionPopoverButton
-                            key={action.type}
-                            action={action}
-                            onClick={() => handleActionSelect(action.type)}
-                            disabled={isPending}
-                            plan={plan}
-                        />
-                    ))}
-
-                    <Collapsible open={isOpenCollapse} onOpenChange={setIsOpenCollapse}>
-                        <CollapsibleContent className="ml-2 space-y-2">
-                            {seguimientoActions.map((action) => (
+                    {/* Body con scroll */}
+                    <div className="px-4 pb-4 flex-1 min-h-0 overflow-y-auto pr-2">
+                        <div className="flex flex-col gap-2">
+                            {baseActions.map((action) => (
                                 <ActionPopoverButton
                                     key={action.type}
                                     action={action}
@@ -116,15 +152,30 @@ export const CreateNodeComponent = ({ workflowId, plan }: PropsCreateNodeCompone
                                     plan={plan}
                                 />
                             ))}
-                        </CollapsibleContent>
-                    </Collapsible>
-                </div>
 
-                {isPending && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Creando acción...
+                            <Collapsible open={isOpenCollapse} onOpenChange={setIsOpenCollapse}>
+                                <CollapsibleContent className="ml-2 space-y-2">
+                                    {seguimientoActions.map((action) => (
+                                        <ActionPopoverButton
+                                            key={action.type}
+                                            action={action}
+                                            onClick={() => handleActionSelect(action.type)}
+                                            disabled={isPending}
+                                            plan={plan}
+                                        />
+                                    ))}
+                                </CollapsibleContent>
+                            </Collapsible>
+                        </div>
                     </div>
-                )}
+
+                    {/* Footer fijo */}
+                    {isPending && (
+                        <div className="px-4 pb-4 shrink-0 flex items-center gap-2 text-xs text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" /> Creando acción...
+                        </div>
+                    )}
+                </div>
             </PopoverContent>
         </Popover>
     );

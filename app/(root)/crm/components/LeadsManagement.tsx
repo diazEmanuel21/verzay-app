@@ -8,18 +8,26 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Search, Plus, MessageCircleMore } from "lucide-react";
-import { SessionWithRegistros, SimpleTag, TipoRegistro } from "@/types/session";
+import {
+    SessionWithRegistrosAndTags,
+    SimpleTag,
+    TipoRegistro,
+} from "@/types/session";
+
 import { Registro, Session } from "@prisma/client";
 import { BulkActionsDropdown, FilterKey, FilterLeadsByStats, SwitchStatus } from "../../sessions/_components";
 import { clearAllHistory } from "@/actions/n8n-chat-historial-action";
 import { activateAllSessions, deactivateAllSessions, deleteAllSessions, getSessionsCountByUserId } from "@/actions/session-action";
-import { deleteRemindersByInstanceName } from "@/actions/seguimientos-actions";
+import { deleteSeguimientosByInstanceName } from "@/actions/seguimientos-actions";
 import { useRouter } from "next/navigation";
 import { ActionsCell } from "../../sessions/_components/Columns";
 import { SessionTagsCombobox, TagFilterBar } from "../../tags/components";
 import { ResumeCard } from "./ResumeCard";
 import { RegistrosTable } from "./RegistrosTable";
 import { formatFecha, getTipoLabel } from "../helpers";
+import { deleteRegistro } from "@/actions/registro-action";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { RegistroUpsertDialog } from './';
 
 /* ===== HELPERS ===== */
 
@@ -45,7 +53,7 @@ export const LeadsManagement = ({
     mutateSessions,
     allTags
 }: {
-    sessions: SessionWithRegistros[];
+    sessions: SessionWithRegistrosAndTags[];
     userId: string;
     filter: FilterKey;
     onChangeFilter: (value: FilterKey) => void;
@@ -59,6 +67,14 @@ export const LeadsManagement = ({
     );
     const [stats, setStats] = useState<{ total: number; active: number; inactive: number } | null>(null);
     const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+
+    const [registroOpen, setRegistroOpen] = useState(false);
+    const [registroMode, setRegistroMode] = useState<"create" | "edit">("create");
+    const [registroTipo, setRegistroTipo] = useState<TipoRegistro>("REPORTE" as any);
+    const [registroEditing, setRegistroEditing] = useState<Registro | null>(null);
+
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const [registroToDelete, setRegistroToDelete] = useState<Registro | null>(null);
 
     const selectedSession = useMemo(
         () => sessions.find((s) => s.id === selectedSessionId) ?? null,
@@ -95,18 +111,13 @@ export const LeadsManagement = ({
         });
     }, [sessions, search, selectedTagIds]);
 
-    const registros = useMemo<Registro[]>(() => {
-        if (!selectedSession) return [];
 
-        const maybeRegistros = (selectedSession as any).registros;
-
-        // Normalizamos: si NO es array, devolvemos []
-        if (!Array.isArray(maybeRegistros)) {
-            return [];
-        }
-
-        return maybeRegistros as Registro[];
+    const registros = useMemo(() => {
+        const raw = (selectedSession as any)?.registros;
+        if (!raw) return [];
+        return Array.isArray(raw) ? raw : [raw]; // 👈 convierte objeto único en lista
     }, [selectedSession]);
+
 
     const countByTipo = useMemo(() => {
         const counts: Record<TipoRegistro, number> = {
@@ -117,9 +128,9 @@ export const LeadsManagement = ({
             PAGO: 0,
             RESERVA: 0,
         };
-        for (const r of registros) {
-            counts[r.tipo] = (counts[r.tipo] ?? 0) + 1;
-        }
+        // for (const r of registros) {
+        //     counts[r.tipo] = (counts[r.tipo] ?? 0) + 1;
+        // }
         return counts;
     }, [registros]);
 
@@ -141,6 +152,25 @@ export const LeadsManagement = ({
         }
         fetchStats();
     }, [userId]);
+
+    function openCreate(tipo?: TipoRegistro) {
+        setRegistroMode("create");
+        setRegistroEditing(null);
+        if (tipo) setRegistroTipo(tipo);
+        setRegistroOpen(true);
+    }
+
+    function openEdit(r: Registro) {
+        setRegistroMode("edit");
+        setRegistroEditing(r);
+        setRegistroTipo(r.tipo as any);
+        setRegistroOpen(true);
+    }
+
+    function askDelete(r: Registro) {
+        setRegistroToDelete(r);
+        setDeleteOpen(true);
+    }
 
     return (
         <div className="flex flex-col h-full">
@@ -189,7 +219,7 @@ export const LeadsManagement = ({
                                     onDeactivateAll={deactivateAllSessions}
                                     onDeleteAll={deleteAllSessions}
                                     onClearHistory={clearAllHistory}
-                                    onClearReminders={deleteRemindersByInstanceName}
+                                    onClearSeguimientos={deleteSeguimientosByInstanceName}
                                     onSuccess={() => router.refresh()}
                                 />
                             </div>
@@ -250,6 +280,13 @@ export const LeadsManagement = ({
                         <div className="flex flex-col gap-3 min-h-0">
                             {selectedSession ? (
                                 <>
+                                    <div className="flex items-center justify-end">
+                                        <Button onClick={() => openCreate()} className="h-8">
+                                            <Plus className="h-4 w-4 mr-2" />
+                                            Nuevo reporte, solicitud, pedido, reclamo, pagos, reserva
+                                        </Button>
+                                    </div>
+
                                     {/* Info rápida del lead */}
                                     <div className="flex flex-col gap-2 rounded-lg border-border bg-muted/40 p-3">
                                         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -471,7 +508,7 @@ export const LeadsManagement = ({
                                                                             </div>
                                                                             <span className="text-muted-foreground whitespace-nowrap ml-2">
                                                                                 {formatFecha(
-                                                                                    r.fecha || undefined
+                                                                                    r.fecha || ""
                                                                                 )}
                                                                             </span>
                                                                         </li>
@@ -494,6 +531,9 @@ export const LeadsManagement = ({
                                                     (r) => r.tipo === "REPORTE"
                                                 )}
                                                 whatsapp={selectedWhatsapp}
+                                                onNew={(t) => openCreate(t as any)}
+                                                onEdit={openEdit}
+                                                onDelete={askDelete}
                                             />
                                         </TabsContent>
 
@@ -507,6 +547,10 @@ export const LeadsManagement = ({
                                                     (r) => r.tipo === "SOLICITUD"
                                                 )}
                                                 whatsapp={selectedWhatsapp}
+                                                onNew={(t) => openCreate(t as any)}
+                                                onEdit={openEdit}
+                                                onDelete={askDelete}
+
                                             />
                                         </TabsContent>
 
@@ -520,6 +564,10 @@ export const LeadsManagement = ({
                                                     (r) => r.tipo === "PEDIDO"
                                                 )}
                                                 whatsapp={selectedWhatsapp}
+                                                onNew={(t) => openCreate(t as any)}
+                                                onEdit={openEdit}
+                                                onDelete={askDelete}
+
                                             />
                                         </TabsContent>
 
@@ -533,6 +581,10 @@ export const LeadsManagement = ({
                                                     (r) => r.tipo === "RECLAMO"
                                                 )}
                                                 whatsapp={selectedWhatsapp}
+                                                onNew={(t) => openCreate(t as any)}
+                                                onEdit={openEdit}
+                                                onDelete={askDelete}
+
                                             />
                                         </TabsContent>
 
@@ -546,6 +598,10 @@ export const LeadsManagement = ({
                                                     (r) => r.tipo === "PAGO"
                                                 )}
                                                 whatsapp={selectedWhatsapp}
+                                                onNew={(t) => openCreate(t as any)}
+                                                onEdit={openEdit}
+                                                onDelete={askDelete}
+
                                             />
                                         </TabsContent>
 
@@ -559,9 +615,49 @@ export const LeadsManagement = ({
                                                     (r) => r.tipo === "RESERVA"
                                                 )}
                                                 whatsapp={selectedWhatsapp}
+                                                onNew={(t) => openCreate(t as any)}
+                                                onEdit={openEdit}
+                                                onDelete={askDelete}
+
                                             />
                                         </TabsContent>
                                     </Tabs>
+
+
+                                    <RegistroUpsertDialog
+                                        open={registroOpen}
+                                        onOpenChange={setRegistroOpen}
+                                        mode={registroMode}
+                                        sessionId={selectedSession.id}
+                                        initialTipo={registroTipo as any}
+                                        registro={registroEditing}
+                                        onSuccess={() => mutateSessions()}
+                                    />
+
+                                    <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>¿Eliminar registro?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Esta acción no se puede deshacer.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                <AlertDialogAction
+                                                    onClick={async () => {
+                                                        if (!registroToDelete) return;
+                                                        await deleteRegistro(registroToDelete.id);
+                                                        setRegistroToDelete(null);
+                                                        mutateSessions();
+                                                    }}
+                                                >
+                                                    Eliminar
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+
                                 </>
                             ) : (
                                 <div className="flex-1 flex items-center justify-center">

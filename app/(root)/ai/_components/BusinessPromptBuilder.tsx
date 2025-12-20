@@ -37,7 +37,7 @@ import {
     FormValues,
     promptSchema,
 } from "@/types/agentAi";
-import { useBusinessAutosave } from "./hooks/useBusinessAutosave";
+import { useBusinessAutosave, AutosaveStatus } from "./hooks/useBusinessAutosave";
 
 /* ---------- CAMPOS ADICIONALES DISPONIBLES ---------- */
 const optionalFields = [
@@ -57,25 +57,39 @@ export const BusinessPromptBuilder = ({
     version,
     onVersionChange,
     onConflict,
+    registerSaveHandler
 }: BusinessPromptBuilderProps) => {
     const [selectedFields, setSelectedFields] = useState<string[]>([]);
- 
+    const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>("idle");
+
     const form = useForm<FormValues>({
         resolver: zodResolver(promptSchema),
         defaultValues: values,
         mode: "onChange",
     });
 
-    // 🔁 AUTOSAVE (usa el form como fuente de verdad)
-    useBusinessAutosave({
+    const { forceSave } = useBusinessAutosave({
         form,
         promptId,
         version,
         onVersionChange,
         onConflict,
+        onStatusChange: setAutosaveStatus,
+        mode: "manual",
     });
 
-    // Si cambian los valores externos, resetea sin pisar campos sucios
+    useEffect(() => {
+        if (!registerSaveHandler) return;
+        registerSaveHandler(forceSave);
+    }, [registerSaveHandler, forceSave]);
+
+    useEffect(() => {
+        if (autosaveStatus === "saved") {
+            const t = setTimeout(() => setAutosaveStatus("idle"), 1500);
+            return () => clearTimeout(t);
+        }
+    }, [autosaveStatus]);
+
     useEffect(() => {
         form.reset(values, { keepDirtyValues: true });
     }, [form, values]);
@@ -108,6 +122,22 @@ export const BusinessPromptBuilder = ({
             <Card className="border-muted/60">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-base">Información del Negocio</CardTitle>
+
+                    {/* Indicador de autosave */}
+                    {autosaveStatus !== "idle" && (
+                        <span
+                            className={cn(
+                                "text-xs",
+                                autosaveStatus === "saving" && "text-muted-foreground",
+                                autosaveStatus === "saved" && "text-emerald-500",
+                                autosaveStatus === "error" && "text-destructive"
+                            )}
+                        >
+                            {autosaveStatus === "saving" && "Guardando..."}
+                            {autosaveStatus === "saved" && "Cambios guardados"}
+                            {autosaveStatus === "error" && "Error al guardar"}
+                        </span>
+                    )}
                 </CardHeader>
 
                 <CardContent className="space-y-4">

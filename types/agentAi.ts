@@ -4,7 +4,7 @@ import { ChangeEvent } from "react";
 import z from "zod";
 
 
-export const SUBTYPE_OPTIONS = ["Solicitudes", "Pedidos", "Reservas", "Reclamos"] as const;
+export const SUBTYPE_OPTIONS = ["Solicitudes", "Pedidos", "Reservas", "Reclamos", "Citas"] as const;
 
 export type DataSubtype = (typeof SUBTYPE_OPTIONS)[number];
 
@@ -61,7 +61,7 @@ export const TrainingDraftSchema = z.object({
                         ]),
                         // ⬇️ refuerza el enum como en el type
                         subtype: z
-                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas"])
+                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas", "Citas"])
                             .optional(),
                         prompt: z.string().optional(),
                         fields: z.array(z.string()).optional(),
@@ -102,7 +102,7 @@ export const FaqDraftSchema = z.object({
                         ]),
                         // ⬇️ refuerza el enum como en el type
                         subtype: z
-                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas"])
+                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas", "Citas"])
                             .optional(),
                         prompt: z.string().optional(),
                         fields: z.array(z.string()).optional(),
@@ -143,7 +143,7 @@ export const ProductsDraftSchema = z.object({
                         ]),
                         // ⬇️ refuerza el enum como en el type
                         subtype: z
-                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas"])
+                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas", "Citas"])
                             .optional(),
                         prompt: z.string().optional(),
                         fields: z.array(z.string()).optional(),
@@ -187,7 +187,7 @@ export const ExtrasDraftSchema = z.object({
                         ]),
                         // ⬇️ refuerza el enum como en el type
                         subtype: z
-                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas"])
+                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas", "Citas"])
                             .optional(),
                         prompt: z.string().optional(),
                         fields: z.array(z.string()).optional(),
@@ -228,7 +228,7 @@ export const ManagementDraftSchema = z.object({
                         ]),
                         // ⬇️ refuerza el enum como en el type
                         subtype: z
-                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas"])
+                            .enum(["Solicitudes", "Reclamos", "Pedidos", "Reservas", "Citas"])
                             .optional(),
                         prompt: z.string().optional(),
                         fields: z.array(z.string()).optional(),
@@ -478,6 +478,7 @@ export type BusinessPromptBuilderProps = BusinessBuilderInterface & {
     version: number;
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
+    registerSaveHandler?: (fn: () => Promise<void>) => void;
 };
 
 export interface PromptPreviewInterface {
@@ -498,6 +499,7 @@ export interface TrainingBuilderProps {
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
     initialSteps?: Array<any>; // steps desde BD (sections.training.steps)
+    registerSaveHandler?: (fn: () => Promise<void>) => void;
 }
 
 /* -------------------- Tipos locales para PASOS -------------------- */
@@ -511,21 +513,21 @@ export type StepTraining = {
 
 export type PedidoFunctionEl = ElementFunction & {
     fn: "captura_datos";
-    subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
+    subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas";
     prompt: string;
     fields?: string[]; // ← campos adicionales (cc, name, etc.)
 };
 
 export type CapturePedidoFunctionEl = ElementFunction & {
     fn: "consulta_datos";
-    subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
+    subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas";
     prompt: string;
     fields?: string[]; // ← campos adicionales (cc, name, etc.)
 };
 
 export type UpdatePedidoFunctionEl = ElementFunction & {
     fn: "actualizar_datos";
-    subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
+    subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas";
     prompt: string;
     fields?: string[]; // ← campos adicionales (cc, name, etc.)
 };
@@ -541,14 +543,14 @@ export type ElementFunction =
         id: string;
         kind: "function";
         fn: "captura_datos";
-        subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
+        subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas";
         prompt: string;
     }
     | {
         id: string;
         kind: "function";
         fn: "actualizar_datos";
-        subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
+        subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas";
         prompt: string;
     }
     | {
@@ -568,20 +570,21 @@ export type ElementFunction =
         id: string;
         kind: "function";
         fn: "consulta_datos";
-        subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
+        subtype: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas";
         prompt: string;
     };
 
 export type ElementItem = ElementText | ElementFunction;
 
 export const CAPTURE_SNIPPETS: Record<
-    "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas",
+    "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas",
     string
 > = {
     Solicitudes: "por favor indicame los siguientes datos",
     Reclamos: "por favor indicame los siguientes datos",
     Pedidos: "por favor indicame los siguientes datos",
     Reservas: "por favor indicame los siguientes datos",
+    Citas: "URL de agendamiento",
 };
 
 export const CONSULTA_DATOS_SNIPPET = `**Consultar Productos**. Si no hay un flujo activo y el usuario pregunta por un producto, ejecuta esta herramienta.
@@ -620,6 +623,7 @@ export type FqaBuilderProps = {
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
     initialItems?: Array<any>; // ← sections.faq.items desde BD
+    registerSaveHandler?: (fn: () => Promise<void>) => void;
 };
 
 export type ProductItemType = {
@@ -640,6 +644,7 @@ export interface ProductBuilderProps {
     version: number;
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
+    registerSaveHandler?: (fn: () => Promise<void>) => void;
     initialItems?: Array<any>;
 }
 
@@ -670,6 +675,7 @@ export interface ExtraInfoBuilderProps {
     version: number;
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
+    registerSaveHandler?: (fn: () => Promise<void>) => void;
     initialExtras?: { items?: Array<any>; firmaEnabled?: boolean; firmaText?: string, firmaName?: string };
 }
 
@@ -701,7 +707,7 @@ export type PropsTextRule = {
 };
 
 export type PropsDataCapture = {
-    el: PedidoFunctionEl | (PedidoFunctionEl & { subtype: "Solicitudes" | "Reclamos" | "Reservas" });
+    el: PedidoFunctionEl | (PedidoFunctionEl & { subtype: "Solicitudes" | "Reclamos" | "Reservas" | "Citas" });
     onRemove: () => void;
     onAddField: (field: string) => void;
     onRemoveField: (field: string) => void;
@@ -732,7 +738,7 @@ type El = {
 };
 
 export type PropsConsultaDatos = {
-    el: PedidoFunctionEl | (PedidoFunctionEl & { subtype: "Solicitudes" | "Reclamos" | "Reservas" });
+    el: PedidoFunctionEl | (PedidoFunctionEl & { subtype: "Solicitudes" | "Reclamos" | "Reservas" | "Citas" });
     onRemove: () => void;
     onAddField: (field: string) => void;
     onRemoveField: (field: string) => void;
@@ -769,7 +775,7 @@ export type FnCommon = {
     id: string;
     kind: "function";
     fn: "captura_datos" | "ejecutar_flujo" | "notificar_asesor" | "consulta_datos" | "actualizar_datos";
-    subtype?: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas";
+    subtype?: "Solicitudes" | "Reclamos" | "Pedidos" | "Reservas" | "Citas";
     prompt?: string;
     fields?: string[];
     flowId?: string | null;
@@ -826,12 +832,20 @@ export type ManagementBuilderProps = {
     initialItems?: Array<any>; // ← sections.faq.items desde BD
     debounceMs?: number;
     flows?: Workflow[];
+    registerSaveHandler?: (fn: () => Promise<void>) => void;
     notificationNumber?: string
 };
 
 
-export const flowBehaviorText = "* **Comportamiento obligatorio:** Tras ejecutar un flujo, responde **únicamente** lo indicado en **Regla/parámetro**.\n Si **no hay una orden clara**, formula una **pregunta contextual** para guiar al usuario al siguiente paso lógico de la conversación. **No añadas texto innecesario.**"
-export const notifyPrompt = "> **Función**: Ejecuta la tool 'Notificacion Asesor'\n* **Comportamiento:** Después de ejecutar la tool, tu única respuesta es la que se te indique en **Regla/parámetro**."
+export const flowBehaviorText = `* **Comportamiento obligatorio:** 
+  1. Tras ejecutar un flujo, responde **únicamente** lo indicado en **Regla/parámetro**.
+  2. Si **no hay una orden clara**, formula una **pregunta contextual** para guiar al usuario al siguiente paso lógico de la conversación. **No añadas texto innecesario.**`
+export const notifyPrompt = `**Función**: Ejecuta la tool 'Notificacion Asesor'
+* **Comportamiento obligatorio:**
+  1. Después de ejecutar la tool, tu única respuesta es la que se te indique en **Regla/parámetro**.
+  2. Si **no hay una orden clara**, envía el siguiente **mensaje de confirmación** al usuario:
+📝 ¡He *notificado* al area encargada!
+👨🏻‍💻 Un asesor se pondrá en contacto contigo a la brevedad posible.`
 export const instructionPrompt = `
 ## INSTRUCCIÓN
 

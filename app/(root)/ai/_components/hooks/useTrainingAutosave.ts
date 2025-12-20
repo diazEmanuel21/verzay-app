@@ -1,9 +1,11 @@
-// app/(root)/ai/_components/hooks/useTrainingAutosave.ts
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { patchTrainingSection } from "@/actions/system-prompt-actions";
 import { StepTraining } from "@/types/agentAi";
+import { toast } from "sonner";
+
+export type AutosaveStatus = "idle" | "saving" | "saved" | "error";
 
 function createDebounced<F extends (...args: any[]) => any>(fn: F, ms = 700) {
     let t: ReturnType<typeof setTimeout> | null = null;
@@ -24,29 +26,51 @@ export function useTrainingAutosave(opts: {
     steps: StepTraining[];
     onVersionChange: (next: number) => void;
     onConflict?: (serverState: any) => void;
+    onStatusChange?: (status: AutosaveStatus) => void;
+    mode?: "auto" | "manual";
 }) {
-    const { promptId, version, steps, onVersionChange, onConflict } = opts;
+    const {
+        promptId,
+        version,
+        steps,
+        onVersionChange,
+        onConflict,
+        onStatusChange,
+        mode = "auto",
+    } = opts;
 
     const versionRef = useRef(version);
-    useEffect(() => { versionRef.current = version; }, [version]);
+    useEffect(() => {
+        versionRef.current = version;
+    }, [version]);
 
-    // onConflict estable vía ref (para no ser dep de runSave)
+    // onConflict estable vía ref
     const conflictRef = useRef<typeof onConflict>();
-    useEffect(() => { conflictRef.current = onConflict; }, [onConflict]);
+    useEffect(() => {
+        conflictRef.current = onConflict;
+    }, [onConflict]);
 
-    // Evita autosave inicial tras hidratar desde BD
+    // Evita autosave inicial tras hidratar
     const mountedRef = useRef(false);
-    useEffect(() => { mountedRef.current = true; }, []);
+    useEffect(() => {
+        mountedRef.current = true;
+    }, []);
 
     // Hash para evitar saves redundantes
     const lastHashRef = useRef<string>("");
     const stepsHash = useMemo(() => JSON.stringify(steps), [steps]);
 
-    const runSave = useMemo(() => {
-        const fn = async (payload: { steps: StepTraining[] }) => {
+    const notifyStatus = (status: AutosaveStatus) => {
+        onStatusChange?.(status);
+    };
+
+    // Lógica de guardado REAL (sin debounce)
+    const saveFn = useCallback(
+        async (payload: { steps: StepTraining[] }) => {
             if (!promptId) return;
-            // Evitar primer disparo por hidratación
-            if (!mountedRef.current) return;
+            if (!mountedRef.current) return; // seguridad extra
+
+            notifyStatus("saving");
 
             try {
                 const res = await patchTrainingSection({
@@ -56,21 +80,39 @@ export function useTrainingAutosave(opts: {
                 });
 
                 if (res?.conflict) {
+                    notifyStatus("error");
+                    toast.error(
+                        "Este entrenamiento se actualizó en otro lugar. Vamos a cargar la última versión."
+                    );
                     conflictRef.current?.(res.data);
                     return;
                 }
-                if (res?.ok && res?.data?.version) {
-                    onVersionChange(res.data.version);
-                }
-            } catch {
-                // opcional: logger/toast
-            }
-        };
-        return createDebounced(fn, 700);
-        // solo cambia si cambia promptId o onVersionChange
-    }, [promptId, onVersionChange]);
 
+                if (res?.ok && res?.data?.version) {
+                    versionRef.current = res.data.version;
+                    onVersionChange(res.data.version);
+                    notifyStatus("saved");
+                } else {
+                    notifyStatus("error");
+                    toast.error("No se pudo guardar los cambios de entrenamiento.");
+                }
+            } catch (err) {
+                console.error("[useTrainingAutosave] Error al guardar:", err);
+                notifyStatus("error");
+                toast.error("Error al guardar el entrenamiento automáticamente.");
+            }
+        },
+        [promptId, onVersionChange] // notifyStatus usa onStatusChange directamente
+    );
+
+    // Versión con debounce para AUTO
+    const runSave = useMemo(() => {
+        return createDebounced(saveFn, 700);
+    }, [saveFn]);
+
+    // Autosave solo si mode === "auto"
     useEffect(() => {
+        if (mode === "manual") return;
         if (!promptId) return;
 
         // No re-guardar si el contenido no cambió
@@ -83,5 +125,17 @@ export function useTrainingAutosave(opts: {
         return () => {
             runSave.cancel?.();
         };
-    }, [stepsHash, promptId, runSave, steps]);
+    }, [stepsHash, promptId, runSave, mode, steps]);
+
+    // Guardado forzado (sin debounce), para usar desde el botón Guardar
+    const forceSave = useCallback(async () => {
+        if (!promptId) return;
+
+        // Actualizamos hash para mantener coherencia con el autosave
+        lastHashRef.current = stepsHash;
+
+        await saveFn({ steps });
+    }, [promptId, steps, stepsHash, saveFn]);
+
+    return { forceSave };
 }

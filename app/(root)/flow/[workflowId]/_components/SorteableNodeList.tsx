@@ -27,6 +27,7 @@ interface SortableNodeListProps {
 
 export const SortableNodeList = ({ nodes, workflowId, user }: SortableNodeListProps) => {
     const [items, setItems] = useState(nodes)
+    console.log({items})
     const sensors = useSensors(useSensor(PointerSensor))
 
     useEffect(() => {

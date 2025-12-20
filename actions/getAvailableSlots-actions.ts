@@ -28,7 +28,8 @@ function nextLocalDateStr(ymd: string): string {
 export async function getAvailableSlots(
     userId: string,
     dateYmd: string,
-    slotDuration: number
+    slotDuration: number,
+    serverTimeZone: string
 ): Promise<AvailableSlotsResponse> {
     if (!userId || !dateYmd || !slotDuration) {
         return { success: false, message: 'Parámetros requeridos faltantes (userId, date o slotDuration).' };
@@ -37,7 +38,7 @@ export async function getAvailableSlots(
     try {
         // 1) TZ del dueño
         const user = await db.user.findUnique({ where: { id: userId }, select: { timezone: true } });
-        const ownerTz = user?.timezone || 'America/Bogota';
+        const ownerTz = user?.timezone || serverTimeZone;
 
         // 2) Fechas locales puras (YYYY-MM-DD) en la TZ del dueño
         const selectedDayLocal = formatInTimeZone(dateYmd, ownerTz, 'yyyy-MM-dd');

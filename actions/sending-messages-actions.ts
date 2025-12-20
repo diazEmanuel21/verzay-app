@@ -23,8 +23,6 @@ export const sendingMessages = async ({
     remoteJid,
     text,
 }: SendingMessages): Promise<{ success: boolean; message: string }> => {
-    console.log({ url, apikey, remoteJid, text });
-
     try {
         const body = {
             number: remoteJid,

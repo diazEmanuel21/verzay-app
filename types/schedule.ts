@@ -43,11 +43,8 @@ export interface DateHourInterface {
     selectedDate?: Date;
     slots: Slot[];
     timezone: string;
+    serverTimeZone: string;
     slotDuration: number;
-
-    // dependencias externas
-    getAvailableSlots: GetAvailableSlotsFn;
-
     // mínimos del usuario (solo usas user.id)
     user: UserWithApiKeys;
 

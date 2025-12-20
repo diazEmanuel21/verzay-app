@@ -59,6 +59,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const [loading, setLoading] = useState(false);
   const [isDraggingFile, setIsDragging] = useState(false);
   const [inactivity, setInactivity] = useState(nodes.inactividad ?? false);
+  const [iaEnabled, setIaEnabled] = useState(false); // true = muestra el TimeInput al inicio
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -71,6 +72,8 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const baseType = nodeType.startsWith('seguimiento-')
     ? nodeType.split('-')[1] as Action['type']
     : nodeType;
+  const isPauseNode = nodeType === 'node_pause';
+  const isNotifyNode = nodeType === 'nodo-notify';
   const hasContent = nodeType === 'text' ? !!message : !!nodes.url;
   const allActions = [...baseActions, ...seguimientoActions];
   const currentAction = allActions.find(
@@ -311,6 +314,50 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   };
 
   const renderContent = () => {
+    if (isPauseNode) {
+      return (
+        <div className="space-y-3 rounded-md border border-border bg-muted/40 p-3">
+          {/* Header: switch + título + descripción */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="airplane-mode"
+                  checked={iaEnabled}
+                  onCheckedChange={setIaEnabled}
+                  className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-400"
+                />
+                <Label
+                  htmlFor="airplane-mode"
+                  className="text-sm font-semibold"
+                >
+                  Activar IA
+                </Label>
+              </div>
+            </div>
+          </div>
+
+          {/* Contenido: solo se muestra cuando está activado */}
+          {iaEnabled && (
+            <div className="pt-1">
+              <TimeInput
+                className="text-xs text-muted-foreground"
+                onChange={handleTimeChange}
+                onBlur={handleOnBlurTime}
+                currentValue={nodes.delay || "minutes-0"}
+              />
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (isNotifyNode) {
+      return (
+        <></>
+      )
+    }
+
     if (baseType === 'text') {
       return (
         <GenericTextarea
@@ -465,7 +512,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
         </CardHeader>
         <CardContent className="p-4">
           {renderContent()}
-          {baseType !== 'text' && baseType !== 'document' && baseType !== 'audio' &&
+          {!isNotifyNode && !isPauseNode && baseType !== 'text' && baseType !== 'document' && baseType !== 'audio' &&
             <div className="flex w-full mt-2">
               <GenericTextarea
                 fileType={baseType}

@@ -34,6 +34,11 @@ import {
     AlertDialog,
     AlertDialogContent,
     AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogCancel,
+    AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 
 import {
@@ -55,6 +60,7 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
     const [newStatus, setNewStatus] = useState<AppointmentStatus>("CONFIRMADA");
+    const [openCancelAlert, setOpenCancelAlert] = useState(false);
 
     const loadAppointments = async () => {
         const res = await getAppointmentsByUser(user.id);
@@ -112,7 +118,8 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
             if (result.success) {
                 toast.success(result.message);
             } else {
-                toast.warning(`No se pudo enviar el mensaje: ${result.message}`);
+                toast.info(`No se envió el mensaje de notificación`);
+                console.error(`Error SchedulePageClient line: 232 ${result.message}`)
             }
 
         } catch (error) {
@@ -198,10 +205,13 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
 
                                     <Button
                                         onClick={() => {
-                                            if (selectedEventId) {
-                                                handleStatusChange(selectedEventId, newStatus);
-                                                setOpenDialog(false);
+                                            if (!selectedEventId) return;
+                                            if (newStatus === "CANCELADA") {
+                                                setOpenCancelAlert(true);
+                                                return;
                                             }
+                                            handleStatusChange(selectedEventId, newStatus);
+                                            setOpenDialog(false);
                                         }}
                                     >
                                         Actualizar
@@ -267,6 +277,40 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                     </Tabs>
                 </AlertDialogContent>
             </AlertDialog >
+
+            <AlertDialog open={openCancelAlert} onOpenChange={setOpenCancelAlert}>
+                <AlertDialogContent className="border-border">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Confirmar cancelación</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Al cambiar el estado a <strong>CANCELADA</strong>, se eliminarán todos los recordatorios/seguimientos
+                            del agendamiento asociados a este cliente:
+                            <span className="block mt-2 text-muted-foreground">
+                                {selectedAppointment?.session?.pushName || "Cliente desconocido"}
+                            </span>
+                            <span className="block text-muted-foreground">
+                                {selectedAppointment?.session?.remoteJid?.split("@")[0] || ""}
+                            </span>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <AlertDialogFooter className="gap-2">
+                        <AlertDialogCancel>Volver</AlertDialogCancel>
+
+                        <AlertDialogAction
+                            onClick={() => {
+                                if (!selectedEventId) return;
+
+                                handleStatusChange(selectedEventId, newStatus); // aquí newStatus es CANCELADA
+                                setOpenCancelAlert(false);
+                                setOpenDialog(false);
+                            }}
+                        >
+                            Sí, cancelar y eliminar recordatorios
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     );
 };
