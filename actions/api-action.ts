@@ -104,12 +104,12 @@ export async function generateQRCode({ instanceName, userId }: GenerateQrInterfa
         const instanceNameAdmin = "Verzay Pro Atc";
         const sendTextUrl = `https://${serverUrlAdmin}/message/sendText/${instanceNameAdmin}`;
 
-        // await sendingMessages({
-        //   url: sendTextUrl,
-        //   apikey: apiKey,
-        //   remoteJid,
-        //   text: "Tu *AGENTE* se encuentra desconectada 🔴. Por favor revisa tu configuración para restablecer la conexión.",
-        // });
+        await sendingMessages({
+          url: sendTextUrl,
+          apikey: apiKey,
+          remoteJid,
+          text: "Tu *AGENTE* se encuentra desconectado 🔴. Por favor revisa tu configuración para restablecer la conexión.",
+        });
       } catch {
         // best-effort: aunque falle el envío, evitamos spam
       }
