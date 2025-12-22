@@ -216,7 +216,7 @@ export const ManagementBuilder = ({
             joinSeparator: "\n",
             appointmentUrl,
         });
-    }, [steps, appointmentUrl]);
+    }, [steps, appointmentUrl]);    
 
     // SYNC con parent
     useEffect(() => {
