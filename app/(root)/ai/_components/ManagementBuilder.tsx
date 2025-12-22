@@ -210,7 +210,8 @@ export const ManagementBuilder = ({
                 ].join("\n");
             },
 
-            elementsLabel: (_n) => `#### Elementos de la gestión ${_n}`,
+            // elementsLabel: (_n) => `#### Elementos de la gestión ${_n}`,
+            elementsLabel: (_n) => ``,
             mainMessageLabel: "Objetivo/respuesta principal de la gestión:",
             joinSeparator: "\n",
             appointmentUrl,
