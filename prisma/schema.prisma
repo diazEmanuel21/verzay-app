@@ -33,13 +33,13 @@ model User {
   muteAgentResponses            Boolean               @default(false)
   timezone                      String?
   meetingDuration               Int?
-  meetingUrl                    String?
   onFacebook                    Boolean               @default(false)
   onInstagram                   Boolean               @default(false)
   aiModelId                     String?
   defaultAiModelId              String?
   defaultProviderId             String?
   delayTimeGPT                  String?
+  meetingUrl                    String?
   accounts                      Account[]
   agentPrompts                  AgentPrompt[]         @relation("UserAgentPrompts")
   publishedAgentPromptRevisions AgentPromptRevision[] @relation("UserPublishedRevisions")
