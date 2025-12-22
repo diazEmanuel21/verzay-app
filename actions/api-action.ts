@@ -108,7 +108,7 @@ export async function generateQRCode({ instanceName, userId }: GenerateQrInterfa
           url: sendTextUrl,
           apikey: apiKey,
           remoteJid,
-          text: "Tu API de Evolution se encuentra desconectada. Por favor revisa tu configuración para restablecer la conexión.",
+          text: "Tu *AGENTE* se encuentra desconectada 🔴. Por favor revisa tu configuración para restablecer la conexión.",
         });
       } catch {
         // best-effort: aunque falle el envío, evitamos spam
