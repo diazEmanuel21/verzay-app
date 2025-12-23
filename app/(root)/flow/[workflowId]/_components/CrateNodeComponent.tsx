@@ -7,7 +7,7 @@ import { createNodeflowSchema, createNodeflowSchemaType } from "@/schema/nodeflo
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
-import { CreateNode } from "@/actions/createNode";
+import { CreateNode } from "@/actions/workflow-node-action";
 import { Plan, Workflow } from "@prisma/client";
 import { baseActions, seguimientoActions } from "../helpers";
 import { Action } from '../types';

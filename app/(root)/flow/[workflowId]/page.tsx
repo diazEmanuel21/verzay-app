@@ -1,13 +1,12 @@
 import { db } from '@/lib/db';
 import React from 'react'
-import { getNodeforUser } from '@/actions/getNodeforUser';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { NodeCard } from './_components/NodeCard';
 import { CreateNodeComponent } from './_components/CrateNodeComponent';
 import { currentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { InboxIcon } from 'lucide-react';
-import { SortableNodeList } from './_components';
+import { getNodeforUser } from '@/actions/workflow-node-action';
+import { WorkflowCanvas } from './_components/WorkflowCanvas';
+import { getWorkflowEdges } from '@/actions/workflow-actions';
 
 const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) => {
   const user = await currentUser();
@@ -18,6 +17,7 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
   const { workflowId } = params;
 
   const nodes = await getNodeforUser(workflowId);
+  const edgesDB = await getWorkflowEdges(workflowId);
   const totalNodes = nodes.length;
   const seguimientoNodes = nodes.filter((n: any) =>
     (n?.tipo ?? "").toLowerCase().startsWith("seguimiento")
@@ -38,11 +38,7 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
     <div className='flex flex-col items-center min-h-full'>
       {nodes.length > 0 ? (
         <div className='flex flex-col h-full w-full gap-5 px-4 text-center pt-6' >
-          <SortableNodeList
-            nodes={JSON.parse(JSON.stringify(nodes))}
-            workflowId={workflow.id}
-            user={JSON.parse(JSON.stringify(user))}
-          />
+          <WorkflowCanvas edgesDB={edgesDB} nodesDB={nodes} workflowId={workflow.id} user={user} />
 
           <div className='flex items-center justify-center'>
             <CreateNodeComponent

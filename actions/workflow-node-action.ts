@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { minioClient } from "@/lib/minio";
 import { createNodeflowSchema, createNodeflowSchemaType } from "@/schema/nodeflow";
-import { MAX_NODES_PER_WORKFLOW, MAX_SEGUIMIENTOS_PER_WORKFLOW } from "@/types/workflow";
+import { MAX_NODES_PER_WORKFLOW, MAX_SEGUIMIENTOS_PER_WORKFLOW, UpdateNodePositionInput } from "@/types/workflow";
 import { redirect } from "next/navigation";
 
 export async function CreateNode(form: createNodeflowSchemaType) {
@@ -353,4 +353,38 @@ export async function deleteWorkflowFiles(userId: string, workflowId: string) {
       error: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+export async function getNodeforUser(workflowId?: string) {
+  return db.workflowNode.findMany({
+    where: {
+      workflowId,
+    },
+    orderBy: {
+      order: "asc"
+    }
+  })
+}
+
+export async function updateWorkflowNodePosition(input: UpdateNodePositionInput) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error('Unauthorized');
+
+  const { nodeId, posX, posY } = input;
+
+  const node = await db.workflowNode.findFirst({
+    where: {
+      id: nodeId,
+    },
+    select: { id: true },
+  });
+
+  if (!node) throw new Error('Node not found');
+
+  await db.workflowNode.update({
+    where: { id: nodeId },
+    data: { posX, posY },
+  });
+
+  return { ok: true };
 }

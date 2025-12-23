@@ -371,6 +371,22 @@ model WorkflowNode {
   inactividad Boolean?
   name_file   String?
   order       Int      @default(0)
+
+  posX Float @default(0)
+  posY Float @default(0)
+}
+
+model WorkflowEdge {
+  id         String   @id @default(cuid())
+  workflowId String
+  sourceId   String
+  targetId   String
+  createdAt  DateTime @default(now())
+
+  @@unique([workflowId, sourceId, targetId])
+  @@index([workflowId])
+  @@index([sourceId])
+  @@index([targetId])
 }
 
 model n8n_chat_histories {

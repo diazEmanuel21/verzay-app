@@ -6,7 +6,7 @@ import { createWorkflowSchema, createWorkflowSchemaType } from "@/schema/workflo
 import { WorkflowStatus } from "@/types/workflow";
 import { Workflow } from "@prisma/client";
 import { redirect } from "next/navigation";
-import { deleteAllNodes, deleteFileNode } from "./createNode";
+import { deleteAllNodes, deleteFileNode } from "./workflow-node-action";
 
 interface GetWorkFlowResponse {
     success: boolean;
@@ -137,17 +137,15 @@ export const deleteEntireWorkflow = async (userId: string, workflowId: string) =
             // #3. Verificar si alguno falló
             const failed = deleteResults.find((res) => !res.success);
 
-            // if (failed) {
-            //   return {
-            //     success: false,
-            //     message: "Error al eliminar uno o más archivos del flujo.",
-            //     stage: "files",
-            //     detail: failed.message || "Error desconocido en la eliminación de archivos.",
-            //   };
-            // }
+            if (failed) {
+                return {
+                    success: false,
+                    message: "Error al eliminar uno o más archivos del flujo.",
+                    stage: "files",
+                    detail: failed.message || "Error desconocido en la eliminación de archivos.",
+                };
+            }
         }
-
-        // ✅ Archivos eliminados, continuar...
 
         // #4. Eliminar nodos
         const nodesRes = await deleteAllNodes(workflowId);
@@ -171,7 +169,6 @@ export const deleteEntireWorkflow = async (userId: string, workflowId: string) =
             };
         }
 
-        // ✅ Todo correcto
         return {
             success: true,
             message: "Flujo y datos relacionados eliminados correctamente.",
@@ -210,3 +207,86 @@ export const updateWorkflow = async (id: string, data: Partial<Workflow>): Promi
         };
     }
 };
+
+
+export async function createWorkflowEdge(params: {
+    workflowId: string;
+    sourceId: string;
+    targetId: string;
+}) {
+    const session = await auth();
+    if (!session?.user?.id) throw new Error('Unauthorized');
+
+    const { workflowId, sourceId, targetId } = params;
+
+    if (sourceId === targetId) throw new Error('No puedes conectar un nodo consigo mismo');
+
+    // validar que el workflow es del usuario
+    const wf = await db.workflow.findFirst({
+        where: { id: workflowId, userId: session.user.id },
+        select: { id: true },
+    });
+    if (!wf) throw new Error('Workflow no encontrado');
+
+    // vlidar que ambos nodos pertenecen a ese workflow
+    const nodes = await db.workflowNode.findMany({
+        where: {
+            id: { in: [sourceId, targetId] },
+            workflowId,
+        },
+        select: { id: true },
+    });
+    if (nodes.length !== 2) throw new Error('Nodos inválidos para este workflow');
+
+    // crear edge (evita duplicado por @@unique)
+    const edge = await db.workflowEdge.create({
+        data: { workflowId, sourceId, targetId },
+        select: { id: true, sourceId: true, targetId: true },
+    });
+
+    return { success: true, edge };
+}
+
+export async function deleteWorkflowEdge(params: {
+    workflowId: string;
+    edgeId: string;
+}) {
+    const session = await auth();
+    if (!session?.user?.id) throw new Error('Unauthorized');
+
+    const { workflowId, edgeId } = params;
+
+    // ✅ validar ownership del workflow
+    const wf = await db.workflow.findFirst({
+        where: { id: workflowId, userId: session.user.id },
+        select: { id: true },
+    });
+    if (!wf) throw new Error('Workflow no encontrado');
+
+    // borrar solo si el edge pertenece al workflow
+    await db.workflowEdge.deleteMany({
+        where: { id: edgeId, workflowId },
+    });
+
+    return { success: true };
+}
+
+export async function getWorkflowEdges(workflowId: string) {
+    const session = await auth();
+    if (!session?.user?.id) throw new Error('Unauthorized');
+
+    // ownership
+    const wf = await db.workflow.findFirst({
+        where: { id: workflowId, userId: session.user.id },
+        select: { id: true },
+    });
+    if (!wf) throw new Error('Workflow no encontrado');
+
+    const edges = await db.workflowEdge.findMany({
+        where: { workflowId },
+        select: { id: true, sourceId: true, targetId: true },
+        orderBy: { createdAt: 'asc' },
+    });
+
+    return edges;
+}
