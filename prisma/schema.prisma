@@ -61,6 +61,11 @@ model User {
   clientesAsignados             reseller[]            @relation("RevendedorAsignador")
   esClienteDe                   reseller[]            @relation("ClienteAsignado")
   aiConfig                      UserAiConfig[]
+
+  financeAccounts     FinanceAccount[]
+  financeCategories   FinanceCategory[]
+  financeTransactions FinanceTransaction[]
+  financeAttachments  FinanceAttachment[]
 }
 
 model Product {
@@ -614,4 +619,133 @@ enum AppointmentStatus {
   PENDIENTE
   CONFIRMADA
   CANCELADA
+}
+
+// MODULO FINANCE
+
+enum FinanceTxType {
+  SALE
+  EXPENSE
+}
+
+enum FinanceTxStatus {
+  ACTIVE
+  VOIDED    // anulado (ventas)
+  DELETED   // eliminado lógico (gastos)
+}
+
+enum FinanceAccountType {
+  COMPANY
+  PERSONAL
+}
+
+model FinanceAccount {
+  id        String             @id @default(cuid())
+  userId    String
+  name      String             // "Empresa", "Carlos", "Alex", "Caja", "Banco", etc
+  type      FinanceAccountType @default(PERSONAL)
+  isDefault Boolean            @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  txs  FinanceTransaction[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("finance_accounts")
+}
+
+model FinanceCurrency {
+  code     String @id // "USD", "COP"
+  name     String
+  symbol   String
+  decimals Int    @default(2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  txs FinanceTransaction[]
+
+  @@map("finance_currencies")
+}
+
+model FinanceCategory {
+  id     String        @id @default(cuid())
+  userId String
+  name   String
+  type   FinanceTxType // categorías separadas por tipo
+
+  color String?
+  order Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  txs  FinanceTransaction[]
+
+  @@unique([userId, type, name])
+  @@index([userId, type])
+  @@map("finance_categories")
+}
+
+model FinanceTransaction {
+  id           String          @id @default(cuid())
+  userId        String
+
+  type          FinanceTxType
+  status        FinanceTxStatus @default(ACTIVE)
+
+  occurredAt    DateTime        // fecha del movimiento
+  amount        Decimal         @db.Decimal(18, 2)
+  currencyCode  String
+
+  accountId     String
+  categoryId    String?
+
+  title         String?
+  description   String?
+
+  counterparty  String?  // cliente/proveedor
+  reference     String?  // #factura / #recibo
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account  FinanceAccount @relation(fields: [accountId], references: [id])
+  currency FinanceCurrency @relation(fields: [currencyCode], references: [code])
+  category FinanceCategory? @relation(fields: [categoryId], references: [id])
+
+  attachments FinanceAttachment[]
+
+  @@index([userId, type, status])
+  @@index([userId, occurredAt])
+  @@index([userId, accountId, occurredAt])
+  @@index([userId, currencyCode, occurredAt])
+  @@index([userId, categoryId, occurredAt])
+  @@map("finance_transactions")
+}
+
+model FinanceAttachment {
+  id            String   @id @default(cuid())
+  userId        String
+  transactionId String
+
+  url           String   // MinIO public URL
+  fileName      String?
+  mimeType      String?
+  sizeBytes     Int?
+
+  createdAt DateTime @default(now())
+
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transaction FinanceTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([transactionId])
+  @@map("finance_attachments")
 }
