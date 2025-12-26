@@ -65,7 +65,7 @@ export function buildExpenseColumns(opts: {
             cell: ({ row }) => {
                 const kind = expenseKind(row.original.category?.name ?? null);
                 return (
-                    <Badge variant="secondary" className="h-5 rounded-md px-2 text-[11px] font-medium">
+                    <Badge variant="secondary" className="h-5 rounded-md px-2 text-[13px] font-medium">
                         {kind}
                     </Badge>
                 );
@@ -84,7 +84,7 @@ export function buildExpenseColumns(opts: {
             header: ({ column }) => (
                 <Button
                     variant="ghost"
-                    className="h-8 px-2 text-xs"
+                    className="h-8 px-2 text-sm"
                     onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                 >
                     Total gasto
@@ -107,7 +107,7 @@ export function buildExpenseColumns(opts: {
         },
         {
             id: 'archivos',
-            header: 'Archivos multimedia',
+            header: 'Archivos',
             cell: ({ row }) => {
                 const atts = row.original.attachments || [];
                 if (!atts.length) return <span className="text-muted-foreground">—</span>;

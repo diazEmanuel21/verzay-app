@@ -79,13 +79,13 @@ export function DataTable<TData, TValue>({
             value={(searchColumn?.getFilterValue() as string) ?? ''}
             onChange={(event) => searchColumn?.setFilterValue(event.target.value)}
             placeholder={searchPlaceholder}
-            className="h-8 w-[260px] text-xs"
+            className="h-8 w-[260px] text-sm"
           />
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="h-8 px-2 text-xs">
+            <Button variant="outline" className="h-8 px-2 text-sm">
               Columnas
             </Button>
           </DropdownMenuTrigger>
@@ -96,7 +96,7 @@ export function DataTable<TData, TValue>({
               .map((column) => (
                 <DropdownMenuCheckboxItem
                   key={column.id}
-                  className="text-xs"
+                  className="text-sm"
                   checked={column.getIsVisible()}
                   onCheckedChange={(value) => column.toggleVisibility(!!value)}
                 >
@@ -112,7 +112,7 @@ export function DataTable<TData, TValue>({
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="[&>th]:text-xs">
+              <TableRow key={headerGroup.id} className="[&>th]:text-sm">
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id} className="py-2">
                     {header.isPlaceholder
@@ -131,7 +131,7 @@ export function DataTable<TData, TValue>({
                   key={row.id}
                   onClick={() => onRowClick?.(row.original)}
                   className={[
-                    '[&>td]:py-2 [&>td]:text-xs',
+                    '[&>td]:py-2 [&>td]:text-sm',
                     onRowClick ? 'cursor-pointer hover:bg-muted/50' : '',
                   ].join(' ')}
                 >
@@ -158,14 +158,14 @@ export function DataTable<TData, TValue>({
 
       {/* Pagination */}
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           {table.getFilteredRowModel().rows.length} registro(s)
         </p>
 
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            className="h-8 px-2 text-xs"
+            className="h-8 px-2 text-sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
@@ -173,7 +173,7 @@ export function DataTable<TData, TValue>({
           </Button>
           <Button
             variant="outline"
-            className="h-8 px-2 text-xs"
+            className="h-8 px-2 text-sm"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
