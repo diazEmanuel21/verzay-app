@@ -1,6 +1,6 @@
 export enum WorkflowStatus {
-    DRAFT = "DRAFT",
-    PUBLISHED = "PUBLICADO"
+  DRAFT = "DRAFT",
+  PUBLISHED = "PUBLICADO"
 }
 // Límites anti-spam por flujo
 export const MAX_NODES_PER_WORKFLOW = 10;
@@ -11,3 +11,6 @@ export type UpdateNodePositionInput = {
   posX: number;
   posY: number;
 };
+
+export type NodeDB = { id: string; order: number };
+export type EdgeDB = { sourceId: string; targetId: string };

@@ -15,73 +15,30 @@ import {
   MiniMap,
   OnNodeDrag,
   useEdgesState,
-  Handle, Position
+  useNodesState
 } from '@xyflow/react';
 
 import '@xyflow/react/dist/style.css';
 
 import { toast } from 'sonner';
-import { NodeCard } from './NodeCard';
 import { updateWorkflowNodePosition } from '@/actions/workflow-node-action';
-import { User } from '@prisma/client';
 import { createWorkflowEdge, deleteWorkflowEdge } from '@/actions/workflow-actions';
-
-type WorkflowNodeDB = {
-  id: string;
-  message: string;
-  tipo: string;
-  url?: string | null;
-  delay?: string | null;
-  inactividad?: boolean | null;
-  name_file?: string | null;
-  order: number;
-  posX?: number | null;
-  posY?: number | null;
-};
-
-type WorkflowEdgeDB = { id: string; sourceId: string; targetId: string };
-
-type Props = {
-  nodesDB: WorkflowNodeDB[];
-  edgesDB: WorkflowEdgeDB[];
-  workflowId: string;
-  user: User;
-};
-
-type CustomNodeData = {
-  nodeDB: WorkflowNodeDB; // cambiar a tu DTO real
-  workflowId: string;
-  user: User;
-};
+import { CustomNodeData, PropsWorkflowCanvas } from '@/types/workflow-node';
+import { CustomNode } from './';
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
-function CustomNode({ data }: { data: CustomNodeData }) {
-  return (
-    <div className="min-w-[320px] relative">
-      {/* Entrada */}
-      <Handle type="target" position={Position.Top} />
-
-      <NodeCard nodes={data.nodeDB as any} workflowId={data.workflowId} user={data.user} />
-
-      {/* Salida */}
-      <Handle type="source" position={Position.Bottom} />
-    </div>
-  );
-}
-
-export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: Props) {
+export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWorkflowCanvas) {
   const rfRef = useRef<ReactFlowInstance<Node<CustomNodeData>, Edge> | null>(null);
 
-  const nodes: Node<CustomNodeData>[] = useMemo(() => {
+  const initialNodes: Node<CustomNodeData>[] = useMemo(() => {
     const sorted = [...nodesDB].sort((a, b) => a.order - b.order);
 
     return sorted.map((n, idx) => {
       const x = n.posX ?? 0;
       const y = n.posY ?? 0;
-
       const needsAuto = x === 0 && y === 0 && sorted.length > 1;
 
       return {
@@ -92,6 +49,12 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: Props) {
       };
     });
   }, [nodesDB, workflowId, user]);
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+
+  useEffect(() => {
+    setNodes(initialNodes);
+  }, [initialNodes, setNodes]);
 
   const initialEdges: Edge[] = useMemo(() => {
     return edgesDB.map((e) => ({
@@ -134,6 +97,7 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: Props) {
 
   // conectar
   const onConnect: OnConnect = useCallback(async (params) => {
+    debugger;
     if (!params.source || !params.target) return;
 
     try {
@@ -175,9 +139,11 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: Props) {
         edges={edges}
         nodeTypes={nodeTypes}
         onEdgesChange={onEdgesChange}
+        onNodesChange={onNodesChange}
         onConnect={onConnect}
         onEdgesDelete={onEdgesDelete}
         onInit={(instance) => (rfRef.current = instance)}
+        defaultEdgeOptions={{ type: 'smoothstep' }}
         onNodeDragStop={onNodeDragStop}
         fitView
       >

@@ -1,0 +1,29 @@
+import { User } from "@prisma/client";
+
+export type WorkflowNodeDB = {
+  id: string;
+  message: string;
+  tipo: string;
+  url?: string | null;
+  delay?: string | null;
+  inactividad?: boolean | null;
+  name_file?: string | null;
+  order: number;
+  posX?: number | null;
+  posY?: number | null;
+};
+
+export type WorkflowEdgeDB = { id: string; sourceId: string; targetId: string };
+
+export type PropsWorkflowCanvas = {
+  nodesDB: WorkflowNodeDB[];
+  edgesDB: WorkflowEdgeDB[];
+  workflowId: string;
+  user: User;
+};
+
+export type CustomNodeData = {
+  nodeDB: WorkflowNodeDB; // cambiar a tu DTO real
+  workflowId: string;
+  user: User;
+};

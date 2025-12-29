@@ -5,8 +5,8 @@ import { currentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { InboxIcon } from 'lucide-react';
 import { getNodeforUser } from '@/actions/workflow-node-action';
-import { WorkflowCanvas } from './_components/WorkflowCanvas';
 import { getWorkflowEdges } from '@/actions/workflow-actions';
+import { WorkflowCanvas } from './_components/WorkflowCanvas';
 
 const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) => {
   const user = await currentUser();

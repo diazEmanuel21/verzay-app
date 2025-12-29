@@ -337,7 +337,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
 
   return (
     <div className="flex items-center justify-center p-1">
-      <Card className="shadow-md border-border rounded-2xl min-w-[300px] max-w-[300px] transition-all duration-300 hover:shadow-lg hover:scale-105">
+      <Card className="shadow-md border-border rounded-2xl min-w-[300px] max-w-[300px] transition-all duration-300 hover:shadow-lg">
         <CardHeader className="relative flex items-center p-3">
           <div className={`absolute -top-4 flex items-center space-x-2 ${currentCardAction?.bg || 'bg-background'} rounded-md px-3 py-1 shadow-md`}>
             {currentCardAction?.icon || <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />}
