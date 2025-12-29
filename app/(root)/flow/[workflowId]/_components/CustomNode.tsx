@@ -11,18 +11,20 @@ export const CustomNode = ({ data }: { data: CustomNodeData }) => {
 
     return (
         <div className="relative min-w-[320px]">
-            {/* TARGET siempre renderizado */}
-            <Handle
-                type="target"
-                position={Position.Top}
-                isConnectable={(!connection.inProgress || isTarget)}
-                isConnectableStart={false}
-         
+            <NodeCard
+                nodes={data.nodeDB as any}
+                workflowId={data.workflowId}
+                user={data.user}
+                targetHandle={
+                    <Handle
+                        type="target"
+                        position={Position.Top}
+                        isConnectable={(!connection.inProgress || isTarget)}
+                        isConnectableStart={false}
+                    />
+                }
             />
 
-            <NodeCard nodes={data.nodeDB as any} workflowId={data.workflowId} user={data.user} />
-
-            {/* SOURCE siempre renderizado */}
             <Handle
                 type="source"
                 position={Position.Bottom}

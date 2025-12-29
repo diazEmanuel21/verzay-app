@@ -7,7 +7,7 @@ import { createNodeflowSchema, createNodeflowSchemaType } from "@/schema/nodeflo
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
-import { CreateNode } from "@/actions/workflow-node-action";
+import { createNode } from "@/actions/workflow-node-action";
 import { Plan, Workflow } from "@prisma/client";
 import { baseActions, seguimientoActions } from "../helpers";
 import { Action } from '../types';
@@ -44,7 +44,7 @@ export const CreateNodeComponent = ({ workflowId, plan, totalNodes, seguimientoN
     });
 
     const { mutate, isPending } = useMutation({
-        mutationFn: CreateNode,
+        mutationFn: createNode,
         onSuccess: () => {
             toast.success("Nodo creado exitosamente", { id: "create-node" });
             setOpen(false);

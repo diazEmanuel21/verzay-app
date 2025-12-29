@@ -31,6 +31,7 @@ function clamp(n: number, min: number, max: number) {
 }
 
 export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWorkflowCanvas) {
+  debugger;
   const rfRef = useRef<ReactFlowInstance<Node<CustomNodeData>, Edge> | null>(null);
 
   const initialNodes: Node<CustomNodeData>[] = useMemo(() => {
@@ -57,6 +58,7 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
   }, [initialNodes, setNodes]);
 
   const initialEdges: Edge[] = useMemo(() => {
+    if (!edgesDB) return [];
     return edgesDB.map((e) => ({
       id: e.id,                  // usa el id de DB
       source: e.sourceId,
@@ -97,7 +99,6 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
 
   // conectar
   const onConnect: OnConnect = useCallback(async (params) => {
-    debugger;
     if (!params.source || !params.target) return;
 
     try {
@@ -107,7 +108,11 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
         targetId: params.target,
       });
 
-      // agrega al canvas usando el id real de DB
+      if (!res.success || !res.edge) {
+        toast.info(res.message || 'No se pudo crear la conexión');
+        return;
+      }
+
       const newEdge: Edge = {
         id: res.edge.id,
         source: res.edge.sourceId,
@@ -124,7 +129,8 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
     // borra uno por uno (MVP)
     for (const edge of deleted) {
       try {
-        await deleteWorkflowEdge({ workflowId, edgeId: edge.id });
+        const res = await deleteWorkflowEdge({ workflowId, edgeId: edge.id });
+        toast.success(res.message || 'Relación eliminada.')
       } catch (e: any) {
         toast.error(e?.message ?? 'No se pudo eliminar la conexión');
       }

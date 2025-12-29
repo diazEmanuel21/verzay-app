@@ -59,7 +59,7 @@ export const createWorkflow = async (form: createWorkflowSchemaType) => {
     const { success, data } = createWorkflowSchema.safeParse(form);
 
     if (!success) {
-        throw new Error("Datos del formulario inválidos.");
+        return { success: false, message: 'Datos del formulario inválidos.' };
     }
 
     const result = await db.workflow.create({
@@ -72,7 +72,7 @@ export const createWorkflow = async (form: createWorkflowSchemaType) => {
     });
 
     if (!result) {
-        throw new Error("Fallo la creación del flujo.");
+        return { success: false, message: 'Fallo la creación del flujo.' };
     }
 
     redirect(`flow/${result.id}`);
@@ -208,25 +208,36 @@ export const updateWorkflow = async (id: string, data: Partial<Workflow>): Promi
     }
 };
 
-
 export async function createWorkflowEdge(params: {
     workflowId: string;
     sourceId: string;
     targetId: string;
 }) {
     const session = await auth();
-    if (!session?.user?.id) throw new Error('Unauthorized');
+    if (!session?.user?.id) return { success: false, message: 'Unauthorized.' };
 
     const { workflowId, sourceId, targetId } = params;
 
-    if (sourceId === targetId) throw new Error('No puedes conectar un nodo consigo mismo');
+    if (sourceId === targetId) return { success: false, message: 'No puedes conectar un nodo consigo mismo.' };
+
+    const existing = await db.workflowEdge.findFirst({
+        where: {
+            workflowId,
+            sourceId,
+        },
+        select: { id: true },
+    });
+
+    if (existing) {
+        return { success: false, message: 'Nodo ya relacionado con otro nodo.' };
+    }
 
     // validar que el workflow es del usuario
     const wf = await db.workflow.findFirst({
         where: { id: workflowId, userId: session.user.id },
         select: { id: true },
     });
-    if (!wf) throw new Error('Workflow no encontrado');
+    if (!wf) return { success: false, message: 'Workflow no encontrado.' };
 
     // vlidar que ambos nodos pertenecen a ese workflow
     const nodes = await db.workflowNode.findMany({
@@ -236,7 +247,7 @@ export async function createWorkflowEdge(params: {
         },
         select: { id: true },
     });
-    if (nodes.length !== 2) throw new Error('Nodos inválidos para este workflow');
+    if (nodes.length !== 2) return { success: false, message: 'Nodos inválidos para este workflow.' };
 
     // crear edge (evita duplicado por @@unique)
     const edge = await db.workflowEdge.create({
@@ -252,7 +263,7 @@ export async function deleteWorkflowEdge(params: {
     edgeId: string;
 }) {
     const session = await auth();
-    if (!session?.user?.id) throw new Error('Unauthorized');
+    if (!session?.user?.id) return { success: false, message: 'Unauthorized.' };
 
     const { workflowId, edgeId } = params;
 
@@ -261,26 +272,26 @@ export async function deleteWorkflowEdge(params: {
         where: { id: workflowId, userId: session.user.id },
         select: { id: true },
     });
-    if (!wf) throw new Error('Workflow no encontrado');
+    if (!wf) return { success: false, message: 'Workflow no encontrado.' };
 
     // borrar solo si el edge pertenece al workflow
     await db.workflowEdge.deleteMany({
         where: { id: edgeId, workflowId },
     });
 
-    return { success: true };
+    return { success: true, message: 'Se eliminó la relación correctamente.' };
 }
 
 export async function getWorkflowEdges(workflowId: string) {
     const session = await auth();
-    if (!session?.user?.id) throw new Error('Unauthorized');
+    if (!session?.user?.id) return { success: false, message: 'Unauthorized.' };
 
     // ownership
     const wf = await db.workflow.findFirst({
         where: { id: workflowId, userId: session.user.id },
         select: { id: true },
     });
-    if (!wf) throw new Error('Workflow no encontrado');
+    if (!wf) return { success: false, message: 'Workflow no encontrado.' };
 
     const edges = await db.workflowEdge.findMany({
         where: { workflowId },
@@ -288,5 +299,5 @@ export async function getWorkflowEdges(workflowId: string) {
         orderBy: { createdAt: 'asc' },
     });
 
-    return edges;
+    return { success: true, message: 'ok', data: edges };
 }

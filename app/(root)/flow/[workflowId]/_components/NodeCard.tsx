@@ -2,12 +2,10 @@
 
 import { ChangeEvent, useState, useTransition } from "react";
 import { useRouter } from 'next/navigation';
-import { User, WorkflowNode } from "@prisma/client";
 import { updateNode, deleteNode, updateUrlNode, updateDelayNode, deleteFileNode, updateInactivityNode } from "@/actions/workflow-node-action";
 import { ACCEPT_TYPES, cardBaseActions, baseActions, getAcceptTypeString, optimizeFile, seguimientoActions, validateFileType, cardSeguimientoActions } from "../helpers";
 import { Action } from "../types";
 import { NodeActions } from "./NodeActions";
-
 import { Card, CardHeader, CardFooter, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { MessageSquareIcon, UploadIcon } from "lucide-react";
@@ -18,16 +16,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { GenericTextarea } from "@/components/shared/GenericTextarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { MAX_MESSAGE_LENGTH, PropsNodeCard } from "@/types/workflow-node";
 
-interface Props {
-  workflowId: string;
-  nodes: WorkflowNode;
-  user: User;
-}
-
-const MAX_MESSAGE_LENGTH = 1000;
-
-export const NodeCard = ({ nodes, workflowId, user }: Props) => {
+export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCard) => {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState(nodes.message);
@@ -339,6 +330,9 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     <div className="flex items-center justify-center p-1">
       <Card className="shadow-md border-border rounded-2xl min-w-[300px] max-w-[300px] transition-all duration-300 hover:shadow-lg">
         <CardHeader className="relative flex items-center p-3">
+          {/* HANDLE WORKFLOW */}
+          {targetHandle}
+
           <div className={`absolute -top-4 flex items-center space-x-2 ${currentCardAction?.bg || 'bg-background'} rounded-md px-3 py-1 shadow-md`}>
             {currentCardAction?.icon || <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />}
             <span className="text-xs font-bold uppercase text-white">

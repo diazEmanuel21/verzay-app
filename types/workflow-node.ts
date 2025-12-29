@@ -1,4 +1,4 @@
-import { User } from "@prisma/client";
+import { User, WorkflowNode } from "@prisma/client";
 
 export type WorkflowNodeDB = {
   id: string;
@@ -17,7 +17,7 @@ export type WorkflowEdgeDB = { id: string; sourceId: string; targetId: string };
 
 export type PropsWorkflowCanvas = {
   nodesDB: WorkflowNodeDB[];
-  edgesDB: WorkflowEdgeDB[];
+  edgesDB?: WorkflowEdgeDB[];
   workflowId: string;
   user: User;
 };
@@ -27,3 +27,12 @@ export type CustomNodeData = {
   workflowId: string;
   user: User;
 };
+
+export interface PropsNodeCard {
+  workflowId: string;
+  nodes: WorkflowNode;
+  user: User;
+  targetHandle?: React.ReactNode;
+}
+
+export const MAX_MESSAGE_LENGTH = 1000;

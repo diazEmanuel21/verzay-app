@@ -1,10 +1,8 @@
-import { db } from '@/lib/db';
-import React from 'react'
 import { CreateNodeComponent } from './_components/CrateNodeComponent';
 import { currentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { InboxIcon } from 'lucide-react';
-import { getNodeforUser } from '@/actions/workflow-node-action';
+import { getExecutionNodesForWorkflow, getNodeforUser } from '@/actions/workflow-node-action';
 import { getWorkflowEdges } from '@/actions/workflow-actions';
 import { WorkflowCanvas } from './_components/WorkflowCanvas';
 
@@ -23,22 +21,12 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
     (n?.tipo ?? "").toLowerCase().startsWith("seguimiento")
   ).length;
 
-  const workflow = await db.workflow.findUnique({
-    where: {
-      id: workflowId,
-      userId: user?.id,
-    }
-  })
-
-  if (!workflow) {
-    return <div>Workflow not found</div>
-  }
 
   return (
     <div className='flex flex-col items-center min-h-full'>
       {nodes.length > 0 ? (
         <div className='flex flex-col h-full w-full gap-5 px-4 text-center pt-6' >
-          <WorkflowCanvas edgesDB={edgesDB} nodesDB={nodes} workflowId={workflow.id} user={user} />
+          <WorkflowCanvas edgesDB={edgesDB.data} nodesDB={nodes} workflowId={workflowId} user={user} />
 
           <div className='flex items-center justify-center'>
             <CreateNodeComponent
@@ -71,3 +59,5 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
 }
 
 export default CustomWorkflow
+
+

@@ -1,12 +1,14 @@
 "use server"
+import { buildLinearExecutionOrder } from "@/app/(root)/flow/[workflowId]/helpers/buildLinearExecutionOrder";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { minioClient } from "@/lib/minio";
 import { createNodeflowSchema, createNodeflowSchemaType } from "@/schema/nodeflow";
 import { MAX_NODES_PER_WORKFLOW, MAX_SEGUIMIENTOS_PER_WORKFLOW, UpdateNodePositionInput } from "@/types/workflow";
+import { WorkflowNode } from "@prisma/client";
 import { redirect } from "next/navigation";
 
-export async function CreateNode(form: createNodeflowSchemaType) {
+export async function createNode(form: createNodeflowSchemaType) {
   const session = await auth(); // Obtén la sesión del usuario
 
   if (!session?.user?.email) {
@@ -106,6 +108,7 @@ export async function updateNode(nodeId: string, newMessage?: string) {
   }
 }
 
+/* TODO: DEPRECATED */
 export async function updateNodeOrder(nodeId: string, order: number) {
   try {
     if (!nodeId) {
@@ -133,7 +136,6 @@ export async function updateNodeOrder(nodeId: string, order: number) {
     };
   }
 }
-
 
 export async function updateUrlNode(nodeId: string, url: string) {
   try {
@@ -312,7 +314,7 @@ export async function deleteFileNode(minIoUrl: string, nodeId: string) {
   }
 }
 
-/* Defectuoso */
+/* TODO: DEFECTUOSO */
 export async function deleteWorkflowFiles(userId: string, workflowId: string) {
   const bucket = process.env.S3_BUCKET_NAME;
   if (!bucket) {
@@ -355,15 +357,35 @@ export async function deleteWorkflowFiles(userId: string, workflowId: string) {
   }
 }
 
-export async function getNodeforUser(workflowId?: string) {
+export async function getNodeforUser(workflowId: string) {
   return db.workflowNode.findMany({
     where: {
       workflowId,
     },
-    orderBy: {
-      order: "asc"
-    }
   })
+}
+
+/* TODO: SE UTILIZA PARA SABER EL ORDEN DE LOS NODOS */
+export async function getExecutionNodesForWorkflow(workflowId: string): Promise<WorkflowNode[]> {
+  const [nodes, edges] = await Promise.all([
+    db.workflowNode.findMany({
+      where: { workflowId },
+    }),
+    db.workflowEdge.findMany({
+      where: { workflowId },
+      select: { sourceId: true, targetId: true },
+    }),
+  ]);
+
+  const orderedIds = buildLinearExecutionOrder(nodes, edges);
+
+  const byId = new Map<string, WorkflowNode>(nodes.map((n) => [n.id, n]));
+
+  const orderedNodes = orderedIds
+    .map((id) => byId.get(id))
+    .filter((n): n is WorkflowNode => n !== undefined);
+
+  return orderedNodes;
 }
 
 export async function updateWorkflowNodePosition(input: UpdateNodePositionInput) {
