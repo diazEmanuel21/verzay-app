@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-import { DataTable } from './data-table'; // reutiliza tu mismo DataTable
+import { DataTable } from './data-table';
 import { buildSalesColumns } from './columns';
 
 import {
@@ -30,12 +30,14 @@ type Props = {
   accounts: any[];
   categories: any[];
   currencies: any[];
-  sales: any[]; // ✅ ya serializado (sin Decimal/Date)
+  sales: any[];
 };
 
 type FormState = {
   occurredAt: string;
-  amount: string;
+  amount: string;      // base
+  extra: string;       // suma
+  discount: string;    // resta
   currencyCode: string;
   accountId: string;
   categoryId: string | null;
@@ -82,10 +84,18 @@ function toAmountNumber(v: any): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+function calcTotal(row: { amount?: any; extra?: any; discount?: any }) {
+  const base = toAmountNumber(row.amount);
+  const extra = toAmountNumber(row.extra);
+  const disc = toAmountNumber(row.discount);
+  return base + extra - disc;
+}
+
 function sumByCurrency(list: any[]) {
   return list.reduce<Record<string, number>>((acc, r) => {
     const code = r.currencyCode || '—';
-    acc[code] = (acc[code] || 0) + toAmountNumber(r.amount);
+    const total = calcTotal(r);
+    acc[code] = (acc[code] || 0) + total;
     return acc;
   }, {});
 }
@@ -131,6 +141,8 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
   const [form, setForm] = useState<FormState>({
     occurredAt: toISODate(new Date()),
     amount: '',
+    extra: '',
+    discount: '',
     currencyCode: defaultCurrency,
     accountId: defaultAccountId,
     categoryId: null,
@@ -142,6 +154,8 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     setForm({
       occurredAt: toISODate(new Date()),
       amount: '',
+      extra: '',
+      discount: '',
       currencyCode: defaultCurrency,
       accountId: defaultAccountId,
       categoryId: null,
@@ -162,6 +176,8 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     setForm({
       occurredAt: toISODate(row.occurredAt),
       amount: String(row.amount ?? ''),
+      extra: String(row.extra ?? ''),
+      discount: String(row.discount ?? ''),
       currencyCode: row.currencyCode,
       accountId: row.accountId,
       categoryId: row.categoryId ?? null,
@@ -183,7 +199,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     setOpen(true);
   };
 
-  // ✅ subir a /api/upload-invoice (reutilizas tu endpoint)
+  // ✅ subir a /api/upload-invoice
   async function uploadReceipt(file: File) {
     const fd = new FormData();
     fd.append('file', file);
@@ -228,6 +244,8 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
           userId,
           occurredAt: form.occurredAt,
           amount: form.amount,
+          extra: form.extra?.trim() ? form.extra : '0',
+          discount: form.discount?.trim() ? form.discount : '0',
           currencyCode: form.currencyCode,
           accountId: form.accountId,
           categoryId: form.categoryId,
@@ -269,6 +287,8 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
               status: 'ACTIVE',
               occurredAt: new Date(payload.occurredAt).toISOString(),
               amount: payload.amount,
+              extra: payload.extra,
+              discount: payload.discount,
               currencyCode: payload.currencyCode,
               accountId: payload.accountId,
               categoryId: payload.categoryId,
@@ -296,26 +316,28 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
               r.id !== editing.id
                 ? r
                 : {
-                    ...r,
-                    occurredAt: new Date(payload.occurredAt).toISOString(),
-                    amount: payload.amount,
-                    currencyCode: payload.currencyCode,
-                    accountId: payload.accountId,
-                    categoryId: payload.categoryId,
-                    title: payload.title,
-                    description: payload.description,
-                    updatedAt: nowIso,
-                    account: accounts.find((a) => a.id === payload.accountId) || r.account,
-                    category: payload.categoryId ? categories.find((c) => c.id === payload.categoryId) || null : null,
-                    currency: currencies.find((c) => c.code === payload.currencyCode) || r.currency,
-                    attachments: attachments.map((a) => ({
-                      id: a.id,
-                      url: a.url,
-                      fileName: a.fileName ?? null,
-                      mimeType: a.mimeType ?? null,
-                      sizeBytes: a.sizeBytes ?? null,
-                    })),
-                  }
+                  ...r,
+                  occurredAt: new Date(payload.occurredAt).toISOString(),
+                  amount: payload.amount,
+                  extra: payload.extra,
+                  discount: payload.discount,
+                  currencyCode: payload.currencyCode,
+                  accountId: payload.accountId,
+                  categoryId: payload.categoryId,
+                  title: payload.title,
+                  description: payload.description,
+                  updatedAt: nowIso,
+                  account: accounts.find((a) => a.id === payload.accountId) || r.account,
+                  category: payload.categoryId ? categories.find((c) => c.id === payload.categoryId) || null : null,
+                  currency: currencies.find((c) => c.code === payload.currencyCode) || r.currency,
+                  attachments: attachments.map((a) => ({
+                    id: a.id,
+                    url: a.url,
+                    fileName: a.fileName ?? null,
+                    mimeType: a.mimeType ?? null,
+                    sizeBytes: a.sizeBytes ?? null,
+                  })),
+                }
             )
           );
         }
@@ -325,7 +347,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
         setEditing(null);
         setAttachments([]);
 
-        router.refresh(); // opcional
+        router.refresh();
       })();
     });
   };
@@ -340,7 +362,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
         toast.success('Venta eliminada');
         if (detailRow?.id === id) closeDetail();
 
-        router.refresh(); // opcional
+        router.refresh();
       })();
     });
   };
@@ -400,6 +422,11 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     if (!detailRow?.currencyCode) return null;
     return currencies.find((c) => c.code === detailRow.currencyCode) || null;
   }, [detailRow, currencies]);
+
+  const detailBase = useMemo(() => toAmountNumber(detailRow?.amount), [detailRow]);
+  const detailExtra = useMemo(() => toAmountNumber(detailRow?.extra), [detailRow]);
+  const detailDiscount = useMemo(() => toAmountNumber(detailRow?.discount), [detailRow]);
+  const detailTotal = useMemo(() => detailBase + detailExtra - detailDiscount, [detailBase, detailExtra, detailDiscount]);
 
   return (
     <div className="space-y-3">
@@ -527,12 +554,16 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                   </div>
 
                   <div className="shrink-0 text-right">
-                    <p className="text-xs text-muted-foreground">Monto</p>
+                    <p className="text-xs text-muted-foreground">Total</p>
                     <p className="text-lg font-bold leading-tight">
                       {detailCurrency?.symbol ? `${detailCurrency.symbol} ` : ''}
-                      {String(detailRow.amount)}
+                      {String(detailTotal)}
                     </p>
                     <p className="text-sm text-muted-foreground">{detailRow.currencyCode}</p>
+
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Base: {String(detailBase)} · Extra: {String(detailExtra)} · Desc: {String(detailDiscount)}
+                    </p>
                   </div>
                 </div>
 
@@ -615,7 +646,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
         </DialogContent>
       </Dialog>
 
-      {/* ✅ Modal Create/Edit (mismo look del detalle) */}
+      {/* ✅ Modal Create/Edit */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-[760px] rounded-2xl">
           <DialogHeader>
@@ -624,16 +655,24 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
 
           {(() => {
             const previewAccountName = accounts.find((a) => a.id === form.accountId)?.name || '—';
-            const previewCategoryName = form.categoryId ? categories.find((c) => c.id === form.categoryId)?.name || 'Sin categoría' : 'Sin categoría';
+            const previewCategoryName = form.categoryId
+              ? categories.find((c) => c.id === form.categoryId)?.name || 'Sin categoría'
+              : 'Sin categoría';
             const previewCurrency = currencies.find((c) => c.code === form.currencyCode) || null;
 
-            const safeAmount = form.amount?.trim() ? form.amount.trim() : '0';
+            const base = toAmountNumber(form.amount);
+            const extra = toAmountNumber(form.extra);
+            const disc = toAmountNumber(form.discount);
+            const total = base + extra - disc;
+
             const decimals = typeof previewCurrency?.decimals === 'number' ? previewCurrency.decimals : 2;
-            const amountFormatted = (() => {
-              const n = Number(safeAmount);
-              if (!isFinite(n)) return safeAmount;
-              return new Intl.NumberFormat('es-CO', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(n);
-            })();
+            const totalFormatted = new Intl.NumberFormat('es-CO', {
+              minimumFractionDigits: decimals,
+              maximumFractionDigits: decimals,
+            }).format(total);
+
+            const mini = (n: number) =>
+              new Intl.NumberFormat('es-CO', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(n);
 
             return (
               <div className="space-y-4">
@@ -641,7 +680,9 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                 <div className="rounded-xl border bg-muted/10 p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <p className="truncate text-base font-semibold">{form.title?.trim() ? form.title.trim() : 'Sin concepto'}</p>
+                      <p className="truncate text-base font-semibold">
+                        {form.title?.trim() ? form.title.trim() : 'Sin concepto'}
+                      </p>
 
                       <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                         <span className="inline-flex items-center gap-2">
@@ -662,20 +703,26 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                     </div>
 
                     <div className="shrink-0 text-right">
-                      <p className="text-xs text-muted-foreground">Monto</p>
+                      <p className="text-xs text-muted-foreground">Total</p>
                       <p className="text-lg font-bold leading-tight">
                         {previewCurrency?.symbol ? `${previewCurrency.symbol} ` : ''}
-                        {amountFormatted}
+                        {totalFormatted}
                       </p>
                       <p className="text-sm text-muted-foreground">{form.currencyCode}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Base: {mini(base)} · Extra: {mini(extra)} · Desc: {mini(disc)}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="mt-3 rounded-lg border bg-background p-3">
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                      {form.description?.trim() ? form.description.trim() : 'Sin descripción'}
-                    </p>
-                  </div>
+                  {form.description?.trim() ? (
+                    <div className="mt-3 rounded-lg border bg-background p-3">
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed">{form.description.trim()}</p>
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-muted-foreground">-</p>
+                  )}
+
                 </div>
 
                 {/* Form */}
@@ -684,12 +731,50 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <label className="text-sm text-muted-foreground">Fecha</label>
-                        <Input type="date" value={form.occurredAt} onChange={(e) => setForm((p) => ({ ...p, occurredAt: e.target.value }))} className="h-9 text-sm" />
+                        <Input
+                          type="date"
+                          value={form.occurredAt}
+                          onChange={(e) => setForm((p) => ({ ...p, occurredAt: e.target.value }))}
+                          className="h-9 text-sm"
+                        />
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-sm text-muted-foreground">Monto</label>
-                        <Input type="number" inputMode="decimal" value={form.amount} onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))} className="h-9 text-sm" placeholder="0.00" />
+                        <label className="text-sm text-muted-foreground">Monto (base)</label>
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          value={form.amount}
+                          onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
+                          className="h-9 text-sm"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-sm text-muted-foreground">Extra</label>
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          value={form.extra}
+                          onChange={(e) => setForm((p) => ({ ...p, extra: e.target.value }))}
+                          className="h-9 text-sm"
+                          placeholder="0.00"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-sm text-muted-foreground">Descuento</label>
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          value={form.discount}
+                          onChange={(e) => setForm((p) => ({ ...p, discount: e.target.value }))}
+                          className="h-9 text-sm"
+                          placeholder="0.00"
+                        />
                       </div>
                     </div>
 
@@ -712,7 +797,10 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
 
                       <div className="space-y-1">
                         <label className="text-sm text-muted-foreground">Moneda</label>
-                        <Select value={form.currencyCode} onValueChange={(v) => setForm((p) => ({ ...p, currencyCode: v }))}>
+                        <Select
+                          value={form.currencyCode}
+                          onValueChange={(v) => setForm((p) => ({ ...p, currencyCode: v }))}
+                        >
                           <SelectTrigger className="h-9 text-sm">
                             <SelectValue placeholder="Selecciona" />
                           </SelectTrigger>
@@ -729,7 +817,10 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
 
                     <div className="space-y-1">
                       <label className="text-sm text-muted-foreground">Categoría</label>
-                      <Select value={form.categoryId || '__none__'} onValueChange={(v) => setForm((p) => ({ ...p, categoryId: v === '__none__' ? null : v }))}>
+                      <Select
+                        value={form.categoryId || '__none__'}
+                        onValueChange={(v) => setForm((p) => ({ ...p, categoryId: v === '__none__' ? null : v }))}
+                      >
                         <SelectTrigger className="h-9 text-sm">
                           <SelectValue placeholder="Opcional" />
                         </SelectTrigger>
@@ -748,14 +839,24 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
 
                     <div className="space-y-1">
                       <label className="text-sm text-muted-foreground">Concepto</label>
-                      <Input value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} className="h-9 text-sm" placeholder="Ej: Venta / Servicio / Suscripción" />
+                      <Input
+                        value={form.title}
+                        onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
+                        className="h-9 text-sm"
+                        placeholder="Ej: Venta / Servicio / Suscripción"
+                      />
                     </div>
                   </div>
 
                   <div className="space-y-3">
                     <div className="space-y-1">
                       <label className="text-sm text-muted-foreground">Descripción</label>
-                      <Textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} className="min-h-[120px] text-sm" placeholder="Opcional" />
+                      <Textarea
+                        value={form.description}
+                        onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+                        className="min-h-[64px] h-[64px] resize-y text-sm"
+                        placeholder="Opcional"
+                      />
                     </div>
 
                     <div className="space-y-2">
@@ -786,7 +887,10 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                       {attachments.length ? (
                         <div className="grid grid-cols-1 gap-2">
                           {attachments.map((a, idx) => (
-                            <div key={a.id ?? `${a.url}-${idx}`} className="flex items-center gap-3 rounded-xl border p-3 hover:bg-muted/30">
+                            <div
+                              key={a.id ?? `${a.url}-${idx}`}
+                              className="flex items-center gap-3 rounded-xl border p-3 hover:bg-muted/30"
+                            >
                               <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border bg-background">
                                 {guessIsImage(a.mimeType, a.url) ? (
                                   <img src={a.url} alt={a.fileName || 'soporte'} className="h-10 w-10 object-cover" />
@@ -798,7 +902,12 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                               </div>
 
                               <div className="min-w-0 flex-1">
-                                <a href={a.url} target="_blank" rel="noreferrer" className="block truncate text-sm font-medium text-primary underline underline-offset-2">
+                                <a
+                                  href={a.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="block truncate text-sm font-medium text-primary underline underline-offset-2"
+                                >
                                   {a.fileName || 'Archivo'}
                                 </a>
                                 <p className="text-xs text-muted-foreground">{a.isNew ? 'Nuevo (sin guardar)' : 'Guardado'}</p>

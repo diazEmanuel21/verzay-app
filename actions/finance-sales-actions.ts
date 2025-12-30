@@ -20,6 +20,8 @@ function serializeTx(tx: any) {
   return {
     ...tx,
     amount: tx.amount?.toString?.() ?? String(tx.amount ?? '0'),
+    extra: tx.extra?.toString?.() ?? String(tx.extra ?? '0'),
+    discount: tx.discount?.toString?.() ?? String(tx.discount ?? '0'),
     occurredAt: tx.occurredAt ? new Date(tx.occurredAt).toISOString() : null,
     createdAt: tx.createdAt ? new Date(tx.createdAt).toISOString() : null,
     updatedAt: tx.updatedAt ? new Date(tx.updatedAt).toISOString() : null,
@@ -132,6 +134,8 @@ export async function createSale(data: {
   userId: string;
   occurredAt: string | Date;
   amount: string | number;
+  extra?: string | number;
+  discount?: string | number;
   currencyCode: string;
   accountId: string;
   categoryId?: string | null;
@@ -144,10 +148,12 @@ export async function createSale(data: {
     const created = await db.financeTransaction.create({
       data: {
         userId: data.userId,
-        type: SALES_TYPE,
+        type: 'INCOME' as any,
         status: 'ACTIVE' as any,
         occurredAt: data.occurredAt instanceof Date ? data.occurredAt : new Date(data.occurredAt),
         amount: new Prisma.Decimal(String(data.amount)),
+        extra: new Prisma.Decimal(String(data.extra ?? 0)),
+        discount: new Prisma.Decimal(String(data.discount ?? 0)),
         currencyCode: data.currencyCode,
         accountId: data.accountId,
         categoryId: data.categoryId ?? null,
@@ -170,6 +176,8 @@ export async function updateSale(
   data: Partial<{
     occurredAt: string | Date;
     amount: string | number;
+    extra: string | number;
+    discount: string | number;
     currencyCode: string;
     accountId: string;
     categoryId: string | null;
@@ -180,15 +188,13 @@ export async function updateSale(
   try {
     const payload: any = { ...data };
 
-    if (payload.occurredAt) {
-      payload.occurredAt = payload.occurredAt instanceof Date ? payload.occurredAt : new Date(payload.occurredAt);
-    }
-    if (payload.amount !== undefined) {
-      payload.amount = new Prisma.Decimal(String(payload.amount));
-    }
+    if (payload.occurredAt) payload.occurredAt = payload.occurredAt instanceof Date ? payload.occurredAt : new Date(payload.occurredAt);
+    if (payload.amount !== undefined) payload.amount = new Prisma.Decimal(String(payload.amount));
+    if (payload.extra !== undefined) payload.extra = new Prisma.Decimal(String(payload.extra));
+    if (payload.discount !== undefined) payload.discount = new Prisma.Decimal(String(payload.discount));
 
     const updated = await db.financeTransaction.updateMany({
-      where: { id, userId, type: SALES_TYPE, status: { not: 'DELETED' as any } },
+      where: { id, userId, type: 'INCOME' as any, status: { not: 'DELETED' as any } },
       data: payload,
     });
 
