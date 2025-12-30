@@ -25,14 +25,21 @@ import { updateWorkflowNodePosition } from '@/actions/workflow-node-action';
 import { createWorkflowEdge, deleteWorkflowEdge } from '@/actions/workflow-actions';
 import { CustomNodeData, PropsWorkflowCanvas } from '@/types/workflow-node';
 import { CustomNode } from './';
+import { useTheme } from 'next-themes';
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
 export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWorkflowCanvas) {
-  debugger;
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
   const rfRef = useRef<ReactFlowInstance<Node<CustomNodeData>, Edge> | null>(null);
+  const totalNodes = useMemo(() => nodesDB.length, [nodesDB]);
+  const seguimientoNodes = useMemo(
+    () => nodesDB.filter((n) => (n.tipo ?? '').toLowerCase().includes('seguimiento')).length,
+    [nodesDB]
+  );
 
   const initialNodes: Node<CustomNodeData>[] = useMemo(() => {
     const sorted = [...nodesDB].sort((a, b) => a.order - b.order);
@@ -46,7 +53,13 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
         id: n.id,
         type: 'customNode',
         position: needsAuto ? { x: 80, y: 80 + idx * 140 } : { x, y },
-        data: { nodeDB: n, workflowId, user },
+        data: {
+          nodeDB: n,
+          workflowId,
+          user,
+          totalNodes,
+          seguimientoNodes,
+        },
       };
     });
   }, [nodesDB, workflowId, user]);
@@ -152,8 +165,10 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
         defaultEdgeOptions={{ type: 'smoothstep' }}
         onNodeDragStop={onNodeDragStop}
         fitView
+        colorMode={isDark ? 'dark' : 'light'}
       >
-        <Background />
+        <Background
+        />
         <Controls />
         <MiniMap />
       </ReactFlow>

@@ -26,6 +26,8 @@ export type CustomNodeData = {
   nodeDB: WorkflowNodeDB; // cambiar a tu DTO real
   workflowId: string;
   user: User;
+  totalNodes: number;
+  seguimientoNodes: number;
 };
 
 export interface PropsNodeCard {

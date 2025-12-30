@@ -27,9 +27,11 @@ interface PropsCreateNodeComponent {
     plan: Plan;
     totalNodes: number;
     seguimientoNodes: number;
+    trigger?: React.ReactNode;
+
 };
 
-export const CreateNodeComponent = ({ workflowId, plan, totalNodes, seguimientoNodes }: PropsCreateNodeComponent) => {
+export const CreateNodeComponent = ({ workflowId, plan, totalNodes, seguimientoNodes, trigger }: PropsCreateNodeComponent) => {
     const [open, setOpen] = useState(false);
     const [isOpenCollapse, setIsOpenCollapse] = useState(false);
 
@@ -112,10 +114,12 @@ export const CreateNodeComponent = ({ workflowId, plan, totalNodes, seguimientoN
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button type="button">
-                    Agregar acción
-                    <FilePlus2 />
-                </Button>
+                {trigger ??
+                    <>
+                        <Button>Agregar acción</Button>
+                        <FilePlus2 />
+                    </>
+                }
             </PopoverTrigger>
 
             <PopoverContent

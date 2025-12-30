@@ -129,9 +129,11 @@ export const deleteEntireWorkflow = async (userId: string, workflowId: string) =
         const nodes = await db.workflowNode.findMany({ where: { workflowId } });
 
         if (nodes.length > 0) {
+            const nodesWithFile = nodes.filter((n) => !!n.url);
+
             // #2. Eliminar archivos de todos los nodos en paralelo
             const deleteResults = await Promise.all(
-                nodes.map((node) => deleteFileNode(node?.url ?? '', node.workflowId))
+                nodesWithFile.map((node) => deleteFileNode(node.url!, node.id))
             );
 
             // #3. Verificar si alguno falló

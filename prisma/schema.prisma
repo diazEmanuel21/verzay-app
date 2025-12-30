@@ -350,15 +350,16 @@ model Tools {
 }
 
 model Workflow {
-  id          String   @id @default(cuid())
-  userId      String
-  name        String
-  description String?
-  definition  String
-  status      String
-  createdAt   DateTime @default(now())
-  updateAt    DateTime @updatedAt
-  umbral      Float    @default(0.5)
+  id            String         @id @default(cuid())
+  userId        String
+  name          String
+  description   String?
+  definition    String
+  status        String
+  createdAt     DateTime       @default(now())
+  updateAt      DateTime       @updatedAt
+  umbral        Float          @default(0.5)
+  workflowEdges WorkflowEdge[]
 
   @@unique([name, userId])
 }
@@ -375,9 +376,11 @@ model WorkflowNode {
   inactividad Boolean?
   name_file   String?
   order       Int      @default(0)
+  posX        Float? // si ya lo tienes
+  posY        Float?
 
-  posX Float @default(0)
-  posY Float @default(0)
+  outgoingEdges WorkflowEdge[] @relation("EdgeSource")
+  incomingEdges WorkflowEdge[] @relation("EdgeTarget")
 }
 
 model WorkflowEdge {
@@ -387,7 +390,12 @@ model WorkflowEdge {
   targetId   String
   createdAt  DateTime @default(now())
 
-  @@unique([workflowId, sourceId, targetId])
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  source WorkflowNode @relation("EdgeSource", fields: [sourceId], references: [id], onDelete: Cascade)
+  target WorkflowNode @relation("EdgeTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([workflowId, sourceId]) // ✅ si tu MVP es 1 salida por nodo
   @@index([workflowId])
   @@index([sourceId])
   @@index([targetId])
@@ -721,6 +729,8 @@ model FinanceTransaction {
 
   title       String?
   description String?
+  extra       Decimal @default(0)
+  discount    Decimal @default(0)
 
   counterparty String? // cliente/proveedor
   reference    String? // #factura / #recibo
