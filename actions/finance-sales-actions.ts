@@ -3,15 +3,6 @@
 import { db } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 
-type SaleRow = Prisma.FinanceTransactionGetPayload<{
-  include: {
-    account: true;
-    category: true;
-    currency: true;
-    attachments: true;
-  };
-}>;
-
 type AttachmentInput = {
   url: string;
   fileName?: string | null;
@@ -26,7 +17,6 @@ interface OperationResponse<T = unknown> {
 }
 
 function serializeTx(tx: any) {
-  // ✅ evita warning: Decimal + Date en Client Components
   return {
     ...tx,
     amount: tx.amount?.toString?.() ?? String(tx.amount ?? '0'),
@@ -37,12 +27,9 @@ function serializeTx(tx: any) {
   };
 }
 
-/**
- * Defaults mínimos:
- * - Monedas USD/COP (catálogo)
- * - Cuenta por defecto "Empresa"
- * - Categorías base (INCOME)
- */
+// ✅ IMPORTANTE: usa el valor REAL de tu enum FinanceTxType (NO "INCOME")
+const SALES_TYPE = 'SALE' as any; // <- si tu enum se llama distinto, cámbialo por el valor correcto
+
 export async function ensureFinanceSalesDefaults(userId: string): Promise<OperationResponse> {
   try {
     // Monedas (catálogo global)
@@ -66,22 +53,27 @@ export async function ensureFinanceSalesDefaults(userId: string): Promise<Operat
 
     if (!hasAccount) {
       await db.financeAccount.create({
-        data: { userId, name: 'Empresa', type: 'COMPANY', isDefault: true },
+        data: { userId, name: 'Empresa', type: 'COMPANY' as any, isDefault: true },
       });
     }
 
-    // Categorías base (ventas/ingresos)
+    // Categorías base (ventas)
     const defaultCats = ['Ventas', 'Servicios', 'Suscripciones', 'Otros'];
 
     await db.financeCategory.createMany({
-      data: defaultCats.map((name) => ({ userId, name, type: 'INCOME' as any })),
+      data: defaultCats.map((name, idx) => ({
+        userId,
+        name,
+        type: SALES_TYPE,
+        order: idx + 1, // ✅ si tienes "order" en el modelo
+      })),
       skipDuplicates: true,
     });
 
     return { success: true, message: 'Defaults de ventas verificados.' };
-  } catch (error) {
+  } catch (error: any) {
     console.error('ensureFinanceSalesDefaults error:', error);
-    return { success: false, message: 'Error creando/verificando defaults de ventas.' };
+    return { success: false, message: `Defaults ventas: ${error?.message || 'Error'}` };
   }
 }
 
@@ -92,8 +84,8 @@ export async function getAllSales(userId: string): Promise<OperationResponse<any
     const list = await db.financeTransaction.findMany({
       where: {
         userId,
-        type: 'INCOME' as any,
-        status: { not: 'DELETED' },
+        type: SALES_TYPE,
+        status: { not: 'DELETED' as any },
       },
       orderBy: [{ occurredAt: 'desc' }, { createdAt: 'desc' }],
       include: { account: true, category: true, currency: true, attachments: true },
@@ -123,7 +115,7 @@ export async function getSalesMeta(
         orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
       }),
       db.financeCategory.findMany({
-        where: { userId, type: 'INCOME' as any },
+        where: { userId, type: SALES_TYPE },
         orderBy: [{ order: 'asc' }, { name: 'asc' }],
       }),
       db.financeCurrency.findMany({ orderBy: { code: 'asc' } }),
@@ -143,7 +135,7 @@ export async function createSale(data: {
   currencyCode: string;
   accountId: string;
   categoryId?: string | null;
-  title?: string | null;        // concepto
+  title?: string | null;
   description?: string | null;
 }): Promise<OperationResponse<{ id: string }>> {
   try {
@@ -152,7 +144,7 @@ export async function createSale(data: {
     const created = await db.financeTransaction.create({
       data: {
         userId: data.userId,
-        type: 'INCOME' as any,
+        type: SALES_TYPE,
         status: 'ACTIVE' as any,
         occurredAt: data.occurredAt instanceof Date ? data.occurredAt : new Date(data.occurredAt),
         amount: new Prisma.Decimal(String(data.amount)),
@@ -196,7 +188,7 @@ export async function updateSale(
     }
 
     const updated = await db.financeTransaction.updateMany({
-      where: { id, userId, type: 'INCOME' as any, status: { not: 'DELETED' as any } },
+      where: { id, userId, type: SALES_TYPE, status: { not: 'DELETED' as any } },
       data: payload,
     });
 
@@ -211,7 +203,7 @@ export async function updateSale(
 export async function deleteSale(id: string, userId: string): Promise<OperationResponse> {
   try {
     const deleted = await db.financeTransaction.updateMany({
-      where: { id, userId, type: 'INCOME' as any },
+      where: { id, userId, type: SALES_TYPE },
       data: { status: 'DELETED' as any, deletedAt: new Date() },
     });
 
@@ -233,7 +225,7 @@ export async function addSaleAttachments(params: {
     if (!attachments?.length) return { success: true, message: 'Sin soportes.' };
 
     const tx = await db.financeTransaction.findFirst({
-      where: { id: transactionId, userId, type: 'INCOME' as any, status: { not: 'DELETED' as any } },
+      where: { id: transactionId, userId, type: SALES_TYPE, status: { not: 'DELETED' as any } },
       select: { id: true },
     });
 
