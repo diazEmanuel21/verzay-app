@@ -64,5 +64,5 @@ export default function AppInitializer({ onReseller, modules, user }: AppInitial
         }
     }, [onReseller, setReseller])
 
-    return null
+    return <></>
 }

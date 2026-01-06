@@ -216,7 +216,7 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
   }, [screenToFlowPosition, workflowId, user, setNodes]);
 
   return (
-    <div className="w-full h-[calc(100vh-160px)] rounded-xl border bg-background overflow-hidden">
+    <div className="w-full h-full">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -233,10 +233,11 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
         fitView
         colorMode={isDark ? 'dark' : 'light'}
       >
-        <Background
-        />
-        <Controls />
-        <MiniMap />
+        <div className="flex flex-col w-full h-full min-h-0">
+          <Background/>
+          <Controls />
+          <MiniMap />
+        </div>
       </ReactFlow>
     </div>
   );

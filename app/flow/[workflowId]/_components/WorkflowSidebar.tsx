@@ -10,6 +10,8 @@ import { baseActions, seguimientoActions } from "../helpers";
 import { Action } from "../types";
 import { MAX_NODES_PER_WORKFLOW, MAX_SEGUIMIENTOS_PER_WORKFLOW } from "@/types/workflow";
 import { ActionSidebarDraggable } from "./";
+import { Button } from "@/components/ui/button";
+import { Lock, Unlock } from "lucide-react";
 
 type Props = {
     totalNodes: number;
@@ -19,6 +21,7 @@ type Props = {
 export function WorkflowSidebar({ totalNodes, seguimientoNodes }: Props) {
     const [q, setQ] = useState("");
     const [isOpenSeguimientos, setIsOpenSeguimientos] = useState(false);
+    const [locked, setLocked] = useState(true);
 
     const allActions = useMemo(() => [...baseActions, ...seguimientoActions], []);
     const qLower = q.trim().toLowerCase();
@@ -73,58 +76,97 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes }: Props) {
     };
 
     return (
-        <aside className="w-[280px] shrink-0 border-r bg-background p-3">
-            <div className="mb-3">
-                <Input placeholder="Buscar..." value={q} onChange={(e) => setQ(e.target.value)} />
-            </div>
-
-            {/* Contadores tipo CreateNodeComponent */}
-            <div className="mb-3 text-xs text-muted-foreground">
-                <div className="flex flex-wrap gap-3">
-                    <span className={cn(reachedTotalLimit && "text-destructive")}>
-                        {`Nodos: ${totalNodes}/${MAX_NODES_PER_WORKFLOW}`}
-                    </span>
-                    <span className={cn(reachedSeguimientoLimit && "text-destructive")}>
-                        {`Seguimientos: ${seguimientoNodes}/${MAX_SEGUIMIENTOS_PER_WORKFLOW}`}
-                    </span>
+        <aside
+            className={cn(
+                "group relative h-full border-border bg-background transition-all duration-200 ease-out",
+                locked
+                    ? "w-[280px]"
+                    : "w-12 hover:w-[280px] bg-transparent"
+            )}
+        >
+            {/* Header siempre visible */}
+            <div className="flex items-center gap-2 p-2 border-border">
+                {/* El buscador solo se ve cuando está expandido */}
+                <div
+                    className={cn(
+                        "flex-1 transition-opacity duration-150",
+                        locked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                    )}
+                >
+                    <Input placeholder="Buscar..." value={q} onChange={(e) => setQ(e.target.value)} />
                 </div>
+
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setLocked((v) => !v)}
+                    className={cn(
+                        "transition-opacity duration-150",
+                        locked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                    )}
+                    title={locked ? "Sidebar fijo" : "Sidebar por hover"}
+                >
+                    {locked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                </Button>
             </div>
 
-            {/* Base actions */}
-            <div className="space-y-2">
-                {filteredBase.map((action) => (
-                    <ActionSidebarDraggable
-                        key={action.type}
-                        action={action}
-                        onDragStart={onDragStart}
-                        disabled={reachedTotalLimit}
-                    />
-                ))}
+            {/* Contenido colapsable */}
+            <div
+                className={cn(
+                    "p-3 h-[calc(100%-48px)] overflow-y-auto",
+                    locked ? "block" : "hidden group-hover:block"
+                )}
+            >
+                {/* ✅ aquí dentro va tu contenido actual tal cual */}
+                {/* Contadores */}
+                <div className="mb-3 text-xs text-muted-foreground">
+                    <div className="flex flex-wrap gap-3">
+                        <span className={cn(reachedTotalLimit && "text-destructive")}>
+                            {`Nodos: ${totalNodes}/${MAX_NODES_PER_WORKFLOW}`}
+                        </span>
+                        <span className={cn(reachedSeguimientoLimit && "text-destructive")}>
+                            {`Seguimientos: ${seguimientoNodes}/${MAX_SEGUIMIENTOS_PER_WORKFLOW}`}
+                        </span>
+                    </div>
+                </div>
 
-                {/* Seguimientos */}
-                <div className="pt-2">
-                    <button
-                        type="button"
-                        className="w-full text-left text-xs text-muted-foreground hover:text-foreground"
-                        onClick={() => setIsOpenSeguimientos((p) => !p)}
-                    >
-                        {isOpenSeguimientos ? "Ocultar seguimientos" : "Ver seguimientos"}
-                    </button>
+                {/* Base actions */}
+                <div className="space-y-2">
+                    {filteredBase.map((action) => (
+                        <ActionSidebarDraggable
+                            key={action.type}
+                            action={action}
+                            onDragStart={onDragStart}
+                            disabled={reachedTotalLimit}
+                        />
+                    ))}
 
-                    <Collapsible open={isOpenSeguimientos} onOpenChange={setIsOpenSeguimientos}>
-                        <CollapsibleContent className="mt-2 ml-2 space-y-2">
-                            {filteredSeguimientos.map((action) => (
-                                <ActionSidebarDraggable
-                                    key={action.type}
-                                    action={action}
-                                    onDragStart={onDragStart}
-                                    disabled={reachedTotalLimit || reachedSeguimientoLimit}
-                                />
-                            ))}
-                        </CollapsibleContent>
-                    </Collapsible>
+                    {/* Seguimientos */}
+                    <div className="pt-2">
+                        <button
+                            type="button"
+                            className="w-full text-left text-xs text-muted-foreground hover:text-foreground"
+                            onClick={() => setIsOpenSeguimientos((p) => !p)}
+                        >
+                            {isOpenSeguimientos ? "Ocultar seguimientos" : "Ver seguimientos"}
+                        </button>
+
+                        <Collapsible open={isOpenSeguimientos} onOpenChange={setIsOpenSeguimientos}>
+                            <CollapsibleContent className="mt-2 ml-2 space-y-2">
+                                {filteredSeguimientos.map((action) => (
+                                    <ActionSidebarDraggable
+                                        key={action.type}
+                                        action={action}
+                                        onDragStart={onDragStart}
+                                        disabled={reachedTotalLimit || reachedSeguimientoLimit}
+                                    />
+                                ))}
+                            </CollapsibleContent>
+                        </Collapsible>
+                    </div>
                 </div>
             </div>
         </aside>
     );
+
 }

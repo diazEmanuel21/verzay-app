@@ -1,6 +1,5 @@
 import { currentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import { InboxIcon } from 'lucide-react';
 import { getNodeforUser } from '@/actions/workflow-node-action';
 import { getWorkflowEdges } from '@/actions/workflow-actions';
 import { WorkflowCanvas } from './_components/WorkflowCanvas';
@@ -22,35 +21,25 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
     (n?.tipo ?? "").toLowerCase().startsWith("seguimiento")
   ).length;
 
-
   return (
-    <div className='flex flex-col items-center min-h-full'>
-      {nodes.length > 0 ? (
-        <div className='flex flex-col h-full w-full text-center'>
-          <div className="flex flex-row gap-4">
-            <ReactFlowProvider>
-              <WorkflowSidebar totalNodes={totalNodes} seguimientoNodes={seguimientoNodes}/>
-              <div className="flex flex-1">
-                <WorkflowCanvas edgesDB={edgesDB.data} nodesDB={nodes} workflowId={workflowId} user={user} />
-              </div>
-            </ReactFlowProvider>
+    <div className="flex flex-col flex-1 w-full min-h-0 h-[95vh]">
+      <ReactFlowProvider>
+        <div className="flex flex-col w-full h-full min-h-0">
+          <div className="flex-1 min-h-0 flex w-full">
+            <WorkflowSidebar totalNodes={totalNodes} seguimientoNodes={seguimientoNodes} />
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <WorkflowCanvas
+                edgesDB={edgesDB.data}
+                nodesDB={nodes}
+                workflowId={workflowId}
+                user={user}
+              />
+            </div>
           </div>
         </div>
-      ) : (
-        <div className="flex flex-1 flex-col gap-4 h-full items-center justify-center">
-          <div className='rounded-full bg-accent w-20 h-20 flex items-center justify-center'>
-            <InboxIcon size={40} className='stroke-primary' />
-          </div>
-          <div className='flex flex-col gap-1 text-center'>
-            <p className="font-bold">No tienes ningun nodo creado</p>
-            <p className="text-sm text-muted-foreground">Crea un nuevo nodo ahora mismo!</p>
-          </div>
-        </div>
-      )}
+      </ReactFlowProvider>
     </div>
   );
 }
 
 export default CustomWorkflow
-
-

@@ -27,7 +27,7 @@ export function CustomNode({ data }: { data: CustomNodeData }) {
             />
 
             {/* ✅ Botón + para agregar nodo (no inicia conexión) */}
-            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 nodrag z-[9999]">
+            {/* <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 nodrag z-[9999]">
                 <CreateNodeComponent
                     workflowId={data.workflowId}
                     plan={data.user?.plan}
@@ -39,7 +39,7 @@ export function CustomNode({ data }: { data: CustomNodeData }) {
                         </Button>
                     }
                 />
-            </div>
+            </div> */}
 
             {/* SOURCE handle real (para conectar manualmente) */}
             <Handle

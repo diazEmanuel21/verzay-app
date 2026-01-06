@@ -1,3 +1,4 @@
+import { themeClass } from "@/types/generic";
 import type { Metadata } from "next";
 import { ReactNode } from "react";
 
@@ -12,7 +13,7 @@ export default function PublicScheduleLayout({
     children: ReactNode;
 }) {
     return (
-        <main className="flex flex-1 w-full h-full flex-col justify-center items-center">
+        <main className={`flex flex-1 w-full h-full flex-col justify-center items-center ${themeClass} p-6`}>
             {children}
         </main>
     );
