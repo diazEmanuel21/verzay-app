@@ -1,5 +1,5 @@
 "use server"
-import { buildLinearExecutionOrder } from "@/app/(root)/flow/[workflowId]/helpers/buildLinearExecutionOrder";
+import { buildLinearExecutionOrder } from "@/app/flow/[workflowId]/helpers/buildLinearExecutionOrder";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { minioClient } from "@/lib/minio";
@@ -11,34 +11,37 @@ import { redirect } from "next/navigation";
 export async function createNode(form: createNodeflowSchemaType) {
   const session = await auth(); // Obtén la sesión del usuario
 
-  if (!session?.user?.email) {
-    throw new Error("Usuario no autenticado.");
-  }
+  if (!session?.user?.email) return {
+    success: false,
+    message: "Usuario no autenticado."
+  };
 
   const user = await db.user.findUnique({
     where: { email: session.user.email },
   });
 
-  if (!user) {
-    throw new Error("Usuario no encontrado.");
-  }
+  if (!user) return {
+    success: false,
+    message: "Usuario no encontrado."
+  };
 
   const { success, data } = createNodeflowSchema.safeParse(form);
 
-  if (!success) {
-    throw new Error("Datos del formulario inválidos.");
-  }
+  if (!success) return {
+    success: false,
+    message: "Datos del formulario inválidos."
+  };
 
   const totalNodes = await db.workflowNode.count({
     where: { workflowId: data.workflowId },
   });
 
   // Si el flujo ya está en 10 (o más), no permitir agregar más (incluye flujos antiguos > 10)
-  if (totalNodes >= MAX_NODES_PER_WORKFLOW) {
-    throw new Error(
-      `Este flujo ya alcanzó el límite de ${MAX_NODES_PER_WORKFLOW} nodos. Elimina un nodo existente para poder agregar uno nuevo.`
-    );
-  }
+  if (totalNodes >= MAX_NODES_PER_WORKFLOW) return {
+    success: false,
+    message: `Este flujo ya alcanzó el límite de ${MAX_NODES_PER_WORKFLOW} nodos. Elimina un nodo existente para poder agregar uno nuevo.`
+  };
+
   const requestedTipo = (data.tipo ?? "").toLowerCase();
   const isSeguimiento =
     requestedTipo === "seguimiento" || requestedTipo.startsWith("seguimiento-");
@@ -52,10 +55,9 @@ export async function createNode(form: createNodeflowSchemaType) {
         ],
       },
     });
-    if (seguimientosCount >= MAX_SEGUIMIENTOS_PER_WORKFLOW) {
-      throw new Error(
-        `Este flujo ya tiene el máximo de ${MAX_SEGUIMIENTOS_PER_WORKFLOW} nodos de seguimiento permitidos para evitar spam.`
-      );
+    if (seguimientosCount >= MAX_SEGUIMIENTOS_PER_WORKFLOW) return {
+      success: false,
+      message: `Este flujo ya tiene el máximo de ${MAX_SEGUIMIENTOS_PER_WORKFLOW} nodos de seguimiento permitidos para evitar spam.`
     }
   }
 
@@ -73,10 +75,10 @@ export async function createNode(form: createNodeflowSchemaType) {
     },
   });
 
-  if (!result) {
-    throw new Error("Falló la creación del nodo.");
+  if (!result) return {
+    success: false,
+    message: 'Falló la creación del nodo.'
   }
-
   redirect(`/flow/${data.workflowId}`);
 }
 
@@ -317,8 +319,9 @@ export async function deleteFileNode(minIoUrl: string, nodeId: string) {
 /* TODO: DEFECTUOSO */
 export async function deleteWorkflowFiles(userId: string, workflowId: string) {
   const bucket = process.env.S3_BUCKET_NAME;
-  if (!bucket) {
-    throw new Error("Falta S3_BUCKET_NAME en variables de entorno.");
+  if (!bucket) return {
+    success: false,
+    message: 'Falta S3_BUCKET_NAME en variables de entorno.'
   }
   const basePrefix = `verzay-media/${userId}`;
 
@@ -390,7 +393,10 @@ export async function getExecutionNodesForWorkflow(workflowId: string): Promise<
 
 export async function updateWorkflowNodePosition(input: UpdateNodePositionInput) {
   const session = await auth();
-  if (!session?.user?.id) throw new Error('Unauthorized');
+  if (!session?.user?.id) return {
+    success: false,
+    message: 'Unauthorized.'
+  };
 
   const { nodeId, posX, posY } = input;
 
@@ -401,7 +407,10 @@ export async function updateWorkflowNodePosition(input: UpdateNodePositionInput)
     select: { id: true },
   });
 
-  if (!node) throw new Error('Node not found');
+  if (!node) return {
+    success: false,
+    message: 'No se encontró un nodo.'
+  }
 
   await db.workflowNode.update({
     where: { id: nodeId },
@@ -409,4 +418,58 @@ export async function updateWorkflowNodePosition(input: UpdateNodePositionInput)
   });
 
   return { ok: true };
+}
+
+export async function createNodeFromCanvas(form: createNodeflowSchemaType & { posX: number; posY: number }) {
+  const session = await auth();
+  if (!session?.user?.email) return {
+    success: false,
+    message: "Usuario no autenticado."
+  };
+
+  const user = await db.user.findUnique({ where: { email: session.user.email } });
+  if (!user) return {
+    success: false,
+    message: "Usuario no encontrado."
+  };
+
+  const totalNodes = await db.workflowNode.count({ where: { workflowId: form.workflowId } });
+  if (totalNodes >= MAX_NODES_PER_WORKFLOW) return {
+    success: false,
+    message: `Este flujo ya alcanzó el límite de ${MAX_NODES_PER_WORKFLOW} nodos...`
+  };
+
+  const requestedTipo = (form.tipo ?? "").toLowerCase();
+  const isSeguimiento = requestedTipo === "seguimiento" || requestedTipo.startsWith("seguimiento-");
+  if (isSeguimiento) {
+    const seguimientosCount = await db.workflowNode.count({
+      where: {
+        workflowId: form.workflowId,
+        OR: [{ tipo: { equals: "seguimiento" } }, { tipo: { startsWith: "seguimiento" } }],
+      },
+    });
+    if (seguimientosCount >= MAX_SEGUIMIENTOS_PER_WORKFLOW) return {
+      success: false,
+      message: `Este flujo ya tiene el máximo de ${MAX_SEGUIMIENTOS_PER_WORKFLOW} seguimientos...`
+    };
+  }
+
+  const maxOrder = await db.workflowNode.aggregate({
+    where: { workflowId: form.workflowId },
+    _max: { order: true },
+  });
+
+  const result = await db.workflowNode.create({
+    data: {
+      workflowId: form.workflowId,
+      tipo: form.tipo,
+      message: form.message ?? "",
+      url: form.url ?? null,
+      posX: form.posX,
+      posY: form.posY,
+      order: (maxOrder._max.order ?? 0) + 1,
+    },
+  });
+
+  return { success: true, data: result };
 }

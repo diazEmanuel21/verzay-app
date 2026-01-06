@@ -15,16 +15,17 @@ import {
   MiniMap,
   OnNodeDrag,
   useEdgesState,
-  useNodesState
+  useNodesState,
+  useReactFlow
 } from '@xyflow/react';
 
 import '@xyflow/react/dist/style.css';
 
 import { toast } from 'sonner';
-import { updateWorkflowNodePosition } from '@/actions/workflow-node-action';
+import { createNode, createNodeFromCanvas, updateWorkflowNodePosition } from '@/actions/workflow-node-action';
 import { createWorkflowEdge, deleteWorkflowEdge } from '@/actions/workflow-actions';
-import { CustomNodeData, PropsWorkflowCanvas } from '@/types/workflow-node';
-import { CustomNode } from './';
+import { CustomNodeData, PaletteItem, PropsWorkflowCanvas } from '@/types/workflow-node';
+import { CustomNode } from '.';
 import { useTheme } from 'next-themes';
 
 function clamp(n: number, min: number, max: number) {
@@ -32,6 +33,8 @@ function clamp(n: number, min: number, max: number) {
 }
 
 export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWorkflowCanvas) {
+  const rfWrapper = useRef<HTMLDivElement>(null);
+  const { screenToFlowPosition } = useReactFlow();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
   const rfRef = useRef<ReactFlowInstance<Node<CustomNodeData>, Edge> | null>(null);
@@ -150,6 +153,67 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
     }
   }, [workflowId]);
 
+  const onDragOver = useCallback((evt: React.DragEvent) => {
+    evt.preventDefault();
+    evt.dataTransfer.dropEffect = "move";
+  }, []);
+
+  const onDrop = useCallback(async (evt: React.DragEvent) => {
+    evt.preventDefault();
+
+    const raw = evt.dataTransfer.getData("application/reactflow");
+    if (!raw) return;
+
+    let item: PaletteItem;
+    try {
+      item = JSON.parse(raw);
+    } catch {
+      return;
+    }
+
+    // coordenadas del drop en el canvas
+    const pos = screenToFlowPosition({ x: evt.clientX, y: evt.clientY });
+
+    const toastId = toast.loading("Creando nodo...");
+
+    try {
+      const res = await createNodeFromCanvas({
+        workflowId,
+        tipo: item.nodeTipo,
+        message: "",
+        posX: pos.x,
+        posY: pos.y,
+      });
+
+      if (!res?.success) {
+        toast.error(res?.message ?? "No se pudo crear el nodo", { id: toastId });
+        return;
+      }
+
+      const nodeDB = res.data;
+
+      if (!nodeDB) return toast.error('Ups! error al crear el nodo.')
+
+      setNodes((nds) =>
+        nds.concat({
+          id: nodeDB.id,
+          type: "customNode",
+          position: { x: nodeDB.posX ?? pos.x, y: nodeDB.posY ?? pos.y },
+          data: {
+            nodeDB,
+            workflowId,
+            user,
+            totalNodes: totalNodes + 1,
+            seguimientoNodes,
+          },
+        } satisfies Node<CustomNodeData>)
+      );
+
+      toast.success("Nodo creado", { id: toastId });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Error creando nodo", { id: toastId });
+    }
+  }, [screenToFlowPosition, workflowId, user, setNodes]);
 
   return (
     <div className="w-full h-[calc(100vh-160px)] rounded-xl border bg-background overflow-hidden">
@@ -164,6 +228,8 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
         onInit={(instance) => (rfRef.current = instance)}
         defaultEdgeOptions={{ type: 'smoothstep' }}
         onNodeDragStop={onNodeDragStop}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
         fitView
         colorMode={isDark ? 'dark' : 'light'}
       >

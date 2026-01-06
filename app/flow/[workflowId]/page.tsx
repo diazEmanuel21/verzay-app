@@ -1,10 +1,11 @@
-import { CreateNodeComponent } from './_components/CrateNodeComponent';
 import { currentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { InboxIcon } from 'lucide-react';
-import { getExecutionNodesForWorkflow, getNodeforUser } from '@/actions/workflow-node-action';
+import { getNodeforUser } from '@/actions/workflow-node-action';
 import { getWorkflowEdges } from '@/actions/workflow-actions';
 import { WorkflowCanvas } from './_components/WorkflowCanvas';
+import { WorkflowSidebar } from './_components/WorkflowSidebar';
+import { ReactFlowProvider } from '@xyflow/react';
 
 const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) => {
   const user = await currentUser();
@@ -25,16 +26,14 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
   return (
     <div className='flex flex-col items-center min-h-full'>
       {nodes.length > 0 ? (
-        <div className='flex flex-col h-full w-full gap-5 px-4 text-center pt-6' >
-          <WorkflowCanvas edgesDB={edgesDB.data} nodesDB={nodes} workflowId={workflowId} user={user} />
-
-          <div className='flex items-center justify-center'>
-            <CreateNodeComponent
-              workflowId={workflowId}
-              plan={user?.plan}
-              totalNodes={totalNodes}
-              seguimientoNodes={seguimientoNodes}
-            />
+        <div className='flex flex-col h-full w-full text-center'>
+          <div className="flex flex-row gap-4">
+            <ReactFlowProvider>
+              <WorkflowSidebar totalNodes={totalNodes} seguimientoNodes={seguimientoNodes}/>
+              <div className="flex flex-1">
+                <WorkflowCanvas edgesDB={edgesDB.data} nodesDB={nodes} workflowId={workflowId} user={user} />
+              </div>
+            </ReactFlowProvider>
           </div>
         </div>
       ) : (
@@ -46,12 +45,6 @@ const CustomWorkflow = async ({ params }: { params: { workflowId: string } }) =>
             <p className="font-bold">No tienes ningun nodo creado</p>
             <p className="text-sm text-muted-foreground">Crea un nuevo nodo ahora mismo!</p>
           </div>
-          <CreateNodeComponent
-            workflowId={workflowId}
-            plan={user?.plan}
-            totalNodes={totalNodes}
-            seguimientoNodes={seguimientoNodes}
-          />
         </div>
       )}
     </div>

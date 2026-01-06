@@ -38,3 +38,18 @@ export interface PropsNodeCard {
 }
 
 export const MAX_MESSAGE_LENGTH = 1000;
+
+export type PaletteItem = {
+  type: string;      // tipo de ReactFlow: ej "customNode"
+  label: string;     // label UI
+  nodeTipo: string;  // tu WorkflowNode.tipo (texto, imagen, audio...)
+  icon?: React.ReactNode;
+};
+
+export const PALETTE: PaletteItem[] = [
+  { type: "customNode", label: "Texto", nodeTipo: "texto" },
+  { type: "customNode", label: "Imagen", nodeTipo: "imagen" },
+  { type: "customNode", label: "Audio", nodeTipo: "audio" },
+  { type: "customNode", label: "Documento", nodeTipo: "documento" },
+  { type: "customNode", label: "Seguimiento Video", nodeTipo: "seguimiento-video" },
+];

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { PencilLine, FileTextIcon } from "lucide-react";
 import { toast } from "sonner";
 import { updateWorkflow } from "@/actions/workflow-actions";
-import { WorkflowAction } from "./";
+import { WorkflowAction } from ".";
 import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";

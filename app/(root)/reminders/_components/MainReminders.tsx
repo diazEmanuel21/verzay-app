@@ -12,7 +12,7 @@ import { GenericDeleteDialog } from '@/components/shared/GenericDeleteDialog';
 import { deleteReminder } from '@/actions/reminders-actions';
 import { toast } from 'sonner';
 import { themeClass } from '@/types/generic';
-import { convertToSeconds } from '../../flow/[workflowId]/helpers';
+import { convertToSeconds } from '@/app/flow/[workflowId]/helpers';
 
 export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, workflows, instancia, isScheduleView, isSchedule }: MainReminderInterface) => {
   const { openDialog, selectedReminderId, setCampaignPage } = useReminderDialogStore();

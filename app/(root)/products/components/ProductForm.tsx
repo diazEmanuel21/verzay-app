@@ -12,8 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Pencil, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { optimizeFile } from "../../flow/[workflowId]/helpers";
 import { nanoid } from "nanoid";
+import { optimizeFile } from "@/app/flow/[workflowId]/helpers";
 
 export const ProductForm = ({
     userId,

@@ -1,6 +1,6 @@
 import { rr, User, Workflow } from '@prisma/client';
 import { MainAutoReplies } from './MainAutoReplies';
-import { UserWorkflows } from '../../flow/_components';
+import { UserWorkflows } from '@/app/flow/_components';
 
 interface Props {
     user: User;
