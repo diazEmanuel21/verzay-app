@@ -29,7 +29,7 @@ export default async function WorkflowLayout({
         <main className={`flex min-h-screen w-full flex-col ${themeClass}`}>
             <AppInitializer onReseller={onReseller} modules={modules} user={user} />
 
-            <ModuleShell padded={false} breadcrumbs>
+            <ModuleShell padded={false} breadcrumbs isFlow={true}>
                 {children}
             </ModuleShell>
         </main>

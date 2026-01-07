@@ -2,21 +2,38 @@
 
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-
-import { baseActions, seguimientoActions } from "../helpers";
-import { Action } from "../types";
 import { MAX_NODES_PER_WORKFLOW, MAX_SEGUIMIENTOS_PER_WORKFLOW } from "@/types/workflow";
 import { ActionSidebarDraggable } from "./";
 import { Button } from "@/components/ui/button";
-import { Lock, Unlock } from "lucide-react";
+import { ChevronDown, Lock, Unlock } from "lucide-react";
+import { Action, baseActions, seguimientoActions } from "@/types/workflow-node";
 
 type Props = {
     totalNodes: number;
     seguimientoNodes: number;
 };
+
+export const CategorySection = ({
+    title,
+    children,
+    right,
+}: {
+    title: string;
+    children: React.ReactNode;
+    right?: React.ReactNode;
+}) => {
+    return (
+        <div className="space-y-2">
+            <div className="flex items-center justify-between">
+                <p className="text-xs">{title}</p>
+                {right}
+            </div>
+            {children}
+        </div>
+    );
+}
 
 export function WorkflowSidebar({ totalNodes, seguimientoNodes }: Props) {
     const [q, setQ] = useState("");
@@ -27,18 +44,21 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes }: Props) {
     const qLower = q.trim().toLowerCase();
 
     const filteredBase = useMemo(() => {
-        if (!qLower) return baseActions;
-        return baseActions.filter(a =>
+        const list = baseActions.filter(a => a.type !== "seguimiento");
+        if (!qLower) return list;
+        return list.filter(a =>
             a.label.toLowerCase().includes(qLower) || a.type.toLowerCase().includes(qLower)
         );
     }, [qLower]);
 
     const filteredSeguimientos = useMemo(() => {
-        if (!qLower) return seguimientoActions;
-        return seguimientoActions.filter(a =>
+        const list = seguimientoActions.filter(a => a.type !== "seguimiento");
+        if (!qLower) return list;
+        return list.filter(a =>
             a.label.toLowerCase().includes(qLower) || a.type.toLowerCase().includes(qLower)
         );
     }, [qLower]);
+
 
     const reachedTotalLimit = totalNodes >= MAX_NODES_PER_WORKFLOW;
     const reachedSeguimientoLimit = seguimientoNodes >= MAX_SEGUIMIENTOS_PER_WORKFLOW;
@@ -78,46 +98,29 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes }: Props) {
     return (
         <aside
             className={cn(
-                "group relative h-full border-border bg-background transition-all duration-200 ease-out",
-                locked
-                    ? "w-[280px]"
-                    : "w-12 hover:w-[280px] bg-transparent"
+                "group relative h-full border-r bg-background transition-all duration-200 ease-out",
+                locked ? "w-[320px]" : "w-12 hover:w-[320px]"
             )}
         >
             {/* Header siempre visible */}
-            <div className="flex items-center gap-2 p-2 border-border">
-                {/* El buscador solo se ve cuando está expandido */}
-                <div
-                    className={cn(
-                        "flex-1 transition-opacity duration-150",
-                        locked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                    )}
-                >
-                    <Input placeholder="Buscar..." value={q} onChange={(e) => setQ(e.target.value)} />
-                </div>
-
+            <div className="flex items-center gap-2 p-2 border-b">
                 <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setLocked((v) => !v)}
-                    className={cn(
-                        "transition-opacity duration-150",
-                        locked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                    )}
+                    onClick={() => setLocked(v => !v)}
+                    className="shrink-0"
                     title={locked ? "Sidebar fijo" : "Sidebar por hover"}
                 >
                     {locked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
                 </Button>
+
+                {/* Search aparece solo expandido */}
+                <div className={cn("flex-1 transition-opacity duration-150", locked ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
+                    <Input placeholder="Buscar..." value={q} onChange={(e) => setQ(e.target.value)} />
+                </div>
             </div>
 
-            {/* Contenido colapsable */}
-            <div
-                className={cn(
-                    "p-3 h-[calc(100%-48px)] overflow-y-auto",
-                    locked ? "block" : "hidden group-hover:block"
-                )}
-            >
-                {/* ✅ aquí dentro va tu contenido actual tal cual */}
+            <div className={cn("p-3 h-[calc(100%-48px)] overflow-y-auto", locked ? "block" : "hidden group-hover:block")}>
                 {/* Contadores */}
                 <div className="mb-3 text-xs text-muted-foreground">
                     <div className="flex flex-wrap gap-3">
@@ -130,43 +133,36 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes }: Props) {
                     </div>
                 </div>
 
-                {/* Base actions */}
-                <div className="space-y-2">
-                    {filteredBase.map((action) => (
-                        <ActionSidebarDraggable
-                            key={action.type}
-                            action={action}
-                            onDragStart={onDragStart}
-                            disabled={reachedTotalLimit}
-                        />
-                    ))}
+                <div className="space-y-5">
+                    <CategorySection title="Base">
+                        <div className="grid grid-cols-2 gap-2">
+                            {filteredBase.map((action) => (
+                                <ActionSidebarDraggable
+                                    key={action.type}
+                                    action={action}
+                                    onDragStart={onDragStart}
+                                    disabled={reachedTotalLimit}
+                                />
+                            ))}
+                        </div>
+                    </CategorySection>
 
-                    {/* Seguimientos */}
-                    <div className="pt-2">
-                        <button
-                            type="button"
-                            className="w-full text-left text-xs text-muted-foreground hover:text-foreground"
-                            onClick={() => setIsOpenSeguimientos((p) => !p)}
-                        >
-                            {isOpenSeguimientos ? "Ocultar seguimientos" : "Ver seguimientos"}
-                        </button>
-
-                        <Collapsible open={isOpenSeguimientos} onOpenChange={setIsOpenSeguimientos}>
-                            <CollapsibleContent className="mt-2 ml-2 space-y-2">
-                                {filteredSeguimientos.map((action) => (
-                                    <ActionSidebarDraggable
-                                        key={action.type}
-                                        action={action}
-                                        onDragStart={onDragStart}
-                                        disabled={reachedTotalLimit || reachedSeguimientoLimit}
-                                    />
-                                ))}
-                            </CollapsibleContent>
-                        </Collapsible>
-                    </div>
+                    <CategorySection
+                        title="Seguimientos"
+                    >
+                        <div className="grid grid-cols-2 gap-2">
+                            {filteredSeguimientos.map((action) => (
+                                <ActionSidebarDraggable
+                                    key={action.type}
+                                    action={action}
+                                    onDragStart={onDragStart}
+                                    disabled={reachedTotalLimit || reachedSeguimientoLimit}
+                                />
+                            ))}
+                        </div>
+                    </CategorySection>
                 </div>
             </div>
         </aside>
     );
-
 }

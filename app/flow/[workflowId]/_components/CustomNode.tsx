@@ -1,7 +1,4 @@
-import { Button } from "@/components/ui/button";
 import { Handle, Position, useConnection } from "@xyflow/react";
-import { Plus } from "lucide-react";
-import { CreateNodeComponent } from "./CrateNodeComponent";
 import { NodeCard } from "./NodeCard";
 import { CustomNodeData } from "@/types/workflow-node";
 
@@ -25,22 +22,6 @@ export function CustomNode({ data }: { data: CustomNodeData }) {
                     />
                 }
             />
-
-            {/* ✅ Botón + para agregar nodo (no inicia conexión) */}
-            {/* <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 nodrag z-[9999]">
-                <CreateNodeComponent
-                    workflowId={data.workflowId}
-                    plan={data.user?.plan}
-                    totalNodes={data.totalNodes}
-                    seguimientoNodes={data.seguimientoNodes}
-                    trigger={
-                        <Button size="icon" className="h-8 w-8 rounded-full shadow-md">
-                            <Plus  />
-                        </Button>
-                    }
-                />
-            </div> */}
-
             {/* SOURCE handle real (para conectar manualmente) */}
             <Handle
                 type="source"

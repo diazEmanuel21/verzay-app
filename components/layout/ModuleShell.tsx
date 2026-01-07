@@ -7,12 +7,14 @@ type Props = {
     children: React.ReactNode;
     padded?: boolean;
     breadcrumbs?: boolean;
+    isFlow?: boolean;
 };
 
 export default async function ModuleShell({
     children,
     padded = true,
     breadcrumbs = true,
+    isFlow,
 }: Props) {
     const cookieStore = await cookies();
     const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
@@ -20,7 +22,7 @@ export default async function ModuleShell({
     return (
         <SidebarProvider defaultOpen={defaultOpen}>
             <SidebarInset className="h-screen flex flex-col min-h-0">
-                {breadcrumbs && <div className="shrink-0"><Breadcrumbs /></div>}
+                {breadcrumbs && <div className="shrink-0"><Breadcrumbs isFlow={isFlow}/></div>}
 
                 {padded ? (
                     <main className={`flex-1 min-h-0 overflow-auto p-4 ${themeClass}`}>

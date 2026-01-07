@@ -1,9 +1,9 @@
 'use client';
 
-import { Action } from '../types';
 import { Button } from "@/components/ui/button";
 import { PremiumModule } from "@/components/shared/PremiumModule";
 import { Plan } from '@prisma/client';
+import { Action } from "@/types/workflow-node";
 
 type Props = {
     action: Action;
@@ -16,24 +16,23 @@ export const ActionSidebarDraggable = ({
     disabled,
     onDragStart,
 }: Props) => {
-    const isSeguimiento = action.type === 'seguimiento' || action.type.startsWith('seguimiento-');
+    // const isSeguimiento = action.type === 'seguimiento' || action.type.startsWith('seguimiento-');
+    const Icon = action.icon;
 
     return (
         <Button
             variant="outline"
-            className={`flex items-center justify-between gap-2 text-sm w-full ${isSeguimiento ? 'bg-blue-100 hover:bg-blue-200' : ''
-                }`}
+            className={`flex`}
             draggable={!disabled}
             onDragStart={(e) => onDragStart(e, action)}
             disabled={disabled}
             title={disabled ? 'Límite alcanzado o acción deshabilitada' : 'Arrastra para crear en el canvas'}
         >
-            <span className="flex flex-row gap-2 items-center">
-                {action.icon}
+            <Icon className={action.iconClassName ?? "!h-3 !w-3"} />
+            <div className="flex flex-1">
                 {action.label}
-            </span>
-
-            {isSeguimiento && <PremiumModule />}
+            </div>
+            {/* {isSeguimiento && <PremiumModule />} */}
         </Button>
     );
 }

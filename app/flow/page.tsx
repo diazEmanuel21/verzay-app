@@ -25,7 +25,7 @@ const FlowPage = async () => {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full p-4">
       {/* Header fijo */}
       <div className="sticky top-0 z-1 mb-6">
         <div className="flex justify-between items-center">

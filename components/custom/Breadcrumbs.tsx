@@ -49,7 +49,7 @@ const breadcrumbLabels: Record<string, string> = {
   schedule: 'agendamiento'
 };
 
-export const Breadcrumbs = () => {
+export const Breadcrumbs = ({ isFlow = false }: { isFlow?: boolean }) => {
   const rawPathname = usePathname();
   const pathname = rawPathname ?? '/';
   const [guides, setGuides] = useState<GuidesUrl[]>([]);
@@ -92,8 +92,10 @@ export const Breadcrumbs = () => {
               {/* <BreadcrumbList> */}
               {/* <BreadcrumbList className="flex flex-wrap items-center gap-1"> */}
               <BreadcrumbList>
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mr-2 h-4" />
+                {!isFlow && <>
+                  <SidebarTrigger className="-ml-1" />
+                  <Separator orientation="vertical" className="mr-2 h-4" />
+                </>}
                 {/* Home link */}
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>

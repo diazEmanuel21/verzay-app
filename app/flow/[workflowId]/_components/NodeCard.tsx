@@ -3,8 +3,7 @@
 import { ChangeEvent, useState, useTransition } from "react";
 import { useRouter } from 'next/navigation';
 import { updateNode, deleteNode, updateUrlNode, updateDelayNode, deleteFileNode, updateInactivityNode } from "@/actions/workflow-node-action";
-import { ACCEPT_TYPES, cardBaseActions, baseActions, getAcceptTypeString, optimizeFile, seguimientoActions, validateFileType, cardSeguimientoActions } from "../helpers";
-import { Action } from "../types";
+import { ACCEPT_TYPES, getAcceptTypeString, optimizeFile, validateFileType } from "../helpers";
 import { NodeActions } from "./NodeActions";
 import { Card, CardHeader, CardFooter, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -16,7 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { GenericTextarea } from "@/components/shared/GenericTextarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { MAX_MESSAGE_LENGTH, PropsNodeCard } from "@/types/workflow-node";
+import { Action, baseActions, cardBaseActions, cardSeguimientoActions, MAX_MESSAGE_LENGTH, PropsNodeCard, seguimientoActions } from "@/types/workflow-node";
 
 export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCard) => {
   const router = useRouter();
@@ -45,6 +44,7 @@ export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCar
 
   const allCardActions = [...cardBaseActions, ...cardSeguimientoActions];
   const currentCardAction = allCardActions.find((action) => action.type.toLowerCase() === nodeType);
+  const IconCard = currentCardAction?.icon ?? MessageSquareIcon;
 
   const accept = baseType && ACCEPT_TYPES[baseType] ? ACCEPT_TYPES[baseType].join(',') : '*';
 
@@ -334,7 +334,7 @@ export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCar
           {targetHandle}
 
           <div className={`absolute -top-4 flex items-center space-x-2 ${currentCardAction?.bg || 'bg-background'} rounded-md px-3 py-1 shadow-md`}>
-            {currentCardAction?.icon || <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />}
+            {<IconCard className={currentCardAction?.iconClassName ?? "h-4 w-4"} />}
             <span className="text-xs font-bold uppercase text-white">
               {`${isSeguimiento ? labelSegumientoCategory : currentCardAction?.label}` || "Tipo desconocido"}
             </span>
