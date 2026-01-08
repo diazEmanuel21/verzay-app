@@ -19,7 +19,6 @@ import {
   useReactFlow
 } from '@xyflow/react';
 
-import '@xyflow/react/dist/style.css';
 
 import { toast } from 'sonner';
 import { createNode, createNodeFromCanvas, updateWorkflowNodePosition } from '@/actions/workflow-node-action';
@@ -231,7 +230,7 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
         onDragOver={onDragOver}
         onDrop={onDrop}
         fitView
-        colorMode={isDark ? 'dark' : 'light'}
+        colorMode={'dark'}
       >
         <div className="flex flex-col w-full h-full min-h-0">
           <Background/>
