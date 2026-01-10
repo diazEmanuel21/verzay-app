@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { useTheme } from 'next-themes';
 
 import {
   ReactFlow,
@@ -19,23 +21,21 @@ import {
   useReactFlow
 } from '@xyflow/react';
 
-
 import { toast } from 'sonner';
-import { createNode, createNodeFromCanvas, updateWorkflowNodePosition } from '@/actions/workflow-node-action';
+import { createNodeFromCanvas, updateWorkflowNodePosition } from '@/actions/workflow-node-action';
 import { createWorkflowEdge, deleteWorkflowEdge } from '@/actions/workflow-actions';
 import { CustomNodeData, PaletteItem, PropsWorkflowCanvas } from '@/types/workflow-node';
 import { CustomNode } from '.';
-import { useTheme } from 'next-themes';
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
 export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWorkflowCanvas) {
-  const rfWrapper = useRef<HTMLDivElement>(null);
-  const { screenToFlowPosition } = useReactFlow();
   const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === 'dark';
+  const { screenToFlowPosition } = useReactFlow();
+  const [mounted, setMounted] = useState(false);
+
   const rfRef = useRef<ReactFlowInstance<Node<CustomNodeData>, Edge> | null>(null);
   const totalNodes = useMemo(() => nodesDB.length, [nodesDB]);
   const seguimientoNodes = useMemo(
@@ -68,6 +68,8 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
 
+  useEffect(() => setMounted(true), []);
+
   useEffect(() => {
     setNodes(initialNodes);
   }, [initialNodes, setNodes]);
@@ -88,6 +90,7 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
     setEdges(initialEdges);
   }, [initialEdges, setEdges]);
 
+  const isDark = mounted && resolvedTheme === "dark";
   const nodeTypes: NodeTypes = useMemo(() => ({ customNode: CustomNode }), []);
 
   const pending = useRef<Record<string, number>>({});
@@ -230,13 +233,11 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
         onDragOver={onDragOver}
         onDrop={onDrop}
         fitView
-        colorMode={'dark'}
+        colorMode={isDark ? "dark" : "light"}
       >
-        <div className="flex flex-col w-full h-full min-h-0">
-          <Background/>
-          <Controls />
-          <MiniMap />
-        </div>
+        <Background />
+        <Controls />
+        <MiniMap />
       </ReactFlow>
     </div>
   );

@@ -10,11 +10,6 @@ import ErrorBoundary from "@/components/error-bundary";
 
 const poppins = Poppins({ subsets: ["latin"], weight: ["400", "700"] });
 
-export const viewport = {
-  width: "device-width",
-  initialScale: 1,
-};
-
 export const metadata: Metadata = {
   title: "Agente IA",
   description: "La plataforma de inteligencia artificial que potencia y automatiza tu negocio.",
@@ -23,12 +18,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <body className={`${poppins.className} overflow-hidden`}>
         <ErrorBoundary>
           <ChunkRecovery />
           <AppProviders>
-            <ThemeProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
               {children}
               <Toaster position="bottom-right" richColors />
             </ThemeProvider>
