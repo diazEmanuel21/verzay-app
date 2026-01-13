@@ -11,10 +11,11 @@ import {
   BreadcrumbSeparator,
   BreadcrumbEllipsis,
 } from '@/components/ui/breadcrumb';
-import { Separator } from "@/components/ui/separator"
+import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from '../ui/sidebar';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getGuidesForPath } from '@/actions/guide-actions';
+import { getWorkflowNameById } from '@/actions/workflow-actions'; // 👈 agrega esto
 import { Play } from 'lucide-react';
 import {
   Dialog,
@@ -53,51 +54,73 @@ const breadcrumbLabels: Record<string, string> = {
 export const Breadcrumbs = ({ isFlow = false }: { isFlow?: boolean }) => {
   const rawPathname = usePathname();
   const pathname = rawPathname ?? '/';
+
+  const segments = useMemo(
+    () => pathname.split('/').filter((segment) => segment !== ''),
+    [pathname]
+  );
+
   const [guides, setGuides] = useState<GuidesUrl[]>([]);
+  const [workflowName, setWorkflowName] = useState<string | null>(null);
+
+  // Detecta workflowId: /flow/:workflowId
+  const workflowId = useMemo(() => {
+    const flowIndex = segments.indexOf('flow');
+    if (flowIndex === -1) return null;
+    return segments[flowIndex + 1] ?? null;
+  }, [segments]);
 
   useEffect(() => {
     const fetchGuides = async () => {
-      const currentPath = pathname;
-      const data = await getGuidesForPath(currentPath);
+      const data = await getGuidesForPath(pathname);
       setGuides(data);
     };
-
     if (segments.length > 0) fetchGuides();
-  }, [pathname]);
+  }, [pathname, segments.length]);
 
-  // Dividimos la ruta en segmentos y eliminamos strings vacías
-  const segments = pathname.split('/').filter((segment) => segment !== '');
+  useEffect(() => {
+    const fetchWorkflowName = async () => {
+      if (!workflowId) {
+        setWorkflowName(null);
+        return;
+      }
+      const name = await getWorkflowNameById(workflowId);
+      setWorkflowName(name);
+    };
+
+    fetchWorkflowName();
+  }, [workflowId]);
 
   // Generamos el array de breadcrumbs
   const breadcrumbs = segments.map((segment, index) => {
     const href = '/' + segments.slice(0, index + 1).join('/');
 
-    // Reemplazamos si está en el diccionario
     const labelFromDict = breadcrumbLabels[segment];
 
-    // Detectamos si es un ID por longitud (puedes ajustar la lógica)
-    const isId = segment.length > 100;
-    const label = labelFromDict || (isId ? 'URL' : decodeURIComponent(segment.replace(/-/g, ' ')));
+    // 👇 si este segmento es el workflowId y ya tenemos nombre, lo mostramos
+    const isWorkflowIdSegment = workflowId && segment === workflowId;
+    const label =
+      (isWorkflowIdSegment && (workflowName ?? 'flujo')) ||
+      labelFromDict ||
+      decodeURIComponent(segment.replace(/-/g, ' '));
 
     return { href, label };
   });
 
   return (
     <>
-      {pathname !== "/multiagente" ?
+      {pathname !== "/multiagente" ? (
         <div className="h-18 shrink-0 block">
-          {/* <div className="h-18 shrink-0 block md:hidden lg:hidden xl:hidden"> */}
-          <header className={`sticky top-0 w-full border-border flex items-center px-4 dark:bg-gray-900 dark:text-white`}>
-            {/* <Breadcrumb className='py-4 flex flex-row flex-1 overflow-hidden bg-slate-100 text-black dark:bg-gray-900 dark:text-white border-border'> */}
-            <Breadcrumb className='py-2 flex flex-row flex-1 overflow-hidden dark:bg-gray-900 dark:text-white'>
-              {/* <BreadcrumbList> */}
-              {/* <BreadcrumbList className="flex flex-wrap items-center gap-1"> */}
+          <header className="sticky top-0 w-full border-border flex items-center px-4 dark:bg-gray-900 dark:text-white">
+            <Breadcrumb className="py-2 flex flex-row flex-1 overflow-hidden dark:bg-gray-900 dark:text-white">
               <BreadcrumbList>
-                {!isFlow && <>
-                  <SidebarTrigger className="-ml-1" />
-                  <Separator orientation="vertical" className="mr-2 h-4" />
-                </>}
-                {/* Home link */}
+                {!isFlow && (
+                  <>
+                    <SidebarTrigger className="-ml-1" />
+                    <Separator orientation="vertical" className="mr-2 h-4" />
+                  </>
+                )}
+
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
                     <Link href="/" className="flex items-center gap-1 text-muted-foreground hover:text-primary">
@@ -107,11 +130,9 @@ export const Breadcrumbs = ({ isFlow = false }: { isFlow?: boolean }) => {
                   </BreadcrumbLink>
                 </BreadcrumbItem>
 
-                {/* Separador inicial */}
                 {breadcrumbs.length > 0 && <BreadcrumbSeparator />}
 
-                {/* Si hay muchos segmentos, mostramos un BreadcrumbEllipsis */}
-                {breadcrumbs.length > 3 && (
+                {breadcrumbs.length > 3 ? (
                   <>
                     <BreadcrumbEllipsis />
                     <BreadcrumbSeparator />
@@ -132,10 +153,7 @@ export const Breadcrumbs = ({ isFlow = false }: { isFlow?: boolean }) => {
                       </div>
                     ))}
                   </>
-                )}
-
-                {/* Si no hay muchos segmentos, mostramos todos */}
-                {breadcrumbs.length <= 3 &&
+                ) : (
                   breadcrumbs.map((breadcrumb, index) => (
                     <div key={breadcrumb.href} className="flex items-center">
                       <BreadcrumbItem>
@@ -149,13 +167,12 @@ export const Breadcrumbs = ({ isFlow = false }: { isFlow?: boolean }) => {
                           </Link>
                         </BreadcrumbLink>
                       </BreadcrumbItem>
-
                       {index !== breadcrumbs.length - 1 && <BreadcrumbSeparator />}
                     </div>
-                  ))}
+                  ))
+                )}
               </BreadcrumbList>
 
-              {/* Tutorials */}
               {guides.length > 0 && (
                 <div className='flex justify-end flex-1'>
                   <Dialog>
@@ -185,12 +202,10 @@ export const Breadcrumbs = ({ isFlow = false }: { isFlow?: boolean }) => {
                               className="border rounded-lg p-5 shadow-sm transition cursor-pointer group"
                               onClick={() => window.open(guide.url, '_blank')}
                             >
-                              {/* Título destacado */}
                               <h3 className="text-base font-semibold text-foreground transition">
                                 {guide.title}
                               </h3>
 
-                              {/* Botón sutil */}
                               <Button
                                 className="mt-3 bg-[#FF0033] hover:bg-[#e60000] text-white font-semibold transition duration-200 uppercase px-4 py-2 text-sm"
                                 onClick={(e) => {
@@ -201,7 +216,6 @@ export const Breadcrumbs = ({ isFlow = false }: { isFlow?: boolean }) => {
                                 <Play className="w-4 h-4 text-white mr-2" />
                                 <span className="hidden sm:inline">Ver en YouTube</span>
                               </Button>
-                              {/* Descripción secundaria */}
                               <p className="text-sm text-muted-foreground mt-1">{guide.description}</p>
                             </li>
                           ))}
@@ -211,14 +225,14 @@ export const Breadcrumbs = ({ isFlow = false }: { isFlow?: boolean }) => {
                   </Dialog>
                 </div>
               )}
-              <div className='flex flex-1 justify-end'>
+
+              <div className="flex flex-1 justify-end">
                 {isFlow && <ThemeSwitcher />}
               </div>
             </Breadcrumb>
           </header>
         </div>
-        : <></>
-      }
+      ) : null}
     </>
   );
 };

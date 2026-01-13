@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { MAX_NODES_PER_WORKFLOW, MAX_SEGUIMIENTOS_PER_WORKFLOW } from "@/types/workflow";
-import { ActionSidebarDraggable } from "./";
+import { ActionSidebarDraggable } from ".";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Lock, Unlock } from "lucide-react";
 import { Action, baseActions, seguimientoActions } from "@/types/workflow-node";

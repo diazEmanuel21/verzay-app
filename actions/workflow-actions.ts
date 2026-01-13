@@ -20,6 +20,15 @@ interface RROperationResponse {
     data?: Workflow[];
 };
 
+export async function getWorkflowNameById(workflowId: string) {
+    const wf = await db.workflow.findUnique({
+        where: { id: workflowId },
+        select: { name: true }, 
+    });
+
+    return wf?.name ?? null;
+}
+
 export const getWorkFlowByUser = async (userId?: string): Promise<GetWorkFlowResponse> => {
     if (!userId) {
         return { success: false, error: "No autenticado.", message: "No autenticado." };

@@ -25,7 +25,7 @@ import { toast } from 'sonner';
 import { createNodeFromCanvas, updateWorkflowNodePosition } from '@/actions/workflow-node-action';
 import { createWorkflowEdge, deleteWorkflowEdge } from '@/actions/workflow-actions';
 import { CustomNodeData, PaletteItem, PropsWorkflowCanvas } from '@/types/workflow-node';
-import { CustomNode } from '.';
+import { CustomEdge, CustomNode } from '.';
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
@@ -80,6 +80,7 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
       id: e.id,                  // usa el id de DB
       source: e.sourceId,
       target: e.targetId,
+      type: 'customEdge',
     }));
   }, [edgesDB]);
 
@@ -92,6 +93,7 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
 
   const isDark = mounted && resolvedTheme === "dark";
   const nodeTypes: NodeTypes = useMemo(() => ({ customNode: CustomNode }), []);
+  const edgeTypes = useMemo(() => ({ customEdge: CustomEdge }), []);
 
   const pending = useRef<Record<string, number>>({});
 
@@ -135,6 +137,7 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
         id: res.edge.id,
         source: res.edge.sourceId,
         target: res.edge.targetId,
+        type: 'customEdge',
       };
 
       setEdges((eds) => [...eds, newEdge]);
@@ -223,12 +226,17 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onEdgesChange={onEdgesChange}
         onNodesChange={onNodesChange}
         onConnect={onConnect}
         onEdgesDelete={onEdgesDelete}
         onInit={(instance) => (rfRef.current = instance)}
-        defaultEdgeOptions={{ type: 'smoothstep' }}
+        defaultEdgeOptions={{ type: 'customEdge' }}
+        connectionLineStyle={{
+          stroke: 'hsl(var(--primary) / 0.65)',
+          strokeWidth: 2.5,
+        }}
         onNodeDragStop={onNodeDragStop}
         onDragOver={onDragOver}
         onDrop={onDrop}
