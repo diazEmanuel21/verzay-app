@@ -19,6 +19,7 @@ export function CustomNode({ data }: { data: CustomNodeData }) {
                 user={data.user}
                 targetHandle={
                     <Handle
+                        id="in"
                         type="target"
                         position={Position.Top}
                         isConnectable={!connection.inProgress || isTarget}
@@ -49,6 +50,7 @@ export function CustomNode({ data }: { data: CustomNodeData }) {
             </div>
 
             <Handle
+                id="out"
                 type="source"
                 position={Position.Bottom}
                 isConnectableStart={!connection.inProgress}

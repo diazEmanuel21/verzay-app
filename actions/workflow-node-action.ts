@@ -391,6 +391,110 @@ export async function getExecutionNodesForWorkflow(workflowId: string): Promise<
   return orderedNodes;
 }
 
+export async function createWorkflowEdge(params: {
+  workflowId: string;
+  sourceId: string;
+  targetId: string;
+  sourceHandle?: string | null;
+  targetHandle?: string | null;
+}) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, message: "Unauthorized." };
+
+  const { workflowId, sourceId, targetId } = params;
+
+  const sourceHandle = params.sourceHandle ?? "default";
+  const targetHandle = params.targetHandle ?? "default";
+
+  if (sourceId === targetId) {
+    return { success: false, message: "No puedes conectar un nodo consigo mismo." };
+  }
+
+  // ✅ MVP: impedir múltiples conexiones desde el MISMO handle del mismo nodo
+  const existing = await db.workflowEdge.findFirst({
+    where: {
+      workflowId,
+      sourceId,
+      sourceHandle, // 👈 ahora valida por handle
+    },
+    select: { id: true },
+  });
+
+  if (existing) {
+    return { success: false, message: "Nodo ya relacionado (salida ocupada)." };
+  }
+
+  // ownership
+  const wf = await db.workflow.findFirst({
+    where: { id: workflowId, userId: session.user.id },
+    select: { id: true },
+  });
+  if (!wf) return { success: false, message: "Workflow no encontrado." };
+
+  // nodos válidos
+  const nodes = await db.workflowNode.findMany({
+    where: { id: { in: [sourceId, targetId] }, workflowId },
+    select: { id: true },
+  });
+  if (nodes.length !== 2) return { success: false, message: "Nodos inválidos para este workflow." };
+
+  const edge = await db.workflowEdge.create({
+    data: { workflowId, sourceId, targetId, sourceHandle, targetHandle },
+    select: { id: true, sourceId: true, targetId: true, sourceHandle: true, targetHandle: true },
+  });
+
+  return { success: true, edge };
+}
+
+export async function deleteWorkflowEdge(params: {
+  workflowId: string;
+  edgeId: string;
+}) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, message: 'Unauthorized.' };
+
+  const { workflowId, edgeId } = params;
+
+  // ✅ validar ownership del workflow
+  const wf = await db.workflow.findFirst({
+    where: { id: workflowId, userId: session.user.id },
+    select: { id: true },
+  });
+  if (!wf) return { success: false, message: 'Workflow no encontrado.' };
+
+  // borrar solo si el edge pertenece al workflow
+  await db.workflowEdge.deleteMany({
+    where: { id: edgeId, workflowId },
+  });
+
+  return { success: true, message: 'Se eliminó la relación correctamente.' };
+}
+
+export async function getWorkflowEdges(workflowId: string) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, message: "Unauthorized." };
+
+  const wf = await db.workflow.findFirst({
+    where: { id: workflowId, userId: session.user.id },
+    select: { id: true },
+  });
+  if (!wf) return { success: false, message: "Workflow no encontrado." };
+
+  const edges = await db.workflowEdge.findMany({
+    where: { workflowId },
+    select: {
+      id: true,
+      sourceId: true,
+      targetId: true,
+      sourceHandle: true,
+      targetHandle: true,
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return { success: true, message: "ok", data: edges };
+}
+
 export async function updateWorkflowNodePosition(input: UpdateNodePositionInput) {
   const session = await auth();
   if (!session?.user?.id) return {
@@ -472,4 +576,42 @@ export async function createNodeFromCanvas(form: createNodeflowSchemaType & { po
   });
 
   return { success: true, data: result };
+}
+
+export async function updateIntentionNodeConfig(params: {
+  nodeId: string;
+  keywords: string[];
+  miniPrompt: string;
+  threshold: number;
+  noMatchMessage: string;
+}) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const { nodeId, keywords, miniPrompt, threshold, noMatchMessage } = params;
+
+  // Validaciones MVP
+  if (!nodeId) return { success: false, message: "nodeId requerido" };
+  if (threshold < 0 || threshold > 1) return { success: false, message: "threshold debe ser 0..1" };
+  if (keywords.length > 30) return { success: false, message: "Máx 30 keywords" };
+  if (miniPrompt.length > 280) return { success: false, message: "miniPrompt muy largo (máx 280)" };
+
+  // Guardar keywords como JSON string
+  const keywordsJson = JSON.stringify(
+    keywords
+      .map(k => k.trim())
+      .filter(Boolean)
+  );
+
+  const updated = await db.workflowNode.update({
+    where: { id: nodeId },
+    data: {
+      keywords: keywordsJson,
+      miniPrompt,
+      threshold,
+      noMatchMessage,
+    },
+  });
+
+  return { success: true, message: "Configuración de intención guardada", data: updated };
 }

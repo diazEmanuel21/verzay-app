@@ -23,7 +23,7 @@ import {
 
 import { toast } from 'sonner';
 import { createNodeFromCanvas, updateWorkflowNodePosition } from '@/actions/workflow-node-action';
-import { createWorkflowEdge, deleteWorkflowEdge } from '@/actions/workflow-actions';
+import { createWorkflowEdge, deleteWorkflowEdge } from '@/actions/workflow-node-action';
 import { CustomNodeData, PaletteItem, PropsWorkflowCanvas } from '@/types/workflow-node';
 import { CustomEdge, CustomNode } from '.';
 
@@ -80,6 +80,8 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
       id: e.id,                  // usa el id de DB
       source: e.sourceId,
       target: e.targetId,
+      sourceHandle: e.sourceHandle ?? "out",
+      targetHandle: e.targetHandle ?? "in",
       type: 'customEdge',
     }));
   }, [edgesDB]);
@@ -121,11 +123,16 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
   const onConnect: OnConnect = useCallback(async (params) => {
     if (!params.source || !params.target) return;
 
+    const sourceHandle = params.sourceHandle ?? "out";
+    const targetHandle = params.targetHandle ?? "in";
+
     try {
       const res = await createWorkflowEdge({
         workflowId,
         sourceId: params.source,
         targetId: params.target,
+        sourceHandle,
+        targetHandle,
       });
 
       if (!res.success || !res.edge) {
@@ -137,6 +144,8 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
         id: res.edge.id,
         source: res.edge.sourceId,
         target: res.edge.targetId,
+        sourceHandle: res.edge.sourceHandle ?? "out",
+        targetHandle: res.edge.targetHandle ?? "in",
         type: 'customEdge',
       };
 

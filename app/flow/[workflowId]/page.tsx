@@ -1,7 +1,6 @@
 import { currentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import { getNodeforUser } from '@/actions/workflow-node-action';
-import { getWorkflowEdges } from '@/actions/workflow-actions';
+import { getNodeforUser, getWorkflowEdges } from '@/actions/workflow-node-action';
 import { WorkflowCanvas } from './_components/WorkflowCanvas';
 import { WorkflowSidebar } from './_components/WorkflowSidebar';
 import { ReactFlowProvider } from '@xyflow/react';

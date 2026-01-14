@@ -376,8 +376,14 @@ model WorkflowNode {
   inactividad Boolean?
   name_file   String?
   order       Int      @default(0)
-  posX        Float? // si ya lo tienes
+  posX        Float?
   posY        Float?
+
+  // ✅ NUEVO (solo para tipo "intención")
+  keywords       String? @db.Text
+  miniPrompt     String? @db.Text
+  threshold      Float?
+  noMatchMessage String? @db.Text
 
   outgoingEdges WorkflowEdge[] @relation("EdgeSource")
   incomingEdges WorkflowEdge[] @relation("EdgeTarget")
@@ -390,12 +396,15 @@ model WorkflowEdge {
   targetId   String
   createdAt  DateTime @default(now())
 
-  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  sourceHandle String  @default("default") // "default" | "yes" | "no"
+  targetHandle String? // opcional
 
-  source WorkflowNode @relation("EdgeSource", fields: [sourceId], references: [id], onDelete: Cascade)
-  target WorkflowNode @relation("EdgeTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  workflow Workflow     @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  source   WorkflowNode @relation("EdgeSource", fields: [sourceId], references: [id], onDelete: Cascade)
+  target   WorkflowNode @relation("EdgeTarget", fields: [targetId], references: [id], onDelete: Cascade)
 
-  @@unique([workflowId, sourceId]) // ✅ si tu MVP es 1 salida por nodo
+  // ✅ antes: @@unique([workflowId, sourceId])
+  @@unique([workflowId, sourceId, sourceHandle])
   @@index([workflowId])
   @@index([sourceId])
   @@index([targetId])

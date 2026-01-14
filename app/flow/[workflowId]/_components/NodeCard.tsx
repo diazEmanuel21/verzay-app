@@ -15,7 +15,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { GenericTextarea } from "@/components/shared/GenericTextarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Action, baseActions, cardBaseActions, cardSeguimientoActions, MAX_MESSAGE_LENGTH, PropsNodeCard, seguimientoActions } from "@/types/workflow-node";
+import { Action, ACTIONS, CARD_ACTIONS, MAX_MESSAGE_LENGTH, PropsNodeCard } from "@/types/workflow-node";
+import { IntentionNodeFields } from './IntentionNodeFields';
 
 export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCard) => {
   const router = useRouter();
@@ -34,16 +35,13 @@ export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCar
   const baseType = nodeType.startsWith('seguimiento-')
     ? nodeType.split('-')[1] as Action['type']
     : nodeType;
-
+  const isIntention = nodeType === 'intention';
   const isPauseNode = nodeType === 'node_pause';
   const isNotifyNode = nodeType === 'nodo-notify';
   const hasContent = nodeType === 'text' ? !!message : !!nodes.url;
+  const currentAction = ACTIONS.find((a) => a.type === nodeType);
+  const currentCardAction = CARD_ACTIONS.find((a) => a.type === nodeType);
 
-  const allActions = [...baseActions, ...seguimientoActions];
-  const currentAction = allActions.find((action) => action.type.toLowerCase() === nodeType);
-
-  const allCardActions = [...cardBaseActions, ...cardSeguimientoActions];
-  const currentCardAction = allCardActions.find((action) => action.type.toLowerCase() === nodeType);
   const IconCard = currentCardAction?.icon ?? MessageSquareIcon;
 
   const accept = baseType && ACCEPT_TYPES[baseType] ? ACCEPT_TYPES[baseType].join(',') : '*';
@@ -268,6 +266,10 @@ export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCar
       );
     }
 
+    if (isIntention) {
+      return <IntentionNodeFields node={nodes as any} />;
+    }
+
     if (hasContent) {
       return (
         <div className="flex items-center w-full rounded nodrag">
@@ -325,7 +327,6 @@ export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCar
       </div>
     );
   };
-
   return (
     <div className="flex items-center justify-center p-1">
       <Card className="shadow-md border-border rounded-2xl min-w-[300px] max-w-[300px] transition-all duration-300 hover:shadow-lg">
