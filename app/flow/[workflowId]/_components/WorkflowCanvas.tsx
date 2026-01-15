@@ -126,6 +126,14 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
     const sourceHandle = params.sourceHandle ?? "out";
     const targetHandle = params.targetHandle ?? "in";
 
+    const exists = edges.some(
+      (e) => e.source === params.source && e.sourceHandle === sourceHandle
+    );
+    if (exists) {
+      toast.info("Ese punto de salida ya está ocupado.");
+      return;
+    }
+
     try {
       const res = await createWorkflowEdge({
         workflowId,

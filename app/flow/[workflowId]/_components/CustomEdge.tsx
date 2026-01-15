@@ -81,6 +81,7 @@ function CustomEdgeComponent(props: EdgeProps) {
                   hover:border-border
                   active:scale-[0.98]
                   transition
+                  z-50
                 "
                             >
                                 <Trash2 className="h-4 w-4" />

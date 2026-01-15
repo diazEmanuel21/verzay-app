@@ -403,8 +403,8 @@ export async function createWorkflowEdge(params: {
 
   const { workflowId, sourceId, targetId } = params;
 
-  const sourceHandle = params.sourceHandle ?? "default";
-  const targetHandle = params.targetHandle ?? "default";
+  const sourceHandle = params.sourceHandle ?? "out";
+  const targetHandle = params.targetHandle ?? "in";
 
   if (sourceId === targetId) {
     return { success: false, message: "No puedes conectar un nodo consigo mismo." };
