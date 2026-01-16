@@ -164,20 +164,21 @@ model Session {
   remoteJid      String
   pushName       String
   instanceId     String
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
   status         Boolean
-  id             Int             @id @default(autoincrement())
-  seguimientos   String?         @default("")
-  inactividad    String?         @default("")
+  id             Int                    @id @default(autoincrement())
+  seguimientos   String?                @default("")
+  inactividad    String?                @default("")
   sessionDelay   String?
-  flujos         String?         @default("")
+  flujos         String?                @default("")
   remoteJidAlt   String?
   Appointment    Appointment[]
   registros      Registro[]
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   tags           SessionTag[]
   SessionTrigger SessionTrigger?
+  WorkflowState  SessionWorkflowState[]
 
   @@index([userId, remoteJid])
 }
@@ -350,16 +351,17 @@ model Tools {
 }
 
 model Workflow {
-  id            String         @id @default(cuid())
+  id            String                 @id @default(cuid())
   userId        String
   name          String
   description   String?
   definition    String
   status        String
-  createdAt     DateTime       @default(now())
-  updateAt      DateTime       @updatedAt
-  umbral        Float          @default(0.5)
+  createdAt     DateTime               @default(now())
+  updateAt      DateTime               @updatedAt
+  umbral        Float                  @default(0.5)
   workflowEdges WorkflowEdge[]
+  sessionStates SessionWorkflowState[]
 
   @@unique([name, userId])
 }
@@ -379,14 +381,38 @@ model WorkflowNode {
   posX        Float?
   posY        Float?
 
-  // ✅ NUEVO (solo para tipo "intención")
   keywords       String? @db.Text
   miniPrompt     String? @db.Text
   threshold      Float?
   noMatchMessage String? @db.Text
 
+  intentionPrompt      String? @db.Text
+  intentionMaxAttempts Int     @default(3)
+
   outgoingEdges WorkflowEdge[] @relation("EdgeSource")
   incomingEdges WorkflowEdge[] @relation("EdgeTarget")
+}
+
+model SessionWorkflowState {
+  id         String @id @default(cuid())
+  sessionId  Int
+  workflowId String
+
+  currentNodeId     String? // nodo donde está pausado (ej: intention)
+  intentionAttempts Int       @default(0)
+  intentionStatus   String    @default("idle") // idle | waiting | passed | failed
+  intentionData     Json?
+  lastPromptAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  session  Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, workflowId])
+  @@index([workflowId])
+  @@index([sessionId])
 }
 
 model WorkflowEdge {

@@ -1,40 +1,51 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 
 import type { WorkflowNodeDB } from '@/types/workflow-node';
 import { updateIntentionNodeConfig } from '@/actions/workflow-node-action';
 
-type Props = {
-    node: WorkflowNodeDB;
-};
+type Props = { node: WorkflowNodeDB };
 
 export function EmbeddingNode({ node }: Props) {
     const router = useRouter();
-    const [miniPrompt, setMiniPrompt] = useState(node.miniPrompt ?? '');
-    const [threshold, setThreshold] = useState<number>(node.threshold ?? 0.5);
-    const [noMatchMessage, setNoMatchMessage] = useState(node.noMatchMessage ?? '');
+
+    const [prompt, setPrompt] = useState(node.intentionPrompt ?? '');
+    const [maxAttempts, setMaxAttempts] = useState<number>(node.intentionMaxAttempts ?? 3);
 
     useEffect(() => {
-        setMiniPrompt(node.miniPrompt ?? '');
-        setThreshold(node.threshold ?? 0.5);
-        setNoMatchMessage(node.noMatchMessage ?? '');
-    }, [node.miniPrompt, node.threshold, node.noMatchMessage]);
+        setPrompt(node.intentionPrompt ?? '');
+        setMaxAttempts(node.intentionMaxAttempts ?? 3);
+    }, [node.intentionPrompt, node.intentionMaxAttempts]);
+
+    const savingRef = useRef(false);
+    const lastSavedRef = useRef({ prompt: prompt.trim(), maxAttempts });
 
     const save = async () => {
-        const toastId = toast.loading('Guardando configuración de intención...');
+        const trimmed = prompt.trim();
+        const payload = { prompt: trimmed, maxAttempts };
+
+        // evita guardar si no cambió
+        if (
+            lastSavedRef.current.prompt === payload.prompt &&
+            lastSavedRef.current.maxAttempts === payload.maxAttempts
+        ) return;
+
+        if (savingRef.current) return;
+        savingRef.current = true;
+
+        const toastId = toast.loading('Guardando intención...');
         try {
             const res = await updateIntentionNodeConfig({
                 nodeId: node.id,
-                miniPrompt: miniPrompt.trim(),
-                threshold,
-                noMatchMessage: noMatchMessage.trim(),
+                intentionPrompt: trimmed,
+                intentionMaxAttempts: maxAttempts,
             });
 
             if (!res?.success) {
@@ -42,52 +53,53 @@ export function EmbeddingNode({ node }: Props) {
                 return;
             }
 
+            lastSavedRef.current = payload;
             toast.success('Intención guardada', { id: toastId });
             router.refresh();
         } catch (e: any) {
             toast.error(e?.message ?? 'Error guardando intención', { id: toastId });
+        } finally {
+            savingRef.current = false;
         }
+    };
+
+    const onBlurSave = () => {
+        // evita onBlur si el valor es inválido
+        if (maxAttempts < 1 || maxAttempts > 10) return;
+        save();
     };
 
     return (
         <div className="space-y-4">
             <div className="space-y-2">
-                <Label className="text-xs">mini prompt</Label>
+                <Label className="text-xs">Prompt del nodo</Label>
                 <Textarea
-                    value={miniPrompt}
-                    onChange={(e) => setMiniPrompt(e.target.value)}
-                    placeholder="Ej: Si el usuario pide info del curso, muestra horarios y precio."
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    onBlur={onBlurSave}
+                    placeholder="Ej: Solicita nombre y descripción del servicio."
                     className="min-h-[90px]"
                 />
                 <p className="text-[11px] text-muted-foreground">
-                    Recomendación: máximo 1–2 frases (280 caracteres).
+                    Este texto se enviará al usuario mientras el nodo esté “esperando” respuesta.
                 </p>
             </div>
 
             <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                    <Label className="text-xs">Umbral</Label>
-                    <span className="text-xs text-muted-foreground">{threshold.toFixed(2)}</span>
-                </div>
-
-                <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={threshold}
-                    onChange={(e) => setThreshold(Number(e.target.value))}
-                    className="w-full"
+                <Label className="text-xs">Cantidad máxima de intentos</Label>
+                <Input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={maxAttempts}
+                    onChange={(e) => setMaxAttempts(Number(e.target.value))}
+                    onBlur={onBlurSave}
+                    className="h-9"
                 />
-
                 <p className="text-[11px] text-muted-foreground">
-                    Más alto = más estricto. Más bajo = se activa más fácil.
+                    Si el usuario no cumple en estos intentos, se irá por la rama <b>No</b>.
                 </p>
             </div>
-
-            <Button type="button" className="w-full" onClick={save}>
-                Guardar configuración
-            </Button>
         </div>
     );
 }

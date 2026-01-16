@@ -580,36 +580,62 @@ export async function createNodeFromCanvas(form: createNodeflowSchemaType & { po
 
 export async function updateIntentionNodeConfig(params: {
   nodeId: string;
+
+  // existentes
   keywords?: string[];
-  miniPrompt: string;
-  threshold: number;
-  noMatchMessage: string;
+  miniPrompt?: string;
+  threshold?: number;
+  noMatchMessage?: string;
+
+  // nuevos (intention)
+  intentionPrompt?: string;
+  intentionMaxAttempts?: number;
 }) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
-  const { nodeId, keywords = [], miniPrompt, threshold, noMatchMessage } = params;
-
-  // Validaciones MVP
+  const { nodeId } = params;
   if (!nodeId) return { success: false, message: "nodeId requerido" };
-  if (threshold < 0 || threshold > 1) return { success: false, message: "threshold debe ser 0..1" };
-  if (miniPrompt.length > 280) return { success: false, message: "miniPrompt muy largo (máx 280)" };
 
-  const keywordsJson = JSON.stringify(
-    keywords
-      .map(k => k.trim())
-      .filter(Boolean) 
-  );
+  const data: any = {};
+
+  // --- embedding/intention config existente (si aplica)
+  if (params.threshold !== undefined) {
+    if (params.threshold < 0 || params.threshold > 1)
+      return { success: false, message: "threshold debe ser 0..1" };
+    data.threshold = params.threshold;
+  }
+
+  if (params.miniPrompt !== undefined) {
+    if (params.miniPrompt.length > 280)
+      return { success: false, message: "miniPrompt muy largo (máx 280)" };
+    data.miniPrompt = params.miniPrompt;
+  }
+
+  if (params.noMatchMessage !== undefined) data.noMatchMessage = params.noMatchMessage;
+
+  if (params.keywords) {
+    data.keywords = JSON.stringify(params.keywords.map(k => k.trim()).filter(Boolean));
+  }
+
+  // --- nuevos campos intention
+  if (params.intentionPrompt !== undefined) {
+    if (params.intentionPrompt.trim().length < 3)
+      return { success: false, message: "El prompt es muy corto" };
+    data.intentionPrompt = params.intentionPrompt.trim();
+  }
+
+  if (params.intentionMaxAttempts !== undefined) {
+    const n = Number(params.intentionMaxAttempts);
+    if (!Number.isFinite(n) || n < 1 || n > 10)
+      return { success: false, message: "intentionMaxAttempts debe ser 1..10" };
+    data.intentionMaxAttempts = n;
+  }
 
   const updated = await db.workflowNode.update({
     where: { id: nodeId },
-    data: {
-      keywords: keywordsJson,
-      miniPrompt,
-      threshold,
-      noMatchMessage,
-    },
+    data,
   });
 
-  return { success: true, message: "Configuración de intención guardada", data: updated };
+  return { success: true, message: "Configuración guardada", data: updated };
 }
