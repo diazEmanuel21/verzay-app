@@ -580,7 +580,7 @@ export async function createNodeFromCanvas(form: createNodeflowSchemaType & { po
 
 export async function updateIntentionNodeConfig(params: {
   nodeId: string;
-  keywords: string[];
+  keywords?: string[];
   miniPrompt: string;
   threshold: number;
   noMatchMessage: string;
@@ -588,19 +588,17 @@ export async function updateIntentionNodeConfig(params: {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
-  const { nodeId, keywords, miniPrompt, threshold, noMatchMessage } = params;
+  const { nodeId, keywords = [], miniPrompt, threshold, noMatchMessage } = params;
 
   // Validaciones MVP
   if (!nodeId) return { success: false, message: "nodeId requerido" };
   if (threshold < 0 || threshold > 1) return { success: false, message: "threshold debe ser 0..1" };
-  if (keywords.length > 30) return { success: false, message: "Máx 30 keywords" };
   if (miniPrompt.length > 280) return { success: false, message: "miniPrompt muy largo (máx 280)" };
 
-  // Guardar keywords como JSON string
   const keywordsJson = JSON.stringify(
     keywords
       .map(k => k.trim())
-      .filter(Boolean)
+      .filter(Boolean) 
   );
 
   const updated = await db.workflowNode.update({

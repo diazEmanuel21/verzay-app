@@ -16,7 +16,7 @@ import { GenericTextarea } from "@/components/shared/GenericTextarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Action, ACTIONS, CARD_ACTIONS, MAX_MESSAGE_LENGTH, PropsNodeCard } from "@/types/workflow-node";
-import { IntentionNodeFields } from './IntentionNodeFields';
+import { EmbeddingNode } from './';
 
 export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCard) => {
   const router = useRouter();
@@ -267,7 +267,7 @@ export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCar
     }
 
     if (isIntention) {
-      return <IntentionNodeFields node={nodes as any} />;
+      return <EmbeddingNode node={nodes as any} />;
     }
 
     if (hasContent) {
@@ -353,7 +353,7 @@ export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCar
         <CardContent className="p-4">
           {renderContent()}
 
-          {!isNotifyNode && !isPauseNode && baseType !== 'text' && baseType !== 'document' && baseType !== 'audio' && (
+          {!isNotifyNode && !isPauseNode && baseType !== 'text' && baseType !== 'document' && baseType !== 'audio' && !isIntention && (
             <div className="flex w-full mt-2 nodrag">
               <GenericTextarea
                 fileType={baseType}
