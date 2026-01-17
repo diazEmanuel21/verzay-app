@@ -166,7 +166,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
 
                 const hourLabel = format(startLocal, "hh:mm a");
 
-                const serviceName = user.Service.find((s) => s.id === selectedService)?.name ?? "Asesoría";
+                const serviceName = user.services.find((s) => s.id === selectedService)?.name ?? "Asesoría";
                 // const displayPhone = `+${fullPhone}`;
                 const displayPhone = e164;
 
@@ -208,7 +208,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
         const urlevo = user.apiKey?.url;
         const apikey = user.instancias[0].instanceId;
         const url = `https://${urlevo}/message/sendText/${instanceName}`;
-        const currentService = user.Service.find((s) => s.id === selectedService);
+        const currentService = user.services.find((s) => s.id === selectedService);
         const text = formatServiceMessage(currentService?.messageText, {
             nameClient,
             selectedDate,
@@ -380,7 +380,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                                 Estás a punto de agendar una cita con los siguientes datos:
                                 <Card className="border-none mt-2 ">
                                     <CardContent className="space-y-4 p-0 m-0">
-                                        <SummaryItem label="Servicio" value={user.Service.find((s) => s.id === selectedService)?.name ?? "—"} />
+                                        <SummaryItem label="Servicio" value={user.services.find((s) => s.id === selectedService)?.name ?? "—"} />
                                         <SummaryItem label="Duración" value={`${slotDuration} min`} />
                                         <SummaryItem label="Fecha" value={formatDateLabel(selectedDate)} />
                                         <SummaryItem label="Contacto" value={`${areaCode} ${phone}`} />

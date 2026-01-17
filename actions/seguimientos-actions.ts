@@ -1,4 +1,4 @@
-// app/actions/seguimientos-actions.ts
+// app/actions/seguimiento-actions.ts
 'use server'
 
 import { db } from "@/lib/db"
@@ -22,7 +22,7 @@ export const createSeguimiento = async (input: unknown) => {
   }
 
   try {
-    const seguimiento = await db.seguimientos.create({
+    const seguimiento = await db.seguimiento.create({
       data: validated.data,
     })
 
@@ -54,7 +54,7 @@ export async function deleteSeguimientosByInstanceName(userId: string): Promise<
 
   try {
     // Buscar la instancia del usuario con instanceType = "Whatsapp"
-    const instancias = await db.instancias.findMany({
+    const instancia = await db.instancia.findMany({
       where: {
         userId,
         instanceType: "Whatsapp",
@@ -64,7 +64,7 @@ export async function deleteSeguimientosByInstanceName(userId: string): Promise<
       },
     })
 
-    if (!instancias.length) {
+    if (!instancia.length) {
       return {
         success: false,
         message: "No se encontró ninguna instancia Whatsapp para este usuario.",
@@ -72,11 +72,11 @@ export async function deleteSeguimientosByInstanceName(userId: string): Promise<
     }
 
     const posiblesInstancias = [
-      ...instancias.map(i => i.instanceName),
-      ...instancias.map(i => i.instanceId),
+      ...instancia.map(i => i.instanceName),
+      ...instancia.map(i => i.instanceId),
     ]
 
-    const result = await db.seguimientos.deleteMany({
+    const result = await db.seguimiento.deleteMany({
       where: {
         instancia: { in: posiblesInstancias },
       },
@@ -86,11 +86,11 @@ export async function deleteSeguimientosByInstanceName(userId: string): Promise<
       success: true,
       message:
         result.count > 0
-          ? `Se eliminaron ${result.count} seguimientos.`
-          : "No se encontraron seguimientos para esa instancia.",
+          ? `Se eliminaron ${result.count} seguimiento.`
+          : "No se encontraron seguimiento para esa instancia.",
       data: {
         count: result.count,
-        instanceNames: instancias.map(i => i.instanceName),
+        instanceNames: instancia.map(i => i.instanceName),
       },
     }
   } catch (error) {
@@ -120,7 +120,7 @@ export async function deleteReminderByInstanceUserRemote(
 
   try {
     // 1) Verificar que esa instancia pertenezca a ese userId
-    const instancia = await db.instancias.findFirst({
+    const instancia = await db.instancia.findFirst({
       where: {
         userId,
         instanceName,
@@ -135,8 +135,8 @@ export async function deleteReminderByInstanceUserRemote(
       }
     }
 
-    // 2) Eliminar seguimientos SOLO de esa instancia y ese remoteJid
-    const result = await db.seguimientos.deleteMany({
+    // 2) Eliminar seguimiento SOLO de esa instancia y ese remoteJid
+    const result = await db.seguimiento.deleteMany({
       where: {
         instancia: instancia.instanceName,
         remoteJid,
@@ -147,7 +147,7 @@ export async function deleteReminderByInstanceUserRemote(
       success: true,
       message:
         result.count > 0
-          ? `seguimientos(s) eliminado(s) correctamente. Total: ${result.count}.`
+          ? `seguimiento(s) eliminado(s) correctamente. Total: ${result.count}.`
           : "No se encontró ningún recordatorio con esos datos.",
       data: { count: result.count },
     }

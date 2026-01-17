@@ -1,4 +1,4 @@
-import { ApiKey, Instancias, Reminders, Session, User, Workflow } from "@prisma/client";
+import { ApiKey, Instancia, Reminders, Session, User, Workflow } from "@prisma/client";
 import { z } from "zod";
 import { UserWithApiKeys } from "./schema";
 
@@ -73,7 +73,7 @@ export interface MainReminderInterface {
     reminders: Reminders[],
     leads: Session[],
     workflows: Workflow[]
-    instancia: Instancias
+    instancia: Instancia
     isScheduleView?: boolean,
     isSchedule?: boolean,
 }

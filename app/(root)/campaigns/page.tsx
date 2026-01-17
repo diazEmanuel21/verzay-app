@@ -1,7 +1,7 @@
 import { currentUser } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getApiKeyById } from "@/actions/api-action"
-import { ApiKey, Instancias, Reminders, Session, Workflow } from "@prisma/client"
+import { ApiKey, Instancia, Reminders, Session, Workflow } from "@prisma/client"
 import { getRemindersByUserId } from "@/actions/reminders-actions"
 import { getSessionsByUserId } from "@/actions/session-action"
 import { getWorkFlowByUser } from "@/actions/workflow-actions"
@@ -25,7 +25,7 @@ function hasWorkflow(result: { data?: Workflow[] }): result is { data: Workflow[
   return !!result.data
 }
 
-function hasInstancia(result: { data?: Instancias[] }): result is { data: Instancias[] } {
+function hasInstancia(result: { data?: Instancia[] }): result is { data: Instancia[] } {
   return !!result.data && result.data.length > 0
 }
 

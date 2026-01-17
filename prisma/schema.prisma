@@ -31,7 +31,7 @@ model Account {
 }
 
 model AgentPrompt {
-  id                  String                @id @db.Uuid
+  id                  String                @id @default(uuid()) @db.Uuid
   userId              String
   agentId             String?
   status              PromptStatus          @default(draft)
@@ -54,7 +54,7 @@ model AgentPrompt {
 }
 
 model AgentPromptRevision {
-  id                 String      @id @db.Uuid
+  id                 String      @id @default(uuid()) @db.Uuid
   promptId           String      @db.Uuid
   revisionNumber     Int
   sectionsSnapshot   Json
@@ -70,7 +70,7 @@ model AgentPromptRevision {
 }
 
 model ApiKey {
-  id        String   @id
+  id        String   @id @default(uuid())
   url       String
   key       String
   createdAt DateTime @default(now())
@@ -79,7 +79,7 @@ model ApiKey {
 }
 
 model Appointment {
-  id        String            @id
+  id        String            @id @default(uuid())
   userId    String
   sessionId Int
   startTime DateTime
@@ -99,7 +99,7 @@ model Appointment {
 }
 
 model GuideUrl {
-  id          String   @id
+  id          String   @id @default(uuid())
   path        String
   title       String
   description String?
@@ -124,7 +124,7 @@ model Instancia {
 }
 
 model Log {
-  id        String   @id
+  id        String   @id @default(uuid())
   level     String
   message   String
   context   String?
@@ -132,7 +132,7 @@ model Log {
 }
 
 model Manual {
-  id          String   @id
+  id          String   @id @default(uuid())
   name        String
   description String?
   url         String
@@ -141,7 +141,7 @@ model Manual {
 }
 
 model Module {
-  id                     String       @id
+  id                     String       @id @default(uuid())
   label                  String
   route                  String
   icon                   String
@@ -160,7 +160,7 @@ model Module {
 }
 
 model ModuleItem {
-  id        String   @id
+  id        String   @id @default(uuid())
   title     String
   url       String
   moduleId  String
@@ -170,6 +170,7 @@ model ModuleItem {
 }
 
 model Pausar {
+  id          Int      @id @default(autoincrement())
   userId      String
   mensaje     String   @default("Fue un gusto ayudarte.")
   tipo        String   @default("abrir")
@@ -178,12 +179,11 @@ model Pausar {
   updatedAt   DateTime @updatedAt
   apikeyId    String
   instanciaId String
-  id          Int      @id @default(autoincrement())
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Product {
-  id          String   @id
+  id          String   @id @default(uuid())
   userId      String
   title       String
   description String?
@@ -212,7 +212,7 @@ model PromptInstance {
 }
 
 model PromptTemplate {
-  id          String   @id
+  id          String   @id @default(uuid())
   name        String   @unique
   description String?
   content     String
@@ -242,7 +242,7 @@ model Registro {
 }
 
 model Reminders {
-  id           String      @id
+  id           String      @id @default(uuid())
   title        String
   description  String?
   time         String?
@@ -262,7 +262,7 @@ model Reminders {
 }
 
 model Service {
-  id           String        @id
+  id           String        @id @default(uuid())
   userId       String
   name         String
   description  String?
@@ -319,7 +319,7 @@ model SessionTrigger {
 }
 
 model SystemMessage {
-  id         String        @id
+  id         String        @id @default(uuid())
   message    String
   userId     String
   createdAt  DateTime      @default(now())
@@ -347,7 +347,7 @@ model Tag {
 }
 
 model Tool {
-  id          String   @id
+  id          String   @id @default(uuid())
   name        String
   description String?
   userId      String
@@ -360,7 +360,7 @@ model Tool {
 }
 
 model User {
-  id                                 String                @id
+  id                                 String                @id @default(uuid())
   name                               String?
   email                              String                @unique
   password                           String?
@@ -413,14 +413,14 @@ model User {
   financeAttachments                 FinanceAttachment[]
   financeCategories                  FinanceCategory[]
   financeTransactions                FinanceTransaction[]
-  iaCredits                          IaCredits?
+  iaCredits                          IaCredit?
   reseller_reseller_reselleridToUser Reseller[]            @relation("reseller_reselleridToUser")
   reseller_reseller_userIdToUser     Reseller[]            @relation("reseller_userIdToUser")
   modules                            Module[]              @relation("UserModules")
 }
 
 model UserAvailability {
-  id        String @id
+  id        String @id @default(uuid())
   userId    String
   dayOfWeek Int
   startTime String
@@ -437,7 +437,7 @@ model VerificationToken {
 }
 
 model Workflow {
-  id            String                 @id
+  id            String                 @id @default(cuid())
   userId        String
   name          String
   description   String?
@@ -448,23 +448,25 @@ model Workflow {
   umbral        Float                  @default(0.5)
   sessionStates SessionWorkflowState[]
   workflowEdges WorkflowEdge[]
+  nodes         WorkflowNode[]
 
   @@unique([name, userId])
 }
 
 model SessionWorkflowState {
-  id                String    @id @default(cuid())
+  id                String        @id @default(cuid())
   sessionId         Int
   workflowId        String
   currentNodeId     String?
-  intentionAttempts Int       @default(0)
-  intentionStatus   String    @default("idle")
+  intentionAttempts Int           @default(0)
+  intentionStatus   String        @default("idle")
   intentionData     Json?
   lastPromptAt      DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  session           Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  workflow          Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  session           Session       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  workflow          Workflow      @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  currentNode       WorkflowNode? @relation(fields: [currentNodeId], references: [id], onDelete: SetNull)
 
   @@unique([sessionId, workflowId])
   @@index([workflowId])
@@ -490,31 +492,35 @@ model WorkflowEdge {
 }
 
 model WorkflowNode {
-  id                   String         @id @default(cuid())
-  workflowId           String
-  message              String
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
-  tipo                 String
-  url                  String?
-  delay                String?
-  inactividad          Boolean?
-  nameFile             String?        @map("name_file")
-  order                Int            @default(0)
-  posX                 Float?
-  posY                 Float?
-  intentionMaxAttempts Int            @default(3)
-  intentionPrompt      String?
-  keywords             String?
-  miniPrompt           String?
-  noMatchMessage       String?
-  threshold            Float?
-  outgoingEdges        WorkflowEdge[] @relation("EdgeSource")
-  incomingEdges        WorkflowEdge[] @relation("EdgeTarget")
+  id                    String                 @id @default(uuid())
+  workflowId            String
+  message               String
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  tipo                  String
+  url                   String?
+  delay                 String?
+  inactividad           Boolean?
+  nameFile              String?                @map("name_file")
+  order                 Int                    @default(0)
+  posX                  Float?
+  posY                  Float?
+  intentionMaxAttempts  Int                    @default(3)
+  intentionPrompt       String?
+  keywords              String?
+  miniPrompt            String?
+  noMatchMessage        String?
+  threshold             Float?
+  outgoingEdges         WorkflowEdge[]         @relation("EdgeSource")
+  incomingEdges         WorkflowEdge[]         @relation("EdgeTarget")
+  workflow              Workflow               @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  sessionWorkflowStates SessionWorkflowState[]
+
+  @@index([workflowId])
 }
 
 model AiModel {
-  id           String   @id
+  id           String   @id @default(uuid())
   providerId   String
   name         String
   description  String?
@@ -531,7 +537,7 @@ model AiModel {
 }
 
 model AiProvider {
-  id          String   @id
+  id          String   @id @default(uuid())
   name        String   @unique
   description String?
   aiModel     String
@@ -545,7 +551,7 @@ model AiProvider {
 }
 
 model FinanceAccount {
-  id        String             @id
+  id        String             @id @default(uuid())
   userId    String
   name      String
   type      FinanceAccountType @default(PERSONAL)
@@ -562,7 +568,7 @@ model FinanceAccount {
 }
 
 model FinanceAttachment {
-  id            String   @id
+  id            String   @id @default(uuid())
   userId        String
   transactionId String
   url           String
@@ -580,7 +586,7 @@ model FinanceAttachment {
 }
 
 model FinanceCategory {
-  id        String        @id
+  id        String        @id @default(uuid())
   userId    String
   name      String
   type      FinanceTxType
@@ -611,7 +617,7 @@ model FinanceCurrency {
 }
 
 model FinanceTransaction {
-  id           String          @id
+  id           String          @id @default(uuid())
   userId       String
   type         FinanceTxType
   status       FinanceTxStatus @default(ACTIVE)
@@ -644,15 +650,16 @@ model FinanceTransaction {
   @@map("finance_transactions")
 }
 
-model IaCredits {
-  id          String   @id
+model IaCredit {
+  id          String   @id @default(uuid())
   userId      String   @unique
   total       Int      @default(0)
   used        Int      @default(0)
   renewalDate DateTime
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("ia_credits")
 }
@@ -707,7 +714,7 @@ model Seguimiento {
 }
 
 model UserAiConfig {
-  id         String   @id
+  id         String   @id @default(uuid())
   userId     String
   providerId String
   apiKey     String

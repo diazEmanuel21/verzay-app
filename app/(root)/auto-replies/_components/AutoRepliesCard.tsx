@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { rr, Workflow } from "@prisma/client";
+import { QuickReply, Workflow } from "@prisma/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { AutoRepliesActions } from "./";
 import { MessageCircleMoreIcon, PencilLine } from "lucide-react";
@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface autoReplies {
-    autoReplie: rr;
+    autoReplie: QuickReply;
     workflows: Workflow[];
 }
 

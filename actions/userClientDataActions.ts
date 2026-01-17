@@ -467,7 +467,7 @@ export async function deleteUser(id: string) {
         .filter(Boolean) as string[];
 
       currentStep = "load_instancias";
-      const instancias = await tx.instancias.findMany({
+      const instancias = await tx.instancia.findMany({
         where: { userId: id },
         select: { instanceName: true },
       });
@@ -503,18 +503,18 @@ export async function deleteUser(id: string) {
           where: { workflowId: { in: workflowIds } },
         });
 
-        await tx.rr.deleteMany({
+        await tx.quickReply.deleteMany({
           where: { workflowId: { in: workflowIds } },
         });
       }
 
-      await tx.rr.deleteMany({ where: { userId: id } });
+      await tx.quickReply.deleteMany({ where: { userId: id } });
 
       // 3) Historias n8n (tabla sin FK; usamos instanceIds como ya hacías)
       currentStep = "cleanup_n8n_chat_histories";
       if (instanceIds.length) {
-        await tx.n8n_chat_histories.deleteMany({
-          where: { session_id: { in: instanceIds } },
+        await tx.n8nChatHistory.deleteMany({
+          where: { sessionId: { in: instanceIds } },
         });
       }
 
@@ -547,7 +547,7 @@ export async function deleteUser(id: string) {
       if (userApiKey?.key) orSeguimientos.push({ apikey: userApiKey.key });
 
       if (orSeguimientos.length) {
-        await tx.seguimientos.deleteMany({ where: { OR: orSeguimientos } });
+        await tx.seguimiento.deleteMany({ where: { OR: orSeguimientos } });
       }
 
       // 9) Borrar usuario (aquí se activan TODOS los onDelete: Cascade)
@@ -560,7 +560,7 @@ export async function deleteUser(id: string) {
         await tx.apiKey.deleteMany({
           where: {
             id: user.apiKeyId,
-            Users: { none: {} },
+            users: { none: {} },
           },
         });
       }

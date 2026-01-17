@@ -10,10 +10,8 @@ export interface ActionResponse<T> {
     data?: T;
 }
 
-type TagWithCount = Tag & {
-    _count: {
-        sessions: number;
-    };
+export type TagWithCount = Tag & {
+  _count: { sessionTags: number };
 };
 
 // Helper simple para normalizar el nombre a slug
@@ -54,10 +52,6 @@ const replaceSessionTagsSchema = z.object({
     tagIds: z.array(z.number().int().positive()).default([]),
 });
 
-/* ===========================
- *  TAGS (CRUD)
- * =========================== */
-
 // Listar todos los tags de un usuario
 
 export async function listTagsAction(
@@ -72,7 +66,7 @@ export async function listTagsAction(
             include: {
                 _count: {
                     select: {
-                        sessions: true, // 👈 cuenta cuántos SessionTag tiene cada Tag
+                        sessionTags: true, // 👈 cuenta cuántos SessionTag tiene cada Tag
                     },
                 },
             },
@@ -245,7 +239,7 @@ export async function getSessionTagsAction(
         const session = await db.session.findUnique({
             where: { id: parsedSessionId },
             include: {
-                tags: {
+                sessionTags: {
                     include: {
                         tag: true,
                     },
@@ -260,7 +254,7 @@ export async function getSessionTagsAction(
             };
         }
 
-        const tags = session.tags.map((st) => ({
+        const tags = session.sessionTags.map((st) => ({
             id: st.tag.id,
             name: st.tag.name,
             slug: st.tag.slug,

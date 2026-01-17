@@ -17,7 +17,7 @@ const prisma = new PrismaClient();
 export async function getAllModules(): Promise<ModuleResponse> {
     try {
         const modules = await prisma.module.findMany({
-            include: { items: true },
+            include: { moduleItems: true },
             orderBy: { order: 'asc' },
         });
 
@@ -51,23 +51,23 @@ export async function createModule(formData: FormModuleValues): Promise<ModuleRe
     const { items, ...moduleData } = parse.data;
 
     try {
-        const module = await prisma.module.create({
+        const moduleApp = await prisma.module.create({
             data: {
                 ...moduleData,
-                items: items && items.length > 0 ? {
+                moduleItems: items && items.length > 0 ? {
                     create: items.map(item => ({
                         title: item.title,
                         url: item.url,
                     })),
                 } : undefined,
             },
-            include: { items: true },
+            include: { moduleItems: true },
         });
 
         return {
             success: true,
             message: 'Módulo creado correctamente',
-            data: [module],
+            data: [moduleApp],
         };
     } catch (error) {
         console.error('createModule error:', error);
@@ -101,11 +101,11 @@ export async function updateModule(moduleId: string, formData: FormModuleValues)
     const { items, ...moduleData } = parse.data;
 
     try {
-        const module = await prisma.module.update({
+        const moduleApp = await prisma.module.update({
             where: { id: moduleId },
             data: {
                 ...moduleData,
-                items: items
+                moduleItems: items
                     ? {
                         deleteMany: {}, // Borra todos los anteriores
                         create: items.map(item => ({
@@ -115,13 +115,13 @@ export async function updateModule(moduleId: string, formData: FormModuleValues)
                     }
                     : undefined,
             },
-            include: { items: true },
+            include: { moduleItems: true },
         });
 
         return {
             success: true,
             message: 'Módulo actualizado correctamente',
-            data: [module],
+            data: [moduleApp],
         };
     } catch (error) {
         console.error('updateModule error:', error);

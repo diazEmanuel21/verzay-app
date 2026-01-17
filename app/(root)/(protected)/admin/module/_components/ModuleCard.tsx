@@ -109,15 +109,15 @@ export const ModuleCard = ({
                     </div>
                 )}
 
-                {module.items?.length > 0 && (
+                {module.moduleItems?.length > 0 && (
                     <Accordion type="single" collapsible className="pt-1">
                         <AccordionItem value="items">
                             <AccordionTrigger className="text-sm text-muted-foreground hover:no-underline">
-                                Ver submódulos ({module.items.length})
+                                Ver submódulos ({module.moduleItems.length})
                             </AccordionTrigger>
                             <AccordionContent>
                                 <ul className="list-disc list-inside text-muted-foreground text-xs space-y-1">
-                                    {module.items.map((item, index) => (
+                                    {module.moduleItems.map((item, index) => (
                                         <li key={index}>
                                             <span className="font-medium">{item.title}</span> –{' '}
                                             <span className="text-muted-foreground">{item.url}</span>

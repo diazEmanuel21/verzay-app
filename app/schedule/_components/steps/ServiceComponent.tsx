@@ -20,7 +20,7 @@ export const ServiceComponent = ({
                         <SelectValue placeholder="Selecciona un servicio" />
                     </SelectTrigger>
                     <SelectContent>
-                        {user.Service.map((service) => (
+                        {user.services.map((service) => (
                             <SelectItem key={service.id} value={service.id}>
                                 {service.name}
                             </SelectItem>

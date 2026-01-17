@@ -74,7 +74,7 @@ export function NavMain({ user }: { user: User }) {
             {/* <SidebarGroupLabel>Módulos</SidebarGroupLabel> */}
             <SidebarMenu>
                 {navItems.map((item) => {
-                    const { route, icon, label, requiresPremium, isActive, items } = item;
+                    const { route, icon, label, requiresPremium, isActive, moduleItems } = item;
                     const Icon = iconMap[icon as keyof typeof iconMap];
                     const linkClasses = clsx(
                         'flex items-center justify-between py-2 rounded-md text-sm font-medium transition',
@@ -92,7 +92,7 @@ export function NavMain({ user }: { user: User }) {
                     const targetRoute = validateRouteAndRole ? '/admin/clientes' : route;
 
                     // Si NO hay subitems, renderizar directamente como link
-                    if (!items || items.length === 0 || validateRouteAndRole) {
+                    if (!moduleItems || moduleItems.length === 0 || validateRouteAndRole) {
                         return (
                             <SidebarMenuItem key={route}>
                                 <SidebarMenuButton className={linkClasses} tooltip={label} onClick={() => handleRoute(label, targetRoute)}>
@@ -127,7 +127,7 @@ export function NavMain({ user }: { user: User }) {
 
                                 <CollapsibleContent>
                                     <SidebarMenuSub>
-                                        {items.map((subItem) => (
+                                        {moduleItems.map((subItem) => (
                                             <SidebarMenuSubItem key={subItem.title}>
                                                 <SidebarMenuSubButton asChild>
                                                     <Link

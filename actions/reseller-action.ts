@@ -23,7 +23,7 @@ export const getClientsByReseller = async (resellerId: string) => {
     const assigned = await db.reseller.findMany({
         where: { resellerid: resellerId },
         include: {
-            user: true, // Relación con User si está definida
+            user_reseller_userIdToUser: true, // Relación con User si está definida
         },
     })
 
@@ -38,7 +38,7 @@ export const getClientsByReseller = async (resellerId: string) => {
     const unassigned = allClients.filter(c => !assignedIds.includes(c.id))
 
     return {
-        assignedClients: assigned.map(r => r.user), // si está incluido el user
+        assignedClients: assigned.map(r => r.user_reseller_userIdToUser), // si está incluido el user
         unassignedClients: unassigned,
     }
 }

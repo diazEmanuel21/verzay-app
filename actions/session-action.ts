@@ -67,7 +67,7 @@ export async function getSessionsByUserId(
       skip,
       take,
       include: {
-        tags: {
+        sessionTags: {
           include: {
             tag: true,
           },
@@ -77,7 +77,7 @@ export async function getSessionsByUserId(
 
     const mapped = sessions.map((s) => ({
       ...s,
-      tags: s.tags.map((st) => ({
+      tags: s.sessionTags.map((st) => ({
         id: st.tag.id,
         name: st.tag.name,
         slug: st.tag.slug,
@@ -199,7 +199,7 @@ export async function searchSessionsByUserId(
       orderBy: { createdAt: "desc" },
       take: 100,
       include: {
-        tags: {
+        sessionTags: {
           include: {
             tag: true, // SessionTag.tag
           },
@@ -210,7 +210,7 @@ export async function searchSessionsByUserId(
     // 👇 mapeamos los tags a un array plano de { id, name, slug, color }
     const mapped = sessions.map((s) => ({
       ...s,
-      tags: s.tags.map((st) => ({
+      tags: s.sessionTags.map((st) => ({
         id: st.tag.id,
         name: st.tag.name,
         slug: st.tag.slug,
@@ -489,7 +489,7 @@ export async function getSessionsByUserIdToCRM(
       take,
       include: {
         registros: true,
-        tags: {
+        sessionTags: {
           include: {
             tag: true,
           },
@@ -500,7 +500,7 @@ export async function getSessionsByUserIdToCRM(
     const mapped: SessionWithRegistrosAndTags[] = sessions.map((s) => ({
       ...s,
       // reemplazamos SessionTag[] por SimpleTag[]
-      tags: s.tags.map((st) => ({
+      tags: s.sessionTags.map((st) => ({
         id: st.tag.id,
         name: st.tag.name,
         slug: st.tag.slug,

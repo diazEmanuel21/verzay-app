@@ -149,7 +149,7 @@ export const FormUser = ({ onSubmit, apikeys, countries }: { onSubmit: (values: 
 
                 <FormField
                     control={form.control}
-                    name="del_seguimiento"
+                    name="delSeguimiento"
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Frase de seguimiento</FormLabel>

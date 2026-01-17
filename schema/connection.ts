@@ -1,5 +1,5 @@
 import { EvolutionInstance } from "@/actions/fetch-intance-action"
-import { Instancias, User, PromptInstance } from "@prisma/client"
+import { Instancia, User, PromptInstance } from "@prisma/client"
 import { z } from "zod"
 
 
@@ -18,7 +18,7 @@ export interface ClientInstanceCardProps {
 
 export interface ConnectionMainInterface {
     user: User
-    instance?: Instancias
+    instance?: Instancia
     instanceType: string
     instanceInfo?: EvolutionInstance[]
     prompts?: PromptInstance[]

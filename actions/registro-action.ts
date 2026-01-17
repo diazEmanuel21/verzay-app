@@ -127,26 +127,6 @@ export async function getRegistrosByUserId(
             take,
         });
 
-        const registrosWithTags = await db.registro.findMany({
-            where: { session: { userId: userId } },
-            include: {
-                session: {
-                    include: {
-                        registros: true,
-                        tags: {
-                            include: {
-                                tag: true, // 👈 aquí obtienes Tag.name / slug / color
-                            },
-                        },
-                    },
-                },
-            },
-            orderBy: { fecha: "desc" },
-            skip,
-            take,
-        });
-
-
         return {
             success: true as const,
             data: registros,

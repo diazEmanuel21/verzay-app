@@ -8,14 +8,14 @@ import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
 import { Suspense } from "react"
 import { CreateReminderSkeleton, ReminderForm } from "./"
-import { ApiKey, Session, Workflow, User, Instancias } from "@prisma/client"
+import { ApiKey, Session, Workflow, User, Instancia } from "@prisma/client"
 
 interface ReminderModalProps {
     user: User
     apiKey: ApiKey
     leads: Session[]
     workflows: Workflow[]
-    instancia: Instancias
+    instancia: Instancia
     isSchedule?: boolean
 }
 

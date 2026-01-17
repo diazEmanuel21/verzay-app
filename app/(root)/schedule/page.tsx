@@ -1,4 +1,4 @@
-import { ApiKey, Instancias, Reminders, Session, Workflow } from "@prisma/client"
+import { ApiKey, Instancia, Reminders, Session, Workflow } from "@prisma/client"
 
 import { currentUser } from '@/lib/auth';
 
@@ -26,7 +26,7 @@ function hasWorkflow(result: { data?: Workflow[] }): result is { data: Workflow[
     return !!result.data
 }
 
-function hasInstancia(result: { data?: Instancias[] }): result is { data: Instancias[] } {
+function hasInstancia(result: { data?: Instancia[] }): result is { data: Instancia[] } {
     return !!result.data && result.data.length > 0
 }
 

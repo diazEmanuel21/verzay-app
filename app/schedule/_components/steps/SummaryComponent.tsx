@@ -26,7 +26,7 @@ export const SummaryComponent = ({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
-          <SummaryItem label="Servicio" value={user.Service.find((s) => s.id === selectedService)?.name} />
+          <SummaryItem label="Servicio" value={user.services.find((s) => s.id === selectedService)?.name} />
           <SummaryItem
             label="Fecha y hora"
             value={

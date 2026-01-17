@@ -37,7 +37,7 @@ export const MainModule = () => {
         requiresPremium: module.requiresPremium,
         showInSidebar: module.showInSidebar ?? true,
         allowedPlans: module.allowedPlans,
-        items: module.items
+        items: module.moduleItems
     });
 
     useEffect(() => {

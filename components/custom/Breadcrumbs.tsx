@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-import { GuidesUrl } from '@prisma/client';
+import { GuideUrl } from '@prisma/client';
 import { Button } from '../ui/button';
 import ThemeSwitcher from './ThemeSwitcher';
 
@@ -60,7 +60,7 @@ export const Breadcrumbs = ({ isFlow = false }: { isFlow?: boolean }) => {
     [pathname]
   );
 
-  const [guides, setGuides] = useState<GuidesUrl[]>([]);
+  const [guides, setGuides] = useState<GuideUrl[]>([]);
   const [workflowName, setWorkflowName] = useState<string | null>(null);
 
   // Detecta workflowId: /flow/:workflowId

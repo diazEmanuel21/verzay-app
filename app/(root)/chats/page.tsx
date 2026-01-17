@@ -14,7 +14,7 @@ import {
   type SendMessageResult,
 } from "@/actions/chat-actions";
 import { getApiKeyById } from "@/actions/api-action";
-import type { ApiKey, Instancias } from "@prisma/client";
+import type { ApiKey, Instancia } from "@prisma/client";
 import { ChatsClient } from "./_components/chats-client";
 
 // Tipos importados desde ChatMain (cliente)
@@ -22,7 +22,7 @@ import type { OutgoingMessagePayload } from "./_components/chat-main";
 import { listTagsAction } from "@/actions/tag-actions";
 
 /* ---------- Utils ---------- */
-function pickWhatsappOrNull(arr: Instancias[]) {
+function pickWhatsappOrNull(arr: Instancia[]) {
   return (
     arr.find((i) => i.instanceType === "Whatsapp") ??
     arr.find((i) => i.instanceType == null) ??
@@ -30,8 +30,8 @@ function pickWhatsappOrNull(arr: Instancias[]) {
   );
 }
 function hasInstancias(
-  result: { data?: Instancias[] | null }
-): result is { data: Instancias[] } {
+  result: { data?: Instancia[] | null }
+): result is { data: Instancia[] } {
   return Array.isArray(result.data) && result.data.length > 0;
 }
 function hasApikey(result: { data?: ApiKey | null }): result is { data: ApiKey } {
@@ -174,7 +174,7 @@ export default async function ChatsPage({
       name: t.name,
       slug: t.slug,
       color: t.color,
-      sessionCount: t._count?.sessions ?? 0,
+      sessionCount: t._count?.sessionTags ?? 0,
 
     })) ?? [];
 

@@ -1,11 +1,11 @@
-import { rr, User, Workflow } from '@prisma/client';
+import { QuickReply, User, Workflow } from '@prisma/client';
 import { MainAutoReplies } from './MainAutoReplies';
 import { UserWorkflows } from '@/app/(root)/flow/_components';
 
 interface Props {
     user: User;
     workflows: Workflow[];
-    autoReplies: rr[];
+    autoReplies: QuickReply[];
 }
 
 export const AutoRepliesContent = ({ user, workflows, autoReplies }: Props) => {

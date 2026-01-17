@@ -32,6 +32,7 @@ const baseSchema = z.object({
     userId: z.string().min(1),
     name: z.string().min(2, 'El nombre es obligatorio'),
     messageText: z.string().min(5, 'El mensaje debe ser más descriptivo'),
+    description: z.string().min(5, 'Utilice una descripción más completa'),
 })
 
 /**

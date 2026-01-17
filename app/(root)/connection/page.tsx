@@ -1,7 +1,7 @@
 import { UnderConstruction } from "@/components/custom"
 import { currentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { ApiKey, Instancias, PromptInstance } from "@prisma/client";
+import { ApiKey, Instancia, PromptInstance } from "@prisma/client";
 import { getInstancesByUserId } from "@/actions/instances-actions";
 import { getApiKeyById } from "@/actions/api-action";
 import { fetchInstanceAction } from "@/actions/fetch-intance-action";
@@ -16,7 +16,7 @@ interface ActionResponse<T> {
 }
 
 // Adapta las funciones de tipo para manejar arrays
-function hasInstancias(result: { data?: Instancias[] | null }): result is { data: Instancias[] } {
+function hasInstancias(result: { data?: Instancia[] | null }): result is { data: Instancia[] } {
     return !!result.data && result.data.length > 0;
 }
 function hasApikey(result: { data?: ApiKey | null }): result is { data: ApiKey } {
@@ -53,7 +53,7 @@ const Connection = async ({ searchParams }: SearchParamProps) => {
 
     // Estructura base para las instancias
     const instancesData: Record<string, {
-        instance?: Instancias;
+        instance?: Instancia;
         info?: any;
         prompts?: PromptInstance[];
     }> = {

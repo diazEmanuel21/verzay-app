@@ -27,7 +27,7 @@ export async function generateQRCode({ instanceName, userId }: GenerateQrInterfa
   }
 
   // Detectar tipo de instancia (si existe en BD)
-  const inst = await db.instancias.findFirst({
+  const inst = await db.instancia.findFirst({
     where: { userId, instanceName },
     select: { instanceType: true },
   });
@@ -245,7 +245,7 @@ export async function getApiKeyById(id: string) {
 }
 
 /* =========================
-   Instancias
+   Instancia
 ========================= */
 export async function createInstance(data: FormData) {
   const instanceName = data.get('instanceName') as string;
@@ -302,7 +302,7 @@ export async function createInstance(data: FormData) {
         throw new Error('No se recibió instanceId en la respuesta de la API.');
       }
 
-      const nuevaInstancia = await db.instancias.create({
+      const nuevaInstancia = await db.instancia.create({
         data: { instanceName, instanceType, userId, instanceId },
       });
 
@@ -310,7 +310,7 @@ export async function createInstance(data: FormData) {
       return { success: true, message: "Instancia creada exitosamente.", instancia: nuevaInstancia, apiResult };
     } else {
       // ❇️ Solo BD (mensajes iguales)
-      const nuevaInstancia = await db.instancias.create({
+      const nuevaInstancia = await db.instancia.create({
         data: {
           instanceName,
           instanceType,
@@ -384,7 +384,7 @@ export async function deleteInstance(userId: string, instanceType: string = 'Wha
     }
 
     // 3. Eliminar la instancia de la base de datos
-    const instancia = await db.instancias.findFirst({
+    const instancia = await db.instancia.findFirst({
       where: { instanceName, instanceType }
     });
 
@@ -392,7 +392,7 @@ export async function deleteInstance(userId: string, instanceType: string = 'Wha
       throw new Error("No se encontró la instancia en la base de datos.");
     }
 
-    await db.instancias.delete({ where: { id: instancia.id } });
+    await db.instancia.delete({ where: { id: instancia.id } });
 
     return { success: true, message: "Instancia eliminada exitosamente." };
   } catch (error: any) {
@@ -402,7 +402,7 @@ export async function deleteInstance(userId: string, instanceType: string = 'Wha
 
 // Función para verificar si el usuario ya tiene una instancia
 export async function checkActiveInstance(userId: string, instanceType: string = 'Whatsapp') {
-  const instanciaActiva = await db.instancias.findFirst({
+  const instanciaActiva = await db.instancia.findFirst({
     where: { userId, instanceType: instanceType },
   });
   return instanciaActiva;
@@ -411,7 +411,7 @@ export async function checkActiveInstance(userId: string, instanceType: string =
 // Funcion para traer datos del cliente
 export async function getInstances(userId: string) {
   try {
-    const instance = await db.instancias.findMany({
+    const instance = await db.instancia.findMany({
       where: { userId: userId },
       select: { instanceName: true, instanceId: true, instanceType: true },
     });
@@ -497,7 +497,7 @@ export async function getDataApi(userId: string, apiKeyId: string) {
       select: { id: true, url: true, key: true },
     });
 
-    const instancia = await db.instancias.findFirst({
+    const instancia = await db.instancia.findFirst({
       where: { userId },
       select: { id: true, instanceName: true, instanceId: true },
     });

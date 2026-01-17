@@ -50,7 +50,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             role,
             plan,
             apiKeyId,
-            del_seguimiento,
+            delSeguimiento,
             webhookUrl,
             apiUrl,
             timezone
@@ -65,13 +65,13 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             role,
             plan,
             apiKeyId,
-            del_seguimiento,
+            delSeguimiento,
             webhookUrl,
             apiUrl,
             timezone,
             meetingDuration: 60,//tiempo en minutos
             meetingUrl: null,//tiempo en minutos
-            delayTimeGPT: '12',//tiempo en minutos
+            delayTimeGpt: '12',//tiempo en minutos
             muteAgentResponses: false,
             onFacebook: false,
             onInstagram: false,

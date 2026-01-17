@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { GuidesUrl as Guide, User } from '@prisma/client';
+import { GuideUrl as Guide, User } from '@prisma/client';
 import { getAllGuides, createGuide, updateGuide, deleteGuide } from '@/actions/guide-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { UserInformation } from '@/app/(root)/profile/_components/UserInformation';
 import { currentUser } from '@/lib/auth';
 import { getCountryCodes } from '@/actions/get-country-action';
-import { ApiKey, Instancias, PromptInstance } from "@prisma/client";
+import { ApiKey, Instancia, PromptInstance } from "@prisma/client";
 import { getInstancesByUserId } from "@/actions/instances-actions";
 import { getApiKeyById } from "@/actions/api-action";
 import { fetchInstanceAction } from "@/actions/fetch-intance-action";
@@ -13,7 +13,7 @@ interface ActionResponse<T> {
   data?: T;
 }
 export interface InstanceInterfaceConn {
-  instance?: Instancias;
+  instance?: Instancia;
   info?: any;
   prompts: PromptInstance[]; // mejor que sea siempre array
 }
@@ -29,7 +29,7 @@ export interface UserInformationProps {
 }
 
 // Adapta las funciones de tipo para manejar arrays
-function hasInstancias(result: { data?: Instancias[] | null }): result is { data: Instancias[] } {
+function hasInstancias(result: { data?: Instancia[] | null }): result is { data: Instancia[] } {
   return !!result.data && result.data.length > 0;
 }
 function hasApikey(result: { data?: ApiKey | null }): result is { data: ApiKey } {

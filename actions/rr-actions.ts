@@ -1,17 +1,17 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { rr } from '@prisma/client';
+import { QuickReply } from '@prisma/client';
 
 interface RROperationResponse {
     success: boolean;
     message: string;
-    data?: rr[];
+    data?: QuickReply[];
 }
 
 export async function getAllRRs(userId: string): Promise<RROperationResponse> {
     try {
-        const list = await db.rr.findMany({
+        const list = await db.quickReply.findMany({
             where: { userId },
             orderBy: { createdAt: 'desc' },
         });
@@ -35,7 +35,7 @@ export async function createRR(data: {
     userId: string;
 }): Promise<RROperationResponse> {
     try {
-        await db.rr.create({ data });
+        await db.quickReply.create({ data });
         return {
             success: true,
             message: 'Registro creado correctamente.',
@@ -51,7 +51,7 @@ export async function createRR(data: {
 
 export async function getAllRRsByWorkflowId(workflowId: string): Promise<RROperationResponse> {
     try {
-        const list = await db.rr.findMany({
+        const list = await db.quickReply.findMany({
             where: { workflowId },
             orderBy: { createdAt: 'desc' },
         });
@@ -69,9 +69,9 @@ export async function getAllRRsByWorkflowId(workflowId: string): Promise<RROpera
     }
 }
 
-export async function updateRR(id: number, data: Partial<rr>): Promise<RROperationResponse> {
+export async function updateRR(id: number, data: Partial<QuickReply>): Promise<RROperationResponse> {
     try {
-        await db.rr.update({
+        await db.quickReply.update({
             where: { id },
             data,
         });
@@ -90,7 +90,7 @@ export async function updateRR(id: number, data: Partial<rr>): Promise<RROperati
 
 export async function deleteRR(id: number): Promise<RROperationResponse> {
     try {
-        await db.rr.delete({ where: { id } });
+        await db.quickReply.delete({ where: { id } });
         return {
             success: true,
             message: 'Registro eliminado correctamente.',

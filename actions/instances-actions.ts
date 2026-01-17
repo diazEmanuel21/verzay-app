@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { z } from "zod";
-import { Instancias } from "@prisma/client";
+import { Instancia } from "@prisma/client";
 
 const getInstancesSchema = z.object({
   userId: z.string().min(1, "El userId es obligatorio"),
@@ -13,7 +13,7 @@ export interface InstanceResponse<T> {
   data: T;
 }
 
-export async function getInstancesByUserId(userId: string): Promise<InstanceResponse<Instancias[]>> {
+export async function getInstancesByUserId(userId: string): Promise<InstanceResponse<Instancia[]>> {
   const validation = getInstancesSchema.safeParse({ userId });
 
   if (!validation.success) {
@@ -26,14 +26,14 @@ export async function getInstancesByUserId(userId: string): Promise<InstanceResp
   }
 
   try {
-    const instances = await db.instancias.findMany({
+    const instances = await db.instancia.findMany({
       where: { userId },
       orderBy: { id: "desc" },
     });
 
     return {
       success: true,
-      message: "Instancias obtenidas correctamente",
+      message: "Instancia obtenidas correctamente",
       data: instances, // 'instances' es un array
     };
   } catch (error) {

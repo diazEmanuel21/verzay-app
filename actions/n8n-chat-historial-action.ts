@@ -1,12 +1,12 @@
 'use server';
 
 import { db } from "@/lib/db";
-import { n8n_chat_histories } from "@prisma/client";
+import { N8nChatHistory } from "@prisma/client";
 
 interface N8nOperationResponse {
   success: boolean;
   message: string;
-  data?: n8n_chat_histories | null;
+  data?: N8nChatHistory | null;
 }
 
 export async function deleteConversationN8N(
@@ -24,7 +24,7 @@ export async function deleteConversationN8N(
     }
 
     // 2. Obtener instancia del usuario
-    const instance = await db.instancias.findFirst({
+    const instance = await db.instancia.findFirst({
       where: { userId },
       select: { instanceName: true }
     });
@@ -39,8 +39,8 @@ export async function deleteConversationN8N(
     // 3. Eliminar TODAS las conversaciones con ese session_id
     const sessionIdentifier = `${instance.instanceName}-${remoteJid}`;
 
-    const deleteResult = await db.n8n_chat_histories.deleteMany({
-      where: { session_id: sessionIdentifier }
+    const deleteResult = await db.n8nChatHistory.deleteMany({
+      where: { sessionId: sessionIdentifier }
     });
 
     if (deleteResult.count === 0) {
@@ -78,7 +78,7 @@ export async function clearAllHistory(userId: string): Promise<N8nOperationRespo
     }
 
     // 2. Buscar la instancia asociada al usuario
-    const instance = await db.instancias.findFirst({
+    const instance = await db.instancia.findFirst({
       where: { userId },
       select: { instanceName: true }
     });
@@ -93,9 +93,9 @@ export async function clearAllHistory(userId: string): Promise<N8nOperationRespo
     const instancePrefix = `${instance.instanceName}-`;
 
     // 3. Eliminar todos los historiales con session_id que comiencen con el instanceName
-    const deleteResult = await db.n8n_chat_histories.deleteMany({
+    const deleteResult = await db.n8nChatHistory.deleteMany({
       where: {
-        session_id: {
+        sessionId: {
           startsWith: instancePrefix, // Prisma no soporta ILIKE directamente, pero startsWith funciona para este caso
         }
       }

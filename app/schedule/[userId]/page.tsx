@@ -15,7 +15,7 @@ const SchedulePage = async ({ params }: { params: { userId: string } }) => {
         where: { id: params.userId },
         include: {
             instancias: true,
-            Service: true,
+            services: true,
             apiKey: true,
         },
     });

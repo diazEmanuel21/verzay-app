@@ -26,12 +26,12 @@ type EditableFields = {
     apiUrl: string;
     company: string;
     notificationNumber: string;
-    del_seguimiento: string;
+    delSeguimiento: string;
     lat: string;
     lng: string;
     mapsUrl: string;
     autoReactivate: number;
-    delayTimeGPT: number;
+    delayTimeGpt: number;
     // Excluyendo campos no editables:
     // id, createdAt, updatedAt, pausar, etc.
 };
@@ -43,13 +43,13 @@ const clientSchema = z.object({
     apiUrl: z.string().min(10).max(200),
     company: z.string().max(50).min(3, { message: 'La empresa debe tener al menos 3 caracteres' }),
     notificationNumber: z.string().min(7).max(15),
-    del_seguimiento: z.string().min(3).max(45),
+    delSeguimiento: z.string().min(3).max(45),
     lat: z.string().optional(),
     lng: z.string().optional(),
     mapsUrl: z.string().url({ message: 'La URL de Google Maps no es válida' }),
     openMsg: z.string().min(3).max(45),
     autoReactivate: z.string(),
-    delayTimeGPT: z.string(),
+    delayTimeGpt: z.string(),
 });
 
 const defaultImgUrl = 'https://images.pexels.com/photos/133356/pexels-photo-133356.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
@@ -467,25 +467,25 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
 
                                         {/* Tiempo de retraso GPT */}
                                         <div>
-                                            <Label htmlFor="delayTimeGPT">Tiempo de retraso GPT</Label>
+                                            <Label htmlFor="delayTimeGpt">Tiempo de retraso GPT</Label>
                                             <div className="mt-1 flex items-center gap-2">
                                                 <Input
-                                                    id="delayTimeGPT"
-                                                    name="delayTimeGPT"
+                                                    id="delayTimeGpt"
+                                                    name="delayTimeGpt"
                                                     type="number"
                                                     min={0}
                                                     className="flex-1"
                                                     value={
-                                                        user.delayTimeGPT !== null &&
-                                                            user.delayTimeGPT !== undefined
-                                                            ? String(user.delayTimeGPT)
+                                                        user.delayTimeGpt !== null &&
+                                                            user.delayTimeGpt !== undefined
+                                                            ? String(user.delayTimeGpt)
                                                             : ""
                                                     }
-                                                    disabled={loadingField === "delayTimeGPT"}
+                                                    disabled={loadingField === "delayTimeGpt"}
                                                     onChange={(e) =>
-                                                        handleChange("delayTimeGPT", e.target.value)
+                                                        handleChange("delayTimeGpt", e.target.value)
                                                     }
-                                                    onBlur={() => handleBlur("delayTimeGPT")}
+                                                    onBlur={() => handleBlur("delayTimeGpt")}
                                                 />
                                                 <span className="text-xs text-muted-foreground">seg</span>
                                             </div>
@@ -519,18 +519,18 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
 
                                         {/* Eliminar seguimiento */}
                                         <div>
-                                            <Label htmlFor="del_seguimiento">Eliminar seguimiento</Label>
+                                            <Label htmlFor="delSeguimiento">Eliminar seguimiento</Label>
                                             <Input
-                                                id="del_seguimiento"
-                                                name="del_seguimiento"
+                                                id="delSeguimiento"
+                                                name="delSeguimiento"
                                                 placeholder="Fue un gusto ayudarle."
                                                 className="mt-1"
-                                                value={(user.del_seguimiento as string) ?? ""}
-                                                disabled={loadingField === "del_seguimiento"}
+                                                value={(user.delSeguimiento as string) ?? ""}
+                                                disabled={loadingField === "delSeguimiento"}
                                                 onChange={(e) =>
-                                                    handleChange("del_seguimiento", e.target.value)
+                                                    handleChange("delSeguimiento", e.target.value)
                                                 }
-                                                onBlur={() => handleBlur("del_seguimiento")}
+                                                onBlur={() => handleBlur("delSeguimiento")}
                                             />
                                             {/* <p className="mt-1 text-xs text-muted-foreground">
                                                 Frase final cuando finalizas el seguimiento del cliente.

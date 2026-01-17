@@ -93,5 +93,5 @@ export const FormModuleSchema = z.object({
 export type FormModuleValues = z.infer<typeof FormModuleSchema>
 
 export type ModuleWithItems = Module & {
-    items: ModuleItem[];
+    moduleItems: ModuleItem[];
 };

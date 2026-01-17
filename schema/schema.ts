@@ -1,12 +1,12 @@
 import { Country } from '@/components/custom/CountryCodeSelect';
-import { Instancias, User, Service, ApiKey, Reminders } from '@prisma/client';
+import { Instancia, User, Service, ApiKey, Reminders } from '@prisma/client';
 
 interface UserWithIntance extends User {
-    instancias: Instancias[]; // Array de registros Pausar
+    instancias: Instancia[]; // Array de registros Pausar
 };
 
 interface UserWithService extends UserWithIntance {
-    Service: Service[];
+    services: Service[];
 };
 
 export interface UserWithApiKeys extends UserWithService {

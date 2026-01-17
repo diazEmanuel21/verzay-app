@@ -1,4 +1,4 @@
-import { rr, User, Workflow } from "@prisma/client";
+import { QuickReply, User, Workflow } from "@prisma/client";
 import Header from '@/components/shared/header';
 import { AutoRepliesCard, CreateAutoReplies } from "./";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -7,7 +7,7 @@ import { AlertCircle, InboxIcon } from "lucide-react";
 interface Props {
   user: User;
   Workflows: Workflow[];
-  autoReplies: rr[];
+  autoReplies: QuickReply[];
 }
 
 export const MainAutoReplies = ({ user, Workflows, autoReplies = [] }: Props) => {

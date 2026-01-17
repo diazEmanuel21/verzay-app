@@ -22,6 +22,7 @@ import { createService } from '@/actions/service-action'
 const formSchema = z.object({
     name: z.string().min(2, 'El nombre es obligatorio'),
     messageText: z.string().min(5, 'El mensaje debe ser más descriptivo'),
+    description: z.string().min(5, 'El mensaje debe ser más descriptivo'),
 })
 
 type FormValues = z.infer<typeof formSchema>

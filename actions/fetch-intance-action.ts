@@ -70,7 +70,7 @@ export async function fetchInstanceAction(form: EvolutionSchemaType): Promise<Re
 
         return {
             success: true,
-            message: 'Instancias obtenidas correctamente',
+            message: 'Instancia obtenidas correctamente',
             data
         }
 

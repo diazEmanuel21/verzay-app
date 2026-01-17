@@ -46,13 +46,13 @@ export function getRouteAccess(
 
   // 2) label/title exacto en algún item del módulo
   const byItemLabel = bySpecificity.find(m =>
-    (m.items ?? []).some(it => getItemLabel(it) === label)
+    (m.moduleItems ?? []).some(it => getItemLabel(it) === label)
   );
   if (byItemLabel) return byItemLabel;
 
   // 3) ruta/url exacta en algún item del módulo
   const byItemExactRoute = bySpecificity.find(m =>
-    (m.items ?? []).some(it => getItemRoute(it) === target)
+    (m.moduleItems ?? []).some(it => getItemRoute(it) === target)
   );
   if (byItemExactRoute) return byItemExactRoute;
 

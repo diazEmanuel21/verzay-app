@@ -10,7 +10,7 @@ export const userSchema = z.object({
     notificationNumber: z
         .string()
         .min(2, "Número inválido (mínimo 8 dígitos)"),
-    del_seguimiento: z
+    delSeguimiento: z
         .string()
         .min(2, "Frase de seguimiento muy corta")
         .max(100, "Frase demasiado larga"),

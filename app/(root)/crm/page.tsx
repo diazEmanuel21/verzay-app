@@ -33,7 +33,7 @@ const CrmPage = async ({ searchParams }: PageProps) => {
             name: t.name,
             slug: t.slug,
             color: t.color,
-            sessionCount: t._count?.sessions ?? 0,
+            sessionCount: t._count?.sessionTags ?? 0,
 
         })) ?? [];
 

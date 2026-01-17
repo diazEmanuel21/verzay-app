@@ -67,6 +67,7 @@ import { serviceDefaultMsg } from "./defaultServiceValues";
 const serviceSchema = z.object({
     name: z.string().min(2, "El nombre es obligatorio"),
     messageText: z.string().min(5, "El mensaje debe ser más descriptivo"),
+    description: z.string().min(5, "El mensaje debe ser más descriptivo"),
 });
 
 type ServiceFormValues = z.infer<typeof serviceSchema>;

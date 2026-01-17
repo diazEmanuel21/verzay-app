@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 import { ChevronsUpDown, Check } from "lucide-react";
 
 // ⬇️ Server actions del CRUD (usa la ruta donde lo pegaste)
-import { getUserAiConfigs,upsertUserAiConfig,setUserDefaults, getUserAiSettings } from "@/actions/userAiconfig-actions";
+import { upsertUserAiConfig, setUserDefaults, getUserAiSettings } from "@/actions/userAiconfig-actions";
 
 type ApiKeyConfiguratorProps = {
     userId: string;
@@ -46,34 +46,9 @@ type ApiKeyConfiguratorProps = {
     onSaved?: () => void;
 };
 
-// ====== Tipos que retornan las actions (resumen mínimo que usamos aquí) ======
-type ProviderWithModels = {
-    id: string;
-    name: string;
-    aiModels: { id: string; name: string; modelName: string | null }[];
-};
-
-type UserConfigDTO = {
-    id: string;
-    userId: string;
-    providerId: string;
-    apiKey: string;
-    isActive: boolean;
-    provider: { id: string; name: string };
-};
-
-type UserDefaultsDTO = {
-    defaultProviderId: string | null;
-    defaultAiModelId: string | null;
-    defaultProvider?: { id: string; name: string } | null;
-    defaultModel?: { id: string; name: string; providerId: string } | null;
-};
-
-type UserAiSettingsDTO = {
-    providers: ProviderWithModels[];
-    configs: UserConfigDTO[];
-    defaults: UserDefaultsDTO;
-};
+type SettingsData = NonNullable<
+    Awaited<ReturnType<typeof getUserAiSettings>>["data"]
+>;
 
 // ====== Validación ======
 const FormSchema = z.object({
@@ -106,8 +81,7 @@ export function ApiKeyConfigurator({
     const [providerOpen, setProviderOpen] = React.useState(false);
     const [modelOpen, setModelOpen] = React.useState(false);
     const [loading, setLoading] = React.useState(false);
-
-    const [settings, setSettings] = React.useState<UserAiSettingsDTO | null>(null);
+    const [settings, setSettings] = React.useState<SettingsData | null>(null);
 
     // Estado de preview (fuera del diálogo)
     const [previewProviderId, setPreviewProviderId] = React.useState<string | null>(null);
@@ -137,13 +111,13 @@ export function ApiKeyConfigurator({
                 return;
             }
 
-            const data = res.data as UserAiSettingsDTO;
+            const data = res.data;
             setSettings(data);
 
             // Defaults del usuario
             const defProvId = data.defaults.defaultProviderId || data.providers[0]?.id || "";
             const modelsForDefault =
-                data.providers.find((p) => p.id === defProvId)?.aiModels || [];
+                data.providers.find((p) => p.id === defProvId)?.models || [];
             const defModelId =
                 data.defaults.defaultAiModelId || modelsForDefault[0]?.id || "";
 
@@ -166,7 +140,7 @@ export function ApiKeyConfigurator({
     const providers = settings?.providers || [];
     const currentProviderId = form.watch("providerId");
     const modelsForProvider =
-        providers.find((p) => p.id === currentProviderId)?.aiModels || [];
+        providers.find((p) => p.id === currentProviderId)?.models || [];
 
     // Si cambia provider, resetea modelo + llena API key si existe config
     React.useEffect(() => {
@@ -227,9 +201,9 @@ export function ApiKeyConfigurator({
             // refresca settings locales
             const ref = await getUserAiSettings(userId);
             if (ref?.success && ref.data) {
-                setSettings(ref.data as UserAiSettingsDTO);
+                setSettings(ref.data);
                 // actualiza preview
-                const cfg = ref.data.configs.find((c: UserConfigDTO) => c.providerId === data.providerId);
+                const cfg = ref.data.configs.find((c) => c.providerId === data.providerId);
                 setPreviewProviderId(data.providerId);
                 setPreviewApiKey(cfg?.apiKey || "");
             }

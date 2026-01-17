@@ -15,7 +15,7 @@ export type ActionResult<T = undefined> = {
   data?: T;
 };
 
-export type ProviderWithModels = AiProvider & { aiModels: AiModel[] };
+export type ProviderWithModels = AiProvider & { models: AiModel[] };
 
 export type UserAiConfigDTO = UserAiConfig & {
   provider: Pick<AiProvider, 'id' | 'name'>;
@@ -71,7 +71,7 @@ function isUniqueError(e: any, fields?: string[]) {
 export async function listAiProvidersWithModels(): Promise<ActionResult<ProviderWithModels[]>> {
   noStore();
   const providers = await db.aiProvider.findMany({
-    include: { aiModels: true },
+    include: { models: true },
     orderBy: { name: 'asc' },
   });
   return { success: true, message: 'ok', data: providers };
@@ -82,7 +82,7 @@ export async function getAiProvider(id: string): Promise<ActionResult<ProviderWi
   noStore();
   const prov = await db.aiProvider.findUnique({
     where: { id },
-    include: { aiModels: true },
+    include: { models: true },
   });
   if (!prov) return { success: false, message: 'provider_not_found' };
   return { success: true, message: 'ok', data: prov };

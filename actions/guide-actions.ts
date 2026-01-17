@@ -1,12 +1,12 @@
 'use server';
 
 import { db } from "@/lib/db"; // Adjust the path if necessary
-import { GuidesUrl } from "@prisma/client";
+import { GuideUrl } from "@prisma/client";
 
 // Get all guides (global, no filter by userId)
 export async function getAllGuides() {
   try {
-    const guides = await db.guidesUrl.findMany({
+    const guides = await db.guideUrl.findMany({
       orderBy: { createdAt: "desc" },
     });
 
@@ -19,7 +19,7 @@ export async function getAllGuides() {
 // Get a single guide by its ID
 export async function getGuideById(id: string) {
   try {
-    const guide = await db.guidesUrl.findUnique({
+    const guide = await db.guideUrl.findUnique({
       where: { id },
     });
 
@@ -44,7 +44,7 @@ interface CreateGuideInput {
 
 export async function createGuide(data: CreateGuideInput) {
   try {
-    const newGuide = await db.guidesUrl.create({
+    const newGuide = await db.guideUrl.create({
       data,
     });
 
@@ -65,7 +65,7 @@ interface UpdateGuideInput {
 
 export async function updateGuide(data: UpdateGuideInput) {
   try {
-    const updatedGuide = await db.guidesUrl.update({
+    const updatedGuide = await db.guideUrl.update({
       where: { id: data.id },
       data: {
         title: data.title,
@@ -84,7 +84,7 @@ export async function updateGuide(data: UpdateGuideInput) {
 // Delete a guide by ID
 export async function deleteGuide(id: string) {
   try {
-    await db.guidesUrl.delete({
+    await db.guideUrl.delete({
       where: { id },
     });
 
@@ -95,7 +95,7 @@ export async function deleteGuide(id: string) {
 }
 
 export async function getGuidesForPath(path: string) {
-  const guides = await db.guidesUrl.findMany({
+  const guides = await db.guideUrl.findMany({
     where: { path },
   });
 
