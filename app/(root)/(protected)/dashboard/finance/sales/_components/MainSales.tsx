@@ -15,6 +15,8 @@ import {
   deleteSaleAttachment,
 } from '@/actions/finance-sales-actions';
 
+import { listProducts } from '@/actions/products-actions';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -23,7 +25,22 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import { CalendarDays, Layers, Paperclip, X, ExternalLink, FileText, Receipt } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+
+import {
+  CalendarDays,
+  Layers,
+  Paperclip,
+  X,
+  ExternalLink,
+  FileText,
+  Receipt,
+  ChevronsUpDown,
+  Check,
+} from 'lucide-react';
+
+import { cn } from '@/lib/utils';
 
 type Props = {
   userId: string;
@@ -31,6 +48,7 @@ type Props = {
   categories: any[];
   currencies: any[];
   sales: any[];
+  products: any[]; // ✅ nuevo
 };
 
 type FormState = {
@@ -43,6 +61,8 @@ type FormState = {
   categoryId: string | null;
   title: string;
   description: string;
+
+  productId: string | null; // ✅ nuevo
 };
 
 type DraftAttachment = {
@@ -100,7 +120,7 @@ function sumByCurrency(list: any[]) {
   }, {});
 }
 
-export default function MainSales({ userId, accounts, categories, currencies, sales }: Props) {
+export default function MainSales({ userId, accounts, categories, currencies, sales, products }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -128,6 +148,40 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
   const [attachments, setAttachments] = useState<DraftAttachment[]>([]);
   const [uploading, setUploading] = useState(false);
 
+  // ✅ selector buscable productos
+  const [productOpen, setProductOpen] = useState(false);
+  const [productQuery, setProductQuery] = useState('');
+  const [productLoading, setProductLoading] = useState(false);
+  const [productOptions, setProductOptions] = useState<any[]>(products ?? []);
+
+  useEffect(() => setProductOptions(products ?? []), [products]);
+
+  useEffect(() => {
+    if (!productOpen) return;
+
+    const t = setTimeout(() => {
+      void (async () => {
+        setProductLoading(true);
+        try {
+          const res = await listProducts({
+            userId,
+            q: productQuery.trim(),
+            page: 1,
+            perPage: 30,
+            onlyActive: true,
+          });
+          setProductOptions(res.items || []);
+        } catch (e: any) {
+          toast.error(e?.message || 'Error buscando productos');
+        } finally {
+          setProductLoading(false);
+        }
+      })();
+    }, 300);
+
+    return () => clearTimeout(t);
+  }, [productOpen, productQuery, userId]);
+
   const defaultAccountId = useMemo(
     () => accounts.find((a) => a.isDefault)?.id || accounts[0]?.id || '',
     [accounts]
@@ -148,6 +202,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     categoryId: null,
     title: '',
     description: '',
+    productId: null,
   });
 
   const resetForm = () => {
@@ -161,6 +216,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
       categoryId: null,
       title: '',
       description: '',
+      productId: null,
     });
   };
 
@@ -168,11 +224,16 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     setEditing(null);
     resetForm();
     setAttachments([]);
+    setProductQuery('');
     setOpen(true);
   };
 
   const openEdit = (row: any) => {
     setEditing(row);
+
+    const inferredProductId =
+      row.productId ?? products.find((p) => p.title === row.title)?.id ?? null;
+
     setForm({
       occurredAt: toISODate(row.occurredAt),
       amount: String(row.amount ?? ''),
@@ -183,6 +244,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
       categoryId: row.categoryId ?? null,
       title: row.title ?? '',
       description: row.description ?? '',
+      productId: inferredProductId,
     });
 
     setAttachments(
@@ -235,8 +297,8 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
   const onSave = () => {
     if (!form.accountId) return toast.error('Selecciona una cuenta');
     if (!form.currencyCode) return toast.error('Selecciona una moneda');
+    if (!form.productId) return toast.error('Selecciona un producto');
     if (!form.amount) return toast.error('Ingresa un monto');
-    if (!form.title.trim()) return toast.error('Ingresa el concepto');
 
     startTransition(() => {
       void (async () => {
@@ -249,8 +311,9 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
           currencyCode: form.currencyCode,
           accountId: form.accountId,
           categoryId: form.categoryId,
-          title: form.title.trim() || null,
+          title: form.title?.trim() || null,
           description: form.description?.trim() || null,
+          productId: form.productId, // ✅
         };
 
         const res = editing
@@ -294,6 +357,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
               categoryId: payload.categoryId,
               title: payload.title,
               description: payload.description,
+              productId: payload.productId,
               createdAt: nowIso,
               updatedAt: nowIso,
               deletedAt: null,
@@ -316,28 +380,29 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
               r.id !== editing.id
                 ? r
                 : {
-                  ...r,
-                  occurredAt: new Date(payload.occurredAt).toISOString(),
-                  amount: payload.amount,
-                  extra: payload.extra,
-                  discount: payload.discount,
-                  currencyCode: payload.currencyCode,
-                  accountId: payload.accountId,
-                  categoryId: payload.categoryId,
-                  title: payload.title,
-                  description: payload.description,
-                  updatedAt: nowIso,
-                  account: accounts.find((a) => a.id === payload.accountId) || r.account,
-                  category: payload.categoryId ? categories.find((c) => c.id === payload.categoryId) || null : null,
-                  currency: currencies.find((c) => c.code === payload.currencyCode) || r.currency,
-                  attachments: attachments.map((a) => ({
-                    id: a.id,
-                    url: a.url,
-                    fileName: a.fileName ?? null,
-                    mimeType: a.mimeType ?? null,
-                    sizeBytes: a.sizeBytes ?? null,
-                  })),
-                }
+                    ...r,
+                    occurredAt: new Date(payload.occurredAt).toISOString(),
+                    amount: payload.amount,
+                    extra: payload.extra,
+                    discount: payload.discount,
+                    currencyCode: payload.currencyCode,
+                    accountId: payload.accountId,
+                    categoryId: payload.categoryId,
+                    title: payload.title,
+                    description: payload.description,
+                    productId: payload.productId,
+                    updatedAt: nowIso,
+                    account: accounts.find((a) => a.id === payload.accountId) || r.account,
+                    category: payload.categoryId ? categories.find((c) => c.id === payload.categoryId) || null : null,
+                    currency: currencies.find((c) => c.code === payload.currencyCode) || r.currency,
+                    attachments: attachments.map((a) => ({
+                      id: a.id,
+                      url: a.url,
+                      fileName: a.fileName ?? null,
+                      mimeType: a.mimeType ?? null,
+                      sizeBytes: a.sizeBytes ?? null,
+                    })),
+                  }
             )
           );
         }
@@ -722,7 +787,6 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                   ) : (
                     <p className="mt-3 text-sm text-muted-foreground">-</p>
                   )}
-
                 </div>
 
                 {/* Form */}
@@ -797,10 +861,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
 
                       <div className="space-y-1">
                         <label className="text-sm text-muted-foreground">Moneda</label>
-                        <Select
-                          value={form.currencyCode}
-                          onValueChange={(v) => setForm((p) => ({ ...p, currencyCode: v }))}
-                        >
+                        <Select value={form.currencyCode} onValueChange={(v) => setForm((p) => ({ ...p, currencyCode: v }))}>
                           <SelectTrigger className="h-9 text-sm">
                             <SelectValue placeholder="Selecciona" />
                           </SelectTrigger>
@@ -837,14 +898,69 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                       </Select>
                     </div>
 
+                    {/* ✅ Producto buscable */}
                     <div className="space-y-1">
-                      <label className="text-sm text-muted-foreground">Concepto</label>
-                      <Input
-                        value={form.title}
-                        onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-                        className="h-9 text-sm"
-                        placeholder="Ej: Venta / Servicio / Suscripción"
-                      />
+                      <label className="text-sm text-muted-foreground">Producto</label>
+
+                      <Popover open={productOpen} onOpenChange={setProductOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            role="combobox"
+                            className="h-9 w-full justify-between text-sm"
+                            disabled={isPending}
+                          >
+                            <span className="truncate">
+                              {form.productId
+                                ? (productOptions.find((p) => p.id === form.productId)?.title || form.title || 'Producto')
+                                : 'Selecciona un producto'}
+                            </span>
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                          <Command>
+                            <CommandInput
+                              placeholder="Buscar producto..."
+                              value={productQuery}
+                              onValueChange={setProductQuery}
+                            />
+
+                            <CommandEmpty>
+                              {productLoading ? 'Buscando...' : 'Sin resultados.'}
+                            </CommandEmpty>
+
+                            <CommandGroup>
+                              {productOptions.map((p) => (
+                                <CommandItem
+                                  key={p.id}
+                                  value={p.title}
+                                  onSelect={() => {
+                                    setForm((prev) => ({
+                                      ...prev,
+                                      productId: p.id,
+                                      title: p.title,
+                                      amount: String(p.price ?? 0),
+                                    }));
+                                    setProductOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      'mr-2 h-4 w-4',
+                                      form.productId === p.id ? 'opacity-100' : 'opacity-0'
+                                    )}
+                                  />
+                                  <span className="flex-1 truncate">{p.title}</span>
+                                  <span className="ml-2 text-xs text-muted-foreground">{String(p.price ?? 0)}</span>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </div>
 
