@@ -365,6 +365,7 @@ export async function getNodeforUser(workflowId: string) {
     where: {
       workflowId,
     },
+    orderBy: { order: "asc" },
   })
 }
 
