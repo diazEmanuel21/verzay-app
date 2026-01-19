@@ -22,7 +22,7 @@ export default async function ModuleShell({
     return (
         <SidebarProvider defaultOpen={defaultOpen}>
             <SidebarInset className="h-screen flex flex-col min-h-0">
-                {breadcrumbs && <div className="shrink-0"><Breadcrumbs isFlow={isFlow}/></div>}
+                {breadcrumbs && <div className="shrink-0"><Breadcrumbs isFlow={isFlow} /></div>}
 
                 {padded ? (
                     <main className={`flex-1 min-h-0 overflow-auto p-4 ${themeClass}`}>
@@ -30,7 +30,7 @@ export default async function ModuleShell({
                     </main>
                 ) : (
                     // ✅ para ReactFlow/editor: sin padding y sin overflow auto aquí
-                    <main className={`flex-1 min-h-0 w-full ${themeClass}`}>
+                    <main className={`flex-1 min-h-0 w-full ${themeClass}  overflow-auto`}>
                         {children}
                     </main>
                 )}

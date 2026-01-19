@@ -1,5 +1,5 @@
 "use server"
-import { buildLinearExecutionOrder } from "@/app/flow/[workflowId]/helpers/buildLinearExecutionOrder";
+import { buildLinearExecutionOrder } from "@/app/flow/[workflowId]with_edges/helpers/buildLinearExecutionOrder";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { minioClient } from "@/lib/minio";
