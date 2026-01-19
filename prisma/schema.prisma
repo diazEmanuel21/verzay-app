@@ -7,60 +7,179 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id                            String                @id @default(cuid())
-  name                          String?
-  email                         String                @unique
-  password                      String?
-  emailVerified                 DateTime?
-  image                         String?
-  role                          Role                  @default(user)
-  createdAt                     DateTime              @default(now())
-  updatedAt                     DateTime              @updatedAt
-  apiUrl                        String                @default("https://api.openAI.co")
-  company                       String                @default("Empresa Demo")
-  lat                           String                @default("0.0000")
-  lng                           String                @default("0.0000")
-  mapsUrl                       String                @default("https://maps.google.com/?q=0,0")
-  notificationNumber            String                @default("0000000000")
-  openingPhrase                 String?               @default("DEPRECATED")
-  apiKeyId                      String?
-  del_seguimiento               String?               @default("Estamos para servirle.")
-  plan                          Plan                  @default(basico)
-  autoReactivate                String?
-  webhookUrl                    String?               @default("https://n8npro.verzay.co/webhook")
-  theme                         ThemeApp?             @default(Default)
-  muteAgentResponses            Boolean               @default(false)
-  timezone                      String?
-  meetingDuration               Int?
-  meetingUrl                    String?
-  onFacebook                    Boolean               @default(false)
-  onInstagram                   Boolean               @default(false)
-  aiModelId                     String?
-  defaultAiModelId              String?
-  defaultProviderId             String?
-  delayTimeGPT                  String?
-  accounts                      Account[]
-  agentPrompts                  AgentPrompt[]         @relation("UserAgentPrompts")
-  publishedAgentPromptRevisions AgentPromptRevision[] @relation("UserPublishedRevisions")
-  Appointment                   Appointment[]
-  instancias                    Instancias[]
-  pausar                        Pausar[]
-  product                       Product[]
-  PromptInstance                PromptInstance[]
-  Service                       Service[]
-  sessions                      Session[]
-  systemMessages                SystemMessage[]
-  tags                          Tag[]
-  tools                         Tools[]
-  apiKey                        ApiKey?               @relation(fields: [apiKeyId], references: [id])
-  defaultAiModel                AiModel?              @relation("DefaultAiModel", fields: [defaultAiModelId], references: [id])
-  UserAvailability              UserAvailability[]
-  UserModules                   UserModules[]
-  iaCredit                      IaCredit?
-  clientesAsignados             reseller[]            @relation("RevendedorAsignador")
-  esClienteDe                   reseller[]            @relation("ClienteAsignado")
-  aiConfig                      UserAiConfig[]
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+
+  refreshToken String? @map("refresh_token")
+  accessToken  String? @map("access_token")
+  expiresAt    Int?    @map("expires_at")
+  tokenType    String? @map("token_type")
+  scope        String?
+  idToken      String? @map("id_token")
+  sessionState String? @map("session_state")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+  @@index([userId])
+}
+
+model AgentPrompt {
+  id                  String                @id @default(uuid()) @db.Uuid
+  userId              String
+  agentId             String?
+  status              PromptStatus          @default(draft)
+  version             Int                   @default(1)
+  sections            Json
+  promptText          String
+  businessName        String?
+  businessSector      String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentPromptRevision AgentPromptRevision[]
+
+  @@index([agentId])
+  @@index([businessName])
+  @@index([businessSector])
+  @@index([sections], type: Gin)
+  @@index([status])
+  @@index([userId])
+}
+
+model AgentPromptRevision {
+  id                 String      @id @default(uuid()) @db.Uuid
+  promptId           String      @db.Uuid
+  revisionNumber     Int
+  sectionsSnapshot   Json
+  promptTextSnapshot String
+  publishedBy        String
+  publishedAt        DateTime    @default(now())
+  notes              String?
+  agentPrompt        AgentPrompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  user               User        @relation(fields: [publishedBy], references: [id], onDelete: Cascade)
+
+  @@unique([promptId, revisionNumber])
+  @@index([publishedAt])
+}
+
+model ApiKey {
+  id        String   @id @default(uuid())
+  url       String
+  key       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
+}
+
+model Appointment {
+  id        String            @id @default(uuid())
+  userId    String
+  sessionId Int
+  startTime DateTime
+  endTime   DateTime
+  timezone  String
+  status    AppointmentStatus @default(PENDIENTE)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  serviceId String?
+  service   Service?          @relation(fields: [serviceId], references: [id])
+  session   Session           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startTime])
+  @@index([sessionId])
+  @@index([serviceId])
+}
+
+model GuideUrl {
+  id          String   @id @default(uuid())
+  path        String
+  title       String
+  description String?
+  url         String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tipo        String?
+
+  @@map("GuidesUrl")
+}
+
+model Instancia {
+  id           Int     @id @default(autoincrement())
+  instanceName String
+  userId       String
+  instanceId   String
+  instanceType String? @default("Whatsapp")
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("Instancias")
+}
+
+model Log {
+  id        String   @id @default(uuid())
+  level     String
+  message   String
+  context   String?
+  timestamp DateTime @default(now())
+}
+
+model Manual {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  url         String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Module {
+  id                     String       @id @default(uuid())
+  label                  String
+  route                  String
+  icon                   String
+  showInSidebar          Boolean?     @default(true)
+  hiddenModuleToSelector Boolean?     @default(false)
+  adminOnly              Boolean      @default(false)
+  requiresPremium        Boolean      @default(false)
+  allowedPlans           Plan[]
+  order                  Int          @default(0)
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+  showOnlySelectedPlans  Boolean?     @default(false)
+  customUrl              String?
+  moduleItems            ModuleItem[]
+  users                  User[]       @relation("UserModules")
+}
+
+model ModuleItem {
+  id        String   @id @default(uuid())
+  title     String
+  url       String
+  moduleId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  module    Module   @relation(fields: [moduleId], references: [id])
+}
+
+model Pausar {
+  id          Int      @id @default(autoincrement())
+  userId      String
+  mensaje     String   @default("Fue un gusto ayudarte.")
+  tipo        String   @default("abrir")
+  baseurl     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  apikeyId    String
+  instanciaId String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Product {
@@ -610,101 +729,6 @@ model UserAiConfig {
   @@map("user_ai_configs")
 }
 
-model FinanceAccount {
-  id        String               @id @default(cuid())
-  userId    String
-  name      String
-  type      FinanceAccountType   @default(PERSONAL)
-  isDefault Boolean              @default(false)
-  createdAt DateTime             @default(now())
-  updatedAt DateTime             @updatedAt
-  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  txs       FinanceTransaction[]
-
-  @@unique([userId, name])
-  @@index([userId])
-  @@map("finance_accounts")
-}
-
-model FinanceCurrency {
-  code      String               @id
-  name      String
-  symbol    String
-  decimals  Int                  @default(2)
-  createdAt DateTime             @default(now())
-  updatedAt DateTime             @updatedAt
-  txs       FinanceTransaction[]
-
-  @@map("finance_currencies")
-}
-
-model FinanceCategory {
-  id        String               @id @default(cuid())
-  userId    String
-  name      String
-  type      FinanceTxType
-  color     String?
-  order     Int                  @default(0)
-  createdAt DateTime             @default(now())
-  updatedAt DateTime             @updatedAt
-  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  txs       FinanceTransaction[]
-
-  @@unique([userId, type, name])
-  @@index([userId, type])
-  @@map("finance_categories")
-}
-
-model FinanceTransaction {
-  id           String              @id @default(cuid())
-  userId       String
-  type         FinanceTxType
-  status       FinanceTxStatus     @default(ACTIVE)
-  occurredAt   DateTime
-  amount       Decimal             @db.Decimal(18, 2)
-  extra        Decimal @default(0)
-  discount     Decimal @default(0)
-  currencyCode String
-  accountId    String
-  categoryId   String?
-  title        String?
-  description  String?
-  counterparty String?
-  reference    String?
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
-  deletedAt    DateTime?
-  attachments  FinanceAttachment[]
-  account      FinanceAccount      @relation(fields: [accountId], references: [id])
-  category     FinanceCategory?    @relation(fields: [categoryId], references: [id])
-  currency     FinanceCurrency     @relation(fields: [currencyCode], references: [code])
-  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, type, status])
-  @@index([userId, occurredAt])
-  @@index([userId, accountId, occurredAt])
-  @@index([userId, currencyCode, occurredAt])
-  @@index([userId, categoryId, occurredAt])
-  @@map("finance_transactions")
-}
-
-model FinanceAttachment {
-  id            String             @id @default(cuid())
-  userId        String
-  transactionId String
-  url           String
-  fileName      String?
-  mimeType      String?
-  sizeBytes     Int?
-  createdAt     DateTime           @default(now())
-  transaction   FinanceTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([transactionId])
-  @@map("finance_attachments")
-}
-
 enum AppointmentStatus {
   PENDIENTE
   CONFIRMADA
@@ -791,10 +815,4 @@ enum TypePromptAi {
   ACTIONS
   DATA_CAPTURE
   DATA_QUERY
-}
-
-enum AppointmentStatus {
-  PENDIENTE
-  CONFIRMADA
-  CANCELADA
 }
