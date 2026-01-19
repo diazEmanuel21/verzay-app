@@ -846,7 +846,5 @@ export const notifyPrompt = `**Función**: Ejecuta la tool 'Notificacion Asesor'
   2. Si **no hay una orden clara**, envía el siguiente **mensaje de confirmación** al usuario:
 📝 ¡He *notificado* al area encargada!
 👨🏻‍💻 Un asesor se pondrá en contacto contigo a la brevedad posible.`
-export const instructionPrompt = `
-
-`;
+export const instructionPrompt = ``;
 ;
