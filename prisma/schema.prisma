@@ -153,7 +153,7 @@ model Module {
   showOnlySelectedPlans  Boolean?     @default(false)
   customUrl              String?
   moduleItems            ModuleItem[]
-  users                  User[]       @relation("UserModules")
+  userModules            UserModule[]
 }
 
 model ModuleItem {
@@ -272,27 +272,26 @@ model Service {
 }
 
 model Session {
-  userId         String
-  remoteJid      String
-  pushName       String
-  instanceId     String
-  createdAt      DateTime               @default(now())
-  updatedAt      DateTime               @updatedAt
-  status         Boolean
-  id             Int                    @id @default(autoincrement())
-  seguimientos   String?                @default("")
-  inactividad    String?                @default("")
-  sessionDelay   String?
-  flujos         String?                @default("")
-  remoteJidAlt   String?
-  appointments   Appointment[]
-  registros      Registro[]
-  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessionTags    SessionTag[]
-  sessionTrigger SessionTrigger?
-  workflowStates SessionWorkflowState[]
-  financeTransactions FinanceTransaction[] // ✅ NUEVO
-
+  userId              String
+  remoteJid           String
+  pushName            String
+  instanceId          String
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  status              Boolean
+  id                  Int                    @id @default(autoincrement())
+  seguimientos        String?                @default("")
+  inactividad         String?                @default("")
+  sessionDelay        String?
+  flujos              String?                @default("")
+  remoteJidAlt        String?
+  appointments        Appointment[]
+  registros           Registro[]
+  user                User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionTags         SessionTag[]
+  sessionTrigger      SessionTrigger?
+  workflowStates      SessionWorkflowState[]
+  financeTransactions FinanceTransaction[]
 
   @@index([userId, remoteJid])
 }
@@ -405,6 +404,7 @@ model User {
   apiKey                             ApiKey?               @relation(fields: [apiKeyId], references: [id])
   defaultAiModel                     AiModel?              @relation(fields: [defaultAiModelId], references: [id])
   userAvailability                   UserAvailability[]
+  userModules                        UserModule[]
   financeAccounts                    FinanceAccount[]
   financeAttachments                 FinanceAttachment[]
   financeCategories                  FinanceCategory[]
@@ -413,7 +413,6 @@ model User {
   reseller_reseller_reselleridToUser Reseller[]            @relation("reseller_reselleridToUser")
   reseller_reseller_userIdToUser     Reseller[]            @relation("reseller_userIdToUser")
   aiConfigs                          UserAiConfig[]
-  modules                            Module[]              @relation("UserModules")
 }
 
 model UserAvailability {
@@ -626,15 +625,12 @@ model FinanceTransaction {
   deletedAt    DateTime?
   discount     Decimal             @default(0)
   extra        Decimal             @default(0)
-
-  // ✅ NUEVO: vínculo a contacto (Session)
   sessionId    Int?
-  session      Session?            @relation(fields: [sessionId], references: [id], onDelete: SetNull)
-
   attachments  FinanceAttachment[]
   account      FinanceAccount      @relation(fields: [accountId], references: [id])
   category     FinanceCategory?    @relation(fields: [categoryId], references: [id])
   currency     FinanceCurrency     @relation(fields: [currencyCode], references: [code])
+  session      Session?            @relation(fields: [sessionId], references: [id])
   user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, accountId, occurredAt])
@@ -642,10 +638,7 @@ model FinanceTransaction {
   @@index([userId, currencyCode, occurredAt])
   @@index([userId, occurredAt])
   @@index([userId, type, status])
-
-  // ✅ NUEVO index recomendado
   @@index([userId, sessionId, occurredAt])
-
   @@map("finance_transactions")
 }
 
@@ -724,6 +717,17 @@ model UserAiConfig {
 
   @@unique([userId, providerId])
   @@map("user_ai_configs")
+}
+
+model UserModule {
+  A      String
+  B      String
+  Module Module @relation(fields: [A], references: [id], onDelete: Cascade)
+  User   User   @relation(fields: [B], references: [id], onDelete: Cascade)
+
+  @@id([A, B], map: "_UserModules_AB_pkey")
+  @@index([B], map: "_UserModules_B_index")
+  @@map("_UserModules")
 }
 
 enum AppointmentStatus {
