@@ -7,7 +7,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
-// ✅ UI (shadcn/ui)
 import {
     Dialog,
     DialogContent,
@@ -44,15 +43,12 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 
-// ✅ Icons
 import { Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react";
 
-// ✅ Actions (Server Actions)
 import {
     createService,
     deleteService,
     getServicesByUser,
-    // NOTE: asegúrate de exponer esta acción en tu proyecto
     updateService,
 } from "@/actions/service-action";
 
@@ -67,7 +63,6 @@ import { serviceDefaultMsg } from "./defaultServiceValues";
 const serviceSchema = z.object({
     name: z.string().min(2, "El nombre es obligatorio"),
     messageText: z.string().min(5, "El mensaje debe ser más descriptivo"),
-    description: z.string().min(5, "El mensaje debe ser más descriptivo"),
 });
 
 type ServiceFormValues = z.infer<typeof serviceSchema>;

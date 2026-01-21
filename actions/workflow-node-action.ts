@@ -581,13 +581,15 @@ export async function createNodeFromCanvas(form: createNodeflowSchemaType & { po
 export async function updateIntentionNodeConfig(params: {
   nodeId: string;
 
+  message?: string;
+
   // existentes
   keywords?: string[];
   miniPrompt?: string;
   threshold?: number;
   noMatchMessage?: string;
 
-  // nuevos (intention)
+  // intention
   intentionPrompt?: string;
   intentionMaxAttempts?: number;
 }) {
@@ -598,6 +600,12 @@ export async function updateIntentionNodeConfig(params: {
   if (!nodeId) return { success: false, message: "nodeId requerido" };
 
   const data: any = {};
+
+  if (params.message !== undefined) {
+    const msg = params.message.trim();
+    if (msg.length < 1) return { success: false, message: "El mensaje es requerido" };
+    data.message = msg;
+  }
 
   // --- embedding/intention config existente (si aplica)
   if (params.threshold !== undefined) {
@@ -618,7 +626,7 @@ export async function updateIntentionNodeConfig(params: {
     data.keywords = JSON.stringify(params.keywords.map(k => k.trim()).filter(Boolean));
   }
 
-  // --- nuevos campos intention
+  // --- intention
   if (params.intentionPrompt !== undefined) {
     if (params.intentionPrompt.trim().length < 3)
       return { success: false, message: "El prompt es muy corto" };

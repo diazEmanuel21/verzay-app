@@ -16,36 +16,54 @@ type Props = { node: WorkflowNodeDB };
 export function EmbeddingNode({ node }: Props) {
     const router = useRouter();
 
-    const [prompt, setPrompt] = useState(node.intentionPrompt ?? '');
+    const [message, setMessage] = useState(node.message ?? '');
+
+    const [intentionPrompt, setIntentionPrompt] = useState(node.intentionPrompt ?? '');
+
     const [maxAttempts, setMaxAttempts] = useState<number>(node.intentionMaxAttempts ?? 3);
 
     useEffect(() => {
-        setPrompt(node.intentionPrompt ?? '');
+        setMessage(node.message ?? '');
+        setIntentionPrompt(node.intentionPrompt ?? '');
         setMaxAttempts(node.intentionMaxAttempts ?? 3);
-    }, [node.intentionPrompt, node.intentionMaxAttempts]);
+    }, [node.message, node.intentionPrompt, node.intentionMaxAttempts]);
 
     const savingRef = useRef(false);
-    const lastSavedRef = useRef({ prompt: prompt.trim(), maxAttempts });
+    const lastSavedRef = useRef({
+        message: (node.message ?? '').trim(),
+        intentionPrompt: (node.intentionPrompt ?? '').trim(),
+        maxAttempts: node.intentionMaxAttempts ?? 3,
+    });
 
     const save = async () => {
-        const trimmed = prompt.trim();
-        const payload = { prompt: trimmed, maxAttempts };
+        const payload = {
+            message: message.trim(),
+            intentionPrompt: intentionPrompt.trim(),
+            maxAttempts,
+        };
 
         // evita guardar si no cambió
         if (
-            lastSavedRef.current.prompt === payload.prompt &&
+            lastSavedRef.current.message === payload.message &&
+            lastSavedRef.current.intentionPrompt === payload.intentionPrompt &&
             lastSavedRef.current.maxAttempts === payload.maxAttempts
-        ) return;
+        ) {
+            return;
+        }
 
         if (savingRef.current) return;
         savingRef.current = true;
 
-        const toastId = toast.loading('Guardando intención...');
+        const toastId = toast.loading('Guardando nodo de intención...');
         try {
             const res = await updateIntentionNodeConfig({
                 nodeId: node.id,
-                intentionPrompt: trimmed,
-                intentionMaxAttempts: maxAttempts,
+
+                message: payload.message,
+
+                intentionPrompt: payload.intentionPrompt,
+
+                intentionMaxAttempts: payload.maxAttempts,
             });
 
             if (!res?.success) {
@@ -54,17 +72,16 @@ export function EmbeddingNode({ node }: Props) {
             }
 
             lastSavedRef.current = payload;
-            toast.success('Intención guardada', { id: toastId });
+            toast.success('Guardado', { id: toastId });
             router.refresh();
         } catch (e: any) {
-            toast.error(e?.message ?? 'Error guardando intención', { id: toastId });
+            toast.error(e?.message ?? 'Error guardando', { id: toastId });
         } finally {
             savingRef.current = false;
         }
     };
 
     const onBlurSave = () => {
-        // evita onBlur si el valor es inválido
         if (maxAttempts < 1 || maxAttempts > 10) return;
         save();
     };
@@ -72,16 +89,30 @@ export function EmbeddingNode({ node }: Props) {
     return (
         <div className="space-y-4">
             <div className="space-y-2">
-                <Label className="text-xs">Prompt del nodo</Label>
+                <Label className="text-xs">Mensaje al usuario (message)</Label>
                 <Textarea
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
                     onBlur={onBlurSave}
-                    placeholder="Ej: Solicita nombre y descripción del servicio."
+                    placeholder="Ej: Perfecto. Por favor dime tu nombre y qué servicio necesitas."
                     className="min-h-[90px]"
                 />
                 <p className="text-[11px] text-muted-foreground">
-                    Este texto se enviará al usuario mientras el nodo esté “esperando” respuesta.
+                    Este texto es lo que el bot le envía al usuario mientras el nodo está “esperando” respuesta.
+                </p>
+            </div>
+
+            <div className="space-y-2">
+                <Label className="text-xs">Prompt del modelo (intentionPrompt)</Label>
+                <Textarea
+                    value={intentionPrompt}
+                    onChange={(e) => setIntentionPrompt(e.target.value)}
+                    onBlur={onBlurSave}
+                    placeholder='Ej: Debes decidir si el usuario ya entregó su nombre y el servicio. Responde {"ok":true} o {"ok":false}.'
+                    className="min-h-[120px]"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                    Este prompt lo usa la IA para decidir <b>sí / no</b>. No se muestra al usuario.
                 </p>
             </div>
 
