@@ -90,7 +90,21 @@ export async function getAllSales(userId: string): Promise<OperationResponse<any
         status: { not: 'DELETED' as any },
       },
       orderBy: [{ occurredAt: 'desc' }, { createdAt: 'desc' }],
-      include: { account: true, category: true, currency: true, attachments: true },
+      include: {
+        account: true,
+        category: true,
+        currency: true,
+        attachments: true,
+
+        // ✅ NUEVO
+        session: {
+          select: {
+            id: true,
+            pushName: true,
+            remoteJid: true,
+          },
+        },
+      },
       take: 200,
     });
 
@@ -148,7 +162,7 @@ export async function createSale(data: {
     const created = await db.financeTransaction.create({
       data: {
         userId: data.userId,
-        type: 'INCOME' as any,
+        type: 'SALE' as any,
         status: 'ACTIVE' as any,
         occurredAt: data.occurredAt instanceof Date ? data.occurredAt : new Date(data.occurredAt),
         amount: new Prisma.Decimal(String(data.amount)),

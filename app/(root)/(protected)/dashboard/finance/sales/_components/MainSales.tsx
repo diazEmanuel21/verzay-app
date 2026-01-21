@@ -17,6 +17,9 @@ import {
 
 import { listProducts } from '@/actions/products-actions';
 
+// ✅ usamos tus actions existentes
+import { searchSessionsByUserId } from '@/actions/session-action';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -38,6 +41,7 @@ import {
   Receipt,
   ChevronsUpDown,
   Check,
+  UserRound,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -48,7 +52,8 @@ type Props = {
   categories: any[];
   currencies: any[];
   sales: any[];
-  products: any[]; // ✅ nuevo
+  products: any[];
+  sessions: any[]; // ✅ nuevo
 };
 
 type FormState = {
@@ -62,7 +67,10 @@ type FormState = {
   title: string;
   description: string;
 
-  productId: string | null; // ✅ nuevo
+  productId: string | null;
+
+  // ✅ NUEVO: contacto Session
+  sessionId: number | null;
 };
 
 type DraftAttachment = {
@@ -120,7 +128,15 @@ function sumByCurrency(list: any[]) {
   }, {});
 }
 
-export default function MainSales({ userId, accounts, categories, currencies, sales, products }: Props) {
+// helper para pintar label del contacto
+function sessionLabel(s: any) {
+  const name = s?.pushName?.trim();
+  const jid = s?.remoteJid?.trim();
+  if (name && jid) return `${name} (${jid})`;
+  return name || jid || `Session #${s?.id ?? ''}`;
+}
+
+export default function MainSales({ userId, accounts, categories, currencies, sales, products, sessions }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -153,7 +169,6 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
   const [productQuery, setProductQuery] = useState('');
   const [productLoading, setProductLoading] = useState(false);
   const [productOptions, setProductOptions] = useState<any[]>(products ?? []);
-
   useEffect(() => setProductOptions(products ?? []), [products]);
 
   useEffect(() => {
@@ -182,6 +197,38 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     return () => clearTimeout(t);
   }, [productOpen, productQuery, userId]);
 
+  // ✅ selector buscable contactos (Session)
+  const [contactOpen, setContactOpen] = useState(false);
+  const [contactQuery, setContactQuery] = useState('');
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactOptions, setContactOptions] = useState<any[]>(sessions ?? []);
+  useEffect(() => setContactOptions(sessions ?? []), [sessions]);
+
+  useEffect(() => {
+    if (!contactOpen) return;
+
+    const t = setTimeout(() => {
+      void (async () => {
+        setContactLoading(true);
+        try {
+          const res = await searchSessionsByUserId(userId, contactQuery.trim());
+          if (!res.success) {
+            toast.error(res.message || 'Error buscando contactos');
+            setContactOptions([]);
+          } else {
+            setContactOptions(res.data || []);
+          }
+        } catch (e: any) {
+          toast.error(e?.message || 'Error buscando contactos');
+        } finally {
+          setContactLoading(false);
+        }
+      })();
+    }, 300);
+
+    return () => clearTimeout(t);
+  }, [contactOpen, contactQuery, userId]);
+
   const defaultAccountId = useMemo(
     () => accounts.find((a) => a.isDefault)?.id || accounts[0]?.id || '',
     [accounts]
@@ -203,6 +250,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     title: '',
     description: '',
     productId: null,
+    sessionId: null, // ✅ nuevo
   });
 
   const resetForm = () => {
@@ -217,6 +265,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
       title: '',
       description: '',
       productId: null,
+      sessionId: null, // ✅ nuevo
     });
   };
 
@@ -225,6 +274,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     resetForm();
     setAttachments([]);
     setProductQuery('');
+    setContactQuery('');
     setOpen(true);
   };
 
@@ -245,6 +295,9 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
       title: row.title ?? '',
       description: row.description ?? '',
       productId: inferredProductId,
+
+      // ✅ nuevo
+      sessionId: typeof row.sessionId === 'number' ? row.sessionId : (row.sessionId ? Number(row.sessionId) : null),
     });
 
     setAttachments(
@@ -313,7 +366,10 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
           categoryId: form.categoryId,
           title: form.title?.trim() || null,
           description: form.description?.trim() || null,
-          productId: form.productId, // ✅
+          productId: form.productId,
+
+          // ✅ NUEVO: vincular contacto
+          sessionId: form.sessionId ?? null,
         };
 
         const res = editing
@@ -342,11 +398,14 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
         // ✅ UI instantánea
         const nowIso = new Date().toISOString();
         if (!editing && txId) {
+          const selectedSession =
+            form.sessionId != null ? (contactOptions.find((s) => s.id === form.sessionId) ?? null) : null;
+
           setRows((prev) => [
             {
               id: txId,
               userId,
-              type: 'INCOME',
+              type: 'SALE',
               status: 'ACTIVE',
               occurredAt: new Date(payload.occurredAt).toISOString(),
               amount: payload.amount,
@@ -358,6 +417,11 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
               title: payload.title,
               description: payload.description,
               productId: payload.productId,
+
+              // ✅ nuevo
+              sessionId: payload.sessionId,
+              session: selectedSession,
+
               createdAt: nowIso,
               updatedAt: nowIso,
               deletedAt: null,
@@ -375,6 +439,9 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
             ...prev,
           ]);
         } else if (editing) {
+          const selectedSession =
+            form.sessionId != null ? (contactOptions.find((s) => s.id === form.sessionId) ?? null) : null;
+
           setRows((prev) =>
             prev.map((r) =>
               r.id !== editing.id
@@ -391,6 +458,11 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                     title: payload.title,
                     description: payload.description,
                     productId: payload.productId,
+
+                    // ✅ nuevo
+                    sessionId: payload.sessionId,
+                    session: selectedSession,
+
                     updatedAt: nowIso,
                     account: accounts.find((a) => a.id === payload.accountId) || r.account,
                     category: payload.categoryId ? categories.find((c) => c.id === payload.categoryId) || null : null,
@@ -492,6 +564,14 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
   const detailExtra = useMemo(() => toAmountNumber(detailRow?.extra), [detailRow]);
   const detailDiscount = useMemo(() => toAmountNumber(detailRow?.discount), [detailRow]);
   const detailTotal = useMemo(() => detailBase + detailExtra - detailDiscount, [detailBase, detailExtra, detailDiscount]);
+
+  const detailSessionLabel = useMemo(() => {
+    const s = detailRow?.session;
+    if (s) return sessionLabel(s);
+    // fallback si no incluyes session en getAllSales
+    if (detailRow?.sessionId) return `Session #${detailRow.sessionId}`;
+    return 'Sin contacto';
+  }, [detailRow]);
 
   return (
     <div className="space-y-3">
@@ -614,6 +694,12 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                       <span className="inline-flex items-center gap-2">
                         <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />
                         {detailCategoryName}
+                      </span>
+
+                      {/* ✅ contacto */}
+                      <span className="inline-flex items-center gap-2">
+                        <UserRound className="h-4 w-4" />
+                        {detailSessionLabel}
                       </span>
                     </div>
                   </div>
@@ -739,6 +825,9 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
             const mini = (n: number) =>
               new Intl.NumberFormat('es-CO', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(n);
 
+            const selectedSession =
+              form.sessionId != null ? (contactOptions.find((s) => s.id === form.sessionId) ?? null) : null;
+
             return (
               <div className="space-y-4">
                 {/* Preview */}
@@ -763,6 +852,12 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                         <span className="inline-flex items-center gap-2">
                           <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />
                           {previewCategoryName}
+                        </span>
+
+                        {/* ✅ contacto en preview */}
+                        <span className="inline-flex items-center gap-2">
+                          <UserRound className="h-4 w-4" />
+                          {selectedSession ? sessionLabel(selectedSession) : 'Sin contacto'}
                         </span>
                       </div>
                     </div>
@@ -896,6 +991,84 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+
+                    {/* ✅ Contacto buscable (Session) */}
+                    <div className="space-y-1">
+                      <label className="text-sm text-muted-foreground">Contacto</label>
+
+                      <Popover open={contactOpen} onOpenChange={setContactOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            role="combobox"
+                            className="h-9 w-full justify-between text-sm"
+                            disabled={isPending}
+                          >
+                            <span className="truncate">
+                              {form.sessionId != null
+                                ? (() => {
+                                    const s = contactOptions.find((x) => x.id === form.sessionId);
+                                    return s ? sessionLabel(s) : `Session #${form.sessionId}`;
+                                  })()
+                                : 'Selecciona un contacto'}
+                            </span>
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                          <Command>
+                            <CommandInput
+                              placeholder="Buscar contacto..."
+                              value={contactQuery}
+                              onValueChange={setContactQuery}
+                            />
+
+                            <CommandEmpty>
+                              {contactLoading ? 'Buscando...' : 'Sin resultados.'}
+                            </CommandEmpty>
+
+                            <CommandGroup>
+                              {/* opción limpiar */}
+                              <CommandItem
+                                value="__none__"
+                                onSelect={() => {
+                                  setForm((prev) => ({ ...prev, sessionId: null }));
+                                  setContactOpen(false);
+                                }}
+                              >
+                                <Check className={cn('mr-2 h-4 w-4', form.sessionId == null ? 'opacity-100' : 'opacity-0')} />
+                                <span className="flex-1 truncate">Sin contacto</span>
+                              </CommandItem>
+
+                              {contactOptions.map((s) => {
+                                const selected = form.sessionId === s.id;
+                                const label = sessionLabel(s);
+
+                                return (
+                                  <CommandItem
+                                    key={s.id}
+                                    value={label}
+                                    onSelect={() => {
+                                      setForm((prev) => ({ ...prev, sessionId: s.id }));
+                                      setContactOpen(false);
+                                    }}
+                                  >
+                                    <Check className={cn('mr-2 h-4 w-4', selected ? 'opacity-100' : 'opacity-0')} />
+                                    <span className="flex-1 truncate">{label}</span>
+                                  </CommandItem>
+                                );
+                              })}
+                            </CommandGroup>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+
+                      <p className="text-xs text-muted-foreground">
+                        Vincula la venta a un contacto del CRM (Session).
+                      </p>
                     </div>
 
                     {/* ✅ Producto buscable */}
