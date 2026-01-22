@@ -5,7 +5,7 @@ export const revalidate = 0;
 
 import MainSales from "./_components/MainSales";
 import { getAllSales, getSalesMeta } from "@/actions/finance-sales-actions";
-import { listProducts } from "@/actions/products-actions"; // ✅ agrega esto
+import { listProducts } from "@/actions/products-actions"; //  agrega esto
 import { getSessionsByUserId } from "@/actions/session-action"; // <-- tu archivo real
 
 export default async function SalesPage() {
@@ -30,7 +30,7 @@ export default async function SalesPage() {
       currencies={metaRes.data!.currencies}
       sales={listRes.data || []}
       products={productsRes.items || []}
-      sessions={sessionsRes.data || []} // ✅ nuevo
+      sessions={sessionsRes.data || []} //  nuevo
     />
   );
 }

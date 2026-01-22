@@ -38,7 +38,7 @@ type DataTableProps<TData, TValue> = {
   searchPlaceholder?: string;
 
   /**
-   * ✅ Click en fila (para abrir detalle)
+   *  Click en fila (para abrir detalle)
    * Tip: En botones dentro de la fila usa e.stopPropagation()
    */
   onRowClick?: (row: TData) => void;

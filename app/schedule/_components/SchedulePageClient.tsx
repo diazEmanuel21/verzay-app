@@ -170,7 +170,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                 // const displayPhone = `+${fullPhone}`;
                 const displayPhone = e164;
 
-                const ownerText = `✅ *Tienes Nueva Cita*:
+                const ownerText = ` *Tienes Nueva Cita*:
 
 👤 *Nombre*: ${nameClient}
 📝 *Descripción ${serviceName}*: Para el día ${dateLabel} a las ${hourLabel}.

@@ -212,7 +212,7 @@ export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCar
     setMessage(value);
   };
 
-  const fileInputId = `file-input-${nodes.id}`; // ✅ ID único por nodo
+  const fileInputId = `file-input-${nodes.id}`; //  ID único por nodo
 
   const renderContent = () => {
     if (isPauseNode) {

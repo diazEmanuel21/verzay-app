@@ -45,7 +45,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
 
         const response = await generateQRCode({ instanceName, userId });
 
-        // ✅ siempre actualiza evoStatus si viene
+        //  siempre actualiza evoStatus si viene
         if (response?.evo?.status) {
             setEvoStatus(response.evo.status);
         }
@@ -56,7 +56,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
             setQrCode(response.qr?.code || null);
             setConnectionStatus(response.connectionState?.instance?.state || null);
 
-            // ✅ toast solo cuando el backend diga "recién notificado"
+            //  toast solo cuando el backend diga "recién notificado"
             if (response?.evo?.justNotified) {
                 toast.error("Tu API de Evolution se encuentra desconectada. Revisa token/instancia/credenciales.");
             }

@@ -29,7 +29,7 @@ export async function getClientsPageData(): Promise<
                 ? getEnrichedClients({ resellerId: user.id })
                 : getEnrichedClients();
 
-        // ✅ Paralelo (evita “tildado” por awaits en cascada)
+        //  Paralelo (evita “tildado” por awaits en cascada)
         const [resUsers, resApikeys, countries] = await Promise.all([
             usersPromise,
             obtenerApiKeys(),

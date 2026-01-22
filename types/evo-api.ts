@@ -1,4 +1,4 @@
-// ✅ cooldown anti-spam
+//  cooldown anti-spam
 export const DISCONNECT_COOLDOWN_MS = 30 * 60 * 1000; // 30 min
 export const EVO_FETCH_TIMEOUT_MS = 12_000; // timeout para detectar "no responde"
 

@@ -17,7 +17,7 @@ import {
 
 import { listProducts } from '@/actions/products-actions';
 
-// ✅ usamos tus actions existentes
+//  usamos tus actions existentes
 import { searchSessionsByUserId } from '@/actions/session-action';
 
 import { Button } from '@/components/ui/button';
@@ -53,7 +53,7 @@ type Props = {
   currencies: any[];
   sales: any[];
   products: any[];
-  sessions: any[]; // ✅ nuevo
+  sessions: any[]; //  nuevo
 };
 
 type FormState = {
@@ -69,7 +69,7 @@ type FormState = {
 
   productId: string | null;
 
-  // ✅ NUEVO: contacto Session
+  //  NUEVO: contacto Session
   sessionId: number | null;
 };
 
@@ -140,11 +140,11 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // ✅ tabla sin recargar
+  //  tabla sin recargar
   const [rows, setRows] = useState<any[]>(sales ?? []);
   useEffect(() => setRows(sales ?? []), [sales]);
 
-  // ✅ detalle por click fila
+  //  detalle por click fila
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailRow, setDetailRow] = useState<any | null>(null);
 
@@ -164,7 +164,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
   const [attachments, setAttachments] = useState<DraftAttachment[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  // ✅ selector buscable productos
+  //  selector buscable productos
   const [productOpen, setProductOpen] = useState(false);
   const [productQuery, setProductQuery] = useState('');
   const [productLoading, setProductLoading] = useState(false);
@@ -197,7 +197,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     return () => clearTimeout(t);
   }, [productOpen, productQuery, userId]);
 
-  // ✅ selector buscable contactos (Session)
+  //  selector buscable contactos (Session)
   const [contactOpen, setContactOpen] = useState(false);
   const [contactQuery, setContactQuery] = useState('');
   const [contactLoading, setContactLoading] = useState(false);
@@ -250,7 +250,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     title: '',
     description: '',
     productId: null,
-    sessionId: null, // ✅ nuevo
+    sessionId: null, //  nuevo
   });
 
   const resetForm = () => {
@@ -265,7 +265,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
       title: '',
       description: '',
       productId: null,
-      sessionId: null, // ✅ nuevo
+      sessionId: null, //  nuevo
     });
   };
 
@@ -296,7 +296,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
       description: row.description ?? '',
       productId: inferredProductId,
 
-      // ✅ nuevo
+      //  nuevo
       sessionId: typeof row.sessionId === 'number' ? row.sessionId : (row.sessionId ? Number(row.sessionId) : null),
     });
 
@@ -314,7 +314,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     setOpen(true);
   };
 
-  // ✅ subir a /api/upload-invoice
+  //  subir a /api/upload-invoice
   async function uploadReceipt(file: File) {
     const fd = new FormData();
     fd.append('file', file);
@@ -368,7 +368,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
           description: form.description?.trim() || null,
           productId: form.productId,
 
-          // ✅ NUEVO: vincular contacto
+          //  NUEVO: vincular contacto
           sessionId: form.sessionId ?? null,
         };
 
@@ -395,7 +395,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
           if (!attachRes.success) return toast.error(attachRes.message);
         }
 
-        // ✅ UI instantánea
+        //  UI instantánea
         const nowIso = new Date().toISOString();
         if (!editing && txId) {
           const selectedSession =
@@ -418,7 +418,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
               description: payload.description,
               productId: payload.productId,
 
-              // ✅ nuevo
+              //  nuevo
               sessionId: payload.sessionId,
               session: selectedSession,
 
@@ -459,7 +459,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                     description: payload.description,
                     productId: payload.productId,
 
-                    // ✅ nuevo
+                    //  nuevo
                     sessionId: payload.sessionId,
                     session: selectedSession,
 
@@ -584,7 +584,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
             </Button>
           </div>
 
-          {/* ✅ resumen */}
+          {/*  resumen */}
           <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div className="flex items-center justify-between rounded-xl border bg-muted/10 px-3 py-2 hover:bg-muted/20">
               <div className="flex items-center gap-2">
@@ -666,7 +666,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
         <CardContent className="pt-0" />
       </Card>
 
-      {/* ✅ Modal Detalle */}
+      {/*  Modal Detalle */}
       <Dialog open={detailOpen} onOpenChange={(v) => (v ? setDetailOpen(true) : closeDetail())}>
         <DialogContent className="sm:max-w-[760px] rounded-2xl">
           <DialogHeader>
@@ -696,7 +696,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                         {detailCategoryName}
                       </span>
 
-                      {/* ✅ contacto */}
+                      {/*  contacto */}
                       <span className="inline-flex items-center gap-2">
                         <UserRound className="h-4 w-4" />
                         {detailSessionLabel}
@@ -797,7 +797,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
         </DialogContent>
       </Dialog>
 
-      {/* ✅ Modal Create/Edit */}
+      {/*  Modal Create/Edit */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-[760px] rounded-2xl">
           <DialogHeader>
@@ -854,7 +854,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                           {previewCategoryName}
                         </span>
 
-                        {/* ✅ contacto en preview */}
+                        {/*  contacto en preview */}
                         <span className="inline-flex items-center gap-2">
                           <UserRound className="h-4 w-4" />
                           {selectedSession ? sessionLabel(selectedSession) : 'Sin contacto'}
@@ -993,7 +993,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                       </Select>
                     </div>
 
-                    {/* ✅ Contacto buscable (Session) */}
+                    {/*  Contacto buscable (Session) */}
                     <div className="space-y-1">
                       <label className="text-sm text-muted-foreground">Contacto</label>
 
@@ -1071,7 +1071,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                       </p>
                     </div>
 
-                    {/* ✅ Producto buscable */}
+                    {/*  Producto buscable */}
                     <div className="space-y-1">
                       <label className="text-sm text-muted-foreground">Producto</label>
 

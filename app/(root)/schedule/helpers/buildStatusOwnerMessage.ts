@@ -7,7 +7,7 @@ type AppointmentStatus = "PENDIENTE" | "CONFIRMADA" | "CANCELADA";
 // Mapa de etiquetas y emojis por estado
 const STATUS_META: Record<AppointmentStatus, { label: string; emoji: string }> = {
     PENDIENTE: { label: "Pendiente", emoji: "🕒" },
-    CONFIRMADA: { label: "Confirmada", emoji: "✅" },
+    CONFIRMADA: { label: "Confirmada", emoji: "" },
     CANCELADA: { label: "Cancelada", emoji: "❌" },
 };
 

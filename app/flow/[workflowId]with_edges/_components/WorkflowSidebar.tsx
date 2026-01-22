@@ -84,7 +84,7 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes }: Props) {
             return;
         }
 
-        // ✅ Formato que espera tu onDrop: item.nodeTipo
+        //  Formato que espera tu onDrop: item.nodeTipo
         const payload = {
             type: "customNode",     // ReactFlow node type
             label: action.label,

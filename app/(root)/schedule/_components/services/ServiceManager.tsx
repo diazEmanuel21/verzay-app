@@ -52,7 +52,7 @@ import {
     updateService,
 } from "@/actions/service-action";
 
-// ✅ Types (Prisma)
+//  Types (Prisma)
 import type { Service } from "@prisma/client";
 import Header from "@/components/shared/header";
 import { serviceDefaultMsg } from "./defaultServiceValues";

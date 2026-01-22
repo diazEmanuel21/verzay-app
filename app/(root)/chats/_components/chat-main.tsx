@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { AttachmentMenu, type ComposeMedia, type MediaType } from './attachment-menu';
 import { SwitchStatus } from '../../sessions/_components';
 
-/* ✅ Importaciones de Acciones y Tipos de Servidor */
+/*  Importaciones de Acciones y Tipos de Servidor */
 import { getMediaBase64FromMessage } from '@/actions/chat-actions';
 import { getSessionByRemoteJid } from '@/actions/session-action';
 // 🚨 NUEVA IMPORTACIÓN ASUMIDA (DEBE SER CREADA POR TI)
@@ -153,7 +153,7 @@ function toUIMessages(
   base64Map: Map<string, { dataUrl: string; mime: string; length: number }>
 ): UIBubble[] {
   return messages.map((m) => {
-    // ✅ Clasificación correcta: "user" solo si fromMe === true
+    //  Clasificación correcta: "user" solo si fromMe === true
     const isUser = m.key?.fromMe === true;
     const sender: 'user' | 'other' = isUser ? 'user' : 'other';
     const ts = m.messageTimestamp;
@@ -436,7 +436,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
   const audioChunksRef = useRef<BlobPart[]>([]);
   const timerRef = useRef<number | null>(null);
 
-  /* ✅ Caché de base64 en ref (evita bucles de renders) + dedupe de solicitudes en vuelo */
+  /*  Caché de base64 en ref (evita bucles de renders) + dedupe de solicitudes en vuelo */
   const mediaCacheRef = useRef<Map<string, { dataUrl: string; mime: string; length: number }>>(new Map());
   const [mediaCacheTick, setMediaCacheTick] = useState(0); // solo para re-render controlado cuando se actualiza la caché
   const inflightRef = useRef<Set<string>>(new Set());
@@ -519,7 +519,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
 
       if (result.success && result.data) {
         setSession(result.data);
-        // ✅ CORRECCIÓN: Imprimimos el dato que acabamos de guardar
+        //  CORRECCIÓN: Imprimimos el dato que acabamos de guardar
         console.log('ahora el session es...', JSON.stringify(result.data))
       } else {
         setSession(null);
@@ -533,7 +533,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
       console.log('ahora el session es...', JSON.stringify(null))
     }
 
-    // ✅ CORRECCIÓN: Asegurar que userId y info?.remoteJid estén en las dependencias
+    //  CORRECCIÓN: Asegurar que userId y info?.remoteJid estén en las dependencias
   }, [userId, info?.remoteJid]);
 
   // Llama a la función de obtención de estado cuando cambie el JID o el usuario

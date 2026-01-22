@@ -39,6 +39,6 @@ export const DEFAULT_REMINDERS_TEMPLATES: ReminderTemplate[] = [
         id: 4,
         title: "Recordatorio 1 minuto (inicio)",
         time: "minutes-1",
-        description: "Listo, @client_name. Comenzamos YA. ✅",
+        description: "Listo, @client_name. Comenzamos YA. ",
     },
 ];

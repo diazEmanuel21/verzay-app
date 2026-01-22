@@ -296,7 +296,7 @@ export async function deleteFileNode(minIoUrl: string, nodeId: string) {
 
     await minioClient.removeObject(bucket, objectName)
 
-    // ✅ Limpiar la URL del nodo en la base de datos
+    //  Limpiar la URL del nodo en la base de datos
     const updatedNode = await db.workflowNode.update({
       where: { id: nodeId },
       data: { url: null },
@@ -411,7 +411,7 @@ export async function createWorkflowEdge(params: {
     return { success: false, message: "No puedes conectar un nodo consigo mismo." };
   }
 
-  // ✅ MVP: impedir múltiples conexiones desde el MISMO handle del mismo nodo
+  //  MVP: impedir múltiples conexiones desde el MISMO handle del mismo nodo
   const existing = await db.workflowEdge.findFirst({
     where: {
       workflowId,
@@ -456,7 +456,7 @@ export async function deleteWorkflowEdge(params: {
 
   const { workflowId, edgeId } = params;
 
-  // ✅ validar ownership del workflow
+  //  validar ownership del workflow
   const wf = await db.workflow.findFirst({
     where: { id: workflowId, userId: session.user.id },
     select: { id: true },

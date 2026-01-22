@@ -21,7 +21,7 @@ export function DateTimePicker({
         ? parse(value, "dd/MM/yyyy HH:mm", new Date())
         : new Date();
 
-    // ✅ Si no es válida, usamos new Date()
+    //  Si no es válida, usamos new Date()
     const initialDate = isValid(parsedInitial) ? parsedInitial : new Date()
 
     const [date, setDate] = useState<Date>(initialDate)

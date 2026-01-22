@@ -100,7 +100,7 @@ export interface Action {
 
 const stylesSeguimiento = "text-purple-700";
 
-// ✅ Acciones base (OJO: "seguimiento" idealmente NO debe estar aquí si será solo categoría)
+//  Acciones base (OJO: "seguimiento" idealmente NO debe estar aquí si será solo categoría)
 export const baseActions: Action[] = [
   { type: "text", label: "Texto", icon: FileText, iconClassName: `text-purple-600` },
   { type: "image", label: "Imagen", icon: ImageIcon, iconClassName: `text-blue-500` },
@@ -112,7 +112,7 @@ export const baseActions: Action[] = [
   { type: "intention", label: "Intención", icon: Brain, iconClassName: "text-cyan-500" },
 ];
 
-// ✅ Acciones de seguimiento (sub-tipos)
+//  Acciones de seguimiento (sub-tipos)
 export const seguimientoActions: Action[] = [
   { type: "seguimiento-text", label: "Texto", icon: FileText, iconClassName: `text-purple-600` },
   { type: "seguimiento-image", label: "Imagen", icon: ImageIcon, iconClassName: `text-blue-500` },

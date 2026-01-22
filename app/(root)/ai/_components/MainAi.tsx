@@ -76,7 +76,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
         youtube: sections?.business?.youtube ?? "",
         notas: sections?.business?.notas ?? "",
 
-        // ✅ Hidrata con el markdown real en vez de "[Contenido cargado]"
+        //  Hidrata con el markdown real en vez de "[Contenido cargado]"
         training: trainingMd,
         faq: faqMd,
         products: productsMd,

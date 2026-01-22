@@ -13,7 +13,7 @@ export const SeedModules = () => {
       const res = await fetch("/api/seed-modules", { method: "POST" });
       const data = await res.json();
       if (data.success) {
-        toast.success("✅ Módulos creados correctamente");
+        toast.success(" Módulos creados correctamente");
       } else {
         toast.error("❌ Error al crear módulos");
       }

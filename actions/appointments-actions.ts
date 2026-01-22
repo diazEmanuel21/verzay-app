@@ -23,7 +23,7 @@ interface CreateAppointmentInput {
     serviceId: string;
 }
 
-// ✅ Obtener citas por usuario (Asesor)
+//Obtener citas por usuario (Asesor)
 export async function getAppointmentsByUser(userId: string): Promise<AppointmentOperationResponse> {
     try {
         const list = await db.appointment.findMany({
@@ -49,7 +49,7 @@ export async function getAppointmentsByUser(userId: string): Promise<Appointment
     }
 }
 
-// ✅ Crear una cita
+//Crear una cita
 export async function createAppointment(input: CreateAppointmentInput): Promise<AppointmentOperationResponse> {
     const { userId, pushName, phone, instanceName, startTime, endTime, timezone, serviceId } = input;
 
@@ -142,7 +142,7 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
 }
 
 
-// ✅ Actualizar estado de cita
+//Actualizar estado de cita
 export async function updateAppointmentStatus(
     id: string,
     status: AppointmentStatus
@@ -207,7 +207,7 @@ export async function updateAppointmentStatus(
 }
 
 
-// ✅ Eliminar una cita
+//Eliminar una cita
 export async function deleteAppointment(id: string): Promise<AppointmentOperationResponse> {
     try {
         await db.appointment.delete({ where: { id } });

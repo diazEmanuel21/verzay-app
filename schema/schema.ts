@@ -10,7 +10,7 @@ interface UserWithService extends UserWithIntance {
 };
 
 export interface UserWithApiKeys extends UserWithService {
-    apiKey: ApiKey | null; // ✅ Esto es lo que tienes
+    apiKey: ApiKey | null; //  Esto es lo que tienes
 };
 
 export interface ScheduleInterface {

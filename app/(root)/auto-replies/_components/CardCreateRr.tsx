@@ -44,7 +44,7 @@ export const CardCreateRr = ({ user, Workflows, onSuccessClose }: AutoReplies) =
             }
             toast.success(res.message, { id: toastId });
             router.refresh();
-            onSuccessClose?.(); // ✅ CIERRA EL MODAL
+            onSuccessClose?.(); //  CIERRA EL MODAL
         } catch (error) {
             toast.error(`Error del servidor: ${error}`, { id: toastId });
         } finally {

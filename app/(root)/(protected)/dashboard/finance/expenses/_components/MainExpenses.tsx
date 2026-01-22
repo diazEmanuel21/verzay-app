@@ -126,13 +126,13 @@ export default function MainExpenses({ userId, accounts, categories, currencies,
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
 
-    // ✅ tabla sin recargar (estado local)
+    //  tabla sin recargar (estado local)
     const [rows, setRows] = useState<any[]>(expenses ?? []);
     useEffect(() => {
         setRows(expenses ?? []);
     }, [expenses]);
 
-    // ✅ detalle por click en fila
+    //  detalle por click en fila
     const [detailOpen, setDetailOpen] = useState(false);
     const [detailRow, setDetailRow] = useState<any | null>(null);
 
@@ -305,7 +305,7 @@ export default function MainExpenses({ userId, accounts, categories, currencies,
                     }
                 }
 
-                // ✅ actualizar UI sin recargar
+                //  actualizar UI sin recargar
                 if (!editing && txId) {
                     const nowIso = new Date().toISOString();
                     setRows((prev) => [
@@ -412,7 +412,7 @@ export default function MainExpenses({ userId, accounts, categories, currencies,
 
     const totalExpenses = useMemo(() => rows, [rows]);
 
-    // ✅ resumen compacto por moneda (USD/COP)
+    //  resumen compacto por moneda (USD/COP)
     const currencyMap = useMemo(() => {
         return Object.fromEntries((currencies || []).map((c: any) => [c.code, c]));
     }, [currencies]);
@@ -441,7 +441,7 @@ export default function MainExpenses({ userId, accounts, categories, currencies,
     const grandTotalText = useMemo(() => formatTotalsLine(grandTotals), [grandTotals]);
 
 
-    // ✅ helpers detalle
+    //  helpers detalle
     const detailAccountName = useMemo(() => {
         if (!detailRow?.accountId) return '';
         return accounts.find((a) => a.id === detailRow.accountId)?.name || '';
@@ -468,7 +468,7 @@ export default function MainExpenses({ userId, accounts, categories, currencies,
                         </Button>
                     </div>
 
-                    {/* ✅ resumen ultra compacto con ícono */}
+                    {/*  resumen ultra compacto con ícono */}
 <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
   {/* Mes */}
   <div className="flex items-center justify-between rounded-xl border bg-muted/10 px-3 py-2 transition-colors hover:bg-muted/20">
@@ -559,7 +559,7 @@ export default function MainExpenses({ userId, accounts, categories, currencies,
                 <CardContent className="pt-0" />
             </Card>
 
-            {/* ✅ Modal Detalle */}
+            {/*  Modal Detalle */}
             <Dialog open={detailOpen} onOpenChange={(v) => (v ? setDetailOpen(true) : closeDetail())}>
                 <DialogContent className="sm:max-w-[760px] rounded-2xl">
                     <DialogHeader>
@@ -703,7 +703,7 @@ export default function MainExpenses({ userId, accounts, categories, currencies,
                 </DialogContent>
             </Dialog>
 
-            {/* ✅ Modal Create/Edit */}
+            {/*  Modal Create/Edit */}
             {/* Modal Create/Edit */}
             {/* Modal Create/Edit */}
             <Dialog open={open} onOpenChange={setOpen}>
@@ -741,7 +741,7 @@ export default function MainExpenses({ userId, accounts, categories, currencies,
 
                         return (
                             <div className="space-y-4">
-                                {/* ✅ PREVIEW (igual a Detalle) */}
+                                {/*  PREVIEW (igual a Detalle) */}
                                 <div className="rounded-xl border bg-muted/10 p-4">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="min-w-0">
@@ -784,7 +784,7 @@ export default function MainExpenses({ userId, accounts, categories, currencies,
                                     </div>
                                 </div>
 
-                                {/* ✅ FORM (compacto y limpio) */}
+                                {/*  FORM (compacto y limpio) */}
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     {/* Columna izquierda */}
                                     <div className="space-y-3">
@@ -914,7 +914,7 @@ export default function MainExpenses({ userId, accounts, categories, currencies,
                                             />
                                         </div>
 
-                                        {/* ✅ Adjuntos con look tipo detalle */}
+                                        {/*  Adjuntos con look tipo detalle */}
                                         <div className="space-y-2">
                                             <div className="flex items-center justify-between">
                                                 <label className="text-sm text-muted-foreground">Soportes</label>

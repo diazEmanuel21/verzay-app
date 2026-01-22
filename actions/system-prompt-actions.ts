@@ -260,7 +260,7 @@ export async function publishPrompt(input: z.infer<typeof PublishSchema>) {
         const result = await db.$transaction(async (tx) => {
             const current = await tx.agentPrompt.findUnique({ where: { id: promptId } });
             if (!current) return { ok: false, error: "Prompt no encontrado" } as Fail;
-            // ✅ Strict sobre datos "upgraded"
+            // Strict sobre datos "upgraded"
             const strict = normalizeAsStrict(current.sections);
 
             // Para componer, usa Draft (por si tu composer espera defaults del Draft)

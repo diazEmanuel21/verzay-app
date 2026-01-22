@@ -46,7 +46,7 @@ export const ConnectionMain = ({
       // console.log('[ConnectionMain] Resultado de createInstance →', result);
 
       if (result.success) {
-        // console.log('[ConnectionMain] ✅ Instancia creada con éxito.');
+        // console.log('[ConnectionMain]  Instancia creada con éxito.');
         toast.success(result.message);
       } else {
         console.warn('[ConnectionMain] ❌ Error al crear instancia →', result.message);

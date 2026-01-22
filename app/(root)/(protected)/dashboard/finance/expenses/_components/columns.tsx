@@ -36,7 +36,7 @@ function iso(d: string | Date) {
     return `${yyyy}-${mm}-${dd}`;
 }
 
-// ✅ regla simple para “Fijo/Variable” (ajústala a tu negocio)
+//  regla simple para “Fijo/Variable” (ajústala a tu negocio)
 function expenseKind(categoryName?: string | null) {
     const fixed = new Set(['Nomina', 'Nómina', 'Salarios', 'Servidores', 'API', 'Herramientas']);
     if (!categoryName) return 'Variable';

@@ -10,7 +10,7 @@ interface IaCreditResponse {
   data?: IaCredit[];
 }
 
-// ✅ Obtener créditos por usuario
+// Obtener créditos por usuario
 export async function getIaCreditByUser(userId: string): Promise<IaCreditResponse> {
   try {
     if (!userId) {
@@ -32,7 +32,7 @@ export async function getIaCreditByUser(userId: string): Promise<IaCreditRespons
   }
 }
 
-// ✅ Crear créditos para un usuario
+// Crear créditos para un usuario
 export async function createIaCreditForUser(
   userId: string,
   total: number,
@@ -65,7 +65,7 @@ export async function createIaCreditForUser(
   }
 }
 
-// ✅ Recargar créditos
+// Recargar créditos
 export async function rechargeIaCredit(
   userId: string,
   newTotal: number,

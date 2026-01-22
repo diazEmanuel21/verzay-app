@@ -76,7 +76,7 @@ export const CreateNodeComponent = ({ workflowId, plan, totalNodes, seguimientoN
                 return;
             }
 
-            // ✅ Validación UI (no reemplaza backend; solo mejora UX)
+            //  Validación UI (no reemplaza backend; solo mejora UX)
             if (totalNodes >= MAX_NODES_PER_WORKFLOW) {
                 toast.error(
                     `Este flujo ya alcanzó el límite de ${MAX_NODES_PER_WORKFLOW} nodos. Elimina un nodo existente para poder agregar uno nuevo.`,
@@ -129,7 +129,7 @@ export const CreateNodeComponent = ({ workflowId, plan, totalNodes, seguimientoN
                     "h-[420px] sm:h-[460px] md:h-[460px] lg:h-[460px]"
                 )}
             >
-                {/* ✅ flexbox interno */}
+                {/*  flexbox interno */}
                 <div className="h-full flex flex-col">
                     {/* Header fijo */}
                     <div className="p-4 pb-3 text-sm text-muted-foreground shrink-0">

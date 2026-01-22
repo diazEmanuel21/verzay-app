@@ -22,7 +22,7 @@ const formSchema = z.object({
   username: z.string().min(2).max(50),
 })
 
-const IaForm = () => { // <- Cambiado a "IaForm" con mayúscula ✅
+const IaForm = () => { // <- Cambiado a "IaForm" con mayúscula 
 
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({

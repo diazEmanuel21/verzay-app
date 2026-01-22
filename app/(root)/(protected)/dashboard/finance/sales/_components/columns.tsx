@@ -71,7 +71,7 @@ export function buildSalesColumns(params: {
       ),
     },
 
-    // ✅ CUENTA (usa row.original.account.name)
+    //  CUENTA (usa row.original.account.name)
     {
       id: 'account',
       header: () => (
@@ -112,7 +112,7 @@ export function buildSalesColumns(params: {
       size: 140,
     },
 
-    // ✅ ARCHIVOS (usa row.original.attachments.length)
+    //  ARCHIVOS (usa row.original.attachments.length)
     {
       id: 'attachments',
       header: () => (

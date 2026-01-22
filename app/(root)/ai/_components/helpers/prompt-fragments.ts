@@ -75,7 +75,7 @@ export const PROMPT_FRAGMENTS: PromptFragment[] = [
       "* **Después**, ejecuta la  `Notificacion Asesor`.\n\n" +
       "* **Comportamiento obligatorio:** Tras ejecutar la , responde **únicamente** lo indicado en **Regla/parámetro**. \n" +
       "Si **no hay una orden clara**, envia el siguiente **mensaje de confirmacion** al usuario:\n" +
-      "> ✅ Tu pago de $[MONTO] ha sido registrado exitosamente.\n" +
+      ">  Tu pago de $[MONTO] ha sido registrado exitosamente.\n" +
       "> 👨🏻‍💻 Un asesor se comunicará contigo a la brevedad o recibirás un mensaje de confirmación."
   },
   {

@@ -28,7 +28,7 @@ export const MediaPicker: React.FC<Props> = ({ onSend, prefixForUpload = "upload
   const [caption, setCaption] = useState("");
   const [ptt, setPtt] = useState(false);            // para audio (nota de voz)
   const [loading, setLoading] = useState(false);
-  const [useBase64, setUseBase64] = useState(true); // ✅ enviar desde memoria local
+  const [useBase64, setUseBase64] = useState(true); //  enviar desde memoria local
 
   async function handleFileSelected(file: File) {
     if (!file) return;

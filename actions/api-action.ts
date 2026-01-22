@@ -122,7 +122,7 @@ export async function generateQRCode({ instanceName, userId }: GenerateQrInterfa
   entry.lastIsConnected = apiConnectedNow;
   cache.set(cacheKey, entry);
 
-  // ✅ respuestas finales, conservando tu lógica original
+  //respuestas finales, conservando tu lógica original
   if (!apiConnectedNow) {
     return {
       success: false,

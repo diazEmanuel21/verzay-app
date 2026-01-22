@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   const nameFormatted = file.name.replaceAll(' ', '_');
   const bucketName = process.env.S3_BUCKET_NAME || 'verzay-media';
 
-  // ✅ carpeta dedicada a recibos
+  //  carpeta dedicada a recibos
   const filePath = `finance/receipts/${randomUUID()}-${nameFormatted}`;
 
   const arrayBuffer = await file.arrayBuffer();

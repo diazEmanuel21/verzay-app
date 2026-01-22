@@ -107,7 +107,7 @@ export const BusinessPromptBuilder = ({
     const shouldShow = (name: keyof FormValues) =>
         selectedFields.includes(name) || hasValue(name);
 
-    // ✅ Considerar "agregado" si está seleccionado o si ya tiene valor
+    //  Considerar "agregado" si está seleccionado o si ya tiene valor
     const isAdded = (name: keyof FormValues) =>
         selectedFields.includes(name) || hasValue(name);
 

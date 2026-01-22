@@ -26,7 +26,7 @@ interface ExpenseOperationResponse<T = unknown> {
 }
 
 /**
- * ✅ Defaults mínimos:
+ * Defaults mínimos:
  * - Monedas USD/COP (catálogo)
  * - Cuenta por defecto "Empresa"
  * - Categorías base de gastos
@@ -82,7 +82,7 @@ export async function ensureFinanceDefaults(userId: string): Promise<ExpenseOper
   }
 }
 
-// ✅ helper para convertir Decimal -> string (plain object)
+//  helper para convertir Decimal -> string (plain object)
 function serializeExpense(row: ExpenseRow) {
   return {
     ...row,
@@ -112,7 +112,7 @@ export async function getAllExpenses(
       take: 200,
     });
 
-    // ✅ aquí quitamos Decimal
+    //  aquí quitamos Decimal
     const safe = list.map(serializeExpense);
 
     return {
@@ -163,7 +163,7 @@ export async function getExpensesMeta(userId: string): Promise<
 }
 
 /**
- * ✅ Crea gasto y devuelve el id (necesario para adjuntar recibos luego)
+ *  Crea gasto y devuelve el id (necesario para adjuntar recibos luego)
  */
 export async function createExpense(data: {
   userId: string;
@@ -267,7 +267,7 @@ export async function deleteExpense(id: string, userId: string): Promise<Expense
 }
 
 /**
- * ✅ Adjuntar soportes (recibos) a un gasto
+ *  Adjuntar soportes (recibos) a un gasto
  */
 export async function addExpenseAttachments(params: {
   userId: string;
@@ -281,7 +281,7 @@ export async function addExpenseAttachments(params: {
       return { success: true, message: 'Sin soportes para agregar.' };
     }
 
-    // ✅ Validar que el gasto existe y pertenece al user
+    //  Validar que el gasto existe y pertenece al user
     const tx = await db.financeTransaction.findFirst({
       where: {
         id: transactionId,
@@ -314,7 +314,7 @@ export async function addExpenseAttachments(params: {
 }
 
 /**
- * ✅ Eliminar un soporte (solo si pertenece al user)
+ *  Eliminar un soporte (solo si pertenece al user)
  */
 export async function deleteExpenseAttachment(params: {
   userId: string;

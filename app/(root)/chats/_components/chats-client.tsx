@@ -110,7 +110,7 @@ export function ChatsClient({
   const BASE_INTERVAL = 2000;
   const MAX_BACKOFF = 30000;
 
-  // ✅ Filtro: excluir "status@broadcast"
+  //  Filtro: excluir "status@broadcast"
   const contacts = useMemo(() => {
     if (!currentChatsResult.success) return [];
     return currentChatsResult.data.filter(
@@ -235,7 +235,7 @@ export function ChatsClient({
         if (warmMessages) await pollAndCompareMessages(selectedJid);
         const chatRefreshResult = await refetchChats();
         if (chatRefreshResult.success) {
-          // ✅ Mantener el filtro al refrescar también
+          //  Mantener el filtro al refrescar también
           const filtered = {
             ...chatRefreshResult,
             data: chatRefreshResult.data.filter(

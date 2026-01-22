@@ -82,7 +82,7 @@ export const ClientInstanceCard = ({
     setShowPromptDialog(true);
   }, []);
 
-  // ✅ Memorizar setOpen para no recrearlo en cada render
+  //  Memorizar setOpen para no recrearlo en cada render
   const handlePromptDialogOpen = useCallback((open: boolean) => {
     setShowPromptDialog(open);
   }, []);
@@ -163,7 +163,7 @@ export const ClientInstanceCard = ({
         </CardFooter>
       </Card>
 
-      {/* ✅ Modal siempre montado, solo se controla la visibilidad */}
+      {/*  Modal siempre montado, solo se controla la visibilidad */}
       <PromptInstanceDialog
         platform={instanceType as any}
         open={showPromptDialog}

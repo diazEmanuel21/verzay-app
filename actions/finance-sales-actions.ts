@@ -29,7 +29,7 @@ function serializeTx(tx: any) {
   };
 }
 
-// ✅ IMPORTANTE: usa el valor REAL de tu enum FinanceTxType (NO "INCOME")
+//  IMPORTANTE: usa el valor REAL de tu enum FinanceTxType (NO "INCOME")
 const SALES_TYPE = 'SALE' as any; // <- si tu enum se llama distinto, cámbialo por el valor correcto
 
 export async function ensureFinanceSalesDefaults(userId: string): Promise<OperationResponse> {
@@ -67,7 +67,7 @@ export async function ensureFinanceSalesDefaults(userId: string): Promise<Operat
         userId,
         name,
         type: SALES_TYPE,
-        order: idx + 1, // ✅ si tienes "order" en el modelo
+        order: idx + 1, //  si tienes "order" en el modelo
       })),
       skipDuplicates: true,
     });
@@ -96,7 +96,7 @@ export async function getAllSales(userId: string): Promise<OperationResponse<any
         currency: true,
         attachments: true,
 
-        // ✅ NUEVO
+        //  NUEVO
         session: {
           select: {
             id: true,
