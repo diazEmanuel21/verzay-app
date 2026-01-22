@@ -5,7 +5,6 @@ import AppInitializer from "@/components/custom/AppInitializer";
 import { themeClass } from "@/types/generic";
 import ModuleShell from "@/components/layout/ModuleShell";
 
-
 import '@xyflow/react/dist/style.css';
 
 export default async function WorkflowLayout({

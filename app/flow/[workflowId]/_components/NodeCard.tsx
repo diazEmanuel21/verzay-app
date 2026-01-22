@@ -1,55 +1,25 @@
 'use client';
 
 import { ChangeEvent, useState, useTransition } from "react";
-import { useSortable } from "@dnd-kit/sortable";
 import { useRouter } from 'next/navigation';
-import { User, WorkflowNode } from "@prisma/client";
 import { updateNode, deleteNode, updateUrlNode, updateDelayNode, deleteFileNode, updateInactivityNode } from "@/actions/workflow-node-action";
-import { ACCEPT_TYPES, baseActions, convertToSeconds, getAcceptTypeString, optimizeFile, seguimientoActions, validateFileType } from "../helpers";
-import { Action } from "../types";
+import { ACCEPT_TYPES, getAcceptTypeString, optimizeFile, validateFileType } from "../helpers";
 import { NodeActions } from "./NodeActions";
-import { cardBaseActions, cardSeguimientoActions } from "../helpers";
-
-import {
-  Card,
-  CardHeader,
-  CardFooter,
-  CardContent
-} from "@/components/ui/card";
-
+import { Card, CardHeader, CardFooter, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import {
-  GripVertical,
-  MessageSquareIcon,
-  UploadIcon,
-} from "lucide-react";
+import { MessageSquareIcon, UploadIcon } from "lucide-react";
 import { TimeInput } from "@/components/shared/TimeInput";
-
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { GenericTextarea } from "@/components/shared/GenericTextarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { CSS } from '@dnd-kit/utilities'
+import { Action, ACTIONS, CARD_ACTIONS, MAX_MESSAGE_LENGTH, PropsNodeCard } from "@/types/workflow-node";
+import { EmbeddingNode } from '.';
 
-interface Props {
-  workflowId: string;
-  nodes: WorkflowNode;
-  user: User;
-};
-
-const MAX_MESSAGE_LENGTH = 1000;
-
-export const NodeCard = ({ nodes, workflowId, user }: Props) => {
+export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCard) => {
   const router = useRouter();
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging: isDraggingNode } = useSortable({ id: nodes.id })
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState(nodes.message);
   const [delay, setDelay] = useState<string>();
@@ -59,37 +29,23 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const [loading, setLoading] = useState(false);
   const [isDraggingFile, setIsDragging] = useState(false);
   const [inactivity, setInactivity] = useState(nodes.inactividad ?? false);
-  const [iaEnabled, setIaEnabled] = useState(false); // true = muestra el TimeInput al inicio
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDraggingNode ? 0.5 : 1,
-    cursor: 'grab',
-  }
+  const [iaEnabled, setIaEnabled] = useState(false);
 
   const nodeType = nodes.tipo?.toLowerCase() as Action['type'];
   const baseType = nodeType.startsWith('seguimiento-')
     ? nodeType.split('-')[1] as Action['type']
     : nodeType;
+  const isIntention = nodeType === 'intention';
   const isPauseNode = nodeType === 'node_pause';
   const isNotifyNode = nodeType === 'nodo-notify';
   const hasContent = nodeType === 'text' ? !!message : !!nodes.url;
-  const allActions = [...baseActions, ...seguimientoActions];
-  const currentAction = allActions.find(
-    (action) => action.type.toLowerCase() === nodeType
-  );
+  const currentAction = ACTIONS.find((a) => a.type === nodeType);
+  const currentCardAction = CARD_ACTIONS.find((a) => a.type === nodeType);
 
-  const allCardActions = [...cardBaseActions, ...cardSeguimientoActions];
-  const currentCardAction = allCardActions.find(
-    (action) => action.type.toLowerCase() === nodeType
-  );
+  const IconCard = currentCardAction?.icon ?? MessageSquareIcon;
 
-  const accept = baseType && ACCEPT_TYPES[baseType]
-    ? ACCEPT_TYPES[baseType].join(',')
-    : '*';
+  const accept = baseType && ACCEPT_TYPES[baseType] ? ACCEPT_TYPES[baseType].join(',') : '*';
 
-  // Mostrar "Seguimiento" en la etiqueta pero usar baseType para la lógica
   const isSeguimiento = nodeType.startsWith('seguimiento-');
   const labelSegumientoCategory = isSeguimiento
     ? `Seguimiento ${currentAction?.label.replace('Seguimiento ', '')}`
@@ -103,8 +59,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
 
     try {
       const res = await updateInactivityNode(nodes.id, checked);
-      if (!res) return;
-      if (!res.success) return toast.error(res.message, { id: toastId });
+      if (!res?.success) return toast.error(res?.message ?? 'Error', { id: toastId });
       toast.success(res.message, { id: toastId });
     } catch (error) {
       toast.error(`Server err: ${error}`, { id: toastId });
@@ -133,31 +88,18 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     toast.loading(`Eliminando ${currentAction?.label}...`, { id: toastId });
 
     try {
-      // Paso 1: Eliminar archivo y limpiar la URL (si aplica)
       if (nodes.url) {
         const fileRes = await deleteFileNode(nodes.url, nodes.id);
-
-        if (!fileRes.success) {
-          toast.error(fileRes.message, { id: toastId });
-          return;
-        }
+        if (!fileRes.success) return toast.error(fileRes.message, { id: toastId });
       }
-      // Paso 2: Eliminar el nodo
+
       const res = await deleteNode(nodes.id, workflowId);
-
-      if (!res || !res.success) {
-        toast.error(res?.message || "Error desconocido al eliminar el nodo.", { id: toastId });
-        return;
-      }
+      if (!res?.success) return toast.error(res?.message ?? "Error desconocido", { id: toastId });
 
       toast.success(res.message, { id: toastId });
       router.refresh();
-
     } catch (error) {
-      console.error("Error en eliminación:", error);
-      toast.error(`Error eliminando el nodo: ${error instanceof Error ? error.message : error}`, {
-        id: toastId,
-      });
+      toast.error(`Error eliminando el nodo: ${error instanceof Error ? error.message : error}`, { id: toastId });
     }
   };
 
@@ -167,100 +109,63 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
 
     try {
       const res = await deleteFileNode(nodes.url as string, nodes.id);
-      if (!res) return;
-      if (!res.success) return toast.error(res?.message, { id: toastId });
-      toast.success(res?.message, { id: toastId });
+      if (!res?.success) return toast.error(res?.message ?? 'Error', { id: toastId });
+      toast.success(res.message, { id: toastId });
       router.refresh();
     } catch (error) {
       toast.error(`Error eliminando el archivo: ${error}`, { id: toastId });
     }
   };
 
-  // const handleCancelUpload = () => {
-  //   setFile(null);
-  // };
-
   const handleUpload = async (file: File) => {
-    if (!file) {
-      toast.error('No hay archivo seleccionado');
-      return;
-    }
+    if (!file) return toast.error('No hay archivo seleccionado');
 
     setIsUploading(true);
     const toastLoading = toast.loading('Subiendo archivo...');
     const nodeTypeIsImage = baseType === 'image';
-    let blob;
+    let blob: Blob | undefined;
 
     try {
       if (nodeTypeIsImage) {
-        // 1. Optimizar el archivo (manejo correcto del tipo)
         const content = await file.arrayBuffer();
         const plainFile = {
           name: file.name,
           size: file.size,
           type: file.type,
-          content: Array.from(new Uint8Array(content)) // lo convertimos en array serializable
+          content: Array.from(new Uint8Array(content))
         };
 
         const optimizedFile = await optimizeFile(plainFile);
-        let optimizedBuffer;
-
-        optimizedBuffer = new Uint8Array(optimizedFile.buffer);
+        const optimizedBuffer = new Uint8Array(optimizedFile.buffer);
         blob = new Blob([optimizedBuffer], { type: optimizedFile.type });
-      };
-      // else {
-      //   optimizedBuffer = new Uint8Array(optimizedFile.content);
-      //   blob = new Blob([optimizedBuffer], { type: optimizedFile.type });
-      // }
+      }
 
-      // 2. Crear FormData
       const formData = new FormData();
-      formData.append('file', (nodeTypeIsImage ? blob : file) as Blob); // usamos el blob optimizado para imagen
+      formData.append('file', (nodeTypeIsImage ? blob : file) as Blob);
       formData.append('file', file);
       formData.append('userID', user.id);
       formData.append('workflowID', workflowId);
 
-      // 3. Subir a la API
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
       if (!res.ok) throw new Error(await res.text());
 
       const { url } = await res.json();
 
-      // 4. Actualizar nodo
       const result = await updateUrlNode(nodes.id, url);
       if (!result.success) throw new Error(result.message);
 
       toast.success(result.message, { id: toastLoading });
       router.refresh();
-
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Error al subir el archivo multimedia',
-        { id: toastLoading }
-      );
+      toast.error(error instanceof Error ? error.message : 'Error al subir el archivo', { id: toastLoading });
     } finally {
       setIsUploading(false);
     }
   };
 
-  /* Drag and drop events */
-  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-  };
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(true); };
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(false); };
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); };
 
   const handleFile = (file: File) => {
     if (!file) return;
@@ -270,74 +175,65 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
       toast.error(`Tipo de archivo no válido. Se esperaba: ${baseType} (${readableTypes})`);
       return;
     }
-    /* Implementación para subida de files automaticamente */
     handleUpload(file);
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-
     const droppedFile = e.dataTransfer.files[0];
     handleFile(droppedFile);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      handleFile(selectedFile);
-    }
+    if (selectedFile) handleFile(selectedFile);
   };
 
-  const handleTimeChange = (delay: string) => {
-    setDelay(delay);
-  };
+  const handleTimeChange = (delay: string) => setDelay(delay);
 
   const handleOnBlurTime = async () => {
     if (!delay) return;
     if (parseInt(delay) === 0) return;
 
     try {
-      //convierte los segundos
-      // const delayInSeconds = convertToSeconds(delay);
-
       const res = await updateDelayNode(nodes.id, delay.toString());
-
-      if (!res) return toast.error('404');
-      if (!res.success) return toast.error(res?.message);
-
-      toast.success(res?.message);
-
+      if (!res?.success) return toast.error(res?.message ?? 'Error');
+      toast.success(res.message);
     } catch (error) {
-      toast.error(`Error al actualizar un seguimiento. Contactese con nosotros. ${error}`)
+      toast.error(`Error al actualizar un seguimiento. ${error}`);
     }
   };
+
+  const handleChangeMessages = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    if (!e?.target) return;
+    const { value } = e.target;
+    if (value.length > MAX_MESSAGE_LENGTH) return toast.info(`El mensaje excede ${MAX_MESSAGE_LENGTH} caracteres`);
+    setMessage(value);
+  };
+
+  const fileInputId = `file-input-${nodes.id}`; //  ID único por nodo
 
   const renderContent = () => {
     if (isPauseNode) {
       return (
-        <div className="space-y-3 rounded-md border border-border bg-muted/40 p-3">
-          {/* Header: switch + título + descripción */}
+        <div className="space-y-3 rounded-md border border-border bg-muted/40 p-3 nodrag">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Switch
-                  id="airplane-mode"
+                  id={`ai-enabled-${nodes.id}`}
                   checked={iaEnabled}
                   onCheckedChange={setIaEnabled}
                   className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-400"
                 />
-                <Label
-                  htmlFor="airplane-mode"
-                  className="text-sm font-semibold"
-                >
+                <Label htmlFor={`ai-enabled-${nodes.id}`} className="text-sm font-semibold">
                   Activar IA
                 </Label>
               </div>
             </div>
           </div>
 
-          {/* Contenido: solo se muestra cuando está activado */}
           {iaEnabled && (
             <div className="pt-1">
               <TimeInput
@@ -352,47 +248,37 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
       );
     }
 
-    if (isNotifyNode) {
-      return (
-        <></>
-      )
-    }
+    if (isNotifyNode) return <></>;
 
     if (baseType === 'text') {
       return (
-        <GenericTextarea
-          fileType={baseType}
-          message={message}
-          handleSave={handleSave}
-          setIsEditing={setIsEditing}
-          setMessage={handleChangeMessages}
-          isPending={isPending}
-          isEditing={isEditing}
-        />
-      )
+        <div className="nodrag">
+          <GenericTextarea
+            fileType={baseType}
+            message={message}
+            handleSave={handleSave}
+            setIsEditing={setIsEditing}
+            setMessage={handleChangeMessages}
+            isPending={isPending}
+            isEditing={isEditing}
+          />
+        </div>
+      );
     }
 
-    // Para tipos de archivo (image, video, audio, documento)
+    if (isIntention) {
+      return <EmbeddingNode node={nodes as any} />;
+    }
+
     if (hasContent) {
       return (
-        <div className="flex items-center w-full rounded">
-          {baseType === 'image' && (
-            <img src={nodes.url!} alt="Contenido del nodo" className="rounded-md w-full h-auto object-contain" />
-          )}
-          {baseType === 'video' && (
-            <video src={nodes.url!} controls className="rounded-md w-full h-auto" />
-          )}
-          {baseType === 'audio' && (
-            <audio src={nodes.url!} controls className="w-full" />
-          )}
+        <div className="flex items-center w-full rounded nodrag">
+          {baseType === 'image' && <img src={nodes.url!} alt="Contenido" className="rounded-md w-full h-auto object-contain" />}
+          {baseType === 'video' && <video src={nodes.url!} controls className="rounded-md w-full h-auto" />}
+          {baseType === 'audio' && <audio src={nodes.url!} controls className="w-full" />}
           {baseType === 'document' && (
             <div className="flex items-center gap-2 p-2 bg-background rounded">
-              <a
-                href={nodes.url!}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-primary hover:underline"
-              >
+              <a href={nodes.url!} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
                 Ver documento
               </a>
             </div>
@@ -401,9 +287,8 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
       );
     }
 
-    // Si no hay content, mostrar opción de subir archivo
     return (
-      <div className="flex flex-col gap-2 w-full">
+      <div className="flex flex-col gap-2 w-full nodrag">
         <div
           className={`flex items-center justify-center w-full h-32 border-2 rounded-lg cursor-pointer transition 
           ${isDraggingFile ? 'border-primary bg-primary/10' : 'border-dashed border-muted-foreground/50 bg-muted/50'}`}
@@ -411,19 +296,18 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
-          onClick={() => document.getElementById('file-input')?.click()}
+          onClick={() => document.getElementById(fileInputId)?.click()}
         >
           <div className="flex flex-col items-center justify-center w-full px-2">
             <UploadIcon className="w-6 h-6 text-muted-foreground" />
             <p className="text-sm text-muted-foreground text-center mt-1">
               {isDraggingFile ? 'Suelta el archivo aquí' : 'Arrastra o haz click'}
             </p>
+
             {file && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <p className="text-xs text-muted-foreground truncate w-full px-2">
-                    {file.name}
-                  </p>
+                  <p className="text-xs text-muted-foreground truncate w-full px-2">{file.name}</p>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p className="text-xs">{file.name}</p>
@@ -431,89 +315,46 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
               </Tooltip>
             )}
           </div>
+
           <Input
-            id="file-input"
+            id={fileInputId}
             type="file"
             className="hidden"
             accept={accept}
             onChange={handleFileChange}
           />
         </div>
-
-        {/* {file && (
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCancelUpload}
-              disabled={isUploading}
-            >
-              Cancelar
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleUpload}
-              disabled={isUploading}
-            >
-              {isUploading ? "Subiendo..." : "Subir"}
-            </Button>
-          </div>
-        )} */}
       </div>
     );
   };
-
-  const handleChangeMessages = (e: ChangeEvent<HTMLTextAreaElement>): void => {
-    // Verificación de seguridad (TypeScript ya valida el tipo, pero es redundante por si el evento es manualmente disparado)
-    if (!e?.target) {
-      console.error('Evento inválido o sin target');
-      return;
-    }
-
-    const { value } = e.target;
-
-    if (value.length > MAX_MESSAGE_LENGTH) {
-      toast.info(`El mensaje excede el límite de ${MAX_MESSAGE_LENGTH} caracteres`)
-      return;
-    }
-
-    setMessage(value);
-  };
-
   return (
-    <div className="flex items-center justify-center p-1" ref={setNodeRef} style={style}>
-      <Card className="shadow-md border-border rounded-2xl min-w-[300px] max-w-[300px] transition-all duration-300 hover:shadow-lg hover:scale-105">
+    <div className="flex items-center justify-center p-1">
+      <Card className="shadow-md border-border rounded-2xl min-w-[300px] max-w-[300px] transition-all duration-300 hover:shadow-lg">
         <CardHeader className="relative flex items-center p-3">
-          <div className="absolute top-0 left-1">
-            <button
-              className="p-1 rounded hover:bg-muted cursor-grab active:cursor-grabbing"
-              {...attributes}
-              {...listeners}
-            >
-              <GripVertical className="w-4 h-4 text-muted-foreground" />
-            </button>
-          </div>
-          {/* Badge tipo de mensaje */}
+          {/* HANDLE WORKFLOW */}
+          {targetHandle}
+
           <div className={`absolute -top-4 flex items-center space-x-2 ${currentCardAction?.bg || 'bg-background'} rounded-md px-3 py-1 shadow-md`}>
-            {currentCardAction?.icon || (
-              <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />
-            )}
+            {<IconCard className={currentCardAction?.iconClassName ?? "h-4 w-4"} />}
             <span className="text-xs font-bold uppercase text-white">
               {`${isSeguimiento ? labelSegumientoCategory : currentCardAction?.label}` || "Tipo desconocido"}
             </span>
           </div>
-          <div className="absolute top-0 right-1">
+
+          <div className="absolute top-0 right-1 nodrag">
             <NodeActions
               fileType={baseType}
-              onDeleteFile={() => handleDeleteFile()}
-              onDeleteNode={() => handleDeleteNode()}
+              onDeleteFile={handleDeleteFile}
+              onDeleteNode={handleDeleteNode}
             />
           </div>
         </CardHeader>
+
         <CardContent className="p-4">
           {renderContent()}
-          {!isNotifyNode && !isPauseNode && baseType !== 'text' && baseType !== 'document' && baseType !== 'audio' &&
-            <div className="flex w-full mt-2">
+
+          {!isNotifyNode && !isPauseNode && baseType !== 'text' && baseType !== 'document' && baseType !== 'audio' && !isIntention && (
+            <div className="flex w-full mt-2 nodrag">
               <GenericTextarea
                 fileType={baseType}
                 message={message}
@@ -524,17 +365,19 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
                 isEditing={isEditing}
               />
             </div>
-          }
-          {isSeguimiento &&
-            <div className="flex items-center gap-1 pt-2 text-sm">
+          )}
+
+          {isSeguimiento && (
+            <div className="flex items-center gap-1 pt-2 text-sm nodrag">
               <Switch
-                id="airplane-mode"
+                id={`inactividad-${nodes.id}`}
                 checked={inactivity}
                 onCheckedChange={handleInactivity}
                 disabled={loading}
                 className="scale-75"
               />
-              <Label htmlFor="inactividad-state">Activar Inactividad  </Label>
+              <Label htmlFor={`inactividad-${nodes.id}`}>Activar Inactividad</Label>
+
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger className="w-5 h-5 flex items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">?</TooltipTrigger>
@@ -544,12 +387,13 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
                 </Tooltip>
               </TooltipProvider>
             </div>
-          }
+          )}
         </CardContent>
-        {isSeguimiento &&
+
+        {isSeguimiento && (
           <>
             <Separator />
-            <CardFooter className="pt-2">
+            <CardFooter className="pt-2 nodrag">
               <TimeInput
                 className="text-xs text-muted-foreground"
                 onChange={handleTimeChange}
@@ -558,7 +402,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
               />
             </CardFooter>
           </>
-        }
+        )}
       </Card>
     </div>
   );
