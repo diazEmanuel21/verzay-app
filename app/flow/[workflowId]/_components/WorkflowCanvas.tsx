@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
 import { useTheme } from 'next-themes';
 
 import {
@@ -18,25 +17,38 @@ import {
   OnNodeDrag,
   useEdgesState,
   useNodesState,
-  useReactFlow
+  useReactFlow,
 } from '@xyflow/react';
 
 import { toast } from 'sonner';
-import { createNodeFromCanvas, updateWorkflowNodePosition } from '@/actions/workflow-node-action';
-import { createWorkflowEdge, deleteWorkflowEdge } from '@/actions/workflow-node-action';
-import { CustomNodeData, PaletteItem, PropsWorkflowCanvas } from '@/types/workflow-node';
+import {
+  createNodeFromCanvas,
+  updateWorkflowNodePosition,
+  createWorkflowEdge,
+  deleteWorkflowEdge,
+} from '@/actions/workflow-node-action';
+
+import { CustomNodeData, PaletteItem, PropsWorkflowCanvas, Action } from '@/types/workflow-node';
 import { CustomEdge, CustomNode } from '.';
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
-export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWorkflowCanvas) {
+export function WorkflowCanvas({
+  nodesDB,
+  workflowId,
+  user,
+  edgesDB,
+  registerCreateNode, // ✅ NUEVO (agrega este prop en PropsWorkflowCanvas)
+}: PropsWorkflowCanvas) {
   const { resolvedTheme } = useTheme();
   const { screenToFlowPosition } = useReactFlow();
-  const [mounted, setMounted] = useState(false);
 
+  const [mounted, setMounted] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const rfRef = useRef<ReactFlowInstance<Node<CustomNodeData>, Edge> | null>(null);
+
   const totalNodes = useMemo(() => nodesDB.length, [nodesDB]);
   const seguimientoNodes = useMemo(
     () => nodesDB.filter((n) => (n.tipo ?? '').toLowerCase().includes('seguimiento')).length,
@@ -64,7 +76,7 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
         },
       };
     });
-  }, [nodesDB, workflowId, user]);
+  }, [nodesDB, workflowId, user, totalNodes, seguimientoNodes]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
 
@@ -77,23 +89,22 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
   const initialEdges: Edge[] = useMemo(() => {
     if (!edgesDB) return [];
     return edgesDB.map((e) => ({
-      id: e.id,                  // usa el id de DB
+      id: e.id,
       source: e.sourceId,
       target: e.targetId,
-      sourceHandle: e.sourceHandle ?? "out",
-      targetHandle: e.targetHandle ?? "in",
+      sourceHandle: e.sourceHandle ?? 'out',
+      targetHandle: e.targetHandle ?? 'in',
       type: 'customEdge',
     }));
   }, [edgesDB]);
 
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-
   useEffect(() => {
     setEdges(initialEdges);
   }, [initialEdges, setEdges]);
 
-  const isDark = mounted && resolvedTheme === "dark";
+  const isDark = mounted && resolvedTheme === 'dark';
   const nodeTypes: NodeTypes = useMemo(() => ({ customNode: CustomNode }), []);
   const edgeTypes = useMemo(() => ({ customEdge: CustomEdge }), []);
 
@@ -119,126 +130,166 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
     pending.current[id] = t;
   }, []);
 
-  // conectar
-  const onConnect: OnConnect = useCallback(async (params) => {
-    if (!params.source || !params.target) return;
+  // ✅ FUNCIÓN ÚNICA DE CREACIÓN (la misma que usa drop y click)
+  const createFromItem = useCallback(
+    async (item: PaletteItem, pos: { x: number; y: number }) => {
+      const toastId = toast.loading('Creando nodo...');
 
-    const sourceHandle = params.sourceHandle ?? "out";
-    const targetHandle = params.targetHandle ?? "in";
-
-    const exists = edges.some(
-      (e) => e.source === params.source && e.sourceHandle === sourceHandle
-    );
-    if (exists) {
-      toast.info("Ese punto de salida ya está ocupado.");
-      return;
-    }
-
-    try {
-      const res = await createWorkflowEdge({
-        workflowId,
-        sourceId: params.source,
-        targetId: params.target,
-        sourceHandle,
-        targetHandle,
-      });
-
-      if (!res.success || !res.edge) {
-        toast.info(res.message || 'No se pudo crear la conexión');
-        return;
-      }
-
-      const newEdge: Edge = {
-        id: res.edge.id,
-        source: res.edge.sourceId,
-        target: res.edge.targetId,
-        sourceHandle: res.edge.sourceHandle ?? "out",
-        targetHandle: res.edge.targetHandle ?? "in",
-        type: 'customEdge',
-      };
-
-      setEdges((eds) => [...eds, newEdge]);
-    } catch (e: any) {
-      toast.error(e?.message ?? 'No se pudo crear la conexión');
-    }
-  }, [workflowId, setEdges]);
-
-  const onEdgesDelete: OnEdgesDelete = useCallback(async (deleted) => {
-    // borra uno por uno (MVP)
-    for (const edge of deleted) {
       try {
-        const res = await deleteWorkflowEdge({ workflowId, edgeId: edge.id });
-        toast.success(res.message || 'Relación eliminada.')
-      } catch (e: any) {
-        toast.error(e?.message ?? 'No se pudo eliminar la conexión');
-      }
-    }
-  }, [workflowId]);
+        const res = await createNodeFromCanvas({
+          workflowId,
+          tipo: item.nodeTipo,
+          message: '',
+          posX: pos.x,
+          posY: pos.y,
+        });
 
+        if (!res?.success) {
+          toast.error(res?.message ?? 'No se pudo crear el nodo', { id: toastId });
+          return;
+        }
+
+        const nodeDB = res.data;
+        if (!nodeDB) {
+          toast.error('Ups! error al crear el nodo.', { id: toastId });
+          return;
+        }
+
+        setNodes((nds) =>
+          nds.concat({
+            id: nodeDB.id,
+            type: 'customNode',
+            position: { x: nodeDB.posX ?? pos.x, y: nodeDB.posY ?? pos.y },
+            data: {
+              nodeDB,
+              workflowId,
+              user,
+              totalNodes: totalNodes + 1,
+              seguimientoNodes,
+            },
+          } satisfies Node<CustomNodeData>)
+        );
+
+        toast.success('Nodo creado', { id: toastId });
+      } catch (e: any) {
+        toast.error(e?.message ?? 'Error creando nodo', { id: toastId });
+      }
+    },
+    [workflowId, user, setNodes, totalNodes, seguimientoNodes]
+  );
+
+  // Drag over
   const onDragOver = useCallback((evt: React.DragEvent) => {
     evt.preventDefault();
-    evt.dataTransfer.dropEffect = "move";
+    evt.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const onDrop = useCallback(async (evt: React.DragEvent) => {
-    evt.preventDefault();
+  // Drop -> usa la misma función
+  const onDrop = useCallback(
+    async (evt: React.DragEvent) => {
+      evt.preventDefault();
 
-    const raw = evt.dataTransfer.getData("application/reactflow");
-    if (!raw) return;
+      const raw = evt.dataTransfer.getData('application/reactflow');
+      if (!raw) return;
 
-    let item: PaletteItem;
-    try {
-      item = JSON.parse(raw);
-    } catch {
-      return;
-    }
-
-    // coordenadas del drop en el canvas
-    const pos = screenToFlowPosition({ x: evt.clientX, y: evt.clientY });
-
-    const toastId = toast.loading("Creando nodo...");
-
-    try {
-      const res = await createNodeFromCanvas({
-        workflowId,
-        tipo: item.nodeTipo,
-        message: "",
-        posX: pos.x,
-        posY: pos.y,
-      });
-
-      if (!res?.success) {
-        toast.error(res?.message ?? "No se pudo crear el nodo", { id: toastId });
+      let item: PaletteItem;
+      try {
+        item = JSON.parse(raw);
+      } catch {
         return;
       }
 
-      const nodeDB = res.data;
+      const pos = screenToFlowPosition({ x: evt.clientX, y: evt.clientY });
+      await createFromItem(item, pos);
+    },
+    [screenToFlowPosition, createFromItem]
+  );
 
-      if (!nodeDB) return toast.error('Ups! error al crear el nodo.')
+  // ✅ CLICK desde sidebar (reusa createFromItem)
+  useEffect(() => {
+    if (!registerCreateNode) return;
 
-      setNodes((nds) =>
-        nds.concat({
-          id: nodeDB.id,
-          type: "customNode",
-          position: { x: nodeDB.posX ?? pos.x, y: nodeDB.posY ?? pos.y },
-          data: {
-            nodeDB,
-            workflowId,
-            user,
-            totalNodes: totalNodes + 1,
-            seguimientoNodes,
-          },
-        } satisfies Node<CustomNodeData>)
-      );
+    registerCreateNode(async (action: Action) => {
+      const el = wrapperRef.current;
+      if (!el) return;
 
-      toast.success("Nodo creado", { id: toastId });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Error creando nodo", { id: toastId });
-    }
-  }, [screenToFlowPosition, workflowId, user, setNodes]);
+      const rect = el.getBoundingClientRect();
+      const pos = screenToFlowPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      });
+
+      const item: PaletteItem = {
+        type: 'customNode',
+        label: action.label,
+        nodeTipo: action.type,
+      };
+
+      await createFromItem(item, pos);
+    });
+  }, [registerCreateNode, screenToFlowPosition, createFromItem]);
+
+  // conectar edges
+  const onConnect: OnConnect = useCallback(
+    async (params) => {
+      if (!params.source || !params.target) return;
+
+      const sourceHandle = params.sourceHandle ?? 'out';
+      const targetHandle = params.targetHandle ?? 'in';
+
+      const exists = edges.some((e) => e.source === params.source && e.sourceHandle === sourceHandle);
+      if (exists) {
+        toast.info('Ese punto de salida ya está ocupado.');
+        return;
+      }
+
+      try {
+        const res = await createWorkflowEdge({
+          workflowId,
+          sourceId: params.source,
+          targetId: params.target,
+          sourceHandle,
+          targetHandle,
+        });
+
+        if (!res.success || !res.edge) {
+          toast.info(res.message || 'No se pudo crear la conexión');
+          return;
+        }
+
+        const newEdge: Edge = {
+          id: res.edge.id,
+          source: res.edge.sourceId,
+          target: res.edge.targetId,
+          sourceHandle: res.edge.sourceHandle ?? 'out',
+          targetHandle: res.edge.targetHandle ?? 'in',
+          type: 'customEdge',
+        };
+
+        setEdges((eds) => [...eds, newEdge]);
+      } catch (e: any) {
+        toast.error(e?.message ?? 'No se pudo crear la conexión');
+      }
+    },
+    [workflowId, edges, setEdges]
+  );
+
+  const onEdgesDelete: OnEdgesDelete = useCallback(
+    async (deleted) => {
+      for (const edge of deleted) {
+        try {
+          const res = await deleteWorkflowEdge({ workflowId, edgeId: edge.id });
+          toast.success(res.message || 'Relación eliminada.');
+        } catch (e: any) {
+          toast.error(e?.message ?? 'No se pudo eliminar la conexión');
+        }
+      }
+    },
+    [workflowId]
+  );
 
   return (
-    <div className="w-full h-full">
+    <div ref={wrapperRef} className="w-full h-full">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -258,7 +309,8 @@ export function WorkflowCanvas({ nodesDB, workflowId, user, edgesDB }: PropsWork
         onDragOver={onDragOver}
         onDrop={onDrop}
         fitView
-        colorMode={isDark ? "dark" : "light"}
+        colorMode={isDark ? 'dark' : 'light'}
+        minZoom={0.05}
       >
         <Background />
         <Controls />

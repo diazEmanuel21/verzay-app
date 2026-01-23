@@ -41,6 +41,8 @@ export type PropsWorkflowCanvas = {
   edgesDB?: WorkflowEdgeDB[];
   workflowId: string;
   user: User;
+
+  registerCreateNode?: (fn: (action: import('@/types/workflow-node').Action) => void) => void;
 };
 
 export type CustomNodeData = {
