@@ -96,7 +96,6 @@ export async function getAllSales(userId: string): Promise<OperationResponse<any
         currency: true,
         attachments: true,
 
-        //  NUEVO
         session: {
           select: {
             id: true,
