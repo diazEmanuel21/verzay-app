@@ -16,13 +16,11 @@ import {
 } from '@/actions/finance-sales-actions';
 
 import { listProducts } from '@/actions/products-actions';
-
-//  usamos tus actions existentes
 import { searchSessionsByUserId } from '@/actions/session-action';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,6 +28,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 import {
   CalendarDays,
@@ -41,7 +42,13 @@ import {
   Receipt,
   ChevronsUpDown,
   Check,
+  Plus,
   UserRound,
+  Phone,
+  Pencil,
+  Eye,
+  Trash2,
+  Coins,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -53,24 +60,24 @@ type Props = {
   currencies: any[];
   sales: any[];
   products: any[];
-  sessions: any[]; //  nuevo
 };
 
 type FormState = {
   occurredAt: string;
-  amount: string;      // base
-  extra: string;       // suma
-  discount: string;    // resta
+  amount: string; // base
+  extra: string; // suma
+  discount: string; // resta
   currencyCode: string;
   accountId: string;
   categoryId: string | null;
   title: string;
   description: string;
-
   productId: string | null;
 
-  //  NUEVO: contacto Session
+  // ✅ contacto (Session)
   sessionId: number | null;
+  contactName: string; // pushName
+  contactJid: string; // remoteJid
 };
 
 type DraftAttachment = {
@@ -128,23 +135,59 @@ function sumByCurrency(list: any[]) {
   }, {});
 }
 
-// helper para pintar label del contacto
-function sessionLabel(s: any) {
-  const name = s?.pushName?.trim();
-  const jid = s?.remoteJid?.trim();
-  if (name && jid) return `${name} (${jid})`;
-  return name || jid || `Session #${s?.id ?? ''}`;
+function MiniField({
+  label,
+  children,
+  hint,
+}: {
+  label: string;
+  children: React.ReactNode;
+  hint?: string;
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-2">
+        <label className="text-xs text-muted-foreground">{label}</label>
+        {hint ? <p className="text-[11px] text-muted-foreground/80">{hint}</p> : null}
+      </div>
+      {children}
+    </div>
+  );
 }
 
-export default function MainSales({ userId, accounts, categories, currencies, sales, products, sessions }: Props) {
+function EmptyBox({ text }: { text: string }) {
+  return (
+    <div className="rounded-xl border bg-background p-4">
+      <p className="text-sm text-muted-foreground">{text}</p>
+    </div>
+  );
+}
+
+function moneyFormat(currencies: any[], code: string, value: number) {
+  const meta = currencies.find((c) => c.code === code);
+  const decimals = typeof meta?.decimals === 'number' ? meta.decimals : 2;
+  try {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: code,
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(value);
+  } catch {
+    const symbol = meta?.symbol ? `${meta.symbol} ` : '';
+    return `${symbol}${value.toFixed(decimals)} ${code}`;
+  }
+}
+
+export default function MainSales({ userId, accounts, categories, currencies, sales, products }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  //  tabla sin recargar
+  // ✅ tabla sin recargar
   const [rows, setRows] = useState<any[]>(sales ?? []);
   useEffect(() => setRows(sales ?? []), [sales]);
 
-  //  detalle por click fila
+  // ✅ detalle por click fila
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailRow, setDetailRow] = useState<any | null>(null);
 
@@ -164,7 +207,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
   const [attachments, setAttachments] = useState<DraftAttachment[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  //  selector buscable productos
+  // ✅ selector buscable productos
   const [productOpen, setProductOpen] = useState(false);
   const [productQuery, setProductQuery] = useState('');
   const [productLoading, setProductLoading] = useState(false);
@@ -197,12 +240,11 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     return () => clearTimeout(t);
   }, [productOpen, productQuery, userId]);
 
-  //  selector buscable contactos (Session)
+  // ✅ selector buscable contacto (Session)
   const [contactOpen, setContactOpen] = useState(false);
   const [contactQuery, setContactQuery] = useState('');
   const [contactLoading, setContactLoading] = useState(false);
-  const [contactOptions, setContactOptions] = useState<any[]>(sessions ?? []);
-  useEffect(() => setContactOptions(sessions ?? []), [sessions]);
+  const [contactOptions, setContactOptions] = useState<any[]>([]);
 
   useEffect(() => {
     if (!contactOpen) return;
@@ -212,12 +254,8 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
         setContactLoading(true);
         try {
           const res = await searchSessionsByUserId(userId, contactQuery.trim());
-          if (!res.success) {
-            toast.error(res.message || 'Error buscando contactos');
-            setContactOptions([]);
-          } else {
-            setContactOptions(res.data || []);
-          }
+          if (!res?.success) return toast.error(res?.message || 'No se pudieron cargar contactos');
+          setContactOptions((res as any).data || []);
         } catch (e: any) {
           toast.error(e?.message || 'Error buscando contactos');
         } finally {
@@ -250,7 +288,10 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     title: '',
     description: '',
     productId: null,
-    sessionId: null, //  nuevo
+
+    sessionId: null,
+    contactName: '',
+    contactJid: '',
   });
 
   const resetForm = () => {
@@ -265,7 +306,10 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
       title: '',
       description: '',
       productId: null,
-      sessionId: null, //  nuevo
+
+      sessionId: null,
+      contactName: '',
+      contactJid: '',
     });
   };
 
@@ -275,6 +319,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     setAttachments([]);
     setProductQuery('');
     setContactQuery('');
+    setContactOptions([]);
     setOpen(true);
   };
 
@@ -283,6 +328,9 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
 
     const inferredProductId =
       row.productId ?? products.find((p) => p.title === row.title)?.id ?? null;
+
+    const inferredContactName = row.counterparty ?? '';
+    const inferredContactJid = row.reference ?? '';
 
     setForm({
       occurredAt: toISODate(row.occurredAt),
@@ -296,8 +344,9 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
       description: row.description ?? '',
       productId: inferredProductId,
 
-      //  nuevo
-      sessionId: typeof row.sessionId === 'number' ? row.sessionId : (row.sessionId ? Number(row.sessionId) : null),
+      sessionId: null,
+      contactName: inferredContactName,
+      contactJid: inferredContactJid,
     });
 
     setAttachments(
@@ -314,7 +363,6 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     setOpen(true);
   };
 
-  //  subir a /api/upload-invoice
   async function uploadReceipt(file: File) {
     const fd = new FormData();
     fd.append('file', file);
@@ -368,13 +416,13 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
           description: form.description?.trim() || null,
           productId: form.productId,
 
-          //  NUEVO: vincular contacto
-          sessionId: form.sessionId ?? null,
+          counterparty: form.contactName?.trim() || null,
+          reference: form.contactJid?.trim() || null,
         };
 
         const res = editing
-          ? await updateSale(editing.id, userId, payload)
-          : await createSale(payload);
+          ? await updateSale(editing.id, userId, payload as any)
+          : await createSale(payload as any);
 
         if (!res.success) return toast.error(res.message);
 
@@ -393,90 +441,6 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
             })),
           });
           if (!attachRes.success) return toast.error(attachRes.message);
-        }
-
-        //  UI instantánea
-        const nowIso = new Date().toISOString();
-        if (!editing && txId) {
-          const selectedSession =
-            form.sessionId != null ? (contactOptions.find((s) => s.id === form.sessionId) ?? null) : null;
-
-          setRows((prev) => [
-            {
-              id: txId,
-              userId,
-              type: 'SALE',
-              status: 'ACTIVE',
-              occurredAt: new Date(payload.occurredAt).toISOString(),
-              amount: payload.amount,
-              extra: payload.extra,
-              discount: payload.discount,
-              currencyCode: payload.currencyCode,
-              accountId: payload.accountId,
-              categoryId: payload.categoryId,
-              title: payload.title,
-              description: payload.description,
-              productId: payload.productId,
-
-              //  nuevo
-              sessionId: payload.sessionId,
-              session: selectedSession,
-
-              createdAt: nowIso,
-              updatedAt: nowIso,
-              deletedAt: null,
-              account: accounts.find((a) => a.id === payload.accountId) || null,
-              category: payload.categoryId ? categories.find((c) => c.id === payload.categoryId) || null : null,
-              currency: currencies.find((c) => c.code === payload.currencyCode) || null,
-              attachments: attachments.map((a) => ({
-                id: a.id,
-                url: a.url,
-                fileName: a.fileName ?? null,
-                mimeType: a.mimeType ?? null,
-                sizeBytes: a.sizeBytes ?? null,
-              })),
-            },
-            ...prev,
-          ]);
-        } else if (editing) {
-          const selectedSession =
-            form.sessionId != null ? (contactOptions.find((s) => s.id === form.sessionId) ?? null) : null;
-
-          setRows((prev) =>
-            prev.map((r) =>
-              r.id !== editing.id
-                ? r
-                : {
-                    ...r,
-                    occurredAt: new Date(payload.occurredAt).toISOString(),
-                    amount: payload.amount,
-                    extra: payload.extra,
-                    discount: payload.discount,
-                    currencyCode: payload.currencyCode,
-                    accountId: payload.accountId,
-                    categoryId: payload.categoryId,
-                    title: payload.title,
-                    description: payload.description,
-                    productId: payload.productId,
-
-                    //  nuevo
-                    sessionId: payload.sessionId,
-                    session: selectedSession,
-
-                    updatedAt: nowIso,
-                    account: accounts.find((a) => a.id === payload.accountId) || r.account,
-                    category: payload.categoryId ? categories.find((c) => c.id === payload.categoryId) || null : null,
-                    currency: currencies.find((c) => c.code === payload.currencyCode) || r.currency,
-                    attachments: attachments.map((a) => ({
-                      id: a.id,
-                      url: a.url,
-                      fileName: a.fileName ?? null,
-                      mimeType: a.mimeType ?? null,
-                      sizeBytes: a.sizeBytes ?? null,
-                    })),
-                  }
-            )
-          );
         }
 
         toast.success(editing ? 'Venta actualizada' : 'Venta creada');
@@ -505,7 +469,12 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
   };
 
   const columns = useMemo(
-    () => buildSalesColumns({ onEdit: openEdit, onDelete, busy: isPending }),
+    () =>
+      buildSalesColumns({
+        onEdit: openEdit,
+        onDelete,
+        busy: isPending,
+      }),
     [isPending] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
@@ -517,33 +486,17 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
   const totalsMonth = useMemo(() => sumByCurrency(monthRows), [monthRows]);
   const totalsAll = useMemo(() => sumByCurrency(rows), [rows]);
 
-  const formatMoney = (value: number, code: string) => {
-    const meta = currencies.find((c) => c.code === code);
-    const decimals = typeof meta?.decimals === 'number' ? meta.decimals : 2;
-    const symbol = meta?.symbol ? `${meta.symbol} ` : '';
-    try {
-      return new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: code,
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals,
-      }).format(value);
-    } catch {
-      return `${symbol}${value.toFixed(decimals)} ${code}`;
-    }
-  };
-
   const monthTotalText = useMemo(() => {
     const entries = Object.entries(totalsMonth);
     if (!entries.length) return '—';
-    return entries.map(([code, v]) => `${formatMoney(v, code)}`).join(' • ');
-  }, [totalsMonth]); // eslint-disable-line react-hooks/exhaustive-deps
+    return entries.map(([code, v]) => `${moneyFormat(currencies, code, v)}`).join(' • ');
+  }, [totalsMonth, currencies]);
 
   const grandTotalText = useMemo(() => {
     const entries = Object.entries(totalsAll);
     if (!entries.length) return '—';
-    return entries.map(([code, v]) => `${formatMoney(v, code)}`).join(' • ');
-  }, [totalsAll]); // eslint-disable-line react-hooks/exhaustive-deps
+    return entries.map(([code, v]) => `${moneyFormat(currencies, code, v)}`).join(' • ');
+  }, [totalsAll, currencies]);
 
   const detailAccountName = useMemo(() => {
     if (!detailRow?.accountId) return '';
@@ -563,343 +516,429 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
   const detailBase = useMemo(() => toAmountNumber(detailRow?.amount), [detailRow]);
   const detailExtra = useMemo(() => toAmountNumber(detailRow?.extra), [detailRow]);
   const detailDiscount = useMemo(() => toAmountNumber(detailRow?.discount), [detailRow]);
-  const detailTotal = useMemo(() => detailBase + detailExtra - detailDiscount, [detailBase, detailExtra, detailDiscount]);
-
-  const detailSessionLabel = useMemo(() => {
-    const s = detailRow?.session;
-    if (s) return sessionLabel(s);
-    // fallback si no incluyes session en getAllSales
-    if (detailRow?.sessionId) return `Session #${detailRow.sessionId}`;
-    return 'Sin contacto';
-  }, [detailRow]);
+  const detailTotal = useMemo(
+    () => detailBase + detailExtra - detailDiscount,
+    [detailBase, detailExtra, detailDiscount]
+  );
 
   return (
-    <div className="space-y-3">
-      <Card className="border-border">
-        <CardHeader className="py-3">
-          <div className="flex items-center justify-between gap-2">
-            <CardTitle className="text-sm">Ventas</CardTitle>
-            <Button size="sm" onClick={openCreate} disabled={isPending}>
-              Nuevo
-            </Button>
-          </div>
-
-          {/*  resumen */}
-          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <div className="flex items-center justify-between rounded-xl border bg-muted/10 px-3 py-2 hover:bg-muted/20">
+    <TooltipProvider>
+      <div className="space-y-3">
+        <Card className="border-border">
+          <CardHeader className="py-3">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg border bg-background">
-                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm">Ventas</CardTitle>
+                <Badge variant="secondary" className="h-6 text-[11px]">
+                  {rows.length} registros
+                </Badge>
+              </div>
+
+              <Button size="sm" onClick={openCreate} disabled={isPending} className="h-9">
+                <Plus className="mr-2 h-4 w-4" />
+                Nueva venta
+              </Button>
+            </div>
+
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <div className="flex items-center justify-between rounded-xl border bg-muted/10 px-3 py-2 hover:bg-muted/20">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg border bg-background">
+                    <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="leading-tight">
+                    <p className="text-[11px] text-muted-foreground">Total mes</p>
+                    <p className="text-sm font-medium">Resumen</p>
+                  </div>
                 </div>
-                <div className="leading-tight">
-                  <p className="text-xs text-muted-foreground">Total mes</p>
-                  <p className="text-sm font-medium">Resumen</p>
+                <div className="text-right leading-tight">
+                  <p className="text-[11px] text-muted-foreground">Monto</p>
+                  <p className="text-sm font-semibold">{monthTotalText}</p>
                 </div>
               </div>
-              <div className="text-right leading-tight">
-                <p className="text-xs text-muted-foreground">Monto</p>
-                <p className="text-sm font-semibold">{monthTotalText}</p>
+
+              <div className="flex items-center justify-between rounded-xl border bg-muted/10 px-3 py-2 hover:bg-muted/20">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg border bg-background">
+                    <Layers className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="leading-tight">
+                    <p className="text-[11px] text-muted-foreground">Total</p>
+                    <p className="text-sm font-medium">Acumulado</p>
+                  </div>
+                </div>
+                <div className="text-right leading-tight">
+                  <p className="text-[11px] text-muted-foreground">Monto</p>
+                  <p className="text-sm font-semibold">{grandTotalText}</p>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between rounded-xl border bg-muted/10 px-3 py-2 hover:bg-muted/20">
-              <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg border bg-background">
-                  <Layers className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="leading-tight">
-                  <p className="text-xs text-muted-foreground">Total</p>
-                  <p className="text-sm font-medium">Acumulado</p>
-                </div>
-              </div>
-              <div className="text-right leading-tight">
-                <p className="text-xs text-muted-foreground">Monto</p>
-                <p className="text-sm font-semibold">{grandTotalText}</p>
-              </div>
-            </div>
-          </div>
-
-          <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mt-2">
-            <TabsList className="h-9 w-full justify-start gap-6 rounded-none bg-transparent p-0">
-              <TabsTrigger
-                value="month"
-                className="rounded-none border-b-2 border-transparent px-0 text-sm data-[state=active]:border-primary data-[state=active]:text-primary"
-              >
-                <span className="inline-flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4" />
-                  Mes
-                </span>
-              </TabsTrigger>
-
-              <TabsTrigger
-                value="total"
-                className="rounded-none border-b-2 border-transparent px-0 text-sm data-[state=active]:border-primary data-[state=active]:text-primary"
-              >
-                <span className="inline-flex items-center gap-2">
-                  <Layers className="h-4 w-4" />
-                  Total
-                </span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="month" className="mt-2">
-              <DataTable
-                columns={columns as any}
-                data={monthRows}
-                searchKey="title"
-                searchPlaceholder="Buscar..."
-                onRowClick={openDetail}
-              />
-            </TabsContent>
-
-            <TabsContent value="total" className="mt-2">
-              <DataTable
-                columns={columns as any}
-                data={rows}
-                searchKey="title"
-                searchPlaceholder="Buscar..."
-                onRowClick={openDetail}
-              />
-            </TabsContent>
-          </Tabs>
-        </CardHeader>
-        <CardContent className="pt-0" />
-      </Card>
-
-      {/*  Modal Detalle */}
-      <Dialog open={detailOpen} onOpenChange={(v) => (v ? setDetailOpen(true) : closeDetail())}>
-        <DialogContent className="sm:max-w-[760px] rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-base">Detalle de venta</DialogTitle>
-          </DialogHeader>
-
-          {detailRow ? (
-            <div className="space-y-4">
-              <div className="rounded-xl border bg-muted/10 p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="truncate text-base font-semibold">{detailRow.title || 'Sin concepto'}</p>
-
-                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                      <span className="inline-flex items-center gap-2">
-                        <CalendarDays className="h-4 w-4" />
-                        {toISODate(detailRow.occurredAt)}
-                      </span>
-
-                      <span className="inline-flex items-center gap-2">
-                        <Layers className="h-4 w-4" />
-                        {detailAccountName || '—'}
-                      </span>
-
-                      <span className="inline-flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />
-                        {detailCategoryName}
-                      </span>
-
-                      {/*  contacto */}
-                      <span className="inline-flex items-center gap-2">
-                        <UserRound className="h-4 w-4" />
-                        {detailSessionLabel}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="shrink-0 text-right">
-                    <p className="text-xs text-muted-foreground">Total</p>
-                    <p className="text-lg font-bold leading-tight">
-                      {detailCurrency?.symbol ? `${detailCurrency.symbol} ` : ''}
-                      {String(detailTotal)}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{detailRow.currencyCode}</p>
-
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Base: {String(detailBase)} · Extra: {String(detailExtra)} · Desc: {String(detailDiscount)}
-                    </p>
-                  </div>
-                </div>
-
-                {detailRow.description ? (
-                  <div className="mt-3 rounded-lg border bg-background p-3">
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{detailRow.description}</p>
-                  </div>
-                ) : (
-                  <p className="mt-3 text-sm text-muted-foreground">Sin descripción</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">Soportes</p>
-                  <p className="text-sm text-muted-foreground">
-                    {detailRow.attachments?.length ? `${detailRow.attachments.length} archivo(s)` : '0 archivos'}
-                  </p>
-                </div>
-
-                {detailRow.attachments?.length ? (
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {detailRow.attachments.map((a: any) => {
-                      const isImg = guessIsImage(a.mimeType, a.url);
-                      const isPdf = guessIsPdf(a.mimeType, a.url);
-
-                      return (
-                        <a
-                          key={a.id ?? a.url}
-                          href={a.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="group flex items-center gap-3 rounded-xl border p-3 hover:bg-muted/30"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border bg-background">
-                            {isImg ? (
-                              <img src={a.url} alt={a.fileName || 'soporte'} className="h-10 w-10 object-cover" />
-                            ) : isPdf ? (
-                              <FileText className="h-5 w-5 text-muted-foreground" />
-                            ) : (
-                              <Paperclip className="h-5 w-5 text-muted-foreground" />
-                            )}
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium">{a.fileName || 'Archivo'}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Abrir <ExternalLink className="ml-1 inline h-3 w-3" />
-                            </p>
-                          </div>
-                        </a>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="rounded-xl border p-4">
-                    <p className="text-sm text-muted-foreground">Sin soportes</p>
-                  </div>
-                )}
-              </div>
-
-              <DialogFooter className="gap-2 sm:gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    closeDetail();
-                    openEdit(detailRow);
-                  }}
+            <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mt-2">
+              <TabsList className="h-9 w-full justify-start gap-6 rounded-none bg-transparent p-0">
+                <TabsTrigger
+                  value="month"
+                  className="rounded-none border-b-2 border-transparent px-0 text-sm data-[state=active]:border-primary data-[state=active]:text-primary"
                 >
-                  Editar
-                </Button>
-                <Button variant="destructive" size="sm" onClick={() => onDelete(detailRow.id)} disabled={isPending}>
-                  Eliminar
-                </Button>
-              </DialogFooter>
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
+                  <span className="inline-flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4" />
+                    Mes
+                  </span>
+                </TabsTrigger>
 
-      {/*  Modal Create/Edit */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-[760px] rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-base">{editing ? '🧾 Editar venta' : '🧾 Nueva venta'}</DialogTitle>
-          </DialogHeader>
+                <TabsTrigger
+                  value="total"
+                  className="rounded-none border-b-2 border-transparent px-0 text-sm data-[state=active]:border-primary data-[state=active]:text-primary"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Layers className="h-4 w-4" />
+                    Total
+                  </span>
+                </TabsTrigger>
+              </TabsList>
 
-          {(() => {
-            const previewAccountName = accounts.find((a) => a.id === form.accountId)?.name || '—';
-            const previewCategoryName = form.categoryId
-              ? categories.find((c) => c.id === form.categoryId)?.name || 'Sin categoría'
-              : 'Sin categoría';
-            const previewCurrency = currencies.find((c) => c.code === form.currencyCode) || null;
+              <TabsContent value="month" className="mt-2">
+                <DataTable
+                  columns={columns as any}
+                  data={monthRows}
+                  searchKey="title"
+                  searchPlaceholder="Buscar..."
+                  onRowClick={openDetail}
+                />
+              </TabsContent>
 
-            const base = toAmountNumber(form.amount);
-            const extra = toAmountNumber(form.extra);
-            const disc = toAmountNumber(form.discount);
-            const total = base + extra - disc;
+              <TabsContent value="total" className="mt-2">
+                <DataTable
+                  columns={columns as any}
+                  data={rows}
+                  searchKey="title"
+                  searchPlaceholder="Buscar..."
+                  onRowClick={openDetail}
+                />
+              </TabsContent>
+            </Tabs>
+          </CardHeader>
 
-            const decimals = typeof previewCurrency?.decimals === 'number' ? previewCurrency.decimals : 2;
-            const totalFormatted = new Intl.NumberFormat('es-CO', {
-              minimumFractionDigits: decimals,
-              maximumFractionDigits: decimals,
-            }).format(total);
+          <CardContent className="pt-0" />
+        </Card>
 
-            const mini = (n: number) =>
-              new Intl.NumberFormat('es-CO', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(n);
+        {/* ✅ Modal Detalle */}
+        <Dialog open={detailOpen} onOpenChange={(v) => (v ? setDetailOpen(true) : closeDetail())}>
+          <DialogContent className="sm:max-w-[820px] rounded-2xl">
+            <DialogHeader className="space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <DialogTitle className="text-base">Detalle de venta</DialogTitle>
+                <div className="flex items-center gap-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="h-9 w-9"
+                        onClick={() => {
+                          if (!detailRow) return;
+                          closeDetail();
+                          openEdit(detailRow);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Editar</TooltipContent>
+                  </Tooltip>
 
-            const selectedSession =
-              form.sessionId != null ? (contactOptions.find((s) => s.id === form.sessionId) ?? null) : null;
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        className="h-9 w-9"
+                        onClick={() => {
+                          if (!detailRow) return;
+                          onDelete(detailRow.id);
+                        }}
+                        disabled={isPending}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Eliminar</TooltipContent>
+                  </Tooltip>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">Visualiza el resumen, contacto y soportes.</p>
+            </DialogHeader>
 
-            return (
+            {detailRow ? (
               <div className="space-y-4">
-                {/* Preview */}
                 <div className="rounded-xl border bg-muted/10 p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <p className="truncate text-base font-semibold">
-                        {form.title?.trim() ? form.title.trim() : 'Sin concepto'}
-                      </p>
+                      <p className="truncate text-base font-semibold">{detailRow.title || 'Sin concepto'}</p>
 
-                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                        <span className="inline-flex items-center gap-2">
-                          <CalendarDays className="h-4 w-4" />
-                          {form.occurredAt}
-                        </span>
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <Badge variant="secondary" className="h-6 text-[11px]">
+                          {toISODate(detailRow.occurredAt)}
+                        </Badge>
+                        <Badge variant="outline" className="h-6 text-[11px]">
+                          {detailAccountName || '—'}
+                        </Badge>
+                        <Badge variant="outline" className="h-6 text-[11px]">
+                          {detailCategoryName}
+                        </Badge>
 
-                        <span className="inline-flex items-center gap-2">
-                          <Layers className="h-4 w-4" />
-                          {previewAccountName}
-                        </span>
-
-                        <span className="inline-flex items-center gap-2">
-                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />
-                          {previewCategoryName}
-                        </span>
-
-                        {/*  contacto en preview */}
-                        <span className="inline-flex items-center gap-2">
-                          <UserRound className="h-4 w-4" />
-                          {selectedSession ? sessionLabel(selectedSession) : 'Sin contacto'}
-                        </span>
+                        {(detailRow.counterparty || detailRow.reference) ? (
+                          <Badge variant="outline" className="h-6 text-[11px]">
+                            <span className="inline-flex items-center gap-1">
+                              <UserRound className="h-3.5 w-3.5" />
+                              {detailRow.counterparty || 'Contacto'}
+                              {detailRow.reference ? (
+                                <>
+                                  <span className="mx-1 opacity-50">·</span>
+                                  <Phone className="h-3.5 w-3.5" />
+                                  <span className="truncate max-w-[180px]">{detailRow.reference}</span>
+                                </>
+                              ) : null}
+                            </span>
+                          </Badge>
+                        ) : null}
                       </div>
                     </div>
 
                     <div className="shrink-0 text-right">
-                      <p className="text-xs text-muted-foreground">Total</p>
+                      <p className="text-[11px] text-muted-foreground">Total</p>
                       <p className="text-lg font-bold leading-tight">
-                        {previewCurrency?.symbol ? `${previewCurrency.symbol} ` : ''}
-                        {totalFormatted}
+                        {detailCurrency?.symbol ? `${detailCurrency.symbol} ` : ''}
+                        {String(detailTotal)}
                       </p>
-                      <p className="text-sm text-muted-foreground">{form.currencyCode}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Base: {mini(base)} · Extra: {mini(extra)} · Desc: {mini(disc)}
+                      <p className="text-xs text-muted-foreground">{detailRow.currencyCode}</p>
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        Base: {String(detailBase)} · Extra: {String(detailExtra)} · Desc: {String(detailDiscount)}
                       </p>
                     </div>
                   </div>
 
-                  {form.description?.trim() ? (
-                    <div className="mt-3 rounded-lg border bg-background p-3">
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed">{form.description.trim()}</p>
+                  <Separator className="my-3" />
+
+                  {detailRow.description ? (
+                    <div className="rounded-lg border bg-background p-3">
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed">{detailRow.description}</p>
                     </div>
                   ) : (
-                    <p className="mt-3 text-sm text-muted-foreground">-</p>
+                    <p className="text-sm text-muted-foreground">Sin descripción</p>
                   )}
                 </div>
 
-                {/* Form */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label className="text-sm text-muted-foreground">Fecha</label>
-                        <Input
-                          type="date"
-                          value={form.occurredAt}
-                          onChange={(e) => setForm((p) => ({ ...p, occurredAt: e.target.value }))}
-                          className="h-9 text-sm"
-                        />
-                      </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium">Soportes</p>
+                    <p className="text-xs text-muted-foreground">
+                      {detailRow.attachments?.length ? `${detailRow.attachments.length} archivo(s)` : '0 archivos'}
+                    </p>
+                  </div>
 
-                      <div className="space-y-1">
-                        <label className="text-sm text-muted-foreground">Monto (base)</label>
+                  {detailRow.attachments?.length ? (
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {detailRow.attachments.map((a: any) => {
+                        const isImg = guessIsImage(a.mimeType, a.url);
+                        const isPdf = guessIsPdf(a.mimeType, a.url);
+
+                        return (
+                          <a
+                            key={a.id ?? a.url}
+                            href={a.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="group flex items-center gap-3 rounded-xl border bg-background p-3 hover:bg-muted/30"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border bg-muted/10">
+                              {isImg ? (
+                                <img src={a.url} alt={a.fileName || 'soporte'} className="h-10 w-10 object-cover" />
+                              ) : isPdf ? (
+                                <FileText className="h-5 w-5 text-muted-foreground" />
+                              ) : (
+                                <Paperclip className="h-5 w-5 text-muted-foreground" />
+                              )}
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium">{a.fileName || 'Archivo'}</p>
+                              <p className="text-[11px] text-muted-foreground">
+                                Abrir <ExternalLink className="ml-1 inline h-3 w-3" />
+                              </p>
+                            </div>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <EmptyBox text="Sin soportes" />
+                  )}
+                </div>
+              </div>
+            ) : null}
+          </DialogContent>
+        </Dialog>
+
+        {/* ✅ Modal Create/Edit */}
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent className="sm:max-w-[1000px] rounded-2xl">
+            <DialogHeader className="space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <DialogTitle className="text-base">{editing ? 'Editar venta' : 'Nueva venta'}</DialogTitle>
+                <Badge variant="secondary" className="h-6 text-[11px]">
+                  {editing ? 'Edición' : 'Registro'}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Más espacio: fecha + moneda viven arriba del concepto. Concepto + total a la derecha.
+              </p>
+            </DialogHeader>
+
+            {(() => {
+              const previewAccountName = accounts.find((a) => a.id === form.accountId)?.name || '—';
+              const previewCategoryName = form.categoryId
+                ? categories.find((c) => c.id === form.categoryId)?.name || 'Sin categoría'
+                : 'Sin categoría';
+
+              const base = toAmountNumber(form.amount);
+              const extra = toAmountNumber(form.extra);
+              const disc = toAmountNumber(form.discount);
+              const total = base + extra - disc;
+
+              const contactText =
+                form.contactName?.trim() || form.contactJid?.trim()
+                  ? `${form.contactName?.trim() || 'Contacto'}${form.contactJid?.trim() ? ` · ${form.contactJid.trim()}` : ''}`
+                  : 'Sin contacto';
+
+              return (
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
+                  {/* LEFT */}
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <MiniField label="Producto">
+                        <Popover open={productOpen} onOpenChange={setProductOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              role="combobox"
+                              className="h-9 w-full justify-between text-sm"
+                              disabled={isPending}
+                            >
+                              <span className="truncate">
+                                {form.productId
+                                  ? productOptions.find((p) => p.id === form.productId)?.title || form.title || 'Producto'
+                                  : 'Selecciona un producto'}
+                              </span>
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Buscar producto..." value={productQuery} onValueChange={setProductQuery} />
+                              <CommandEmpty>{productLoading ? 'Buscando...' : 'Sin resultados.'}</CommandEmpty>
+
+                              <CommandGroup>
+                                {productOptions.map((p) => (
+                                  <CommandItem
+                                    key={p.id}
+                                    value={p.title}
+                                    onSelect={() => {
+                                      setForm((prev) => ({
+                                        ...prev,
+                                        productId: p.id,
+                                        title: p.title,
+                                        amount: String(p.price ?? 0),
+                                      }));
+                                      setProductOpen(false);
+                                    }}
+                                  >
+                                    <Check className={cn('mr-2 h-4 w-4', form.productId === p.id ? 'opacity-100' : 'opacity-0')} />
+                                    <span className="flex-1 truncate">{p.title}</span>
+                                    <span className="ml-2 text-xs text-muted-foreground">{String(p.price ?? 0)}</span>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                      </MiniField>
+
+                      <MiniField label="Contacto (opcional)" hint="Selecciona de Sessions">
+                        <Popover open={contactOpen} onOpenChange={setContactOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              role="combobox"
+                              className="h-9 w-full justify-between text-sm"
+                              disabled={isPending}
+                            >
+                              <span className="truncate">
+                                {form.contactName || form.contactJid
+                                  ? `${form.contactName || 'Contacto'}${form.contactJid ? ` · ${form.contactJid}` : ''}`
+                                  : 'Selecciona un contacto'}
+                              </span>
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                            <Command>
+                              <CommandInput
+                                placeholder="Buscar por nombre o número..."
+                                value={contactQuery}
+                                onValueChange={setContactQuery}
+                              />
+                              <CommandEmpty>{contactLoading ? 'Buscando...' : 'Sin resultados.'}</CommandEmpty>
+
+                              <CommandGroup>
+                                <CommandItem
+                                  value="__clear__"
+                                  onSelect={() => {
+                                    setForm((prev) => ({
+                                      ...prev,
+                                      sessionId: null,
+                                      contactName: '',
+                                      contactJid: '',
+                                    }));
+                                    setContactOpen(false);
+                                  }}
+                                >
+                                  <span className="text-xs text-muted-foreground">Quitar contacto</span>
+                                </CommandItem>
+
+                                {contactOptions.map((s: any) => (
+                                  <CommandItem
+                                    key={s.id}
+                                    value={`${s.pushName ?? ''} ${s.remoteJid ?? ''}`}
+                                    onSelect={() => {
+                                      setForm((prev) => ({
+                                        ...prev,
+                                        sessionId: s.id,
+                                        contactName: s.pushName ?? '',
+                                        contactJid: s.remoteJid ?? '',
+                                      }));
+                                      setContactOpen(false);
+                                    }}
+                                  >
+                                    <Check className={cn('mr-2 h-4 w-4', form.sessionId === s.id ? 'opacity-100' : 'opacity-0')} />
+                                    <div className="min-w-0 flex-1">
+                                      <p className="truncate text-sm">{s.pushName || 'Sin nombre'}</p>
+                                      <p className="truncate text-[11px] text-muted-foreground">{s.remoteJid}</p>
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                      </MiniField>
+
+                      <MiniField label="Monto (base)">
                         <Input
                           type="number"
                           inputMode="decimal"
@@ -908,12 +947,9 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                           className="h-9 text-sm"
                           placeholder="0.00"
                         />
-                      </div>
-                    </div>
+                      </MiniField>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label className="text-sm text-muted-foreground">Extra</label>
+                      <MiniField label="Extra">
                         <Input
                           type="number"
                           inputMode="decimal"
@@ -922,10 +958,9 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                           className="h-9 text-sm"
                           placeholder="0.00"
                         />
-                      </div>
+                      </MiniField>
 
-                      <div className="space-y-1">
-                        <label className="text-sm text-muted-foreground">Descuento</label>
+                      <MiniField label="Descuento">
                         <Input
                           type="number"
                           inputMode="decimal"
@@ -934,12 +969,9 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                           className="h-9 text-sm"
                           placeholder="0.00"
                         />
-                      </div>
-                    </div>
+                      </MiniField>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label className="text-sm text-muted-foreground">Cuenta</label>
+                      <MiniField label="Cuenta">
                         <Select value={form.accountId} onValueChange={(v) => setForm((p) => ({ ...p, accountId: v }))}>
                           <SelectTrigger className="h-9 text-sm">
                             <SelectValue placeholder="Selecciona" />
@@ -952,205 +984,143 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                             ))}
                           </SelectContent>
                         </Select>
-                      </div>
+                      </MiniField>
 
-                      <div className="space-y-1">
-                        <label className="text-sm text-muted-foreground">Moneda</label>
-                        <Select value={form.currencyCode} onValueChange={(v) => setForm((p) => ({ ...p, currencyCode: v }))}>
+                      <MiniField label="Categoría">
+                        <Select
+                          value={form.categoryId || '__none__'}
+                          onValueChange={(v) => setForm((p) => ({ ...p, categoryId: v === '__none__' ? null : v }))}
+                        >
                           <SelectTrigger className="h-9 text-sm">
-                            <SelectValue placeholder="Selecciona" />
+                            <SelectValue placeholder="Opcional" />
                           </SelectTrigger>
                           <SelectContent>
-                            {currencies.map((c) => (
-                              <SelectItem key={c.code} value={c.code} className="text-sm">
-                                {c.code}
+                            <SelectItem value="__none__" className="text-sm">
+                              Sin categoría
+                            </SelectItem>
+                            {categories.map((c) => (
+                              <SelectItem key={c.id} value={c.id} className="text-sm">
+                                {c.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
+                      </MiniField>
+
+                      <div className="sm:col-span-2">
+                        <MiniField label="Descripción" hint="Opcional">
+                          <Textarea
+                            value={form.description}
+                            onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+                            className="min-h-[76px] h-[76px] resize-y text-sm"
+                            placeholder="Notas, referencia, observación..."
+                          />
+                        </MiniField>
                       </div>
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="text-sm text-muted-foreground">Categoría</label>
-                      <Select
-                        value={form.categoryId || '__none__'}
-                        onValueChange={(v) => setForm((p) => ({ ...p, categoryId: v === '__none__' ? null : v }))}
-                      >
-                        <SelectTrigger className="h-9 text-sm">
-                          <SelectValue placeholder="Opcional" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__none__" className="text-sm">
-                            Sin categoría
-                          </SelectItem>
-                          {categories.map((c) => (
-                            <SelectItem key={c.id} value={c.id} className="text-sm">
-                              {c.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/*  Contacto buscable (Session) */}
-                    <div className="space-y-1">
-                      <label className="text-sm text-muted-foreground">Contacto</label>
-
-                      <Popover open={contactOpen} onOpenChange={setContactOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            role="combobox"
-                            className="h-9 w-full justify-between text-sm"
-                            disabled={isPending}
-                          >
-                            <span className="truncate">
-                              {form.sessionId != null
-                                ? (() => {
-                                    const s = contactOptions.find((x) => x.id === form.sessionId);
-                                    return s ? sessionLabel(s) : `Session #${form.sessionId}`;
-                                  })()
-                                : 'Selecciona un contacto'}
-                            </span>
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                          <Command>
-                            <CommandInput
-                              placeholder="Buscar contacto..."
-                              value={contactQuery}
-                              onValueChange={setContactQuery}
-                            />
-
-                            <CommandEmpty>
-                              {contactLoading ? 'Buscando...' : 'Sin resultados.'}
-                            </CommandEmpty>
-
-                            <CommandGroup>
-                              {/* opción limpiar */}
-                              <CommandItem
-                                value="__none__"
-                                onSelect={() => {
-                                  setForm((prev) => ({ ...prev, sessionId: null }));
-                                  setContactOpen(false);
-                                }}
-                              >
-                                <Check className={cn('mr-2 h-4 w-4', form.sessionId == null ? 'opacity-100' : 'opacity-0')} />
-                                <span className="flex-1 truncate">Sin contacto</span>
-                              </CommandItem>
-
-                              {contactOptions.map((s) => {
-                                const selected = form.sessionId === s.id;
-                                const label = sessionLabel(s);
-
-                                return (
-                                  <CommandItem
-                                    key={s.id}
-                                    value={label}
-                                    onSelect={() => {
-                                      setForm((prev) => ({ ...prev, sessionId: s.id }));
-                                      setContactOpen(false);
-                                    }}
-                                  >
-                                    <Check className={cn('mr-2 h-4 w-4', selected ? 'opacity-100' : 'opacity-0')} />
-                                    <span className="flex-1 truncate">{label}</span>
-                                  </CommandItem>
-                                );
-                              })}
-                            </CommandGroup>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-
-                      <p className="text-xs text-muted-foreground">
-                        Vincula la venta a un contacto del CRM (Session).
-                      </p>
-                    </div>
-
-                    {/*  Producto buscable */}
-                    <div className="space-y-1">
-                      <label className="text-sm text-muted-foreground">Producto</label>
-
-                      <Popover open={productOpen} onOpenChange={setProductOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            role="combobox"
-                            className="h-9 w-full justify-between text-sm"
-                            disabled={isPending}
-                          >
-                            <span className="truncate">
-                              {form.productId
-                                ? (productOptions.find((p) => p.id === form.productId)?.title || form.title || 'Producto')
-                                : 'Selecciona un producto'}
-                            </span>
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                          <Command>
-                            <CommandInput
-                              placeholder="Buscar producto..."
-                              value={productQuery}
-                              onValueChange={setProductQuery}
-                            />
-
-                            <CommandEmpty>
-                              {productLoading ? 'Buscando...' : 'Sin resultados.'}
-                            </CommandEmpty>
-
-                            <CommandGroup>
-                              {productOptions.map((p) => (
-                                <CommandItem
-                                  key={p.id}
-                                  value={p.title}
-                                  onSelect={() => {
-                                    setForm((prev) => ({
-                                      ...prev,
-                                      productId: p.id,
-                                      title: p.title,
-                                      amount: String(p.price ?? 0),
-                                    }));
-                                    setProductOpen(false);
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      'mr-2 h-4 w-4',
-                                      form.productId === p.id ? 'opacity-100' : 'opacity-0'
-                                    )}
-                                  />
-                                  <span className="flex-1 truncate">{p.title}</span>
-                                  <span className="ml-2 text-xs text-muted-foreground">{String(p.price ?? 0)}</span>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
+                    <div className="flex justify-end gap-2 pt-1">
+                      <Button variant="outline" size="sm" onClick={() => setOpen(false)} disabled={isPending} className="h-9">
+                        Cancelar
+                      </Button>
+                      <Button onClick={onSave} size="sm" disabled={isPending || uploading} className="h-9">
+                        {editing ? 'Guardar cambios' : 'Guardar venta'}
+                      </Button>
                     </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <label className="text-sm text-muted-foreground">Descripción</label>
-                      <Textarea
-                        value={form.description}
-                        onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                        className="min-h-[64px] h-[64px] resize-y text-sm"
-                        placeholder="Opcional"
-                      />
+                  {/* RIGHT */}
+                  <div className="space-y-3 lg:sticky lg:top-4">
+                    {/* ✅ Fecha + Moneda arriba de concepto (editable) */}
+                    <div className="rounded-xl border bg-background p-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                            <p className="text-xs text-muted-foreground">Fecha</p>
+                          </div>
+                          <Input
+                            type="date"
+                            value={form.occurredAt}
+                            onChange={(e) => setForm((p) => ({ ...p, occurredAt: e.target.value }))}
+                            className="h-9 text-sm"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Coins className="h-4 w-4 text-muted-foreground" />
+                            <p className="text-xs text-muted-foreground">Moneda</p>
+                          </div>
+                          <Select
+                            value={form.currencyCode}
+                            onValueChange={(v) => setForm((p) => ({ ...p, currencyCode: v }))}
+                          >
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue placeholder="Moneda" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {currencies.map((c) => (
+                                <SelectItem key={c.code} value={c.code} className="text-sm">
+                                  {c.code}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
+                    {/* Concepto + total */}
+                    <div className="rounded-xl border bg-background p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[11px] text-muted-foreground">Concepto</p>
+                          <p className="truncate text-sm font-medium">
+                            {form.title?.trim() ? form.title.trim() : '—'}
+                          </p>
+
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <Badge variant="outline" className="h-6 text-[11px]">
+                              {previewAccountName}
+                            </Badge>
+                            <Badge variant="outline" className="h-6 text-[11px]">
+                              {previewCategoryName}
+                            </Badge>
+                            <Badge variant="outline" className="h-6 text-[11px]">
+                              <span className="inline-flex items-center gap-1">
+                                <UserRound className="h-3.5 w-3.5" />
+                                <span className="truncate max-w-[170px]">{contactText}</span>
+                              </span>
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 text-right">
+                          <p className="text-[11px] text-muted-foreground">Total</p>
+                          <p className="text-lg font-bold leading-tight">
+                            {moneyFormat(currencies, form.currencyCode, total)}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            Base: {base} · Extra: {extra} · Desc: {disc}
+                          </p>
+                        </div>
+                      </div>
+
+                      {form.description?.trim() ? (
+                        <>
+                          <Separator className="my-3" />
+                          <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                            {form.description.trim()}
+                          </p>
+                        </>
+                      ) : null}
+                    </div>
+
+                    {/* Soportes */}
+                    <div className="rounded-xl border bg-background p-3">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm text-muted-foreground">Soportes</label>
+                        <p className="text-sm font-medium">Soportes</p>
 
                         <Button
                           type="button"
@@ -1173,6 +1143,12 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                         />
                       </div>
 
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        Tip: usa capturas o PDF. Se guardan al crear/editar.
+                      </p>
+
+                      <Separator className="my-3" />
+
                       {attachments.length ? (
                         <div className="grid grid-cols-1 gap-2">
                           {attachments.map((a, idx) => (
@@ -1180,7 +1156,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                               key={a.id ?? `${a.url}-${idx}`}
                               className="flex items-center gap-3 rounded-xl border p-3 hover:bg-muted/30"
                             >
-                              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border bg-background">
+                              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border bg-muted/10">
                                 {guessIsImage(a.mimeType, a.url) ? (
                                   <img src={a.url} alt={a.fileName || 'soporte'} className="h-10 w-10 object-cover" />
                                 ) : guessIsPdf(a.mimeType, a.url) ? (
@@ -1199,7 +1175,9 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                                 >
                                   {a.fileName || 'Archivo'}
                                 </a>
-                                <p className="text-xs text-muted-foreground">{a.isNew ? 'Nuevo (sin guardar)' : 'Guardado'}</p>
+                                <p className="text-[11px] text-muted-foreground">
+                                  {a.isNew ? 'Nuevo (sin guardar)' : 'Guardado'}
+                                </p>
                               </div>
 
                               <Button
@@ -1227,27 +1205,31 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                           ))}
                         </div>
                       ) : (
-                        <div className="rounded-xl border p-4">
-                          <p className="text-sm text-muted-foreground">{uploading ? 'Subiendo...' : 'Sin soportes'}</p>
-                        </div>
+                        <EmptyBox text={uploading ? 'Subiendo...' : 'Sin soportes'} />
                       )}
+                    </div>
+
+                    {/* Minimal help */}
+                    <div className="rounded-xl border bg-muted/10 p-3">
+                      <div className="flex items-start gap-2">
+                        <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg border bg-background">
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">Vista previa</p>
+                          <p className="text-xs text-muted-foreground">
+                            Concepto y total se actualizan en tiempo real.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-
-                <div className="flex justify-end gap-2 pt-1">
-                  <Button variant="outline" size="sm" onClick={() => setOpen(false)} disabled={isPending}>
-                    Cancelar
-                  </Button>
-                  <Button onClick={onSave} size="sm" disabled={isPending || uploading}>
-                    {editing ? 'Guardar cambios' : 'Guardar'}
-                  </Button>
-                </div>
-              </div>
-            );
-          })()}
-        </DialogContent>
-      </Dialog>
-    </div>
+              );
+            })()}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </TooltipProvider>
   );
 }
