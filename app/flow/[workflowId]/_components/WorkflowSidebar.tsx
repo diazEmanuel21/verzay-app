@@ -154,7 +154,7 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes, onCreateNode }: 
                                     key={action.type}
                                     action={action}
                                     onDragStart={onDragStart}
-                                    onClickCreate={onClickCreate}   // NUEVO
+                                    onClickCreate={onClickCreate}
                                     disabled={reachedTotalLimit}
                                 />
                             ))}
@@ -168,7 +168,7 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes, onCreateNode }: 
                                     key={action.type}
                                     action={action}
                                     onDragStart={onDragStart}
-                                    onClickCreate={onClickCreate}   // ✅ NUEVO
+                                    onClickCreate={onClickCreate}   
                                     disabled={reachedTotalLimit || reachedSeguimientoLimit}
                                 />
                             ))}

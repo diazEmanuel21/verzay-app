@@ -30,7 +30,7 @@ export default async function SalesPage() {
       currencies={metaRes.data!.currencies}
       sales={listRes.data || []}
       products={productsRes.items || []}
-      sessions={sessionsRes.data || []} //  nuevo
+      // sessions={sessionsRes.data || []} //  nuevo
     />
   );
 }
