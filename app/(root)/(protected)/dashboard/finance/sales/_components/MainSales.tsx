@@ -529,9 +529,6 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <CardTitle className="text-sm">Ventas</CardTitle>
-                <Badge variant="secondary" className="h-6 text-[11px]">
-                  {rows.length} registros
-                </Badge>
               </div>
 
               <Button size="sm" onClick={openCreate} disabled={isPending} className="h-9">
@@ -791,9 +788,6 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                   {editing ? 'Edición' : 'Registro'}
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Más espacio: fecha + moneda viven arriba del concepto. Concepto + total a la derecha.
-              </p>
             </DialogHeader>
 
             {(() => {
@@ -1209,20 +1203,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                       )}
                     </div>
 
-                    {/* Minimal help */}
-                    <div className="rounded-xl border bg-muted/10 p-3">
-                      <div className="flex items-start gap-2">
-                        <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg border bg-background">
-                          <Eye className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">Vista previa</p>
-                          <p className="text-xs text-muted-foreground">
-                            Concepto y total se actualizan en tiempo real.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+
                   </div>
                 </div>
               );

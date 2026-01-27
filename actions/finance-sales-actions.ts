@@ -196,18 +196,41 @@ export async function updateSale(
     categoryId: string | null;
     title: string | null;
     description: string | null;
+
+    // 👇 si por error te llega desde el front, lo ignoramos
+    userId?: string;
+    type?: any;
+    status?: any;
+    createdAt?: any;
+    updatedAt?: any;
+    deletedAt?: any;
   }>
 ): Promise<OperationResponse> {
   try {
-    const payload: any = { ...data };
+    // ✅ whitelist: SOLO estos campos pueden actualizarse
+    const payload: any = {};
 
-    if (payload.occurredAt) payload.occurredAt = payload.occurredAt instanceof Date ? payload.occurredAt : new Date(payload.occurredAt);
-    if (payload.amount !== undefined) payload.amount = new Prisma.Decimal(String(payload.amount));
-    if (payload.extra !== undefined) payload.extra = new Prisma.Decimal(String(payload.extra));
-    if (payload.discount !== undefined) payload.discount = new Prisma.Decimal(String(payload.discount));
+    if (data.occurredAt !== undefined) {
+      payload.occurredAt =
+        data.occurredAt instanceof Date ? data.occurredAt : new Date(data.occurredAt);
+    }
+    if (data.amount !== undefined) payload.amount = new Prisma.Decimal(String(data.amount));
+    if (data.extra !== undefined) payload.extra = new Prisma.Decimal(String(data.extra));
+    if (data.discount !== undefined) payload.discount = new Prisma.Decimal(String(data.discount));
+
+    if (data.currencyCode !== undefined) payload.currencyCode = data.currencyCode;
+    if (data.accountId !== undefined) payload.accountId = data.accountId;
+    if (data.categoryId !== undefined) payload.categoryId = data.categoryId;
+    if (data.title !== undefined) payload.title = data.title;
+    if (data.description !== undefined) payload.description = data.description;
 
     const updated = await db.financeTransaction.updateMany({
-      where: { id, userId, type: 'INCOME' as any, status: { not: 'DELETED' as any } },
+      where: {
+        id,
+        userId,
+        type: SALES_TYPE, // ✅ era INCOME: aquí debe ser SALE
+        status: { not: 'DELETED' as any },
+      },
       data: payload,
     });
 
