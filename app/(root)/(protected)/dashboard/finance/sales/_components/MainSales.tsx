@@ -273,7 +273,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
   );
 
   const defaultCurrency = useMemo(
-    () => currencies.find((c) => c.code === 'USD')?.code || currencies[0]?.code || 'USD',
+    () => currencies.find((c) => c.code === 'COP')?.code || currencies[0]?.code || 'COP',
     [currencies]
   );
 
