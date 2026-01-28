@@ -388,7 +388,7 @@ model User {
   defaultProviderId                  String?
   delayTimeGpt                       String?               @map("delayTimeGPT")
   meetingUrl                         String?
-  preferredCurrencyCode              String       @default("COP")
+  preferredCurrencyCode              String                @default("COP")
   accounts                           Account[]
   agentPrompts                       AgentPrompt[]
   publishedAgentPromptRevisions      AgentPromptRevision[]
@@ -551,12 +551,13 @@ model FinanceAccount {
   name         String
   type         FinanceAccountType   @default(PERSONAL)
   isDefault    Boolean              @default(false)
-  currencyCode String?
-  currency     FinanceCurrency?     @relation(fields: [currencyCode], references: [code])
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
+  currencyCode String?
+  currency     FinanceCurrency?     @relation(fields: [currencyCode], references: [code])
   user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions FinanceTransaction[]
+
   @@unique([userId, name])
   @@index([userId])
   @@index([userId, currencyCode])
@@ -604,11 +605,8 @@ model FinanceCurrency {
   decimals     Int                  @default(2)
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
-
-  transactions FinanceTransaction[]
-
-  // ✅ NUEVO: relación inversa para FinanceAccount
   accounts     FinanceAccount[]
+  transactions FinanceTransaction[]
 
   @@map("finance_currencies")
 }
