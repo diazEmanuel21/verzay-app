@@ -89,6 +89,11 @@ export type SeguimientoActionType =
   | "seguimiento-document"
   | "seguimiento-audio"
 
+export type PropsWorkflowSidebar = {
+  totalNodes: number;
+  seguimientoNodes: number;
+  onCreateNode: (action: Action) => void;
+};
 // Tipo combinado para ActionType
 export type ActionType = BaseActionType | SeguimientoActionType;
 

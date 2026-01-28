@@ -110,7 +110,7 @@ export const Breadcrumbs = ({ isFlow = false }: { isFlow?: boolean }) => {
   return (
     <>
       {pathname !== "/multiagente" ? (
-        <div className="h-18 shrink-0 block">
+        <div className={`h-18 shrink-0 ${isFlow && 'flex flex-1'}`}>
           <header className="sticky top-0 w-full border-border flex items-center px-4 dark:bg-gray-900 dark:text-white">
             <Breadcrumb className="py-2 flex flex-row flex-1 overflow-hidden dark:bg-gray-900 dark:text-white">
               <BreadcrumbList>
@@ -231,7 +231,7 @@ export const Breadcrumbs = ({ isFlow = false }: { isFlow?: boolean }) => {
               </div>
             </Breadcrumb>
           </header>
-        </div>
+        </div >
       ) : null}
     </>
   );

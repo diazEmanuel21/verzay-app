@@ -4,7 +4,7 @@ export enum WorkflowStatus {
 }
 // Límites anti-spam por flujo
 export const MAX_NODES_PER_WORKFLOW = 50;
-export const MAX_SEGUIMIENTOS_PER_WORKFLOW = 4;
+export const MAX_SEGUIMIENTOS_PER_WORKFLOW = 50;
 
 export type UpdateNodePositionInput = {
   nodeId: string;
