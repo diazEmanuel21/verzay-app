@@ -388,6 +388,7 @@ model User {
   defaultProviderId                  String?
   delayTimeGpt                       String?               @map("delayTimeGPT")
   meetingUrl                         String?
+  preferredCurrencyCode              String       @default("COP")
   accounts                           Account[]
   agentPrompts                       AgentPrompt[]
   publishedAgentPromptRevisions      AgentPromptRevision[]
