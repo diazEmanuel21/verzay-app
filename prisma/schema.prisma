@@ -550,6 +550,11 @@ model FinanceAccount {
   name         String
   type         FinanceAccountType   @default(PERSONAL)
   isDefault    Boolean              @default(false)
+
+  // ✅ NUEVO
+  currencyCode String?
+  currency     FinanceCurrency?     @relation(fields: [currencyCode], references: [code])
+
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
   user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -557,6 +562,7 @@ model FinanceAccount {
 
   @@unique([userId, name])
   @@index([userId])
+  @@index([userId, currencyCode])
   @@map("finance_accounts")
 }
 
@@ -601,7 +607,11 @@ model FinanceCurrency {
   decimals     Int                  @default(2)
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
+
   transactions FinanceTransaction[]
+
+  // ✅ NUEVO: relación inversa para FinanceAccount
+  accounts     FinanceAccount[]
 
   @@map("finance_currencies")
 }
