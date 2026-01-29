@@ -2,10 +2,17 @@
 export const DISCONNECT_COOLDOWN_MS = 30 * 60 * 1000; // 30 min
 export const EVO_FETCH_TIMEOUT_MS = 12_000; // timeout para detectar "no responde"
 
+export const DISCONNECTION_MSG = `📵 Se *desvinculó* su WhatsApp del Agente.\n\n*Solución*: entre a su cuenta\n\n👉 agente.ia-app.com\n\n*Conectar* → en WhatsApp Business: Dispositivos vinculados.\n\n*Vincular un dispositivo* y escanee el *QR*  📳`
+
 export type EvoHealthCacheEntry = {
   lastIsConnected: boolean | null; // null = no hay historial
-  lastNotifiedAt: number;          // timestamp ms
+  lastNotifiedAt: number;          // timestamp ms (para cooldown)
+  notifiedDayKey: string;          // "YYYY-MM-DD" (Bogotá)
+  notifiedCountToday: number;      // 0..2
 };
+
+export const getDayKeyBogota = (ts = Date.now()) =>
+  new Date(ts).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); // YYYY-MM-DD
 
 export const getEvoCache = (): Map<string, EvoHealthCacheEntry> => {
   const g = globalThis as any;

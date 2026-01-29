@@ -23,6 +23,7 @@ export const navigationRoutes: NavigationRoutesInterface[] = [
     { route: "/chats" },
     { route: "/sessions" },
     { route: "/flow" },
+    { route: "/workflow" },
     { route: "/campaigns" },
     { route: "/tools" },
     { route: "/reminders" },

@@ -343,7 +343,6 @@ export const WorkflowCard = ({
 
                 <div className="flex items-center">
                     <WorkflowAction
-                        workflowName={workflow.name.toUpperCase()}
                         workflowId={workflow.id}
                         userId={userId}
                     />

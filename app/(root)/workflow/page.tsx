@@ -3,9 +3,9 @@ import { redirect } from 'next/navigation';
 import Header from '@/components/shared/header';
 import { Skeleton } from '@/components/ui/skeleton';
 
-import CreateWorflowDialog from './_components/CreateWorflowDialog';
 import { currentUser } from '@/lib/auth';
-import { UserWorkflows } from './_components';
+import CreateWorflowDialog from '../flow/_components/CreateWorflowDialog';
+import { UserWorkflows } from '../flow/_components';
 
 function UserWorkFlowSkeleton() {
   return (
@@ -17,7 +17,7 @@ function UserWorkFlowSkeleton() {
   );
 };
 
-const FlowPage = async () => {
+const WorkflowPage = async () => {
   const user = await currentUser();
 
   if (!user) {
@@ -30,7 +30,7 @@ const FlowPage = async () => {
       <div className="sticky top-0 z-1 mb-6">
         <div className="flex justify-between items-center">
           <Header
-            title={'Flujos básicos'}
+            title={'Flujos avanzados'}
           />
           <CreateWorflowDialog />
         </div>
@@ -44,4 +44,4 @@ const FlowPage = async () => {
   );
 };
 
-export default FlowPage;
+export default WorkflowPage;

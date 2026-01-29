@@ -32,7 +32,7 @@ import { Button } from '../ui/button';
 import ThemeSwitcher from './ThemeSwitcher';
 
 const breadcrumbLabels: Record<string, string> = {
-  flow: 'flujos',
+  flow: 'flujo',
   profile: 'perfil',
   sessions: 'Leads',
   credits: 'planes',
@@ -63,12 +63,14 @@ export const Breadcrumbs = ({ isFlow = false }: { isFlow?: boolean }) => {
   const [guides, setGuides] = useState<GuideUrl[]>([]);
   const [workflowName, setWorkflowName] = useState<string | null>(null);
 
-  // Detecta workflowId: /flow/:workflowId
-  const workflowId = useMemo(() => {
-    const flowIndex = segments.indexOf('flow');
-    if (flowIndex === -1) return null;
-    return segments[flowIndex + 1] ?? null;
+  const moduleIndex = useMemo(() => {
+    return segments.findIndex((s) => s === 'flow' || s === 'workflow' || s === 'workflows');
   }, [segments]);
+
+  const workflowId = useMemo(() => {
+    if (moduleIndex === -1) return null;
+    return segments[moduleIndex + 1] ?? null;
+  }, [segments, moduleIndex]);
 
   useEffect(() => {
     const fetchGuides = async () => {
@@ -97,8 +99,7 @@ export const Breadcrumbs = ({ isFlow = false }: { isFlow?: boolean }) => {
 
     const labelFromDict = breadcrumbLabels[segment];
 
-    // 👇 si este segmento es el workflowId y ya tenemos nombre, lo mostramos
-    const isWorkflowIdSegment = workflowId && segment === workflowId;
+    const isWorkflowIdSegment = workflowId && index === moduleIndex + 1;
     const label =
       (isWorkflowIdSegment && (workflowName ?? 'flujo')) ||
       labelFromDict ||
@@ -142,10 +143,10 @@ export const Breadcrumbs = ({ isFlow = false }: { isFlow?: boolean }) => {
                           <BreadcrumbLink asChild>
                             <Link
                               href={breadcrumb.href}
-                              className={`capitalize ${index === breadcrumbs.length - 1 ? 'text-primary' : 'text-muted-foreground'
+                              className={`${index === breadcrumbs.length - 1 ? 'text-primary' : 'text-muted-foreground'
                                 } hover:text-primary transition`}
                             >
-                              {breadcrumb.label}
+                              {breadcrumb.label.toLocaleLowerCase()}
                             </Link>
                           </BreadcrumbLink>
                         </BreadcrumbItem>
@@ -160,10 +161,10 @@ export const Breadcrumbs = ({ isFlow = false }: { isFlow?: boolean }) => {
                         <BreadcrumbLink asChild>
                           <Link
                             href={breadcrumb.href}
-                            className={`capitalize ${index === breadcrumbs.length - 1 ? 'text-primary' : 'text-muted-foreground'
+                            className={`${index === breadcrumbs.length - 1 ? 'text-primary' : 'text-muted-foreground'
                               } hover:text-primary transition`}
                           >
-                            {breadcrumb.label}
+                            {breadcrumb.label.toLocaleLowerCase()}
                           </Link>
                         </BreadcrumbLink>
                       </BreadcrumbItem>

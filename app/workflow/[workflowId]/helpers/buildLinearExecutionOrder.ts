@@ -23,7 +23,6 @@ export function buildLinearExecutionOrder(nodes: NodeDB[], edges: EdgeDB[]) {
     }
 
     // Si por algún motivo hay más de un start (edges desconectados), elige uno con fallback
-    // (puedes usar createdAt o el menor order si aún existe como histórico)
     const start = [...starts].sort((a, b) => {
         const ao = a.order ?? Number.MAX_SAFE_INTEGER;
         const bo = b.order ?? Number.MAX_SAFE_INTEGER;

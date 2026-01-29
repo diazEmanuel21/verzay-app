@@ -81,11 +81,14 @@ export const ModuleForm = ({
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    {navigationRoutes.map((item) => (
-                                        <SelectItem key={item.route} value={item.route}>
-                                            {item.route}
-                                        </SelectItem>
-                                    ))}
+                                    {[...navigationRoutes]
+                                        .sort((a, b) => a.route.localeCompare(b.route))
+                                        .map((item) => (
+                                            <SelectItem key={item.route} value={item.route}>
+                                                {item.route}
+                                            </SelectItem>
+                                        ))}
+
                                 </SelectContent>
                             </Select>
                         </FormItem>
@@ -233,11 +236,13 @@ export const ModuleForm = ({
                                         <SelectValue placeholder="Selecciona URL" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {navigationRoutes.map((route) => (
-                                            <SelectItem key={route.route} value={route.route}>
-                                                {route.route}
-                                            </SelectItem>
-                                        ))}
+                                        {[...navigationRoutes]
+                                            .sort((a, b) => a.route.localeCompare(b.route))
+                                            .map((item) => (
+                                                <SelectItem key={item.route} value={item.route}>
+                                                    {item.route}
+                                                </SelectItem>
+                                            ))}
                                     </SelectContent>
                                 </Select>
                                 {/* INPUT para título */}

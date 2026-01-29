@@ -5,7 +5,7 @@ import { ApiKey } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
 import { sendingMessages } from "./sending-messages-actions";
-import { ClientResponse, DISCONNECT_COOLDOWN_MS, EVO_FETCH_TIMEOUT_MS, GenerateQrInterface, getEvoCache, isApiConnected, isWhatsappLike, QRCodeResponse } from "@/types/evo-api";
+import { ClientResponse, DISCONNECT_COOLDOWN_MS, DISCONNECTION_MSG, EVO_FETCH_TIMEOUT_MS, GenerateQrInterface, getDayKeyBogota, getEvoCache, isApiConnected, isWhatsappLike, QRCodeResponse } from "@/types/evo-api";
 
 /* =========================
    Server-Action: Generar QR
@@ -43,12 +43,26 @@ export async function generateQRCode({ instanceName, userId }: GenerateQrInterfa
   const cache = getEvoCache();
   const cacheKey = `${userId}::${instanceName}`;
   const now = Date.now();
-  const entry = cache.get(cacheKey) ?? { lastIsConnected: null, lastNotifiedAt: 0 };
+  const todayKey = getDayKeyBogota(now);
+
+  const entry =
+    cache.get(cacheKey) ??
+    {
+      lastIsConnected: null,
+      lastNotifiedAt: 0,
+      notifiedDayKey: todayKey,
+      notifiedCountToday: 0,
+    };
+
+  if (entry.notifiedDayKey !== todayKey) {
+    entry.notifiedDayKey = todayKey;
+    entry.notifiedCountToday = 0;
+  }
 
   let qr: { code: string; pairingCode?: string } | undefined;
   let connectionState: { instance: { state: string } } | undefined;
 
-  // 🔽 esto es el estado de CONEXIÓN a la API (Evolution alive / dead)
+  // esto es el estado de CONEXIÓN a la API (Evolution alive / dead)
   let apiConnectedNow = false;
 
   // para devolver mensaje si algo falla
@@ -92,10 +106,18 @@ export async function generateQRCode({ instanceName, userId }: GenerateQrInterfa
   const transitionedToDisconnected = entry.lastIsConnected === true && apiConnectedNow === false;
   const cooldownOk = now - entry.lastNotifiedAt >= DISCONNECT_COOLDOWN_MS;
 
+  const dailyOk = entry.notifiedCountToday < 2;
+
+
   let justNotified = false;
 
-  if ((transitionedToDisconnected && cooldownOk) || (entry.lastIsConnected === null && !apiConnectedNow && cooldownOk)) {
-    // Intento de notificación (si está configurado)
+  if (
+    dailyOk &&
+    (
+      (transitionedToDisconnected && cooldownOk) ||
+      (entry.lastIsConnected === null && !apiConnectedNow && cooldownOk)
+    )
+  ) {
     const remoteJid = (user as any).notificationNumber as string | undefined;
 
     if (remoteJid) {
@@ -108,15 +130,16 @@ export async function generateQRCode({ instanceName, userId }: GenerateQrInterfa
           url: sendTextUrl,
           apikey: apiKey,
           remoteJid,
-          text: "Tu *AGENTE* se encuentra desconectado 🔴. Por favor revisa tu configuración para restablecer la conexión.",
+          text: DISCONNECTION_MSG,
         });
       } catch {
-        // best-effort: aunque falle el envío, evitamos spam
+        // best-effort
       }
     }
 
     entry.lastNotifiedAt = now;
-    justNotified = true;
+    entry.notifiedCountToday += 1;
+    justNotified = true; // ✅
   }
 
   entry.lastIsConnected = apiConnectedNow;
