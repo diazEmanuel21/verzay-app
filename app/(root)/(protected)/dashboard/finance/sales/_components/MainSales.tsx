@@ -348,7 +348,7 @@ export default function MainSales({
       description: row.description ?? '',
       productId: inferredProductId,
 
-      sessionId: null,
+      sessionId: row.sessionId ?? null,
       contactName: inferredContactName,
       contactJid: inferredContactJid,
     });
@@ -420,7 +420,7 @@ export default function MainSales({
           title: form.title?.trim() || null,
           description: form.description?.trim() || null,
           productId: form.productId,
-
+          sessionId: form.sessionId ?? null, // ✅ guarda relación real con Session
           counterparty: form.contactName?.trim() || null,
           reference: form.contactJid?.trim() || null,
         };

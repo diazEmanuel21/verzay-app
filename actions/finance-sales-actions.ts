@@ -29,8 +29,16 @@ function serializeTx(tx: any) {
   };
 }
 
-//  IMPORTANTE: usa el valor REAL de tu enum FinanceTxType (NO "INCOME")
-const SALES_TYPE = 'SALE' as any; // <- si tu enum se llama distinto, cámbialo por el valor correcto
+// IMPORTANTE: tu enum es FinanceTxType: SALE | EXPENSE
+const SALES_TYPE = 'SALE' as any;
+
+function toDecimalOrUndefined(v: any) {
+  if (v === undefined) return undefined;
+  if (v === null) return new Prisma.Decimal('0');
+  const s = String(v).trim();
+  if (!s) return new Prisma.Decimal('0');
+  return new Prisma.Decimal(s);
+}
 
 export async function ensureFinanceSalesDefaults(userId: string): Promise<OperationResponse> {
   try {
@@ -67,7 +75,7 @@ export async function ensureFinanceSalesDefaults(userId: string): Promise<Operat
         userId,
         name,
         type: SALES_TYPE,
-        order: idx + 1, //  si tienes "order" en el modelo
+        order: idx + 1,
       })),
       skipDuplicates: true,
     });
@@ -95,7 +103,6 @@ export async function getAllSales(userId: string): Promise<OperationResponse<any
         category: true,
         currency: true,
         attachments: true,
-
         session: {
           select: {
             id: true,
@@ -147,13 +154,21 @@ export async function createSale(data: {
   userId: string;
   occurredAt: string | Date;
   amount: string | number;
-  extra?: string | number;
-  discount?: string | number;
+  extra?: string | number | null;
+  discount?: string | number | null;
   currencyCode: string;
   accountId: string;
   categoryId?: string | null;
   title?: string | null;
   description?: string | null;
+
+  // ✅ contacto/sesión
+  sessionId?: number | null;
+  counterparty?: string | null;
+  reference?: string | null;
+
+  // 👇 si llega desde el front lo ignoramos
+  productId?: any;
 }): Promise<OperationResponse<{ id: string }>> {
   try {
     await ensureFinanceSalesDefaults(data.userId);
@@ -161,25 +176,32 @@ export async function createSale(data: {
     const created = await db.financeTransaction.create({
       data: {
         userId: data.userId,
-        type: 'SALE' as any,
+        type: SALES_TYPE,
         status: 'ACTIVE' as any,
         occurredAt: data.occurredAt instanceof Date ? data.occurredAt : new Date(data.occurredAt),
         amount: new Prisma.Decimal(String(data.amount)),
-        extra: new Prisma.Decimal(String(data.extra ?? 0)),
-        discount: new Prisma.Decimal(String(data.discount ?? 0)),
+        extra: toDecimalOrUndefined(data.extra) ?? new Prisma.Decimal('0'),
+        discount: toDecimalOrUndefined(data.discount) ?? new Prisma.Decimal('0'),
         currencyCode: data.currencyCode,
         accountId: data.accountId,
         categoryId: data.categoryId ?? null,
         title: data.title ?? null,
         description: data.description ?? null,
+
+        // ✅ guarda contacto real
+        sessionId: data.sessionId ?? null,
+
+        // ✅ snapshot opcional
+        counterparty: data.counterparty ?? null,
+        reference: data.reference ?? null,
       },
       select: { id: true },
     });
 
     return { success: true, message: 'Venta creada.', data: { id: created.id } };
-  } catch (error) {
+  } catch (error: any) {
     console.error('createSale error:', error);
-    return { success: false, message: 'Error al crear venta.' };
+    return { success: false, message: error?.message || 'Error al crear venta.' };
   }
 }
 
@@ -188,14 +210,19 @@ export async function updateSale(
   userId: string,
   data: Partial<{
     occurredAt: string | Date;
-    amount: string | number;
-    extra: string | number;
-    discount: string | number;
+    amount: string | number | null;
+    extra: string | number | null;
+    discount: string | number | null;
     currencyCode: string;
     accountId: string;
     categoryId: string | null;
     title: string | null;
     description: string | null;
+
+    // ✅ contacto/sesión
+    sessionId: number | null;
+    counterparty: string | null;
+    reference: string | null;
 
     // 👇 si por error te llega desde el front, lo ignoramos
     userId?: string;
@@ -204,19 +231,24 @@ export async function updateSale(
     createdAt?: any;
     updatedAt?: any;
     deletedAt?: any;
+    productId?: any;
   }>
 ): Promise<OperationResponse> {
   try {
-    // ✅ whitelist: SOLO estos campos pueden actualizarse
     const payload: any = {};
 
     if (data.occurredAt !== undefined) {
-      payload.occurredAt =
-        data.occurredAt instanceof Date ? data.occurredAt : new Date(data.occurredAt);
+      payload.occurredAt = data.occurredAt instanceof Date ? data.occurredAt : new Date(data.occurredAt);
     }
-    if (data.amount !== undefined) payload.amount = new Prisma.Decimal(String(data.amount));
-    if (data.extra !== undefined) payload.extra = new Prisma.Decimal(String(data.extra));
-    if (data.discount !== undefined) payload.discount = new Prisma.Decimal(String(data.discount));
+
+    const amount = toDecimalOrUndefined(data.amount);
+    if (amount !== undefined) payload.amount = amount;
+
+    const extra = toDecimalOrUndefined(data.extra);
+    if (extra !== undefined) payload.extra = extra;
+
+    const discount = toDecimalOrUndefined(data.discount);
+    if (discount !== undefined) payload.discount = discount;
 
     if (data.currencyCode !== undefined) payload.currencyCode = data.currencyCode;
     if (data.accountId !== undefined) payload.accountId = data.accountId;
@@ -224,11 +256,16 @@ export async function updateSale(
     if (data.title !== undefined) payload.title = data.title;
     if (data.description !== undefined) payload.description = data.description;
 
+    // ✅ contacto real + snapshot
+    if (data.sessionId !== undefined) payload.sessionId = data.sessionId;
+    if (data.counterparty !== undefined) payload.counterparty = data.counterparty;
+    if (data.reference !== undefined) payload.reference = data.reference;
+
     const updated = await db.financeTransaction.updateMany({
       where: {
         id,
         userId,
-        type: SALES_TYPE, // ✅ era INCOME: aquí debe ser SALE
+        type: SALES_TYPE,
         status: { not: 'DELETED' as any },
       },
       data: payload,
@@ -236,9 +273,9 @@ export async function updateSale(
 
     if (updated.count === 0) return { success: false, message: 'Venta no encontrada o no editable.' };
     return { success: true, message: 'Venta actualizada.' };
-  } catch (error) {
+  } catch (error: any) {
     console.error('updateSale error:', error);
-    return { success: false, message: 'Error al actualizar venta.' };
+    return { success: false, message: error?.message || 'Error al actualizar venta.' };
   }
 }
 
