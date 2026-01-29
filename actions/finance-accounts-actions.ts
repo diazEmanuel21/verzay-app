@@ -2,102 +2,124 @@
 
 import { db } from '@/lib/db';
 
-type Op<T = unknown> = { success: boolean; message: string; data?: T };
-
-export async function getFinanceAccounts(userId: string): Promise<Op<any[]>> {
+export async function getFinanceAccounts(userId: string) {
   try {
-    const accounts = await db.financeAccount.findMany({
+    const data = await db.financeAccount.findMany({
       where: { userId },
-      orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
       include: { currency: true },
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
     });
-    return { success: true, message: 'OK', data: accounts };
+
+    return { success: true, data };
   } catch (e: any) {
     return { success: false, message: e?.message || 'Error listando cuentas' };
   }
 }
 
-export async function createFinanceAccount(data: {
+export async function createFinanceAccount(payload: {
   userId: string;
   name: string;
-  type?: 'COMPANY' | 'PERSONAL';
-  currencyCode: string; // recomendado obligatorio
+  type: 'PERSONAL' | 'COMPANY';
+  currencyCode: string;
   isDefault?: boolean;
-}): Promise<Op<{ id: string }>> {
+}) {
   try {
-    // si será default, desmarca las demás
-    if (data.isDefault) {
+    const { userId, isDefault } = payload;
+
+    // si viene default -> desmarcar las otras
+    if (isDefault) {
       await db.financeAccount.updateMany({
-        where: { userId: data.userId, isDefault: true },
+        where: { userId, isDefault: true },
         data: { isDefault: false },
       });
     }
 
     const created = await db.financeAccount.create({
       data: {
-        userId: data.userId,
-        name: data.name.trim(),
-        type: (data.type ?? 'PERSONAL') as any,
-        currencyCode: data.currencyCode,
-        isDefault: !!data.isDefault,
+        userId,
+        name: payload.name,
+        type: payload.type,
+        currencyCode: payload.currencyCode,
+        isDefault: !!payload.isDefault,
       },
-      select: { id: true },
+      include: { currency: true },
     });
 
-    return { success: true, message: 'Cuenta creada', data: { id: created.id } };
+    return { success: true, data: created };
   } catch (e: any) {
     return { success: false, message: e?.message || 'Error creando cuenta' };
   }
 }
 
+// ✅ ESTA ES LA QUE TE FALTA / NO ESTÁ EXPORTADA
 export async function updateFinanceAccount(
-  id: string,
+  accountId: string,
   userId: string,
-  data: Partial<{
+  payload: Partial<{
     name: string;
-    type: 'COMPANY' | 'PERSONAL';
+    type: 'PERSONAL' | 'COMPANY';
     currencyCode: string;
     isDefault: boolean;
   }>
-): Promise<Op> {
+) {
   try {
-    if (data.isDefault) {
+    // si se marca default -> desmarcar las otras
+    if (payload.isDefault) {
       await db.financeAccount.updateMany({
-        where: { userId, isDefault: true, NOT: { id } },
+        where: { userId, isDefault: true },
         data: { isDefault: false },
       });
     }
 
-    await db.financeAccount.update({
-      where: { id },
+    const updated = await db.financeAccount.update({
+      where: { id: accountId },
       data: {
-        ...(data.name !== undefined ? { name: data.name.trim() } : {}),
-        ...(data.type !== undefined ? { type: data.type as any } : {}),
-        ...(data.currencyCode !== undefined ? { currencyCode: data.currencyCode } : {}),
-        ...(data.isDefault !== undefined ? { isDefault: data.isDefault } : {}),
+        ...(payload.name !== undefined ? { name: payload.name } : {}),
+        ...(payload.type !== undefined ? { type: payload.type } : {}),
+        ...(payload.currencyCode !== undefined ? { currencyCode: payload.currencyCode } : {}),
+        ...(payload.isDefault !== undefined ? { isDefault: payload.isDefault } : {}),
       },
+      include: { currency: true },
     });
 
-    return { success: true, message: 'Cuenta actualizada' };
+    return { success: true, data: updated };
   } catch (e: any) {
     return { success: false, message: e?.message || 'Error actualizando cuenta' };
   }
 }
 
-export async function deleteFinanceAccount(id: string, userId: string): Promise<Op> {
+export async function deleteFinanceAccount(accountId: string, userId: string) {
   try {
-    // bloquea si hay transacciones
-    const txCount = await db.financeTransaction.count({
-      where: { userId, accountId: id, status: { not: 'DELETED' as any } },
+    // opcional: impedir borrar default si quieres
+    // const acc = await db.financeAccount.findUnique({ where: { id: accountId } });
+    // if (acc?.isDefault) return { success:false, message:'No puedes borrar la cuenta default' };
+
+    await db.financeAccount.delete({
+      where: { id: accountId },
     });
-    if (txCount > 0) {
-      return { success: false, message: 'No puedes eliminar una cuenta con transacciones.' };
+
+    // opcional: si quedó sin default, setear uno
+    const hasDefault = await db.financeAccount.findFirst({
+      where: { userId, isDefault: true },
+      select: { id: true },
+    });
+
+    if (!hasDefault) {
+      const first = await db.financeAccount.findFirst({
+        where: { userId },
+        orderBy: { createdAt: 'asc' },
+        select: { id: true },
+      });
+
+      if (first?.id) {
+        await db.financeAccount.update({
+          where: { id: first.id },
+          data: { isDefault: true },
+        });
+      }
     }
 
-    const deleted = await db.financeAccount.deleteMany({ where: { id, userId } });
-    if (deleted.count === 0) return { success: false, message: 'Cuenta no encontrada' };
-
-    return { success: true, message: 'Cuenta eliminada' };
+    return { success: true };
   } catch (e: any) {
     return { success: false, message: e?.message || 'Error eliminando cuenta' };
   }

@@ -46,9 +46,7 @@ import {
   UserRound,
   Phone,
   Pencil,
-  Eye,
   Trash2,
-  Coins,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -60,24 +58,27 @@ type Props = {
   currencies: any[];
   sales: any[];
   products: any[];
+  primaryCurrencyCode: string; // ✅ moneda del user
 };
 
 type FormState = {
   occurredAt: string;
-  amount: string; // base
-  extra: string; // suma
-  discount: string; // resta
-  currencyCode: string;
+  amount: string;
+  extra: string;
+  discount: string;
+
+  currencyCode: string; // ✅ ya no editable
+
   accountId: string;
   categoryId: string | null;
+
   title: string;
   description: string;
   productId: string | null;
 
-  // ✅ contacto (Session)
   sessionId: number | null;
-  contactName: string; // pushName
-  contactJid: string; // remoteJid
+  contactName: string;
+  contactJid: string;
 };
 
 type DraftAttachment = {
@@ -135,15 +136,23 @@ function sumByCurrency(list: any[]) {
   }, {});
 }
 
-function MiniField({
-  label,
-  children,
-  hint,
-}: {
-  label: string;
-  children: React.ReactNode;
-  hint?: string;
-}) {
+function moneyFormat(currencies: any[], code: string, value: number) {
+  const meta = currencies.find((c) => c.code === code);
+  const decimals = typeof meta?.decimals === 'number' ? meta.decimals : 2;
+  try {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: code,
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(value);
+  } catch {
+    const symbol = meta?.symbol ? `${meta.symbol} ` : '';
+    return `${symbol}${value.toFixed(decimals)} ${code}`;
+  }
+}
+
+function MiniField({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-2">
@@ -163,31 +172,21 @@ function EmptyBox({ text }: { text: string }) {
   );
 }
 
-function moneyFormat(currencies: any[], code: string, value: number) {
-  const meta = currencies.find((c) => c.code === code);
-  const decimals = typeof meta?.decimals === 'number' ? meta.decimals : 2;
-  try {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: code,
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    }).format(value);
-  } catch {
-    const symbol = meta?.symbol ? `${meta.symbol} ` : '';
-    return `${symbol}${value.toFixed(decimals)} ${code}`;
-  }
-}
-
-export default function MainSales({ userId, accounts, categories, currencies, sales, products }: Props) {
+export default function MainSales({
+  userId,
+  accounts,
+  categories,
+  currencies,
+  sales,
+  products,
+  primaryCurrencyCode,
+}: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // ✅ tabla sin recargar
   const [rows, setRows] = useState<any[]>(sales ?? []);
   useEffect(() => setRows(sales ?? []), [sales]);
 
-  // ✅ detalle por click fila
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailRow, setDetailRow] = useState<any | null>(null);
 
@@ -207,7 +206,6 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
   const [attachments, setAttachments] = useState<DraftAttachment[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  // ✅ selector buscable productos
   const [productOpen, setProductOpen] = useState(false);
   const [productQuery, setProductQuery] = useState('');
   const [productLoading, setProductLoading] = useState(false);
@@ -240,7 +238,6 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     return () => clearTimeout(t);
   }, [productOpen, productQuery, userId]);
 
-  // ✅ selector buscable contacto (Session)
   const [contactOpen, setContactOpen] = useState(false);
   const [contactQuery, setContactQuery] = useState('');
   const [contactLoading, setContactLoading] = useState(false);
@@ -272,10 +269,14 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     [accounts]
   );
 
-  const defaultCurrency = useMemo(
-    () => currencies.find((c) => c.code === 'COP')?.code || currencies[0]?.code || 'COP',
-    [currencies]
-  );
+  // ✅ moneda por defecto (si existe en currencies)
+  const defaultCurrency = useMemo(() => {
+    return (
+      currencies.find((c) => c.code === primaryCurrencyCode)?.code ||
+      currencies[0]?.code ||
+      'USD'
+    );
+  }, [currencies, primaryCurrencyCode]);
 
   const [form, setForm] = useState<FormState>({
     occurredAt: toISODate(new Date()),
@@ -293,6 +294,10 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
     contactName: '',
     contactJid: '',
   });
+
+  useEffect(() => {
+    setForm((p) => ({ ...p, currencyCode: p.currencyCode || defaultCurrency }));
+  }, [defaultCurrency]);
 
   const resetForm = () => {
     setForm({
@@ -326,18 +331,17 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
   const openEdit = (row: any) => {
     setEditing(row);
 
-    const inferredProductId =
-      row.productId ?? products.find((p) => p.title === row.title)?.id ?? null;
-
+    const inferredProductId = row.productId ?? products.find((p) => p.title === row.title)?.id ?? null;
     const inferredContactName = row.counterparty ?? '';
     const inferredContactJid = row.reference ?? '';
 
+    // ✅ mantiene moneda del registro (solo lectura)
     setForm({
       occurredAt: toISODate(row.occurredAt),
       amount: String(row.amount ?? ''),
       extra: String(row.extra ?? ''),
       discount: String(row.discount ?? ''),
-      currencyCode: row.currencyCode,
+      currencyCode: row.currencyCode || defaultCurrency,
       accountId: row.accountId,
       categoryId: row.categoryId ?? null,
       title: row.title ?? '',
@@ -397,7 +401,6 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
 
   const onSave = () => {
     if (!form.accountId) return toast.error('Selecciona una cuenta');
-    if (!form.currencyCode) return toast.error('Selecciona una moneda');
     if (!form.productId) return toast.error('Selecciona un producto');
     if (!form.amount) return toast.error('Ingresa un monto');
 
@@ -409,7 +412,9 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
           amount: form.amount,
           extra: form.extra?.trim() ? form.extra : '0',
           discount: form.discount?.trim() ? form.discount : '0',
-          currencyCode: form.currencyCode,
+
+          currencyCode: form.currencyCode, // ✅ fijo (solo lectura)
+
           accountId: form.accountId,
           categoryId: form.categoryId,
           title: form.title?.trim() || null,
@@ -420,10 +425,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
           reference: form.contactJid?.trim() || null,
         };
 
-        const res = editing
-          ? await updateSale(editing.id, userId, payload as any)
-          : await createSale(payload as any);
-
+        const res = editing ? await updateSale(editing.id, userId, payload as any) : await createSale(payload as any);
         if (!res.success) return toast.error(res.message);
 
         const txId = editing ? editing.id : (res as any).data?.id;
@@ -486,17 +488,29 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
   const totalsMonth = useMemo(() => sumByCurrency(monthRows), [monthRows]);
   const totalsAll = useMemo(() => sumByCurrency(rows), [rows]);
 
+  const orderedEntries = (totals: Record<string, number>) => {
+    const entries = Object.entries(totals);
+    if (!entries.length) return [];
+
+    const safe = currencies.find((c) => c.code === primaryCurrencyCode)?.code || defaultCurrency;
+
+    return [
+      ...entries.filter(([code]) => code === safe),
+      ...entries.filter(([code]) => code !== safe),
+    ];
+  };
+
   const monthTotalText = useMemo(() => {
-    const entries = Object.entries(totalsMonth);
+    const entries = orderedEntries(totalsMonth);
     if (!entries.length) return '—';
-    return entries.map(([code, v]) => `${moneyFormat(currencies, code, v)}`).join(' • ');
-  }, [totalsMonth, currencies]);
+    return entries.map(([code, v]) => moneyFormat(currencies, code, v)).join(' • ');
+  }, [totalsMonth, currencies, primaryCurrencyCode, defaultCurrency]);
 
   const grandTotalText = useMemo(() => {
-    const entries = Object.entries(totalsAll);
+    const entries = orderedEntries(totalsAll);
     if (!entries.length) return '—';
-    return entries.map(([code, v]) => `${moneyFormat(currencies, code, v)}`).join(' • ');
-  }, [totalsAll, currencies]);
+    return entries.map(([code, v]) => moneyFormat(currencies, code, v)).join(' • ');
+  }, [totalsAll, currencies, primaryCurrencyCode, defaultCurrency]);
 
   const detailAccountName = useMemo(() => {
     if (!detailRow?.accountId) return '';
@@ -516,10 +530,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
   const detailBase = useMemo(() => toAmountNumber(detailRow?.amount), [detailRow]);
   const detailExtra = useMemo(() => toAmountNumber(detailRow?.extra), [detailRow]);
   const detailDiscount = useMemo(() => toAmountNumber(detailRow?.discount), [detailRow]);
-  const detailTotal = useMemo(
-    () => detailBase + detailExtra - detailDiscount,
-    [detailBase, detailExtra, detailDiscount]
-  );
+  const detailTotal = useMemo(() => detailBase + detailExtra - detailDiscount, [detailBase, detailExtra, detailDiscount]);
 
   return (
     <TooltipProvider>
@@ -527,9 +538,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
         <Card className="border-border">
           <CardHeader className="py-3">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-sm">Ventas</CardTitle>
-              </div>
+              <CardTitle className="text-sm">Ventas</CardTitle>
 
               <Button size="sm" onClick={openCreate} disabled={isPending} className="h-9">
                 <Plus className="mr-2 h-4 w-4" />
@@ -595,23 +604,11 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
               </TabsList>
 
               <TabsContent value="month" className="mt-2">
-                <DataTable
-                  columns={columns as any}
-                  data={monthRows}
-                  searchKey="title"
-                  searchPlaceholder="Buscar..."
-                  onRowClick={openDetail}
-                />
+                <DataTable columns={columns as any} data={monthRows} searchKey="title" searchPlaceholder="Buscar..." onRowClick={openDetail} />
               </TabsContent>
 
               <TabsContent value="total" className="mt-2">
-                <DataTable
-                  columns={columns as any}
-                  data={rows}
-                  searchKey="title"
-                  searchPlaceholder="Buscar..."
-                  onRowClick={openDetail}
-                />
+                <DataTable columns={columns as any} data={rows} searchKey="title" searchPlaceholder="Buscar..." onRowClick={openDetail} />
               </TabsContent>
             </Tabs>
           </CardHeader>
@@ -684,7 +681,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                           {detailCategoryName}
                         </Badge>
 
-                        {(detailRow.counterparty || detailRow.reference) ? (
+                        {detailRow.counterparty || detailRow.reference ? (
                           <Badge variant="outline" className="h-6 text-[11px]">
                             <span className="inline-flex items-center gap-1">
                               <UserRound className="h-3.5 w-3.5" />
@@ -814,13 +811,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                       <MiniField label="Producto">
                         <Popover open={productOpen} onOpenChange={setProductOpen}>
                           <PopoverTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              role="combobox"
-                              className="h-9 w-full justify-between text-sm"
-                              disabled={isPending}
-                            >
+                            <Button type="button" variant="outline" role="combobox" className="h-9 w-full justify-between text-sm" disabled={isPending}>
                               <span className="truncate">
                                 {form.productId
                                   ? productOptions.find((p) => p.id === form.productId)?.title || form.title || 'Producto'
@@ -864,13 +855,7 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                       <MiniField label="Contacto (opcional)" hint="Selecciona de Sessions">
                         <Popover open={contactOpen} onOpenChange={setContactOpen}>
                           <PopoverTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              role="combobox"
-                              className="h-9 w-full justify-between text-sm"
-                              disabled={isPending}
-                            >
+                            <Button type="button" variant="outline" role="combobox" className="h-9 w-full justify-between text-sm" disabled={isPending}>
                               <span className="truncate">
                                 {form.contactName || form.contactJid
                                   ? `${form.contactName || 'Contacto'}${form.contactJid ? ` · ${form.contactJid}` : ''}`
@@ -882,23 +867,14 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
 
                           <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                             <Command>
-                              <CommandInput
-                                placeholder="Buscar por nombre o número..."
-                                value={contactQuery}
-                                onValueChange={setContactQuery}
-                              />
+                              <CommandInput placeholder="Buscar por nombre o número..." value={contactQuery} onValueChange={setContactQuery} />
                               <CommandEmpty>{contactLoading ? 'Buscando...' : 'Sin resultados.'}</CommandEmpty>
 
                               <CommandGroup>
                                 <CommandItem
                                   value="__clear__"
                                   onSelect={() => {
-                                    setForm((prev) => ({
-                                      ...prev,
-                                      sessionId: null,
-                                      contactName: '',
-                                      contactJid: '',
-                                    }));
+                                    setForm((prev) => ({ ...prev, sessionId: null, contactName: '', contactJid: '' }));
                                     setContactOpen(false);
                                   }}
                                 >
@@ -933,69 +909,35 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                       </MiniField>
 
                       <MiniField label="Monto (base)">
-                        <Input
-                          type="number"
-                          inputMode="decimal"
-                          value={form.amount}
-                          onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
-                          className="h-9 text-sm"
-                          placeholder="0.00"
-                        />
+                        <Input type="number" inputMode="decimal" value={form.amount} onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))} className="h-9 text-sm" placeholder="0.00" />
                       </MiniField>
 
                       <MiniField label="Extra">
-                        <Input
-                          type="number"
-                          inputMode="decimal"
-                          value={form.extra}
-                          onChange={(e) => setForm((p) => ({ ...p, extra: e.target.value }))}
-                          className="h-9 text-sm"
-                          placeholder="0.00"
-                        />
+                        <Input type="number" inputMode="decimal" value={form.extra} onChange={(e) => setForm((p) => ({ ...p, extra: e.target.value }))} className="h-9 text-sm" placeholder="0.00" />
                       </MiniField>
 
                       <MiniField label="Descuento">
-                        <Input
-                          type="number"
-                          inputMode="decimal"
-                          value={form.discount}
-                          onChange={(e) => setForm((p) => ({ ...p, discount: e.target.value }))}
-                          className="h-9 text-sm"
-                          placeholder="0.00"
-                        />
+                        <Input type="number" inputMode="decimal" value={form.discount} onChange={(e) => setForm((p) => ({ ...p, discount: e.target.value }))} className="h-9 text-sm" placeholder="0.00" />
                       </MiniField>
 
                       <MiniField label="Cuenta">
                         <Select value={form.accountId} onValueChange={(v) => setForm((p) => ({ ...p, accountId: v }))}>
-                          <SelectTrigger className="h-9 text-sm">
-                            <SelectValue placeholder="Selecciona" />
-                          </SelectTrigger>
+                          <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecciona" /></SelectTrigger>
                           <SelectContent>
                             {accounts.map((a) => (
-                              <SelectItem key={a.id} value={a.id} className="text-sm">
-                                {a.name}
-                              </SelectItem>
+                              <SelectItem key={a.id} value={a.id} className="text-sm">{a.name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </MiniField>
 
                       <MiniField label="Categoría">
-                        <Select
-                          value={form.categoryId || '__none__'}
-                          onValueChange={(v) => setForm((p) => ({ ...p, categoryId: v === '__none__' ? null : v }))}
-                        >
-                          <SelectTrigger className="h-9 text-sm">
-                            <SelectValue placeholder="Opcional" />
-                          </SelectTrigger>
+                        <Select value={form.categoryId || '__none__'} onValueChange={(v) => setForm((p) => ({ ...p, categoryId: v === '__none__' ? null : v }))}>
+                          <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Opcional" /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="__none__" className="text-sm">
-                              Sin categoría
-                            </SelectItem>
+                            <SelectItem value="__none__" className="text-sm">Sin categoría</SelectItem>
                             {categories.map((c) => (
-                              <SelectItem key={c.id} value={c.id} className="text-sm">
-                                {c.name}
-                              </SelectItem>
+                              <SelectItem key={c.id} value={c.id} className="text-sm">{c.name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -1003,29 +945,19 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
 
                       <div className="sm:col-span-2">
                         <MiniField label="Descripción" hint="Opcional">
-                          <Textarea
-                            value={form.description}
-                            onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                            className="min-h-[76px] h-[76px] resize-y text-sm"
-                            placeholder="Notas, referencia, observación..."
-                          />
+                          <Textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} className="min-h-[76px] h-[76px] resize-y text-sm" placeholder="Notas, referencia, observación..." />
                         </MiniField>
                       </div>
                     </div>
 
                     <div className="flex justify-end gap-2 pt-1">
-                      <Button variant="outline" size="sm" onClick={() => setOpen(false)} disabled={isPending} className="h-9">
-                        Cancelar
-                      </Button>
-                      <Button onClick={onSave} size="sm" disabled={isPending || uploading} className="h-9">
-                        {editing ? 'Guardar cambios' : 'Guardar venta'}
-                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setOpen(false)} disabled={isPending} className="h-9">Cancelar</Button>
+                      <Button onClick={onSave} size="sm" disabled={isPending || uploading} className="h-9">{editing ? 'Guardar cambios' : 'Guardar venta'}</Button>
                     </div>
                   </div>
 
                   {/* RIGHT */}
                   <div className="space-y-3 lg:sticky lg:top-4">
-                    {/* ✅ Fecha + Moneda arriba de concepto (editable) */}
                     <div className="rounded-xl border bg-background p-3">
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
@@ -1033,54 +965,29 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                             <CalendarDays className="h-4 w-4 text-muted-foreground" />
                             <p className="text-xs text-muted-foreground">Fecha</p>
                           </div>
-                          <Input
-                            type="date"
-                            value={form.occurredAt}
-                            onChange={(e) => setForm((p) => ({ ...p, occurredAt: e.target.value }))}
-                            className="h-9 text-sm"
-                          />
+                          <Input type="date" value={form.occurredAt} onChange={(e) => setForm((p) => ({ ...p, occurredAt: e.target.value }))} className="h-9 text-sm" />
                         </div>
 
+                        {/* ✅ Moneda SOLO lectura */}
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <Coins className="h-4 w-4 text-muted-foreground" />
+                            <Layers className="h-4 w-4 text-muted-foreground" />
                             <p className="text-xs text-muted-foreground">Moneda</p>
                           </div>
-                          <Select
-                            value={form.currencyCode}
-                            onValueChange={(v) => setForm((p) => ({ ...p, currencyCode: v }))}
-                          >
-                            <SelectTrigger className="h-9 text-sm">
-                              <SelectValue placeholder="Moneda" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {currencies.map((c) => (
-                                <SelectItem key={c.code} value={c.code} className="text-sm">
-                                  {c.code}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Input value={form.currencyCode} disabled className="h-9 text-sm opacity-100" />
                         </div>
                       </div>
                     </div>
 
-                    {/* Concepto + total */}
                     <div className="rounded-xl border bg-background p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="text-[11px] text-muted-foreground">Concepto</p>
-                          <p className="truncate text-sm font-medium">
-                            {form.title?.trim() ? form.title.trim() : '—'}
-                          </p>
+                          <p className="truncate text-sm font-medium">{form.title?.trim() ? form.title.trim() : '—'}</p>
 
                           <div className="mt-2 flex flex-wrap gap-2">
-                            <Badge variant="outline" className="h-6 text-[11px]">
-                              {previewAccountName}
-                            </Badge>
-                            <Badge variant="outline" className="h-6 text-[11px]">
-                              {previewCategoryName}
-                            </Badge>
+                            <Badge variant="outline" className="h-6 text-[11px]">{previewAccountName}</Badge>
+                            <Badge variant="outline" className="h-6 text-[11px]">{previewCategoryName}</Badge>
                             <Badge variant="outline" className="h-6 text-[11px]">
                               <span className="inline-flex items-center gap-1">
                                 <UserRound className="h-3.5 w-3.5" />
@@ -1092,64 +999,39 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
 
                         <div className="shrink-0 text-right">
                           <p className="text-[11px] text-muted-foreground">Total</p>
-                          <p className="text-lg font-bold leading-tight">
-                            {moneyFormat(currencies, form.currencyCode, total)}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground">
-                            Base: {base} · Extra: {extra} · Desc: {disc}
-                          </p>
+                          <p className="text-lg font-bold leading-tight">{moneyFormat(currencies, form.currencyCode, total)}</p>
+                          <p className="text-[11px] text-muted-foreground">Base: {base} · Extra: {extra} · Desc: {disc}</p>
                         </div>
                       </div>
 
                       {form.description?.trim() ? (
                         <>
                           <Separator className="my-3" />
-                          <p className="text-xs text-muted-foreground whitespace-pre-wrap">
-                            {form.description.trim()}
-                          </p>
+                          <p className="text-xs text-muted-foreground whitespace-pre-wrap">{form.description.trim()}</p>
                         </>
                       ) : null}
                     </div>
 
-                    {/* Soportes */}
                     <div className="rounded-xl border bg-background p-3">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium">Soportes</p>
 
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="h-9 px-3 text-sm"
-                          disabled={uploading || isPending}
-                          onClick={() => document.getElementById('sale-receipts')?.click()}
-                        >
+                        <Button type="button" variant="outline" className="h-9 px-3 text-sm" disabled={uploading || isPending} onClick={() => document.getElementById('sale-receipts')?.click()}>
                           <Paperclip className="mr-2 h-4 w-4" />
                           Adjuntar
                         </Button>
 
-                        <input
-                          id="sale-receipts"
-                          type="file"
-                          multiple
-                          className="hidden"
-                          onChange={(e) => handleFiles(e.target.files)}
-                          accept="image/*,application/pdf"
-                        />
+                        <input id="sale-receipts" type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} accept="image/*,application/pdf" />
                       </div>
 
-                      <p className="mt-1 text-[11px] text-muted-foreground">
-                        Tip: usa capturas o PDF. Se guardan al crear/editar.
-                      </p>
+                      <p className="mt-1 text-[11px] text-muted-foreground">Tip: usa capturas o PDF. Se guardan al crear/editar.</p>
 
                       <Separator className="my-3" />
 
                       {attachments.length ? (
                         <div className="grid grid-cols-1 gap-2">
                           {attachments.map((a, idx) => (
-                            <div
-                              key={a.id ?? `${a.url}-${idx}`}
-                              className="flex items-center gap-3 rounded-xl border p-3 hover:bg-muted/30"
-                            >
+                            <div key={a.id ?? `${a.url}-${idx}`} className="flex items-center gap-3 rounded-xl border p-3 hover:bg-muted/30">
                               <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border bg-muted/10">
                                 {guessIsImage(a.mimeType, a.url) ? (
                                   <img src={a.url} alt={a.fileName || 'soporte'} className="h-10 w-10 object-cover" />
@@ -1161,17 +1043,10 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                               </div>
 
                               <div className="min-w-0 flex-1">
-                                <a
-                                  href={a.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="block truncate text-sm font-medium text-primary underline underline-offset-2"
-                                >
+                                <a href={a.url} target="_blank" rel="noreferrer" className="block truncate text-sm font-medium text-primary underline underline-offset-2">
                                   {a.fileName || 'Archivo'}
                                 </a>
-                                <p className="text-[11px] text-muted-foreground">
-                                  {a.isNew ? 'Nuevo (sin guardar)' : 'Guardado'}
-                                </p>
+                                <p className="text-[11px] text-muted-foreground">{a.isNew ? 'Nuevo (sin guardar)' : 'Guardado'}</p>
                               </div>
 
                               <Button
@@ -1202,8 +1077,6 @@ export default function MainSales({ userId, accounts, categories, currencies, sa
                         <EmptyBox text={uploading ? 'Subiendo...' : 'Sin soportes'} />
                       )}
                     </div>
-
-
                   </div>
                 </div>
               );

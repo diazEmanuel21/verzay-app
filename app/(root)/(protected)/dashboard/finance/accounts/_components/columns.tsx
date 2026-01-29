@@ -10,11 +10,17 @@ export function buildAccountsColumns({
   onDelete,
   onSetDefault,
   busy,
+  getAccountSummary,
 }: {
   onEdit: (row: any) => void;
   onDelete: (id: string) => void;
   onSetDefault: (row: any) => void;
   busy: boolean;
+  getAccountSummary: (accountId: string) => {
+    salesText: string;
+    expensesText: string;
+    balanceText: string;
+  };
 }) {
   return [
     {
@@ -22,6 +28,8 @@ export function buildAccountsColumns({
       header: 'Cuenta',
       cell: ({ row }: any) => {
         const r = row.original;
+        const sum = getAccountSummary(r.id);
+
         return (
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -32,26 +40,37 @@ export function buildAccountsColumns({
                 </Badge>
               ) : null}
             </div>
+
             <p className="text-[11px] text-muted-foreground">
               {r.type} · {r.currencyCode}
+            </p>
+
+            {/* ✅ mini resumen */}
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Ventas: <span className="font-medium">{sum.salesText}</span> · Gastos:{' '}
+              <span className="font-medium">{sum.expensesText}</span>
             </p>
           </div>
         );
       },
     },
+
     {
-      accessorKey: 'currencyCode',
-      header: 'Moneda',
+      id: 'balance',
+      header: 'Saldo',
       cell: ({ row }: any) => {
         const r = row.original;
-        const symbol = r.currency?.symbol;
+        const sum = getAccountSummary(r.id);
+
         return (
-          <span className="text-sm">
-            {r.currencyCode} {symbol ? `· ${symbol}` : ''}
-          </span>
+          <div className="text-right">
+            <p className="text-sm font-semibold">{sum.balanceText}</p>
+            <p className="text-[11px] text-muted-foreground">Ventas - Gastos</p>
+          </div>
         );
       },
     },
+
     {
       id: 'actions',
       header: '',

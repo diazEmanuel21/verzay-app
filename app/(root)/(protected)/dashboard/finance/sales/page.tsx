@@ -23,14 +23,14 @@ export default async function SalesPage() {
   if (!listRes.success) return <div className="p-6 text-sm text-red-500">{listRes.message}</div>;
 
   return (
-    <MainSales
-      userId={user.id}
-      accounts={metaRes.data!.accounts}
-      categories={metaRes.data!.categories}
-      currencies={metaRes.data!.currencies}
-      sales={listRes.data || []}
-      products={productsRes.items || []}
-      // sessions={sessionsRes.data || []} //  nuevo
-    />
-  );
+  <MainSales
+    userId={user.id}
+    accounts={metaRes.data!.accounts}
+    categories={metaRes.data!.categories}
+    currencies={metaRes.data!.currencies}
+    sales={listRes.data || []}
+    products={productsRes.items || []}
+    primaryCurrencyCode={(user as any).primaryCurrencyCode || 'USD'}
+  />
+);
 }

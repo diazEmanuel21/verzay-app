@@ -7,8 +7,11 @@ import { Button } from '@/components/ui/button';
 import { db } from '@/lib/db';
 import { auth } from '@/auth';
 
-import { CalendarDays, TrendingUp, TrendingDown, Wallet, ArrowRight } from 'lucide-react';
+import { CalendarDays, TrendingUp, TrendingDown, Wallet, Settings } from 'lucide-react';
 import { FinanceMonthChart } from './_components/FinanceMonthChart';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
@@ -36,13 +39,8 @@ function keyYMD(d: Date) {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
-function formatPlain(n: number) {
-  // ✅ sin moneda, solo número (combinado)
-  return new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(n);
-}
-
 function moneyFormat(meta: { code: string; symbol: string; decimals: number } | undefined, value: number) {
-  const code = meta?.code ?? 'USD';
+  const code = meta?.code ?? 'COP';
   const decimals = typeof meta?.decimals === 'number' ? meta.decimals : 2;
 
   try {
@@ -65,7 +63,7 @@ export default async function FinanceHomePage() {
 
   const me = await db.user.findUnique({
     where: { email },
-    select: { id: true },
+    select: { id: true, preferredCurrencyCode: true },
   });
   if (!me?.id) return null;
 
@@ -78,6 +76,10 @@ export default async function FinanceHomePage() {
     select: { code: true, symbol: true, decimals: true },
   });
 
+  const preferredCode = me.preferredCurrencyCode || 'COP';
+  const preferredMeta = currencies.find((c) => c.code === preferredCode);
+  const formatPreferred = (n: number) => moneyFormat(preferredMeta, n);
+
   const monthTx = await db.financeTransaction.findMany({
     where: {
       userId: me.id,
@@ -87,7 +89,6 @@ export default async function FinanceHomePage() {
     },
     select: {
       type: true,
-      currencyCode: true,
       occurredAt: true,
       amount: true,
       extra: true,
@@ -96,29 +97,17 @@ export default async function FinanceHomePage() {
     orderBy: { occurredAt: 'asc' },
   });
 
-  // ✅ Totales combinados (mezclando monedas tal cual)
   let salesCombined = 0;
   let expensesCombined = 0;
 
-  // ✅ (Opcional) breakdown por moneda (para mostrar chips)
-  const salesByCurrency = new Map<string, number>();
-  const expensesByCurrency = new Map<string, number>();
-
   for (const r of monthTx) {
     const total = calcTotal(r);
-    const code = r.currencyCode || '—';
-
-    if (r.type === 'SALE') {
-      salesCombined += total;
-      salesByCurrency.set(code, (salesByCurrency.get(code) || 0) + total);
-    }
-    if (r.type === 'EXPENSE') {
-      expensesCombined += total;
-      expensesByCurrency.set(code, (expensesByCurrency.get(code) || 0) + total);
-    }
+    if (r.type === 'SALE') salesCombined += total;
+    if (r.type === 'EXPENSE') expensesCombined += total;
   }
 
-  // ✅ Series por día (combinada también)
+  const netCombined = salesCombined - expensesCombined;
+
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   const dayRows = Array.from({ length: daysInMonth }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth(), i + 1);
@@ -140,180 +129,128 @@ export default async function FinanceHomePage() {
 
   const monthLabel = now.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
 
-  const salesBreakdown =
-    salesByCurrency.size === 0
-      ? []
-      : Array.from(salesByCurrency.entries()).map(([code, v]) => {
-          const meta = currencies.find((c) => c.code === code);
-          return { code, label: moneyFormat(meta, v) };
-        });
-
-  const expensesBreakdown =
-    expensesByCurrency.size === 0
-      ? []
-      : Array.from(expensesByCurrency.entries()).map(([code, v]) => {
-          const meta = currencies.find((c) => c.code === code);
-          return { code, label: moneyFormat(meta, v) };
-        });
-
   return (
-    <div className="space-y-3">
-      {/* ✅ Resumen mes (COMBINADO) */}
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-        <Card className="border-border">
-          <CardHeader className="py-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg border bg-background">
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="leading-tight">
-                  <p className="text-[11px] text-muted-foreground">Ventas</p>
-                  <CardTitle className="text-sm">Total del mes</CardTitle>
-                </div>
-              </div>
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-0.5">
+          <h1 className="text-xl font-semibold leading-none tracking-tight">Finanzas</h1>
+          <p className="text-sm text-muted-foreground">Resumen del mes actual.</p>
+        </div>
 
-              <Badge variant="secondary" className="h-6 text-[11px]">
-                <span className="inline-flex items-center gap-1">
-                  <CalendarDays className="h-3.5 w-3.5" />
-                  {monthLabel}
-                </span>
-              </Badge>
-            </div>
-          </CardHeader>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="h-8 px-3 text-xs">
+            <span className="inline-flex items-center gap-1">
+              <CalendarDays className="h-4 w-4" />
+              {monthLabel}
+            </span>
+          </Badge>
 
-          <CardContent className="pt-0">
-            {/* ✅ Total combinado sin moneda */}
-            <p className="text-lg font-bold leading-tight">{formatPlain(salesCombined)}</p>
-
-            {/* ✅ breakdown por moneda (opcional) */}
-            {salesBreakdown.length ? (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {salesBreakdown.map((b) => (
-                  <Badge key={b.code} variant="outline" className="h-6 text-[11px]">
-                    {b.label}
-                  </Badge>
-                ))}
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
-
-        <Card className="border-border">
-          <CardHeader className="py-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg border bg-background">
-                  <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="leading-tight">
-                  <p className="text-[11px] text-muted-foreground">Gastos</p>
-                  <CardTitle className="text-sm">Total del mes</CardTitle>
-                </div>
-              </div>
-
-              <Badge variant="secondary" className="h-6 text-[11px]">
-                <span className="inline-flex items-center gap-1">
-                  <CalendarDays className="h-3.5 w-3.5" />
-                  {monthLabel}
-                </span>
-              </Badge>
-            </div>
-          </CardHeader>
-
-          <CardContent className="pt-0">
-            {/* ✅ Total combinado sin moneda */}
-            <p className="text-lg font-bold leading-tight">{formatPlain(expensesCombined)}</p>
-
-            {/* ✅ breakdown por moneda (opcional) */}
-            {expensesBreakdown.length ? (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {expensesBreakdown.map((b) => (
-                  <Badge key={b.code} variant="outline" className="h-6 text-[11px]">
-                    {b.label}
-                  </Badge>
-                ))}
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
+          <Button asChild variant="outline" className="h-9">
+            <Link href="/dashboard/finance/settings" className="inline-flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Configuración
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      {/* ✅ Accesos (azules) */}
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-        <Card className="border-border">
-          <CardHeader className="py-3">
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg border bg-background">
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div className="leading-tight">
-                <CardTitle className="text-sm">Ventas</CardTitle>
-                <p className="text-[11px] text-muted-foreground">Registra y revisa ventas</p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <Button asChild className="h-9 w-full">
-              <Link href="/dashboard/finance/sales">
-                Ir a Ventas <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+      {/* Totales clickeables */}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        {/* Ventas */}
+        <Link href="/dashboard/finance/sales" className="block">
+          <Card className="border-border transition hover:bg-muted/40">
+            <CardHeader className="pb-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border bg-muted/40">
+                    <TrendingUp className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <CardTitle className="text-sm">Ventas del mes</CardTitle>
+                    <p className="text-xs text-muted-foreground">Ver ventas</p>
+                  </div>
+                </div>
 
-        <Card className="border-border">
-          <CardHeader className="py-3">
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg border bg-background">
-                <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                <Badge variant="outline" className="h-7 px-2 text-[11px]">
+                  {preferredCode}
+                </Badge>
               </div>
-              <div className="leading-tight">
-                <CardTitle className="text-sm">Gastos</CardTitle>
-                <p className="text-[11px] text-muted-foreground">Registra y revisa gastos</p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <Button asChild className="h-9 w-full">
-              <Link href="/dashboard/finance/expenses">
-                Ir a Gastos <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+            </CardHeader>
 
-        <Card className="border-border">
-          <CardHeader className="py-3">
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg border bg-background">
-                <Wallet className="h-4 w-4 text-muted-foreground" />
+            <CardContent className="pt-0">
+              <p className="text-2xl font-semibold tracking-tight">{formatPreferred(salesCombined)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Click para abrir Ventas</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Gastos */}
+        <Link href="/dashboard/finance/expenses" className="block">
+          <Card className="border-border transition hover:bg-muted/40">
+            <CardHeader className="pb-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border bg-muted/40">
+                    <TrendingDown className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <CardTitle className="text-sm">Gastos del mes</CardTitle>
+                    <p className="text-xs text-muted-foreground">Ver gastos</p>
+                  </div>
+                </div>
+
+                <Badge variant="outline" className="h-7 px-2 text-[11px]">
+                  {preferredCode}
+                </Badge>
               </div>
-              <div className="leading-tight">
-                <CardTitle className="text-sm">Cuentas</CardTitle>
-                <p className="text-[11px] text-muted-foreground">Administra cuentas</p>
+            </CardHeader>
+
+            <CardContent className="pt-0">
+              <p className="text-2xl font-semibold tracking-tight">{formatPreferred(expensesCombined)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Click para abrir Gastos</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Neto */}
+        <Link href="/dashboard/finance/accounts" className="block">
+          <Card className="border-border transition hover:bg-muted/40">
+            <CardHeader className="pb-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border bg-muted/40">
+                    <Wallet className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <CardTitle className="text-sm">Cuenta del mes</CardTitle>
+                    <p className="text-xs text-muted-foreground">Ventas - Gastos</p>
+                  </div>
+                </div>
+
+                <Badge variant="outline" className="h-7 px-2 text-[11px]">
+                  {preferredCode}
+                </Badge>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <Button asChild className="h-9 w-full">
-              <Link href="/dashboard/finance/accounts">
-                Ir a Cuentas <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+            </CardHeader>
+
+            <CardContent className="pt-0">
+              <p className="text-2xl font-semibold tracking-tight">{formatPreferred(netCombined)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Click para abrir Cuentas</p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
-      {/* ✅ Diagrama del mes (COMBINADO) */}
+      {/* Chart */}
       <Card className="border-border">
-        <CardHeader className="py-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="leading-tight">
+        <CardHeader className="pb-2">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-0.5">
               <CardTitle className="text-sm">Ventas vs Gastos por día</CardTitle>
-              <p className="text-[11px] text-muted-foreground">{monthLabel}</p>
+              <p className="text-xs text-muted-foreground">{monthLabel}</p>
             </div>
-            <Badge variant="outline" className="h-6 text-[11px]">
+            <Badge variant="outline" className="h-7 px-2 text-[11px]">
               {daysInMonth} días
             </Badge>
           </div>
