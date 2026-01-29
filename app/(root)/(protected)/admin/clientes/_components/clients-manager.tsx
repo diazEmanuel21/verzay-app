@@ -75,6 +75,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             muteAgentResponses: false,
             onFacebook: false,
             onInstagram: false,
+            preferredCurrencyCode: 'COP',
             lat: '0.0000',
             lng: '0.0000',
             mapsUrl: 'https://maps.google.com/?q=0,0',
