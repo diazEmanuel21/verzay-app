@@ -38,7 +38,7 @@ type Props = {
   initialAccounts: any[];
   currencies: any[];
 
-  // ✅ nuevo: para saldo y modal
+  // ✅ para saldo y modal
   sales: any[];
   expenses: any[];
 };
@@ -58,6 +58,22 @@ const toISODate = (d: Date | string) => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
+function isValidISODate(v: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const d = new Date(v + 'T00:00:00');
+  return !Number.isNaN(d.getTime());
+}
+
+function inInclusiveRange(occurredAt: any, fromISO: string, toISO: string) {
+  if (!occurredAt) return false;
+
+  const t = new Date(occurredAt).getTime();
+  const from = new Date(fromISO + 'T00:00:00').getTime();
+  const to = new Date(toISO + 'T23:59:59.999').getTime();
+
+  return t >= from && t <= to;
+}
+
 function toAmountNumber(v: any): number {
   if (v === null || v === undefined) return 0;
   const n = Number(String(v));
@@ -75,6 +91,7 @@ function calcSaleTotal(row: any) {
 function formatMoney(currencies: any[], code: string, value: number) {
   const meta = currencies.find((c) => c.code === code);
   const decimals = typeof meta?.decimals === 'number' ? meta.decimals : 2;
+
   try {
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
@@ -104,6 +121,50 @@ export default function MainFinanceAccounts({
   const defaultCurrencyCode = useMemo(() => {
     return currencies?.find((c) => c.code === 'USD')?.code || currencies?.[0]?.code || 'USD';
   }, [currencies]);
+
+  // =====================================================
+  // ✅ Filtro: MES actual (default) + RANGO + TODO
+  // =====================================================
+  const now = new Date();
+  const [rangeMode, setRangeMode] = useState<'month' | 'range' | 'all'>('month');
+
+  const [month, setMonth] = useState(() => {
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    return `${yyyy}-${mm}`;
+  });
+
+  const monthStartISO = useMemo(() => `${month}-01`, [month]);
+  const monthEndISO = useMemo(() => {
+    const [y, m] = month.split('-').map(Number);
+    const lastDay = new Date(y, m, 0).getDate();
+    return `${month}-${String(lastDay).padStart(2, '0')}`;
+  }, [month]);
+
+  const [dateFrom, setDateFrom] = useState<string>(monthStartISO);
+  const [dateTo, setDateTo] = useState<string>(monthEndISO);
+
+  useEffect(() => {
+    if (rangeMode !== 'month') return;
+    setDateFrom(monthStartISO);
+    setDateTo(monthEndISO);
+  }, [rangeMode, monthStartISO, monthEndISO]);
+
+  const filteredSales = useMemo(() => {
+    const allRows = sales || [];
+    if (rangeMode === 'all') return allRows;
+
+    if (!isValidISODate(dateFrom) || !isValidISODate(dateTo)) return [];
+    return allRows.filter((s: any) => inInclusiveRange(s.occurredAt, dateFrom, dateTo));
+  }, [sales, rangeMode, dateFrom, dateTo]);
+
+  const filteredExpenses = useMemo(() => {
+    const allRows = expenses || [];
+    if (rangeMode === 'all') return allRows;
+
+    if (!isValidISODate(dateFrom) || !isValidISODate(dateTo)) return [];
+    return allRows.filter((e: any) => inInclusiveRange(e.occurredAt, dateFrom, dateTo));
+  }, [expenses, rangeMode, dateFrom, dateTo]);
 
   // -------------------------
   // ✅ Modal ledger por cuenta
@@ -187,7 +248,7 @@ export default function MainFinanceAccounts({
           ? await updateFinanceAccount(editing.id, userId, payload)
           : await createFinanceAccount(payload);
 
-        if (!res.success) return toast.error(res.message);
+        if (!res?.success) return toast.error(res?.message || 'No se pudo guardar');
 
         toast.success(editing ? 'Cuenta actualizada' : 'Cuenta creada');
         setOpen(false);
@@ -201,7 +262,7 @@ export default function MainFinanceAccounts({
     startTransition(() => {
       void (async () => {
         const res = await deleteFinanceAccount(id, userId);
-        if (!res.success) return toast.error(res.message);
+        if (!res?.success) return toast.error(res?.message || 'No se pudo eliminar');
 
         setRows((prev) => prev.filter((r) => r.id !== id));
         toast.success('Cuenta eliminada');
@@ -214,7 +275,7 @@ export default function MainFinanceAccounts({
     startTransition(() => {
       void (async () => {
         const res = await updateFinanceAccount(row.id, userId, { isDefault: true });
-        if (!res.success) return toast.error(res.message);
+        if (!res?.success) return toast.error(res?.message || 'No se pudo actualizar');
 
         toast.success('Cuenta por defecto actualizada');
         router.refresh();
@@ -224,6 +285,7 @@ export default function MainFinanceAccounts({
 
   // -----------------------------------------
   // ✅ Resumen por cuenta (ventas/gastos/saldo)
+  //    usando filteredSales/filteredExpenses
   // -----------------------------------------
   const summaryByAccount = useMemo(() => {
     const map = new Map<
@@ -245,14 +307,14 @@ export default function MainFinanceAccounts({
       });
     }
 
-    for (const s of sales || []) {
+    for (const s of filteredSales || []) {
       const id = s.accountId;
       if (!id || !map.has(id)) continue;
       const cur = map.get(id)!;
       cur.sales += calcSaleTotal(s);
     }
 
-    for (const e of expenses || []) {
+    for (const e of filteredExpenses || []) {
       const id = e.accountId;
       if (!id || !map.has(id)) continue;
       const cur = map.get(id)!;
@@ -260,11 +322,11 @@ export default function MainFinanceAccounts({
     }
 
     map.forEach((v) => {
-  v.balance = v.sales - v.expenses;
-});
+      v.balance = v.sales - v.expenses;
+    });
 
     return map;
-  }, [rows, sales, expenses, defaultCurrencyCode]);
+  }, [rows, filteredSales, filteredExpenses, defaultCurrencyCode]);
 
   const getAccountSummary = (accountId: string) => {
     const s = summaryByAccount.get(accountId);
@@ -287,11 +349,13 @@ export default function MainFinanceAccounts({
         busy: isPending,
         getAccountSummary,
       }),
-    [isPending, rows, sales, expenses, currencies] // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isPending, rows, filteredSales, filteredExpenses, currencies, dateFrom, dateTo, rangeMode]
   );
 
   // -----------------------------------------
   // ✅ Ledger data (ventas + gastos) por cuenta
+  //    usando filteredSales/filteredExpenses
   // -----------------------------------------
   const ledgerRows = useMemo(() => {
     if (!ledgerAccount?.id) return [];
@@ -299,7 +363,7 @@ export default function MainFinanceAccounts({
     const accountId = ledgerAccount.id;
 
     const salesRows =
-      (sales || [])
+      (filteredSales || [])
         .filter((s) => s.accountId === accountId)
         .map((s) => ({
           id: `S-${s.id}`,
@@ -312,7 +376,7 @@ export default function MainFinanceAccounts({
         })) || [];
 
     const expenseRows =
-      (expenses || [])
+      (filteredExpenses || [])
         .filter((e) => e.accountId === accountId)
         .map((e) => ({
           id: `E-${e.id}`,
@@ -333,27 +397,26 @@ export default function MainFinanceAccounts({
     if (ledgerTab === 'sales') return all.filter((r) => r.kind === 'SALE');
     if (ledgerTab === 'expenses') return all.filter((r) => r.kind === 'EXPENSE');
     return all;
-  }, [ledgerAccount, sales, expenses, ledgerTab]);
+  }, [ledgerAccount, filteredSales, filteredExpenses, ledgerTab]);
 
   const ledgerTotals = useMemo(() => {
     if (!ledgerAccount?.id) return { sales: 0, expenses: 0, balance: 0 };
 
     const id = ledgerAccount.id;
 
-    const s = (sales || [])
+    const s = (filteredSales || [])
       .filter((x) => x.accountId === id)
       .reduce((acc, x) => acc + calcSaleTotal(x), 0);
 
-    const e = (expenses || [])
+    const e = (filteredExpenses || [])
       .filter((x) => x.accountId === id)
       .reduce((acc, x) => acc + toAmountNumber(x.amount), 0);
 
     return { sales: s, expenses: e, balance: s - e };
-  }, [ledgerAccount, sales, expenses]);
+  }, [ledgerAccount, filteredSales, filteredExpenses]);
 
   const ledgerCurrencyCode = ledgerAccount?.currencyCode || defaultCurrencyCode;
 
-  // ✅ columnas para el modal ledger (simple, sin tu DataTable genérico)
   const ledgerColumns = useMemo(() => {
     return [
       {
@@ -408,11 +471,28 @@ export default function MainFinanceAccounts({
     ];
   }, [currencies, ledgerCurrencyCode]);
 
+  const applyRangeValidation = () => {
+    if (rangeMode === 'all') return true;
+
+    if (!isValidISODate(dateFrom) || !isValidISODate(dateTo)) {
+      toast.error('Fecha inválida. Usa formato YYYY-MM-DD.');
+      return false;
+    }
+
+    const a = new Date(dateFrom + 'T00:00:00').getTime();
+    const b = new Date(dateTo + 'T00:00:00').getTime();
+    if (a > b) {
+      toast.error('La fecha "Desde" no puede ser mayor que "Hasta".');
+      return false;
+    }
+    return true;
+  };
+
   return (
     <div className="space-y-3">
       <Card className="border-border">
         <CardHeader className="py-3">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <CardTitle className="text-sm">Cuentas</CardTitle>
               <Badge variant="secondary" className="h-6 text-[11px]">
@@ -425,6 +505,81 @@ export default function MainFinanceAccounts({
               Nueva cuenta
             </Button>
           </div>
+
+          {/* ✅ Filtros */}
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                size="sm"
+                variant={rangeMode === 'month' ? 'default' : 'outline'}
+                onClick={() => setRangeMode('month')}
+                className="h-9"
+              >
+                <CalendarDays className="mr-2 h-4 w-4" />
+                Mes actual
+              </Button>
+
+              <Button
+                size="sm"
+                variant={rangeMode === 'range' ? 'default' : 'outline'}
+                onClick={() => setRangeMode('range')}
+                className="h-9"
+              >
+                <CalendarDays className="mr-2 h-4 w-4" />
+                Rango
+              </Button>
+
+              <Button
+                size="sm"
+                variant={rangeMode === 'all' ? 'default' : 'outline'}
+                onClick={() => setRangeMode('all')}
+                className="h-9"
+              >
+                <Layers className="mr-2 h-4 w-4" />
+                Todo
+              </Button>
+
+              {rangeMode === 'month' ? (
+                <Input
+                  type="month"
+                  value={month}
+                  onChange={(e) => setMonth(e.target.value)}
+                  className="h-9 w-[170px] text-sm"
+                />
+              ) : null}
+
+              {rangeMode === 'range' ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="h-9 w-[160px] text-sm"
+                  />
+                  <Input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="h-9 w-[160px] text-sm"
+                  />
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-9"
+                    onClick={() => applyRangeValidation()}
+                  >
+                    Aplicar
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+
+            <Badge variant="outline" className="h-8 text-[11px]">
+              {rangeMode === 'all'
+                ? 'Filtrando: Todo'
+                : `Filtrando: ${dateFrom} → ${dateTo}`}
+            </Badge>
+          </div>
         </CardHeader>
 
         <CardContent className="pt-0">
@@ -433,7 +588,11 @@ export default function MainFinanceAccounts({
             data={rows}
             searchKey="name"
             searchPlaceholder="Buscar cuenta..."
-            onRowClick={openLedger} // ✅ click abre modal ledger
+            onRowClick={(row: any) => {
+              // si están en rango/mes y el rango es inválido, no abrir
+              if (!applyRangeValidation()) return;
+              openLedger(row);
+            }}
           />
         </CardContent>
       </Card>
@@ -446,7 +605,9 @@ export default function MainFinanceAccounts({
               Movimientos de la cuenta: {ledgerAccount?.name || '—'}
             </DialogTitle>
             <p className="text-xs text-muted-foreground">
-              Ventas, gastos y saldo (ventas - gastos) de esta cuenta.
+              {rangeMode === 'all'
+                ? 'Ventas, gastos y saldo (ventas - gastos) de esta cuenta.'
+                : `Ventas, gastos y saldo (ventas - gastos) de esta cuenta en el rango ${dateFrom} → ${dateTo}.`}
             </p>
           </DialogHeader>
 
@@ -577,8 +738,12 @@ export default function MainFinanceAccounts({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-[680px] rounded-2xl">
           <DialogHeader className="space-y-1">
-            <DialogTitle className="text-base">{editing ? 'Editar cuenta' : 'Nueva cuenta'}</DialogTitle>
-            <p className="text-xs text-muted-foreground">Define el nombre, tipo y moneda base de la cuenta.</p>
+            <DialogTitle className="text-base">
+              {editing ? 'Editar cuenta' : 'Nueva cuenta'}
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground">
+              Define el nombre, tipo y moneda base de la cuenta.
+            </p>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -602,7 +767,10 @@ export default function MainFinanceAccounts({
                 <div className="flex items-center gap-2">
                   <p className="text-xs text-muted-foreground">Tipo</p>
                 </div>
-                <Select value={form.type} onValueChange={(v) => setForm((p) => ({ ...p, type: v as any }))}>
+                <Select
+                  value={form.type}
+                  onValueChange={(v) => setForm((p) => ({ ...p, type: v as any }))}
+                >
                   <SelectTrigger className="h-9 text-sm">
                     <SelectValue placeholder="Selecciona" />
                   </SelectTrigger>
@@ -624,7 +792,10 @@ export default function MainFinanceAccounts({
                   <p className="text-xs text-muted-foreground">Moneda de la cuenta</p>
                 </div>
 
-                <Select value={form.currencyCode} onValueChange={(v) => setForm((p) => ({ ...p, currencyCode: v }))}>
+                <Select
+                  value={form.currencyCode}
+                  onValueChange={(v) => setForm((p) => ({ ...p, currencyCode: v }))}
+                >
                   <SelectTrigger className="h-9 text-sm">
                     <SelectValue placeholder="Selecciona moneda" />
                   </SelectTrigger>
@@ -648,7 +819,9 @@ export default function MainFinanceAccounts({
               <div className="flex items-center justify-between rounded-xl border bg-muted/10 px-3 py-2 sm:col-span-2">
                 <div className="min-w-0">
                   <p className="text-sm font-medium">Cuenta por defecto</p>
-                  <p className="text-xs text-muted-foreground">Se selecciona automáticamente al crear una venta o gasto.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Se selecciona automáticamente al crear una venta o gasto.
+                  </p>
                 </div>
                 <Switch
                   checked={form.isDefault}
@@ -659,7 +832,13 @@ export default function MainFinanceAccounts({
             </div>
 
             <div className="flex justify-end gap-2 pt-1">
-              <Button variant="outline" size="sm" onClick={() => setOpen(false)} disabled={isPending} className="h-9">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setOpen(false)}
+                disabled={isPending}
+                className="h-9"
+              >
                 Cancelar
               </Button>
               <Button onClick={onSave} size="sm" disabled={isPending} className="h-9">

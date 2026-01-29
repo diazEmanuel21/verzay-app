@@ -2,7 +2,12 @@
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Pencil, Trash2, Star } from 'lucide-react';
 
 export function buildAccountsColumns({
@@ -23,54 +28,47 @@ export function buildAccountsColumns({
   };
 }) {
   return [
+    // ✅ Columna: Cuenta (solo nombre)
     {
       accessorKey: 'name',
       header: 'Cuenta',
       cell: ({ row }: any) => {
         const r = row.original;
-        const sum = getAccountSummary(r.id);
 
         return (
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <p className="truncate font-medium">{r.name}</p>
+
               {r.isDefault ? (
                 <Badge variant="secondary" className="h-6 text-[11px]">
                   Default
                 </Badge>
               ) : null}
             </div>
-
-            <p className="text-[11px] text-muted-foreground">
-              {r.type} · {r.currencyCode}
-            </p>
-
-            {/* ✅ mini resumen */}
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              Ventas: <span className="font-medium">{sum.salesText}</span> · Gastos:{' '}
-              <span className="font-medium">{sum.expensesText}</span>
-            </p>
           </div>
         );
       },
     },
 
+    // ✅ Columna: Saldo
     {
       id: 'balance',
       header: 'Saldo',
       cell: ({ row }: any) => {
         const r = row.original;
-        const sum = getAccountSummary(r.id);
+        const summary = getAccountSummary?.(r.id);
+        const balanceText = summary?.balanceText ?? '—';
 
         return (
           <div className="text-right">
-            <p className="text-sm font-semibold">{sum.balanceText}</p>
-            <p className="text-[11px] text-muted-foreground">Ventas - Gastos</p>
+            <p className="text-sm font-semibold">{balanceText}</p>
           </div>
         );
       },
     },
 
+    // ✅ Columna: Acciones
     {
       id: 'actions',
       header: '',
