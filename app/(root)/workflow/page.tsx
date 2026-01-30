@@ -36,9 +36,8 @@ const WorkflowPage = async () => {
         </div>
       </div>
 
-
       <Suspense fallback={<UserWorkFlowSkeleton />}>
-        <UserWorkflows userId={user.id} />
+        <UserWorkflows userId={user.id} isPro={true} />
       </Suspense>
     </div>
   );

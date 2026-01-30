@@ -434,20 +434,34 @@ model VerificationToken {
 }
 
 model Workflow {
-  id            String                 @id @default(cuid())
-  userId        String
-  name          String
-  description   String?
-  definition    String
-  status        String
-  createdAt     DateTime               @default(now())
-  updatedAt     DateTime               @updatedAt @map("updateAt")
-  umbral        Float                  @default(0.5)
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  definition  String
+  status      String
+  isPro       Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt @map("updateAt")
+  umbral      Float    @default(0.5)
+
   sessionStates SessionWorkflowState[]
   workflowEdges WorkflowEdge[]
   nodes         WorkflowNode[]
 
   @@unique([name, userId])
+}
+
+model WorkflowExecutionLock {
+  id           String   @id @default(cuid())
+  userId       String
+  instanceName String
+  remoteJid    String
+  workflowId   String
+  lockKey      String   @unique
+  createdAt    DateTime @default(now())
+
+  @@index([userId, instanceName, remoteJid, workflowId])
 }
 
 model SessionWorkflowState {

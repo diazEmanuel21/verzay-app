@@ -10,7 +10,7 @@ interface Props {
 
 export const AutoRepliesContent = ({ user, workflows, autoReplies }: Props) => {
     if (workflows.length === 0) {
-        return <UserWorkflows userId={user.id} />;
+        return <UserWorkflows userId={user.id} isPro={false} />;
     }
 
     return <MainAutoReplies user={user} Workflows={workflows} autoReplies={autoReplies} />;
