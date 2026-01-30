@@ -223,7 +223,7 @@ export default async function FinanceHomePage() {
                     <Wallet className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div className="space-y-0.5">
-                    <CardTitle className="text-sm">Cuenta del mes</CardTitle>
+                    <CardTitle className="text-sm">Estado de cuentas</CardTitle>
                     <p className="text-xs text-muted-foreground">Ventas - Gastos</p>
                   </div>
                 </div>

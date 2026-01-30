@@ -7,7 +7,7 @@ import MainSales from "./_components/MainSales";
 import { getAllSales, getSalesMeta } from "@/actions/finance-sales-actions";
 import { listProducts } from "@/actions/products-actions";
 import { getSessionsByUserId } from "@/actions/session-action";
-import { serializePrisma } from "@/lib/serialize-prisma"; // ✅
+import { serializePrisma } from "@/lib/serialize-prisma";
 
 export default async function SalesPage() {
   const user = await currentUser();
@@ -23,22 +23,23 @@ export default async function SalesPage() {
   if (!metaRes.success) return <div className="p-6 text-sm text-red-500">{metaRes.message}</div>;
   if (!listRes.success) return <div className="p-6 text-sm text-red-500">{listRes.message}</div>;
 
-  // ✅ CLAVE: serializa todo lo que pueda traer Decimal/Date anidado
   const meta = serializePrisma(metaRes.data!);
   const sales = serializePrisma(listRes.data || []);
   const products = serializePrisma(productsRes.items || []);
-  const sessions = serializePrisma((sessionsRes as any)?.data || (sessionsRes as any) || []); // opcional
+  const sessions = serializePrisma((sessionsRes as any)?.data || (sessionsRes as any) || []);
 
   return (
-    <MainSales
-      userId={user.id}
-      accounts={meta.accounts}
-      categories={meta.categories}
-      currencies={meta.currencies}
-      sales={sales}
-      products={products}
-      primaryCurrencyCode={(user as any).primaryCurrencyCode || "USD"}
-      // sessions={sessions} // si luego lo usas
-    />
+    <div className="p-4 sm:p-6">
+      <MainSales
+        userId={user.id}
+        accounts={meta.accounts}
+        categories={meta.categories}
+        currencies={meta.currencies}
+        sales={sales}
+        products={products}
+        primaryCurrencyCode={(user as any).primaryCurrencyCode || "USD"}
+        // sessions={sessions} // si luego lo necesitas
+      />
+    </div>
   );
 }
