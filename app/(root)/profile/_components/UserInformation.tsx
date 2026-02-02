@@ -17,7 +17,7 @@ import { UserInformationProps } from "../page";
 import { ConnectionMain } from "../../connection/_components";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { optimizeFile } from "@/app/flow/[workflowId]/helpers";
+import { optimizeFile } from "../../workflow/[workflowId]/helpers";
 
 // ============================
 // Tipado

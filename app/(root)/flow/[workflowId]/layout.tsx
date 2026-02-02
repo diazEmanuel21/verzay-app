@@ -1,10 +1,6 @@
-import { currentUser } from "@/lib/auth";
-import { getResellerProfileForUser } from "@/actions/reseller-action";
-import { getAllModules } from "@/actions/module-actions";
-import AppInitializer from "@/components/custom/AppInitializer";
-import { themeClass } from "@/types/generic";
 import ModuleShell from "@/components/layout/ModuleShell";
-
+import { currentUser } from "@/lib/auth";
+import { themeClass } from "@/types/generic";
 
 import '@xyflow/react/dist/style.css';
 
@@ -24,17 +20,9 @@ export default async function WorkflowLayout({
         );
     }
 
-    const onReseller = await getResellerProfileForUser(user.id);
-    const modules = (await getAllModules()).data ?? [];
-
-
     return (
         <main className={`flex min-h-screen w-full flex-col ${themeClass}`}>
-            <AppInitializer onReseller={onReseller} modules={modules} user={user} />
-
-            <ModuleShell padded={false} breadcrumbs isFlow={true}>
-                {children}
-            </ModuleShell>
+            {children}
         </main>
     );
 }
