@@ -27,7 +27,7 @@ import { createWorkflow } from "@/actions/workflow-actions";
 
 const MAX_KEYWORDS = 20;
 
-function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
+function CreateWorflowDialog({ triggerText, isPro = false }: { triggerText?: String, isPro: boolean }) {
   const [open, setOpen] = useState(false);
 
   // Select "fantasma" para el tipo de coincidencia
@@ -39,7 +39,7 @@ function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
 
   const form = useForm<createWorkflowSchemaType>({
     resolver: zodResolver(createWorkflowSchema),
-    defaultValues: {},
+    defaultValues: { isPro },
   });
 
   // Configuración de la mutación
@@ -108,20 +108,21 @@ function CreateWorflowDialog({ triggerText }: { triggerText?: String }) {
       const descriptionJson =
         cleanedKeywords.length > 0
           ? JSON.stringify({
-            matchType: matchType.toLocaleLowerCase(), // "exacta" | "contiene"
+            matchType: matchType.toLocaleLowerCase(),
             keywords: cleanedKeywords.map((k) => k.toLocaleLowerCase()),
           })
           : "";
 
       const payload: createWorkflowSchemaType = {
         ...values,
+        isPro,
         description: descriptionJson,
       };
 
       toast.loading("Creando flujo...", { id: "create-workflow" });
       mutate(payload);
     },
-    [mutate, matchType, keywords]
+    [mutate, matchType, keywords, isPro]
   );
 
   return (

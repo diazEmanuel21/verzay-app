@@ -13,7 +13,7 @@ function hasWorkflow(result: { data?: Workflow[] }): result is { data: Workflow[
 interface UserWorkflowsProps {
     userId: string;
     isPro: boolean;
-}
+};
 
 export async function UserWorkflows({ userId, isPro }: UserWorkflowsProps) {
     const resWorkflow = await getWorkFlowByUser(userId);
@@ -42,7 +42,7 @@ export async function UserWorkflows({ userId, isPro }: UserWorkflowsProps) {
                     <p className="font-bold">NO EXISTE NINGUN FLUJO</p>
                     <p className="text-sm text-muted-foreground">Click en botón para crear un nuevo Flujo</p>
                 </div>
-                <CreateWorflowDialog triggerText="CREA TU PRIMER FLUJO" />
+                <CreateWorflowDialog triggerText="CREA TU PRIMER FLUJO" isPro={isPro} />
             </div>
         );
     }

@@ -32,7 +32,7 @@ const FlowPage = async () => {
           <Header
             title={'Flujos básicos'}
           />
-          <CreateWorflowDialog />
+          <CreateWorflowDialog isPro={false} />
         </div>
       </div>
 

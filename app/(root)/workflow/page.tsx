@@ -32,7 +32,7 @@ const WorkflowPage = async () => {
           <Header
             title={'Flujos avanzados'}
           />
-          <CreateWorflowDialog />
+          <CreateWorflowDialog isPro={true}/>
         </div>
       </div>
 
