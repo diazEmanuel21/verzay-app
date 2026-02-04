@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 
+import { requireAuth } from "@/lib/require-auth";
 import { currentUser } from "@/lib/auth";
 import { getResellerProfileForUser } from "@/actions/reseller-action";
 import { getAllModules } from "@/actions/module-actions";
@@ -18,41 +19,30 @@ export default async function RootGroupLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const user = await currentUser();
-    const isAuthenticated = !!user?.id;
+    await requireAuth();
 
+    const user = await currentUser(); // aquí ya debe existir sí o sí
     const cookieStore = await cookies();
     const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
-    const onReseller = isAuthenticated
-        ? await getResellerProfileForUser(user!.id)
-        : { success: false, message: "Sin sesión activa" };
+    const onReseller = await getResellerProfileForUser(user!.id);
+    const modules = (await getAllModules()).data ?? [];
 
-    const modules = isAuthenticated ? (await getAllModules()).data ?? [] : [];
-
-    const loading = isAuthenticated && (!user || modules.length === 0);
+    const loading = !user || modules.length === 0;
     if (loading) return <AppSkeleton />;
 
     return (
         <>
-            {isAuthenticated ? (
-                <>
-                    <AppInitializer onReseller={onReseller} modules={modules} user={user} />
-                    <SidebarProvider defaultOpen={defaultOpen}>
-                        <AppSidebar user={user} />
-                        <SidebarInset className="h-screen flex flex-col">
-                            <Breadcrumbs />
-                            <main className={`flex-1 overflow-auto p-4 ${themeClass}`}>
-                                {children}
-                            </main>
-                        </SidebarInset>
-                    </SidebarProvider>
-                </>
-            ) : (
-                <main className={`flex min-h-screen w-full items-center justify-center ${themeClass}`}>
-                    {children}
-                </main>
-            )}
+            <AppInitializer onReseller={onReseller} modules={modules} user={user} />
+            <SidebarProvider defaultOpen={defaultOpen}>
+                <AppSidebar user={user} />
+                <SidebarInset className="h-screen flex flex-col">
+                    <Breadcrumbs />
+                    <main className={`flex-1 overflow-auto p-4 ${themeClass}`}>
+                        {children}
+                    </main>
+                </SidebarInset>
+            </SidebarProvider>
         </>
     );
 }

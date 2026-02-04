@@ -1,6 +1,6 @@
 "use server";
 
-import { signIn } from "@/auth";
+import { auth, signIn } from "@/auth";
 import { db } from "@/lib/db";
 import { loginSchema, registerSchema } from "@/lib/zod";
 import bcrypt from "bcryptjs";
@@ -86,3 +86,20 @@ export const registerAction = async (
     return { error: "error 500" };
   }
 };
+
+export async function changePasswordAction(newPassword: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("No auth");
+
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+
+  await db.user.update({
+    where: { id: session.user.id },
+    data: {
+      password: passwordHash,
+      tokenVersion: { increment: 1 },
+    },
+  });
+
+  return { success: true };
+}

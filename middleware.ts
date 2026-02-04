@@ -8,6 +8,14 @@ export default auth((req) => {
   const { nextUrl } = req;
   const currentPath = nextUrl.pathname;
   const isLoggedIn = !!req.auth;
+
+  const isTokenInvalid = (req.auth?.user as any)?.invalid === true;
+  if (isLoggedIn && isTokenInvalid) {
+    const loginUrl = new URL("/login", nextUrl);
+    loginUrl.searchParams.set("callbackUrl", currentPath);
+    return NextResponse.redirect(loginUrl);
+  }
+
   const userRole = req.auth?.user?.role ?? 'user';
   const userPlan = req.auth?.user?.plan ?? 'basico';
 
