@@ -112,7 +112,7 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes, onCreateNode }: 
                 draggable={!disabled}
                 onDragStart={(evt) => onDragStart(evt, action)}
                 onClick={() => onClickCreate(action)}
-                className="flex justify-start"
+                className="flex justify-start w-full"
             >
                 <Icon className={`h-4 w-4 ${action.iconClassName ?? ''}`} />
                 <span className="truncate">{action.label}</span>
@@ -125,7 +125,7 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes, onCreateNode }: 
             side="right"
             variant="sidebar"
             collapsible="offcanvas"
-            className="bg-white dark:bg-gray-900 text-gray-800 dark:text-zinc-100 border-r border-zinc-200 dark:border-gray-800"
+            className="bg-white dark:bg-gray-900 text-gray-800 dark:text-zinc-100 border-l border-zinc-200 dark:border-gray-800"
         >
             <SidebarHeader className="p-2">
                 <Input placeholder="Buscar..." value={q} onChange={(e) => setQ(e.target.value)} />
@@ -136,21 +136,17 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes, onCreateNode }: 
             <SidebarContent className="p-2 gap-2">
                 <SidebarGroup>
                     <SidebarGroupLabel>Base</SidebarGroupLabel>
-                    <SidebarGroupContent className="mt-2">
-                        <div className="grid grid-cols-2 gap-2">
-                            {filteredBase.map((action) => renderTile(action, reachedTotalLimit))}
-                        </div>
+                    <SidebarGroupContent className="flex flex-col gap-1">
+                        {filteredBase.map((action) => renderTile(action, reachedTotalLimit))}
                     </SidebarGroupContent>
                 </SidebarGroup>
 
                 <SidebarGroup>
                     <SidebarGroupLabel>Seguimientos</SidebarGroupLabel>
-                    <SidebarGroupContent className="mt-2">
-                        <div className="grid grid-cols-2 gap-2">
-                            {filteredSeguimientos.map((action) =>
-                                renderTile(action, reachedTotalLimit || reachedSeguimientoLimit)
-                            )}
-                        </div>
+                    <SidebarGroupContent className="flex flex-col gap-1">
+                        {filteredSeguimientos.map((action) =>
+                            renderTile(action, reachedTotalLimit || reachedSeguimientoLimit)
+                        )}
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>

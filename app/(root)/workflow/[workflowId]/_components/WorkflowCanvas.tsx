@@ -371,7 +371,7 @@ export function WorkflowCanvas({
   );
 
   return (
-    <div ref={wrapperRef} className="w-full h-full">
+    <div ref={wrapperRef} className="w-full h-full max-h-[93vh]">
       <ReactFlow
         nodes={nodes}
         edges={edges}

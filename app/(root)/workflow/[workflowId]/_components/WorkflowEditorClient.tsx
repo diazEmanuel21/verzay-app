@@ -27,14 +27,12 @@ export function WorkflowEditorClient({ nodesDB, edgesDB, workflowId, user }: Pro
     }, [setCounts, clearCreateNode]);
 
     return (
-        <div className="flex-1 min-h-0 overflow-hidden">
-            <WorkflowCanvas
-                edgesDB={edgesDB}
-                nodesDB={nodesDB}
-                workflowId={workflowId}
-                user={user}
-                registerCreateNode={registerCreateNode}
-            />
-        </div>
+        <WorkflowCanvas
+            edgesDB={edgesDB}
+            nodesDB={nodesDB}
+            workflowId={workflowId}
+            user={user}
+            registerCreateNode={registerCreateNode}
+        />
     );
 }
