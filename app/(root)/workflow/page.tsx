@@ -32,13 +32,12 @@ const WorkflowPage = async () => {
           <Header
             title={'Flujos avanzados'}
           />
-          <CreateWorflowDialog />
+          <CreateWorflowDialog isPro={true} />
         </div>
       </div>
 
-
       <Suspense fallback={<UserWorkFlowSkeleton />}>
-        <UserWorkflows userId={user.id} />
+        <UserWorkflows userId={user.id} isPro={true} />
       </Suspense>
     </div>
   );

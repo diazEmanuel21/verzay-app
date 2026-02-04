@@ -12,13 +12,17 @@ function hasWorkflow(result: { data?: Workflow[] }): result is { data: Workflow[
 
 interface UserWorkflowsProps {
     userId: string;
-}
+    isPro: boolean;
+};
 
-export async function UserWorkflows({ userId }: UserWorkflowsProps) {
+export async function UserWorkflows({ userId, isPro }: UserWorkflowsProps) {
     const resWorkflow = await getWorkFlowByUser(userId);
     const workflows = hasWorkflow(resWorkflow) ? resWorkflow.data : [];
+    const basicWorkflows = workflows.filter(w => w.isPro === false);
+    const proWorkflows = workflows.filter(w => w.isPro === true);
+    const wichKindWorkflow = isPro ? proWorkflows : basicWorkflows;
 
-    if (!workflows) {
+    if (!wichKindWorkflow) {
         return (
             <Alert variant={'destructive'}>
                 <AlertCircle className='w-4 h-4' />
@@ -28,7 +32,7 @@ export async function UserWorkflows({ userId }: UserWorkflowsProps) {
         );
     }
 
-    if (workflows.length === 0) {
+    if (wichKindWorkflow.length === 0) {
         return (
             <div className="flex flex-col gap-4 h-full items-center justify-center">
                 <div className='rounded-full bg-accent w-20 h-20 flex items-center justify-center'>
@@ -38,7 +42,7 @@ export async function UserWorkflows({ userId }: UserWorkflowsProps) {
                     <p className="font-bold">NO EXISTE NINGUN FLUJO</p>
                     <p className="text-sm text-muted-foreground">Click en botón para crear un nuevo Flujo</p>
                 </div>
-                <CreateWorflowDialog triggerText="CREA TU PRIMER FLUJO" />
+                <CreateWorflowDialog triggerText="CREA TU PRIMER FLUJO" isPro={isPro} />
             </div>
         );
     }
@@ -46,7 +50,7 @@ export async function UserWorkflows({ userId }: UserWorkflowsProps) {
     return (
         <div className="flex-1 overflow-y-auto">
             <div className="grid grid-cols-1 gap-2">
-                {workflows.map((workflow) => (
+                {wichKindWorkflow.map((workflow) => (
                     <WorkflowCard key={workflow.id} workflow={workflow} userId={userId} />
                 ))}
             </div>

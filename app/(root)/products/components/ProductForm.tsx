@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Pencil, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { nanoid } from "nanoid";
-import { optimizeFile } from "@/app/flow/[workflowId]/helpers";
+import { optimizeFile } from "../../workflow/[workflowId]/helpers";
 
 export const ProductForm = ({
     userId,

@@ -226,10 +226,11 @@ export const Breadcrumbs = ({ isFlow = false }: { isFlow?: boolean }) => {
                   </Dialog>
                 </div>
               )}
-
-              <div className="flex flex-1 justify-end">
-                {isFlow && <ThemeSwitcher />}
-              </div>
+              {isFlow &&
+                <div className="flex flex-1 justify-end">
+                  <ThemeSwitcher />
+                </div>
+              }
             </Breadcrumb>
           </header>
         </div >

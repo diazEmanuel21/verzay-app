@@ -23,7 +23,7 @@ interface RROperationResponse {
 export async function getWorkflowNameById(workflowId: string) {
     const wf = await db.workflow.findUnique({
         where: { id: workflowId },
-        select: { name: true }, 
+        select: { name: true },
     });
 
     return wf?.name ?? null;
@@ -58,31 +58,21 @@ export const createWorkflow = async (form: createWorkflowSchemaType) => {
         where: { email: session?.user.email ?? "" }
     });
 
-    if (!session?.user?.id) {
-        console.log("Usuario no autenticado");
-    }
-
-    console.log("Sesión del usuario: ", session);
-
+    if (!session?.user?.id) return { success: false, message: 'Usuario no autenticado.' };
 
     const { success, data } = createWorkflowSchema.safeParse(form);
 
-    if (!success) {
-        return { success: false, message: 'Datos del formulario inválidos.' };
-    }
+    if (!success) return { success: false, message: 'Datos del formulario inválidos.' };
 
     const result = await db.workflow.create({
         data: {
-            userId: user?.id!, // Asegurarse de que userId no sea undefined
+            userId: user?.id!,
             status: WorkflowStatus.DRAFT,
             definition: "workflow",
             ...data,
         },
     });
-
-    if (!result) {
-        return { success: false, message: 'Fallo la creación del flujo.' };
-    }
+    if (!result) return { success: false, message: 'Fallo la creación del flujo.' };
 
     redirect(`flow/${result.id}`);
 };

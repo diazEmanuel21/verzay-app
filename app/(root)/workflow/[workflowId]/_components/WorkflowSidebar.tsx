@@ -122,7 +122,7 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes, onCreateNode }: 
 
     return (
         <Sidebar
-            side="left"
+            side="right"
             variant="sidebar"
             collapsible="offcanvas"
             className="bg-white dark:bg-gray-900 text-gray-800 dark:text-zinc-100 border-r border-zinc-200 dark:border-gray-800"
