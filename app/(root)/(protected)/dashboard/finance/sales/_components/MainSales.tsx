@@ -58,7 +58,7 @@ type Props = {
   currencies: any[];
   sales: any[];
   products: any[];
-  primaryCurrencyCode: string; // ✅ moneda del user
+  primaryCurrencyCode: string; // ✅ aquí llega preferredCurrencyCode desde settings
 };
 
 type FormState = {
@@ -67,7 +67,7 @@ type FormState = {
   extra: string;
   discount: string;
 
-  currencyCode: string; // ✅ ya no editable
+  currencyCode: string; // ✅ solo lectura
 
   accountId: string;
   categoryId: string | null;
@@ -139,6 +139,8 @@ function sumByCurrency(list: any[]) {
 function moneyFormat(currencies: any[], code: string, value: number) {
   const meta = currencies.find((c) => c.code === code);
   const decimals = typeof meta?.decimals === 'number' ? meta.decimals : 2;
+
+  // ✅ locale CO está bien para COP y USD (formato), si luego quieres lo hacemos dinámico
   try {
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
@@ -269,12 +271,13 @@ export default function MainSales({
     [accounts]
   );
 
-  // ✅ moneda por defecto (si existe en currencies)
+  // ✅ moneda por defecto SIEMPRE la del setting (si existe en catálogo)
   const defaultCurrency = useMemo(() => {
     return (
       currencies.find((c) => c.code === primaryCurrencyCode)?.code ||
+      currencies.find((c) => c.code === 'COP')?.code ||
       currencies[0]?.code ||
-      'USD'
+      'COP'
     );
   }, [currencies, primaryCurrencyCode]);
 
@@ -295,8 +298,13 @@ export default function MainSales({
     contactJid: '',
   });
 
+  // ✅ si cambias la moneda en settings y recargas la página,
+  // al abrir "Nuevo" debe usar la nueva moneda
   useEffect(() => {
-    setForm((p) => ({ ...p, currencyCode: p.currencyCode || defaultCurrency }));
+    setForm((p) => ({
+      ...p,
+      currencyCode: p.currencyCode || defaultCurrency,
+    }));
   }, [defaultCurrency]);
 
   const resetForm = () => {
@@ -413,19 +421,23 @@ export default function MainSales({
           extra: form.extra?.trim() ? form.extra : '0',
           discount: form.discount?.trim() ? form.discount : '0',
 
-          currencyCode: form.currencyCode, // ✅ fijo (solo lectura)
+          // ✅ SIEMPRE la moneda del setting al crear (y se mantiene al editar)
+          currencyCode: form.currencyCode,
 
           accountId: form.accountId,
           categoryId: form.categoryId,
           title: form.title?.trim() || null,
           description: form.description?.trim() || null,
           productId: form.productId,
-          sessionId: form.sessionId ?? null, // ✅ guarda relación real con Session
+          sessionId: form.sessionId ?? null,
           counterparty: form.contactName?.trim() || null,
           reference: form.contactJid?.trim() || null,
         };
 
-        const res = editing ? await updateSale(editing.id, userId, payload as any) : await createSale(payload as any);
+        const res = editing
+          ? await updateSale(editing.id, userId, payload as any)
+          : await createSale(payload as any);
+
         if (!res.success) return toast.error(res.message);
 
         const txId = editing ? editing.id : (res as any).data?.id;
@@ -492,6 +504,7 @@ export default function MainSales({
     const entries = Object.entries(totals);
     if (!entries.length) return [];
 
+    // ✅ prioriza la moneda del setting en los resúmenes
     const safe = currencies.find((c) => c.code === primaryCurrencyCode)?.code || defaultCurrency;
 
     return [
@@ -604,11 +617,23 @@ export default function MainSales({
               </TabsList>
 
               <TabsContent value="month" className="mt-2">
-                <DataTable columns={columns as any} data={monthRows} searchKey="title" searchPlaceholder="Buscar..." onRowClick={openDetail} />
+                <DataTable
+                  columns={columns as any}
+                  data={monthRows}
+                  searchKey="title"
+                  searchPlaceholder="Buscar..."
+                  onRowClick={openDetail}
+                />
               </TabsContent>
 
               <TabsContent value="total" className="mt-2">
-                <DataTable columns={columns as any} data={rows} searchKey="title" searchPlaceholder="Buscar..." onRowClick={openDetail} />
+                <DataTable
+                  columns={columns as any}
+                  data={rows}
+                  searchKey="title"
+                  searchPlaceholder="Buscar..."
+                  onRowClick={openDetail}
+                />
               </TabsContent>
             </Tabs>
           </CardHeader>
@@ -616,164 +641,269 @@ export default function MainSales({
           <CardContent className="pt-0" />
         </Card>
 
-        {/* ✅ Modal Detalle */}
-        <Dialog open={detailOpen} onOpenChange={(v) => (v ? setDetailOpen(true) : closeDetail())}>
-          <DialogContent className="sm:max-w-[820px] rounded-2xl">
-            <DialogHeader className="space-y-1">
-              <div className="flex items-center justify-between gap-2">
-                <DialogTitle className="text-base">Detalle de venta</DialogTitle>
-                <div className="flex items-center gap-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        className="h-9 w-9"
-                        onClick={() => {
-                          if (!detailRow) return;
-                          closeDetail();
-                          openEdit(detailRow);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Editar</TooltipContent>
-                  </Tooltip>
+{/* ✅ Modal Detalle (MEJORADO) */}
+<Dialog open={detailOpen} onOpenChange={(v) => (v ? setDetailOpen(true) : closeDetail())}>
+  <DialogContent className="sm:max-w-[980px] rounded-2xl p-0 overflow-hidden">
+    {/* Header */}
+    <div className="border-b bg-background/95 p-4 sm:p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <DialogTitle className="text-base sm:text-lg font-semibold truncate">
+            {/** Cambia el texto según sea Sales/Expenses */}
+            Detalle de venta
+          </DialogTitle>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Visualiza el resumen, contacto y soportes.
+          </p>
+        </div>
 
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="destructive"
-                        className="h-9 w-9"
-                        onClick={() => {
-                          if (!detailRow) return;
-                          onDelete(detailRow.id);
-                        }}
-                        disabled={isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Eliminar</TooltipContent>
-                  </Tooltip>
+        <div className="flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-9 w-9 rounded-xl"
+                onClick={() => {
+                  if (!detailRow) return;
+                  closeDetail();
+                  openEdit(detailRow);
+                }}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Editar</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                variant="destructive"
+                className="h-9 w-9 rounded-xl"
+                onClick={() => {
+                  if (!detailRow) return;
+                  onDelete(detailRow.id);
+                }}
+                disabled={isPending}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Eliminar</TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+    </div>
+
+    {detailRow ? (
+      <div className="p-4 sm:p-5">
+        {/* Layout: info + total */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
+          {/* LEFT */}
+          <div className="space-y-4">
+            {/* Hero card */}
+            <div className="rounded-2xl border bg-muted/10 p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="truncate text-base font-semibold">
+                    {detailRow.title || 'Sin concepto'}
+                  </p>
+
+                  {/* chips */}
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <Badge variant="secondary" className="h-6 rounded-lg text-[11px]">
+                      {toISODate(detailRow.occurredAt)}
+                    </Badge>
+
+                    <Badge variant="outline" className="h-6 rounded-lg text-[11px]">
+                      {detailAccountName || '—'}
+                    </Badge>
+
+                    <Badge variant="outline" className="h-6 rounded-lg text-[11px]">
+                      {detailCategoryName}
+                    </Badge>
+
+                    {(detailRow.counterparty || detailRow.reference) ? (
+                      <Badge variant="outline" className="h-6 rounded-lg text-[11px]">
+                        <span className="inline-flex items-center gap-1">
+                          <UserRound className="h-3.5 w-3.5" />
+                          <span className="truncate max-w-[170px]">
+                            {detailRow.counterparty || 'Contacto'}
+                          </span>
+
+                          {detailRow.reference ? (
+                            <>
+                              <span className="mx-1 opacity-50">·</span>
+                              <Phone className="h-3.5 w-3.5" />
+                              <span className="truncate max-w-[180px]">
+                                {detailRow.reference}
+                              </span>
+                            </>
+                          ) : null}
+                        </span>
+                      </Badge>
+                    ) : null}
+                  </div>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">Visualiza el resumen, contacto y soportes.</p>
-            </DialogHeader>
 
-            {detailRow ? (
-              <div className="space-y-4">
-                <div className="rounded-xl border bg-muted/10 p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="truncate text-base font-semibold">{detailRow.title || 'Sin concepto'}</p>
+              <Separator className="my-3" />
 
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <Badge variant="secondary" className="h-6 text-[11px]">
-                          {toISODate(detailRow.occurredAt)}
-                        </Badge>
-                        <Badge variant="outline" className="h-6 text-[11px]">
-                          {detailAccountName || '—'}
-                        </Badge>
-                        <Badge variant="outline" className="h-6 text-[11px]">
-                          {detailCategoryName}
-                        </Badge>
+              {/* Description */}
+              {detailRow.description ? (
+                <div className="rounded-xl border bg-background p-3">
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                    {detailRow.description}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Sin descripción</p>
+              )}
+            </div>
 
-                        {detailRow.counterparty || detailRow.reference ? (
-                          <Badge variant="outline" className="h-6 text-[11px]">
-                            <span className="inline-flex items-center gap-1">
-                              <UserRound className="h-3.5 w-3.5" />
-                              {detailRow.counterparty || 'Contacto'}
-                              {detailRow.reference ? (
-                                <>
-                                  <span className="mx-1 opacity-50">·</span>
-                                  <Phone className="h-3.5 w-3.5" />
-                                  <span className="truncate max-w-[180px]">{detailRow.reference}</span>
-                                </>
-                              ) : null}
-                            </span>
+            {/* Attachments */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">Soportes</p>
+                <p className="text-xs text-muted-foreground">
+                  {detailRow.attachments?.length ? `${detailRow.attachments.length} archivo(s)` : '0 archivos'}
+                </p>
+              </div>
+
+              {detailRow.attachments?.length ? (
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {detailRow.attachments.map((a: any) => {
+                    const isImg = guessIsImage(a.mimeType, a.url);
+                    const isPdf = guessIsPdf(a.mimeType, a.url);
+
+                    return (
+                      <a
+                        key={a.id ?? a.url}
+                        href={a.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group flex items-center gap-3 rounded-2xl border bg-background p-3 transition-colors hover:bg-muted/30"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border bg-muted/10">
+                          {isImg ? (
+                            <img
+                              src={a.url}
+                              alt={a.fileName || 'soporte'}
+                              className="h-11 w-11 object-cover"
+                            />
+                          ) : isPdf ? (
+                            <FileText className="h-5 w-5 text-muted-foreground" />
+                          ) : (
+                            <Paperclip className="h-5 w-5 text-muted-foreground" />
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">
+                            {a.fileName || 'Archivo'}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            Abrir <ExternalLink className="ml-1 inline h-3 w-3" />
+                          </p>
+                        </div>
+
+                        <div className="opacity-0 transition-opacity group-hover:opacity-100">
+                          <Badge variant="secondary" className="h-6 rounded-lg text-[11px]">
+                            Ver
                           </Badge>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <div className="shrink-0 text-right">
-                      <p className="text-[11px] text-muted-foreground">Total</p>
-                      <p className="text-lg font-bold leading-tight">
-                        {detailCurrency?.symbol ? `${detailCurrency.symbol} ` : ''}
-                        {String(detailTotal)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{detailRow.currencyCode}</p>
-                      <p className="mt-1 text-[11px] text-muted-foreground">
-                        Base: {String(detailBase)} · Extra: {String(detailExtra)} · Desc: {String(detailDiscount)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <Separator className="my-3" />
-
-                  {detailRow.description ? (
-                    <div className="rounded-lg border bg-background p-3">
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed">{detailRow.description}</p>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Sin descripción</p>
-                  )}
+                        </div>
+                      </a>
+                    );
+                  })}
                 </div>
+              ) : (
+                <EmptyBox text="Sin soportes" />
+              )}
+            </div>
+          </div>
 
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">Soportes</p>
-                    <p className="text-xs text-muted-foreground">
-                      {detailRow.attachments?.length ? `${detailRow.attachments.length} archivo(s)` : '0 archivos'}
-                    </p>
-                  </div>
+          {/* RIGHT */}
+          <div className="space-y-3 lg:sticky lg:top-4">
+            <div className="rounded-2xl border bg-background p-4">
+              <p className="text-xs text-muted-foreground">Total</p>
 
-                  {detailRow.attachments?.length ? (
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      {detailRow.attachments.map((a: any) => {
-                        const isImg = guessIsImage(a.mimeType, a.url);
-                        const isPdf = guessIsPdf(a.mimeType, a.url);
-
-                        return (
-                          <a
-                            key={a.id ?? a.url}
-                            href={a.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="group flex items-center gap-3 rounded-xl border bg-background p-3 hover:bg-muted/30"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border bg-muted/10">
-                              {isImg ? (
-                                <img src={a.url} alt={a.fileName || 'soporte'} className="h-10 w-10 object-cover" />
-                              ) : isPdf ? (
-                                <FileText className="h-5 w-5 text-muted-foreground" />
-                              ) : (
-                                <Paperclip className="h-5 w-5 text-muted-foreground" />
-                              )}
-                            </div>
-
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium">{a.fileName || 'Archivo'}</p>
-                              <p className="text-[11px] text-muted-foreground">
-                                Abrir <ExternalLink className="ml-1 inline h-3 w-3" />
-                              </p>
-                            </div>
-                          </a>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <EmptyBox text="Sin soportes" />
-                  )}
-                </div>
+              <div className="mt-1 flex items-end justify-between gap-3">
+                <p className="text-2xl font-bold leading-none">
+                  {detailCurrency?.symbol ? `${detailCurrency.symbol} ` : ''}
+                  {String(detailTotal)}
+                </p>
+                <Badge variant="outline" className="h-7 rounded-xl text-[11px]">
+                  {detailRow.currencyCode}
+                </Badge>
               </div>
-            ) : null}
-          </DialogContent>
-        </Dialog>
+
+              {/* ✅ Solo para Sales: breakdown bonito */}
+              {(detailBase !== undefined || detailExtra !== undefined || detailDiscount !== undefined) ? (
+                <>
+                  <Separator className="my-3" />
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="rounded-xl border bg-muted/10 p-2">
+                      <p className="text-[11px] text-muted-foreground">Base</p>
+                      <p className="text-sm font-semibold truncate">{String(detailBase)}</p>
+                    </div>
+                    <div className="rounded-xl border bg-muted/10 p-2">
+                      <p className="text-[11px] text-muted-foreground">Extra</p>
+                      <p className="text-sm font-semibold truncate">{String(detailExtra)}</p>
+                    </div>
+                    <div className="rounded-xl border bg-muted/10 p-2">
+                      <p className="text-[11px] text-muted-foreground">Desc</p>
+                      <p className="text-sm font-semibold truncate">{String(detailDiscount)}</p>
+                    </div>
+                  </div>
+                </>
+              ) : null}
+            </div>
+
+            {/* Acciones secundarias (opcional) */}
+            <div className="rounded-2xl border bg-muted/10 p-4">
+              <p className="text-sm font-medium">Acciones</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Edita o elimina este registro.
+              </p>
+
+              <div className="mt-3 flex gap-2">
+                <Button
+                  variant="outline"
+                  className="h-9 flex-1 rounded-xl"
+                  onClick={() => {
+                    if (!detailRow) return;
+                    closeDetail();
+                    openEdit(detailRow);
+                  }}
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Editar
+                </Button>
+
+                <Button
+                  variant="destructive"
+                  className="h-9 flex-1 rounded-xl"
+                  onClick={() => {
+                    if (!detailRow) return;
+                    onDelete(detailRow.id);
+                  }}
+                  disabled={isPending}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Eliminar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    ) : null}
+  </DialogContent>
+</Dialog>
+
 
         {/* ✅ Modal Create/Edit */}
         <Dialog open={open} onOpenChange={setOpen}>
