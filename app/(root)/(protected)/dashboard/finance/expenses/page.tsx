@@ -25,6 +25,12 @@ export default async function ExpensesPage() {
   const meta = serializePrisma(metaRes.data!);
   const expenses = serializePrisma(listRes.data || []);
 
+  // ✅ usar la moneda guardada en settings (igual que Sales)
+  const preferredCurrencyCode =
+    (user as any).preferredCurrencyCode ||
+    (user as any).primaryCurrencyCode || // fallback por si antes existía ese campo
+    "COP";
+
   return (
     <MainExpenses
       userId={user.id}
@@ -32,7 +38,7 @@ export default async function ExpensesPage() {
       categories={meta.categories}
       currencies={meta.currencies}
       expenses={expenses}
-      primaryCurrencyCode={(user as any).primaryCurrencyCode || "USD"}
+      primaryCurrencyCode={preferredCurrencyCode}
     />
   );
 }

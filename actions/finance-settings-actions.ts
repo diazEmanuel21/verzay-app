@@ -59,7 +59,6 @@ export async function updatePreferredCurrencyCode(
     const email = session?.user?.email;
     if (!email) return { success: false, message: 'No autenticado.' };
 
-    // Validar que exista en catálogo
     const currency = await db.financeCurrency.findUnique({
       where: { code: preferredCurrencyCode },
       select: { code: true },
@@ -69,7 +68,7 @@ export async function updatePreferredCurrencyCode(
 
     await db.user.update({
       where: { email },
-      data: { preferredCurrencyCode: preferredCurrencyCode },
+      data: { preferredCurrencyCode },
     });
 
     return { success: true, message: 'Moneda actualizada.' };

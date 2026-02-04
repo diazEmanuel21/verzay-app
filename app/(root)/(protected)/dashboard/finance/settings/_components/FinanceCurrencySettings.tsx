@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -29,11 +30,11 @@ export default function FinanceCurrencySettings({
   currentCode: string;
   currencies: Currency[];
 }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [code, setCode] = useState(currentCode);
 
   const options = useMemo(() => {
-    // fallback por si la tabla está vacía
     if (!currencies?.length) {
       return [
         { code: 'COP', name: 'Peso Colombiano', symbol: 'COP$', decimals: 2 },
@@ -51,6 +52,7 @@ export default function FinanceCurrencySettings({
         return;
       }
       toast.success('Moneda guardada');
+      router.refresh(); // ✅ clave
     });
   };
 
