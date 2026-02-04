@@ -277,7 +277,6 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                 user={user}
                                 values={values}
                                 handleChange={handleChange}
-                                // 👇 meta para autosave con versionado
                                 promptId={promptMeta.id}
                                 version={promptVersion}
                                 onVersionChange={setPromptVersion}

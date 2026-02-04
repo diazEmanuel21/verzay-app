@@ -34,6 +34,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+const WELCOME_TITLE = "***Inicio Bienvenida***";
+
 /* utilidad: type-guard para pedidos */
 function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
   return (
@@ -55,6 +57,7 @@ export function TrainingBuilder({
   initialSteps = [],
   registerSaveHandler
 }: TrainingBuilderProps) {
+
   const [steps, setSteps] = useState<StepTraining[]>(() => {
     if (Array.isArray(initialSteps) && initialSteps.length > 0) {
       return initialSteps as StepTraining[];
@@ -62,7 +65,7 @@ export function TrainingBuilder({
     return [];
   });
 
-  // 🔹 Estado de autosave
+  // estado de autosave
   const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>("idle");
 
   const handleConflict = useCallback(
@@ -105,7 +108,7 @@ export function TrainingBuilder({
       emptyMessage:
         "Aún no has agregado pasos de entrenamiento. Usa “Agregar paso” para comenzar.",
       sectionLabel: (n, step) => `### Paso ${n} — ${step.title || "Sin título"}`,
-      elementsLabel: (n) => `#### Elementos del paso: ${n}`,    
+      elementsLabel: (n) => `#### Elementos del paso: ${n}`,
       mainMessageLabel: "Objetivo/respuesta principal del paso:",
       joinSeparator: "\n",
     });
@@ -131,6 +134,26 @@ export function TrainingBuilder({
 
   /* -------------------- Acciones por PASO -------------------- */
   const addStep = () => {
+
+    if (steps.length === 0) {
+      setSteps((prev) => [
+        ...prev,
+        {
+          id: nanoid(),
+          title: WELCOME_TITLE,
+          mainMessage: `Cuando un **Usuario:** inicie la conversación con frases como:\n\n\> Hola / Buenos días / Buenas tardes / Buenas noches/Información / Precio / Me interesa / Etc. (Que no tenga un contexto claro)\n\n***Enviar mensaje de Bienvenida:**\n\nTu único mensaje de bienvenida es:`,
+          elements: [{
+            id: nanoid(),
+            kind: "text",
+            text: ""
+          }],
+          openPicker: false,
+        },
+      ]);
+
+      return;
+    }
+
     setSteps((prev) => [
       ...prev,
       {
@@ -355,11 +378,12 @@ export function TrainingBuilder({
                       }
                       placeholder="Escribe el mensaje inicial para este paso…"
                       className="min-h-[32px]"
+                      disabled={step.title === WELCOME_TITLE}
                     />
                   </div>
 
                   <Separator />
-                  
+
                   <div className="rounded-lg border border-dashed border-muted/60 p-1">
                     {step.elements.length === 0 ? (
                       <div className="text-center text-sm text-muted-foreground">
