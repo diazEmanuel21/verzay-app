@@ -5,8 +5,8 @@ import { db } from "@/lib/db";
 import { loginSchema, registerSchema } from "@/lib/zod";
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
-import { cookies } from "next/headers";
 import { z } from "zod";
+import { cookies } from "next/headers";
 
 export const loginAction = async (values: z.infer<typeof loginSchema>) => {
   try {
@@ -23,28 +23,6 @@ export const loginAction = async (values: z.infer<typeof loginSchema>) => {
     return { error: "error 500" };
   }
 };
-
-export async function impersonateUser(targetUserId: string) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, message: "No auth" };
-
-  // ✅ Solo admin (ajusta si reseller también aplica)
-  if (session.user.role !== "admin") {
-    return { success: false, message: "No autorizado" };
-  }
-
-  // opcional: validar que existe el usuario target
-  const exists = await db.user.findUnique({ where: { id: targetUserId }, select: { id: true } });
-  if (!exists) return { success: false, message: "Usuario no existe" };
-
-  cookies().set("impersonate_user_id", targetUserId, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-  });
-
-  return { success: true };
-}
 
 export const registerAction = async (
   values: z.infer<typeof registerSchema>
@@ -112,9 +90,14 @@ export const registerAction = async (
 
 export async function changePasswordAction(newPassword: string) {
   const session = await auth();
-  if (!session?.user?.id) throw new Error("No auth");
+  if (!session?.user?.id) return { success: false, message: "No auth" };
 
-  const passwordHash = await bcrypt.hash(newPassword, 10);
+  const p = (newPassword ?? "").trim();
+  if (p.length < 6) {
+    return { success: false, message: "La contraseña debe tener al menos 6 caracteres." };
+  }
+
+  const passwordHash = await bcrypt.hash(p, 10);
 
   await db.user.update({
     where: { id: session.user.id },
@@ -124,5 +107,86 @@ export async function changePasswordAction(newPassword: string) {
     },
   });
 
+  return { success: true };
+}
+
+export async function adminChangeUserPassword(input: {
+  userId: string;
+  oldPassword: string;
+  newPassword: string;
+}) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, message: "No auth" };
+  if (session.user.role !== "admin") return { success: false, message: "No autorizado" };
+
+  const userId = input.userId;
+  const oldPassword = (input.oldPassword ?? "").trim();
+  const newPassword = (input.newPassword ?? "").trim();
+
+  const target = await db.user.findUnique({
+    where: { id: userId },
+    select: { id: true, password: true },
+  });
+
+  if (!target) return { success: false, message: "Usuario no existe" };
+  if (!target.password) return { success: false, message: "Este usuario no tiene contraseña local" };
+
+  const oldOk = await bcrypt.compare(oldPassword, target.password);
+  if (!oldOk) return { success: false, message: "Contraseña actual incorrecta" };
+
+  // Evitar que ponga la misma contraseña
+  const sameAsOld = await bcrypt.compare(newPassword, target.password);
+  if (sameAsOld) return { success: false, message: "La nueva contraseña no puede ser igual a la anterior" };
+
+  const hash = await bcrypt.hash(newPassword, 10);
+
+  await db.user.update({
+    where: { id: userId },
+    data: {
+      password: hash,
+      tokenVersion: { increment: 1 },
+    },
+  });
+
+  return { success: true, message: "Contraseña actualizada. Se cerró sesión en todos los dispositivos." };
+}
+
+export async function impersonateUser(targetUserId: string) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, message: "No auth" };
+
+  const realUser = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  });
+
+  if (!realUser || realUser.role !== "admin") {
+    return { success: false, message: "No autorizado" };
+  }
+
+  const exists = await db.user.findUnique({
+    where: { id: targetUserId },
+    select: { id: true },
+  });
+
+  if (!exists) return { success: false, message: "Usuario no existe" };
+
+  cookies().set("impersonate_user_id", targetUserId, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+  });
+
+  return { success: true };
+}
+
+export async function logoutAction() {
+  const store = cookies();
+
+  // cookie de impersonación (clave para tu bug)
+  store.delete("impersonate_user_id");
+
+  // (Opcional) si guardas otros estados por cookies, bórralos aquí
+  // store.delete("sidebar_state");
   return { success: true };
 }

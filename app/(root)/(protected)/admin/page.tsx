@@ -49,6 +49,13 @@ const AdminPage = async () => {
       href: "/admin/module",
       buttonLabel: "Ir a Módulos",
     },
+    {
+      title: "Gestión de contraseñas",
+      description: "Setea contraseñas y cambia contraseñas por cliente.",
+      icon: <LayoutGrid className="text-teal-600" />,
+      href: "/admin/password",
+      buttonLabel: "Ir a Contraseñas",
+    },
     // {
     //   title: "Plantillas IA",
     //   description: "Crea y gestiona plantillas para prompts personalizados.",

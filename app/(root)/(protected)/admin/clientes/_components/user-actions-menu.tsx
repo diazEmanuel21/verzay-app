@@ -14,7 +14,7 @@ import { DialogType } from './clients-manager'
 import { ClientInterface } from '@/lib/types'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
-import { loginAction } from '@/actions/auth-action'
+import { impersonateUser, loginAction } from '@/actions/auth-action'
 import { toast } from 'sonner'
 
 interface propsActionsMenu {
@@ -34,20 +34,32 @@ export const UserActionsMenu = ({ user, openDialogGetUserId, currentUserRol }: p
             return
         }
 
-        startTransition(async () => {
-            const res = await loginAction({
-                email: user.email,
-                password: user.password ?? ''
-            })
+        // startTransition(async () => {
+        //     const res = await loginAction({
+        //         email: user.email,
+        //         password: user.password ?? ''
+        //     })
 
-            if (res?.success) {
-                toast.success(`Iniciaste sesión como ${user.email}`)
-                router.refresh()
-                router.push('/')
+        //     if (res?.success) {
+        //         toast.success(`Iniciaste sesión como ${user.email}`)
+        //         router.refresh()
+        //         router.push('/')
+        //     } else {
+        //         toast.error(res?.error || 'No se pudo iniciar sesión como ese usuario')
+        //     }
+        // })
+
+
+        startTransition(async () => {
+            const res = await impersonateUser(user.id);
+            if (res.success) {
+                toast.success(`Entraste como ${user.email}`);
+                router.refresh();
+                router.push("/");
             } else {
-                toast.error(res?.error || 'No se pudo iniciar sesión como ese usuario')
+                toast.error(res.message);
             }
-        })
+        });
     }
 
     return (
@@ -64,6 +76,11 @@ export const UserActionsMenu = ({ user, openDialogGetUserId, currentUserRol }: p
                         onClick={() => openDialogGetUserId(user.id, 'editar', true)}
                     >
                         Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        onClick={() => router.push(`/admin/password?userId=${user.id}`)}
+                    >
+                        Contraseña
                     </DropdownMenuItem>
                     {currentUserRol === 'admin' &&
                         <DropdownMenuItem

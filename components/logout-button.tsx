@@ -1,7 +1,5 @@
 'use client'
 
-import { signOut } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 import { Plan, User } from '@prisma/client'
 
 import {
@@ -15,6 +13,7 @@ import {
 import { ChevronsUpDown, LogOut } from 'lucide-react'
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from './ui/sidebar'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import { handleLogout } from '@/lib/handleLogout'
 // import { PLAN_COLORS } from '@/types/plans'
 
 type LogoutButtonProps = {
@@ -23,16 +22,7 @@ type LogoutButtonProps = {
 };
 
 const LogoutButton = ({ user }: LogoutButtonProps) => {
-  const router = useRouter();
   const { isMobile } = useSidebar()
-
-  const handleLogout = async () => {
-    await signOut({
-      callbackUrl: '/login',
-    })
-  }
-
-  const goTo = (path: string) => router.push(path)
 
   const userInitial = user?.name?.charAt(0).toUpperCase() ?? '?'
 
@@ -94,28 +84,6 @@ const LogoutButton = ({ user }: LogoutButtonProps) => {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {/* <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => goTo('/credits')}>
-                <Sparkles />
-                Mejorar mi plan
-              </DropdownMenuItem>
-            </DropdownMenuGroup> */}
-            {/* <DropdownMenuSeparator /> */}
-            {/* <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => goTo('/profile')}>
-                <BadgeCheck />
-                Ajustes de perfil
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator /> */}
             <DropdownMenuItem onClick={handleLogout} className="text-red-600">
               <LogOut className="mr-2 h-4 w-4" />
               Salir

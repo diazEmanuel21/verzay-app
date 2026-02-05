@@ -218,39 +218,23 @@ export const updateClientDataByField = async (
     return { success: false, message: 'Error interno al actualizar los datos.' };
   }
 };
+
 // ==============================
 // UPDATE CLIENT DATA
 // ==============================
-export const updateClientData = async (
-  userId: string,
-  formData: FormData
-): Promise<{ success: boolean; message: string }> => {
+export const updateClientData = async (userId: string, formData: FormData) => {
   try {
     const dataToUpdate: Record<string, any> = {};
 
-    // 1) Procesa primero los booleanos
     (BOOLEAN_FIELDS as readonly string[]).forEach((key) => {
       const b = normalizeBoolean(formData, key);
       if (b !== undefined) dataToUpdate[key] = b;
     });
 
-    // 2) Copia el resto de campos no booleanos
     assignNonBooleanFields(formData, dataToUpdate);
 
-    // 3) Si vino password, hashear + tokenVersion++
-    // if (typeof dataToUpdate.password === "string") {
-    //   const newPassword = dataToUpdate.password.trim();
+    delete dataToUpdate.password;
 
-    //   if (newPassword.length === 0) {
-    //     // si vino vacío, no actualices password
-    //     delete dataToUpdate.password;
-    //   } else {
-    //     dataToUpdate.password = await bcrypt.hash(newPassword, 10);
-    //     dataToUpdate.tokenVersion = { increment: 1 }; // ✅ logout all devices
-    //   }
-    // }
-
-    // 4) Validación mínima
     if (Object.keys(dataToUpdate).length === 0) {
       return { success: false, message: "No se encontraron campos válidos para actualizar." };
     }
