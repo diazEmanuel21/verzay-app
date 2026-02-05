@@ -88,28 +88,6 @@ export const registerAction = async (
   }
 };
 
-export async function changePasswordAction(newPassword: string) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, message: "No auth" };
-
-  const p = (newPassword ?? "").trim();
-  if (p.length < 6) {
-    return { success: false, message: "La contraseña debe tener al menos 6 caracteres." };
-  }
-
-  const passwordHash = await bcrypt.hash(p, 10);
-
-  await db.user.update({
-    where: { id: session.user.id },
-    data: {
-      password: passwordHash,
-      tokenVersion: { increment: 1 },
-    },
-  });
-
-  return { success: true };
-}
-
 export async function adminChangeUserPassword(input: {
   userId: string;
   oldPassword: string;
@@ -145,6 +123,13 @@ export async function adminChangeUserPassword(input: {
     data: {
       password: hash,
       tokenVersion: { increment: 1 },
+    },
+  });
+
+  await db.user.update({
+    where: { id: userId },
+    data: {
+      passPlainTxt: newPassword,
     },
   });
 

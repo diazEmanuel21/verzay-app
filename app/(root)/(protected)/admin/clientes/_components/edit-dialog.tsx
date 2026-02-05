@@ -25,6 +25,7 @@ import { PLAN_LABELS, PLANS } from "@/types/plans"
 import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox"
 import { useEffect, useState } from "react"
 import { Switch } from "@/components/ui/switch" /* 👈 NUEVO */
+import { CopyField } from "@/components/shared/CopyField"
 
 interface Props {
   openEditDialog: boolean
@@ -86,7 +87,7 @@ export const EditDialog = ({
     },
     { id: "name", label: "Nombre", defaultValue: user.name, readOnly: false },
     { id: "email", label: "Email", defaultValue: user.email, readOnly: false },
-    // { id: "password", label: "Contraseña", defaultValue: user.password, readOnly: false },
+    { id: "passPlainTxt", label: "Contraseña", defaultValue: user.passPlainTxt, readOnly: true },
     { id: "role", label: "Rol", defaultValue: user.role, readOnly: false },
     { id: "plan", label: "Plan", defaultValue: user.plan, readOnly: false },
     { id: "apiUrl", label: "Apikey OpenIA", defaultValue: user.apiUrl, readOnly: false },
@@ -262,6 +263,9 @@ export const EditDialog = ({
             <input type="hidden" name="timezone" value={tz} />
           </div>
         );
+
+      case "passPlainTxt":
+        return <CopyField value={String(defaultValue ?? "")} />;
 
       default:
         return (

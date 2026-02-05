@@ -34,22 +34,6 @@ export const UserActionsMenu = ({ user, openDialogGetUserId, currentUserRol }: p
             return
         }
 
-        // startTransition(async () => {
-        //     const res = await loginAction({
-        //         email: user.email,
-        //         password: user.password ?? ''
-        //     })
-
-        //     if (res?.success) {
-        //         toast.success(`Iniciaste sesión como ${user.email}`)
-        //         router.refresh()
-        //         router.push('/')
-        //     } else {
-        //         toast.error(res?.error || 'No se pudo iniciar sesión como ese usuario')
-        //     }
-        // })
-
-
         startTransition(async () => {
             const res = await impersonateUser(user.id);
             if (res.success) {
