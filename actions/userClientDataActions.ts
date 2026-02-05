@@ -237,18 +237,18 @@ export const updateClientData = async (
     // 2) Copia el resto de campos no booleanos
     assignNonBooleanFields(formData, dataToUpdate);
 
-    // ✅ 3) Si vino password, hashear + tokenVersion++
-    if (typeof dataToUpdate.password === "string") {
-      const newPassword = dataToUpdate.password.trim();
+    // 3) Si vino password, hashear + tokenVersion++
+    // if (typeof dataToUpdate.password === "string") {
+    //   const newPassword = dataToUpdate.password.trim();
 
-      if (newPassword.length === 0) {
-        // si vino vacío, no actualices password
-        delete dataToUpdate.password;
-      } else {
-        dataToUpdate.password = await bcrypt.hash(newPassword, 10);
-        dataToUpdate.tokenVersion = { increment: 1 }; // ✅ logout all devices
-      }
-    }
+    //   if (newPassword.length === 0) {
+    //     // si vino vacío, no actualices password
+    //     delete dataToUpdate.password;
+    //   } else {
+    //     dataToUpdate.password = await bcrypt.hash(newPassword, 10);
+    //     dataToUpdate.tokenVersion = { increment: 1 }; // ✅ logout all devices
+    //   }
+    // }
 
     // 4) Validación mínima
     if (Object.keys(dataToUpdate).length === 0) {

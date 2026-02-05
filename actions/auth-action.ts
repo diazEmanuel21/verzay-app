@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { loginSchema, registerSchema } from "@/lib/zod";
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
+import { cookies } from "next/headers";
 import { z } from "zod";
 
 export const loginAction = async (values: z.infer<typeof loginSchema>) => {
@@ -22,6 +23,28 @@ export const loginAction = async (values: z.infer<typeof loginSchema>) => {
     return { error: "error 500" };
   }
 };
+
+export async function impersonateUser(targetUserId: string) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, message: "No auth" };
+
+  // ✅ Solo admin (ajusta si reseller también aplica)
+  if (session.user.role !== "admin") {
+    return { success: false, message: "No autorizado" };
+  }
+
+  // opcional: validar que existe el usuario target
+  const exists = await db.user.findUnique({ where: { id: targetUserId }, select: { id: true } });
+  if (!exists) return { success: false, message: "Usuario no existe" };
+
+  cookies().set("impersonate_user_id", targetUserId, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+  });
+
+  return { success: true };
+}
 
 export const registerAction = async (
   values: z.infer<typeof registerSchema>

@@ -5,7 +5,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import authConfig from "@/auth.config";
 import { db } from "@/lib/db";
 import { Plan, Role, User } from "@prisma/client";
-import type { JWT } from "next-auth/jwt";
+
 
 declare module "next-auth" {
   interface Session {
@@ -13,18 +13,7 @@ declare module "next-auth" {
       id: string;
       role: Role;
       plan: Plan;
-      tokenVersion: number;
     } & DefaultSession["user"];
-  }
-}
-
-declare module "next-auth/jwt" {
-  interface JWT {
-    id?: string;
-    role?: Role;
-    plan?: Plan;
-    tokenVersion?: number;
-    invalid?: boolean;
   }
 }
 
@@ -33,28 +22,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   session: { strategy: "jwt" },
   callbacks: {
-    async jwt({ token, user }) {
+    // jwt() se ejecuta cada vez que se crea o actualiza un token JWT.
+    // Aquí es donde puedes agregar información adicional al token.
+    jwt({ token, user }) {
       if (user) {
-        const u = user as any;
+        const u = user as User;
         token.id = u.id;
         token.role = u.role;
         token.plan = u.plan;
-        token.tokenVersion = u.tokenVersion ?? 0; // ✅ se mete al token al loguear
+
       }
       return token;
     },
-
-    async session({ session, token }) {
+    session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as Role;
         session.user.plan = token.plan as Plan;
-        (session.user as any).tokenVersion = (token as any).tokenVersion ?? 0;
       }
       return session;
-    },
+    }
   },
-
   events: {
     // El evento linkAccount se dispara cuando una cuenta (proveedor OAuth: GitHub, Google, Facebook, etc.)  se vincula a un usuario existente en tu base de datos.
     async linkAccount({ user }) {
