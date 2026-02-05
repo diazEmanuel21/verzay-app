@@ -21,7 +21,7 @@ export default async function RootGroupLayout({
 }) {
     await requireAuth();
 
-    const user = await currentUser(); // aquí ya debe existir sí o sí
+    const user = await currentUser();
     const cookieStore = await cookies();
     const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
