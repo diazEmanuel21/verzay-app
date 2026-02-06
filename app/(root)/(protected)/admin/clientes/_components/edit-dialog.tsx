@@ -24,8 +24,7 @@ import { VolumeX, Volume2 } from 'lucide-react'
 import { PLAN_LABELS, PLANS } from "@/types/plans"
 import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox"
 import { useEffect, useState } from "react"
-import { Switch } from "@/components/ui/switch" /* 👈 NUEVO */
-import { CopyField } from "@/components/shared/CopyField"
+import { Switch } from "@/components/ui/switch" 
 
 interface Props {
   openEditDialog: boolean
