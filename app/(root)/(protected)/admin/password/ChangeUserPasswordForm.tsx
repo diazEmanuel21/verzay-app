@@ -5,7 +5,6 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { Eye, EyeOff, KeyRound, ShieldCheck, ShieldAlert } from "lucide-react";
 
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,11 +49,7 @@ const reqs = [
 function RequirementItem({ ok, label }: { ok: boolean; label: string }) {
     return (
         <div className="flex items-center gap-2 text-xs">
-            {ok ? (
-                <ShieldCheck className="h-4 w-4 text-green-600" />
-            ) : (
-                <ShieldAlert className="h-4 w-4 text-muted-foreground" />
-            )}
+            {ok ? <ShieldCheck className="h-4 w-4 text-green-600" /> : <ShieldAlert className="h-4 w-4 text-muted-foreground" />}
             <span className={ok ? "text-green-700 dark:text-green-400" : "text-muted-foreground"}>{label}</span>
         </div>
     );
@@ -82,11 +77,12 @@ export function ChangeUserPasswordForm({ userId }: Props) {
         else console.log("[ChangePassword]", msg);
     };
 
-    const checklist = useMemo(() => {
-        return reqs.map((r) => ({ ...r, ok: r.test(newPassword) }));
-    }, [newPassword]);
+    const checklist = useMemo(() => reqs.map((r) => ({ ...r, ok: r.test(newPassword) })), [newPassword]);
 
-    const matchOk = useMemo(() => confirmPassword.length > 0 && newPassword === confirmPassword, [newPassword, confirmPassword]);
+    const matchOk = useMemo(
+        () => confirmPassword.length > 0 && newPassword === confirmPassword,
+        [newPassword, confirmPassword]
+    );
 
     const validateLocal = () => {
         setFieldError({});
@@ -127,7 +123,6 @@ export function ChangeUserPasswordForm({ userId }: Props) {
 
                 toast.success(res.message ?? "Listo", { id: "chg-pass" });
 
-                // limpiar fields (seguridad)
                 setOldPassword("");
                 setNewPassword("");
                 setConfirmPassword("");
@@ -144,162 +139,172 @@ export function ChangeUserPasswordForm({ userId }: Props) {
     const allReqsOk = checklist.every((c) => c.ok);
 
     return (
-        <div className="flex justify-center items-center w-full h-full">
-            <Card className="w-full max-w-[720px] border-border">
-                <CardHeader className="space-y-1">
-                    <CardTitle className="flex items-center gap-2">
-                        <KeyRound className="h-5 w-5" />
-                        Cambiar contraseña (usuario)
-                    </CardTitle>
-                    <CardDescription className="text-sm">
-                        userId: <span className="font-mono text-xs">{userId}</span>
-                    </CardDescription>
-                </CardHeader>
+        <div className="w-full">
+            {/* padding responsive + centra el contenido */}
+            <div className="mx-auto w-full max-w-5xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+                <Card className="w-full border-border">
+                    <CardHeader className="space-y-1">
+                        <CardTitle className="flex flex-wrap items-center gap-2 text-base sm:text-lg">
+                            <KeyRound className="h-5 w-5" />
+                            Cambiar contraseña (usuario)
+                        </CardTitle>
 
-                <CardContent className="space-y-5">
-                    <div className="space-y-4">
-                        {/* Old */}
-                        <div className="space-y-2">
-                            <Label htmlFor="oldPassword">Contraseña actual</Label>
-                            <div className="relative">
-                                <Input
-                                    id="oldPassword"
-                                    type={showOld ? "text" : "password"}
-                                    value={oldPassword}
-                                    onChange={(e) => setOldPassword(e.target.value)}
-                                    onBlur={validateLocal}
-                                    disabled={pending}
-                                    placeholder="Ingresa la contraseña actual"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowOld((v) => !v)}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
-                                    aria-label="Mostrar/ocultar"
-                                >
-                                    {showOld ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                </button>
-                            </div>
-                            {fieldError.oldPassword && <p className="text-xs text-destructive">{fieldError.oldPassword}</p>}
-                        </div>
+                        <CardDescription className="text-xs sm:text-sm break-all">
+                            userId: <span className="font-mono text-[11px] sm:text-xs">{userId}</span>
+                        </CardDescription>
+                    </CardHeader>
 
-                        <Separator />
-
-                        {/* New */}
-                        <div className="space-y-2">
-                            <Label htmlFor="newPassword">Nueva contraseña</Label>
-                            <div className="relative">
-                                <Input
-                                    id="newPassword"
-                                    type={showNew ? "text" : "password"}
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                    onBlur={validateLocal}
-                                    disabled={pending}
-                                    placeholder="Crea una contraseña fuerte"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowNew((v) => !v)}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
-                                    aria-label="Mostrar/ocultar"
-                                >
-                                    {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                </button>
-                            </div>
-                            {fieldError.newPassword && <p className="text-xs text-destructive">{fieldError.newPassword}</p>}
-
-                            {/* Checklist */}
-                            <div className="grid gap-1 rounded-lg border-border p-3">
-                                <div className="text-xs font-medium mb-1">Requisitos</div>
-                                <div className="grid gap-1">
-                                    {checklist.map((c) => (
-                                        <RequirementItem key={c.key} ok={c.ok} label={c.label} />
-                                    ))}
+                    <CardContent className="space-y-5">
+                        {/* Layout responsive: 1 col (mobile) | 2 col (lg) */}
+                        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-6">
+                            {/* Col 1: formulario */}
+                            <div className="space-y-4">
+                                {/* Old */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="oldPassword">Contraseña actual</Label>
+                                    <div className="relative">
+                                        <Input
+                                            id="oldPassword"
+                                            type={showOld ? "text" : "password"}
+                                            value={oldPassword}
+                                            onChange={(e) => setOldPassword(e.target.value)}
+                                            onBlur={validateLocal}
+                                            disabled={pending}
+                                            placeholder="Ingresa la contraseña actual"
+                                            className="pr-10"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowOld((v) => !v)}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:bg-muted/40"
+                                            aria-label="Mostrar/ocultar"
+                                        >
+                                            {showOld ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
+                                    {fieldError.oldPassword && <p className="text-xs text-destructive">{fieldError.oldPassword}</p>}
                                 </div>
-                            </div>
-                        </div>
 
-                        {/* Confirm */}
-                        <div className="space-y-2">
-                            <Label htmlFor="confirmPassword">Confirmar nueva contraseña</Label>
-                            <div className="relative">
-                                <Input
-                                    id="confirmPassword"
-                                    type={showConfirm ? "text" : "password"}
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    onBlur={validateLocal}
-                                    disabled={pending}
-                                    placeholder="Repite la nueva contraseña"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowConfirm((v) => !v)}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
-                                    aria-label="Mostrar/ocultar"
+                                <Separator />
+
+                                {/* New */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="newPassword">Nueva contraseña</Label>
+                                    <div className="relative">
+                                        <Input
+                                            id="newPassword"
+                                            type={showNew ? "text" : "password"}
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            onBlur={validateLocal}
+                                            disabled={pending}
+                                            placeholder="Crea una contraseña fuerte"
+                                            className="pr-10"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowNew((v) => !v)}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:bg-muted/40"
+                                            aria-label="Mostrar/ocultar"
+                                        >
+                                            {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
+                                    {fieldError.newPassword && <p className="text-xs text-destructive">{fieldError.newPassword}</p>}
+
+                                    {/* Checklist */}
+                                    <div className="rounded-lg border border-border p-3">
+                                        <div className="mb-2 text-xs font-medium">Requisitos</div>
+                                        <div className="grid gap-1 sm:grid-cols-2">
+                                            {checklist.map((c) => (
+                                                <RequirementItem key={c.key} ok={c.ok} label={c.label} />
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Confirm */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="confirmPassword">Confirmar nueva contraseña</Label>
+                                    <div className="relative">
+                                        <Input
+                                            id="confirmPassword"
+                                            type={showConfirm ? "text" : "password"}
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            onBlur={validateLocal}
+                                            disabled={pending}
+                                            placeholder="Repite la nueva contraseña"
+                                            className="pr-10"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirm((v) => !v)}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:bg-muted/40"
+                                            aria-label="Mostrar/ocultar"
+                                        >
+                                            {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
+
+                                    <div className="text-xs">
+                                        {confirmPassword.length === 0 ? (
+                                            <span className="text-muted-foreground">Escribe la confirmación.</span>
+                                        ) : matchOk ? (
+                                            <span className="text-green-700 dark:text-green-400">Coinciden</span>
+                                        ) : (
+                                            <span className="text-destructive">No coinciden</span>
+                                        )}
+                                    </div>
+
+                                    {fieldError.confirmPassword && <p className="text-xs text-destructive">{fieldError.confirmPassword}</p>}
+                                </div>
+
+                                {/* CTA */}
+                                <Button
+                                    className="w-full"
+                                    disabled={pending || !allReqsOk || !matchOk || oldPassword.trim().length === 0}
+                                    onClick={onSubmit}
                                 >
-                                    {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                </button>
+                                    {pending ? "Actualizando..." : "Cambiar contraseña"}
+                                </Button>
                             </div>
 
-                            <div className="flex items-center justify-between">
-                                <div className="text-xs">
-                                    {confirmPassword.length === 0 ? (
-                                        <span className="text-muted-foreground">Escribe la confirmación.</span>
-                                    ) : matchOk ? (
-                                        <span className="text-green-700 dark:text-green-400">Coinciden</span>
+                            {/* Col 2: Estado/logs */}
+                            <div className="rounded-lg border border-border p-3 sm:p-4">
+                                <div className="mb-2 text-xs font-medium">Estado en tiempo real</div>
+                                <div className="mb-3 text-[11px] text-muted-foreground">
+                                    {pending ? "Procesando solicitud en servidor…" : "Listo para enviar."}
+                                </div>
+
+                                <div className="max-h-[45vh] min-h-[160px] overflow-auto space-y-1 rounded-md bg-muted/20 p-2 text-[11px] font-mono sm:max-h-[420px]">
+                                    {logs.length === 0 ? (
+                                        <div className="text-muted-foreground">Sin eventos todavía.</div>
                                     ) : (
-                                        <span className="text-destructive">No coinciden</span>
+                                        logs.map((l, i) => (
+                                            <div key={i} className="break-words">
+                                                <span className="text-muted-foreground">{l.ts}</span>{" "}
+                                                <span
+                                                    className={
+                                                        l.level === "error"
+                                                            ? "text-destructive"
+                                                            : l.level === "warn"
+                                                                ? "text-yellow-600"
+                                                                : "text-foreground"
+                                                    }
+                                                >
+                                                    [{l.level}]
+                                                </span>{" "}
+                                                {l.msg}
+                                            </div>
+                                        ))
                                     )}
                                 </div>
                             </div>
-
-                            {fieldError.confirmPassword && <p className="text-xs text-destructive">{fieldError.confirmPassword}</p>}
                         </div>
-                    </div>
-
-                    <Button
-                        className="w-full"
-                        disabled={pending || !allReqsOk || !matchOk || oldPassword.trim().length === 0}
-                        onClick={onSubmit}
-                    >
-                        {pending ? "Actualizando..." : "Cambiar contraseña"}
-                    </Button>
-
-                    {/* Estado / logs */}
-                    <div className="rounded-lg border-border p-3">
-                        <div className="text-xs font-medium mb-2">Estado en tiempo real</div>
-                        <div className="text-[11px] text-muted-foreground mb-2">
-                            {pending ? "Procesando solicitud en servidor…" : "Listo para enviar."}
-                        </div>
-
-                        <div className="max-h-40 overflow-auto space-y-1 text-[11px] font-mono">
-                            {logs.length === 0 ? (
-                                <div className="text-muted-foreground">Sin eventos todavía.</div>
-                            ) : (
-                                logs.map((l, i) => (
-                                    <div key={i}>
-                                        <span className="text-muted-foreground">{l.ts}</span>{" "}
-                                        <span
-                                            className={
-                                                l.level === "error"
-                                                    ? "text-destructive"
-                                                    : l.level === "warn"
-                                                        ? "text-yellow-600"
-                                                        : "text-foreground"
-                                            }
-                                        >
-                                            [{l.level}]
-                                        </span>{" "}
-                                        {l.msg}
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 }
