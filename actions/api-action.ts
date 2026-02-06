@@ -103,44 +103,44 @@ export async function generateQRCode({ instanceName, userId }: GenerateQrInterfa
   }
 
   // regla anti-spam
-  // const transitionedToDisconnected = entry.lastIsConnected === true && apiConnectedNow === false;
-  // const cooldownOk = now - entry.lastNotifiedAt >= DISCONNECT_COOLDOWN_MS;
+  const transitionedToDisconnected = entry.lastIsConnected === true && apiConnectedNow === false;
+  const cooldownOk = now - entry.lastNotifiedAt >= DISCONNECT_COOLDOWN_MS;
 
-  // const dailyOk = entry.notifiedCountToday < 2;
+  const dailyOk = entry.notifiedCountToday < 2;
 
 
   let justNotified = false;
 
-  // if (
-  //   dailyOk &&
-  //   (
-  //     (transitionedToDisconnected && cooldownOk) ||
-  //     (entry.lastIsConnected === null && !apiConnectedNow && cooldownOk)
-  //   )
-  // ) {
-  //   const remoteJid = (user as any).notificationNumber as string | undefined;
+  if (
+    dailyOk &&
+    (
+      (transitionedToDisconnected && cooldownOk) ||
+      (entry.lastIsConnected === null && !apiConnectedNow && cooldownOk)
+    )
+  ) {
+    // const remoteJid = (user as any).notificationNumber as string | undefined;
 
-  //   if (remoteJid) {
-  //     try {
-  //       const serverUrlAdmin = "evoapi.ia-app.com";
-  //       const instanceNameAdmin = "Verzay Pro Atc";
-  //       const sendTextUrl = `https://${serverUrlAdmin}/message/sendText/${instanceNameAdmin}`;
+    // if (remoteJid) {
+    //   try {
+    //     const serverUrlAdmin = "evoapi.ia-app.com";
+    //     const instanceNameAdmin = "Verzay Pro Atc";
+    //     const sendTextUrl = `https://${serverUrlAdmin}/message/sendText/${instanceNameAdmin}`;
 
-  //       await sendingMessages({
-  //         url: sendTextUrl,
-  //         apikey: apiKey,
-  //         remoteJid,
-  //         text: DISCONNECTION_MSG,
-  //       });
-  //     } catch {
-  //       // best-effort
-  //     }
-  //   }
+    //     await sendingMessages({
+    //       url: sendTextUrl,
+    //       apikey: apiKey,
+    //       remoteJid,
+    //       text: DISCONNECTION_MSG,
+    //     });
+    //   } catch {
+    //     // best-effort
+    //   }
+    // }
 
-  //   entry.lastNotifiedAt = now;
-  //   entry.notifiedCountToday += 1;
-  //   justNotified = true; // ✅
-  // }
+    entry.lastNotifiedAt = now;
+    entry.notifiedCountToday += 1;
+    justNotified = true; // ✅
+  }
 
   entry.lastIsConnected = apiConnectedNow;
   cache.set(cacheKey, entry);
