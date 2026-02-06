@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { User } from '@prisma/client'
 import {
   Dialog,
   DialogContent,
@@ -11,9 +10,6 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import {
-  FileText,
-  FileSpreadsheet,
-  Folder,
   Save,
   RefreshCw,
   Trash2

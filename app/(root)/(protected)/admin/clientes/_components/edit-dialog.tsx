@@ -87,7 +87,7 @@ export const EditDialog = ({
     },
     { id: "name", label: "Nombre", defaultValue: user.name, readOnly: false },
     { id: "email", label: "Email", defaultValue: user.email, readOnly: false },
-    { id: "passPlainTxt", label: "Contraseña", defaultValue: user.passPlainTxt, readOnly: true },
+    { id: "passPlainTxt", label: "Contraseña", defaultValue: user.passPlainTxt, readOnly: false },
     { id: "role", label: "Rol", defaultValue: user.role, readOnly: false },
     { id: "plan", label: "Plan", defaultValue: user.plan, readOnly: false },
     { id: "apiUrl", label: "Apikey OpenIA", defaultValue: user.apiUrl, readOnly: false },

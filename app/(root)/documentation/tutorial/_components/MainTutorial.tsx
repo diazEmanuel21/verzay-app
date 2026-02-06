@@ -77,14 +77,16 @@ export const MainTutorial = ({ user }: { user: User }) => {
 
     const handleDelete = async (id: string) => {
         const res = await deleteGuide(id);
+
         if (res.success) {
             toast.success('Guide deleted');
             fetchGuides();
         } else {
             toast.error(res.message);
         }
-    };
 
+        return res;
+    };
 
     const filteredGuides = guides.filter(guide =>
         guide.title.toLowerCase().includes(filter.toLowerCase()) ||
@@ -246,7 +248,7 @@ export const MainTutorial = ({ user }: { user: User }) => {
                     setOpen={setShowDeleteDialog}
                     itemName={itemDelete.title}
                     itemId={itemDelete.id}
-                    mutationFn={() => handleDelete(itemDelete.id)}
+                    mutationFn={(id) => handleDelete(id)}
                     entityLabel={itemDelete.title}
                 />
             }

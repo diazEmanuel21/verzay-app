@@ -4,6 +4,8 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 
 export const CopyField = ({ value }: { value: string }) => {
+    debugger;
+    
     const handleCopy = async () => {
         await navigator.clipboard.writeText(value);
         toast.success("Copiado");

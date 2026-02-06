@@ -49,7 +49,7 @@ export function DataTable<TData, TValue>({ columns, data, currentUserRol, openCr
   const [rowSelection, setRowSelection] = useState({})
   const [pagination, setPagination] = useState({
     pageIndex: 0,
-    pageSize: 1000,
+    pageSize: 8,
   })
 
   const table = useReactTable({

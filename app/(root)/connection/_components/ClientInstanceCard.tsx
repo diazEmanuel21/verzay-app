@@ -175,11 +175,12 @@ export const ClientInstanceCard = ({
       <GenericDeleteDialog
         open={showDeleteDialog}
         setOpen={setShowDeleteDialog}
-        itemName={'Agente IA'}
-        itemId={instanceId ?? 'instance-123'}
-        mutationFn={() => deleteInstance(user.id, instanceType)}
+        itemName="Agente IA"
+        itemId={instanceId ?? "instance-123"}
+        mutationFn={async (_id) => deleteInstance(user.id, instanceType)}
         entityLabel="Agente IA"
       />
+
     </>
   );
 };

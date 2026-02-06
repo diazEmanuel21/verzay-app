@@ -21,7 +21,7 @@ interface GenericDeleteDialogProps {
     setOpen: (open: boolean) => void;
     itemName?: string; // Solo se requiere si `requireConfirmationText` es true
     itemId: string | number;
-    mutationFn: (id: string) => Promise<any>;
+    mutationFn: (id: string) => Promise<{ success: boolean; message: string }>;
     entityLabel: string; // Ej: "Flujos", "respuesta rápida"
     requireConfirmationText?: boolean; // Si es true, exige escribir el nombre
 }
@@ -40,15 +40,20 @@ export function GenericDeleteDialog({
 
     const deleteMutation = useMutation({
         mutationFn,
-        onSuccess: () => {
-            toast.success(`${capitalize(entityLabel)} eliminado satisfactoriamente`, { id: itemId });
+        onSuccess: (res) => {
+            if (!res?.success) {
+                toast.error(res?.message || `Hubo un error al eliminar el ${entityLabel}`, { id: itemId });
+                return;
+            }
+
+            toast.success(res?.message || `${capitalize(entityLabel)} eliminado satisfactoriamente`, { id: itemId });
             setConfirmText("");
             setOpen(false);
             router.refresh();
         },
-        onError: () => {
-            toast.error(`Hubo un error al eliminar el ${entityLabel}`, { id: itemId });
-        }
+        onError: (err: any) => {
+            toast.error(err?.message || `Hubo un error al eliminar el ${entityLabel}`, { id: itemId });
+        },
     });
 
     const isConfirmDisabled = requireConfirmationText

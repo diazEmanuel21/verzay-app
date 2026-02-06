@@ -1,5 +1,6 @@
-export * from './CreateWorflowDialog';
-export * from './DeleteWorkflowDialog';
+export { default as CreateWorflowDialog } from './CreateWorflowDialog';
+export { default as DeleteWorkflowDialog } from './DeleteWorkflowDialog';
+
 export * from './WorkflowAction';
 export * from './WorkflowCard';
 export * from './UserWorkflows';

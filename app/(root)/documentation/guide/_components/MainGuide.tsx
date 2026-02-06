@@ -97,16 +97,18 @@ export function MainGuide({ user }: MainGuideProps) {
     })
   }
 
-
   const handleDelete = async (id: string) => {
-    startTransition(async () => {
-      const res = await deleteManual(id)
-      if (res.success) {
-        toast.success(res.message)
-        fetchManuals()
-      } else toast.error(res.message)
-    })
-  }
+    const res = await deleteManual(id);
+
+    if (res.success) {
+      toast.success(res.message);
+      fetchManuals();
+    } else {
+      toast.error(res.message);
+    }
+
+    return res;
+  };
 
   const openEdit = (manual: ManualClient) => {
     setEditData(manual)
@@ -228,16 +230,16 @@ export function MainGuide({ user }: MainGuideProps) {
         )}
       </div>
 
-      {templateId &&
+      {templateId && (
         <GenericDeleteDialog
           open={showDeleteDialog}
           itemName="Plantilla"
           entityLabel="Plantilla"
           setOpen={setShowDeleteDialog}
           itemId={templateId}
-          mutationFn={() => handleDelete(templateId)}
+          mutationFn={(id) => handleDelete(id)}
         />
-      }
+      )}
     </>
 
   )

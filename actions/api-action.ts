@@ -361,14 +361,13 @@ export async function deleteInstance(userId: string, instanceType: string = 'Wha
     const instanceName = instanciaActiva.instanceName;
 
     if (isWhatsappLike(instanceType)) {
-      // 🔥 Evolution SOLO para WhatsApp/nulo
       const user = await db.user.findUnique({
         where: { id: userId },
         include: { apiKey: true },
       });
 
       if (!user || !user.apiKey) {
-        throw new Error("El usuario no tiene una ApiKey asignada.");
+        return { success: false, message: "El usuario no tiene una ApiKey asignada." };
       }
 
       const { key: apiKey, url: serverUrl } = user.apiKey;
@@ -377,49 +376,63 @@ export async function deleteInstance(userId: string, instanceType: string = 'Wha
       const logoutOptions = {
         method: 'DELETE',
         headers: {
-          'apikey': apiKey,
-          'Content-Type': 'application/json'
-        }
+          apikey: apiKey,
+          'Content-Type': 'application/json',
+        },
       };
 
-      const logoutResponse = await fetch(`https://${serverUrl}/instance/logout/${instanceName}`, logoutOptions);
-      const logoutResult = await logoutResponse.json();
+      const logoutResponse = await fetch(
+        `https://${serverUrl}/instance/logout/${instanceName}`,
+        logoutOptions
+      );
+
+      const logoutResult = await logoutResponse.json().catch(() => ({} as any));
 
       if (!logoutResponse.ok) {
-        throw new Error(logoutResult.message || 'Error al hacer logout de la instancia en la API.');
+        return {
+          success: false,
+          message: logoutResult?.message || 'Error al hacer logout de la instancia en la API.',
+        };
       }
 
       // 2. Eliminar la instancia en la API
       const deleteOptions = {
         method: 'DELETE',
         headers: {
-          'apikey': apiKey,
-          'Content-Type': 'application/json'
-        }
+          apikey: apiKey,
+          'Content-Type': 'application/json',
+        },
       };
 
-      const deleteResponse = await fetch(`https://${serverUrl}/instance/delete/${instanceName}`, deleteOptions);
-      const deleteResult = await deleteResponse.json();
+      const deleteResponse = await fetch(
+        `https://${serverUrl}/instance/delete/${instanceName}`,
+        deleteOptions
+      );
+
+      const deleteResult = await deleteResponse.json().catch(() => ({} as any));
 
       if (!deleteResponse.ok) {
-        throw new Error(deleteResult.message || 'Error al eliminar la instancia en la API.');
+        return {
+          success: false,
+          message: deleteResult?.message || 'Error al eliminar la instancia en la API.',
+        };
       }
     }
 
     // 3. Eliminar la instancia de la base de datos
     const instancia = await db.instancia.findFirst({
-      where: { instanceName, instanceType }
+      where: { instanceName, instanceType },
     });
 
     if (!instancia) {
-      throw new Error("No se encontró la instancia en la base de datos.");
+      return { success: false, message: "No se encontró la instancia en la base de datos." };
     }
 
     await db.instancia.delete({ where: { id: instancia.id } });
 
     return { success: true, message: "Instancia eliminada exitosamente." };
   } catch (error: any) {
-    return { success: false, message: error.message || "Error al eliminar la instancia." };
+    return { success: false, message: error?.message || "Error al eliminar la instancia." };
   }
 }
 
