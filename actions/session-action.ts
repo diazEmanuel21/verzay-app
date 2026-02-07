@@ -527,3 +527,17 @@ export async function getSessionsByUserIdToCRM(
     };
   }
 }
+
+
+export async function toggleAgentDisabled(userId: string, sessionId: number, agentDisabled: boolean) {
+  try {
+    await db.session.update({
+      where: { id: sessionId },
+      data: { agentDisabled },
+    });
+
+    return { success: true, message: 'Estado actualizado correctamente' };
+  } catch (error: any) {
+    return { success: false, message: error?.message || 'Error al actualizar' };
+  }
+}

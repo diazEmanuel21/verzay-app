@@ -18,7 +18,6 @@ import { deleteConversationN8N } from "@/actions/n8n-chat-historial-action";
 import { toast } from "sonner";
 import {
   AlertDialog,
-  AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -31,6 +30,8 @@ import { Badge } from "@/components/ui/badge";
 import { deleteReminderByInstanceUserRemote } from "@/actions/seguimientos-actions";
 import { SessionTagsCombobox } from "../../tags/components";
 import { Session, SimpleTag } from "@/types/session";
+import { SwitchAgentDisabled } from "./SwitchAgentDisabled";
+import { HeaderWithInfo } from "./HeaderWithInfo";
 
 export const ActionsCell = ({ session, onDeleteSuccess }: { session: Session, onDeleteSuccess?: (deletedId: number) => void }) => {
   const [openDeleteCliente, setOpenDeleteCliente] = useState(false);
@@ -213,11 +214,36 @@ export const columns = ({ onDeleteSuccess, mutateSessions, allTags }: {
     },
     {
       accessorKey: "status",
-      header: "Estado",
+      header: () => (
+        <HeaderWithInfo
+          title="Sesión"
+          info="Controla si el chat está activo/inactivo para automatizaciones de conversación (pausas, antiflood, reactivaciones, etc.)."
+        />
+      ),
       cell: ({ row }) => {
         const status = row.getValue("status") as boolean;
         const sessionId = row.original.id;
         return <SwitchStatus checked={status} sessionId={sessionId} mutateSessions={mutateSessions} />;
+      },
+    },
+    {
+      accessorKey: "agentDisabled",
+      header: () => (
+        <HeaderWithInfo
+          title="Agente"
+          info="Apaga o enciende el agente IA para este cliente. Si está OFF, el sistema guarda historial, pero no ejecuta IA ni workflows."
+        />
+      ),
+      cell: ({ row }) => {
+        const session = row.original;
+        return (
+          <SwitchAgentDisabled
+            agentDisabled={!!session.agentDisabled}
+            userId={session.userId}
+            sessionId={session.id}
+            mutateSessions={mutateSessions}
+          />
+        );
       },
     },
     {

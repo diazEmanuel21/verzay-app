@@ -283,6 +283,7 @@ model Session {
   seguimientos        String?                @default("")
   inactividad         String?                @default("")
   sessionDelay        String?
+  agentDisabled       Boolean                @default(false)
   flujos              String?                @default("")
   remoteJidAlt        String?
   appointments        Appointment[]

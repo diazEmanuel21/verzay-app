@@ -5,3 +5,5 @@ export * from './LeadsInformation';
 export * from './BulkActionsDropdown';
 export * from './LeadCreateForm';
 export * from './FilterLeadsByStats';
+export * from './SwitchAgentDisabled';
+export * from './HeaderWithInfo';
