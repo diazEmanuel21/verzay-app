@@ -7,6 +7,7 @@ import { WorkflowStatus } from "@/types/workflow";
 import { Workflow } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { deleteAllNodes, deleteFileNode } from "./workflow-node-action";
+import { currentUser } from "@/lib/auth";
 
 interface GetWorkFlowResponse {
     success: boolean;
@@ -52,13 +53,8 @@ export const getWorkFlowByUser = async (userId?: string): Promise<GetWorkFlowRes
 };
 
 export const createWorkflow = async (form: createWorkflowSchemaType) => {
-    const session = await auth(); // Obtén la sesión del usuario
-
-    const user = await db.user.findUnique({
-        where: { email: session?.user.email ?? "" }
-    });
-
-    if (!session?.user?.id) return { success: false, message: 'Usuario no autenticado.' };
+    const user = await currentUser();
+    if (!user) return { success: false, message: 'Usuario no autenticado.' };
 
     const { success, data } = createWorkflowSchema.safeParse(form);
 
@@ -79,25 +75,8 @@ export const createWorkflow = async (form: createWorkflowSchemaType) => {
 
 export const deleteWorkflow = async (id: string) => {
     try {
-        const session = await auth();
-
-        if (!session?.user?.email) {
-            return {
-                success: false,
-                message: "No se encontró una sesión activa.",
-            };
-        }
-
-        const user = await db.user.findUnique({
-            where: { email: session.user.email },
-        });
-
-        if (!user) {
-            return {
-                success: false,
-                message: "Usuario no encontrado en la base de datos.",
-            };
-        }
+        const user = await currentUser();
+        if (!user) return { success: false, message: 'Usuario no autenticado.' };
 
         const deleted = await db.workflow.delete({
             where: {

@@ -1,6 +1,7 @@
 "use server"
 import { buildLinearExecutionOrder } from "@/app/(root)/workflow/[workflowId]/helpers/buildLinearExecutionOrder";
 import { auth } from "@/auth";
+import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { minioClient } from "@/lib/minio";
 import { createNodeflowSchema, createNodeflowSchemaType } from "@/schema/nodeflow";
@@ -9,16 +10,7 @@ import { WorkflowNode } from "@prisma/client";
 import { redirect } from "next/navigation";
 
 export async function createNode(form: createNodeflowSchemaType) {
-  const session = await auth(); // Obtén la sesión del usuario
-
-  if (!session?.user?.email) return {
-    success: false,
-    message: "Usuario no autenticado."
-  };
-
-  const user = await db.user.findUnique({
-    where: { email: session.user.email },
-  });
+  const user = await currentUser();
 
   if (!user) return {
     success: false,
@@ -399,8 +391,7 @@ export async function createWorkflowEdge(params: {
   sourceHandle?: string | null;
   targetHandle?: string | null;
 }) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, message: "Unauthorized." };
+  const user = await currentUser();
 
   const { workflowId, sourceId, targetId } = params;
 
@@ -427,7 +418,7 @@ export async function createWorkflowEdge(params: {
 
   // ownership
   const wf = await db.workflow.findFirst({
-    where: { id: workflowId, userId: session.user.id },
+    where: { id: workflowId, userId: user.id },
     select: { id: true },
   });
   if (!wf) return { success: false, message: "Workflow no encontrado." };
@@ -451,14 +442,12 @@ export async function deleteWorkflowEdge(params: {
   workflowId: string;
   edgeId: string;
 }) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, message: 'Unauthorized.' };
-
+  const user = await currentUser();
   const { workflowId, edgeId } = params;
 
   //  validar ownership del workflow
   const wf = await db.workflow.findFirst({
-    where: { id: workflowId, userId: session.user.id },
+    where: { id: workflowId, userId: user.id },
     select: { id: true },
   });
   if (!wf) return { success: false, message: 'Workflow no encontrado.' };
@@ -472,11 +461,11 @@ export async function deleteWorkflowEdge(params: {
 }
 
 export async function getWorkflowEdges(workflowId: string) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, message: "Unauthorized." };
+  const user = await currentUser();
+  if (!user) return { success: false, message: 'Usuario no autenticado.' };
 
   const wf = await db.workflow.findFirst({
-    where: { id: workflowId, userId: session.user.id },
+    where: { id: workflowId, userId: user.id },
     select: { id: true },
   });
   if (!wf) return { success: false, message: "Workflow no encontrado." };
@@ -497,11 +486,8 @@ export async function getWorkflowEdges(workflowId: string) {
 }
 
 export async function updateWorkflowNodePosition(input: UpdateNodePositionInput) {
-  const session = await auth();
-  if (!session?.user?.id) return {
-    success: false,
-    message: 'Unauthorized.'
-  };
+  const user = await currentUser();
+  if (!user) return { success: false, message: 'Usuario no autenticado.' };
 
   const { nodeId, posX, posY } = input;
 
@@ -526,17 +512,8 @@ export async function updateWorkflowNodePosition(input: UpdateNodePositionInput)
 }
 
 export async function createNodeFromCanvas(form: createNodeflowSchemaType & { posX: number; posY: number }) {
-  const session = await auth();
-  if (!session?.user?.email) return {
-    success: false,
-    message: "Usuario no autenticado."
-  };
-
-  const user = await db.user.findUnique({ where: { email: session.user.email } });
-  if (!user) return {
-    success: false,
-    message: "Usuario no encontrado."
-  };
+  const user = await currentUser();
+  if (!user) return { success: false, message: 'Usuario no autenticado.' };
 
   const totalNodes = await db.workflowNode.count({ where: { workflowId: form.workflowId } });
   if (totalNodes >= MAX_NODES_PER_WORKFLOW) return {
@@ -594,8 +571,8 @@ export async function updateIntentionNodeConfig(params: {
   intentionPrompt?: string;
   intentionMaxAttempts?: number;
 }) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+  const user = await currentUser();
+  if (!user) return { success: false, message: 'Usuario no autenticado.' };
 
   const { nodeId } = params;
   if (!nodeId) return { success: false, message: "nodeId requerido" };
