@@ -271,7 +271,7 @@ export async function getApiKeyById(id: string) {
    Instancia
 ========================= */
 export async function createInstance(data: FormData) {
-  const instanceName = data.get('instanceName') as string;
+  const instanceName = (data.get('instanceName') as string)?.trim();
   const instanceType = data.get('instanceType') as string;
   const userId = data.get('userId') as string;
 
@@ -288,7 +288,6 @@ export async function createInstance(data: FormData) {
     }
 
     if (isWhatsappLike(instanceType)) {
-      // 🔥 Evolution SOLO para WhatsApp/nulo
       const user = await db.user.findUnique({
         where: { id: userId },
         include: { apiKey: true },
@@ -332,13 +331,12 @@ export async function createInstance(data: FormData) {
       revalidatePath('/agregar-api');
       return { success: true, message: "Instancia creada exitosamente.", instancia: nuevaInstancia, apiResult };
     } else {
-      // ❇️ Solo BD (mensajes iguales)
       const nuevaInstancia = await db.instancia.create({
         data: {
           instanceName,
           instanceType,
           userId,
-          instanceId: `local-${randomUUID()}`, // id local para integridad
+          instanceId: `local-${randomUUID()}`,
         },
       });
 
