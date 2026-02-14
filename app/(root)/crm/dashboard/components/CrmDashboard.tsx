@@ -320,8 +320,7 @@ export const CrmDashboard = ({
                                             return (
                                                 <TableRow key={r.id} className="hover:bg-accent/40">
                                                     <TableCell className="py-1.5 align-top whitespace-nowrap">
-                                                        {/* {whatsapp} - corregir consulta */}
-                                                        corregir consulta
+                                                        {r.session.remoteJid.split('@')[0]}
                                                     </TableCell>
                                                     <TableCell className="py-1.5 align-top whitespace-nowrap">
                                                         {nombre}
