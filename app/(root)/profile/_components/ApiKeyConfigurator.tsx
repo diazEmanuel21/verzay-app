@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,8 +34,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { ChevronsUpDown, Check } from "lucide-react";
 
-// ⬇️ Server actions del CRUD (usa la ruta donde lo pegaste)
+// Server actions del CRUD (usa la ruta donde lo pegaste)
 import { upsertUserAiConfig, setUserDefaults, getUserAiSettings } from "@/actions/userAiconfig-actions";
+import { useEffect, useState } from "react";
+import { keepOnlyOpenAIProvider } from "../helpers/keepOnlyOpenAIProvider";
 
 type ApiKeyConfiguratorProps = {
     userId: string;
@@ -77,15 +78,15 @@ export function ApiKeyConfigurator({
     label = "API key (por proveedor)",
     onSaved,
 }: ApiKeyConfiguratorProps) {
-    const [open, setOpen] = React.useState(false);
-    const [providerOpen, setProviderOpen] = React.useState(false);
-    const [modelOpen, setModelOpen] = React.useState(false);
-    const [loading, setLoading] = React.useState(false);
-    const [settings, setSettings] = React.useState<SettingsData | null>(null);
+    const [open, setOpen] = useState(false);
+    const [providerOpen, setProviderOpen] = useState(false);
+    const [modelOpen, setModelOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [settings, setSettings] = useState<SettingsData | null>(null);
 
     // Estado de preview (fuera del diálogo)
-    const [previewProviderId, setPreviewProviderId] = React.useState<string | null>(null);
-    const [previewApiKey, setPreviewApiKey] = React.useState<string>("");
+    const [previewProviderId, setPreviewProviderId] = useState<string | null>(null);
+    const [previewApiKey, setPreviewApiKey] = useState<string>("");
 
     const form = useForm<FormValues>({
         resolver: zodResolver(FormSchema),
@@ -100,7 +101,7 @@ export function ApiKeyConfigurator({
     });
 
     // Carga inicial
-    React.useEffect(() => {
+    useEffect(() => {
         (async () => {
             setLoading(true);
             const res = await getUserAiSettings(userId);
@@ -112,20 +113,21 @@ export function ApiKeyConfigurator({
             }
 
             const data = res.data;
-            setSettings(data);
+            const dataFormatted = keepOnlyOpenAIProvider(data)
+            setSettings(dataFormatted);
 
             // Defaults del usuario
-            const defProvId = data.defaults.defaultProviderId || data.providers[0]?.id || "";
+            const defProvId = dataFormatted.defaults.defaultProviderId || dataFormatted.providers[0]?.id || "";
             const modelsForDefault =
-                data.providers.find((p) => p.id === defProvId)?.models || [];
+                dataFormatted.providers.find((p) => p.id === defProvId)?.models || [];
             const defModelId =
-                data.defaults.defaultAiModelId || modelsForDefault[0]?.id || "";
+                dataFormatted.defaults.defaultAiModelId || modelsForDefault[0]?.id || "";
 
             form.setValue("providerId", defProvId);
             form.setValue("modelId", defModelId);
 
             // Prefill apiKey si ya había config para ese provider
-            const existingCfg = data.configs.find((c) => c.providerId === defProvId);
+            const existingCfg = dataFormatted.configs.find((c) => c.providerId === defProvId);
             if (existingCfg) {
                 form.setValue("apiKey", existingCfg.apiKey);
             }
@@ -143,7 +145,7 @@ export function ApiKeyConfigurator({
         providers.find((p) => p.id === currentProviderId)?.models || [];
 
     // Si cambia provider, resetea modelo + llena API key si existe config
-    React.useEffect(() => {
+    useEffect(() => {
         if (!settings) return;
 
         const existsModel = modelsForProvider.some(
@@ -201,9 +203,10 @@ export function ApiKeyConfigurator({
             // refresca settings locales
             const ref = await getUserAiSettings(userId);
             if (ref?.success && ref.data) {
-                setSettings(ref.data);
-                // actualiza preview
-                const cfg = ref.data.configs.find((c) => c.providerId === data.providerId);
+                const filtered = keepOnlyOpenAIProvider(ref.data);
+                setSettings(filtered);
+
+                const cfg = filtered.configs.find((c: any) => c.providerId === data.providerId);
                 setPreviewProviderId(data.providerId);
                 setPreviewApiKey(cfg?.apiKey || "");
             }

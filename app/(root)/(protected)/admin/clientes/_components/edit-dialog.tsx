@@ -89,7 +89,7 @@ export const EditDialog = ({
     { id: "passPlainTxt", label: "Contraseña", defaultValue: user.passPlainTxt, readOnly: true },
     { id: "role", label: "Rol", defaultValue: user.role, readOnly: false },
     { id: "plan", label: "Plan", defaultValue: user.plan, readOnly: false },
-    { id: "apiUrl", label: "Apikey OpenIA", defaultValue: user.apiUrl, readOnly: false },
+    { id: "apiUrl", label: "Apikey OpenIA", defaultValue: user.aiConfigs[0].apiKey, readOnly: true },
     { id: "webhookUrl", label: "Webhook URL", defaultValue: user.webhookUrl, readOnly: false },
     { id: "company", label: "Empresa", defaultValue: user.company, readOnly: false },
     // { id: "notificationNumber", label: "Teléfono Notificación", defaultValue: user.notificationNumber, readOnly: false },

@@ -269,19 +269,19 @@ export const columns = ({ onDeleteSuccess, mutateSessions, allTags }: {
         </Badge>)
       },
     },
-    {
-      accessorKey: "seguimientos",
-      header: "Seguimientos",
-      cell: ({ row }) => {
-        const reminders = row.getValue("seguimientos") || "-";
-        const sizeReminders = Object.keys(reminders).length;
-        return (<Badge
-          className="bg-blue-500 text-white dark:bg-blue-600"
-        >
-          {sizeReminders}
-        </Badge>)
-      },
-    },
+    // {
+    //   accessorKey: "seguimientos",
+    //   header: "Seguimientos",
+    //   cell: ({ row }) => {
+    //     const reminders = row.getValue("seguimientos") || "-";
+    //     const sizeReminders = Object.keys(reminders).length;
+    //     return (<Badge
+    //       className="bg-blue-500 text-white dark:bg-blue-600"
+    //     >
+    //       {sizeReminders}
+    //     </Badge>)
+    //   },
+    // },
     {
       id: "tags",
       header: "Etiquetas",

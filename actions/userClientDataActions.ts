@@ -65,6 +65,7 @@ export async function getEnrichedClients(filter?: FilterOptions): Promise<Client
       where: userIds ? { id: { in: userIds } } : undefined,
       include: {
         pausar: true,
+        aiConfigs: true,
       },
       orderBy: { name: "asc" },
     });
