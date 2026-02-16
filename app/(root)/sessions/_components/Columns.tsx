@@ -201,13 +201,12 @@ export const columns = ({ onDeleteSuccess, mutateSessions, allTags }: {
     {
       accessorKey: "remoteJid",
       header: "Celular",
-      // cell: ({ row }) => {
-      //   const remoteJid = row.getValue("remoteJid") as string;
-      //   const phone = remoteJid.split('@')[0];
-      //   return <div className="capitalize">{phone}</div>;
-      // },
-
-      cell: ({ row }) => <div>{row.getValue("remoteJid") || "Sin nombre"}</div>,
+      cell: ({ row }) => {
+        const remoteJid = row.getValue("remoteJid") as string;
+        const phone = remoteJid.split('@')[0];
+        return <div className="capitalize">{phone}</div>;
+      },
+      // cell: ({ row }) => <div>{row.getValue("remoteJid") || "Sin nombre"}</div>,
     },
     // {
     //   accessorKey: "remoteJidAlt",
