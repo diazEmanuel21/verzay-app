@@ -209,11 +209,11 @@ export const columns = ({ onDeleteSuccess, mutateSessions, allTags }: {
 
       cell: ({ row }) => <div>{row.getValue("remoteJid") || "Sin nombre"}</div>,
     },
-    {
-      accessorKey: "remoteJidAlt",
-      header: "Celular 2",
-      cell: ({ row }) => <div>{row.getValue("remoteJidAlt") || "Sin nombre"}</div>,
-    },
+    // {
+    //   accessorKey: "remoteJidAlt",
+    //   header: "Celular 2",
+    //   cell: ({ row }) => <div>{row.getValue("remoteJidAlt") || "Sin nombre"}</div>,
+    // },
     {
       accessorKey: "pushName",
       header: "Nombre",
