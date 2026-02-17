@@ -25,6 +25,7 @@ import { SummaryItem } from "./";
 const serverTimeZone = 'America/Bogota';
 
 export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInterface) => {
+    console.log({ user })
     // ── UI Steeps
     const [step, setStep] = useState(0);
     const stepLabel = [
@@ -126,9 +127,9 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                 const seguimientoTime = subtractSecondsFromTime(startLocal, rem.normalizedSeconds);
                 const dataSeguimiento: SeguimientoInput = {
                     idNodo: "",
-                    serverurl: rem.serverUrl ? `https://${rem.serverUrl}` : undefined,
-                    instancia: rem.instanceName ?? undefined,
-                    apikey: rem.apikey ?? undefined,
+                    serverurl: `https://${user.apiKey?.url}`,
+                    instancia: user.instancias[0].instanceName,
+                    apikey: user.instancias[0].instanceId,
                     remoteJid,
                     mensaje: formatServiceMessage(rem.description ?? '', {
                         nameClient,
