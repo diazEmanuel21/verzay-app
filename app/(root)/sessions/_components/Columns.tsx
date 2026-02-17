@@ -32,6 +32,7 @@ import { SessionTagsCombobox } from "../../tags/components";
 import { Session, SimpleTag } from "@/types/session";
 import { SwitchAgentDisabled } from "./SwitchAgentDisabled";
 import { HeaderWithInfo } from "./HeaderWithInfo";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const ActionsCell = ({ session, onDeleteSuccess }: { session: Session, onDeleteSuccess?: (deletedId: number) => void }) => {
   const [openDeleteCliente, setOpenDeleteCliente] = useState(false);
@@ -206,17 +207,31 @@ export const columns = ({ onDeleteSuccess, mutateSessions, allTags }: {
         const phone = remoteJid.split('@')[0];
         return <div className="capitalize">{phone}</div>;
       },
-      // cell: ({ row }) => <div>{row.getValue("remoteJid") || "Sin nombre"}</div>,
     },
-    // {
-    //   accessorKey: "remoteJidAlt",
-    //   header: "Celular 2",
-    //   cell: ({ row }) => <div>{row.getValue("remoteJidAlt") || "Sin nombre"}</div>,
-    // },
     {
       accessorKey: "pushName",
       header: "Nombre",
-      cell: ({ row }) => <div>{row.getValue("pushName") || "Sin nombre"}</div>,
+      cell: ({ row }) => {
+        const name = (row.getValue("pushName") as string) || "Sin nombre";
+
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className="max-w-[150px] truncate"
+                >
+                  {name}
+                </div>
+              </TooltipTrigger>
+
+              <TooltipContent className="max-w-[420px] break-words">
+                {name}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      },
     },
     {
       accessorKey: "status",
