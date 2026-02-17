@@ -33,6 +33,7 @@ import { Session, SimpleTag } from "@/types/session";
 import { SwitchAgentDisabled } from "./SwitchAgentDisabled";
 import { HeaderWithInfo } from "./HeaderWithInfo";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { FlowListOrder } from "./FlowListOrder";
 
 export const ActionsCell = ({ session, onDeleteSuccess }: { session: Session, onDeleteSuccess?: (deletedId: number) => void }) => {
   const [openDeleteCliente, setOpenDeleteCliente] = useState(false);
@@ -268,20 +269,17 @@ export const columns = ({ onDeleteSuccess, mutateSessions, allTags }: {
       },
     },
     {
-      accessorKey: "updatedAt",
+      accessorKey: "createdAt",
       header: "Creado",
-      cell: ({ row }) => new Date(row.getValue("updatedAt")).toLocaleDateString(),
+      cell: ({ row }) => new Date(row.getValue("createdAt")).toLocaleDateString(),
     },
     {
       accessorKey: "flujos",
       header: "Flujos",
       cell: ({ row }) => {
         const flows = row.getValue("flujos") || "-";
-        return (<Badge
-          className="bg-blue-500 text-white dark:bg-blue-600"
-        >
-          {JSON.stringify(flows)}
-        </Badge>)
+  
+        return <FlowListOrder raw={flows.toString()} />
       },
     },
     // {

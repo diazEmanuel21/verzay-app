@@ -45,7 +45,6 @@ export function SessionsContent({ userId, allTags }: SessionsContentProps) {
 
 
       const response = await getSessionsByUserId(userId, page * PAGE_SIZE, PAGE_SIZE, status);
-      console.log({ responseSession: response })
       if (!response.success) throw new Error(response.message);
       return response.data || [];
     },

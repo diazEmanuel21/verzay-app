@@ -25,7 +25,6 @@ import { SummaryItem } from "./";
 const serverTimeZone = 'America/Bogota';
 
 export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInterface) => {
-    console.log({ user })
     // ── UI Steeps
     const [step, setStep] = useState(0);
     const stepLabel = [
