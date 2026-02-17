@@ -845,6 +845,6 @@ export const notifyPrompt = `**Función**: Ejecuta la tool 'Notificacion Asesor'
   1. Después de ejecutar la tool, tu única respuesta es la que se te indique en **Regla/parámetro**.
   2. Si **no hay una orden clara**, envía el siguiente **mensaje de confirmación** al usuario:
 📝 ¡He *notificado* al area encargada!
-👨🏻‍💻 Un asesor se pondrá en contacto contigo a la brevedad posible.`
+👨🏻‍💻 El area encargada se pondrá en contacto contigo a la brevedad posible.`
 export const instructionPrompt = ``;
 ;
