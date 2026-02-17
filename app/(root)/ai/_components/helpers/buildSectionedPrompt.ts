@@ -11,7 +11,7 @@ export type AnyEl = {
     flowId?: string;
     notificationNumber?: string;
 
-    // ✅ NUEVO (opcional): si quieres que “Regla/parámetro” salga al final del bloque gestión
+    // NUEVO (opcional): si quieres que “Regla/parámetro” salga al final del bloque gestión
     ruleParam?: string;
 };
 
@@ -53,6 +53,8 @@ export type PromptBuildConfig = {
 
     // flag interno para imprimir “APARTADO GESTION:” una sola vez
     __managementHeaderPrinted?: boolean;
+
+    __managementIndex?: number;
 };
 
 export const transformSubtype = (subtype?: string): string | undefined => {
@@ -146,7 +148,7 @@ function formatElement(el: AnyEl, k: number, flowBehaviorText: string, cfg: Prom
 
                     // MODO MANAGEMENT (formato gestión)
                     if (cfg.mode === "management") {
-                        const gestionName = cfg.managementName?.trim() || "X";
+                        const gestionName = String(cfg.__managementIndex ?? 1);
                         const ruleParam = trimOrUndefined(el.ruleParam);
 
                         out.push(
@@ -193,7 +195,7 @@ function formatElement(el: AnyEl, k: number, flowBehaviorText: string, cfg: Prom
 
                 // MODO MANAGEMENT (formato “Gestión X — …”)
                 if (cfg.mode === "management") {
-                    const gestionName = cfg.managementName?.trim() || "X";
+                    const gestionName = String(cfg.__managementIndex ?? 1);
                     const ruleParam = trimOrUndefined(el.ruleParam);
 
                     const datosBlock = el.fields?.length ? el.fields.map((f) => `* ${f}`).join("\n") : "* * *Datos*: [escritos por el cliente]";
@@ -313,7 +315,7 @@ export function buildSectionedPrompt(items: AnyStep[], cfg: PromptBuildConfig): 
         // Título de sección
         // En management: reemplazamos el sectionLabel por “### Gestión X — Tipo”
         if (cfg.mode === "management") {
-            const gestionName = cfg.managementName?.trim() || "X";
+            cfg.__managementIndex = n;
 
             const captura = (step.elements || []).find(
                 (el: AnyEl) => el.kind === "function" && el.fn === "captura_datos"
@@ -321,7 +323,7 @@ export function buildSectionedPrompt(items: AnyStep[], cfg: PromptBuildConfig): 
 
             const newSubtype = transformSubtype(captura?.subtype ?? "") ?? "gestión";
 
-            blocks.push(`\n### Gestión ${gestionName} — ${getGestionTitle(newSubtype)}`);
+            blocks.push(`\n### Gestión ${n} — ${getGestionTitle(newSubtype)}`);
         } else {
             blocks.push(`\n${cfg.sectionLabel(n, step)}`);
         }
