@@ -47,7 +47,7 @@ export type PromptBuildConfig = {
     mode?: "default" | "management";
 
     // NUEVO: para imprimir “Gestión X”
-    managementName?: string; // ej: "X"
+    managementName?: string;
     // (opcional) si quieres forzar un objetivo global; si no, usa step.mainMessage
     managementObjective?: string;
 
@@ -193,7 +193,6 @@ function formatElement(el: AnyEl, k: number, flowBehaviorText: string, cfg: Prom
 
                 const info = newSubtype ? generoMap[newSubtype] ?? { articulo: "la", label: newSubtype } : { articulo: "la", label: "gestión" };
 
-                // MODO MANAGEMENT (formato “Gestión X — …”)
                 if (cfg.mode === "management") {
                     const gestionName = String(cfg.__managementIndex ?? 1);
                     const ruleParam = trimOrUndefined(el.ruleParam);
@@ -312,8 +311,6 @@ export function buildSectionedPrompt(items: AnyStep[], cfg: PromptBuildConfig): 
     items.forEach((step, i) => {
         const n = i + 1;
 
-        // Título de sección
-        // En management: reemplazamos el sectionLabel por “### Gestión X — Tipo”
         if (cfg.mode === "management") {
             cfg.__managementIndex = n;
 
@@ -333,7 +330,7 @@ export function buildSectionedPrompt(items: AnyStep[], cfg: PromptBuildConfig): 
 
         if (cfg.mode === "management") {
             // Objetivo: si cfg.managementObjective existe, usa ese; si no, usa main
-            const objective = trimOrUndefined(cfg.managementObjective) ?? main ?? "X";
+            const objective = trimOrUndefined(cfg.managementObjective) ?? main ?? String(n);
             blocks.push(`* **Objetivo principal de la gestión:** ${objective}`);
 
             // “Cuando un usuario…”
