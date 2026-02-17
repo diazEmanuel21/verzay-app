@@ -227,7 +227,7 @@ function formatElement(el: AnyEl, k: number, flowBehaviorText: string, cfg: Prom
                             `* **Notificación**: tras registrar, ejecuta la **tool**: \`Notificacion Asesor\`.`,
                             `* **Comportamiento obligatorio:** Tras ejecutar la tool, responde **únicamente** lo indicado en **Regla/parámetro**.`,
                             `Si **no hay una orden clara**, envía el siguiente **mensaje de confirmación** al usuario:`,
-                            `> 📝 ¡He **registrado** tu **tipo_registro**! 👨🏻‍💻 Un asesor se pondrá en contacto a la brevedad posible. ⏰`,
+                            `> 📝 ¡He **registrado** tu ${info.label}! 👨🏻‍💻 Un asesor se pondrá en contacto a la brevedad posible. ⏰`,
                             ``,
                             ruleParam ? `- (${k}) **Regla/parámetro:** ${ruleParam}` : "",
                         ]
