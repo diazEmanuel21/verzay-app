@@ -15,7 +15,7 @@ import {
 } from "@/types/session";
 
 import { Registro, Session } from "@prisma/client";
-import { BulkActionsDropdown, FilterKey, FilterLeadsByStats, SwitchStatus } from "../../sessions/_components";
+import { BulkActionsDropdown, FilterLeadsByStats, FilterSessionTypes, SessionStatsInterface, SwitchStatus } from "../../sessions/_components";
 import { clearAllHistory } from "@/actions/n8n-chat-historial-action";
 import { activateAllSessions, deactivateAllSessions, deleteAllSessions, getSessionsCountByUserId } from "@/actions/session-action";
 import { deleteSeguimientosByInstanceName } from "@/actions/seguimientos-actions";
@@ -55,8 +55,8 @@ export const LeadsManagement = ({
 }: {
     sessions: SessionWithRegistrosAndTags[];
     userId: string;
-    filter: FilterKey;
-    onChangeFilter: (value: FilterKey) => void;
+    filter: FilterSessionTypes;
+    onChangeFilter: (value: FilterSessionTypes) => void;
     mutateSessions: () => void;
     allTags: SimpleTag[];
 }) => {
@@ -65,7 +65,7 @@ export const LeadsManagement = ({
     const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
         sessions[0]?.id ?? null
     );
-    const [stats, setStats] = useState<{ total: number; active: number; inactive: number } | null>(null);
+    const [stats, setStats] = useState<SessionStatsInterface | null>(null);
     const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
 
     const [registroOpen, setRegistroOpen] = useState(false);

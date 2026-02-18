@@ -7,29 +7,27 @@ import { activateAllSessions, deactivateAllSessions, deleteAllSessions, getSessi
 import { clearAllHistory } from "@/actions/n8n-chat-historial-action";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { Card, } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { AlertCircle, CheckCircle2, Database, XCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { UserSessionsSkeleton } from "./user-sessions-skeleton";
 import { columns } from "./Columns";
 import { DataTable } from "./data-table";
 import { BulkActionsDropdown } from "./BulkActionsDropdown";
-import { cn } from "@/lib/utils";
 import { deleteSeguimientosByInstanceName } from "@/actions/seguimientos-actions";
 import { Session, SessionsContentProps, SimpleTag } from "@/types/session";
-import { FilterLeadsByStats } from "./FilterLeadsByStats";
+import { FilterLeadsByStats, FilterSessionTypes, SessionStatsInterface } from "./FilterLeadsByStats";
 
 const PAGE_SIZE = 20;
 
 export function SessionsContent({ userId, allTags }: SessionsContentProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [stats, setStats] = useState<{ total: number; active: number; inactive: number } | null>(null);
+  const [stats, setStats] = useState<SessionStatsInterface | null>(null);
   const [searchResults, setSearchResults] = useState<Session[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const observerRef = useRef<HTMLDivElement>(null);
-  const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
+  const [filter, setFilter] = useState<FilterSessionTypes>("all");
 
   const getKey = (pageIndex: number, previousPageData: Session[] | null) => {
     if (previousPageData && previousPageData.length < PAGE_SIZE) return null;
@@ -41,10 +39,24 @@ export function SessionsContent({ userId, allTags }: SessionsContentProps) {
     async (key: string) => {
       const [userId, pageIndex, filter] = key.split("-");
       const page = parseInt(pageIndex, 10);
-      const status = filter === "active" ? true : filter === "inactive" ? false : undefined;
+      const sessionStatus =
+        filter === "activeSession" ? true :
+          filter === "inactiveSession" ? false :
+            undefined;
+debugger;
+      const agentDisabled =
+        filter === "activeAgent" ? false :
+          filter === "inactiveAgent" ? true :
+            undefined;
 
 
-      const response = await getSessionsByUserId(userId, page * PAGE_SIZE, PAGE_SIZE, status);
+      const response = await getSessionsByUserId(
+        userId,
+        page * PAGE_SIZE,
+        PAGE_SIZE,
+        sessionStatus,
+        agentDisabled
+      );
       if (!response.success) throw new Error(response.message);
       return response.data || [];
     },

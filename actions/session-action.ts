@@ -20,18 +20,26 @@ export async function getSessionsCountByUserId(userId: string) {
       where: { userId },
     });
 
-    const active = await db.session.count({
+    const activeSession = await db.session.count({
       where: { userId, status: true },
     });
 
-    const inactive = total - active;
+    const inactiveSession = total - activeSession;
+
+    const activeAgent = await db.session.count({
+      where: { userId, agentDisabled: false },
+    });
+
+    const inactiveAgent = total - activeAgent;
 
     return {
       success: true,
       data: {
         total,
-        active,
-        inactive,
+        activeSession,
+        inactiveSession,
+        activeAgent,
+        inactiveAgent
       }
     };
   } catch (error) {
@@ -47,7 +55,8 @@ export async function getSessionsByUserId(
   userId: string,
   skip: number = 0,
   take: number = 20,
-  status?: boolean // true: activos, false: inactivos, undefined: todos
+  status?: boolean, // true: activos, false: inactivos, undefined: todos
+  agentDisabled?: boolean // false: agente activo, true: agente inactivo, undefined: todos
 ): Promise<SessionsListResponse> {
   try {
     if (!userId) {
@@ -62,6 +71,7 @@ export async function getSessionsByUserId(
       where: {
         userId,
         ...(status !== undefined && { status }),
+        ...(agentDisabled !== undefined && { agentDisabled }),
       },
       orderBy: { createdAt: "desc" },
       skip,

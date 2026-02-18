@@ -1,15 +1,26 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle2, Database, XCircle } from "lucide-react";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckCircle2, Database, XCircle, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type FilterKey = "all" | "active" | "inactive";
+export interface SessionStatsInterface {
+    total: number;
+    activeSession: number;
+    inactiveSession: number;
+    activeAgent: number;
+    inactiveAgent: number;
+}
+
+export type FilterSessionTypes =
+    | "all"
+    | "activeSession"
+    | "inactiveSession"
+    | "activeAgent"
+    | "inactiveAgent";
 
 export interface FilterLeadsByStatsProps {
-    stats: { total: number; active: number; inactive: number } | null;
-    filter: FilterKey;
-    onChangeFilter: (value: FilterKey) => void;
+    stats: SessionStatsInterface | null;
+    filter: FilterSessionTypes;
+    onChangeFilter: (value: FilterSessionTypes) => void;
 }
 
 export const FilterLeadsByStats = ({
@@ -18,8 +29,10 @@ export const FilterLeadsByStats = ({
     onChangeFilter,
 }: FilterLeadsByStatsProps) => {
     const total = stats?.total ?? 0;
-    const active = stats?.active ?? 0;
-    const inactive = stats?.inactive ?? 0;
+    const activeSession = stats?.activeSession ?? 0;
+    const inactiveSession = stats?.inactiveSession ?? 0;
+    const activeAgent = stats?.activeAgent ?? 0;
+    const inactiveAgent = stats?.inactiveAgent ?? 0;
 
     const cardStats = [
         {
@@ -30,41 +43,81 @@ export const FilterLeadsByStats = ({
             description: "Leads en total",
             color: "",
             progress: null as number | null,
+            clickable: true,
+            onClick: () => onChangeFilter("all"),
+            isActive: filter === "all",
         },
         {
-            key: "active" as const,
-            title: "Activos",
+            key: "activeSession" as const,
+            title: "Clientes Activos",
             icon: <CheckCircle2 className="h-4 w-4 text-green-500" />,
-            value: active,
+            value: activeSession,
             description: total
-                ? `${Math.round((active / total) * 100)}% del total`
+                ? `${Math.round((activeSession / total) * 100)}% del total`
                 : "0% del total",
             color: "text-green-600",
-            progress: total ? (active / total) * 100 : 0,
+            progress: total ? (activeSession / total) * 100 : 0,
+            clickable: true,
+            onClick: () => onChangeFilter("activeSession"),
+            isActive: filter === "activeSession",
         },
         {
-            key: "inactive" as const,
-            title: "Inactivos",
+            key: "inactiveSession" as const,
+            title: "Clientes Inactivos",
             icon: <XCircle className="h-4 w-4 text-red-500" />,
-            value: inactive,
+            value: inactiveSession,
             description: total
-                ? `${100 - Math.round((active / total) * 100)}% del total`
+                ? `${Math.round((inactiveSession / total) * 100)}% del total`
                 : "0% del total",
             color: "text-red-600",
-            progress: total ? 100 - (active / total) * 100 : 0,
+            progress: total ? (inactiveSession / total) * 100 : 0,
+            clickable: true,
+            onClick: () => onChangeFilter("inactiveSession"),
+            isActive: filter === "inactiveSession",
+        },
+        {
+            key: "activeAgent" as const,
+            title: "Agente Activo",
+            icon: <Bot className="h-4 w-4 text-green-500" />,
+            value: activeAgent,
+            description: total
+                ? `${Math.round((activeAgent / total) * 100)}% del total`
+                : "0% del total",
+            color: "text-green-600",
+            progress: total ? (activeAgent / total) * 100 : 0,
+            clickable: true,
+            onClick: () => onChangeFilter("activeAgent"),
+            isActive: filter === "activeAgent",
+        },
+        {
+            key: "inactiveAgent" as const,
+            title: "Agente Inactivo",
+            icon: <Bot className="h-4 w-4 text-red-500" />,
+            value: inactiveAgent,
+            description: total
+                ? `${Math.round((inactiveAgent / total) * 100)}% del total`
+                : "0% del total",
+            color: "text-red-600",
+            progress: total ? (inactiveAgent / total) * 100 : 0,
+            clickable: true,
+            onClick: () => onChangeFilter("inactiveAgent"),
+            isActive: filter === "inactiveAgent",
         },
     ] as const;
 
     return (
         <>
             {cardStats.map((card, idx) => {
-                const isActive = filter === card.key;
+                const isActive = card.isActive;
+                const isClickable = card.clickable;
+
                 return (
                     <Card
                         key={idx}
-                        onClick={() => onChangeFilter(card.key)}
+                        onClick={isClickable ? card.onClick : undefined}
                         className={cn(
-                            "flex-1 flex flex-col overflow-hidden cursor-pointer transition-all duration-300 ease-in-out border rounded-xl hover:shadow-md hover:-translate-y-[2px]",
+                            "flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out border rounded-xl hover:shadow-md hover:-translate-y-[2px]",
+                            isClickable ? "cursor-pointer" : "cursor-default opacity-95",
                             isActive
                                 ? "border-primary ring-primary bg-muted/20"
                                 : "border-border"
@@ -79,25 +132,6 @@ export const FilterLeadsByStats = ({
                             </CardTitle>
                             <div className="hidden sm:block">{card.icon}</div>
                         </CardHeader>
-                        {/* <CardContent>
-                            {stats ? (
-                                <>
-                                    {card.progress !== null && (
-                                        <div className="relative mt-2">
-                                            <Progress
-                                                value={card.progress}
-                                                className="flex items-center justify-center h-4 transition-all duration-500"
-                                            />
-                                            <span className="absolute inset-0 flex items-center justify-center text-[10px] sm:text-xs">
-                                                {card.description}
-                                            </span>
-                                        </div>
-                                    )}
-                                </>
-                            ) : (
-                                <Skeleton className="h-8 w-24" />
-                            )}
-                        </CardContent> */}
                     </Card>
                 );
             })}

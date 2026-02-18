@@ -9,19 +9,18 @@ import { LoadingProgress } from "@/components/shared/LoadingProgress";
 import { LeadsManagement } from "./LeadsManagement";
 import { getSessionsByUserIdToCRM } from "@/actions/session-action";
 import { SessionWithRegistrosAndTags, SimpleTag } from "@/types/session";
+import { FilterSessionTypes } from "../../sessions/_components";
 
 type MainCrmProps = {
   userId: string;
   allTags: SimpleTag[];
 };
 
-type FilterKey = "all" | "active" | "inactive";
-
 const PAGE_SIZE = 50;
 
 export const MainCrm = ({ userId, allTags }: MainCrmProps) => {
   const observerRef = useRef<HTMLDivElement | null>(null);
-  const [filter, setFilter] = useState<FilterKey>("all");
+  const [filter, setFilter] = useState<FilterSessionTypes>("all");
 
   const getKey = (
     pageIndex: number,
@@ -30,7 +29,7 @@ export const MainCrm = ({ userId, allTags }: MainCrmProps) => {
     if (previousPageData && previousPageData.length < PAGE_SIZE) return null;
 
     const statusKey =
-      filter === "all" ? "all" : filter === "active" ? "true" : "false";
+      filter === "all" ? "all" : filter === "activeSession" ? "true" : "false";
 
     return `${userId}-${statusKey}-${pageIndex}`;
   };
