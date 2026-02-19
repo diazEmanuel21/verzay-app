@@ -1,7 +1,7 @@
 import z from "zod";
 import { buildBusinessHeader } from "./buildBusinessHeader";
 import { nonEmpty } from "./nonEmpty";
-import { instructionPrompt, SectionsDraftSchema } from "@/types/agentAi";
+import { SectionsDraftSchema } from "@/types/agentAi";
 import { buildExtrasMarkdown, buildFaqMarkdown, buildManagementMarkdown, buildProductsMarkdown, buildTrainingMarkdown } from "./actionsBuilders";
 
 export function composePromptFromSections(sections: z.infer<typeof SectionsDraftSchema>): string {
@@ -11,7 +11,6 @@ export function composePromptFromSections(sections: z.infer<typeof SectionsDraft
 
     const out: string[] = [];
     out.push(buildBusinessHeader(sections.business));
-    out.push(instructionPrompt);
 
     const trainingMd = buildTrainingMarkdown(sections.training);
     if (nonEmpty(trainingMd)) {

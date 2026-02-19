@@ -836,7 +836,6 @@ export type ManagementBuilderProps = {
     notificationNumber?: string
 };
 
-
 export const flowBehaviorText = `* **Comportamiento obligatorio:** 
   1. Tras ejecutar un flujo, responde **únicamente** lo indicado en **Regla/parámetro**.
   2. Si **no hay una orden clara**, formula una **pregunta contextual** para guiar al usuario al siguiente paso lógico de la conversación. **No añadas texto innecesario.**`
@@ -846,5 +845,60 @@ export const notifyPrompt = `**Función**: Ejecuta la tool 'Notificacion Asesor'
   2. Si **no hay una orden clara**, envía el siguiente **mensaje de confirmación** al usuario:
 📝 ¡He *notificado* al area encargada!
 👨🏻‍💻 El area encargada se pondrá en contacto contigo a la brevedad posible.`
-export const instructionPrompt = ``;
-;
+
+export type AnyEl = {
+    kind: "text" | "function";
+    text?: string;
+    fn?: "captura_datos" | "ejecutar_flujo" | "notificar_asesor" | "consulta_datos" | "actualizar_datos";
+    subtype?: string;
+    prompt?: string;
+    fields?: string[];
+    flowName?: string;
+    flowId?: string;
+    notificationNumber?: string;
+
+    // NUEVO (opcional): si quieres que “Regla/parámetro” salga al final del bloque gestión
+    ruleParam?: string;
+};
+
+export type AnyStep = {
+    title?: string;
+    mainMessage?: string;
+    elements?: AnyEl[];
+};
+
+export type FirmaOpts = {
+    enabled: boolean;
+    text: string;
+};
+
+export type PromptBuildConfig = {
+    /** Mensaje cuando no hay items */
+    emptyMessage: string;
+    /** Texto del encabezado por sección (recibe índice base 1) */
+    sectionLabel: (n: number, step: AnyStep) => string;
+    /** Texto del bloque de elementos (recibe índice base 1) */
+    elementsLabel: (n: number, step: AnyStep) => string;
+    /** Etiqueta del mensaje principal */
+    mainMessageLabel: string;
+    /** Texto para la explicación de ejecutar_flujo */
+    flowBehaviorText?: string;
+    /** Separador entre bloques finales */
+    joinSeparator?: string;
+    /** Opción para anteponer firma */
+    firma?: FirmaOpts;
+    appointmentUrl?: string;
+
+    // NUEVO: modo especial solo para ManagementBuilder
+    mode?: "default" | "management";
+
+    // NUEVO: para imprimir “Gestión X”
+    managementName?: string;
+    // (opcional) si quieres forzar un objetivo global; si no, usa step.mainMessage
+    managementObjective?: string;
+
+    // flag interno para imprimir “APARTADO GESTION:” una sola vez
+    __managementHeaderPrinted?: boolean;
+
+    __managementIndex?: number;
+};

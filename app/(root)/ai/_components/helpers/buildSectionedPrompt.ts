@@ -1,61 +1,4 @@
-import { flowBehaviorText as initialFlowBehaviorText, notifyPrompt } from "@/types/agentAi";
-
-export type AnyEl = {
-    kind: "text" | "function";
-    text?: string;
-    fn?: "captura_datos" | "ejecutar_flujo" | "notificar_asesor" | "consulta_datos" | "actualizar_datos";
-    subtype?: string;
-    prompt?: string;
-    fields?: string[];
-    flowName?: string;
-    flowId?: string;
-    notificationNumber?: string;
-
-    // NUEVO (opcional): si quieres que “Regla/parámetro” salga al final del bloque gestión
-    ruleParam?: string;
-};
-
-export type AnyStep = {
-    title?: string;
-    mainMessage?: string;
-    elements?: AnyEl[];
-};
-
-export type FirmaOpts = {
-    enabled: boolean;
-    text: string;
-};
-
-export type PromptBuildConfig = {
-    /** Mensaje cuando no hay items */
-    emptyMessage: string;
-    /** Texto del encabezado por sección (recibe índice base 1) */
-    sectionLabel: (n: number, step: AnyStep) => string;
-    /** Texto del bloque de elementos (recibe índice base 1) */
-    elementsLabel: (n: number, step: AnyStep) => string;
-    /** Etiqueta del mensaje principal */
-    mainMessageLabel: string;
-    /** Texto para la explicación de ejecutar_flujo */
-    flowBehaviorText?: string;
-    /** Separador entre bloques finales */
-    joinSeparator?: string;
-    /** Opción para anteponer firma */
-    firma?: FirmaOpts;
-    appointmentUrl?: string;
-
-    // NUEVO: modo especial solo para ManagementBuilder
-    mode?: "default" | "management";
-
-    // NUEVO: para imprimir “Gestión X”
-    managementName?: string;
-    // (opcional) si quieres forzar un objetivo global; si no, usa step.mainMessage
-    managementObjective?: string;
-
-    // flag interno para imprimir “APARTADO GESTION:” una sola vez
-    __managementHeaderPrinted?: boolean;
-
-    __managementIndex?: number;
-};
+import { AnyEl, AnyStep, flowBehaviorText as initialFlowBehaviorText, notifyPrompt, PromptBuildConfig } from "@/types/agentAi";
 
 export const transformSubtype = (subtype?: string): string | undefined => {
     const transformMap: Record<string, string> = {
@@ -346,8 +289,18 @@ export function buildSectionedPrompt(items: AnyStep[], cfg: PromptBuildConfig): 
 
         // Elementos
         const els = Array.isArray(step.elements) ? step.elements : [];
-        if (els.length >= 0) {
-            // en management ya imprimimos “#### Elementos…” dentro de formatElement (para que quede “Elementos de la gestión X”)
+
+        const hasActions = els.some((el: AnyEl) => {
+            if (el.kind === "function") {
+                return el.fn === "ejecutar_flujo" || el.fn === "notificar_asesor";
+            }
+            if (el.kind === "text") {
+                return !!trimOrUndefined(el.text);
+            }
+            return false;
+        });
+
+        if (hasActions) {
             if (cfg.mode !== "management") {
                 blocks.push(`${cfg.elementsLabel(n, step)}`);
             }
@@ -357,7 +310,6 @@ export function buildSectionedPrompt(items: AnyStep[], cfg: PromptBuildConfig): 
                 blocks.push(...formatElement(el, k, flowBehaviorText, cfg));
             });
 
-            // separador final
             blocks.push("---");
         }
     });
