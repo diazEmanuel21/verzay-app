@@ -14,7 +14,6 @@ import { useManagementAutosave, AutosaveStatus } from "./hooks/useManagementAuto
 import ElementRenderer from "./action-steeps/ElementRenderer";
 import { FunctionSelector } from "./FunctionSelector";
 import { PromptFragment } from "./helpers/prompt-fragments";
-import { AnyEl, buildSectionedPrompt, transformSubtype } from "./helpers";
 import { getUserAppointmentUrl } from "@/actions/userClientDataActions"; // 👈 NUEVO
 // import { ManagementPromptBuilder } from "./ManagementPromptBuilder";
 
@@ -24,7 +23,9 @@ import type {
     ManagementItem,
     PedidoFunctionEl,
     DataSubtype,
+    AnyEl,
 } from "@/types/agentAi";
+import { buildSectionedPrompt, transformSubtype } from "./helpers";
 
 /* type-guard genérico para funciones (Gestión puede incluir varias) */
 function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
