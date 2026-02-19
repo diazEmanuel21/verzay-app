@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useTransition } from "react";
 import useSWRInfinite from "swr/infinite";
 
 import { CrmDashboard } from "./CrmDashboard";
@@ -11,97 +10,98 @@ import { getRegistrosByUserId, updateRegistroEstado } from "@/actions/registro-a
 import { LoadingProgress } from "@/components/shared/LoadingProgress";
 import { RegistroWithSession } from "@/types/session";
 
-type MainDashboardProps = {
-  userId: string;
-};
+type MainDashboardProps = { userId: string };
 
 const PAGE_SIZE = 50;
 
 export const MainDashboard = ({ userId }: MainDashboardProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const observerRef = useRef<HTMLDivElement | null>(null);
 
-  const getKey = (
-    pageIndex: number,
-    previousPageData: RegistroWithSession[] | null
-  ) => {
-    // si la página anterior viene con menos de PAGE_SIZE, ya no hay más
+  const scrollRootRef = useRef<HTMLDivElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const loadingMoreRef = useRef(false);
+  const ioRef = useRef<IntersectionObserver | null>(null);
+
+  const getKey = (pageIndex: number, previousPageData: RegistroWithSession[] | null) => {
     if (previousPageData && previousPageData.length < PAGE_SIZE) return null;
     return `${userId}-${pageIndex}`;
   };
 
-  const {
-    data,
-    size,
-    setSize,
-    mutate,
-    isLoading,
-    isValidating,
-    error,
-  } = useSWRInfinite<RegistroWithSession[]>(
-    getKey,
-    async (key: string) => {
-      const [, pageIndex] = key.split("-");
-      const page = parseInt(pageIndex, 10);
+  const { data, size, setSize, mutate, isLoading, isValidating, error } =
+    useSWRInfinite<RegistroWithSession[]>(
+      getKey,
+      async (key: string) => {
+        const [, pageIndex] = key.split("-");
+        const page = parseInt(pageIndex, 10);
 
-      const res = await getRegistrosByUserId(
-        userId,
-        page * PAGE_SIZE,
-        PAGE_SIZE
-      );
-
-      if (!res.success) {
-        throw new Error(res.message || "No se pudieron cargar los registros");
-      }
-
-      return res.data || [];
-    },
-    {
-      revalidateAll: false,
-      revalidateFirstPage: false,
-    }
-  );
-
-  const registros = useMemo(
-    () => (data ? data.flat() : []),
-    [data]
-  );
-
-  const hasMore =
-    !data || (data[data.length - 1]?.length === PAGE_SIZE);
-
-  // Infinite scroll con IntersectionObserver (igual patrón que SessionsContent)
-  useEffect(() => {
-    if (!observerRef.current) return;
-    if (!hasMore) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry.isIntersecting && !isValidating && hasMore) {
-          setSize((prev) => prev + 1);
-        }
+        const res = await getRegistrosByUserId(userId, page * PAGE_SIZE, PAGE_SIZE);
+        if (!res.success) throw new Error(res.message || "No se pudieron cargar los registros");
+        return res.data || [];
       },
-      { threshold: 1.0 }
+      { revalidateAll: false, revalidateFirstPage: false }
     );
 
-    observer.observe(observerRef.current);
+  const registros = useMemo(() => (data ? data.flat() : []), [data]);
 
-    return () => observer.disconnect();
-  }, [hasMore, isValidating, setSize]);
+  const hasMore = !data || (data[data.length - 1]?.length === PAGE_SIZE);
+
+  // callback estable (no cambia cada render)
+  const handleScrollRootReady = useCallback((el: HTMLDivElement | null) => {
+    scrollRootRef.current = el;
+  }, []);
+
+  // libera lock al terminar
+  useEffect(() => {
+    if (!isValidating) loadingMoreRef.current = false;
+  }, [isValidating]);
+
+  // ÚNICO observer (aquí)
+  useEffect(() => {
+    const rootEl = scrollRootRef.current;
+    const targetEl = sentinelRef.current;
+
+    if (!rootEl || !targetEl) return;
+    if (!data) return;
+    if (!hasMore) return;
+
+    ioRef.current?.disconnect();
+
+    ioRef.current = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry?.isIntersecting) return;
+
+        // NO cargar si aún no hay overflow (evita auto-load)
+        const hasOverflow = rootEl.scrollHeight > rootEl.clientHeight;
+        if (!hasOverflow) return;
+
+        if (loadingMoreRef.current) return;
+        if (isValidating) return;
+        if (!hasMore) return;
+
+        loadingMoreRef.current = true;
+        setSize((prev) => prev + 1);
+      },
+      {
+        root: rootEl,
+        threshold: 0,
+        rootMargin: "120px 0px",
+      }
+    );
+
+    ioRef.current.observe(targetEl);
+
+    return () => {
+      ioRef.current?.disconnect();
+      ioRef.current = null;
+    };
+  }, [data, hasMore, isValidating, setSize]);
 
   const handleChangeEstado = (registroId: number, nuevoEstado: string) => {
     startTransition(async () => {
       const res = await updateRegistroEstado(registroId, nuevoEstado);
-
-      // aquí podrías usar toast según res.success
-      if (!res?.success) {
-        // opcional: mostrar error
-        return;
-      }
-
-      // Revalidamos la lista sin recargar toda la página
+      if (!res?.success) return;
       await mutate();
     });
   };
@@ -122,9 +122,7 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
-            {(error as Error).message}
-          </AlertDescription>
+          <AlertDescription>{(error as Error).message}</AlertDescription>
         </Alert>
       </div>
     );
@@ -136,20 +134,9 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
         userId={userId}
         registros={registros}
         onChangeEstado={handleChangeEstado}
+        sentinelRef={sentinelRef}
+        onScrollRootReady={handleScrollRootReady}
       />
-
-      {/* Sentinel para infinite scroll */}
-      {hasMore && <div ref={observerRef} className="h-10" />}
-
-      {isValidating && (
-        <p className="mt-2 text-xs text-muted-foreground">
-          <LoadingProgress
-            fullscreen
-            label="Cargando más registros..."
-            description="Esto suele tardar solo unos segundos..."
-          />
-        </p>
-      )}
     </div>
   );
 };

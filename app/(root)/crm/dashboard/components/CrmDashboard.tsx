@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
     Card,
     CardHeader,
@@ -48,15 +48,26 @@ import { MetricCard } from "./MetricCard";
 export const CrmDashboard = ({
     registros,
     onChangeEstado,
-    userId
+    userId,
+    sentinelRef,
+    onScrollRootReady,
 }: {
     registros: RegistroWithSession[];
     onChangeEstado?: (registroId: number, nuevoEstado: string) => void;
-    userId: string
+    userId: string;
+    sentinelRef: React.RefObject<HTMLDivElement>;
+    onScrollRootReady: (el: HTMLDivElement | null) => void;
 }) => {
-    const [activeTab, setActiveTab] = useState<
-        "TODOS" | TipoRegistro
-    >("TODOS");
+    const [activeTab, setActiveTab] = useState<"TODOS" | TipoRegistro>("TODOS");
+    const scrollAreaWrapRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        const wrap = scrollAreaWrapRef.current;
+        if (!wrap) return;
+
+        const viewport = wrap.querySelector<HTMLDivElement>("[data-radix-scroll-area-viewport]");
+        onScrollRootReady(viewport ?? null);
+    }, []);
 
     // --- Métricas base ---
     const totalRegistros = registros.length;
@@ -280,87 +291,90 @@ export const CrmDashboard = ({
                         </TabsList>
 
                         <TabsContent value={activeTab} className="mt-0">
-                            <ScrollArea className="h-[320px] rounded-md border">
-                                <Table className="text-xs">
-                                    <TableHeader>
-                                        <TableRow className="hover:bg-transparent">
-                                            <TableHead className="h-8 py-1.5 whitespace-nowrap">
-                                                WhatsApp
-                                            </TableHead>
-                                            <TableHead className="h-8 py-1.5 whitespace-nowrap">
-                                                Nombre
-                                            </TableHead>
-                                            <TableHead className="h-8 py-1.5 whitespace-nowrap">
-                                                Fecha
-                                            </TableHead>
-                                            <TableHead className="h-8 py-1.5">Detalle</TableHead>
-                                            <TableHead className="h-8 py-1.5 text-right">
-                                                Estado
-                                            </TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {registrosFiltrados.length === 0 && (
-                                            <TableRow>
-                                                <TableCell
-                                                    colSpan={6}
-                                                    className="h-16 text-center text-[11px] text-muted-foreground"
-                                                >
-                                                    No hay registros para este filtro.
-                                                </TableCell>
+                            <div ref={scrollAreaWrapRef}>
+                                <ScrollArea className="h-[320px] rounded-md border">
+                                    <Table className="text-xs">
+                                        <TableHeader>
+                                            <TableRow className="hover:bg-transparent">
+                                                <TableHead className="h-8 py-1.5 whitespace-nowrap">
+                                                    WhatsApp
+                                                </TableHead>
+                                                <TableHead className="h-8 py-1.5 whitespace-nowrap">
+                                                    Nombre
+                                                </TableHead>
+                                                <TableHead className="h-8 py-1.5 whitespace-nowrap">
+                                                    Fecha
+                                                </TableHead>
+                                                <TableHead className="h-8 py-1.5">Detalle</TableHead>
+                                                <TableHead className="h-8 py-1.5 text-right">
+                                                    Estado
+                                                </TableHead>
                                             </TableRow>
-                                        )}
-
-                                        {registrosFiltrados.map((r) => {
-                                            const nombre = getDisplayNombreFromRegistro(r);
-                                            const tipoLabel = getTipoLabel(r.tipo);
-                                            const detalle =
-                                                r.resumen || r.detalles || "Sin detalles";
-
-                                            return (
-                                                <TableRow key={r.id} className="hover:bg-accent/40">
-                                                    <TableCell className="py-1.5 align-top whitespace-nowrap">
-                                                        {r.session.remoteJid.split('@')[0]}
-                                                    </TableCell>
-                                                    <TableCell className="py-1.5 align-top whitespace-nowrap">
-                                                        {nombre}
-                                                    </TableCell>
-                                                    <TableCell className="py-1.5 align-top whitespace-nowrap">
-                                                        {formatFecha(r.fecha || '')}
-                                                    </TableCell>
-                                                    <TableCell className="py-1.5 align-top max-w-[280px]">
-                                                        <span className="line-clamp-2">{detalle}</span>
-                                                    </TableCell>
-                                                    <TableCell className="py-1.5 align-top text-right">
-                                                        <Select
-                                                            value={r.estado ?? 'pendiente'}
-                                                            onValueChange={(value) => {
-                                                                if (value === r.estado) return;
-                                                                onChangeEstado?.(r.id, value);
-                                                            }}
-                                                        >
-                                                            <SelectTrigger className="h-7 w-[150px] text-[10px] justify-between">
-                                                                <SelectValue placeholder="Seleccionar estado" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {getEstadoOptions(r.tipo).map((estado) => (
-                                                                    <SelectItem
-                                                                        key={estado}
-                                                                        value={estado}
-                                                                        className="text-[11px]"
-                                                                    >
-                                                                        {estado}
-                                                                    </SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {registrosFiltrados.length === 0 && (
+                                                <TableRow>
+                                                    <TableCell
+                                                        colSpan={6}
+                                                        className="h-16 text-center text-[11px] text-muted-foreground"
+                                                    >
+                                                        No hay registros para este filtro.
                                                     </TableCell>
                                                 </TableRow>
-                                            );
-                                        })}
-                                    </TableBody>
-                                </Table>
-                            </ScrollArea>
+                                            )}
+
+                                            {registrosFiltrados.map((r) => {
+                                                const nombre = getDisplayNombreFromRegistro(r);
+                                                const tipoLabel = getTipoLabel(r.tipo);
+                                                const detalle =
+                                                    r.resumen || r.detalles || "Sin detalles";
+
+                                                return (
+                                                    <TableRow key={r.id} className="hover:bg-accent/40">
+                                                        <TableCell className="py-1.5 align-top whitespace-nowrap">
+                                                            {r.session.remoteJid.split('@')[0]}
+                                                        </TableCell>
+                                                        <TableCell className="py-1.5 align-top whitespace-nowrap">
+                                                            {nombre}
+                                                        </TableCell>
+                                                        <TableCell className="py-1.5 align-top whitespace-nowrap">
+                                                            {formatFecha(r.fecha || '')}
+                                                        </TableCell>
+                                                        <TableCell className="py-1.5 align-top max-w-[280px]">
+                                                            <span className="line-clamp-2">{detalle}</span>
+                                                        </TableCell>
+                                                        <TableCell className="py-1.5 align-top text-right">
+                                                            <Select
+                                                                value={r.estado ?? 'pendiente'}
+                                                                onValueChange={(value) => {
+                                                                    if (value === r.estado) return;
+                                                                    onChangeEstado?.(r.id, value);
+                                                                }}
+                                                            >
+                                                                <SelectTrigger className="h-7 w-[150px] text-[10px] justify-between">
+                                                                    <SelectValue placeholder="Seleccionar estado" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {getEstadoOptions(r.tipo).map((estado) => (
+                                                                        <SelectItem
+                                                                            key={estado}
+                                                                            value={estado}
+                                                                            className="text-[11px]"
+                                                                        >
+                                                                            {estado}
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                    <div ref={sentinelRef} className="h-8" />
+                                </ScrollArea>
+                            </div>
                         </TabsContent>
                     </Tabs>
                 </CardContent>
