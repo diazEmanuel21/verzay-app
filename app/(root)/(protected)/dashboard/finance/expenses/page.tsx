@@ -21,11 +21,11 @@ export default async function ExpensesPage() {
   if (!listRes.success)
     return <div className="p-6 text-sm text-red-500">{listRes.message}</div>;
 
-  // ✅ CLAVE: convertir Decimal/Date -> plain objects
+  // CLAVE: convertir Decimal/Date -> plain objects
   const meta = serializePrisma(metaRes.data!);
   const expenses = serializePrisma(listRes.data || []);
 
-  // ✅ usar la moneda guardada en settings (igual que Sales)
+  // usar la moneda guardada en settings (igual que Sales)
   const preferredCurrencyCode =
     (user as any).preferredCurrencyCode ||
     (user as any).primaryCurrencyCode || // fallback por si antes existía ese campo

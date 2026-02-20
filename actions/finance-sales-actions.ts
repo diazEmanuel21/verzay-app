@@ -162,7 +162,7 @@ export async function createSale(data: {
   title?: string | null;
   description?: string | null;
 
-  // ✅ contacto/sesión
+  // contacto/sesión
   sessionId?: number | null;
   counterparty?: string | null;
   reference?: string | null;
@@ -188,10 +188,10 @@ export async function createSale(data: {
         title: data.title ?? null,
         description: data.description ?? null,
 
-        // ✅ guarda contacto real
+        // guarda contacto real
         sessionId: data.sessionId ?? null,
 
-        // ✅ snapshot opcional
+        // snapshot opcional
         counterparty: data.counterparty ?? null,
         reference: data.reference ?? null,
       },
@@ -219,7 +219,7 @@ export async function updateSale(
     title: string | null;
     description: string | null;
 
-    // ✅ contacto/sesión
+    // contacto/sesión
     sessionId: number | null;
     counterparty: string | null;
     reference: string | null;
@@ -256,7 +256,7 @@ export async function updateSale(
     if (data.title !== undefined) payload.title = data.title;
     if (data.description !== undefined) payload.description = data.description;
 
-    // ✅ contacto real + snapshot
+    // contacto real + snapshot
     if (data.sessionId !== undefined) payload.sessionId = data.sessionId;
     if (data.counterparty !== undefined) payload.counterparty = data.counterparty;
     if (data.reference !== undefined) payload.reference = data.reference;

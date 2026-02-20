@@ -15,10 +15,10 @@ export async function currentUser(request?: Request) {
     const session = await auth();
     if (!session?.user?.id) return null;
 
-    // ✅ cookie de impersonación
+    // cookie de impersonación
     const impersonateId = cookies().get("impersonate_user_id")?.value;
 
-    // ✅ trae el usuario real (solo para saber su role)
+    // trae el usuario real (solo para saber su role)
     const realUser = await db.user.findUnique({
         where: { id: session.user.id },
         select: { id: true, role: true },
@@ -26,12 +26,12 @@ export async function currentUser(request?: Request) {
 
     if (!realUser) return null;
 
-    // ✅ decide qué userId usar
+    // decide qué userId usar
     const effectiveUserId =
         impersonateId && realUser.role === "admin" ? impersonateId : realUser.id;
 
     const userPromise = db.user.findUnique({
-        where: { id: effectiveUserId }, // ✅ por id (no email)
+        where: { id: effectiveUserId }, // por id (no email)
         select: {
             id: true,
             name: true,

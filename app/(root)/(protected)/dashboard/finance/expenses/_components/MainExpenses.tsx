@@ -46,13 +46,13 @@ type Props = {
   categories: any[];
   currencies: any[];
   expenses: any[];
-  primaryCurrencyCode: string; // ✅ moneda del user (desde settings)
+  primaryCurrencyCode: string; // moneda del user (desde settings)
 };
 
 type FormState = {
   occurredAt: string;
   amount: string;
-  currencyCode: string; // ✅ fijo (solo lectura)
+  currencyCode: string; // fijo (solo lectura)
   accountId: string;
   categoryId: string | null;
   title: string;
@@ -189,7 +189,7 @@ export default function MainExpenses({
     [accounts]
   );
 
-  // ✅ moneda fija: la del user (si existe en catálogo), sino primera, sino USD
+  // moneda fija: la del user (si existe en catálogo), sino primera, sino USD
   const defaultCurrency = useMemo(() => {
     return (
       currencies.find((c) => c.code === primaryCurrencyCode)?.code ||
@@ -212,7 +212,7 @@ export default function MainExpenses({
     // si cambió la moneda del user / load props
     setForm((p) => ({
       ...p,
-      currencyCode: defaultCurrency, // ✅ forzar a la preferida (como Sales)
+      currencyCode: defaultCurrency, // forzar a la preferida (como Sales)
     }));
   }, [defaultCurrency]);
 
@@ -238,7 +238,7 @@ export default function MainExpenses({
   const openEdit = (row: any) => {
     setEditing(row);
 
-    // ✅ mantiene moneda del registro (solo lectura), si no hay, usa defaultCurrency
+    // mantiene moneda del registro (solo lectura), si no hay, usa defaultCurrency
     setForm({
       occurredAt: toISODate(row.occurredAt),
       amount: String(row.amount ?? ''),
@@ -306,7 +306,7 @@ export default function MainExpenses({
           userId,
           occurredAt: form.occurredAt,
           amount: form.amount,
-          currencyCode: form.currencyCode, // ✅ fijo (solo lectura)
+          currencyCode: form.currencyCode, // fijo (solo lectura)
           accountId: form.accountId,
           categoryId: form.categoryId,
           title: form.title?.trim() || null,
@@ -424,14 +424,14 @@ export default function MainExpenses({
             <div className="flex items-center justify-between gap-2">
               <CardTitle className="text-sm">Gastos</CardTitle>
 
-              {/* ✅ mismo estilo de Sales */}
+              {/* mismo estilo de Sales */}
               <Button size="sm" onClick={openCreate} disabled={isPending} className="h-9">
                 <Plus className="mr-2 h-4 w-4" />
                 Nuevo gasto
               </Button>
             </div>
 
-            {/* ✅ resumen como Sales */}
+            {/* resumen como Sales */}
             <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div className="flex items-center justify-between rounded-xl border bg-muted/10 px-3 py-2 hover:bg-muted/20">
                 <div className="flex items-center gap-2">
@@ -514,7 +514,7 @@ export default function MainExpenses({
           <CardContent className="pt-0" />
         </Card>
 
-        {/* ✅ Modal Detalle (más parecido a Sales: botones icon) */}
+        {/* Modal Detalle (más parecido a Sales: botones icon) */}
         <Dialog open={detailOpen} onOpenChange={(v) => (v ? setDetailOpen(true) : closeDetail())}>
           <DialogContent className="sm:max-w-[820px] rounded-2xl">
             <DialogHeader className="space-y-1">
@@ -653,7 +653,7 @@ export default function MainExpenses({
           </DialogContent>
         </Dialog>
 
-        {/* ✅ Modal Create/Edit (MISMO DISEÑO QUE SALES: left form + right resumen sticky) */}
+        {/* Modal Create/Edit (MISMO DISEÑO QUE SALES: left form + right resumen sticky) */}
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="sm:max-w-[1000px] rounded-2xl">
             <DialogHeader className="space-y-1">
@@ -774,7 +774,7 @@ export default function MainExpenses({
                           />
                         </div>
 
-                        {/* ✅ Moneda SOLO lectura como Sales */}
+                        {/* Moneda SOLO lectura como Sales */}
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <Layers className="h-4 w-4 text-muted-foreground" />

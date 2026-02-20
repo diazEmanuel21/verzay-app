@@ -39,7 +39,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = u.id;
         token.role = u.role;
         token.plan = u.plan;
-        token.tokenVersion = u.tokenVersion ?? 0; // ✅ se mete al token al loguear
+        token.tokenVersion = u.tokenVersion ?? 0; // se mete al token al loguear
       }
       return token;
     },

@@ -19,7 +19,7 @@ export default async function FinanceAccountsPage() {
   const email = session?.user?.email;
   if (!email) return null;
 
-  // ✅ usar ID real del usuario en BD (evita FK)
+  // usar ID real del usuario en BD (evita FK)
   const me = await db.user.findUnique({
     where: { email },
     select: { id: true },
@@ -27,7 +27,7 @@ export default async function FinanceAccountsPage() {
 
   if (!me?.id) return null;
 
-  // ✅ monedas directo (sin getSalesMeta)
+  // monedas directo (sin getSalesMeta)
   const currencies = await db.financeCurrency.findMany({
     orderBy: { code: "asc" },
   });
@@ -50,7 +50,7 @@ export default async function FinanceAccountsPage() {
     return <div className="p-6 text-sm text-red-500">{expensesRes.message}</div>;
   }
 
-  // ✅ CLAVE: serializa Decimal -> number (y cualquier Decimal anidado)
+  // CLAVE: serializa Decimal -> number (y cualquier Decimal anidado)
   const accounts = serializePrisma(accRes.data ?? []);
   const sales = serializePrisma(salesRes.data ?? []);
   const expenses = serializePrisma(expensesRes.data ?? []);

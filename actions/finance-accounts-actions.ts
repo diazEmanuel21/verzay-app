@@ -51,7 +51,7 @@ export async function createFinanceAccount(payload: {
   }
 }
 
-// ✅ ESTA ES LA QUE TE FALTA / NO ESTÁ EXPORTADA
+// ESTA ES LA QUE TE FALTA / NO ESTÁ EXPORTADA
 export async function updateFinanceAccount(
   accountId: string,
   userId: string,

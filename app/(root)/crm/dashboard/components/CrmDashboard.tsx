@@ -44,14 +44,17 @@ import { RegistroWithSession, TipoRegistro } from "@/types/session";
 import { formatFecha, getTipoLabel } from "../../helpers";
 import { getDisplayNombreFromRegistro, getEstadoOptions, toDate } from "../helpers";
 import { MetricCard } from "./MetricCard";
+import { DashboardStats } from "./MainDashboard";
 
 export const CrmDashboard = ({
+    stats,
     registros,
     onChangeEstado,
     userId,
     sentinelRef,
     onScrollRootReady,
 }: {
+    stats: DashboardStats | null;
     registros: RegistroWithSession[];
     onChangeEstado?: (registroId: number, nuevoEstado: string) => void;
     userId: string;
@@ -65,34 +68,33 @@ export const CrmDashboard = ({
         const wrap = scrollAreaWrapRef.current;
         if (!wrap) return;
 
-        const viewport = wrap.querySelector<HTMLDivElement>("[data-radix-scroll-area-viewport]");
+        const viewport = wrap.querySelector<HTMLDivElement>(
+            "[data-radix-scroll-area-viewport]"
+        );
+
         onScrollRootReady(viewport ?? null);
-    }, []);
+    }, [onScrollRootReady, activeTab]);
 
-    // --- Métricas base ---
-    const totalRegistros = registros.length;
 
-    const leadsConMovimientos = useMemo(() => {
+    // Métricas (globales) desde stats
+    const totalRegistros = stats?.totalRegistros ?? registros.length;
+    const leadsConMovimientosFallback = useMemo(() => {
         const set = new Set<number>();
         for (const r of registros) set.add(r.sessionId);
         return set.size;
     }, [registros]);
 
-    // --- Registros por tipo ---
-    const countsByTipo = useMemo(() => {
+    const leadsConMovimientos = stats?.leadsConMovimientos ?? leadsConMovimientosFallback;
+
+    const countsByTipo = useMemo<Record<TipoRegistro, number>>(() => {
+        if (stats?.countsByTipo) return stats.countsByTipo;
+
         const base: Record<TipoRegistro, number> = {
-            REPORTE: 0,
-            SOLICITUD: 0,
-            PEDIDO: 0,
-            RECLAMO: 0,
-            PAGO: 0,
-            RESERVA: 0,
+            REPORTE: 0, SOLICITUD: 0, PEDIDO: 0, RECLAMO: 0, PAGO: 0, RESERVA: 0,
         };
-        for (const r of registros) {
-            base[r.tipo] = (base[r.tipo] ?? 0) + 1;
-        }
+        for (const r of registros) base[r.tipo] += 1;
         return base;
-    }, [registros]);
+    }, [stats?.countsByTipo, registros]);
 
     const chartDataByTipo = useMemo(
         () =>
@@ -103,31 +105,71 @@ export const CrmDashboard = ({
         [countsByTipo]
     );
 
-    // --- Registros últimos 7 días ---
+    // Actividad últimos 7 días (global) desde stats
     const chartDataByDay = useMemo(() => {
-        const now = new Date();
-        const daysMap = new Map<string, number>(); // key: yyyy-MM-dd
+        if (stats?.chartDataByDay) return stats.chartDataByDay;
+        return [];
+    }, [stats]);
 
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date(now);
-            d.setDate(d.getDate() - i);
-            const key = d.toISOString().slice(0, 10);
-            daysMap.set(key, 0);
-        }
+    // --- Métricas base ---
+    // const totalRegistros = registros.length;
 
-        for (const r of registros) {
-            const d = toDate(r.fecha || '');
-            const key = d.toISOString().slice(0, 10);
-            if (daysMap.has(key)) {
-                daysMap.set(key, (daysMap.get(key) ?? 0) + 1);
-            }
-        }
+    // const leadsConMovimientos = useMemo(() => {
+    //     const set = new Set<number>();
+    //     for (const r of registros) set.add(r.sessionId);
+    //     return set.size;
+    // }, [registros]);
 
-        return Array.from(daysMap.entries()).map(([key, count]) => ({
-            fecha: key.slice(5), // MM-DD
-            cantidad: count,
-        }));
-    }, [registros]);
+    // --- Registros por tipo ---
+    // const countsByTipo = useMemo(() => {
+    //     const base: Record<TipoRegistro, number> = {
+    //         REPORTE: 0,
+    //         SOLICITUD: 0,
+    //         PEDIDO: 0,
+    //         RECLAMO: 0,
+    //         PAGO: 0,
+    //         RESERVA: 0,
+    //     };
+    //     for (const r of registros) {
+    //         base[r.tipo] = (base[r.tipo] ?? 0) + 1;
+    //     }
+    //     return base;
+    // }, [registros]);
+
+    // const chartDataByTipo = useMemo(
+    //     () =>
+    //         (Object.keys(countsByTipo) as TipoRegistro[]).map((tipo) => ({
+    //             tipo: getTipoLabel(tipo),
+    //             cantidad: countsByTipo[tipo],
+    //         })),
+    //     [countsByTipo]
+    // );
+
+    // --- Registros últimos 7 días ---
+    // const chartDataByDay = useMemo(() => {
+    //     const now = new Date();
+    //     const daysMap = new Map<string, number>(); // key: yyyy-MM-dd
+
+    //     for (let i = 6; i >= 0; i--) {
+    //         const d = new Date(now);
+    //         d.setDate(d.getDate() - i);
+    //         const key = d.toISOString().slice(0, 10);
+    //         daysMap.set(key, 0);
+    //     }
+
+    //     for (const r of registros) {
+    //         const d = toDate(r.fecha || '');
+    //         const key = d.toISOString().slice(0, 10);
+    //         if (daysMap.has(key)) {
+    //             daysMap.set(key, (daysMap.get(key) ?? 0) + 1);
+    //         }
+    //     }
+
+    //     return Array.from(daysMap.entries()).map(([key, count]) => ({
+    //         fecha: key.slice(5), // MM-DD
+    //         cantidad: count,
+    //     }));
+    // }, [registros]);
 
     // --- Tablas globales ---
     const registrosFiltrados = useMemo(() => {
@@ -236,7 +278,8 @@ export const CrmDashboard = ({
             </div>
 
             {/* Tags stats */}
-            <TagStatsCard userId={userId} />
+            {/* TODO: DESCOMENTAR TAGS CUANDO EXISTAN */}
+            {/* <TagStatsCard userId={userId} /> */}
 
 
             {/* TABLAS GLOBALES */}

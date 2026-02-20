@@ -1,25 +1,30 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import useSWRInfinite from "swr/infinite";
 
 import { CrmDashboard } from "./CrmDashboard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { getRegistrosByUserId, updateRegistroEstado } from "@/actions/registro-action";
+import { getCrmDashboardStatsByUserId, getRegistrosByUserId, updateRegistroEstado } from "@/actions/registro-action";
 import { LoadingProgress } from "@/components/shared/LoadingProgress";
-import { RegistroWithSession } from "@/types/session";
+import { RegistroWithSession, TipoRegistro } from "@/types/session";
 
-type MainDashboardProps = { userId: string };
+export type MainDashboardProps = { userId: string };
+export type DashboardStats = {
+  totalRegistros: number;
+  leadsConMovimientos: number;
+  countsByTipo: Record<TipoRegistro, number>;
+  chartDataByDay: { fecha: string; cantidad: number }[];
+};
 
 const PAGE_SIZE = 50;
 
 export const MainDashboard = ({ userId }: MainDashboardProps) => {
   const [isPending, startTransition] = useTransition();
-
-  const scrollRootRef = useRef<HTMLDivElement | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [scrollRootEl, setScrollRootEl] = useState<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
-
   const loadingMoreRef = useRef(false);
   const ioRef = useRef<IntersectionObserver | null>(null);
 
@@ -43,13 +48,17 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
     );
 
   const registros = useMemo(() => (data ? data.flat() : []), [data]);
-
   const hasMore = !data || (data[data.length - 1]?.length === PAGE_SIZE);
 
-  // callback estable (no cambia cada render)
   const handleScrollRootReady = useCallback((el: HTMLDivElement | null) => {
-    scrollRootRef.current = el;
+    setScrollRootEl(el);
   }, []);
+
+  const refreshStats = useCallback(async () => {
+    const res = await getCrmDashboardStatsByUserId(userId);
+    if (res.success) setStats(res.data);
+  }, [userId]);
+
 
   // libera lock al terminar
   useEffect(() => {
@@ -58,7 +67,7 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
 
   // ÚNICO observer (aquí)
   useEffect(() => {
-    const rootEl = scrollRootRef.current;
+    const rootEl = scrollRootEl;
     const targetEl = sentinelRef.current;
 
     if (!rootEl || !targetEl) return;
@@ -72,7 +81,6 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
         const entry = entries[0];
         if (!entry?.isIntersecting) return;
 
-        // NO cargar si aún no hay overflow (evita auto-load)
         const hasOverflow = rootEl.scrollHeight > rootEl.clientHeight;
         if (!hasOverflow) return;
 
@@ -96,13 +104,19 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
       ioRef.current?.disconnect();
       ioRef.current = null;
     };
-  }, [data, hasMore, isValidating, setSize]);
+  }, [scrollRootEl, data, hasMore, isValidating, setSize]);
+
+  useEffect(() => {
+    refreshStats();
+  }, [refreshStats]);
 
   const handleChangeEstado = (registroId: number, nuevoEstado: string) => {
     startTransition(async () => {
       const res = await updateRegistroEstado(registroId, nuevoEstado);
       if (!res?.success) return;
+
       await mutate();
+      await refreshStats(); // mantiene métricas perfectas
     });
   };
 
@@ -131,6 +145,7 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
   return (
     <div className="flex flex-col h-full">
       <CrmDashboard
+        stats={stats}
         userId={userId}
         registros={registros}
         onChangeEstado={handleChangeEstado}

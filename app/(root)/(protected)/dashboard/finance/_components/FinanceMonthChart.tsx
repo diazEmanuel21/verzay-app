@@ -48,7 +48,7 @@ export function FinanceMonthChart({
 }) {
   const money = makeMoneyFormatter(currencyCode);
 
-  // ✅ Colores diferenciados (ventas azul, gastos rojo)
+  // Colores diferenciados (ventas azul, gastos rojo)
   const SALES_COLOR = 'hsl(var(--primary))';
   const EXPENSES_COLOR = 'hsl(var(--destructive))';
 

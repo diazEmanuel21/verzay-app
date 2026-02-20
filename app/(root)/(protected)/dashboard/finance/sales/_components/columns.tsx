@@ -84,7 +84,7 @@ export function buildSalesColumns({ onEdit, onDelete, busy }: BuildColsArgs): Co
                   className="h-8 w-8"
                   onClick={(e) => {
                     e.preventDefault();
-                    e.stopPropagation(); // ✅ evita abrir el detalle
+                    e.stopPropagation(); // evita abrir el detalle
                     onEdit(original);
                   }}
                   disabled={busy}
@@ -105,7 +105,7 @@ export function buildSalesColumns({ onEdit, onDelete, busy }: BuildColsArgs): Co
                   className="h-8 w-8"
                   onClick={(e) => {
                     e.preventDefault();
-                    e.stopPropagation(); // ✅ evita abrir el detalle
+                    e.stopPropagation(); // evita abrir el detalle
                     onDelete(original.id);
                   }}
                   disabled={busy}

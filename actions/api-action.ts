@@ -139,7 +139,7 @@ export async function generateQRCode({ instanceName, userId }: GenerateQrInterfa
 
     entry.lastNotifiedAt = now;
     entry.notifiedCountToday += 1;
-    justNotified = true; // ✅
+    justNotified = true;
   }
 
   entry.lastIsConnected = apiConnectedNow;

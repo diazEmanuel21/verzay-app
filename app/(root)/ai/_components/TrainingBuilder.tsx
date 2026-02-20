@@ -469,7 +469,7 @@ export function TrainingBuilder({
             <SortableContext items={stepIds} strategy={verticalListSortingStrategy}>
               <div className="space-y-4">
                 {steps.map((step, idx) => {
-                  const lockWelcome = step.title === WELCOME_TITLE; // ✅ bloquea drag del welcome (opcional)
+                  const lockWelcome = step.title === WELCOME_TITLE; // bloquea drag del welcome (opcional)
 
                   return (
                     <SortableStepCard
@@ -481,7 +481,7 @@ export function TrainingBuilder({
                         <Card className="bg-muted/10 border-muted/60">
                           <CardHeader className="py-3">
                             <div className="flex items-start gap-2">
-                              {/* ✅ Drag handle del paso */}
+                              {/* Drag handle del paso */}
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -571,7 +571,7 @@ export function TrainingBuilder({
                                       <SortableElementRow key={el.id} id={el.id} stepId={step.id}>
                                         {({ dragHandleProps }) => (
                                           <div className="flex items-start gap-2">
-                                            {/* ✅ Drag handle del elemento */}
+                                            {/* Drag handle del elemento */}
                                             <Button
                                               type="button"
                                               variant="ghost"

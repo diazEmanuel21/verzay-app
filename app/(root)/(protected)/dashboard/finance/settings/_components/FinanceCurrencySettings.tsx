@@ -52,7 +52,7 @@ export default function FinanceCurrencySettings({
         return;
       }
       toast.success('Moneda guardada');
-      router.refresh(); // ✅ clave
+      router.refresh(); // clave
     });
   };
 

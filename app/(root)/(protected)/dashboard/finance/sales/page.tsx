@@ -28,7 +28,7 @@ export default async function SalesPage() {
   const products = serializePrisma(productsRes.items || []);
   const sessions = serializePrisma((sessionsRes as any)?.data || (sessionsRes as any) || []);
 
-  // ✅ usar la moneda guardada en settings
+  // usar la moneda guardada en settings
   const preferredCurrencyCode =
     (user as any).preferredCurrencyCode ||
     (user as any).primaryCurrencyCode || // por si antes la tenías con otro nombre

@@ -38,7 +38,7 @@ type Props = {
   initialAccounts: any[];
   currencies: any[];
 
-  // ✅ para saldo y modal
+  // para saldo y modal
   sales: any[];
   expenses: any[];
 };
@@ -80,7 +80,7 @@ function toAmountNumber(v: any): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-// ✅ ventas total = amount + extra - discount
+// ventas total = amount + extra - discount
 function calcSaleTotal(row: any) {
   const base = toAmountNumber(row?.amount);
   const extra = toAmountNumber(row?.extra);
@@ -123,7 +123,7 @@ export default function MainFinanceAccounts({
   }, [currencies]);
 
   // =====================================================
-  // ✅ Filtro: MES actual (default) + RANGO + TODO
+  // Filtro: MES actual (default) + RANGO + TODO
   // =====================================================
   const now = new Date();
   const [rangeMode, setRangeMode] = useState<'month' | 'range' | 'all'>('month');
@@ -167,7 +167,7 @@ export default function MainFinanceAccounts({
   }, [expenses, rangeMode, dateFrom, dateTo]);
 
   // -------------------------
-  // ✅ Modal ledger por cuenta
+  // Modal ledger por cuenta
   // -------------------------
   const [ledgerOpen, setLedgerOpen] = useState(false);
   const [ledgerAccount, setLedgerAccount] = useState<any | null>(null);
@@ -185,7 +185,7 @@ export default function MainFinanceAccounts({
   };
 
   // -------------------------
-  // ✅ CRUD modal (crear/editar)
+  // CRUD modal (crear/editar)
   // -------------------------
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
@@ -284,7 +284,7 @@ export default function MainFinanceAccounts({
   };
 
   // -----------------------------------------
-  // ✅ Resumen por cuenta (ventas/gastos/saldo)
+  // Resumen por cuenta (ventas/gastos/saldo)
   //    usando filteredSales/filteredExpenses
   // -----------------------------------------
   const summaryByAccount = useMemo(() => {
@@ -354,7 +354,7 @@ export default function MainFinanceAccounts({
   );
 
   // -----------------------------------------
-  // ✅ Ledger data (ventas + gastos) por cuenta
+  // Ledger data (ventas + gastos) por cuenta
   //    usando filteredSales/filteredExpenses
   // -----------------------------------------
   const ledgerRows = useMemo(() => {
@@ -506,7 +506,7 @@ export default function MainFinanceAccounts({
             </Button>
           </div>
 
-          {/* ✅ Filtros */}
+          {/* Filtros */}
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <Button
@@ -597,7 +597,7 @@ export default function MainFinanceAccounts({
         </CardContent>
       </Card>
 
-      {/* ✅ MODAL LEDGER (ventas + gastos por cuenta) */}
+      {/* MODAL LEDGER (ventas + gastos por cuenta) */}
       <Dialog open={ledgerOpen} onOpenChange={(v) => (v ? setLedgerOpen(true) : closeLedger())}>
         <DialogContent className="sm:max-w-[980px] rounded-2xl">
           <DialogHeader className="space-y-1">
@@ -734,7 +734,7 @@ export default function MainFinanceAccounts({
         </DialogContent>
       </Dialog>
 
-      {/* ✅ MODAL CREATE/EDIT */}
+      {/* MODAL CREATE/EDIT */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-[680px] rounded-2xl">
           <DialogHeader className="space-y-1">

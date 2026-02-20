@@ -58,7 +58,7 @@ type Props = {
   currencies: any[];
   sales: any[];
   products: any[];
-  primaryCurrencyCode: string; // ✅ aquí llega preferredCurrencyCode desde settings
+  primaryCurrencyCode: string; // aquí llega preferredCurrencyCode desde settings
 };
 
 type FormState = {
@@ -67,7 +67,7 @@ type FormState = {
   extra: string;
   discount: string;
 
-  currencyCode: string; // ✅ solo lectura
+  currencyCode: string; // solo lectura
 
   accountId: string;
   categoryId: string | null;
@@ -140,7 +140,7 @@ function moneyFormat(currencies: any[], code: string, value: number) {
   const meta = currencies.find((c) => c.code === code);
   const decimals = typeof meta?.decimals === 'number' ? meta.decimals : 2;
 
-  // ✅ locale CO está bien para COP y USD (formato), si luego quieres lo hacemos dinámico
+  // locale CO está bien para COP y USD (formato), si luego quieres lo hacemos dinámico
   try {
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
@@ -271,7 +271,7 @@ export default function MainSales({
     [accounts]
   );
 
-  // ✅ moneda por defecto SIEMPRE la del setting (si existe en catálogo)
+  // moneda por defecto SIEMPRE la del setting (si existe en catálogo)
   const defaultCurrency = useMemo(() => {
     return (
       currencies.find((c) => c.code === primaryCurrencyCode)?.code ||
@@ -298,7 +298,7 @@ export default function MainSales({
     contactJid: '',
   });
 
-  // ✅ si cambias la moneda en settings y recargas la página,
+  // si cambias la moneda en settings y recargas la página,
   // al abrir "Nuevo" debe usar la nueva moneda
   useEffect(() => {
     setForm((p) => ({
@@ -343,7 +343,7 @@ export default function MainSales({
     const inferredContactName = row.counterparty ?? '';
     const inferredContactJid = row.reference ?? '';
 
-    // ✅ mantiene moneda del registro (solo lectura)
+    // mantiene moneda del registro (solo lectura)
     setForm({
       occurredAt: toISODate(row.occurredAt),
       amount: String(row.amount ?? ''),
@@ -421,7 +421,7 @@ export default function MainSales({
           extra: form.extra?.trim() ? form.extra : '0',
           discount: form.discount?.trim() ? form.discount : '0',
 
-          // ✅ SIEMPRE la moneda del setting al crear (y se mantiene al editar)
+          // SIEMPRE la moneda del setting al crear (y se mantiene al editar)
           currencyCode: form.currencyCode,
 
           accountId: form.accountId,
@@ -504,7 +504,7 @@ export default function MainSales({
     const entries = Object.entries(totals);
     if (!entries.length) return [];
 
-    // ✅ prioriza la moneda del setting en los resúmenes
+    // prioriza la moneda del setting en los resúmenes
     const safe = currencies.find((c) => c.code === primaryCurrencyCode)?.code || defaultCurrency;
 
     return [
@@ -641,7 +641,7 @@ export default function MainSales({
           <CardContent className="pt-0" />
         </Card>
 
-{/* ✅ Modal Detalle (MEJORADO) */}
+{/* Modal Detalle (MEJORADO) */}
 <Dialog open={detailOpen} onOpenChange={(v) => (v ? setDetailOpen(true) : closeDetail())}>
   <DialogContent className="sm:max-w-[980px] rounded-2xl p-0 overflow-hidden">
     {/* Header */}
@@ -840,7 +840,7 @@ export default function MainSales({
                 </Badge>
               </div>
 
-              {/* ✅ Solo para Sales: breakdown bonito */}
+              {/* Solo para Sales: breakdown bonito */}
               {(detailBase !== undefined || detailExtra !== undefined || detailDiscount !== undefined) ? (
                 <>
                   <Separator className="my-3" />
@@ -905,7 +905,7 @@ export default function MainSales({
 </Dialog>
 
 
-        {/* ✅ Modal Create/Edit */}
+        {/* Modal Create/Edit */}
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="sm:max-w-[1000px] rounded-2xl">
             <DialogHeader className="space-y-1">
@@ -1098,7 +1098,7 @@ export default function MainSales({
                           <Input type="date" value={form.occurredAt} onChange={(e) => setForm((p) => ({ ...p, occurredAt: e.target.value }))} className="h-9 text-sm" />
                         </div>
 
-                        {/* ✅ Moneda SOLO lectura */}
+                        {/* Moneda SOLO lectura */}
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <Layers className="h-4 w-4 text-muted-foreground" />

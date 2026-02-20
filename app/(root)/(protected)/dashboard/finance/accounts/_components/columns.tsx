@@ -28,7 +28,7 @@ export function buildAccountsColumns({
   };
 }) {
   return [
-    // ✅ Columna: Cuenta (solo nombre)
+    // Columna: Cuenta (solo nombre)
     {
       accessorKey: 'name',
       header: 'Cuenta',
@@ -51,7 +51,7 @@ export function buildAccountsColumns({
       },
     },
 
-    // ✅ Columna: Saldo
+    // Columna: Saldo
     {
       id: 'balance',
       header: 'Saldo',
@@ -68,7 +68,7 @@ export function buildAccountsColumns({
       },
     },
 
-    // ✅ Columna: Acciones
+    // Columna: Acciones
     {
       id: 'actions',
       header: '',

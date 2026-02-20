@@ -141,6 +141,92 @@ export async function getRegistrosByUserId(
     }
 }
 
+export async function getCrmDashboardStatsByUserId(userId: string) {
+    try {
+        // 1) total registros
+        const totalRegistros = await db.registro.count({
+            where: { session: { userId } },
+        });
+
+        // 2) leads con movimientos (distinct sessionId)
+        const leadsConMovimientos = await db.registro.groupBy({
+            by: ["sessionId"],
+            where: { session: { userId } },
+        });
+
+        // 3) conteo por tipo
+        const byTipo = await db.registro.groupBy({
+            by: ["tipo"],
+            where: { session: { userId } },
+            _count: { _all: true },
+        });
+
+        const countsByTipo = {
+            REPORTE: 0,
+            SOLICITUD: 0,
+            PEDIDO: 0,
+            RECLAMO: 0,
+            PAGO: 0,
+            RESERVA: 0,
+        } satisfies Record<TipoRegistro, number>;
+
+        for (const row of byTipo) {
+            const tipo = row.tipo as TipoRegistro;
+            countsByTipo[tipo] = row._count._all;
+        }
+
+        // 4) últimos 7 días
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+        start.setDate(start.getDate() - 6); // incluye hoy (7 días)
+
+        const last7 = await db.registro.findMany({
+            where: { session: { userId }, fecha: { gte: start } },
+            select: { fecha: true },
+            orderBy: { fecha: "asc" },
+        });
+
+        // mapa yyyy-MM-dd => count
+        const daysMap = new Map<string, number>();
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(now);
+            d.setDate(d.getDate() - i);
+            const key = d.toISOString().slice(0, 10);
+            daysMap.set(key, 0);
+        }
+
+        for (const r of last7) {
+            if (!r.fecha) continue;
+            const key = r.fecha.toISOString().slice(0, 10);
+            if (daysMap.has(key)) daysMap.set(key, (daysMap.get(key) ?? 0) + 1);
+        }
+
+        const chartDataByDay = Array.from(daysMap.entries()).map(([key, count]) => ({
+            fecha: key.slice(5), // MM-DD
+            cantidad: count,
+        }));
+
+        return {
+            success: true as const,
+            data: {
+                totalRegistros,
+                leadsConMovimientos: leadsConMovimientos.length,
+                countsByTipo,
+                chartDataByDay,
+            },
+        };
+    } catch (error) {
+        console.error("[getCrmDashboardStatsByUserId] Error:", error);
+        return {
+            success: false as const,
+            message: "Error al obtener estadísticas del CRM",
+        };
+    }
+}
+
 export async function getSessionTagStatsByUserId(userId: string) {
     try {
         // 1) Agrupamos en la tabla pivote SessionTag
