@@ -27,7 +27,6 @@ import {
     TableCell,
 } from "@/components/ui/table";
 import { BarChart3, Activity, Filter } from "lucide-react";
-import { TagStatsCard } from './TagStatsCard';
 
 import {
     ResponsiveContainer,
@@ -45,6 +44,12 @@ import { formatFecha, getTipoLabel } from "../../helpers";
 import { getDisplayNombreFromRegistro, getEstadoOptions, toDate } from "../helpers";
 import { MetricCard } from "./MetricCard";
 import { DashboardStats } from "./MainDashboard";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+
 
 export const CrmDashboard = ({
     stats,
@@ -384,7 +389,35 @@ export const CrmDashboard = ({
                                                             {formatFecha(r.fecha || '')}
                                                         </TableCell>
                                                         <TableCell className="py-1.5 align-top max-w-[280px]">
-                                                            <span className="line-clamp-2">{detalle}</span>
+                                                            <Popover>
+                                                                <PopoverTrigger asChild>
+                                                                    <button
+                                                                        type="button"
+                                                                        className="w-full text-left truncate whitespace-nowrap text-xs leading-5 cursor-pointer hover:underline underline-offset-2"
+                                                                        title="Ver detalle completo"
+                                                                    >
+                                                                        {detalle}
+                                                                    </button>
+                                                                </PopoverTrigger>
+
+                                                                <PopoverContent
+                                                                    side="top"
+                                                                    align="start"
+                                                                    className="w-[520px] p-0"
+                                                                >
+                                                                    <div className="border-b px-3 py-2">
+                                                                        <p className="text-[11px] text-muted-foreground">
+                                                                            Detalle completo
+                                                                        </p>
+                                                                    </div>
+
+                                                                    <ScrollArea className="max-h-[260px] px-3 py-2">
+                                                                        <p className="text-[12px] leading-relaxed whitespace-pre-wrap break-words">
+                                                                            {detalle}
+                                                                        </p>
+                                                                    </ScrollArea>
+                                                                </PopoverContent>
+                                                            </Popover>
                                                         </TableCell>
                                                         <TableCell className="py-1.5 align-top text-right">
                                                             <Select
