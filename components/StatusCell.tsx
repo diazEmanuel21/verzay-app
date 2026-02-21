@@ -2,25 +2,31 @@
 
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { PowerIcon, QrCodeIcon } from "lucide-react"
+import { BotIcon, PowerIcon, QrCodeIcon } from "lucide-react"
 import { Button } from "./ui/button"
 
 interface StatusCellProps {
   isEvoEnabled?: boolean
   qrStatus?: boolean
+  enabledSynthesizer?: boolean
 }
 1
-export const StatusCell = ({ qrStatus, isEvoEnabled }: StatusCellProps) => {
+export const StatusCell = ({ qrStatus, isEvoEnabled, enabledSynthesizer }: StatusCellProps) => {
   const qrColor = qrStatus ? "text-red-600" : "text-green-600"
   const evoColor = isEvoEnabled ? "text-green-600" : "text-red-600"
+  const synthesizerColor = enabledSynthesizer ? "text-green-600" : "text-red-600"
 
   const qrTooltip = qrStatus
     ? "QR desconectado"
-    : "QR conectado"
+    : "QR conectado";
 
   const evoTooltip = isEvoEnabled
     ? "Robot encendido"
-    : "Robot apagado"
+    : "Robot apagado";
+
+  const synthesizerTooltip = enabledSynthesizer
+    ? "Encendido"
+    : "Apagado";
 
   return (
     <>
@@ -45,6 +51,17 @@ export const StatusCell = ({ qrStatus, isEvoEnabled }: StatusCellProps) => {
             </Button>
           </TooltipTrigger>
           <TooltipContent>{evoTooltip}</TooltipContent>
+        </Tooltip>
+      }
+      {
+        enabledSynthesizer !== undefined &&
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant={"outline"}>
+              <BotIcon className={`${synthesizerColor} size-5`} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{synthesizerTooltip}</TooltipContent>
         </Tooltip>
       }
     </>
