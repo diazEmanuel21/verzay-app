@@ -54,15 +54,14 @@ export const EditDialog = ({
   // 1) Estado local para la zona horaria (para el TimezoneCombobox)
   const [tz, setTz] = useState<string>(user.timezone ?? "");
 
-  // 👇 NUEVOS estados para switches
-  const [fb, setFb] = useState<boolean>(user.onFacebook ?? false);
-  const [ig, setIg] = useState<boolean>(user.onInstagram ?? false);
+  // const [fb, setFb] = useState<boolean>(user.onFacebook ?? false);
+  // const [ig, setIg] = useState<boolean>(user.onInstagram ?? false);
 
   // 2) Re-sincroniza cuando cambie el usuario o al abrir/cerrar
   useEffect(() => {
     setTz(user.timezone ?? "");
-    setFb(user.onFacebook ?? false);     // 👈 sync FB
-    setIg(user.onInstagram ?? false);    // 👈 sync IG
+    // setFb(user.onFacebook ?? false);     
+    // setIg(user.onInstagram ?? false);  
   }, [user.id, openEditDialog, user.timezone, user.onFacebook, user.onInstagram]);
 
   let fields = [
@@ -72,18 +71,18 @@ export const EditDialog = ({
       defaultValue: user.muteAgentResponses,
       readOnly: false,
     },
-    {
-      id: "onFacebook",
-      label: "Activar Facebook",
-      defaultValue: user.onFacebook ?? false,
-      readOnly: false,
-    },
-    {
-      id: "onInstagram",
-      label: "Activar Instagram",
-      defaultValue: user.onInstagram ?? false,
-      readOnly: false,
-    },
+    // {
+    //   id: "onFacebook",
+    //   label: "Activar Facebook",
+    //   defaultValue: user.onFacebook ?? false,
+    //   readOnly: false,
+    // },
+    // {
+    //   id: "onInstagram",
+    //   label: "Activar Instagram",
+    //   defaultValue: user.onInstagram ?? false,
+    //   readOnly: false,
+    // },
     { id: "name", label: "Nombre", defaultValue: user.name, readOnly: false },
     { id: "email", label: "Email", defaultValue: user.email, readOnly: false },
     { id: "passPlainTxt", label: "Contraseña", defaultValue: user.passPlainTxt, readOnly: true },
@@ -204,44 +203,44 @@ export const EditDialog = ({
           </Select>
         )
 
-      case 'onFacebook': {
-        const checked = fb;
-        return (
-          <div className="col-span-3 flex items-center gap-3">
-            <input type="hidden" name="onFacebook" value={checked ? "true" : "false"} />
-            {/* <span className="text-sm">
-              <span className={checked ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}>
-                {checked ? "Activado" : "Desactivado"}
-              </span>
-            </span> */}
-            <Switch
-              id="onFacebook"
-              checked={checked}
-              onCheckedChange={setFb}
-              disabled={readOnly}
-            />
-          </div>
-        )
-      }
-      case 'onInstagram': {
-        const checked = ig;
-        return (
-          <div className="col-span-3 flex items-center gap-3">
-            <input type="hidden" name="onInstagram" value={checked ? "true" : "false"} />
-            {/* <span className="text-sm">
-              <span className={checked ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}>
-                {checked ? "Activado" : "Desactivado"}
-              </span>
-            </span> */}
-            <Switch
-              id="onInstagram"
-              checked={checked}
-              onCheckedChange={setIg}
-              disabled={readOnly}
-            />
-          </div>
-        )
-      }
+      // case 'onFacebook': {
+      //   const checked = fb;
+      //   return (
+      //     <div className="col-span-3 flex items-center gap-3">
+      //       <input type="hidden" name="onFacebook" value={checked ? "true" : "false"} />
+      //       {/* <span className="text-sm">
+      //         <span className={checked ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}>
+      //           {checked ? "Activado" : "Desactivado"}
+      //         </span>
+      //       </span> */}
+      //       <Switch
+      //         id="onFacebook"
+      //         checked={checked}
+      //         onCheckedChange={setFb}
+      //         disabled={readOnly}
+      //       />
+      //     </div>
+      //   )
+      // }
+      // case 'onInstagram': {
+      //   const checked = ig;
+      //   return (
+      //     <div className="col-span-3 flex items-center gap-3">
+      //       <input type="hidden" name="onInstagram" value={checked ? "true" : "false"} />
+      //       {/* <span className="text-sm">
+      //         <span className={checked ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}>
+      //           {checked ? "Activado" : "Desactivado"}
+      //         </span>
+      //       </span> */}
+      //       <Switch
+      //         id="onInstagram"
+      //         checked={checked}
+      //         onCheckedChange={setIg}
+      //         disabled={readOnly}
+      //       />
+      //     </div>
+      //   )
+      // }
 
       case 'timezone':
         if (readOnly) {
