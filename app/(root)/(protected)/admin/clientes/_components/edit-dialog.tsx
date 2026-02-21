@@ -24,7 +24,7 @@ import { VolumeX, Volume2 } from 'lucide-react'
 import { PLAN_LABELS, PLANS } from "@/types/plans"
 import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox"
 import { useEffect, useState } from "react"
-import { Switch } from "@/components/ui/switch" 
+import { Switch } from "@/components/ui/switch"
 
 interface Props {
   openEditDialog: boolean
@@ -43,7 +43,6 @@ export const EditDialog = ({
   apikeys,
   currentUserRol
 }: Props) => {
-  const openMsg = user.pausar.find(p => p.tipo === 'abrir')?.mensaje || '';
   const ROLES = Object.values(Role);
   const ROLE_LABELS: Record<Role, string> = {
     user: 'Usuario',
@@ -51,18 +50,13 @@ export const EditDialog = ({
     reseller: 'Reseller',
   };
 
-  // 1) Estado local para la zona horaria (para el TimezoneCombobox)
   const [tz, setTz] = useState<string>(user.timezone ?? "");
+  const [enSi, setEnSi] = useState<boolean>(user.enabledSynthesizer ?? false);
 
-  // const [fb, setFb] = useState<boolean>(user.onFacebook ?? false);
-  // const [ig, setIg] = useState<boolean>(user.onInstagram ?? false);
-
-  // 2) Re-sincroniza cuando cambie el usuario o al abrir/cerrar
   useEffect(() => {
     setTz(user.timezone ?? "");
-    // setFb(user.onFacebook ?? false);     
-    // setIg(user.onInstagram ?? false);  
-  }, [user.id, openEditDialog, user.timezone, user.onFacebook, user.onInstagram]);
+    setEnSi(user.enabledSynthesizer ?? false);
+  }, [user.id, openEditDialog, user.timezone, user.enabledSynthesizer]);
 
   let fields = [
     {
@@ -71,18 +65,12 @@ export const EditDialog = ({
       defaultValue: user.muteAgentResponses,
       readOnly: false,
     },
-    // {
-    //   id: "onFacebook",
-    //   label: "Activar Facebook",
-    //   defaultValue: user.onFacebook ?? false,
-    //   readOnly: false,
-    // },
-    // {
-    //   id: "onInstagram",
-    //   label: "Activar Instagram",
-    //   defaultValue: user.onInstagram ?? false,
-    //   readOnly: false,
-    // },
+    {
+      id: "enabledSynthesizer",
+      label: "Activar sintetizador",
+      defaultValue: user.enabledSynthesizer ?? false,
+      readOnly: false,
+    },
     { id: "name", label: "Nombre", defaultValue: user.name, readOnly: false },
     { id: "email", label: "Email", defaultValue: user.email, readOnly: false },
     { id: "passPlainTxt", label: "Contraseña", defaultValue: user.passPlainTxt, readOnly: true },
@@ -202,46 +190,20 @@ export const EditDialog = ({
             </SelectContent>
           </Select>
         )
-
-      // case 'onFacebook': {
-      //   const checked = fb;
-      //   return (
-      //     <div className="col-span-3 flex items-center gap-3">
-      //       <input type="hidden" name="onFacebook" value={checked ? "true" : "false"} />
-      //       {/* <span className="text-sm">
-      //         <span className={checked ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}>
-      //           {checked ? "Activado" : "Desactivado"}
-      //         </span>
-      //       </span> */}
-      //       <Switch
-      //         id="onFacebook"
-      //         checked={checked}
-      //         onCheckedChange={setFb}
-      //         disabled={readOnly}
-      //       />
-      //     </div>
-      //   )
-      // }
-      // case 'onInstagram': {
-      //   const checked = ig;
-      //   return (
-      //     <div className="col-span-3 flex items-center gap-3">
-      //       <input type="hidden" name="onInstagram" value={checked ? "true" : "false"} />
-      //       {/* <span className="text-sm">
-      //         <span className={checked ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}>
-      //           {checked ? "Activado" : "Desactivado"}
-      //         </span>
-      //       </span> */}
-      //       <Switch
-      //         id="onInstagram"
-      //         checked={checked}
-      //         onCheckedChange={setIg}
-      //         disabled={readOnly}
-      //       />
-      //     </div>
-      //   )
-      // }
-
+      case 'enabledSynthesizer': {
+        const checked = enSi;
+        return (
+          <div className="col-span-3 flex items-center gap-3">
+            <input type="hidden" name="enabledSynthesizer" value={checked ? "true" : "false"} />
+            <Switch
+              id="enabledSynthesizer"
+              checked={checked}
+              onCheckedChange={(state: boolean) => { setEnSi(state) }}
+              disabled={readOnly}
+            />
+          </div>
+        )
+      }
       case 'timezone':
         if (readOnly) {
           return (

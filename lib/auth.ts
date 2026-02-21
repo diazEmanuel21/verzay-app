@@ -51,6 +51,7 @@ export async function currentUser(request?: Request) {
             meetingDuration: true,
             timezone: true,
             meetingUrl: true,
+            enabledSynthesizer: true,
         },
     });
 
