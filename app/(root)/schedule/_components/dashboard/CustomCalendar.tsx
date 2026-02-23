@@ -128,23 +128,29 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
         }
     };
 
+    const isMobile =
+        typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches;
+
     return (
         <>
             <FullCalendar plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView="timeGridDay"
                 events={events}
-                headerToolbar={{
-                    left: "prev,next today",
-                    center: "title",
-                    right: "timeGridDay,timeGridWeek,dayGridMonth",
-                }}
+                headerToolbar={
+                    isMobile
+                        ? { left: "prev,next", center: "title", right: "timeGridDay,timeGridWeek,dayGridMonth" }
+                        : { left: "prev,next today", center: "title", right: "timeGridDay,timeGridWeek,dayGridMonth" }
+                }
+                buttonText={
+                    isMobile
+                        ? { today: "Hoy", timeGridDay: "D", timeGridWeek: "S", dayGridMonth: "M" }
+                        : { today: "Hoy", timeGridDay: "Día", timeGridWeek: "Semana", dayGridMonth: "Mes" }
+                }
                 editable={true}
                 height="auto"
                 allDaySlot={false}
-                slotMinTime="07:00:00"     // <— oculta 00:00–04:00
-                slotMaxTime="19:00:00"  // (opcional) recorta por el final
-                // slotMinTime={}
-                // slotMaxTime={}
+                slotMinTime="07:00:00"
+                slotMaxTime="19:00:00"
                 eventClick={(info) => {
                     setSelectedEventId(info.event.id);
                     const currentStatus = appointments.find((a) => a.id === info.event.id)?.status;
@@ -152,6 +158,12 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                     setNewStatus(currentStatus || "PENDIENTE");
                     setOpenDialog(true);
                 }}
+                titleFormat={
+                    isMobile
+                        ? { day: "numeric", month: "short" } // 23 feb
+                        : { year: "numeric", month: "long", day: "numeric" } // 23 febrero 2026
+
+                }
                 locale={esLocale}
             />
 

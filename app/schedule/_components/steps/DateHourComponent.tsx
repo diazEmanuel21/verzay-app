@@ -68,7 +68,6 @@ export const DateHourComponent = ({
             onSelect={(d) => {
               setSelectedDate(d || undefined);
               setSelectedSlot(null);
-              // ⚠️ enviamos el día de calendario exacto que el usuario clickeó
               const ymd = d ? format(d, "yyyy-MM-dd") : "";
               setSelectedDateYmd(ymd);
               if (ymd) {
