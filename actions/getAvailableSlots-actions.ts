@@ -70,7 +70,7 @@ export async function getAvailableSlots(
             where: {
                 userId,
                 startTime: { gte: dayStartUtc, lt: nextDayStartUtc },
-                status: { in: ['PENDIENTE', 'CONFIRMADA'] },
+                status: { in: ['PENDIENTE', 'CONFIRMADA', 'ATENDIDA'] },
             },
             select: { startTime: true, endTime: true },
             orderBy: { startTime: 'asc' },

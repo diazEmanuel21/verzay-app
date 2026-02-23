@@ -94,7 +94,7 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
         const overlap = await db.appointment.findFirst({
             where: {
                 userId,
-                status: { in: ["PENDIENTE", "CONFIRMADA"] },
+                status: { in: ["PENDIENTE", "CONFIRMADA", "ATENDIDA"] },
                 OR: [
                     {
                         startTime: {

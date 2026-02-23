@@ -1,10 +1,7 @@
 import { format, toZonedTime } from "date-fns-tz";
 import { AppointmentWithSession } from "./normalizeAppointmentsToEvents";
+import { AppointmentStatus } from "@prisma/client";
 
-// Tipos
-type AppointmentStatus = "PENDIENTE" | "CONFIRMADA" | "CANCELADA";
-
-// Mapa de título + emoji por estado (status_variable + emoji_variable)
 const STATUS_META: Record<
     AppointmentStatus,
     { title: string; emoji: string }
@@ -12,6 +9,7 @@ const STATUS_META: Record<
     PENDIENTE: { title: "Cita Pendiente", emoji: "🕒" },
     CONFIRMADA: { title: "Cita Confirmada", emoji: "✅" },
     CANCELADA: { title: "Cita Cancelada", emoji: "❌" },
+    ATENDIDA: { title: "Cita Atendida", emoji: "✅" },
 };
 
 interface BuildStatusOwnerMessageInterface {
@@ -40,6 +38,17 @@ export const buildStatusOwnerMessage = ({
 
     // Motivo opcional (útil en cancelación, pero funciona en cualquier estado)
     const reasonBlock = opts?.reason ? `\n\n📝 Motivo: ${opts.reason}` : "";
+
+    if (newStatus === "ATENDIDA") {
+        const text = `📅 *CITA ATENDIDA* ✅
+
+👤 *${clientName}*, agradecemos su asistencia.
+
+Si considera que podemos mejorar algún aspecto del proceso, le agradecemos indicarlo. Es clave para mejorar nuestro servicio.🤝`;
+
+        return text;
+    };
+
 
     const text = `📅 *${meta.title.toUpperCase()}* ${meta.emoji}
 

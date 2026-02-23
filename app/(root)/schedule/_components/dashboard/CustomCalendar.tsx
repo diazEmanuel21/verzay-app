@@ -107,7 +107,7 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
         const url = `https://${urlevo}/message/sendText/${instanceName}`;
         const text = buildStatusOwnerMessage({
             appointment: currentAppointment,
-            newStatus /*, { reason: 'Cliente no puede asistir' }*/
+            newStatus
         });
 
         const remoteJid = currentAppointment.session.remoteJid.split('@')[0];
@@ -208,6 +208,7 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                                         <SelectContent>
                                             <SelectItem value="PENDIENTE">Pendiente</SelectItem>
                                             <SelectItem value="CONFIRMADA">Confirmada</SelectItem>
+                                            <SelectItem value="ATENDIDA">Atendida</SelectItem>
                                             <SelectItem value="CANCELADA">Cancelada</SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -259,7 +260,16 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                                             </div>
                                             <div className="flex text-sm gap-1 flex-row">
                                                 <strong className="uppercase font-medium">Estado de la cita: </strong>
-                                                <span className={`font-normal ${currentAppointment.status === 'CANCELADA' ? 'text-red-600' : 'text-green-600'}`}>
+                                                <span
+                                                    className={`font-normal ${currentAppointment.status === "CANCELADA"
+                                                            ? "text-red-600"
+                                                            : currentAppointment.status === "ATENDIDA"
+                                                                ? "text-blue-600"
+                                                                : currentAppointment.status === "CONFIRMADA"
+                                                                    ? "text-green-600"
+                                                                    : "text-yellow-600"
+                                                        }`}
+                                                >
                                                     {currentAppointment.status}
                                                 </span>
                                             </div>

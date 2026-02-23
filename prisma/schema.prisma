@@ -757,6 +757,7 @@ enum AppointmentStatus {
   PENDIENTE
   CONFIRMADA
   CANCELADA
+  ATENDIDA
 }
 
 enum FinanceAccountType {
