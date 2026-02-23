@@ -244,12 +244,6 @@ export function buildSectionedPrompt(items: AnyStep[], cfg: PromptBuildConfig): 
         return blocks.join(joinSep);
     }
 
-    // NUEVO: imprime el encabezado “APARTADO GESTION:” una sola vez (solo management)
-    if (cfg.mode === "management" && !cfg.__managementHeaderPrinted) {
-        blocks.push(`APARTADO GESTION:\n`);
-        cfg.__managementHeaderPrinted = true;
-    }
-
     // Contenido
     items.forEach((step, i) => {
         const n = i + 1;

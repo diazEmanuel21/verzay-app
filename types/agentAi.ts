@@ -897,8 +897,5 @@ export type PromptBuildConfig = {
     // (opcional) si quieres forzar un objetivo global; si no, usa step.mainMessage
     managementObjective?: string;
 
-    // flag interno para imprimir “APARTADO GESTION:” una sola vez
-    __managementHeaderPrinted?: boolean;
-
     __managementIndex?: number;
 };
