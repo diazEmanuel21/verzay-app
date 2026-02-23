@@ -300,7 +300,7 @@ export function buildSectionedPrompt(items: AnyStep[], cfg: PromptBuildConfig): 
             return false;
         });
 
-        if (hasActions) {
+        if (hasActions || cfg.mode === "management") {
             if (cfg.mode !== "management") {
                 blocks.push(`${cfg.elementsLabel(n, step)}`);
             }

@@ -68,24 +68,24 @@ export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogT
   //     </Button>
   //   ),
   // },
-  // {
-  //   accessorKey: 'reseller',
-  //   header: ({ column }) => (
-  //     <Button
-  //       variant="ghost"
-  //       onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-  //       className="text-sm"
-  //     >
-  //       Marca
-  //       <ArrowUpDown className="ml-2 h-4 w-4" />
-  //     </Button>
-  //   ),
-  //   filterFn: resellerFilterFn, // Aquí se usa
+  {
+    accessorKey: 'reseller',
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        className="text-sm"
+      >
+        Marca
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    filterFn: resellerFilterFn, // Aquí se usa
 
-  //   cell: ({ row }) => (
-  //     row.original.reseller?.company ?? ''
-  //   ),
-  // },
+    cell: ({ row }) => (
+      row.original.reseller?.company ?? ''
+    ),
+  },
   {
     accessorKey: 'qrStatus',
     header: ({ column }) => (
