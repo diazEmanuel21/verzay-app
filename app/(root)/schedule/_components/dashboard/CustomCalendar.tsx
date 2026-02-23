@@ -211,7 +211,7 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                                             <SelectItem value="PENDIENTE">Pendiente</SelectItem>
                                             <SelectItem value="CONFIRMADA">Confirmada</SelectItem>
                                             <SelectItem value="ATENDIDA">Atendida</SelectItem>
-                                            <SelectItem value="NO_ASISTIDA">NO asistida</SelectItem>
+                                            <SelectItem value="NO_ASISTIDA">No asistida</SelectItem>
                                             <SelectItem value="CANCELADA">Cancelada</SelectItem>
                                         </SelectContent>
                                     </Select>
