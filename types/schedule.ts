@@ -1,6 +1,7 @@
 // Tipos mínimos que el componente necesita
 import { Country } from '@/components/custom/CountryCodeSelect';
 import { UserWithApiKeys } from '@/schema/schema';
+import { AppointmentStatus } from "@prisma/client";
 
 export interface ServiceInterface {
     selectedService: string;
@@ -73,24 +74,32 @@ export interface ScheduleFormInterface {
 }
 
 export interface SummaryComponentInterface {
-  // datos base
-  user: UserWithApiKeys;
-  timezone: string;
+    // datos base
+    user: UserWithApiKeys;
+    timezone: string;
 
-  // datos del cliente
-  nameClient: string;
-  areaCode: string;   // ej: "+57"
-  phone: string;
+    // datos del cliente
+    nameClient: string;
+    areaCode: string;   // ej: "+57"
+    phone: string;
 
-  // estado de UI
-  loading: boolean;
+    // estado de UI
+    loading: boolean;
 
-  // selección actual
-  selectedService: string;          // serviceId
-  selectedSlot: string | null;      // `${startISO}|${endISO}`
-  selectedDate?: Date;
+    // selección actual
+    selectedService: string;          // serviceId
+    selectedSlot: string | null;      // `${startISO}|${endISO}`
+    selectedDate?: Date;
 
-  // acciones
-  setStep: (step: number) => void;        // o: (step: 0|1|2|3) => void
-  setOpenDialog: (open: boolean) => void; // o: React.Dispatch<React.SetStateAction<boolean>>
+    // acciones
+    setStep: (step: number) => void;        // o: (step: 0|1|2|3) => void
+    setOpenDialog: (open: boolean) => void; // o: React.Dispatch<React.SetStateAction<boolean>>
 }
+
+export const STATUS_LABELS: Record<AppointmentStatus, string> = {
+    PENDIENTE: "Pendiente",
+    CONFIRMADA: "Confirmada",
+    ATENDIDA: "Atendida",
+    CANCELADA: "Cancelada",
+    NO_ASISTIDA: "No asistida",
+};

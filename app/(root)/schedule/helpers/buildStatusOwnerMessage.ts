@@ -10,12 +10,14 @@ const STATUS_META: Record<
     CONFIRMADA: { title: "Cita Confirmada", emoji: "✅" },
     CANCELADA: { title: "Cita Cancelada", emoji: "❌" },
     ATENDIDA: { title: "Cita Atendida", emoji: "✅" },
+    NO_ASISTIDA: { title: "Cita No Asistida", emoji: "⚠️" },
 };
 
 interface BuildStatusOwnerMessageInterface {
     appointment: AppointmentWithSession;
     newStatus: AppointmentStatus;
     opts?: { reason?: string };
+    userId: string;
 }
 
 // Genera el texto para notificar cambio de estado (formato compacto)
@@ -23,6 +25,7 @@ export const buildStatusOwnerMessage = ({
     appointment,
     newStatus,
     opts,
+    userId,
 }: BuildStatusOwnerMessageInterface) => {
     const meta = STATUS_META[newStatus];
 
@@ -36,6 +39,8 @@ export const buildStatusOwnerMessage = ({
     const serviceName = appointment.service?.name ?? "—";
     const clientName = appointment.session?.pushName ?? "Cliente";
 
+    const scheduleUrl = userId === "cm84mjtp50000l6soenaosi2z" ? 'https://verzay.com/agendar-una-cita' : `https://agente.ia-app.com/schedule/${userId}`;
+
     // Motivo opcional (útil en cancelación, pero funciona en cualquier estado)
     const reasonBlock = opts?.reason ? `\n\n📝 Motivo: ${opts.reason}` : "";
 
@@ -48,6 +53,18 @@ Si considera que podemos mejorar algún aspecto del proceso, le agradecemos indi
 
         return text;
     };
+
+    if (newStatus === "NO_ASISTIDA") {
+        const text = `📅 *CITA NO ASISTIDA* ❌
+
+👤 *${clientName}*, no fue posible su asistencia.
+
+Puedes reagendar nuevamente aquí:
+
+👉 ${scheduleUrl}`;
+
+        return text;
+    }
 
 
     const text = `📅 *${meta.title.toUpperCase()}* ${meta.emoji}

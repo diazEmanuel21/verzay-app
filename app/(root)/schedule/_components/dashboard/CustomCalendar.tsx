@@ -51,6 +51,7 @@ import {
 import { ScheduleInterface } from "@/schema/schema";
 import { XCircleIcon } from 'lucide-react';
 import { sendingMessages } from "@/actions/sending-messages-actions";
+import { STATUS_LABELS } from "@/types/schedule";
 
 export const CustomCalendar = ({ user }: ScheduleInterface) => {
     const toastId = "progress-calendar";
@@ -107,7 +108,8 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
         const url = `https://${urlevo}/message/sendText/${instanceName}`;
         const text = buildStatusOwnerMessage({
             appointment: currentAppointment,
-            newStatus
+            newStatus,
+            userId: user.id
         });
 
         const remoteJid = currentAppointment.session.remoteJid.split('@')[0];
@@ -209,6 +211,7 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                                             <SelectItem value="PENDIENTE">Pendiente</SelectItem>
                                             <SelectItem value="CONFIRMADA">Confirmada</SelectItem>
                                             <SelectItem value="ATENDIDA">Atendida</SelectItem>
+                                            <SelectItem value="NO_ASISTIDA">NO asistida</SelectItem>
                                             <SelectItem value="CANCELADA">Cancelada</SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -262,7 +265,9 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                                                 <strong className="uppercase font-medium">Estado de la cita: </strong>
                                                 <span
                                                     className={`font-normal ${currentAppointment.status === "CANCELADA"
-                                                            ? "text-red-600"
+                                                        ? "text-red-600"
+                                                        : currentAppointment.status === "NO_ASISTIDA"
+                                                            ? "text-gray-600"
                                                             : currentAppointment.status === "ATENDIDA"
                                                                 ? "text-blue-600"
                                                                 : currentAppointment.status === "CONFIRMADA"
@@ -270,12 +275,10 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                                                                     : "text-yellow-600"
                                                         }`}
                                                 >
-                                                    {currentAppointment.status}
+                                                    {STATUS_LABELS[currentAppointment.status]}
                                                 </span>
                                             </div>
                                         </div>
-
-                                        {/* Información de la cita */}
                                         <div className="space-y-3 mt-4">
                                             <div className="flex text-sm gap-1 flex-row">
                                                 <strong className="uppercase font-medium">Fecha:</strong>
