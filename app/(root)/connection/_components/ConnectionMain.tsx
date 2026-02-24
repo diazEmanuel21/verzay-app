@@ -43,10 +43,8 @@ export const ConnectionMain = ({
 
     try {
       const result = await createInstance(formData);
-      // console.log('[ConnectionMain] Resultado de createInstance →', result);
 
       if (result.success) {
-        // console.log('[ConnectionMain]  Instancia creada con éxito.');
         toast.success(result.message);
       } else {
         console.warn('[ConnectionMain] ❌ Error al crear instancia →', result.message);
@@ -60,14 +58,6 @@ export const ConnectionMain = ({
       
     }
   };
-
-  // 🔄 [LOG] Render dinámico según estado
-  // console.log('[ConnectionMain] Render →', {
-  //   tieneInstancia: !!instance,
-  //   instanceName,
-  //   instanceType,
-  //   loading,
-  // });
 
   return instance ? (
     <ClientInstanceCard

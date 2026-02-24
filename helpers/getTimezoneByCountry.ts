@@ -11,7 +11,6 @@
  *
  * @example
  * const timezone = getTimezoneByCountry("Colombia");
- * console.log(timezone); // "America/Bogota"
  */
 // export function getTimezoneByCountry(countryName: string): string | null {
 //   if (!countryName) return null;

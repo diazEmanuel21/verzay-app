@@ -128,7 +128,6 @@ export async function updatePromptInstancia(id: number, formData: FormData): Pro
   const validation = updatePromptSchema.safeParse(data);
 
   if (!validation.success) {
-    // console.log(validation.error.issues); // Esto te ayudará a depurar el problema
     return {
       success: false,
       message: "Datos de entrada inválidos para la actualización.",

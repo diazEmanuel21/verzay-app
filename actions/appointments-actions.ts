@@ -91,6 +91,15 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
             session = register.data;
         }
 
+        if (pushName && session?.id) {
+            await db.session.update({
+                where: { id: session.id },
+                data: {
+                    pushName: pushName.trim(),
+                },
+            });
+        }
+
         const overlap = await db.appointment.findFirst({
             where: {
                 userId,
@@ -140,7 +149,6 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
         };
     }
 }
-
 
 //Actualizar estado de cita
 export async function updateAppointmentStatus(

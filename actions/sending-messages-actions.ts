@@ -30,8 +30,6 @@ export const sendingMessages = async ({
             text,
         };
 
-        // console.log(`Enviando texto a ${remoteJid}`, 'NodeSenderService');
-
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -48,7 +46,6 @@ export const sendingMessages = async ({
         }
 
         const data = await response.json();
-        // console.log(`Respuesta ${remoteJid}: ${JSON.stringify(data)}`, 'NodeSenderService');
         return { success: true, message: 'Se notificó correctamente.' };
 
     } catch (error: any) {

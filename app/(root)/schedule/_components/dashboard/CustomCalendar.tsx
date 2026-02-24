@@ -169,6 +169,7 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
                 locale={esLocale}
             />
 
+
             <AlertDialog
                 open={openDialog}
                 onOpenChange={(open) => {

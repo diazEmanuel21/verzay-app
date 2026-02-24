@@ -98,7 +98,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
             const res = await createAppointment({
                 userId: user.id,
                 pushName: nameClient,
-                phone: remoteJid, // lo dejas como lo tienes
+                phone: remoteJid, 
                 instanceName,
                 startTime,
                 endTime,

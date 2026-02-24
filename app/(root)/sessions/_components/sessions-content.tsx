@@ -43,7 +43,6 @@ export function SessionsContent({ userId, allTags }: SessionsContentProps) {
         filter === "activeSession" ? true :
           filter === "inactiveSession" ? false :
             undefined;
-debugger;
       const agentDisabled =
         filter === "activeAgent" ? false :
           filter === "inactiveAgent" ? true :
