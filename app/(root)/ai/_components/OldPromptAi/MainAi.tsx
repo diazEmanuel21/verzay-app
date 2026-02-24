@@ -18,7 +18,12 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Ellipsis, MoreVertical } from "lucide-react";
+import { Ellipsis } from "lucide-react";
+
+export function formatPromptByType(promptAi: any[], type: string) {
+    const filtered = (promptAi ?? []).filter((m) => m.typePrompt === type);
+    return formatPromptArray(filtered);
+}
 
 export function formatPromptArray(data: any): string {
     // Verificamos que sea un array válido
@@ -51,7 +56,9 @@ export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
     const [dataDelete, setDataDelete] = useState<PromptAiFormValues | null>(null);
     const [activeTab, setActiveTab] = useState<TypePromptAi>(TypePromptAi.TRAINING);
 
-    const promptFormatted = formatPromptArray(promptAi);
+    const trainingPromptFormatted = formatPromptByType(promptAi ?? [], "TRAINING");
+    const faqsPromptFormatted = formatPromptByType(promptAi ?? [], "FAQs");
+
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
     const openCreateDialog = () => {
@@ -129,8 +136,12 @@ export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
                 <div className="flex flex-1 ">
                     <AiTabs
                         onTabChange={onTabChange}
-                        promptFormatted={promptFormatted}
+                        promptsByTab={{
+                            TRAINING: trainingPromptFormatted,
+                            FAQs: faqsPromptFormatted,
+                        }}
                     />
+
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost">
@@ -186,7 +197,8 @@ export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
                 open={delTraining}
                 setOpen={setDelTraining}
                 itemName="Entrenamiento IA"
-                itemId={module.id}
+                // itemId={module.id}
+                itemId={userId}
                 mutationFn={() => deletePromptAiByUserId(userId)}
                 entityLabel="Todo el entrenamiento IA"
             />

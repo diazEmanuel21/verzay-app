@@ -1,41 +1,46 @@
-"use client";
-
-import { ChatMessage } from "@/types/ai-assistence-chat";
 import { create } from "zustand";
+import type { ChatMessage } from "@/types/ai-assistence-chat";
 
-type ChatState = {
+type ChatStore = {
+    // UI open/close
     isOpen: boolean;
-    messages: ChatMessage[];
-    isSending: boolean;
     setOpen: (v: boolean) => void;
+
+    // mensajes + typing
+    messages: ChatMessage[];
+    isTyping: boolean;
+    setTyping: (v: boolean) => void;
+
+    // buffer para concatenar
+    buffer: ChatMessage[];
+    flushTimer: any | null;
+
     addMessage: (m: ChatMessage) => void;
-    setSending: (v: boolean) => void;
-    reset: () => void;
+    enqueueUserMessage: (m: ChatMessage) => void;
+    clearBuffer: () => void;
+    setFlushTimer: (t: any | null) => void;
 };
 
-export const useChatStore = create<ChatState>((set) => ({
+export const useChatStore = create<ChatStore>((set) => ({
     isOpen: false,
+    setOpen: (v) => set({ isOpen: v }),
+
     messages: [
         {
             id: "welcome",
             role: "assistant",
-            content: "Hola 👋 Dime qué quieres hacer en la app y te guío paso a paso.",
+            content: "Hola 👋 Dime qué necesitas hacer en la app y te guío paso a paso.",
             createdAt: Date.now(),
         },
     ],
-    isSending: false,
-    setOpen: (v) => set({ isOpen: v }),
+    isTyping: false,
+    setTyping: (v) => set({ isTyping: v }),
+
+    buffer: [],
+    flushTimer: null,
+
     addMessage: (m) => set((s) => ({ messages: [...s.messages, m] })),
-    setSending: (v) => set({ isSending: v }),
-    reset: () =>
-        set({
-            messages: [
-                {
-                    id: "welcome",
-                    role: "assistant",
-                    content: "Listo ✅ Empecemos de nuevo. ¿Qué necesitas hacer?",
-                    createdAt: Date.now(),
-                },
-            ],
-        }),
+    enqueueUserMessage: (m) => set((s) => ({ buffer: [...s.buffer, m] })),
+    clearBuffer: () => set({ buffer: [] }),
+    setFlushTimer: (t) => set({ flushTimer: t }),
 }));

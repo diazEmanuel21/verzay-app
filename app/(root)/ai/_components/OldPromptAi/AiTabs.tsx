@@ -1,27 +1,30 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { toast } from "sonner";
-import { Copy } from "lucide-react";
-import { TYPE_AI_LABELS } from '@/schema/ai'
+import { useMemo, useRef, useState } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { toast } from "sonner"
+import { Copy, ArrowLeft, ArrowRight } from "lucide-react"
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { TYPE_AI_LABELS } from '@/schema/ai'
 
-interface PromptPreviewDialogProps {
-    promptFormatted: string;
-}
+export const allowed = ["TRAINING", "FAQs"] as const
+type AllowedTab = typeof allowed[number]
+
+type PromptByTab = Partial<Record<string, string>>
 
 export const AiTabs = ({
     onTabChange,
-    promptFormatted,
+    promptsByTab, 
 }: {
     onTabChange?: (tab: string) => void
-    promptFormatted: string
+    promptsByTab: PromptByTab
 }) => {
-    const [activeTab, setActiveTab] = useState<string>(Object.keys(TYPE_AI_LABELS)[0])
+    const firstAllowed = Object.entries(TYPE_AI_LABELS).find(([key]) => allowed.includes(key as AllowedTab))?.[0] ?? allowed[0]
+    const [activeTab, setActiveTab] = useState<string>(firstAllowed)
     const scrollRef = useRef<HTMLDivElement>(null)
+
+    const activeTabs = Object.entries(TYPE_AI_LABELS).filter(([key]) => allowed.includes(key as AllowedTab))
 
     const handleTabClick = (key: string) => {
         setActiveTab(key)
@@ -37,11 +40,12 @@ export const AiTabs = ({
         })
     }
 
+    const activePrompt = useMemo(() => promptsByTab[activeTab] ?? "", [promptsByTab, activeTab])
+
     return (
         <div className="w-full">
-            {/* Controles móviles */}
             <div className="flex justify-between">
-                <Button variant="ghost" size="icon" onClick={() => scroll('left')} className=" sm:hidden">
+                <Button variant="ghost" size="icon" onClick={() => scroll('left')} className="sm:hidden">
                     <ArrowLeft />
                 </Button>
 
@@ -52,7 +56,7 @@ export const AiTabs = ({
                         'sm:overflow-visible sm:justify-start sm:flex-wrap'
                     )}
                 >
-                    {Object.entries(TYPE_AI_LABELS).map(([key, label]) => (
+                    {activeTabs.map(([key, label]) => (
                         <button
                             key={key}
                             onClick={() => handleTabClick(key)}
@@ -66,10 +70,15 @@ export const AiTabs = ({
                             {label}
                         </button>
                     ))}
-                     <PromptPreviewDialog promptFormatted={promptFormatted} />
+
+                    <PromptPreviewDialog
+                        activeTab={activeTab}
+                        activeLabel={TYPE_AI_LABELS[activeTab as keyof typeof TYPE_AI_LABELS] ?? activeTab}
+                        promptFormatted={activePrompt}
+                    />
                 </div>
 
-                <Button variant="ghost" size="icon" onClick={() => scroll('right')} className=" sm:hidden">
+                <Button variant="ghost" size="icon" onClick={() => scroll('right')} className="sm:hidden">
                     <ArrowRight />
                 </Button>
             </div>
@@ -77,45 +86,44 @@ export const AiTabs = ({
     )
 }
 
+interface PromptPreviewDialogProps {
+    activeTab: string
+    activeLabel: string
+    promptFormatted: string
+}
 
-export const PromptPreviewDialog = ({ promptFormatted }: PromptPreviewDialogProps) => {
-    const [open, setOpen] = useState(false);
+export const PromptPreviewDialog = ({ activeTab, activeLabel, promptFormatted }: PromptPreviewDialogProps) => {
+    const [open, setOpen] = useState(false)
 
     const handleCopy = async () => {
         try {
-            await navigator.clipboard.writeText(promptFormatted);
-            toast.success("Copiado al portapapeles");
+            await navigator.clipboard.writeText(promptFormatted ?? "")
+            toast.success("Copiado al portapapeles")
         } catch {
-            toast.error("No se pudo copiar");
+            toast.error("No se pudo copiar")
         }
-    };
+    }
 
     return (
         <>
-            {/* Botón principal para abrir el diálogo */}
             <Button variant="outline" onClick={() => setOpen(true)}>
                 Previsualizar
             </Button>
 
-            {/* Diálogo de vista previa */}
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="max-w-3xl max-h-[80vh] p-0 flex flex-col">
                     <DialogHeader className="px-6 pt-6 pb-3 border-b">
                         <DialogTitle className="flex items-center justify-between w-full">
-                            Vista previa del prompt
-                            <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={handleCopy}
-                                className="gap-1 hover:bg-muted"
-                            >
+                            Vista previa — {activeLabel}
+                            <Button size="sm" variant="ghost" onClick={handleCopy} className="gap-1 hover:bg-muted">
                                 <Copy className="w-4 h-4" />
                                 Copiar
                             </Button>
                         </DialogTitle>
+                        {/* si quieres mostrar el key técnico */}
+                        <div className="text-xs text-muted-foreground">Tab: {activeTab}</div>
                     </DialogHeader>
 
-                    {/* Contenido del prompt (solo lectura) */}
                     <div className="flex-1 overflow-y-auto px-6 py-4 bg-muted/30 rounded-md text-sm font-mono whitespace-pre-wrap leading-relaxed">
                         {promptFormatted || "No hay contenido para mostrar."}
                     </div>
@@ -128,5 +136,5 @@ export const PromptPreviewDialog = ({ promptFormatted }: PromptPreviewDialogProp
                 </DialogContent>
             </Dialog>
         </>
-    );
-};
+    )
+}

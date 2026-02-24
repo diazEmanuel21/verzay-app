@@ -3,11 +3,11 @@ import { SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 
 export const TYPE_AI_LABELS: Record<TypePromptAi, string> = {
-    [TypePromptAi.TRAINING]: 'Entrenamiento',
-    [TypePromptAi.FAQs]: 'Preguntas frecuentes',
+    [TypePromptAi.TRAINING]: 'Prompt padre',
+    [TypePromptAi.FAQs]: 'Prompt asistente IA',
     [TypePromptAi.ACTIONS]: 'Acciones',
     [TypePromptAi.DATA_CAPTURE]: 'Captura de datos',
-    [TypePromptAi.DATA_QUERY]: 'Consulta de Datos',
+    [TypePromptAi.DATA_QUERY]: 'Consulta de Datos|',
 };
 
 export const PromptAiSchema = z.object({

@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { SystemMessage } from '@prisma/client'
 import { PromptAiFormValues, PromptAiSchema } from '@/schema/ai'
 
+const ADMIN_USER_ID = "cm842kthc0000qd2l66nbnytv";
 
 export interface PromptAiResponse<> {
     success: boolean
@@ -164,4 +165,22 @@ export async function deletePromptAiByUserId(userId: string): Promise<PromptAiRe
             message: `Error al eliminar los mensajes, ${errorMessage}`,
         };
     }
+}
+
+export async function getPromptAssistence() {
+    const prompt = await db.systemMessage.findFirst({
+        where: {
+            userId: ADMIN_USER_ID,
+            typePrompt: "FAQs",
+        },
+        orderBy: { updatedAt: "desc" }, // por si existieran varios, toma el más reciente
+        select: {
+            id: true,
+            title: true,
+            message: true,
+            updatedAt: true,
+        },
+    });
+
+    return prompt?.message ?? "";
 }
