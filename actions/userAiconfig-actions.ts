@@ -7,7 +7,11 @@ import { Prisma, AiModel, AiProvider, UserAiConfig, User } from '@prisma/client'
 /* ============================
    Tipos de respuesta y DTOs
 ============================ */
-
+export type ResolvedAiClientDTO = {
+  provider: string;
+  model: string;
+  apiKey: string;
+};
 
 export type ActionResult<T = undefined> = {
   success: boolean;
@@ -119,15 +123,15 @@ export async function getUserAiDefaults(userId: string): Promise<ActionResult<Us
   const [provider, model] = await Promise.all([
     u.defaultProviderId
       ? db.aiProvider.findUnique({
-          where: { id: u.defaultProviderId },
-          select: { id: true, name: true },
-        })
+        where: { id: u.defaultProviderId },
+        select: { id: true, name: true },
+      })
       : Promise.resolve(null),
     u.defaultAiModelId
       ? db.aiModel.findUnique({
-          where: { id: u.defaultAiModelId },
-          select: { id: true, name: true, providerId: true },
-        })
+        where: { id: u.defaultAiModelId },
+        select: { id: true, name: true, providerId: true },
+      })
       : Promise.resolve(null),
   ]);
 
@@ -508,15 +512,15 @@ export async function setUserDefaults(input: {
     const [prov, mod] = await Promise.all([
       updated.defaultProviderId
         ? db.aiProvider.findUnique({
-            where: { id: updated.defaultProviderId },
-            select: { id: true, name: true },
-          })
+          where: { id: updated.defaultProviderId },
+          select: { id: true, name: true },
+        })
         : Promise.resolve(null),
       updated.defaultAiModelId
         ? db.aiModel.findUnique({
-            where: { id: updated.defaultAiModelId },
-            select: { id: true, name: true, providerId: true },
-          })
+          where: { id: updated.defaultAiModelId },
+          select: { id: true, name: true, providerId: true },
+        })
         : Promise.resolve(null),
     ]);
 
@@ -538,5 +542,45 @@ export async function setUserDefaults(input: {
       return { success: false, message: e.message };
     }
     return { success: false, message: 'defaults_set_error' };
+  }
+}
+
+export async function resolveUserAiClient(userId: string): Promise<ActionResult<ResolvedAiClientDTO>> {
+  noStore();
+  try {
+    const u = await ensureUser(userId);
+
+    if (!u.defaultProviderId || !u.defaultAiModelId) {
+      return { success: false, message: "user_missing_defaults" };
+    }
+
+    const cfg = await db.userAiConfig.findFirst({
+      where: { userId, isActive: true, providerId: u.defaultProviderId },
+      select: { apiKey: true },
+    });
+
+    if (!cfg?.apiKey) return { success: false, message: "user_missing_active_apikey" };
+
+    const provider = await db.aiProvider.findUnique({
+      where: { id: u.defaultProviderId },
+      select: { name: true },
+    });
+
+    const model = await db.aiModel.findUnique({
+      where: { id: u.defaultAiModelId },
+      select: { name: true },
+    });
+
+    if (!provider?.name || !model?.name) {
+      return { success: false, message: "provider_or_model_invalid" };
+    }
+
+    return {
+      success: true,
+      message: "ok",
+      data: { provider: provider.name, model: model.name, apiKey: cfg.apiKey },
+    };
+  } catch (e) {
+    return { success: false, message: "resolve_ai_client_error" };
   }
 }

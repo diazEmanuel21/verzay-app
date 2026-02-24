@@ -31,7 +31,7 @@ import { GuideUrl } from '@prisma/client';
 import { Button } from '../ui/button';
 import ThemeSwitcher from './ThemeSwitcher';
 
-const breadcrumbLabels: Record<string, string> = {
+export const breadcrumbLabels: Record<string, string> = {
   flow: 'flujo',
   profile: 'perfil',
   sessions: 'Leads',

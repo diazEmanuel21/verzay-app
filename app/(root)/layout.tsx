@@ -13,6 +13,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 
 import { themeClass } from "@/types/generic";
+import { ChatWidget } from "./ai-chat/components";
 
 export default async function RootGroupLayout({
     children,
@@ -41,6 +42,7 @@ export default async function RootGroupLayout({
                     <main className={`flex-1 overflow-auto p-4 ${themeClass}`}>
                         {children}
                     </main>
+                    <ChatWidget />
                 </SidebarInset>
             </SidebarProvider>
         </>
