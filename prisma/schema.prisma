@@ -418,6 +418,44 @@ model User {
   reseller_reseller_reselleridToUser Reseller[]            @relation("reseller_reselleridToUser")
   reseller_reseller_userIdToUser     Reseller[]            @relation("reseller_userIdToUser")
   aiConfigs                          UserAiConfig[]
+  billing                            UserBilling?
+}
+
+model UserBilling {
+  id     String @id @default(uuid())
+  userId String @unique
+
+  // Configuración por cliente
+  price              Decimal? @db.Decimal(18, 2)
+  currencyCode       String   @default("COP")
+  paymentMethodLabel String?
+  paymentNotes       String?
+
+  // Estado de cobro
+  dueDate       DateTime?
+  billingStatus BillingStatus @default(UNPAID)
+
+  // Acceso al servicio
+  accessStatus    ServiceAccessStatus @default(ACTIVE)
+  suspendedAt     DateTime?
+  suspendedReason String?
+
+  // Trazabilidad / anti-spam recordatorios
+  lastPaymentAt       DateTime?
+  lastReminderAt      DateTime?
+  lastReminderDueDate DateTime?
+
+  // Reglas
+  graceDays Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([dueDate])
+  @@index([billingStatus])
+  @@index([accessStatus])
 }
 
 model UserAvailability {
@@ -841,4 +879,14 @@ enum TypePromptAi {
   ACTIONS
   DATA_CAPTURE
   DATA_QUERY
+}
+
+enum BillingStatus {
+  PAID
+  UNPAID
+}
+
+enum ServiceAccessStatus {
+  ACTIVE
+  SUSPENDED
 }
