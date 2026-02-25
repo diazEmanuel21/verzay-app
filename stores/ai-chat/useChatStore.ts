@@ -1,10 +1,17 @@
 import { create } from "zustand";
 import type { ChatMessage } from "@/types/ai-assistence-chat";
 
+const LS_KEY = "verzay_chat_onboarding_hidden_v1";
+
 type ChatStore = {
     // UI open/close
     isOpen: boolean;
     setOpen: (v: boolean) => void;
+
+    showOnboarding: boolean;
+    setShowOnboarding: (v: boolean) => void;
+    initOnboarding: () => void;
+    hideOnboardingForever: () => void;
 
     // mensajes + typing
     messages: ChatMessage[];
@@ -24,6 +31,23 @@ type ChatStore = {
 export const useChatStore = create<ChatStore>((set) => ({
     isOpen: false,
     setOpen: (v) => set({ isOpen: v }),
+
+    showOnboarding: false,
+    setShowOnboarding: (v) => set({ showOnboarding: v }),
+    initOnboarding: () => {
+        try {
+            const hidden = localStorage.getItem(LS_KEY) === "1";
+            set({ showOnboarding: !hidden });
+        } catch {
+            set({ showOnboarding: true });
+        }
+    },
+    hideOnboardingForever: () => {
+        try {
+            localStorage.setItem(LS_KEY, "1");
+        } catch { }
+        set({ showOnboarding: false });
+    },
 
     messages: [
         {

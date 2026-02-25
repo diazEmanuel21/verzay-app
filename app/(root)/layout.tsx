@@ -14,6 +14,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 
 import { themeClass } from "@/types/generic";
 import { ChatWidget } from "./ai-chat/components";
+import { ChatOnboardingModal } from "@/components/shared/ChatOnboardingModal";
 
 export default async function RootGroupLayout({
     children,
@@ -43,6 +44,7 @@ export default async function RootGroupLayout({
                         {children}
                     </main>
                     <ChatWidget />
+                    <ChatOnboardingModal />
                 </SidebarInset>
             </SidebarProvider>
         </>
