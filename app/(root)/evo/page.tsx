@@ -4,7 +4,7 @@ import { currentUser } from "@/lib/auth";
 
 const MultiagentePage = async () => {
     const user = await currentUser();
-    const url = "https://conexion-1.verzay.co/manager/";
+    const url = "https://evoapi1.ia-app.com/manager";
 
     if (!user || user?.role !== "admin") {
         return <AccessDenied />;
