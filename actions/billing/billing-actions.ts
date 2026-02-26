@@ -3,7 +3,7 @@
 
 import { db } from "@/lib/db"; // ajusta si tu prisma client se llama distinto
 import { Prisma } from "@prisma/client";
-import { toDate } from "./helpers/billing-helpers";
+import { serializeUserBilling, toDate } from "./helpers/billing-helpers";
 import { currentUser } from "@/lib/auth";
 import { BillingUpsertInput, ResponseFormat } from "@/types/billing";
 import { assertAdminOrReseller, toDecimal } from "./helpers/billing-helpers.server";
@@ -25,7 +25,7 @@ export async function getUserBillingByUserId(
         return {
             success: true,
             message: billing ? "Billing encontrado." : "Cliente sin billing configurado.",
-            data: billing ?? null,
+            data: serializeUserBilling(billing),
         };
     } catch (e: any) {
         console.error("[getUserBillingByUserId]", e);

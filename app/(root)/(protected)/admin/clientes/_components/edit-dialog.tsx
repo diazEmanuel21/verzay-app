@@ -217,7 +217,7 @@ export const EditDialog = ({
         const checked = userStatus;
         return (
           <div className="col-span-3 flex items-center gap-3">
-            <input type="hidden" name="enabledSynthesizer" value={checked ? "true" : "false"} />
+            <input type="hidden" name="status" value={checked ? "true" : "false"} />
             <Switch
               id="status"
               checked={checked}

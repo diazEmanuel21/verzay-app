@@ -75,3 +75,27 @@ export function money(price?: string | null, code?: string) {
     if (!price) return "—";
     return `${price} ${code ?? ""}`.trim();
 }
+
+export function serializeUserBilling(u: any) {
+  const b = u.billing;
+  if (!b) return { ...u, billing: null };
+
+  return {
+    ...u,
+    billing: {
+      ...b,
+      price: b.price ? b.price.toString() : null,
+
+      dueDate: b.dueDate ? b.dueDate.toISOString() : null,
+      serviceStartAt: b.serviceStartAt ? b.serviceStartAt.toISOString() : null,
+      serviceEndAt: b.serviceEndAt ? b.serviceEndAt.toISOString() : null,
+      serviceEndsAt: b.serviceEndsAt ? b.serviceEndsAt.toISOString() : null,
+      suspendedAt: b.suspendedAt ? b.suspendedAt.toISOString() : null,
+      lastPaymentAt: b.lastPaymentAt ? b.lastPaymentAt.toISOString() : null,
+      lastReminderAt: b.lastReminderAt ? b.lastReminderAt.toISOString() : null,
+      lastReminderDueDate: b.lastReminderDueDate ? b.lastReminderDueDate.toISOString() : null,
+      createdAt: b.createdAt ? b.createdAt.toISOString() : null,
+      updatedAt: b.updatedAt ? b.updatedAt.toISOString() : null,
+    },
+  };
+};

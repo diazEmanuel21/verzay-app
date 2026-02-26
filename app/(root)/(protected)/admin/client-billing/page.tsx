@@ -20,9 +20,7 @@ const BillingCrmPage = async ({ searchParams }: Props) => {
 
 
     return (
-        <div className="p-4 md:p-6">
-            <BillingCrmClient initial={res} />
-        </div>
+        <BillingCrmClient initial={res} />
     );
 };
 
