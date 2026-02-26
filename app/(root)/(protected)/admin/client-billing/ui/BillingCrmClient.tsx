@@ -226,7 +226,7 @@ export function BillingCrmClient({
                             <TableHead>Notificación</TableHead>
                             <TableHead>Inicio</TableHead>
                             <TableHead>Vence</TableHead>
-                            <TableHead>Fin ciclo</TableHead>
+                            {/* <TableHead>Fin ciclo</TableHead> */}
                             <TableHead>Días restantes</TableHead>
 
                             <TableHead>Cliente</TableHead>
@@ -253,7 +253,7 @@ export function BillingCrmClient({
                                     <TableCell className="py-2">
                                         {fmtDateShort(b?.dueDate ?? null)}
                                     </TableCell>
-                                    <TableCell className="py-2 text-xs">{fmtDateShort(b?.serviceEndsAt ?? null)}</TableCell>
+                                    {/* <TableCell className="py-2 text-xs">{fmtDateShort(b?.serviceEndsAt ?? null)}</TableCell> */}
                                     <TableCell className="py-2 text-xs">{daysLeftService(b?.dueDate ?? null)}</TableCell>
 
                                     <TableCell className="py-2">
@@ -367,23 +367,6 @@ export function BillingCrmClient({
 
                         <ScrollArea className="max-h-[70vh] pr-3">
                             <div className="grid gap-2 p-2">
-                                <div className="grid gap-1">
-                                    <label className="text-muted-foreground">
-                                        Fecha de pago (vence)
-                                    </label>
-                                    <Input
-                                        type="date"
-                                        value={dialog.form.dueDate}
-                                        onChange={(e) =>
-                                            setDialog((s) => ({
-                                                ...s,
-                                                form: { ...s.form, dueDate: e.target.value },
-                                            }))
-                                        }
-                                        className="h-9"
-                                    />
-                                </div>
-
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="grid gap-1">
                                         <label className="text-muted-foreground">Precio</label>
@@ -520,6 +503,23 @@ export function BillingCrmClient({
                                         </div>
 
                                         <div className="grid gap-1">
+                                            <label className="text-muted-foreground">
+                                                Fecha de pago (vence)
+                                            </label>
+                                            <Input  
+                                                type="date"
+                                                value={dialog.form.dueDate}
+                                                onChange={(e) =>
+                                                    setDialog((s) => ({
+                                                        ...s,
+                                                        form: { ...s.form, dueDate: e.target.value },
+                                                    }))
+                                                }
+                                                className="h-9"
+                                            />
+                                        </div>
+
+                                        {/* <div className="grid gap-1">
                                             <label className="text-muted-foreground">Fin ciclo (serviceEndsAt)</label>
                                             <Input
                                                 type="date"
@@ -532,7 +532,7 @@ export function BillingCrmClient({
                                                 }
                                                 className="h-9"
                                             />
-                                        </div>
+                                        </div> */}
                                     </div>
                                 </div>
                             </div>

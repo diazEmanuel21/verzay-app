@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import Header from '@/components/shared/header'
 import { currentUser } from '@/lib/auth'
 import Link from 'next/link'
-import { FileText, Handshake, LayoutGrid, PlugZap, UserCog } from 'lucide-react'
+import { FileText, Handshake, LayoutGrid, PlugZap, UserCog, Wallet } from 'lucide-react'
 import AccessDenied from '@/app/AccessDenied'
 
 const AdminPage = async () => {
@@ -63,7 +63,13 @@ const AdminPage = async () => {
     //   href: "/admin/templates",
     //   buttonLabel: "Ir a Plantillas",
     // },
-
+    {
+      title: "Finanzas",
+      description: "Gestiona facturación, pagos y control financiero de clientes.",
+      icon: <Wallet className="text-indigo-600" />,
+      href: "/admin/client-billing",
+      buttonLabel: "Ir a Finanzas",
+    },
   ];
 
   // 🔐 Filtrar según rol del usuario
@@ -78,7 +84,7 @@ const AdminPage = async () => {
         title="Panel Super Administrativo"
       />
 
-      <div className="flex flex-wrap gap-2 items-center pt-4">
+      <div className="flex flex-wrap pt-4 gap-2 items-center justify-center">
         {visibleCards.map((card, index) => (
           <Card
             key={index}

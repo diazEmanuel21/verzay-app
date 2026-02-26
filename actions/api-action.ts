@@ -118,24 +118,24 @@ export async function generateQRCode({ instanceName, userId }: GenerateQrInterfa
       (entry.lastIsConnected === null && !apiConnectedNow && cooldownOk)
     )
   ) {
-    // const remoteJid = (user as any).notificationNumber as string | undefined;
+    const remoteJid = (user as any).notificationNumber as string | undefined;
 
-    // if (remoteJid) {
-    //   try {
-    //     const serverUrlAdmin = "evoapi.ia-app.com";
-    //     const instanceNameAdmin = "Verzay Pro Atc";
-    //     const sendTextUrl = `https://${serverUrlAdmin}/message/sendText/${instanceNameAdmin}`;
+    if (remoteJid) {
+      try {
+        const serverUrlAdmin = "evoapi.ia-app.com";
+        const instanceNameAdmin = "Verzay Pro Atc";
+        const sendTextUrl = `https://${serverUrlAdmin}/message/sendText/${instanceNameAdmin}`;
 
-    //     await sendingMessages({
-    //       url: sendTextUrl,
-    //       apikey: apiKey,
-    //       remoteJid,
-    //       text: DISCONNECTION_MSG,
-    //     });
-    //   } catch {
-    //     // best-effort
-    //   }
-    // }
+        await sendingMessages({
+          url: sendTextUrl,
+          apikey: apiKey,
+          remoteJid,
+          text: DISCONNECTION_MSG,
+        });
+      } catch {
+        // best-effort
+      }
+    }
 
     entry.lastNotifiedAt = now;
     entry.notifiedCountToday += 1;
