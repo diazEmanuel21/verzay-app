@@ -1,38 +1,12 @@
-import { Prisma } from "@prisma/client";
-import { currentUser } from "@/lib/auth";
 import { format } from "date-fns";
 import { BillingTemplateType } from "@/types/billing";
 
-
-/**
- * Helpers (SOLID: auth/guard separado)
- */
-export async function requireAuth() {
-    const user = await currentUser();
-    if (!user) throw new Error("No autorizado.");
-    return user;
-}
-
-export function assertAdminOrReseller(role?: string | null) {
-    if (role !== "admin" && role !== "reseller") {
-        throw new Error("No autorizado.");
-    }
-}
 
 export function toDate(value?: string | Date | null): Date | null {
     if (!value) return null;
     const d = value instanceof Date ? value : new Date(value);
     if (Number.isNaN(d.getTime())) return null;
     return d;
-}
-
-export function toDecimal(value?: string | number | null): Prisma.Decimal | null {
-    if (value === null || value === undefined || value === "") return null;
-    try {
-        return new Prisma.Decimal(value);
-    } catch {
-        return null;
-    }
 }
 
 export function fmtDateDDMMYYYY(date: Date) {
@@ -82,4 +56,22 @@ export function pickPreviewTemplate(daysRemaining: number, graceDays: number): B
     if (graceDays > 0 && daysRemaining <= -graceDays && daysRemaining < 0) return "EXPIRED";
     // default: si no cae en un caso especial, mostramos el recordatorio “normal”
     return "REMINDER_3D";
+}
+
+export function safeDate(d?: string | Date | null) {
+    if (!d) return null;
+    const dd = d instanceof Date ? d : new Date(d);
+    if (Number.isNaN(dd.getTime())) return null;
+    return dd;
+}
+
+export function fmtDateShort(d?: string | Date | null) {
+    const dd = safeDate(d);
+    if (!dd) return "—";
+    return format(dd, "yyyy-MM-dd");
+}
+
+export function money(price?: string | null, code?: string) {
+    if (!price) return "—";
+    return `${price} ${code ?? ""}`.trim();
 }

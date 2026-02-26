@@ -3,9 +3,6 @@
 
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { format } from "date-fns";
-
-
 
 import {
     Card,
@@ -44,7 +41,6 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 
-import { Badge } from "@/components/ui/badge";
 import { Ellipsis } from "lucide-react";
 
 import {
@@ -56,106 +52,9 @@ import {
     suspendUserService,
     upsertUserBillingConfig,
 } from "@/actions/billing/billing-actions";
-import { ResponseFormat } from "@/types/billing";
-
-// ------- Types (mantenerlo simple para no tocar tus types existentes)
-type BillingStatus = "PAID" | "UNPAID";
-type AccessStatus = "ACTIVE" | "SUSPENDED";
-
-type UserBilling = {
-    id: string;
-    userId: string;
-    price: string | null;
-    currencyCode: string;
-    paymentMethodLabel: string | null;
-    paymentNotes: string | null;
-    dueDate: string | Date | null;
-    billingStatus: BillingStatus;
-    accessStatus: AccessStatus;
-    suspendedAt: string | Date | null;
-    suspendedReason: string | null;
-    lastPaymentAt: string | Date | null;
-    lastReminderAt: string | Date | null;
-    lastReminderDueDate: string | Date | null;
-    graceDays: number;
-};
-
-type ClientRow = {
-    id: string;
-    name: string | null;
-    email: string;
-    role: string;
-    company: string;
-    notificationNumber: string;
-    plan: string;
-    createdAt: string | Date;
-    billing?: UserBilling | null;
-};
-
-function safeDate(d?: string | Date | null) {
-    if (!d) return null;
-    const dd = d instanceof Date ? d : new Date(d);
-    if (Number.isNaN(dd.getTime())) return null;
-    return dd;
-}
-
-function fmtDateShort(d?: string | Date | null) {
-    const dd = safeDate(d);
-    if (!dd) return "—";
-    return format(dd, "yyyy-MM-dd");
-}
-
-function money(price?: string | null, code?: string) {
-    if (!price) return "—";
-    return `${price} ${code ?? ""}`.trim();
-}
-
-function statusBadgePaid(status?: BillingStatus) {
-    if (status === "PAID") return <Badge className="text-xs">Pagó</Badge>;
-    return (
-        <Badge variant="secondary" className="text-xs">
-            No pagó
-        </Badge>
-    );
-}
-
-function statusBadgeAccess(status?: AccessStatus) {
-    if (status === "ACTIVE") return <Badge className="text-xs">Activo</Badge>;
-    return (
-        <Badge variant="destructive" className="text-xs">
-            Suspendido
-        </Badge>
-    );
-}
-
-// ------- Dialog state
-type EditDialogState = {
-    open: boolean;
-    user?: ClientRow | null;
-    loading?: boolean;
-    form: {
-        dueDate: string; // yyyy-mm-dd
-        price: string;
-        currencyCode: string;
-        paymentMethodLabel: string;
-        paymentNotes: string;
-        graceDays: string;
-    };
-};
-
-const emptyDialog: EditDialogState = {
-    open: false,
-    user: null,
-    loading: false,
-    form: {
-        dueDate: "",
-        price: "",
-        currencyCode: "COP",
-        paymentMethodLabel: "",
-        paymentNotes: "",
-        graceDays: "0",
-    },
-};
+import { ClientRow, EditDialogState, emptyDialog, ResponseFormat, UserBilling } from "@/types/billing";
+import { fmtDateShort, money } from "@/actions/billing/helpers/billing-helpers";
+import { daysLeftService, StatusBadgeAccess, StatusBadgePaid } from "../helpers";
 
 export function BillingCrmClient({
     initial,
@@ -245,6 +144,10 @@ export function BillingCrmClient({
                 paymentMethodLabel: b?.paymentMethodLabel ?? "",
                 paymentNotes: b?.paymentNotes ?? "",
                 graceDays: String(b?.graceDays ?? 0),
+                serviceName: b?.serviceName ?? "",
+                notifyRemoteJid: b?.notifyRemoteJid ?? "",
+                serviceStartAt: b?.serviceStartAt ? fmtDateShort(b.serviceStartAt) : "",
+                serviceEndsAt: b?.serviceEndsAt ? fmtDateShort(b.serviceEndsAt) : "",
             },
         });
     }
@@ -264,6 +167,10 @@ export function BillingCrmClient({
                 paymentMethodLabel: dialog.form.paymentMethodLabel || null,
                 paymentNotes: dialog.form.paymentNotes || null,
                 graceDays: Number(dialog.form.graceDays || 0),
+                serviceName: dialog.form.serviceName || null,
+                notifyRemoteJid: dialog.form.notifyRemoteJid || null,
+                serviceStartAt: dialog.form.serviceStartAt || null,
+                serviceEndsAt: dialog.form.serviceEndsAt || null,
             });
 
             if (!cfg.success) {
@@ -296,8 +203,8 @@ export function BillingCrmClient({
     return (
         <Card className="rounded-2xl border-border">
             <CardHeader className="pb-3">
-                <CardTitle className="text-lg">CRM Pagos</CardTitle>
-                <CardDescription className="text-sm">
+                <CardTitle>CRM Pagos</CardTitle>
+                <CardDescription>
                     Gestiona vencimientos, pagos y acceso al servicio.
                 </CardDescription>
 
@@ -306,7 +213,7 @@ export function BillingCrmClient({
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
                         placeholder="Buscar por nombre, email, empresa, plan…"
-                        className="h-9 text-sm"
+                        className="h-9"
                     />
                 </div>
             </CardHeader>
@@ -316,13 +223,19 @@ export function BillingCrmClient({
                     <Table>
                         <TableHeader>
                             <TableRow className="border-border">
-                                <TableHead className="text-xs">Cliente</TableHead>
-                                <TableHead className="text-xs">Precio</TableHead>
-                                <TableHead className="text-xs">Medio</TableHead>
-                                <TableHead className="text-xs">Vence</TableHead>
-                                <TableHead className="text-xs">Pago</TableHead>
-                                <TableHead className="text-xs">Acceso</TableHead>
-                                <TableHead className="text-xs text-right">Acciones</TableHead>
+                                <TableHead>Cliente</TableHead>
+                                <TableHead>Precio</TableHead>
+                                <TableHead>Medio</TableHead>
+                                <TableHead>Vence</TableHead>
+                                <TableHead>Pago</TableHead>
+                                <TableHead>Acceso</TableHead>
+
+                                <TableHead>Servicio</TableHead>
+                                <TableHead>Notificación</TableHead>
+                                <TableHead>Inicio</TableHead>
+                                <TableHead>Fin ciclo</TableHead>
+                                <TableHead>Días restantes</TableHead>
+                                <TableHead className="text-right">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
 
@@ -334,36 +247,44 @@ export function BillingCrmClient({
                                     <TableRow key={u.id} className="h-10  border-border">
                                         <TableCell className="py-2">
                                             <div className="leading-tight">
-                                                <div className="text-sm font-medium truncate max-w-[260px]">
+                                                <div className="font-medium truncate max-w-[260px]">
                                                     {u.name ?? "Sin nombre"}
                                                 </div>
-                                                <div className="text-xs text-muted-foreground truncate max-w-[260px]">
+                                                <div className="text-muted-foreground truncate max-w-[260px]">
                                                     {u.email}
                                                 </div>
                                             </div>
                                         </TableCell>
 
-                                        <TableCell className="py-2 text-xs">
+                                        <TableCell className="py-2">
                                             {money(b?.price ?? null, b?.currencyCode ?? "COP")}
                                         </TableCell>
 
-                                        <TableCell className="py-2 text-xs truncate max-w-[180px]">
+                                        <TableCell className="py-2 truncate max-w-[180px]">
                                             {b?.paymentMethodLabel ?? "—"}
                                         </TableCell>
 
-                                        <TableCell className="py-2 text-xs">
+                                        <TableCell className="py-2">
                                             {fmtDateShort(b?.dueDate ?? null)}
                                         </TableCell>
 
-                                        <TableCell className="py-2 text-xs">
-                                            {statusBadgePaid(b?.billingStatus ?? "UNPAID")}
+                                        <TableCell className="py-2">
+                                            {StatusBadgePaid(b?.billingStatus ?? "UNPAID")}
                                         </TableCell>
 
-                                        <TableCell className="py-2 text-xs">
-                                            {statusBadgeAccess(b?.accessStatus ?? "ACTIVE")}
+                                        <TableCell className="py-2">
+                                            {StatusBadgeAccess(b?.accessStatus ?? "ACTIVE")}
                                         </TableCell>
 
-                                        <TableCell className="py-2 text-right">
+                                        <TableCell className="py-2 text-xs">{b?.serviceName ?? "—"}</TableCell>
+                                        <TableCell className="py-2 text-xs truncate max-w-[160px]">
+                                            {b?.notifyRemoteJid ?? u.notificationNumber ?? "—"}
+                                        </TableCell>
+                                        <TableCell className="py-2 text-xs">{fmtDateShort(b?.serviceStartAt ?? null)}</TableCell>
+                                        <TableCell className="py-2 text-xs">{fmtDateShort(b?.serviceEndsAt ?? null)}</TableCell>
+                                        <TableCell className="py-2 text-xs">{daysLeftService(b?.serviceEndsAt ?? null)}</TableCell>
+
+                                        <TableCell className="py-2">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button
@@ -376,12 +297,11 @@ export function BillingCrmClient({
                                                 </DropdownMenuTrigger>
 
                                                 <DropdownMenuContent align="end">
-                                                    <DropdownMenuLabel className="text-xs">
+                                                    <DropdownMenuLabel>
                                                         Acciones
                                                     </DropdownMenuLabel>
 
                                                     <DropdownMenuItem
-                                                        className="text-xs"
                                                         onClick={() => openEdit(u)}
                                                     >
                                                         Editar pagos
@@ -390,14 +310,12 @@ export function BillingCrmClient({
                                                     <DropdownMenuSeparator />
 
                                                     <DropdownMenuItem
-                                                        className="text-xs"
                                                         onClick={() => handleMarkPaid(u.id)}
                                                     >
                                                         Marcar pagó
                                                     </DropdownMenuItem>
 
                                                     <DropdownMenuItem
-                                                        className="text-xs"
                                                         onClick={() => handleMarkUnpaid(u.id)}
                                                     >
                                                         Marcar no pagó
@@ -406,14 +324,12 @@ export function BillingCrmClient({
                                                     <DropdownMenuSeparator />
 
                                                     <DropdownMenuItem
-                                                        className="text-xs"
                                                         onClick={() => handleSuspend(u.id)}
                                                     >
                                                         Suspender servicio
                                                     </DropdownMenuItem>
 
                                                     <DropdownMenuItem
-                                                        className="text-xs"
                                                         onClick={() => handleActivate(u.id)}
                                                     >
                                                         Activar servicio
@@ -427,7 +343,7 @@ export function BillingCrmClient({
 
                             {!filtered.length && (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="py-6 text-center text-sm">
+                                    <TableCell colSpan={7} className="py-6 text-center">
                                         No hay resultados.
                                     </TableCell>
                                 </TableRow>
@@ -446,14 +362,14 @@ export function BillingCrmClient({
                     <DialogContent className="sm:max-w-[520px] rounded-2xl">
                         <DialogHeader>
                             <DialogTitle className="text-base">Editar pagos</DialogTitle>
-                            <DialogDescription className="text-sm">
+                            <DialogDescription>
                                 Configura precio, medio y fecha de vencimiento.
                             </DialogDescription>
                         </DialogHeader>
 
                         <div className="grid gap-3">
                             <div className="grid gap-1">
-                                <label className="text-xs text-muted-foreground">
+                                <label className="text-muted-foreground">
                                     Fecha de pago (vence)
                                 </label>
                                 <Input
@@ -465,13 +381,13 @@ export function BillingCrmClient({
                                             form: { ...s.form, dueDate: e.target.value },
                                         }))
                                     }
-                                    className="h-9 text-sm"
+                                    className="h-9"
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="grid gap-1">
-                                    <label className="text-xs text-muted-foreground">Precio</label>
+                                    <label className="text-muted-foreground">Precio</label>
                                     <Input
                                         value={dialog.form.price}
                                         onChange={(e) =>
@@ -481,12 +397,12 @@ export function BillingCrmClient({
                                             }))
                                         }
                                         placeholder="Ej: 129000"
-                                        className="h-9 text-sm"
+                                        className="h-9"
                                     />
                                 </div>
 
                                 <div className="grid gap-1">
-                                    <label className="text-xs text-muted-foreground">Moneda</label>
+                                    <label className="text-muted-foreground">Moneda</label>
                                     <Input
                                         value={dialog.form.currencyCode}
                                         onChange={(e) =>
@@ -496,13 +412,13 @@ export function BillingCrmClient({
                                             }))
                                         }
                                         placeholder="COP"
-                                        className="h-9 text-sm"
+                                        className="h-9"
                                     />
                                 </div>
                             </div>
 
                             <div className="grid gap-1">
-                                <label className="text-xs text-muted-foreground">
+                                <label className="text-muted-foreground">
                                     Medio de pago
                                 </label>
                                 <Input
@@ -514,12 +430,12 @@ export function BillingCrmClient({
                                         }))
                                     }
                                     placeholder="Ej: Transferencia / Nequi / Stripe"
-                                    className="h-9 text-sm"
+                                    className="h-9"
                                 />
                             </div>
 
                             <div className="grid gap-1">
-                                <label className="text-xs text-muted-foreground">
+                                <label className="text-muted-foreground">
                                     Instrucciones / notas
                                 </label>
                                 <Input
@@ -531,12 +447,12 @@ export function BillingCrmClient({
                                         }))
                                     }
                                     placeholder="Ej: Cuenta, link, referencia, etc."
-                                    className="h-9 text-sm"
+                                    className="h-9"
                                 />
                             </div>
 
                             <div className="grid gap-1">
-                                <label className="text-xs text-muted-foreground">
+                                <label className="text-muted-foreground">
                                     Días de gracia
                                 </label>
                                 <Input
@@ -548,7 +464,7 @@ export function BillingCrmClient({
                                         }))
                                     }
                                     placeholder="0"
-                                    className="h-9 text-sm"
+                                    className="h-9"
                                 />
                             </div>
                         </div>

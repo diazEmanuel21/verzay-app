@@ -52,13 +52,21 @@ export const EditDialog = ({
 
   const [tz, setTz] = useState<string>(user.timezone ?? "");
   const [enSi, setEnSi] = useState<boolean>(user.enabledSynthesizer ?? false);
+  const [userStatus, setUserStatus] = useState<boolean>(user.status ?? false);
 
   useEffect(() => {
     setTz(user.timezone ?? "");
     setEnSi(user.enabledSynthesizer ?? false);
-  }, [user.id, openEditDialog, user.timezone, user.enabledSynthesizer]);
+    setUserStatus(user.status ?? false);
+  }, [user.id, openEditDialog, user.timezone, user.enabledSynthesizer, user.status]);
 
   let fields = [
+    {
+      id: "status",
+      label: "Estado",
+      defaultValue: user.status ?? false,
+      readOnly: false,
+    },
     {
       id: "muteAgentResponses",
       label: "Silenciar agente",
@@ -71,6 +79,7 @@ export const EditDialog = ({
       defaultValue: user.enabledSynthesizer ?? false,
       readOnly: false,
     },
+
     { id: "name", label: "Nombre", defaultValue: user.name, readOnly: false },
     { id: "email", label: "Email", defaultValue: user.email, readOnly: false },
     { id: "passPlainTxt", label: "Contraseña", defaultValue: user.passPlainTxt, readOnly: true },
@@ -199,6 +208,20 @@ export const EditDialog = ({
               id="enabledSynthesizer"
               checked={checked}
               onCheckedChange={(state: boolean) => { setEnSi(state) }}
+              disabled={readOnly}
+            />
+          </div>
+        )
+      }
+      case 'status': {
+        const checked = userStatus;
+        return (
+          <div className="col-span-3 flex items-center gap-3">
+            <input type="hidden" name="enabledSynthesizer" value={checked ? "true" : "false"} />
+            <Switch
+              id="status"
+              checked={checked}
+              onCheckedChange={(state: boolean) => { setUserStatus(state) }}
               disabled={readOnly}
             />
           </div>

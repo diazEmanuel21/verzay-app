@@ -7,7 +7,8 @@ import { addDays, endOfDay, differenceInCalendarDays, isSameDay } from "date-fns
 import { buildBillingMessage } from "./billing-message-templates";
 import { sendingMessages } from "../sending-messages-actions";
 import { ResponseFormat } from "@/types/billing";
-import { assertAdminOrReseller, onlyDigitsPhone, pickTemplate } from "./helpers/billing-helpers";
+import { onlyDigitsPhone, pickTemplate } from "./helpers/billing-helpers";
+import { assertAdminOrReseller } from "./helpers/billing-helpers.server";
 
 /**
  * Job:
@@ -100,7 +101,11 @@ export async function runBillingDailyJob(): Promise<
                 const user = b.user;
                 const urlevo = user.apiKey?.url;
                 const instance = user.instancias?.[0];
-                const remoteJid = onlyDigitsPhone(user.notificationNumber || "");
+                const target = (b.notifyRemoteJid?.trim() || user.notificationNumber || "").trim();
+                // si viene con @s.whatsapp.net lo respetamos; si no, lo normalizamos
+                const remoteJid = target.includes("@")
+                    ? target
+                    : onlyDigitsPhone(target);
 
                 if (!urlevo || !instance?.instanceName || !instance?.instanceId || !remoteJid) continue;
 
@@ -111,7 +116,7 @@ export async function runBillingDailyJob(): Promise<
                 const paymentText = (b.paymentNotes?.trim() || b.paymentMethodLabel?.trim() || "").trim() || "—";
 
                 // Plan / licencia: por ahora fijo como tus ejemplos (luego lo hacemos dinámico por plan)
-                const planLabel = `🤖 Agente IA`;
+                const planLabel = b.serviceName ? `🤖 ${b.serviceName}` : `🤖 Agente IA`;
                 const licenseLabel = `🗓️ Licencia 30 días`;
 
                 // Bandera opcional (si quieres, luego la hacemos por currencyCode)

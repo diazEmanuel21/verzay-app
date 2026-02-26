@@ -69,6 +69,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             webhookUrl,
             apiUrl,
             timezone,
+            status: true,
             passPlainTxt: 'IA@verzay.1234',
             meetingDuration: 60,//tiempo en minutos
             meetingUrl: null,//tiempo en minutos

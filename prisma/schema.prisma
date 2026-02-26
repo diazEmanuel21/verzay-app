@@ -358,6 +358,7 @@ model Tool {
 
 model User {
   id                                 String                @id @default(uuid())
+  status                             Boolean               @default(true)
   name                               String?
   email                              String                @unique
   password                           String?
@@ -425,35 +426,33 @@ model UserBilling {
   id     String @id @default(uuid())
   userId String @unique
 
-  // Configuración por cliente
-  price              Decimal? @db.Decimal(18, 2)
-  currencyCode       String   @default("COP")
-  paymentMethodLabel String?
-  paymentNotes       String?
+  serviceName            String?
+  notifyRemoteJid        String?
+  serviceStartAt         DateTime?
+  serviceEndAt           DateTime?
+  serviceActiveDaysTotal Int       @default(0)
+  serviceEndsAt          DateTime?
 
-  // Estado de cobro
-  dueDate       DateTime?
-  billingStatus BillingStatus @default(UNPAID)
-
-  // Acceso al servicio
-  accessStatus    ServiceAccessStatus @default(ACTIVE)
-  suspendedAt     DateTime?
-  suspendedReason String?
-
-  // Trazabilidad / anti-spam recordatorios
+  price               Decimal?            @db.Decimal(18, 2)
+  currencyCode        String              @default("COP")
+  paymentMethodLabel  String?
+  paymentNotes        String?
+  dueDate             DateTime?
+  billingStatus       BillingStatus       @default(UNPAID)
+  accessStatus        ServiceAccessStatus @default(ACTIVE)
+  suspendedAt         DateTime?
+  suspendedReason     String?
   lastPaymentAt       DateTime?
   lastReminderAt      DateTime?
   lastReminderDueDate DateTime?
-
-  // Reglas
-  graceDays Int @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  graceDays           Int                 @default(0)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([dueDate])
+  @@index([serviceEndsAt])
   @@index([billingStatus])
   @@index([accessStatus])
 }

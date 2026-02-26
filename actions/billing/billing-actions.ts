@@ -3,9 +3,10 @@
 
 import { db } from "@/lib/db"; // ajusta si tu prisma client se llama distinto
 import { Prisma } from "@prisma/client";
-import { assertAdminOrReseller, toDate, toDecimal } from "./helpers/billing-helpers";
+import { toDate } from "./helpers/billing-helpers";
 import { currentUser } from "@/lib/auth";
 import { BillingUpsertInput, ResponseFormat } from "@/types/billing";
+import { assertAdminOrReseller, toDecimal } from "./helpers/billing-helpers.server";
 
 /**
  * 1) Obtener billing de un cliente
@@ -55,8 +56,11 @@ export async function upsertUserBillingConfig(
             currencyCode: input.currencyCode ?? undefined,
             paymentMethodLabel: input.paymentMethodLabel ?? undefined,
             paymentNotes: input.paymentNotes ?? undefined,
-            graceDays:
-                typeof input.graceDays === "number" ? input.graceDays : undefined,
+            graceDays: typeof input.graceDays === "number" ? input.graceDays : undefined,
+            serviceName: input.serviceName ?? undefined,
+            notifyRemoteJid: input.notifyRemoteJid ?? undefined,
+            serviceStartAt: toDate(input.serviceStartAt) ?? undefined,
+            serviceEndsAt: toDate(input.serviceEndsAt) ?? undefined,
         };
 
         const billing = await db.userBilling.upsert({
@@ -68,6 +72,10 @@ export async function upsertUserBillingConfig(
                 paymentMethodLabel: (data.paymentMethodLabel as any) ?? null,
                 paymentNotes: (data.paymentNotes as any) ?? null,
                 graceDays: (data.graceDays as any) ?? 0,
+                serviceName: (data.serviceName as any) ?? null,
+                notifyRemoteJid: (data.notifyRemoteJid as any) ?? null,
+                serviceStartAt: (data.serviceStartAt as any) ?? null,
+                serviceEndsAt: (data.serviceEndsAt as any) ?? null,
             },
             update: data,
         });
@@ -104,7 +112,7 @@ export async function setUserBillingDueDate(
             create: {
                 userId,
                 dueDate: parsed,
-                // defaults:
+                serviceEndsAt: parsed,
                 currencyCode: "COP",
                 billingStatus: "UNPAID",
                 accessStatus: "ACTIVE",
@@ -112,7 +120,7 @@ export async function setUserBillingDueDate(
             },
             update: {
                 dueDate: parsed,
-                // anti-spam: si cambia el dueDate, permitimos recordatorio de este nuevo ciclo
+                serviceEndsAt: parsed,
                 lastReminderDueDate: null,
             },
         });
@@ -136,6 +144,10 @@ export async function markUserAsPaid(
 
         if (!userId) return { success: false, message: "userId es requerido." };
 
+        const now = new Date();
+        // Traemos el billing actual para respetar "primera activación"
+        const existing = await db.userBilling.findUnique({ where: { userId } });
+
         const billing = await db.userBilling.upsert({
             where: { userId },
             create: {
@@ -143,15 +155,19 @@ export async function markUserAsPaid(
                 currencyCode: "COP",
                 billingStatus: "PAID",
                 accessStatus: "ACTIVE",
-                lastPaymentAt: new Date(),
+                lastPaymentAt: now,
                 graceDays: 0,
+                serviceStartAt: now,
+                serviceEndAt: null,
             },
             update: {
                 billingStatus: "PAID",
                 accessStatus: "ACTIVE",
-                lastPaymentAt: new Date(),
+                lastPaymentAt: now,
                 suspendedAt: null,
                 suspendedReason: null,
+                serviceStartAt: existing?.serviceStartAt ?? now,
+                serviceEndAt: null,
             },
         });
 
@@ -208,6 +224,8 @@ export async function suspendUserService(
 
         if (!userId) return { success: false, message: "userId es requerido." };
 
+        const now = new Date();
+
         const billing = await db.userBilling.upsert({
             where: { userId },
             create: {
@@ -215,14 +233,16 @@ export async function suspendUserService(
                 currencyCode: "COP",
                 billingStatus: "UNPAID",
                 accessStatus: "SUSPENDED",
-                suspendedAt: new Date(),
+                suspendedAt: now,
                 suspendedReason: reason ?? "Suspendido manualmente",
                 graceDays: 0,
+                serviceEndAt: now,
             },
             update: {
                 accessStatus: "SUSPENDED",
-                suspendedAt: new Date(),
+                suspendedAt: now,
                 suspendedReason: reason ?? "Suspendido manualmente",
+                serviceEndAt: now,
             },
         });
 
@@ -245,6 +265,9 @@ export async function activateUserService(
 
         if (!userId) return { success: false, message: "userId es requerido." };
 
+        const now = new Date();
+        const existing = await db.userBilling.findUnique({ where: { userId } });
+
         const billing = await db.userBilling.upsert({
             where: { userId },
             create: {
@@ -253,11 +276,15 @@ export async function activateUserService(
                 billingStatus: "UNPAID",
                 accessStatus: "ACTIVE",
                 graceDays: 0,
+                serviceStartAt: now,
+                serviceEndAt: null,
             },
             update: {
                 accessStatus: "ACTIVE",
                 suspendedAt: null,
                 suspendedReason: null,
+                serviceStartAt: existing?.serviceStartAt ?? now,
+                serviceEndAt: null,
             },
         });
 

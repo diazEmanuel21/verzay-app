@@ -34,6 +34,7 @@ export async function currentUser(request?: Request) {
         where: { id: effectiveUserId }, // por id (no email)
         select: {
             id: true,
+            status: true,
             name: true,
             email: true,
             role: true,

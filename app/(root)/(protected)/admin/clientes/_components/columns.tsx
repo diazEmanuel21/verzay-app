@@ -17,6 +17,20 @@ const resellerFilterFn = (row: Row<any>, columnId: string, filterValue: string) 
 
 export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogType, state: boolean) => void, currentUserRol: string): ColumnDef<ClientInterface>[] => [
   {
+    accessorKey: 'status',
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        className="text-sm"
+      >
+        Estado
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => <StatusCell userStatus={row.original.status} />,
+  },
+  {
     accessorKey: 'role',
     header: ({ column }) => (
       <Button

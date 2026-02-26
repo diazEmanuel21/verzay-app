@@ -42,7 +42,7 @@ export async function previewBillingReminderMessage(
         const template = pickPreviewTemplate(daysRemaining, Number(billing.graceDays || 0));
 
         // Por ahora igual que el job: fijo (luego lo hacemos dinámico por plan)
-        const planLabel = `🤖 Agente IA`;
+        const planLabel = billing.serviceName ? `🤖 ${billing.serviceName}` : `🤖 Agente IA`;
         const licenseLabel = `🗓️ Licencia 30 días`;
         const currencyFlag = billing.currencyCode === "USD" ? "🇺🇸" : null;
 
