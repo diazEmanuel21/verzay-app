@@ -1,8 +1,22 @@
 // app/(root)/(protected)/admin/ruta-para-listar-clientes-y-crm-pagos/ui/BillingCrmClient.tsx
 "use client";
 
+import * as React from "react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+
+import {
+    ColumnDef,
+    SortingState,
+    VisibilityState,
+    ColumnFiltersState,
+    flexRender,
+    getCoreRowModel,
+    getFilteredRowModel,
+    getPaginationRowModel,
+    getSortedRowModel,
+    useReactTable,
+} from "@tanstack/react-table";
 
 import {
     Card,
@@ -14,6 +28,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+
 import {
     Table,
     TableHeader,
@@ -30,6 +45,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuItem,
+    DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 
 import {
@@ -41,7 +57,7 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 
-import { Ellipsis } from "lucide-react";
+import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Ellipsis } from "lucide-react";
 
 import {
     activateUserService,
@@ -52,9 +68,19 @@ import {
     suspendUserService,
     upsertUserBillingConfig,
 } from "@/actions/billing/billing-actions";
-import { ClientRow, EditDialogState, emptyDialog, ResponseFormat, UserBilling } from "@/types/billing";
+
+import {
+    ClientRow,
+    EditDialogState,
+    emptyDialog,
+    ResponseFormat,
+    UserBilling,
+} from "@/types/billing";
+
 import { fmtDateShort, money } from "@/actions/billing/helpers/billing-helpers";
 import { daysLeftService, StatusBadgeAccess, StatusBadgePaid } from "../helpers";
+import { DICTIONARY_COLS } from "@/types/ai-assistence-chat";
+import { DaysLeftCell } from "../components";
 
 export function BillingCrmClient({
     initial,
@@ -62,21 +88,22 @@ export function BillingCrmClient({
     initial: ResponseFormat<ClientRow[]>;
 }) {
     const [data, setData] = useState<ClientRow[]>(initial.data ?? []);
-    const [q, setQ] = useState("");
     const [dialog, setDialog] = useState<EditDialogState>(emptyDialog);
 
-    const filtered = useMemo(() => {
-        const term = q.trim().toLowerCase();
-        if (!term) return data;
+    // DataTable state (shadcn style)
+    const [globalFilter, setGlobalFilter] = useState("");
+    const [sorting, setSorting] = useState<SortingState>([]);
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+    const [rowSelection, setRowSelection] = useState({})
+    const [pagination, setPagination] = useState({
+        pageIndex: 0,
+        pageSize: 8,
+    });
 
-        return data.filter((u) => {
-            const a =
-                `${u.name ?? ""} ${u.email} ${u.company ?? ""} ${u.plan ?? ""}`
-                    .toLowerCase()
-                    .includes(term);
-            return a;
-        });
-    }, [data, q]);
+    const COLUMNS_LABELS = Object.fromEntries(
+        DICTIONARY_COLS.map(col => [col.key, col.label])
+    );
 
     async function refreshBillingForUser(userId: string) {
         const res = await getUserBillingByUserId(userId);
@@ -86,9 +113,7 @@ export function BillingCrmClient({
         }
 
         setData((prev) =>
-            prev.map((u) =>
-                u.id === userId ? { ...u, billing: res.data ?? null } : u
-            )
+            prev.map((u) => (u.id === userId ? { ...u, billing: res.data ?? null } : u))
         );
     }
 
@@ -123,7 +148,6 @@ export function BillingCrmClient({
     async function openEdit(u: ClientRow) {
         setDialog((s) => ({ ...s, open: true, user: u, loading: true }));
 
-        // traer billing real para poblar dialog (por si la lista estaba desfasada)
         const res = await getUserBillingByUserId(u.id);
         if (!res.success) {
             toast.error(res.message);
@@ -159,7 +183,6 @@ export function BillingCrmClient({
         try {
             setDialog((s) => ({ ...s, loading: true }));
 
-            // 1) config
             const cfg = await upsertUserBillingConfig({
                 userId: u.id,
                 price: dialog.form.price || null,
@@ -179,7 +202,6 @@ export function BillingCrmClient({
                 return;
             }
 
-            // 2) due date (solo si viene)
             const due = dialog.form.dueDate?.trim() ? dialog.form.dueDate : null;
             const dueRes = await setUserBillingDueDate(u.id, due);
 
@@ -200,6 +222,251 @@ export function BillingCrmClient({
         }
     }
 
+    const columns = useMemo<ColumnDef<ClientRow>[]>(() => {
+        const sortableHeader = (title: string) => ({ column }: any) => (
+            <Button
+                variant="ghost"
+                className="h-8 px-2 text-xs"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+                {title}
+                <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+            </Button>
+        );
+
+        return [
+            {
+                id: "service",
+                header: sortableHeader("Servicio"),
+                accessorFn: (row) => row.billing?.serviceName ?? "",
+                cell: ({ row }) => {
+                    const b = row.original.billing ?? null;
+                    return <div className="py-2 text-xs">{b?.serviceName ?? "—"}</div>;
+                },
+            },
+            {
+                id: "notify",
+                header: sortableHeader("Notificación"),
+                accessorFn: (row) =>
+                    row.billing?.notifyRemoteJid ?? row.notificationNumber ?? "",
+                cell: ({ row }) => {
+                    const u = row.original;
+                    const b = u.billing ?? null;
+                    return (
+                        <div className="py-2 text-xs truncate max-w-[160px]">
+                            {b?.notifyRemoteJid ?? u.notificationNumber ?? "—"}
+                        </div>
+                    );
+                },
+            },
+            {
+                id: "start",
+                header: sortableHeader("Inicio"),
+                accessorFn: (row) => row.billing?.serviceStartAt ?? null,
+                cell: ({ row }) => {
+                    const b = row.original.billing ?? null;
+                    return (
+                        <div className="py-2 text-xs">
+                            {fmtDateShort(b?.serviceStartAt ?? null)}
+                        </div>
+                    );
+                },
+            },
+            {
+                id: "due",
+                header: sortableHeader("Vence"),
+                accessorFn: (row) => row.billing?.dueDate ?? null,
+                cell: ({ row }) => {
+                    const b = row.original.billing ?? null;
+                    return <div className="py-2 text-xs">{fmtDateShort(b?.dueDate ?? null)}</div>;
+                },
+            },
+
+            {
+                id: "daysLeft",
+                header: sortableHeader("Días restantes"),
+                accessorFn: (row) => row.billing?.dueDate ?? null,
+                cell: ({ row }) => {
+                    const b = row.original.billing ?? null;
+                    const dueDate = parseInt(daysLeftService(b?.dueDate ?? null));
+                    return (
+                        <div className="py-2 text-xs">
+                            <DaysLeftCell dueDate={dueDate} />
+                        </div>
+                    );
+                },
+            },
+            {
+                id: "client",
+                header: sortableHeader("Cliente"),
+                accessorFn: (row) =>
+                    `${row.name ?? ""} ${row.email ?? ""} ${row.company ?? ""} ${row.plan ?? ""}`,
+                cell: ({ row }) => {
+                    const u = row.original;
+                    return (
+                        <div className="py-2">
+                            <div className="leading-tight">
+                                <div className="font-medium truncate max-w-[260px] text-xs">
+                                    {u.name ?? "Sin nombre"}
+                                </div>
+                                <div className="text-muted-foreground truncate max-w-[260px] text-[11px]">
+                                    {u.email}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                },
+            },
+            {
+                id: "price",
+                header: sortableHeader("Precio"),
+                accessorFn: (row) => Number(row.billing?.price ?? 0),
+                cell: ({ row }) => {
+                    const b = row.original.billing ?? null;
+                    return (
+                        <div className="py-2 text-xs">
+                            {money(b?.price ?? null, b?.currencyCode ?? "COP")}
+                        </div>
+                    );
+                },
+            },
+            {
+                id: "method",
+                header: sortableHeader("Medio"),
+                accessorFn: (row) => row.billing?.paymentMethodLabel ?? "",
+                cell: ({ row }) => {
+                    const b = row.original.billing ?? null;
+                    return (
+                        <div className="py-2 text-xs truncate max-w-[180px]">
+                            {b?.paymentMethodLabel ?? "—"}
+                        </div>
+                    );
+                },
+            },
+            {
+                id: "paid",
+                header: "Pago",
+                accessorFn: (row) => row.billing?.billingStatus ?? "UNPAID",
+                cell: ({ row }) => {
+                    const b = row.original.billing ?? null;
+                    return <div className="py-2">{StatusBadgePaid(b?.billingStatus ?? "UNPAID")}</div>;
+                },
+            },
+            {
+                id: "access",
+                header: "Acceso",
+                accessorFn: (row) => row.billing?.accessStatus ?? "ACTIVE",
+                cell: ({ row }) => {
+                    const b = row.original.billing ?? null;
+                    return <div className="py-2">{StatusBadgeAccess(b?.accessStatus ?? "ACTIVE")}</div>;
+                },
+            },
+            {
+                id: "actions",
+                header: () => <div className="text-right">Acciones</div>,
+                enableSorting: false,
+                enableHiding: false,
+                cell: ({ row }) => {
+                    const u = row.original;
+                    return (
+                        <div className="py-2 flex justify-end">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                        <Ellipsis className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+
+                                    <DropdownMenuItem onClick={() => openEdit(u)}>
+                                        Editar pagos
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuSeparator />
+
+                                    <DropdownMenuItem onClick={() => handleMarkPaid(u.id)}>
+                                        Marcar pagó
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuItem onClick={() => handleMarkUnpaid(u.id)}>
+                                        Marcar no pagó
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuSeparator />
+
+                                    <DropdownMenuItem onClick={() => handleSuspend(u.id)}>
+                                        Suspender servicio
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuItem onClick={() => handleActivate(u.id)}>
+                                        Activar servicio
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    );
+                },
+            },
+        ];
+    }, []);
+
+    // Global filter (busca como tu filtro anterior, pero dentro de TanStack)
+    const globalFilterFn = React.useCallback(
+        (row: any, _columnId: string, filterValue: string) => {
+            const term = String(filterValue ?? "").trim().toLowerCase();
+            if (!term) return true;
+
+            const u: ClientRow = row.original;
+            const b = u.billing ?? null;
+
+            const haystack = [
+                u.name ?? "",
+                u.email ?? "",
+                u.company ?? "",
+                u.plan ?? "",
+                b?.serviceName ?? "",
+                b?.notifyRemoteJid ?? "",
+                u.notificationNumber ?? "",
+                b?.paymentMethodLabel ?? "",
+                b?.paymentNotes ?? "",
+                b?.currencyCode ?? "",
+                b?.billingStatus ?? "",
+                b?.accessStatus ?? "",
+            ]
+                .join(" ")
+                .toLowerCase();
+
+            return haystack.includes(term);
+        },
+        []
+    );
+
+    const table = useReactTable({
+        data,
+        columns,
+        state: {
+            sorting,
+            columnVisibility,
+            columnFilters,
+            globalFilter,
+            rowSelection,
+            pagination
+        },
+        onPaginationChange: setPagination,
+        onSortingChange: setSorting,
+        onColumnVisibilityChange: setColumnVisibility,
+        onColumnFiltersChange: setColumnFilters,
+        onGlobalFilterChange: setGlobalFilter,
+        onRowSelectionChange: setRowSelection,
+        globalFilterFn,
+        getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+    });
+
     return (
         <Card className="border-border">
             <CardHeader>
@@ -210,152 +477,143 @@ export function BillingCrmClient({
 
                 <div className="mt-3 flex gap-2">
                     <Input
-                        value={q}
-                        onChange={(e) => setQ(e.target.value)}
+                        value={globalFilter}
+                        onChange={(e) => setGlobalFilter(e.target.value)}
                         placeholder="Buscar por nombre, email, empresa, plan…"
                         className="h-9"
                     />
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="ml-auto">
+                                <Ellipsis className="h-4 w-4 md:hidden" />
+                                <span className="hidden md:inline">Filtrar</span>
+                                <ChevronDown className="ml-2 h-4 w-4 hidden md:inline" />
+                            </Button>
+                        </DropdownMenuTrigger>
+
+                        <DropdownMenuContent align="end">
+                            {table
+                                .getAllColumns()
+                                .filter((column) => column.getCanHide())
+                                .map((column) => {
+                                    return (
+                                        <DropdownMenuCheckboxItem
+                                            key={column.id}
+                                            checked={column.getIsVisible()}
+                                            onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                                        >
+                                            {COLUMNS_LABELS[column.id] || column.id}
+                                        </DropdownMenuCheckboxItem>
+                                    );
+                                })}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </CardHeader>
 
             <CardContent className="border-border">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="border-border">
-                            <TableHead>Servicio</TableHead>
-                            <TableHead>Notificación</TableHead>
-                            <TableHead>Inicio</TableHead>
-                            <TableHead>Vence</TableHead>
-                            {/* <TableHead>Fin ciclo</TableHead> */}
-                            <TableHead>Días restantes</TableHead>
+                <div className="rounded-md border border-border">
+                    <Table>
+                        <TableHeader>
+                            {table.getHeaderGroups().map((hg) => (
+                                <TableRow key={hg.id} className="border-border">
+                                    {hg.headers.map((header) => (
+                                        <TableHead key={header.id} className="text-xs">
+                                            {header.isPlaceholder
+                                                ? null
+                                                : flexRender(header.column.columnDef.header, header.getContext())}
+                                        </TableHead>
+                                    ))}
+                                </TableRow>
+                            ))}
+                        </TableHeader>
 
-                            <TableHead>Cliente</TableHead>
-                            <TableHead>Precio</TableHead>
-                            <TableHead>Medio</TableHead>
-                            <TableHead>Pago</TableHead>
-                            <TableHead>Acceso</TableHead>
-
-                            <TableHead className="text-right">Acciones</TableHead>
-                        </TableRow>
-                    </TableHeader>
-
-                    <TableBody>
-                        {filtered.map((u) => {
-                            const b = u.billing ?? null;
-
-                            return (
-                                <TableRow key={u.id} className="h-10  border-border">
-                                    <TableCell className="py-2 text-xs">{b?.serviceName ?? "—"}</TableCell>
-                                    <TableCell className="py-2 text-xs truncate max-w-[160px]">
-                                        {b?.notifyRemoteJid ?? u.notificationNumber ?? "—"}
-                                    </TableCell>
-                                    <TableCell className="py-2 text-xs">{fmtDateShort(b?.serviceStartAt ?? null)}</TableCell>
-                                    <TableCell className="py-2">
-                                        {fmtDateShort(b?.dueDate ?? null)}
-                                    </TableCell>
-                                    {/* <TableCell className="py-2 text-xs">{fmtDateShort(b?.serviceEndsAt ?? null)}</TableCell> */}
-                                    <TableCell className="py-2 text-xs">{daysLeftService(b?.dueDate ?? null)}</TableCell>
-
-                                    <TableCell className="py-2">
-                                        <div className="leading-tight">
-                                            <div className="font-medium truncate max-w-[260px]">
-                                                {u.name ?? "Sin nombre"}
-                                            </div>
-                                            <div className="text-muted-foreground truncate max-w-[260px]">
-                                                {u.email}
-                                            </div>
-                                        </div>
-                                    </TableCell>
-
-                                    <TableCell className="py-2">
-                                        {money(b?.price ?? null, b?.currencyCode ?? "COP")}
-                                    </TableCell>
-
-                                    <TableCell className="py-2 truncate max-w-[180px]">
-                                        {b?.paymentMethodLabel ?? "—"}
-                                    </TableCell>
-
-                                    <TableCell className="py-2">
-                                        {StatusBadgePaid(b?.billingStatus ?? "UNPAID")}
-                                    </TableCell>
-
-                                    <TableCell className="py-2">
-                                        {StatusBadgeAccess(b?.accessStatus ?? "ACTIVE")}
-                                    </TableCell>
-
-                                    <TableCell className="py-2">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8"
-                                                >
-                                                    <Ellipsis className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuLabel>
-                                                    Acciones
-                                                </DropdownMenuLabel>
-
-                                                <DropdownMenuItem
-                                                    onClick={() => openEdit(u)}
-                                                >
-                                                    Editar pagos
-                                                </DropdownMenuItem>
-
-                                                <DropdownMenuSeparator />
-
-                                                <DropdownMenuItem
-                                                    onClick={() => handleMarkPaid(u.id)}
-                                                >
-                                                    Marcar pagó
-                                                </DropdownMenuItem>
-
-                                                <DropdownMenuItem
-                                                    onClick={() => handleMarkUnpaid(u.id)}
-                                                >
-                                                    Marcar no pagó
-                                                </DropdownMenuItem>
-
-                                                <DropdownMenuSeparator />
-
-                                                <DropdownMenuItem
-                                                    onClick={() => handleSuspend(u.id)}
-                                                >
-                                                    Suspender servicio
-                                                </DropdownMenuItem>
-
-                                                <DropdownMenuItem
-                                                    onClick={() => handleActivate(u.id)}
-                                                >
-                                                    Activar servicio
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                        <TableBody>
+                            {table.getRowModel().rows?.length ? (
+                                table.getRowModel().rows.map((row) => (
+                                    <TableRow key={row.id} className="h-10 border-border">
+                                        {row.getVisibleCells().map((cell) => (
+                                            <TableCell key={cell.id} className="py-0 align-middle">
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={table.getAllColumns().length}
+                                        className="py-6 text-center text-sm"
+                                    >
+                                        No hay resultados.
                                     </TableCell>
                                 </TableRow>
-                            );
-                        })}
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
 
-                        {!filtered.length && (
-                            <TableRow>
-                                <TableCell colSpan={12} className="py-6 text-center">
-                                    No hay resultados.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
+                {/* Pagination (shadcn style) */}
+                <div className="mt-3 flex items-center justify-between gap-2">
+                    <div className="text-xs text-muted-foreground">
+                        Mostrando{" "}
+                        <b>{table.getRowModel().rows.length}</b> de{" "}
+                        <b>{table.getFilteredRowModel().rows.length}</b> resultados
+                    </div>
 
-                {/* Dialog editar */}
+                    <div className="flex items-center gap-1">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => table.setPageIndex(0)}
+                            disabled={!table.getCanPreviousPage()}
+                        >
+                            <ChevronsLeft className="h-4 w-4" />
+                        </Button>
+
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => table.previousPage()}
+                            disabled={!table.getCanPreviousPage()}
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                        </Button>
+
+                        <div className="px-2 text-xs">
+                            Página <b>{table.getState().pagination.pageIndex + 1}</b> /{" "}
+                            <b>{table.getPageCount()}</b>
+                        </div>
+
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => table.nextPage()}
+                            disabled={!table.getCanNextPage()}
+                        >
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                            disabled={!table.getCanNextPage()}
+                        >
+                            <ChevronsRight className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Dialog editar (igual que el tuyo) */}
                 <Dialog
                     open={dialog.open}
-                    onOpenChange={(open) =>
-                        setDialog((s) => (open ? s : emptyDialog))
-                    }
+                    onOpenChange={(open) => setDialog((s) => (open ? s : emptyDialog))}
                 >
                     <DialogContent className="sm:max-w-[520px] rounded-2xl">
                         <DialogHeader>
@@ -400,9 +658,7 @@ export function BillingCrmClient({
                                 </div>
 
                                 <div className="grid gap-1">
-                                    <label className="text-muted-foreground">
-                                        Medio de pago
-                                    </label>
+                                    <label className="text-muted-foreground">Medio de pago</label>
                                     <Input
                                         value={dialog.form.paymentMethodLabel}
                                         onChange={(e) =>
@@ -434,9 +690,7 @@ export function BillingCrmClient({
                                 </div>
 
                                 <div className="grid gap-1">
-                                    <label className="text-muted-foreground">
-                                        Días de gracia
-                                    </label>
+                                    <label className="text-muted-foreground">Días de gracia</label>
                                     <Input
                                         value={dialog.form.graceDays}
                                         onChange={(e) =>
@@ -461,7 +715,7 @@ export function BillingCrmClient({
                                                     form: { ...s.form, serviceName: e.target.value },
                                                 }))
                                             }
-                                            placeholder='Ej: Agente IA / CRM / Licencia'
+                                            placeholder="Ej: Agente IA / CRM / Licencia"
                                             className="h-9"
                                         />
                                     </div>
@@ -482,7 +736,8 @@ export function BillingCrmClient({
                                             className="h-9"
                                         />
                                         <p className="text-[11px] text-muted-foreground">
-                                            Si queda vacío, se usará el <b>notificationNumber</b> del usuario.
+                                            Si queda vacío, se usará el <b>notificationNumber</b> del
+                                            usuario.
                                         </p>
                                     </div>
 
@@ -506,7 +761,7 @@ export function BillingCrmClient({
                                             <label className="text-muted-foreground">
                                                 Fecha de pago (vence)
                                             </label>
-                                            <Input  
+                                            <Input
                                                 type="date"
                                                 value={dialog.form.dueDate}
                                                 onChange={(e) =>
@@ -518,21 +773,6 @@ export function BillingCrmClient({
                                                 className="h-9"
                                             />
                                         </div>
-
-                                        {/* <div className="grid gap-1">
-                                            <label className="text-muted-foreground">Fin ciclo (serviceEndsAt)</label>
-                                            <Input
-                                                type="date"
-                                                value={dialog.form.serviceEndsAt}
-                                                onChange={(e) =>
-                                                    setDialog((s) => ({
-                                                        ...s,
-                                                        form: { ...s.form, serviceEndsAt: e.target.value },
-                                                    }))
-                                                }
-                                                className="h-9"
-                                            />
-                                        </div> */}
                                     </div>
                                 </div>
                             </div>

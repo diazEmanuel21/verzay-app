@@ -52,3 +52,16 @@ export type ChatConversation = {
 };
 
 export const AI_ROLES = ["user", "assistant"] as const;
+
+export const DICTIONARY_COLS = [
+    { key: "service", label: "Servicio" },
+    { key: "notify", label: "Notificar" },
+    { key: "start", label: "Inicio" },
+    { key: "due", label: "Vencimiento" },
+    { key: "daysLeft", label: "Días restantes" },
+    { key: "client", label: "Cliente" },
+    { key: "price", label: "Precio" },
+    { key: "method", label: "Método" },
+    { key: "paid", label: "Pagado" },
+    { key: "access", label: "Acceso" }
+];
