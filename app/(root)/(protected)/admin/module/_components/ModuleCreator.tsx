@@ -4,10 +4,10 @@ import { ModuleForm } from './'
 import { Button } from "@/components/ui/button"
 import { AnimatePresence, motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ScrollArea } from '@radix-ui/react-scroll-area'
 import { FormModuleValues } from '@/schema/module'
 import { SubmitHandler } from 'react-hook-form'
 import { X } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function ModuleCreator({ onSave, openModule = false, setOpenModule }: {
     onSave: SubmitHandler<FormModuleValues>;

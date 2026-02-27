@@ -1,7 +1,6 @@
 "use client"
 import { DialogHeader, DialogTitle } from "../ui/dialog";
 import { cn } from "@/lib/utils"
-import { Separator } from "@radix-ui/react-separator";
 import {Icon, LucideIcon} from "lucide-react"
 
 

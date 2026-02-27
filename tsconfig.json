@@ -28,6 +28,6 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "types" // ✅ asegurarse que está incluida
-  ],
+, "app/(root)/(protected)/admin/client-billing/helpers/exportExcelAllFiltered"  ],
   "exclude": ["node_modules"]
 }

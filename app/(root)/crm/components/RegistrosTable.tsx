@@ -3,13 +3,13 @@ import {
     Table, TableHeader, TableRow, TableHead, TableBody, TableCell,
 } from "@/components/ui/table";
 import { Plus, MoreHorizontal, Pencil, Trash } from "lucide-react";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { formatFecha, getTipoLabel } from "../helpers";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const RegistrosTable = ({
     tipo,

@@ -75,9 +75,8 @@ import {
 } from "@/types/billing";
 
 import { fmtDateShort, money } from "@/actions/billing/helpers/billing-helpers";
-import { daysLeftService, StatusBadgeAccess, StatusBadgePaid } from "../helpers";
-import { DICTIONARY_COLS } from "@/types/ai-assistence-chat";
-import { DaysLeftCell } from "../components";
+import { COLUMNS_LABELS, daysLeftService, exportExcelAllFiltered, getExportValue, StatusBadgeAccess, StatusBadgePaid } from "../helpers";
+import { BillingCrmFiltersCards, BillingSkeletton, DaysLeftCell } from "../components";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -100,9 +99,7 @@ export function BillingCrmClient({
         pageSize: 9,
     });
 
-    const COLUMNS_LABELS = Object.fromEntries(
-        DICTIONARY_COLS.map(col => [col.key, col.label])
-    );
+
 
     async function refreshBillingForUser(userId: string) {
         const res = await getUserBillingByUserId(userId);
@@ -156,6 +153,9 @@ export function BillingCrmClient({
         setDialog((s) => ({ ...s, open: true, user: u, loading: true }));
 
         const res = await getUserBillingByUserId(u.id);
+
+        await sleep(600);
+
         if (!res.success) {
             toast.error(res.message);
             setDialog((s) => ({ ...s, loading: false }));
@@ -185,6 +185,7 @@ export function BillingCrmClient({
             original,
         });
     }
+
     function normalizeEditForm(f: any) {
         return {
             dueDate: (f?.dueDate ?? "").trim(),
@@ -286,7 +287,7 @@ export function BillingCrmClient({
             const Header = ({ column }: any) => (
                 <Button
                     variant="ghost"
-                    className="h-8 px-2 text-xs"
+                    className="h-8 px-2"
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                 >
                     {title}
@@ -305,7 +306,7 @@ export function BillingCrmClient({
                 accessorFn: (row) => row.billing?.serviceName ?? "",
                 cell: ({ row }) => {
                     const b = row.original.billing ?? null;
-                    return <div className="py-2 text-xs">{b?.serviceName ?? "—"}</div>;
+                    return <div className="py-2">{b?.serviceName ?? "—"}</div>;
                 },
             },
             {
@@ -317,7 +318,7 @@ export function BillingCrmClient({
                     const u = row.original;
                     const b = u.billing ?? null;
                     return (
-                        <div className="py-2 text-xs truncate max-w-[160px]">
+                        <div className="py-2 truncate max-w-[160px]">
                             {b?.notifyRemoteJid ?? u.notificationNumber ?? "—"}
                         </div>
                     );
@@ -330,7 +331,7 @@ export function BillingCrmClient({
                 cell: ({ row }) => {
                     const b = row.original.billing ?? null;
                     return (
-                        <div className="py-2 text-xs">
+                        <div className="py-2">
                             {fmtDateShort(b?.serviceStartAt ?? null)}
                         </div>
                     );
@@ -340,12 +341,23 @@ export function BillingCrmClient({
                 id: "due",
                 header: sortableHeader("Vence"),
                 accessorFn: (row) => row.billing?.dueDate ?? null,
+                filterFn: (row, _columnId, filterValue) => {
+                    if (filterValue !== "SOON") return true;
+
+                    const b = row.original.billing ?? null;
+                    const due = b?.dueDate ?? null;
+
+                    const left = parseInt(daysLeftService(due));
+                    if (!Number.isFinite(left)) return false;
+
+                    const soonDays = 3;
+                    return left >= 0 && left <= soonDays;
+                },
                 cell: ({ row }) => {
                     const b = row.original.billing ?? null;
-                    return <div className="py-2 text-xs">{fmtDateShort(b?.dueDate ?? null)}</div>;
+                    return <div className="py-2">{fmtDateShort(b?.dueDate ?? null)}</div>;
                 },
             },
-
             {
                 id: "daysLeft",
                 header: sortableHeader("Días restantes"),
@@ -354,7 +366,7 @@ export function BillingCrmClient({
                     const b = row.original.billing ?? null;
                     const dueDate = parseInt(daysLeftService(b?.dueDate ?? null));
                     return (
-                        <div className="py-2 text-xs">
+                        <div className="py-2">
                             <DaysLeftCell dueDate={dueDate} />
                         </div>
                     );
@@ -370,10 +382,10 @@ export function BillingCrmClient({
                     return (
                         <div className="py-2">
                             <div className="leading-tight">
-                                <div className="font-medium truncate max-w-[260px] text-xs">
+                                <div className="font-medium truncate max-w-[260px]">
                                     {u.name ?? "Sin nombre"}
                                 </div>
-                                <div className="text-muted-foreground truncate max-w-[260px] text-[11px]">
+                                <div className="text-muted-foreground truncate max-w-[260px]">
                                     {u.email}
                                 </div>
                             </div>
@@ -388,7 +400,7 @@ export function BillingCrmClient({
                 cell: ({ row }) => {
                     const b = row.original.billing ?? null;
                     return (
-                        <div className="py-2 text-xs">
+                        <div className="py-2">
                             {money(b?.price ?? null, b?.currencyCode ?? "COP")}
                         </div>
                     );
@@ -401,7 +413,7 @@ export function BillingCrmClient({
                 cell: ({ row }) => {
                     const b = row.original.billing ?? null;
                     return (
-                        <div className="py-2 text-xs truncate max-w-[180px]">
+                        <div className="py-2 truncate max-w-[180px]">
                             {b?.paymentMethodLabel ?? "—"}
                         </div>
                     );
@@ -536,40 +548,62 @@ export function BillingCrmClient({
             <div className="sticky top-0 z-1">
                 <div className="flex justify-between items-center gap-2">
                     <div className="flex flex-row flex-1 gap-2">
-                        <div className="flex flex-col sm:flex-row items-centerem gap-2 flex-1">
-                            <Input
-                                value={globalFilter}
-                                onChange={(e) => setGlobalFilter(e.target.value)}
-                                placeholder="Buscar por nombre, email, empresa, plan…"
-                                className="h-9"
-                            />
+                        <div className="flex flex-col gap-2 flex-1">
+                            <BillingCrmFiltersCards table={table} data={data} />
+                            <div className="flex flex-row gap-1">
+                                <Input
+                                    value={globalFilter}
+                                    onChange={(e) => setGlobalFilter(e.target.value)}
+                                    placeholder="Buscar por nombre, email, empresa, plan…"
+                                    className="h-9"
+                                />
 
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="ml-auto">
-                                        <Ellipsis className="h-4 w-4 md:hidden" />
-                                        <span className="hidden md:inline">Filtrar</span>
-                                        <ChevronDown className="ml-2 h-4 w-4 hidden md:inline" />
-                                    </Button>
-                                </DropdownMenuTrigger>
+                                {/* Filtros columnas */}
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="ml-auto">
+                                            <Ellipsis className="h-4 w-4 md:hidden" />
+                                            <span className="hidden md:inline">Filtrar</span>
+                                            <ChevronDown className="ml-2 h-4 w-4 hidden md:inline" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
 
-                                <DropdownMenuContent align="end">
-                                    {table
-                                        .getAllColumns()
-                                        .filter((column) => column.getCanHide())
-                                        .map((column) => {
-                                            return (
-                                                <DropdownMenuCheckboxItem
-                                                    key={column.id}
-                                                    checked={column.getIsVisible()}
-                                                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                                                >
-                                                    {COLUMNS_LABELS[column.id] || column.id}
-                                                </DropdownMenuCheckboxItem>
-                                            );
-                                        })}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                    <DropdownMenuContent align="end">
+                                        {table
+                                            .getAllColumns()
+                                            .filter((column) => column.getCanHide())
+                                            .map((column) => {
+                                                return (
+                                                    <DropdownMenuCheckboxItem
+                                                        key={column.id}
+                                                        checked={column.getIsVisible()}
+                                                        onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                                                    >
+                                                        {COLUMNS_LABELS[column.id] || column.id}
+                                                    </DropdownMenuCheckboxItem>
+                                                );
+                                            })}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+
+                                {/* Table actions */}
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="ml-auto">
+                                            <Ellipsis />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+
+                                        <DropdownMenuItem onClick={() => exportExcelAllFiltered(table)}>
+                                            Exportar Excel
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -586,7 +620,7 @@ export function BillingCrmClient({
                                     {table.getHeaderGroups().map((hg) => (
                                         <TableRow key={hg.id} className="border-border">
                                             {hg.headers.map((header) => (
-                                                <TableHead key={header.id} className="text-xs">
+                                                <TableHead key={header.id}>
                                                     {header.isPlaceholder
                                                         ? null
                                                         : flexRender(header.column.columnDef.header, header.getContext())}
@@ -611,7 +645,7 @@ export function BillingCrmClient({
                                         <TableRow>
                                             <TableCell
                                                 colSpan={table.getAllColumns().length}
-                                                className="py-6 text-center text-sm"
+                                                className="py-6 text-center"
                                             >
                                                 No hay resultados.
                                             </TableCell>
@@ -679,170 +713,174 @@ export function BillingCrmClient({
                                 open={dialog.open}
                                 onOpenChange={(open) => setDialog((s) => (open ? s : emptyDialog))}
                             >
-                                <DialogContent className="sm:max-w-[520px] rounded-2xl">
+                                <DialogContent>
                                     <DialogHeader>
-                                        <DialogTitle className="text-base">Editar pagos</DialogTitle>
+                                        <DialogTitle>Editar pagos</DialogTitle>
                                         <DialogDescription>
                                             Configura precio, medio y fecha de vencimiento.
                                         </DialogDescription>
                                     </DialogHeader>
 
-                                    <ScrollArea className="max-h-[75vh] pr-3">
-                                        <div className="grid gap-2 p-2">
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div className="grid gap-1">
-                                                    <label className="text-muted-foreground">Precio</label>
-                                                    <Input
-                                                        value={dialog.form.price}
-                                                        onChange={(e) =>
-                                                            setDialog((s) => ({
-                                                                ...s,
-                                                                form: { ...s.form, price: e.target.value },
-                                                            }))
-                                                        }
-                                                        placeholder="Ej: 129000"
-                                                        className="h-9"
-                                                    />
+                                    {dialog.loading ? (
+                                        <BillingSkeletton />
+                                    ) : (
+                                        <ScrollArea className="max-h-[75vh] pr-3">
+                                            <div className="grid gap-2 p-2">
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="grid gap-1">
+                                                        <label className="text-muted-foreground">Precio</label>
+                                                        <Input
+                                                            value={dialog.form.price}
+                                                            onChange={(e) =>
+                                                                setDialog((s) => ({
+                                                                    ...s,
+                                                                    form: { ...s.form, price: e.target.value },
+                                                                }))
+                                                            }
+                                                            placeholder="Ej: 129000"
+                                                            className="h-9"
+                                                        />
+                                                    </div>
+
+                                                    <div className="grid gap-1">
+                                                        <label className="text-muted-foreground">Moneda</label>
+                                                        <Input
+                                                            value={dialog.form.currencyCode}
+                                                            onChange={(e) =>
+                                                                setDialog((s) => ({
+                                                                    ...s,
+                                                                    form: { ...s.form, currencyCode: e.target.value },
+                                                                }))
+                                                            }
+                                                            placeholder="COP"
+                                                            className="h-9"
+                                                        />
+                                                    </div>
                                                 </div>
 
                                                 <div className="grid gap-1">
-                                                    <label className="text-muted-foreground">Moneda</label>
+                                                    <label className="text-muted-foreground">Medio de pago</label>
                                                     <Input
-                                                        value={dialog.form.currencyCode}
+                                                        value={dialog.form.paymentMethodLabel}
                                                         onChange={(e) =>
                                                             setDialog((s) => ({
                                                                 ...s,
-                                                                form: { ...s.form, currencyCode: e.target.value },
+                                                                form: { ...s.form, paymentMethodLabel: e.target.value },
                                                             }))
                                                         }
-                                                        placeholder="COP"
-                                                        className="h-9"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="grid gap-1">
-                                                <label className="text-muted-foreground">Medio de pago</label>
-                                                <Input
-                                                    value={dialog.form.paymentMethodLabel}
-                                                    onChange={(e) =>
-                                                        setDialog((s) => ({
-                                                            ...s,
-                                                            form: { ...s.form, paymentMethodLabel: e.target.value },
-                                                        }))
-                                                    }
-                                                    placeholder="Ej: Transferencia / Nequi / Stripe"
-                                                    className="h-9"
-                                                />
-                                            </div>
-
-                                            <div className="grid gap-1">
-                                                <label className="text-muted-foreground">
-                                                    Instrucciones / notas
-                                                </label>
-                                                <Input
-                                                    value={dialog.form.paymentNotes}
-                                                    onChange={(e) =>
-                                                        setDialog((s) => ({
-                                                            ...s,
-                                                            form: { ...s.form, paymentNotes: e.target.value },
-                                                        }))
-                                                    }
-                                                    placeholder="Ej: Cuenta, link, referencia, etc."
-                                                    className="h-9"
-                                                />
-                                            </div>
-
-                                            <div className="grid gap-1">
-                                                <label className="text-muted-foreground">Días de gracia</label>
-                                                <Input
-                                                    value={dialog.form.graceDays}
-                                                    onChange={(e) =>
-                                                        setDialog((s) => ({
-                                                            ...s,
-                                                            form: { ...s.form, graceDays: e.target.value },
-                                                        }))
-                                                    }
-                                                    placeholder="0"
-                                                    className="h-9"
-                                                />
-                                            </div>
-
-                                            <div className="mt-2 grid gap-3">
-                                                <div className="grid gap-1">
-                                                    <label className="text-muted-foreground">Servicio</label>
-                                                    <Input
-                                                        value={dialog.form.serviceName}
-                                                        onChange={(e) =>
-                                                            setDialog((s) => ({
-                                                                ...s,
-                                                                form: { ...s.form, serviceName: e.target.value },
-                                                            }))
-                                                        }
-                                                        placeholder="Ej: Agente IA / CRM / Licencia"
+                                                        placeholder="Ej: Transferencia / Nequi / Stripe"
                                                         className="h-9"
                                                     />
                                                 </div>
 
                                                 <div className="grid gap-1">
                                                     <label className="text-muted-foreground">
-                                                        Número notificación (remoteJid destino)
+                                                        Instrucciones / notas
                                                     </label>
                                                     <Input
-                                                        value={dialog.form.notifyRemoteJid}
+                                                        value={dialog.form.paymentNotes}
                                                         onChange={(e) =>
                                                             setDialog((s) => ({
                                                                 ...s,
-                                                                form: { ...s.form, notifyRemoteJid: e.target.value },
+                                                                form: { ...s.form, paymentNotes: e.target.value },
                                                             }))
                                                         }
-                                                        placeholder="Ej: 573001112233 o 573001112233@s.whatsapp.net"
+                                                        placeholder="Ej: Cuenta, link, referencia, etc."
                                                         className="h-9"
                                                     />
-                                                    <p className="text-[11px] text-muted-foreground">
-                                                        Si queda vacío, se usará el <b>notificationNumber</b> del
-                                                        usuario.
-                                                    </p>
                                                 </div>
 
-                                                <div className="grid grid-cols-2 gap-3">
+                                                <div className="grid gap-1">
+                                                    <label className="text-muted-foreground">Días de gracia</label>
+                                                    <Input
+                                                        value={dialog.form.graceDays}
+                                                        onChange={(e) =>
+                                                            setDialog((s) => ({
+                                                                ...s,
+                                                                form: { ...s.form, graceDays: e.target.value },
+                                                            }))
+                                                        }
+                                                        placeholder="0"
+                                                        className="h-9"
+                                                    />
+                                                </div>
+
+                                                <div className="mt-2 grid gap-3">
                                                     <div className="grid gap-1">
-                                                        <label className="text-muted-foreground">Fecha inicio</label>
+                                                        <label className="text-muted-foreground">Servicio</label>
                                                         <Input
-                                                            type="date"
-                                                            value={dialog.form.serviceStartAt}
+                                                            value={dialog.form.serviceName}
                                                             onChange={(e) =>
                                                                 setDialog((s) => ({
                                                                     ...s,
-                                                                    form: { ...s.form, serviceStartAt: e.target.value },
+                                                                    form: { ...s.form, serviceName: e.target.value },
                                                                 }))
                                                             }
+                                                            placeholder="Ej: Agente IA / CRM / Licencia"
                                                             className="h-9"
                                                         />
                                                     </div>
 
                                                     <div className="grid gap-1">
                                                         <label className="text-muted-foreground">
-                                                            Fecha de pago (vence)
+                                                            Número notificación (remoteJid destino)
                                                         </label>
                                                         <Input
-                                                            type="date"
-                                                            value={dialog.form.dueDate}
+                                                            value={dialog.form.notifyRemoteJid}
                                                             onChange={(e) =>
                                                                 setDialog((s) => ({
                                                                     ...s,
-                                                                    form: { ...s.form, dueDate: e.target.value },
+                                                                    form: { ...s.form, notifyRemoteJid: e.target.value },
                                                                 }))
                                                             }
+                                                            placeholder="Ej: 573001112233 o 573001112233@s.whatsapp.net"
                                                             className="h-9"
                                                         />
+                                                        <p className="text-[11px] text-muted-foreground">
+                                                            Si queda vacío, se usará el <b>notificationNumber</b> del
+                                                            usuario.
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div className="grid gap-1">
+                                                            <label className="text-muted-foreground">Fecha inicio</label>
+                                                            <Input
+                                                                type="date"
+                                                                value={dialog.form.serviceStartAt}
+                                                                onChange={(e) =>
+                                                                    setDialog((s) => ({
+                                                                        ...s,
+                                                                        form: { ...s.form, serviceStartAt: e.target.value },
+                                                                    }))
+                                                                }
+                                                                className="h-9"
+                                                            />
+                                                        </div>
+
+                                                        <div className="grid gap-1">
+                                                            <label className="text-muted-foreground">
+                                                                Fecha de pago (vence)
+                                                            </label>
+                                                            <Input
+                                                                type="date"
+                                                                value={dialog.form.dueDate}
+                                                                onChange={(e) =>
+                                                                    setDialog((s) => ({
+                                                                        ...s,
+                                                                        form: { ...s.form, dueDate: e.target.value },
+                                                                    }))
+                                                                }
+                                                                className="h-9"
+                                                            />
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </ScrollArea>
+                                        </ScrollArea>
+                                    )}
 
-                                    <DialogFooter className="mt-2">
+                                    <DialogFooter>
                                         <Button
                                             variant="outline"
                                             onClick={() => setDialog(emptyDialog)}

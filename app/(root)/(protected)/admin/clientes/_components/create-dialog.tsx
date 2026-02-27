@@ -5,8 +5,8 @@ import { ApiKey } from '@prisma/client'
 import { FormUser } from './FormUser';
 import { userSchema } from '@/schema/user'
 import { z } from 'zod'
-import { ScrollArea } from '@radix-ui/react-scroll-area'
 import { Country } from '@/components/custom/CountryCodeSelect';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type UserFormValues = z.infer<typeof userSchema>;
 interface Props {
