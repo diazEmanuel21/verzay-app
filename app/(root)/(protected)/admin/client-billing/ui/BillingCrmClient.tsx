@@ -220,16 +220,21 @@ export function BillingCrmClient({
     }
 
     const columns = useMemo<ColumnDef<ClientRow>[]>(() => {
-        const sortableHeader = (title: string) => ({ column }: any) => (
-            <Button
-                variant="ghost"
-                className="h-8 px-2 text-xs"
-                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            >
-                {title}
-                <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
-            </Button>
-        );
+        const sortableHeader = (title: string) => {
+            const Header = ({ column }: any) => (
+                <Button
+                    variant="ghost"
+                    className="h-8 px-2 text-xs"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                >
+                    {title}
+                    <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+                </Button>
+            );
+
+            Header.displayName = `SortableHeader(${title})`;
+            return Header;
+        };
 
         return [
             {
@@ -407,7 +412,7 @@ export function BillingCrmClient({
                 },
             },
         ];
-    }, []);
+    }, [openEdit, handleMarkPaid, handleMarkUnpaid, handleSuspend, handleActivate]);
 
     const globalFilterFn = React.useCallback(
         (row: any, _columnId: string, filterValue: string) => {
