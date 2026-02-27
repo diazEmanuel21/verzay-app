@@ -48,7 +48,8 @@ export const breadcrumbLabels: Record<string, string> = {
   documentation: 'documentación',
   module: 'módulos',
   templates: 'plantillas',
-  schedule: 'agendamiento'
+  schedule: 'agendamiento',
+  'client-billing': 'finanzas'
 };
 
 export const Breadcrumbs = ({ isFlow = false }: { isFlow?: boolean }) => {

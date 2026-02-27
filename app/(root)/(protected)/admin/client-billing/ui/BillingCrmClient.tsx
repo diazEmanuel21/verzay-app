@@ -20,14 +20,11 @@ import {
 
 import {
     Card,
-    CardHeader,
-    CardTitle,
-    CardDescription,
     CardContent,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 import {
     Table,
@@ -98,7 +95,7 @@ export function BillingCrmClient({
     const [rowSelection, setRowSelection] = useState({})
     const [pagination, setPagination] = useState({
         pageIndex: 0,
-        pageSize: 8,
+        pageSize: 9,
     });
 
     const COLUMNS_LABELS = Object.fromEntries(
@@ -412,7 +409,6 @@ export function BillingCrmClient({
         ];
     }, []);
 
-    // Global filter (busca como tu filtro anterior, pero dentro de TanStack)
     const globalFilterFn = React.useCallback(
         (row: any, _columnId: string, filterValue: string) => {
             const term = String(filterValue ?? "").trim().toLowerCase();
@@ -468,331 +464,335 @@ export function BillingCrmClient({
     });
 
     return (
-        <Card className="border-border">
-            <CardHeader>
-                <CardTitle>CRM Pagos</CardTitle>
-                <CardDescription>
-                    Gestiona vencimientos, pagos y acceso al servicio.
-                </CardDescription>
+        <div className="flex flex-col h-full gap-2">
+            {/* Header fijo */}
+            <div className="sticky top-0 z-1">
+                <div className="flex justify-between items-center gap-2">
+                    <div className="flex flex-row flex-1 gap-2">
+                        <div className="flex flex-col sm:flex-row items-centerem gap-2 flex-1">
+                            <Input
+                                value={globalFilter}
+                                onChange={(e) => setGlobalFilter(e.target.value)}
+                                placeholder="Buscar por nombre, email, empresa, plan…"
+                                className="h-9"
+                            />
 
-                <div className="mt-3 flex gap-2">
-                    <Input
-                        value={globalFilter}
-                        onChange={(e) => setGlobalFilter(e.target.value)}
-                        placeholder="Buscar por nombre, email, empresa, plan…"
-                        className="h-9"
-                    />
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="ml-auto">
+                                        <Ellipsis className="h-4 w-4 md:hidden" />
+                                        <span className="hidden md:inline">Filtrar</span>
+                                        <ChevronDown className="ml-2 h-4 w-4 hidden md:inline" />
+                                    </Button>
+                                </DropdownMenuTrigger>
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="ml-auto">
-                                <Ellipsis className="h-4 w-4 md:hidden" />
-                                <span className="hidden md:inline">Filtrar</span>
-                                <ChevronDown className="ml-2 h-4 w-4 hidden md:inline" />
-                            </Button>
-                        </DropdownMenuTrigger>
-
-                        <DropdownMenuContent align="end">
-                            {table
-                                .getAllColumns()
-                                .filter((column) => column.getCanHide())
-                                .map((column) => {
-                                    return (
-                                        <DropdownMenuCheckboxItem
-                                            key={column.id}
-                                            checked={column.getIsVisible()}
-                                            onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                                        >
-                                            {COLUMNS_LABELS[column.id] || column.id}
-                                        </DropdownMenuCheckboxItem>
-                                    );
-                                })}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            </CardHeader>
-
-            <CardContent className="border-border">
-                <div className="rounded-md border border-border">
-                    <Table>
-                        <TableHeader>
-                            {table.getHeaderGroups().map((hg) => (
-                                <TableRow key={hg.id} className="border-border">
-                                    {hg.headers.map((header) => (
-                                        <TableHead key={header.id} className="text-xs">
-                                            {header.isPlaceholder
-                                                ? null
-                                                : flexRender(header.column.columnDef.header, header.getContext())}
-                                        </TableHead>
-                                    ))}
-                                </TableRow>
-                            ))}
-                        </TableHeader>
-
-                        <TableBody>
-                            {table.getRowModel().rows?.length ? (
-                                table.getRowModel().rows.map((row) => (
-                                    <TableRow key={row.id} className="h-10 border-border">
-                                        {row.getVisibleCells().map((cell) => (
-                                            <TableCell key={cell.id} className="py-0 align-middle">
-                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                            </TableCell>
-                                        ))}
-                                    </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={table.getAllColumns().length}
-                                        className="py-6 text-center text-sm"
-                                    >
-                                        No hay resultados.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                {/* Pagination (shadcn style) */}
-                <div className="mt-3 flex items-center justify-between gap-2">
-                    <div className="text-xs text-muted-foreground">
-                        Mostrando{" "}
-                        <b>{table.getRowModel().rows.length}</b> de{" "}
-                        <b>{table.getFilteredRowModel().rows.length}</b> resultados
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => table.setPageIndex(0)}
-                            disabled={!table.getCanPreviousPage()}
-                        >
-                            <ChevronsLeft className="h-4 w-4" />
-                        </Button>
-
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                        </Button>
-
-                        <div className="px-2 text-xs">
-                            Página <b>{table.getState().pagination.pageIndex + 1}</b> /{" "}
-                            <b>{table.getPageCount()}</b>
+                                <DropdownMenuContent align="end">
+                                    {table
+                                        .getAllColumns()
+                                        .filter((column) => column.getCanHide())
+                                        .map((column) => {
+                                            return (
+                                                <DropdownMenuCheckboxItem
+                                                    key={column.id}
+                                                    checked={column.getIsVisible()}
+                                                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                                                >
+                                                    {COLUMNS_LABELS[column.id] || column.id}
+                                                </DropdownMenuCheckboxItem>
+                                            );
+                                        })}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
-
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
-                        >
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
-
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                            disabled={!table.getCanNextPage()}
-                        >
-                            <ChevronsRight className="h-4 w-4" />
-                        </Button>
                     </div>
                 </div>
+            </div>
 
-                {/* Dialog editar (igual que el tuyo) */}
-                <Dialog
-                    open={dialog.open}
-                    onOpenChange={(open) => setDialog((s) => (open ? s : emptyDialog))}
-                >
-                    <DialogContent className="sm:max-w-[520px] rounded-2xl">
-                        <DialogHeader>
-                            <DialogTitle className="text-base">Editar pagos</DialogTitle>
-                            <DialogDescription>
-                                Configura precio, medio y fecha de vencimiento.
-                            </DialogDescription>
-                        </DialogHeader>
 
-                        <ScrollArea className="max-h-[70vh] pr-3">
-                            <div className="grid gap-2 p-2">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="grid gap-1">
-                                        <label className="text-muted-foreground">Precio</label>
-                                        <Input
-                                            value={dialog.form.price}
-                                            onChange={(e) =>
-                                                setDialog((s) => ({
-                                                    ...s,
-                                                    form: { ...s.form, price: e.target.value },
-                                                }))
-                                            }
-                                            placeholder="Ej: 129000"
-                                            className="h-9"
-                                        />
-                                    </div>
+            {/* Scroll interno para el content */}
+            <div className="flex-1 overflow-y-auto">
+                <div className="grid grid-cols-1 gap-4">
+                    <Card className="border-border">
+                        <CardContent>
+                            <Table className="w-full border-border table-auto">
+                                <TableHeader>
+                                    {table.getHeaderGroups().map((hg) => (
+                                        <TableRow key={hg.id} className="border-border">
+                                            {hg.headers.map((header) => (
+                                                <TableHead key={header.id} className="text-xs">
+                                                    {header.isPlaceholder
+                                                        ? null
+                                                        : flexRender(header.column.columnDef.header, header.getContext())}
+                                                </TableHead>
+                                            ))}
+                                        </TableRow>
+                                    ))}
+                                </TableHeader>
 
-                                    <div className="grid gap-1">
-                                        <label className="text-muted-foreground">Moneda</label>
-                                        <Input
-                                            value={dialog.form.currencyCode}
-                                            onChange={(e) =>
-                                                setDialog((s) => ({
-                                                    ...s,
-                                                    form: { ...s.form, currencyCode: e.target.value },
-                                                }))
-                                            }
-                                            placeholder="COP"
-                                            className="h-9"
-                                        />
-                                    </div>
+                                <TableBody>
+                                    {table.getRowModel().rows?.length ? (
+                                        table.getRowModel().rows.map((row) => (
+                                            <TableRow key={row.id} className="h-10 border-border">
+                                                {row.getVisibleCells().map((cell) => (
+                                                    <TableCell key={cell.id} className="py-0 align-middle">
+                                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                    </TableCell>
+                                                ))}
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell
+                                                colSpan={table.getAllColumns().length}
+                                                className="py-6 text-center text-sm"
+                                            >
+                                                No hay resultados.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+
+                            <div className="mt-3 flex items-center justify-between gap-2">
+                                <div className="text-xs text-muted-foreground">
+                                    Mostrando{" "}
+                                    <b>{table.getRowModel().rows.length}</b> de{" "}
+                                    <b>{table.getFilteredRowModel().rows.length}</b> resultados
                                 </div>
 
-                                <div className="grid gap-1">
-                                    <label className="text-muted-foreground">Medio de pago</label>
-                                    <Input
-                                        value={dialog.form.paymentMethodLabel}
-                                        onChange={(e) =>
-                                            setDialog((s) => ({
-                                                ...s,
-                                                form: { ...s.form, paymentMethodLabel: e.target.value },
-                                            }))
-                                        }
-                                        placeholder="Ej: Transferencia / Nequi / Stripe"
-                                        className="h-9"
-                                    />
-                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => table.setPageIndex(0)}
+                                        disabled={!table.getCanPreviousPage()}
+                                    >
+                                        <ChevronsLeft className="h-4 w-4" />
+                                    </Button>
 
-                                <div className="grid gap-1">
-                                    <label className="text-muted-foreground">
-                                        Instrucciones / notas
-                                    </label>
-                                    <Input
-                                        value={dialog.form.paymentNotes}
-                                        onChange={(e) =>
-                                            setDialog((s) => ({
-                                                ...s,
-                                                form: { ...s.form, paymentNotes: e.target.value },
-                                            }))
-                                        }
-                                        placeholder="Ej: Cuenta, link, referencia, etc."
-                                        className="h-9"
-                                    />
-                                </div>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => table.previousPage()}
+                                        disabled={!table.getCanPreviousPage()}
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Button>
 
-                                <div className="grid gap-1">
-                                    <label className="text-muted-foreground">Días de gracia</label>
-                                    <Input
-                                        value={dialog.form.graceDays}
-                                        onChange={(e) =>
-                                            setDialog((s) => ({
-                                                ...s,
-                                                form: { ...s.form, graceDays: e.target.value },
-                                            }))
-                                        }
-                                        placeholder="0"
-                                        className="h-9"
-                                    />
-                                </div>
-
-                                <div className="mt-2 grid gap-3">
-                                    <div className="grid gap-1">
-                                        <label className="text-muted-foreground">Servicio</label>
-                                        <Input
-                                            value={dialog.form.serviceName}
-                                            onChange={(e) =>
-                                                setDialog((s) => ({
-                                                    ...s,
-                                                    form: { ...s.form, serviceName: e.target.value },
-                                                }))
-                                            }
-                                            placeholder="Ej: Agente IA / CRM / Licencia"
-                                            className="h-9"
-                                        />
+                                    <div className="px-2 text-xs">
+                                        Página <b>{table.getState().pagination.pageIndex + 1}</b> /{" "}
+                                        <b>{table.getPageCount()}</b>
                                     </div>
 
-                                    <div className="grid gap-1">
-                                        <label className="text-muted-foreground">
-                                            Número notificación (remoteJid destino)
-                                        </label>
-                                        <Input
-                                            value={dialog.form.notifyRemoteJid}
-                                            onChange={(e) =>
-                                                setDialog((s) => ({
-                                                    ...s,
-                                                    form: { ...s.form, notifyRemoteJid: e.target.value },
-                                                }))
-                                            }
-                                            placeholder="Ej: 573001112233 o 573001112233@s.whatsapp.net"
-                                            className="h-9"
-                                        />
-                                        <p className="text-[11px] text-muted-foreground">
-                                            Si queda vacío, se usará el <b>notificationNumber</b> del
-                                            usuario.
-                                        </p>
-                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => table.nextPage()}
+                                        disabled={!table.getCanNextPage()}
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
 
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div className="grid gap-1">
-                                            <label className="text-muted-foreground">Fecha inicio</label>
-                                            <Input
-                                                type="date"
-                                                value={dialog.form.serviceStartAt}
-                                                onChange={(e) =>
-                                                    setDialog((s) => ({
-                                                        ...s,
-                                                        form: { ...s.form, serviceStartAt: e.target.value },
-                                                    }))
-                                                }
-                                                className="h-9"
-                                            />
-                                        </div>
-
-                                        <div className="grid gap-1">
-                                            <label className="text-muted-foreground">
-                                                Fecha de pago (vence)
-                                            </label>
-                                            <Input
-                                                type="date"
-                                                value={dialog.form.dueDate}
-                                                onChange={(e) =>
-                                                    setDialog((s) => ({
-                                                        ...s,
-                                                        form: { ...s.form, dueDate: e.target.value },
-                                                    }))
-                                                }
-                                                className="h-9"
-                                            />
-                                        </div>
-                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                                        disabled={!table.getCanNextPage()}
+                                    >
+                                        <ChevronsRight className="h-4 w-4" />
+                                    </Button>
                                 </div>
                             </div>
-                        </ScrollArea>
 
-                        <DialogFooter className="mt-2">
-                            <Button
-                                variant="outline"
-                                onClick={() => setDialog(emptyDialog)}
-                                disabled={!!dialog.loading}
+                            <Dialog
+                                open={dialog.open}
+                                onOpenChange={(open) => setDialog((s) => (open ? s : emptyDialog))}
                             >
-                                Cancelar
-                            </Button>
-                            <Button onClick={saveEdit} disabled={!!dialog.loading}>
-                                Guardar
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-            </CardContent>
-        </Card>
+                                <DialogContent className="sm:max-w-[520px] rounded-2xl">
+                                    <DialogHeader>
+                                        <DialogTitle className="text-base">Editar pagos</DialogTitle>
+                                        <DialogDescription>
+                                            Configura precio, medio y fecha de vencimiento.
+                                        </DialogDescription>
+                                    </DialogHeader>
+
+                                    <ScrollArea className="max-h-[75vh] pr-3">
+                                        <div className="grid gap-2 p-2">
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="grid gap-1">
+                                                    <label className="text-muted-foreground">Precio</label>
+                                                    <Input
+                                                        value={dialog.form.price}
+                                                        onChange={(e) =>
+                                                            setDialog((s) => ({
+                                                                ...s,
+                                                                form: { ...s.form, price: e.target.value },
+                                                            }))
+                                                        }
+                                                        placeholder="Ej: 129000"
+                                                        className="h-9"
+                                                    />
+                                                </div>
+
+                                                <div className="grid gap-1">
+                                                    <label className="text-muted-foreground">Moneda</label>
+                                                    <Input
+                                                        value={dialog.form.currencyCode}
+                                                        onChange={(e) =>
+                                                            setDialog((s) => ({
+                                                                ...s,
+                                                                form: { ...s.form, currencyCode: e.target.value },
+                                                            }))
+                                                        }
+                                                        placeholder="COP"
+                                                        className="h-9"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="grid gap-1">
+                                                <label className="text-muted-foreground">Medio de pago</label>
+                                                <Input
+                                                    value={dialog.form.paymentMethodLabel}
+                                                    onChange={(e) =>
+                                                        setDialog((s) => ({
+                                                            ...s,
+                                                            form: { ...s.form, paymentMethodLabel: e.target.value },
+                                                        }))
+                                                    }
+                                                    placeholder="Ej: Transferencia / Nequi / Stripe"
+                                                    className="h-9"
+                                                />
+                                            </div>
+
+                                            <div className="grid gap-1">
+                                                <label className="text-muted-foreground">
+                                                    Instrucciones / notas
+                                                </label>
+                                                <Input
+                                                    value={dialog.form.paymentNotes}
+                                                    onChange={(e) =>
+                                                        setDialog((s) => ({
+                                                            ...s,
+                                                            form: { ...s.form, paymentNotes: e.target.value },
+                                                        }))
+                                                    }
+                                                    placeholder="Ej: Cuenta, link, referencia, etc."
+                                                    className="h-9"
+                                                />
+                                            </div>
+
+                                            <div className="grid gap-1">
+                                                <label className="text-muted-foreground">Días de gracia</label>
+                                                <Input
+                                                    value={dialog.form.graceDays}
+                                                    onChange={(e) =>
+                                                        setDialog((s) => ({
+                                                            ...s,
+                                                            form: { ...s.form, graceDays: e.target.value },
+                                                        }))
+                                                    }
+                                                    placeholder="0"
+                                                    className="h-9"
+                                                />
+                                            </div>
+
+                                            <div className="mt-2 grid gap-3">
+                                                <div className="grid gap-1">
+                                                    <label className="text-muted-foreground">Servicio</label>
+                                                    <Input
+                                                        value={dialog.form.serviceName}
+                                                        onChange={(e) =>
+                                                            setDialog((s) => ({
+                                                                ...s,
+                                                                form: { ...s.form, serviceName: e.target.value },
+                                                            }))
+                                                        }
+                                                        placeholder="Ej: Agente IA / CRM / Licencia"
+                                                        className="h-9"
+                                                    />
+                                                </div>
+
+                                                <div className="grid gap-1">
+                                                    <label className="text-muted-foreground">
+                                                        Número notificación (remoteJid destino)
+                                                    </label>
+                                                    <Input
+                                                        value={dialog.form.notifyRemoteJid}
+                                                        onChange={(e) =>
+                                                            setDialog((s) => ({
+                                                                ...s,
+                                                                form: { ...s.form, notifyRemoteJid: e.target.value },
+                                                            }))
+                                                        }
+                                                        placeholder="Ej: 573001112233 o 573001112233@s.whatsapp.net"
+                                                        className="h-9"
+                                                    />
+                                                    <p className="text-[11px] text-muted-foreground">
+                                                        Si queda vacío, se usará el <b>notificationNumber</b> del
+                                                        usuario.
+                                                    </p>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="grid gap-1">
+                                                        <label className="text-muted-foreground">Fecha inicio</label>
+                                                        <Input
+                                                            type="date"
+                                                            value={dialog.form.serviceStartAt}
+                                                            onChange={(e) =>
+                                                                setDialog((s) => ({
+                                                                    ...s,
+                                                                    form: { ...s.form, serviceStartAt: e.target.value },
+                                                                }))
+                                                            }
+                                                            className="h-9"
+                                                        />
+                                                    </div>
+
+                                                    <div className="grid gap-1">
+                                                        <label className="text-muted-foreground">
+                                                            Fecha de pago (vence)
+                                                        </label>
+                                                        <Input
+                                                            type="date"
+                                                            value={dialog.form.dueDate}
+                                                            onChange={(e) =>
+                                                                setDialog((s) => ({
+                                                                    ...s,
+                                                                    form: { ...s.form, dueDate: e.target.value },
+                                                                }))
+                                                            }
+                                                            className="h-9"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </ScrollArea>
+
+                                    <DialogFooter className="mt-2">
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => setDialog(emptyDialog)}
+                                            disabled={!!dialog.loading}
+                                        >
+                                            Cancelar
+                                        </Button>
+                                        <Button onClick={saveEdit} disabled={!!dialog.loading}>
+                                            Guardar
+                                        </Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        </div>
     );
 }
