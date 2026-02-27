@@ -74,40 +74,44 @@ export type ClientRow = {
     billing?: UserBilling | null;
 };
 
-// ------- Dialog state
-export type EditDialogState = {
-    open: boolean;
-    user?: ClientRow | null;
-    loading?: boolean;
-    form: {
-        dueDate: string; // yyyy-mm-dd
-        price: string;
-        currencyCode: string;
-        paymentMethodLabel: string;
-        paymentNotes: string;
-        graceDays: string;
-        serviceName: string;
-        notifyRemoteJid: string;
-        serviceStartAt: string; // date
-        serviceEndsAt: string;  // date
-    };
+export type BillingEditForm = {
+    dueDate: string;
+    price: any;
+    currencyCode: string;
+    paymentMethodLabel: string;
+    paymentNotes: string;
+    graceDays: string;
+    serviceName: string;
+    notifyRemoteJid: string;
+    serviceStartAt: string;
+    serviceEndsAt: string;
 };
 
-export const emptyDialog: EditDialogState = {
-    open: false,
-    user: null,
-    loading: false,
-    form: {
-        dueDate: "",
-        price: "",
-        currencyCode: "COP",
-        paymentMethodLabel: "",
-        paymentNotes: "",
-        graceDays: "0",
+export type EditDialogState = {
+    open: boolean;
+    loading: boolean;
+    user: ClientRow | null;
+    form: BillingEditForm;
 
-        serviceName: "",
-        notifyRemoteJid: "",
-        serviceStartAt: "",
-        serviceEndsAt: "",
-    },
+    original?: BillingEditForm;
+};
+
+
+export const emptyDialog: EditDialogState = {
+  open: false,
+  loading: false,
+  user: null,
+  form: {
+    dueDate: "",
+    price: "",
+    currencyCode: "COP",
+    paymentMethodLabel: "",
+    paymentNotes: "",
+    graceDays: "0",
+    serviceName: "",
+    notifyRemoteJid: "",
+    serviceStartAt: "",
+    serviceEndsAt: "",
+  },
+  original: undefined, 
 };

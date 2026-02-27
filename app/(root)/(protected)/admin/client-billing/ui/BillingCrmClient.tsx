@@ -79,6 +79,8 @@ import { daysLeftService, StatusBadgeAccess, StatusBadgePaid } from "../helpers"
 import { DICTIONARY_COLS } from "@/types/ai-assistence-chat";
 import { DaysLeftCell } from "../components";
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 export function BillingCrmClient({
     initial,
 }: {
@@ -113,6 +115,14 @@ export function BillingCrmClient({
             prev.map((u) => (u.id === userId ? { ...u, billing: res.data ?? null } : u))
         );
     }
+
+    const canSave = useMemo(() => {
+        if (!dialog.open) return false;
+        if (dialog.loading) return false;
+        if (!dialog.user) return false;
+        if (!dialog.original) return true;
+        return hasChanges(dialog.form, dialog.original);
+    }, [dialog.open, dialog.loading, dialog.user, dialog.form, dialog.original]);
 
     async function handleMarkPaid(userId: string) {
         const res = await markUserAsPaid(userId);
@@ -154,63 +164,115 @@ export function BillingCrmClient({
 
         const b: UserBilling | null = res.data ?? null;
 
+        const original = {
+            dueDate: b?.dueDate ? fmtDateShort(b.dueDate) : "",
+            price: b?.price ?? "",
+            currencyCode: b?.currencyCode ?? "COP",
+            paymentMethodLabel: b?.paymentMethodLabel ?? "",
+            paymentNotes: b?.paymentNotes ?? "",
+            graceDays: String(b?.graceDays ?? 0),
+            serviceName: b?.serviceName ?? "",
+            notifyRemoteJid: b?.notifyRemoteJid ?? "",
+            serviceStartAt: b?.serviceStartAt ? fmtDateShort(b.serviceStartAt) : "",
+            serviceEndsAt: b?.serviceEndsAt ? fmtDateShort(b.serviceEndsAt) : "",
+        };
+
         setDialog({
             open: true,
             user: u,
             loading: false,
-            form: {
-                dueDate: b?.dueDate ? fmtDateShort(b.dueDate) : "",
-                price: b?.price ?? "",
-                currencyCode: b?.currencyCode ?? "COP",
-                paymentMethodLabel: b?.paymentMethodLabel ?? "",
-                paymentNotes: b?.paymentNotes ?? "",
-                graceDays: String(b?.graceDays ?? 0),
-                serviceName: b?.serviceName ?? "",
-                notifyRemoteJid: b?.notifyRemoteJid ?? "",
-                serviceStartAt: b?.serviceStartAt ? fmtDateShort(b.serviceStartAt) : "",
-                serviceEndsAt: b?.serviceEndsAt ? fmtDateShort(b.serviceEndsAt) : "",
-            },
+            form: original,
+            original,
         });
+    }
+    function normalizeEditForm(f: any) {
+        return {
+            dueDate: (f?.dueDate ?? "").trim(),
+            price: String(f?.price ?? "").trim(),
+            currencyCode: (f?.currencyCode ?? "COP").trim(),
+            paymentMethodLabel: (f?.paymentMethodLabel ?? "").trim(),
+            paymentNotes: (f?.paymentNotes ?? "").trim(),
+            graceDays: String(f?.graceDays ?? "0").trim(),
+            serviceName: (f?.serviceName ?? "").trim(),
+            notifyRemoteJid: (f?.notifyRemoteJid ?? "").trim(),
+            serviceStartAt: (f?.serviceStartAt ?? "").trim(),
+            serviceEndsAt: (f?.serviceEndsAt ?? "").trim(),
+        };
+    }
+
+    function hasChanges(current: any, original: any) {
+        const a = normalizeEditForm(current);
+        const b = normalizeEditForm(original);
+        return JSON.stringify(a) !== JSON.stringify(b);
     }
 
     async function saveEdit() {
         const u = dialog.user;
         if (!u) return;
 
+        const original = dialog.original ?? null;
+
+        if (original && !hasChanges(dialog.form, original)) {
+            toast.message("No hay cambios para guardar.");
+            setDialog((s) => ({ ...s, loading: false }));
+            return;
+        }
+
         try {
             setDialog((s) => ({ ...s, loading: true }));
 
-            const cfg = await upsertUserBillingConfig({
-                userId: u.id,
-                price: dialog.form.price || null,
-                currencyCode: dialog.form.currencyCode || "COP",
-                paymentMethodLabel: dialog.form.paymentMethodLabel || null,
-                paymentNotes: dialog.form.paymentNotes || null,
-                graceDays: Number(dialog.form.graceDays || 0),
-                serviceName: dialog.form.serviceName || null,
-                notifyRemoteJid: dialog.form.notifyRemoteJid || null,
-                serviceStartAt: dialog.form.serviceStartAt || null,
-                serviceEndsAt: dialog.form.serviceEndsAt || null,
-            });
+            // Solo actualiza config si cambió algo del config (sin contar dueDate)
+            const curr = normalizeEditForm(dialog.form);
+            const prev = original ? normalizeEditForm(original) : null;
 
-            if (!cfg.success) {
-                toast.error(cfg.message);
-                setDialog((s) => ({ ...s, loading: false }));
-                return;
+            const configChanged =
+                !prev ||
+                curr.price !== prev.price ||
+                curr.currencyCode !== prev.currencyCode ||
+                curr.paymentMethodLabel !== prev.paymentMethodLabel ||
+                curr.paymentNotes !== prev.paymentNotes ||
+                curr.graceDays !== prev.graceDays ||
+                curr.serviceName !== prev.serviceName ||
+                curr.notifyRemoteJid !== prev.notifyRemoteJid ||
+                curr.serviceStartAt !== prev.serviceStartAt ||
+                curr.serviceEndsAt !== prev.serviceEndsAt;
+
+            const dueChanged = !prev || curr.dueDate !== prev.dueDate;
+
+            if (configChanged) {
+                const cfg = await upsertUserBillingConfig({
+                    userId: u.id,
+                    price: curr.price || null,
+                    currencyCode: curr.currencyCode || "COP",
+                    paymentMethodLabel: curr.paymentMethodLabel || null,
+                    paymentNotes: curr.paymentNotes || null,
+                    graceDays: Number(curr.graceDays || 0),
+                    serviceName: curr.serviceName || null,
+                    notifyRemoteJid: curr.notifyRemoteJid || null,
+                    serviceStartAt: curr.serviceStartAt || null,
+                    serviceEndsAt: curr.serviceEndsAt || null,
+                });
+
+                if (!cfg.success) {
+                    toast.error(cfg.message);
+                    setDialog((s) => ({ ...s, loading: false }));
+                    return;
+                }
             }
 
-            const due = dialog.form.dueDate?.trim() ? dialog.form.dueDate : null;
-            const dueRes = await setUserBillingDueDate(u.id, due);
+            if (dueChanged) {
+                const due = curr.dueDate ? curr.dueDate : null;
+                const dueRes = await setUserBillingDueDate(u.id, due);
 
-            if (!dueRes.success) {
-                toast.error(dueRes.message);
-                setDialog((s) => ({ ...s, loading: false }));
-                return;
+                if (!dueRes.success) {
+                    toast.error(dueRes.message);
+                    setDialog((s) => ({ ...s, loading: false }));
+                    return;
+                }
             }
 
             toast.success("Pagos actualizados.");
             await refreshBillingForUser(u.id);
-
             setDialog(emptyDialog);
         } catch (e: any) {
             console.error("[saveEdit]", e);
@@ -788,7 +850,7 @@ export function BillingCrmClient({
                                         >
                                             Cancelar
                                         </Button>
-                                        <Button onClick={saveEdit} disabled={!!dialog.loading}>
+                                        <Button onClick={saveEdit} disabled={!canSave}>
                                             Guardar
                                         </Button>
                                     </DialogFooter>
