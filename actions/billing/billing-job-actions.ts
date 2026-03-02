@@ -3,21 +3,28 @@
 
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { addDays, endOfDay, differenceInCalendarDays, isSameDay } from "date-fns";
+import { addDays, endOfDay, differenceInCalendarDays, format, isSameDay } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 import { buildBillingMessage } from "./billing-message-templates";
-import { sendingMessages } from "../sending-messages-actions";
 import { ResponseFormat } from "@/types/billing";
 import { onlyDigitsPhone, pickTemplate } from "./helpers/billing-helpers";
 import { assertAdminOrReseller } from "./helpers/billing-helpers.server";
 
 /**
  * Job:
- * - Envía recordatorio a 3 días antes
- * - Envía "Hoy vence" el mismo día
- * - Envía "Expirado" cuando ya pasó el graceDays (o si graceDays=3, justo a -3)
- * - Suspende servicio cuando sobrepasa graceDays (mantengo tu suspensión, pero ahora queda alineada)
+ * - Encola recordatorio en tabla `seguimientos` a 3 días antes
+ * - Encola "Hoy vence" el mismo día
+ * - Encola "Expirado" cuando ya pasó el graceDays (o si graceDays=3, justo a -3)
+ * - Suspende servicio cuando sobrepasa graceDays
  */
-export async function runBillingDailyJob(): Promise<
+type BillingJobResult = ResponseFormat<{
+    attempted: number;
+    sent: number;
+    suspendedApplied: number;
+    errors: number;
+}>;
+
+async function runBillingDailyJobInternal(requireAuth: boolean): Promise<
     ResponseFormat<{
         attempted: number;
         sent: number;
@@ -26,10 +33,14 @@ export async function runBillingDailyJob(): Promise<
     }>
 > {
     try {
-        const me = await currentUser();
-        if (!me) return { success: false, message: "No autorizado." };
-        assertAdminOrReseller(me.role);
+        const BILLING_SEGUIMIENTO_TYPE = "billing-text";
+        if (requireAuth) {
+            const me = await currentUser();
+            if (!me) return { success: false, message: "No autorizado." };
+            assertAdminOrReseller(me.role);
+        }
 
+        const BILLING_TZ = "America/Bogota";
         const now = new Date();
 
         // Tomamos todos los UNPAID ACTIVE con dueDate <= +3 días (para cubrir 3d antes, hoy y vencidos recientes)
@@ -99,7 +110,7 @@ export async function runBillingDailyJob(): Promise<
                 }
 
                 const user = b.user;
-                const urlevo = user.apiKey?.url;
+                const urlevo = user.apiKey?.url?.trim();
                 const instance = user.instancias?.[0];
                 const target = (b.notifyRemoteJid?.trim() || user.notificationNumber || "").trim();
                 // si viene con @s.whatsapp.net lo respetamos; si no, lo normalizamos
@@ -108,9 +119,6 @@ export async function runBillingDailyJob(): Promise<
                     : onlyDigitsPhone(target);
 
                 if (!urlevo || !instance?.instanceName || !instance?.instanceId || !remoteJid) continue;
-
-                const url = `https://${urlevo}/message/sendText/${instance.instanceName}`;
-                const apikey = instance.instanceId;
 
                 // Medios de pago: prioriza notes (link/instrucciones) y si no, label
                 const paymentText = (b.paymentNotes?.trim() || b.paymentMethodLabel?.trim() || "").trim() || "—";
@@ -137,33 +145,42 @@ export async function runBillingDailyJob(): Promise<
 
                 attempted++;
 
-                const result = await sendingMessages({ url, apikey, remoteJid, text });
+                const scheduleAt = format(toZonedTime(new Date(), BILLING_TZ), "dd/MM/yyyy HH:mm");
 
-                if (result.success) {
-                    sent++;
+                await db.seguimiento.create({
+                    data: {
+                        idNodo: "",
+                        serverurl: `https://${urlevo}`,
+                        instancia: instance.instanceName,
+                        apikey: instance.instanceId,
+                        remoteJid,
+                        mensaje: text,
+                        tipo: BILLING_SEGUIMIENTO_TYPE,
+                        time: scheduleAt,
+                    },
+                });
 
+                sent++;
+
+                await db.userBilling.update({
+                    where: { id: b.id },
+                    data: {
+                        lastReminderAt: new Date(),
+                        lastReminderDueDate: due,
+                    },
+                });
+
+                // Si hoy está expirado (beyond grace), también suspendemos (corte alineado al mensaje)
+                if (template === "EXPIRED") {
                     await db.userBilling.update({
                         where: { id: b.id },
                         data: {
-                            lastReminderAt: new Date(),
-                            lastReminderDueDate: due,
+                            accessStatus: "SUSPENDED",
+                            suspendedAt: new Date(),
+                            suspendedReason: "Vencido sin pago",
                         },
                     });
-
-                    // Si hoy está expirado (beyond grace), también suspendemos (corte alineado al mensaje)
-                    if (template === "EXPIRED") {
-                        await db.userBilling.update({
-                            where: { id: b.id },
-                            data: {
-                                accessStatus: "SUSPENDED",
-                                suspendedAt: new Date(),
-                                suspendedReason: "Vencido sin pago",
-                            },
-                        });
-                        suspendedApplied++;
-                    }
-                } else {
-                    errors++;
+                    suspendedApplied++;
                 }
             } catch (e) {
                 console.error("[runBillingDailyJob.loop]", e);
@@ -180,4 +197,12 @@ export async function runBillingDailyJob(): Promise<
         console.error("[runBillingDailyJob]", e);
         return { success: false, message: e?.message ?? "Error ejecutando job." };
     }
+}
+
+export async function runBillingDailyJob(): Promise<BillingJobResult> {
+    return runBillingDailyJobInternal(true);
+}
+
+export async function runBillingDailyJobSystem(): Promise<BillingJobResult> {
+    return runBillingDailyJobInternal(false);
 }

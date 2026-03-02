@@ -1,5 +1,4 @@
 // app/actions/billing-message-templates.ts
-"use server";
 
 import { BillingTemplateType } from "@/types/billing";
 import { fmtDateDDMMYYYY, fmtPriceLine } from "./helpers/billing-helpers";
