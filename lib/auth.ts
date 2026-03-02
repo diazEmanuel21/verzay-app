@@ -1,6 +1,7 @@
 // lib/auth.ts
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { isAdminLike } from "@/lib/rbac";
 import { cookies } from "next/headers";
 
 // Cache para la duración de la request
@@ -28,7 +29,7 @@ export async function currentUser(request?: Request) {
 
     // decide qué userId usar
     const effectiveUserId =
-        impersonateId && realUser.role === "admin" ? impersonateId : realUser.id;
+        impersonateId && isAdminLike(realUser.role) ? impersonateId : realUser.id;
 
     const userPromise = db.user.findUnique({
         where: { id: effectiveUserId }, // por id (no email)

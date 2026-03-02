@@ -21,7 +21,7 @@ export const userSchema = z.object({
     apiUrl: z
         .string()
         .min(30, "URL demasiado corta"),
-    role: z.enum(["user", "admin", "reseller"], {
+    role: z.enum(["user", "admin", "reseller", "super_admin"], {
         required_error: "Debes seleccionar un rol",
     }),
     plan: z.enum(PLAN_VALUES),

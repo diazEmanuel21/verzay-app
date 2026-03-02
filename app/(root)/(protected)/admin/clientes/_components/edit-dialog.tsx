@@ -48,6 +48,7 @@ export const EditDialog = ({
     user: 'Usuario',
     admin: 'Administrador',
     reseller: 'Reseller',
+    super_admin: 'Super administrador',
   };
 
   const [tz, setTz] = useState<string>(user.timezone ?? "");

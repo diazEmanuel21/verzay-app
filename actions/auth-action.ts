@@ -2,6 +2,7 @@
 
 import { auth, signIn } from "@/auth";
 import { db } from "@/lib/db";
+import { isAdminLike } from "@/lib/rbac";
 import { loginSchema, registerSchema } from "@/lib/zod";
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
@@ -95,7 +96,7 @@ export async function adminChangeUserPassword(input: {
 }) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "No auth" };
-  if (session.user.role !== "admin") return { success: false, message: "No autorizado" };
+  if (!isAdminLike(session.user.role)) return { success: false, message: "No autorizado" };
 
   const userId = input.userId;
   const oldPassword = (input.oldPassword ?? "").trim();
@@ -145,7 +146,7 @@ export async function impersonateUser(targetUserId: string) {
     select: { role: true },
   });
 
-  if (!realUser || realUser.role !== "admin") {
+  if (!realUser || !isAdminLike(realUser.role)) {
     return { success: false, message: "No autorizado" };
   }
 

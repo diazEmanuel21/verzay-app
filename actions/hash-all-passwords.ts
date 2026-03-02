@@ -3,6 +3,7 @@
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { isAdminLike } from "@/lib/rbac";
 
 type HashProgress = {
     success: boolean;
@@ -30,7 +31,7 @@ export async function hashAllPasswords(): Promise<HashProgress> {
         if (!session?.user?.id) {
             return { success: false, phase: "auth", message: "No auth" };
         }
-        if (session.user.role !== "admin") {
+        if (!isAdminLike(session.user.role)) {
             return { success: false, phase: "auth", message: "No autorizado (solo admin)" };
         }
 

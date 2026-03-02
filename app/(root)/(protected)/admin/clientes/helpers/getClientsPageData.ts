@@ -4,6 +4,7 @@ import { currentUser } from "@/lib/auth";
 import { getEnrichedClients } from "@/actions/userClientDataActions";
 import { obtenerApiKeys } from "@/actions/api-action";
 import { getCountryCodes } from "@/actions/get-country-action";
+import { isAdminOrReseller } from "@/lib/rbac";
 import type { ClientInterface } from "@/lib/types";
 import type { ApiKey } from "@prisma/client";
 import type { Country } from "@/components/custom/CountryCodeSelect";
@@ -23,6 +24,7 @@ export async function getClientsPageData(): Promise<
     try {
         const user = await currentUser();
         if (!user) return { success: false, message: "No autorizado." };
+        if (!isAdminOrReseller(user.role)) return { success: false, message: "No autorizado." };
 
         const usersPromise =
             user.role === "reseller"

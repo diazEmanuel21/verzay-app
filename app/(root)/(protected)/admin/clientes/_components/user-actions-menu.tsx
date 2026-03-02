@@ -66,7 +66,7 @@ export const UserActionsMenu = ({ user, openDialogGetUserId, currentUserRol }: p
                     >
                         Contraseña
                     </DropdownMenuItem>
-                    {currentUserRol === 'admin' &&
+                    {(currentUserRol === 'admin' || currentUserRol === 'super_admin') &&
                         <DropdownMenuItem
                             onClick={() => openDialogGetUserId(user.id, 'tools', true,)}
                         >
@@ -84,7 +84,7 @@ export const UserActionsMenu = ({ user, openDialogGetUserId, currentUserRol }: p
                     >
                         Ingresar
                     </DropdownMenuItem>
-                    {currentUserRol === 'admin' &&
+                    {(currentUserRol === 'admin' || currentUserRol === 'super_admin') &&
                         <>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem

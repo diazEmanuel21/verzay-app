@@ -1,6 +1,7 @@
 'use server'
 
 import { currentUser } from "@/lib/auth";
+import { isAdminLike } from "@/lib/rbac";
 import { MainModule } from "./_components";
 import AccessDenied from "@/app/AccessDenied";
 
@@ -11,7 +12,7 @@ interface Props {
 const ModulePage = async ({ searchParams }: Props) => {
     const user = await currentUser();
 
-    if (!user || user?.role !== "admin") {
+    if (!user || !isAdminLike(user.role)) {
         return <AccessDenied />;
     };
 

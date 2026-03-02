@@ -47,14 +47,14 @@ export const TemplateList = ({ templates, onEdit, userRole, onDelete }: Template
                                     onClick={() => window.open(template.content, "_blank")}
                                     rel="noopener noreferrer"
                                 >
-                                   { userRole === 'admin' ? <Eye /> : 'Ver'}
+                                   {(userRole === 'admin' || userRole === 'super_admin') ? <Eye /> : 'Ver'}
                                 </Button>
                             ) : (
                                 <p className="text-muted-foreground">Sin descripción.</p>
                             )}
                         </>
                         {
-                            userRole === 'admin' &&
+                            (userRole === 'admin' || userRole === 'super_admin') &&
                             <>
                                 <Button
                                     variant="secondary"

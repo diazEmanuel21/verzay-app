@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { currentUser } from "@/lib/auth";
+import { isAdminOrReseller } from "@/lib/rbac";
 
 /**
  * Helpers SERVER (auth/guards/decimal)
@@ -11,7 +12,7 @@ export async function requireAuth() {
 }
 
 export function assertAdminOrReseller(role?: string | null) {
-  if (role !== "admin" && role !== "reseller") {
+  if (!isAdminOrReseller(role)) {
     throw new Error("No autorizado.");
   }
 }

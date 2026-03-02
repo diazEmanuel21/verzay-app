@@ -1,6 +1,8 @@
 'use server';
 
+import { currentUser } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { isAdminLike } from '@/lib/rbac';
 import { IaCredit } from '@prisma/client';
 
 
@@ -13,6 +15,11 @@ interface IaCreditResponse {
 // Obtener créditos por usuario
 export async function getIaCreditByUser(userId: string): Promise<IaCreditResponse> {
   try {
+    const me = await currentUser();
+    if (!me || !isAdminLike(me.role)) {
+      return { success: false, message: 'No autorizado' };
+    }
+
     if (!userId) {
       return { success: false, message: 'userId es requerido' };
     }
@@ -40,6 +47,11 @@ export async function createIaCreditForUser(
   used?: number
 ): Promise<IaCreditResponse> {
   try {
+    const me = await currentUser();
+    if (!me || !isAdminLike(me.role)) {
+      return { success: false, message: 'No autorizado' };
+    }
+
     if (!userId || total == null || !renewalDate) {
       return { success: false, message: 'Faltan datos obligatorios' };
     }
@@ -73,6 +85,11 @@ export async function rechargeIaCredit(
   used?: number
 ): Promise<IaCreditResponse> {
   try {
+    const me = await currentUser();
+    if (!me || !isAdminLike(me.role)) {
+      return { success: false, message: 'No autorizado' };
+    }
+
     if (!userId) {
       return { success: false, message: 'Usuario desconocido.' };
     }

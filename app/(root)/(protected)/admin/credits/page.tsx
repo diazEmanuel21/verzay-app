@@ -1,4 +1,7 @@
 import { CreditMain } from "./_components";
+import AccessDenied from "@/app/AccessDenied";
+import { currentUser } from "@/lib/auth";
+import { isAdminLike } from "@/lib/rbac";
 
 interface Props {
   searchParams: {
@@ -6,7 +9,13 @@ interface Props {
   };
 }
 
-const CreditPage = ({ searchParams }: Props) => {
+const CreditPage = async ({ searchParams }: Props) => {
+  const user = await currentUser();
+
+  if (!user || !isAdminLike(user.role)) {
+    return <AccessDenied />;
+  }
+
   const userId = searchParams.userId;
 
   if (!userId) {

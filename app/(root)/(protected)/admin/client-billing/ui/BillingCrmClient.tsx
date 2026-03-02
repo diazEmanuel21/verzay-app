@@ -80,6 +80,8 @@ import { BillingCrmFiltersCards, BillingSkeletton, DaysLeftCell } from "../compo
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+export const soonDays = 5;
+
 export function BillingCrmClient({
     initial,
 }: {
@@ -350,7 +352,6 @@ export function BillingCrmClient({
                     const left = parseInt(daysLeftService(due));
                     if (!Number.isFinite(left)) return false;
 
-                    const soonDays = 3;
                     return left >= 0 && left <= soonDays;
                 },
                 cell: ({ row }) => {
@@ -423,18 +424,34 @@ export function BillingCrmClient({
                 id: "paid",
                 header: "Pago",
                 accessorFn: (row) => row.billing?.billingStatus ?? "UNPAID",
+                filterFn: (row, columnId, filterValue) => {
+                    if (!filterValue) return true;
+                    return String(row.getValue(columnId)) === String(filterValue);
+                },
                 cell: ({ row }) => {
                     const b = row.original.billing ?? null;
-                    return <div className="py-2">{StatusBadgePaid(b?.billingStatus ?? "UNPAID")}</div>;
+                    return (
+                        <div className="py-2">
+                            {StatusBadgePaid(b?.billingStatus ?? "UNPAID")}
+                        </div>
+                    );
                 },
             },
             {
                 id: "access",
                 header: "Acceso",
                 accessorFn: (row) => row.billing?.accessStatus ?? "ACTIVE",
+                filterFn: (row, columnId, filterValue) => {
+                    if (!filterValue) return true;
+                    return String(row.getValue(columnId)) === String(filterValue);
+                },
                 cell: ({ row }) => {
                     const b = row.original.billing ?? null;
-                    return <div className="py-2">{StatusBadgeAccess(b?.accessStatus ?? "ACTIVE")}</div>;
+                    return (
+                        <div className="py-2">
+                            {StatusBadgeAccess(b?.accessStatus ?? "ACTIVE")}
+                        </div>
+                    );
                 },
             },
             {
@@ -549,7 +566,7 @@ export function BillingCrmClient({
                 <div className="flex justify-between items-center gap-2">
                     <div className="flex flex-row flex-1 gap-2">
                         <div className="flex flex-col gap-2 flex-1">
-                            <BillingCrmFiltersCards table={table} data={data} />
+                            <BillingCrmFiltersCards table={table} data={data} soonDays={soonDays} />
                             <div className="flex flex-row gap-1">
                                 <Input
                                     value={globalFilter}

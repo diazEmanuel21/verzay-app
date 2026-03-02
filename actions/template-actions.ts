@@ -1,7 +1,9 @@
 'use server'
 
 import { z } from 'zod'
+import { currentUser } from '@/lib/auth';
 import { db } from "@/lib/db";
+import { isAdminLike } from '@/lib/rbac';
 import { PromptTemplate } from '@prisma/client';
 
 export interface ModuleResponse {
@@ -27,8 +29,22 @@ const updateTemplateSchema = z.object({
     isActive: z.boolean(),
 })
 
+const assertCanManageTemplates = async (): Promise<ModuleResponse | null> => {
+    const me = await currentUser();
+    if (!me || !isAdminLike(me.role)) {
+        return {
+            success: false,
+            message: "No autorizado.",
+        };
+    }
+    return null;
+};
+
 export async function createTemplate(input: z.infer<typeof createTemplateSchema>): Promise<ModuleResponse> {
     try {
+        const unauthorized = await assertCanManageTemplates();
+        if (unauthorized) return unauthorized;
+
         const data = createTemplateSchema.parse(input)
 
         const existing = await db.promptTemplate.findUnique({
@@ -58,6 +74,9 @@ export async function createTemplate(input: z.infer<typeof createTemplateSchema>
 
 export async function updateTemplate(input: z.infer<typeof updateTemplateSchema>): Promise<ModuleResponse> {
     try {
+        const unauthorized = await assertCanManageTemplates();
+        if (unauthorized) return unauthorized;
+
         const data = updateTemplateSchema.parse(input)
 
         const exists = await db.promptTemplate.findUnique({ where: { id: data.id } })
@@ -90,6 +109,9 @@ export async function updateTemplate(input: z.infer<typeof updateTemplateSchema>
 
 export async function deleteTemplate(id: string): Promise<ModuleResponse> {
     try {
+        const unauthorized = await assertCanManageTemplates();
+        if (unauthorized) return unauthorized;
+
         const idSchema = z.string().uuid()
         idSchema.parse(id)
 
@@ -115,6 +137,9 @@ export async function deleteTemplate(id: string): Promise<ModuleResponse> {
 
 export async function getAllTemplates(): Promise<ModuleResponse> {
     try {
+        const unauthorized = await assertCanManageTemplates();
+        if (unauthorized) return unauthorized;
+
         const data = await db.promptTemplate.findMany({
             orderBy: { createdAt: 'desc' },
         })

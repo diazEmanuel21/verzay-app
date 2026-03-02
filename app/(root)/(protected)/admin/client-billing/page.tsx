@@ -1,6 +1,7 @@
 'use server'
 
 import { currentUser } from "@/lib/auth";
+import { isAdminLike } from "@/lib/rbac";
 import AccessDenied from "@/app/AccessDenied";
 import { getClientsWithBilling } from "@/actions/billing/billing-page-actions";
 import { BillingCrmClient } from "./ui/BillingCrmClient";
@@ -12,7 +13,7 @@ interface Props {
 const BillingCrmPage = async ({ searchParams }: Props) => {
     const user = await currentUser();
 
-    if (!user || user?.role !== "admin") {
+    if (!user || !isAdminLike(user.role)) {
         return <AccessDenied />;
     };
 

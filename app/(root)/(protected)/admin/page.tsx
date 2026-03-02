@@ -2,6 +2,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from '@/components/ui/button'
 import Header from '@/components/shared/header'
 import { currentUser } from '@/lib/auth'
+import { isAdminLike } from '@/lib/rbac'
 import Link from 'next/link'
 import { FileText, Handshake, LayoutGrid, PlugZap, UserCog, Wallet } from 'lucide-react'
 import AccessDenied from '@/app/AccessDenied'
@@ -9,7 +10,7 @@ import AccessDenied from '@/app/AccessDenied'
 const AdminPage = async () => {
   const user = await currentUser()
 
-  if (!user || user?.role !== "admin") {
+  if (!user || !isAdminLike(user.role)) {
     return <AccessDenied />;
   };
 

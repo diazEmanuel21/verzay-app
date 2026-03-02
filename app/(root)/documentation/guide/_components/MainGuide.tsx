@@ -141,7 +141,7 @@ export function MainGuide({ user }: MainGuideProps) {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            {user.role === Role.admin &&
+            {(user.role === Role.admin || user.role === Role.super_admin) &&
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
                   <Button
@@ -200,9 +200,9 @@ export function MainGuide({ user }: MainGuideProps) {
                         onClick={() => window.open(manual.url, "_blank")}
                         rel="noopener noreferrer"
                       >
-                        {user.role === Role.admin ? <Eye /> : 'Ver'}
+                        {(user.role === Role.admin || user.role === Role.super_admin) ? <Eye /> : 'Ver'}
                       </Button>
-                      {user.role === Role.admin &&
+                      {(user.role === Role.admin || user.role === Role.super_admin) &&
                         <>
                           <Button
                             variant="secondary"

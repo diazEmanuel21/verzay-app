@@ -3,6 +3,7 @@
 import { currentUser } from "@/lib/auth"
 import { MainReseller } from "./_components"
 import { db } from "@/lib/db"
+import { isAdminLike } from "@/lib/rbac"
 import AccessDenied from "@/app/AccessDenied"
 
 interface Props {
@@ -13,7 +14,7 @@ const ResellerPage = async ({ searchParams }: Props) => {
     const user = await currentUser()
 
     // Verificación de permisos
-    if (!user || user?.role !== "admin") {
+    if (!user || !isAdminLike(user.role)) {
         return <AccessDenied />;
     }
 

@@ -72,12 +72,12 @@ export function canAccessRoute({
   label, // opcional: desambiguación
 }: {
   route: string;
-  userRole: string; // 'user' | 'admin' | 'reseller'
+  userRole: string; // 'user' | 'admin' | 'super_admin' | 'reseller'
   userPlan: Plan;
   modules: ModuleWithItems[];
   label: string;
 }) {
-  const isAdminLike = userRole === 'admin' || userRole === 'reseller';
+  const isAdminLike = userRole === 'admin' || userRole === 'super_admin' || userRole === 'reseller';
 
   const link = getRouteAccess(route, modules, { label });
   if (!link) return { allowed: true as const };

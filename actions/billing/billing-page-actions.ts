@@ -3,6 +3,7 @@
 
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isAdminOrReseller } from "@/lib/rbac";
 import { ResponseFormat } from "@/types/billing";
 import { serializeUserBilling } from "./helpers/billing-helpers";
 
@@ -17,7 +18,7 @@ export async function getClientsWithBilling(): Promise<ResponseFormat<any[]>> {
   try {
     const me = await currentUser();
     if (!me) return { success: false, message: "No autorizado." };
-    if (me.role !== "admin" && me.role !== "reseller") {
+    if (!isAdminOrReseller(me.role)) {
       return { success: false, message: "No autorizado." };
     }
 

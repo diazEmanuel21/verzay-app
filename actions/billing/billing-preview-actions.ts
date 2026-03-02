@@ -3,6 +3,7 @@
 
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isAdminOrReseller } from "@/lib/rbac";
 import { differenceInCalendarDays } from "date-fns";
 import { BillingTemplateType, ResponseFormat } from "@/types/billing";
 import { buildBillingMessage } from "./billing-message-templates";
@@ -16,7 +17,7 @@ export async function previewBillingReminderMessage(
     try {
         const me = await currentUser();
         if (!me) return { success: false, message: "No autorizado." };
-        if (me.role !== "admin" && me.role !== "reseller")
+        if (!isAdminOrReseller(me.role))
             return { success: false, message: "No autorizado." };
 
         const billing = await db.userBilling.findUnique({

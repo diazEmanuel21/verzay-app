@@ -12,7 +12,7 @@ type Props = {
     table: Table<ClientRow>;
     data: ClientRow[];
     className?: string;
-    soonDays?: number; // default 3
+    soonDays: number;
 };
 
 function StatCard({
@@ -53,18 +53,12 @@ function StatCard({
     );
 }
 
-export function BillingCrmFiltersCards({
-    table,
-    data,
-    className,
-    soonDays = 3,
-}: Props) {
-    // Estados actuales de filtros (TanStack)
+export const BillingCrmFiltersCards = ({ table, data, className, soonDays }: Props) => {
     const paidFilter = table.getColumn("paid")?.getFilterValue() as string | undefined;
     const accessFilter = table.getColumn("access")?.getFilterValue() as string | undefined;
+    const dueFilter = table.getColumn("due")?.getFilterValue() as string | undefined;
 
-    // Métricas (sobre data completa)
-    const total = data.length;
+    const total = table.getPreFilteredRowModel().rows.length;
 
     const paidCount = React.useMemo(
         () => data.filter((u) => (u.billing?.billingStatus ?? "UNPAID") === "PAID").length,
@@ -81,11 +75,6 @@ export function BillingCrmFiltersCards({
         [data]
     );
 
-    const accessSuspendedCount = React.useMemo(
-        () => data.filter((u) => (u.billing?.accessStatus ?? "ACTIVE") !== "ACTIVE").length,
-        [data]
-    );
-
     const dueSoonCount = React.useMemo(() => {
         return data.filter((u) => {
             const due = u.billing?.dueDate ?? null;
@@ -94,26 +83,30 @@ export function BillingCrmFiltersCards({
         }).length;
     }, [data, soonDays]);
 
-    function toggleColumnFilter(colId: "paid" | "access", value: string) {
+    function clearAllQuickFilters() {
+        table.getColumn("paid")?.setFilterValue(undefined);
+        table.getColumn("access")?.setFilterValue(undefined);
+        table.getColumn("due")?.setFilterValue(undefined);
+    }
+
+    function setExclusiveFilter(colId: "paid" | "access" | "due", value: string) {
         const col = table.getColumn(colId);
         if (!col) return;
 
         const curr = col.getFilterValue() as string | undefined;
-        col.setFilterValue(curr === value ? undefined : value);
+
+        // Si ya está activo, se apaga y queda "Total"
+        if (curr === value) {
+            clearAllQuickFilters();
+            return;
+        }
+
+        // Si no, limpiamos todo y activamos solo este
+        clearAllQuickFilters();
+        col.setFilterValue(value);
     }
 
-    function clearAllQuickFilters() {
-        table.getColumn("paid")?.setFilterValue(undefined);
-        table.getColumn("access")?.setFilterValue(undefined);
-    }
-
-    const dueFilter = table.getColumn("due")?.getFilterValue() as string | undefined;
-
-    function toggleDueSoon() {
-        const col = table.getColumn("due");
-        if (!col) return;
-        col.setFilterValue(dueFilter === "SOON" ? undefined : "SOON");
-    }
+    const anyQuickFilterActive = !!paidFilter || !!accessFilter || !!dueFilter;
 
     return (
         <div className={cn("grid grid-cols-1 md:grid-cols-5 gap-3", className)}>
@@ -121,7 +114,7 @@ export function BillingCrmFiltersCards({
                 title="Total"
                 value={total}
                 icon={<Database className="h-4 w-4" />}
-                active={!paidFilter && !accessFilter}
+                active={!anyQuickFilterActive}
                 onClick={clearAllQuickFilters}
             />
 
@@ -130,7 +123,7 @@ export function BillingCrmFiltersCards({
                 value={paidCount}
                 icon={<CircleCheck className="h-4 w-4" />}
                 active={paidFilter === "PAID"}
-                onClick={() => toggleColumnFilter("paid", "PAID")}
+                onClick={() => setExclusiveFilter("paid", "PAID")}
                 valueClassName="text-emerald-400"
                 activeClassName="ring-1 ring-emerald-500/60"
             />
@@ -140,7 +133,7 @@ export function BillingCrmFiltersCards({
                 value={unpaidCount}
                 icon={<CircleX className="h-4 w-4" />}
                 active={paidFilter === "UNPAID"}
-                onClick={() => toggleColumnFilter("paid", "UNPAID")}
+                onClick={() => setExclusiveFilter("paid", "UNPAID")}
                 valueClassName="text-red-400"
                 activeClassName="ring-1 ring-red-500/60"
             />
@@ -150,18 +143,17 @@ export function BillingCrmFiltersCards({
                 value={accessActiveCount}
                 icon={<UserCheck className="h-4 w-4" />}
                 active={accessFilter === "ACTIVE"}
-                onClick={() => toggleColumnFilter("access", "ACTIVE")}
+                onClick={() => setExclusiveFilter("access", "ACTIVE")}
                 valueClassName="text-emerald-400"
                 activeClassName="ring-1 ring-emerald-500/60"
             />
-
 
             <StatCard
                 title={`Vence pronto (≤ ${soonDays}d)`}
                 value={dueSoonCount}
                 icon={<UserX className="h-4 w-4" />}
                 active={dueFilter === "SOON"}
-                onClick={toggleDueSoon}
+                onClick={() => setExclusiveFilter("due", "SOON")}
                 valueClassName={dueSoonCount > 0 ? "text-yellow-300" : undefined}
                 activeClassName="ring-1 ring-yellow-500/60"
             />

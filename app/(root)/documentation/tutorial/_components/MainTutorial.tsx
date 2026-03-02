@@ -116,7 +116,7 @@ export const MainTutorial = ({ user }: { user: User }) => {
                             onChange={e => setFilter(e.target.value)}
                         />
                     </div>
-                    {user?.role === 'admin' &&
+                    {(user?.role === 'admin' || user?.role === 'super_admin') &&
                         <Dialog open={open} onOpenChange={setOpen}>
                             <DialogTrigger asChild>
                                 <Button
@@ -207,9 +207,9 @@ export const MainTutorial = ({ user }: { user: User }) => {
                                                 onClick={() => window.open(guide.url, "_blank")}
                                                 rel="noopener noreferrer"
                                             >
-                                                {user?.role === 'admin' ? <Eye /> : 'Ver'}
+                                                {(user?.role === 'admin' || user?.role === 'super_admin') ? <Eye /> : 'Ver'}
                                             </Button>
-                                            {user?.role === 'admin' &&
+                                            {(user?.role === 'admin' || user?.role === 'super_admin') &&
                                                 <>
                                                     <Button
                                                         variant="secondary"

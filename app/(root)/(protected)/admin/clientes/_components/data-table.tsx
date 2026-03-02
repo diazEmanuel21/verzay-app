@@ -84,7 +84,7 @@ export function DataTable<TData, TValue>({ columns, data, currentUserRol, openCr
               <ColumnFilterInput table={table} />
 
               {/* button-create-client */}
-              {currentUserRol === 'admin' &&
+              {(currentUserRol === 'admin' || currentUserRol === 'super_admin') &&
 
                 <Button onClick={openCreateDialogUser} className="m-0 flex items-center gap-2">
                   {/* Icono + para móviles */}

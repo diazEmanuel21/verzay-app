@@ -283,9 +283,9 @@ model Session {
   seguimientos        String?                @default("")
   inactividad         String?                @default("")
   sessionDelay        String?
-  agentDisabled       Boolean                @default(false)
   flujos              String?                @default("")
   remoteJidAlt        String?
+  agentDisabled       Boolean                @default(false)
   appointments        Appointment[]
   registros           Registro[]
   user                User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -358,12 +358,9 @@ model Tool {
 
 model User {
   id                                 String                @id @default(uuid())
-  status                             Boolean               @default(true)
   name                               String?
   email                              String                @unique
   password                           String?
-  passPlainTxt                       String?               @default("IA@verzay.1234")
-  tokenVersion                       Int                   @default(0)
   emailVerified                      DateTime?
   image                              String?
   role                               Role                  @default(user)
@@ -387,13 +384,16 @@ model User {
   meetingDuration                    Int?
   onFacebook                         Boolean               @default(false)
   onInstagram                        Boolean               @default(false)
-  enabledSynthesizer                 Boolean               @default(false)
   aiModelId                          String?
   defaultAiModelId                   String?
   defaultProviderId                  String?
   delayTimeGpt                       String?               @map("delayTimeGPT")
   meetingUrl                         String?
   preferredCurrencyCode              String                @default("COP")
+  tokenVersion                       Int                   @default(0)
+  passPlainTxt                       String?               @default("IA@verzay.1234")
+  enabledSynthesizer                 Boolean               @default(false)
+  status                             Boolean               @default(true)
   accounts                           Account[]
   agentPrompts                       AgentPrompt[]
   publishedAgentPromptRevisions      AgentPromptRevision[]
@@ -410,6 +410,7 @@ model User {
   apiKey                             ApiKey?               @relation(fields: [apiKeyId], references: [id])
   defaultAiModel                     AiModel?              @relation(fields: [defaultAiModelId], references: [id])
   userAvailability                   UserAvailability[]
+  billing                            UserBilling?
   userModules                        UserModule[]
   financeAccounts                    FinanceAccount[]
   financeAttachments                 FinanceAttachment[]
@@ -419,37 +420,33 @@ model User {
   reseller_reseller_reselleridToUser Reseller[]            @relation("reseller_reselleridToUser")
   reseller_reseller_userIdToUser     Reseller[]            @relation("reseller_userIdToUser")
   aiConfigs                          UserAiConfig[]
-  billing                            UserBilling?
 }
 
 model UserBilling {
-  id     String @id @default(uuid())
-  userId String @unique
-
-  serviceName            String?
+  id                     String              @id @default(uuid())
+  userId                 String              @unique
+  price                  Decimal?            @db.Decimal(18, 2)
+  currencyCode           String              @default("COP")
+  paymentMethodLabel     String?
+  paymentNotes           String?
+  dueDate                DateTime?
+  billingStatus          BillingStatus       @default(UNPAID)
+  accessStatus           ServiceAccessStatus @default(ACTIVE)
+  suspendedAt            DateTime?
+  suspendedReason        String?
+  lastPaymentAt          DateTime?
+  lastReminderAt         DateTime?
+  lastReminderDueDate    DateTime?
+  graceDays              Int                 @default(0)
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
   notifyRemoteJid        String?
-  serviceStartAt         DateTime?
+  serviceActiveDaysTotal Int                 @default(0)
   serviceEndAt           DateTime?
-  serviceActiveDaysTotal Int       @default(0)
   serviceEndsAt          DateTime?
-
-  price               Decimal?            @db.Decimal(18, 2)
-  currencyCode        String              @default("COP")
-  paymentMethodLabel  String?
-  paymentNotes        String?
-  dueDate             DateTime?
-  billingStatus       BillingStatus       @default(UNPAID)
-  accessStatus        ServiceAccessStatus @default(ACTIVE)
-  suspendedAt         DateTime?
-  suspendedReason     String?
-  lastPaymentAt       DateTime?
-  lastReminderAt      DateTime?
-  lastReminderDueDate DateTime?
-  graceDays           Int                 @default(0)
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serviceName            String?
+  serviceStartAt         DateTime?
+  user                   User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([dueDate])
   @@index([serviceEndsAt])
@@ -475,17 +472,16 @@ model VerificationToken {
 }
 
 model Workflow {
-  id          String   @id @default(cuid())
-  userId      String
-  name        String
-  description String?
-  definition  String
-  status      String
-  isPro       Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt @map("updateAt")
-  umbral      Float    @default(0.5)
-
+  id            String                 @id @default(cuid())
+  userId        String
+  name          String
+  description   String?
+  definition    String
+  status        String
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt @map("updateAt")
+  umbral        Float                  @default(0.5)
+  isPro         Boolean                @default(false)
   sessionStates SessionWorkflowState[]
   workflowEdges WorkflowEdge[]
   nodes         WorkflowNode[]
@@ -843,6 +839,7 @@ enum Role {
   user
   admin
   reseller
+  super_admin
 }
 
 enum ThemeApp {

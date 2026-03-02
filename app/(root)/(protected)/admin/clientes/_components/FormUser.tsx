@@ -31,6 +31,7 @@ export const FormUser = ({ onSubmit, apikeys, countries }: { onSubmit: (values: 
         user: 'Usuario',
         admin: 'Administrador',
         reseller: 'Reseller',
+        super_admin: 'Super administrador',
     };
 
     // const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone ?? "America/Bogota";

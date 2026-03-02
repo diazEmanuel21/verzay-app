@@ -8,6 +8,7 @@ import { ClientInterface } from "@/lib/types";
 import { revalidatePath } from 'next/cache';
 import { getIaCreditByUser } from './actions-ia-credits';
 import { currentUser } from '@/lib/auth';
+import { isAdminLike, isAdminOrReseller } from '@/lib/rbac';
 import { getRemindersByUserId } from './reminders-actions';
 import { DEFAULT_REMINDERS_TEMPLATES } from '@/types/reminder';
 import bcrypt from "bcryptjs";
@@ -37,11 +38,30 @@ const assignNonBooleanFields = (fd: FormData, target: Record<string, any>) => {
     if (RESTRICTED_FIELDS.has(key)) return;
     if ((BOOLEAN_FIELDS as readonly string[]).includes(key)) return; // ya procesados
     target[key] = value;
-  });
+    });
+};
+
+const ensureAdminOrResellerUser = async () => {
+  const me = await currentUser();
+  if (!me || !isAdminOrReseller(me.role)) {
+    throw new Error("No autorizado.");
+  }
+  return me;
+};
+
+const ensureSelfOrAdmin = async (targetUserId: string) => {
+  const me = await currentUser();
+  if (!me) throw new Error("No autorizado.");
+  if (me.id !== targetUserId && !isAdminOrReseller(me.role)) {
+    throw new Error("No autorizado.");
+  }
+  return me;
 };
 
 export async function getEnrichedClients(filter?: FilterOptions): Promise<ClientResponse<ClientInterface[]>> {
   try {
+    await ensureAdminOrResellerUser();
+
     let userIds: string[] | undefined;
 
     if (filter?.resellerId) {
@@ -159,6 +179,8 @@ export async function getEnrichedClients(filter?: FilterOptions): Promise<Client
 // ==============================
 export const getClientDataByUserId = async (userId: string): Promise<ClientResponse<UserWithPausar>> => {
   try {
+    await ensureSelfOrAdmin(userId);
+
     const user = await db.user.findUnique({
       where: { id: userId },
       include: {
@@ -197,6 +219,8 @@ export const updateClientDataByField = async (
   value: string
 ): Promise<{ success: boolean; message: string }> => {
   try {
+    await ensureSelfOrAdmin(userId);
+
     if (field === 'openMsg') {
       return { success: false, message: 'El campo openMsg está restringido y no puede ser actualizado aquí.' };
     }
@@ -224,6 +248,8 @@ export const updateClientDataByField = async (
 // ==============================
 export const updateClientData = async (userId: string, formData: FormData) => {
   try {
+    await ensureAdminOrResellerUser();
+
     const dataToUpdate: Record<string, any> = {};
 
     (BOOLEAN_FIELDS as readonly string[]).forEach((key) => {
@@ -258,6 +284,8 @@ export async function updateUserMeetingDuration(
   meetingUrl?: string
 ): Promise<ClientResponse> {
   try {
+    await ensureSelfOrAdmin(userId);
+
     // 1) Validación duración
     if (meetingDuration < 1 || meetingDuration > 480) {
       return {
@@ -325,6 +353,8 @@ export async function updateUserMeetingDuration(
 // ==============================
 export const updateAbrirPhrase = async (userId: string, mensaje: string) => {
   try {
+    await ensureSelfOrAdmin(userId);
+
     const userWithPausar = await db.user.findUnique({
       where: { id: userId },
       include: {
@@ -359,6 +389,8 @@ export const createUserWithPausar = async (
   }
 ): Promise<ClientResponse<UserWithPausar>> => {
   try {
+    await ensureAdminOrResellerUser();
+
     const { openingPhrase, ...userFields } = userData;
 
     // 1. Crear el usuario
@@ -417,6 +449,14 @@ export async function deleteUserOld(id: string): Promise<ClientResponse> {
   }
 
   try {
+    const me = await currentUser();
+    if (!me || !isAdminLike(me.role)) {
+      return {
+        success: false,
+        message: "No autorizado.",
+      };
+    }
+
     await db.user.delete({
       where: { id },
     });
@@ -445,6 +485,11 @@ export async function deleteUser(id: string) {
   let currentStep = "init";
 
   try {
+    const me = await currentUser();
+    if (!me || !isAdminLike(me.role)) {
+      return { success: false, message: "No autorizado." };
+    }
+
     await db.$transaction(async (tx) => {
       currentStep = "load_user";
       const user = await tx.user.findUnique({

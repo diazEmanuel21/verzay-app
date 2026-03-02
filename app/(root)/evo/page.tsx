@@ -1,12 +1,13 @@
 import AccessDenied from "@/app/AccessDenied";
 import IframeRenderer from "@/components/custom/IframeRenderer";
 import { currentUser } from "@/lib/auth";
+import { isAdminLike } from "@/lib/rbac";
 
 const MultiagentePage = async () => {
     const user = await currentUser();
     const url = "https://evoapi1.ia-app.com/manager";
 
-    if (!user || user?.role !== "admin") {
+    if (!user || !isAdminLike(user.role)) {
         return <AccessDenied />;
     };
 
