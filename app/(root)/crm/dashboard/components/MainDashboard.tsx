@@ -6,7 +6,7 @@ import useSWRInfinite from "swr/infinite";
 import { CrmDashboard } from "./CrmDashboard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { getCrmDashboardStatsByUserId, getRegistrosByUserId, updateRegistroEstado } from "@/actions/registro-action";
+import { getCrmDashboardStatsByUserId, getRegistrosByUserId, RegistrosFilters, updateRegistroEstado } from "@/actions/registro-action";
 import { LoadingProgress } from "@/components/shared/LoadingProgress";
 import { RegistroWithSession, TipoRegistro } from "@/types/session";
 
@@ -21,6 +21,8 @@ export type DashboardStats = {
 const PAGE_SIZE = 50;
 
 export const MainDashboard = ({ userId }: MainDashboardProps) => {
+  const [activeTab, setActiveTab] = useState<"TODOS" | TipoRegistro>("TODOS");
+  const [filters, setFilters] = useState<RegistrosFilters>({});
   const [isPending, startTransition] = useTransition();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [scrollRootEl, setScrollRootEl] = useState<HTMLDivElement | null>(null);
@@ -30,17 +32,28 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
 
   const getKey = (pageIndex: number, previousPageData: RegistroWithSession[] | null) => {
     if (previousPageData && previousPageData.length < PAGE_SIZE) return null;
-    return `${userId}-${pageIndex}`;
+    return `crm:${userId}:${activeTab}:${filters.estado ?? ""}:${filters.fechaDesde ?? ""}:${filters.fechaHasta ?? ""}:${pageIndex}`;
   };
 
   const { data, size, setSize, mutate, isLoading, isValidating, error } =
     useSWRInfinite<RegistroWithSession[]>(
       getKey,
       async (key: string) => {
-        const [, pageIndex] = key.split("-");
-        const page = parseInt(pageIndex, 10);
+        const parts = key.split(":");
+        const pageIndexRaw = parts[parts.length - 1] ?? "0";
+        const toRaw = parts[parts.length - 2] ?? "";
+        const fromRaw = parts[parts.length - 3] ?? "";
+        const estadoRaw = parts[parts.length - 4] ?? "";
+        const tabRaw = parts[parts.length - 5] as "TODOS" | TipoRegistro;
+        const page = parseInt(pageIndexRaw, 10);
+        const tipo = tabRaw === "TODOS" ? undefined : tabRaw;
+        const serverFilters: RegistrosFilters = {
+          ...(estadoRaw ? { estado: estadoRaw } : {}),
+          ...(fromRaw ? { fechaDesde: fromRaw } : {}),
+          ...(toRaw ? { fechaHasta: toRaw } : {}),
+        };
 
-        const res = await getRegistrosByUserId(userId, page * PAGE_SIZE, PAGE_SIZE);
+        const res = await getRegistrosByUserId(userId, page * PAGE_SIZE, PAGE_SIZE, tipo, serverFilters);
         if (!res.success) throw new Error(res.message || "No se pudieron cargar los registros");
         return res.data || [];
       },
@@ -120,6 +133,18 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
     });
   };
 
+  const handleTabChange = useCallback((tab: "TODOS" | TipoRegistro) => {
+    loadingMoreRef.current = false;
+    setActiveTab(tab);
+    setSize(1);
+  }, [setSize]);
+
+  const handleFiltersChange = useCallback((next: RegistrosFilters) => {
+    loadingMoreRef.current = false;
+    setFilters(next);
+    setSize(1);
+  }, [setSize]);
+
   if (isLoading && size === 1) {
     return (
       <LoadingProgress
@@ -147,6 +172,10 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
       <CrmDashboard
         stats={stats}
         userId={userId}
+        activeTab={activeTab}
+        onActiveTabChange={handleTabChange}
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
         registros={registros}
         onChangeEstado={handleChangeEstado}
         sentinelRef={sentinelRef}

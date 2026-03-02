@@ -744,7 +744,7 @@ model QuickReply {
 }
 
 model Seguimiento {
-  id          Int     @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   idNodo      String?
   serverurl   String?
   instancia   String?
@@ -753,9 +753,11 @@ model Seguimiento {
   mensaje     String?
   tipo        String?
   time        String?
-  nameFile    String? @map("name_file")
+  nameFile    String?  @map("name_file")
   consecutivo String?
   media       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
 
   @@map("seguimientos")
 }

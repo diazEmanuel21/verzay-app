@@ -4,6 +4,12 @@ import { db } from "@/lib/db";
 import { ActionResult } from "@/types/registro";
 import { TipoRegistro } from "@/types/session";
 
+export type RegistrosFilters = {
+    estado?: string;
+    fechaDesde?: string;
+    fechaHasta?: string;
+};
+
 export async function createRegistro(input: {
     sessionId: number;
     tipo: TipoRegistro;
@@ -106,14 +112,36 @@ export async function updateRegistroEstado(registroId: number, nuevoEstado: stri
 export async function getRegistrosByUserId(
     userId: string,
     skip = 0,
-    take = 50
+    take = 50,
+    tipo?: TipoRegistro,
+    filters?: RegistrosFilters
 ) {
     try {
+        const estado = (filters?.estado ?? "").trim();
+
+        const fechaDesde = filters?.fechaDesde
+            ? new Date(`${filters.fechaDesde}T00:00:00.000`)
+            : null;
+        const fechaHasta = filters?.fechaHasta
+            ? new Date(`${filters.fechaHasta}T23:59:59.999`)
+            : null;
+
+        const fechaWhere =
+            fechaDesde || fechaHasta
+                ? {
+                    ...(fechaDesde ? { gte: fechaDesde } : {}),
+                    ...(fechaHasta ? { lte: fechaHasta } : {}),
+                }
+                : undefined;
+
         const registros = await db.registro.findMany({
             where: {
                 session: {
                     userId,
                 },
+                ...(tipo ? { tipo } : {}),
+                ...(estado ? { estado } : {}),
+                ...(fechaWhere ? { fecha: fechaWhere } : {}),
             },
             include: {
                 session: {

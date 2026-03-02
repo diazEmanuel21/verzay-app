@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
     Card,
     CardHeader,
@@ -8,6 +8,7 @@ import {
     CardDescription,
     CardContent,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
     Select,
     SelectTrigger,
@@ -41,19 +42,31 @@ import {
 } from "recharts";
 import { RegistroWithSession, TipoRegistro } from "@/types/session";
 import { formatFecha, getTipoLabel } from "../../helpers";
-import { getDisplayNombreFromRegistro, getEstadoOptions, toDate } from "../helpers";
+import { getDisplayNombreFromRegistro, getEstadoOptions } from "../helpers";
 import { MetricCard } from "./MetricCard";
 import { DashboardStats } from "./MainDashboard";
+import { RegistrosFilters } from "@/actions/registro-action";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
+import { TagStatsCard } from "./TagStatsCard";
+import { ESTADOS_POR_TIPO } from "@/types/registro";
+
+const CRM_TABS = ["TODOS", "REPORTE", "SOLICITUD", "PEDIDO", "RECLAMO", "PAGO", "RESERVA"] as const;
+type CrmTabValue = (typeof CRM_TABS)[number];
+const isCrmTabValue = (value: string): value is CrmTabValue =>
+    (CRM_TABS as readonly string[]).includes(value);
 
 
 export const CrmDashboard = ({
     stats,
     registros,
+    activeTab,
+    onActiveTabChange,
+    filters,
+    onFiltersChange,
     onChangeEstado,
     userId,
     sentinelRef,
@@ -61,12 +74,15 @@ export const CrmDashboard = ({
 }: {
     stats: DashboardStats | null;
     registros: RegistroWithSession[];
+    activeTab: "TODOS" | TipoRegistro;
+    onActiveTabChange: (value: "TODOS" | TipoRegistro) => void;
+    filters: RegistrosFilters;
+    onFiltersChange: (filters: RegistrosFilters) => void;
     onChangeEstado?: (registroId: number, nuevoEstado: string) => void;
     userId: string;
     sentinelRef: React.RefObject<HTMLDivElement>;
     onScrollRootReady: (el: HTMLDivElement | null) => void;
 }) => {
-    const [activeTab, setActiveTab] = useState<"TODOS" | TipoRegistro>("TODOS");
     const scrollAreaWrapRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -115,6 +131,17 @@ export const CrmDashboard = ({
         if (stats?.chartDataByDay) return stats.chartDataByDay;
         return [];
     }, [stats]);
+
+    const estadoOptions = useMemo(() => {
+        if (activeTab === "TODOS") {
+            const set = new Set<string>();
+            for (const key of Object.keys(ESTADOS_POR_TIPO) as TipoRegistro[]) {
+                for (const estado of ESTADOS_POR_TIPO[key]) set.add(estado);
+            }
+            return Array.from(set).sort((a, b) => a.localeCompare(b, "es"));
+        }
+        return getEstadoOptions(activeTab);
+    }, [activeTab]);
 
     // --- Métricas base ---
     // const totalRegistros = registros.length;
@@ -177,10 +204,7 @@ export const CrmDashboard = ({
     // }, [registros]);
 
     // --- Tablas globales ---
-    const registrosFiltrados = useMemo(() => {
-        if (activeTab === "TODOS") return registros;
-        return registros.filter((r) => r.tipo === activeTab);
-    }, [registros, activeTab]);
+    const registrosFiltrados = registros;
 
     return (
         <div className="flex flex-col gap-4 h-full">
@@ -284,7 +308,7 @@ export const CrmDashboard = ({
 
             {/* Tags stats */}
             {/* TODO: DESCOMENTAR TAGS CUANDO EXISTAN */}
-            {/* <TagStatsCard userId={userId} /> */}
+            <TagStatsCard userId={userId} />
 
 
             {/* TABLAS GLOBALES */}
@@ -297,21 +321,95 @@ export const CrmDashboard = ({
                             cliente.
                         </CardDescription>
                     </div>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 text-[11px] px-2"
-                    >
-                        <Filter className="h-3 w-3 mr-1" />
-                        Filtros (próximamente)
-                    </Button>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-[11px] px-2"
+                            >
+                                <Filter className="h-3 w-3 mr-1" />
+                                Filtros
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="end" className="w-[320px] p-3">
+                            <div className="grid gap-3">
+                                <div className="grid gap-1">
+                                    <label className="text-xs text-muted-foreground">Estado</label>
+                                    <Select
+                                        value={filters.estado ?? "__all__"}
+                                        onValueChange={(value) =>
+                                            onFiltersChange({
+                                                ...filters,
+                                                estado: value === "__all__" ? undefined : value,
+                                            })
+                                        }
+                                    >
+                                        <SelectTrigger className="h-8 text-xs">
+                                            <SelectValue placeholder="Todos" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__all__">Todos</SelectItem>
+                                            {estadoOptions.map((estado) => (
+                                                <SelectItem key={estado} value={estado}>
+                                                    {estado}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="grid gap-1">
+                                        <label className="text-xs text-muted-foreground">Desde</label>
+                                        <Input
+                                            type="date"
+                                            className="h-8 text-xs"
+                                            value={filters.fechaDesde ?? ""}
+                                            onChange={(e) =>
+                                                onFiltersChange({
+                                                    ...filters,
+                                                    fechaDesde: e.target.value || undefined,
+                                                })
+                                            }
+                                        />
+                                    </div>
+                                    <div className="grid gap-1">
+                                        <label className="text-xs text-muted-foreground">Hasta</label>
+                                        <Input
+                                            type="date"
+                                            className="h-8 text-xs"
+                                            value={filters.fechaHasta ?? ""}
+                                            onChange={(e) =>
+                                                onFiltersChange({
+                                                    ...filters,
+                                                    fechaHasta: e.target.value || undefined,
+                                                })
+                                            }
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 text-xs"
+                                        onClick={() => onFiltersChange({})}
+                                    >
+                                        Limpiar filtros
+                                    </Button>
+                                </div>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3 min-h-0">
                     <Tabs
                         value={activeTab}
-                        onValueChange={(v) =>
-                            setActiveTab(v as "TODOS" | TipoRegistro)
-                        }
+                        onValueChange={(v) => {
+                            if (isCrmTabValue(v)) onActiveTabChange(v);
+                        }}
                         className="flex flex-col min-h-0"
                     >
                         <TabsList className="grid grid-cols-4 md:grid-cols-7 gap-1 mb-2">
