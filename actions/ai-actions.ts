@@ -3,8 +3,7 @@
 import { db } from '@/lib/db'
 import { SystemMessage } from '@prisma/client'
 import { PromptAiFormValues, PromptAiSchema } from '@/schema/ai'
-
-const ADMIN_USER_ID = "cm842kthc0000qd2l66nbnytv";
+import { ADMIN_USER_ID } from '@/types/generic'
 
 export interface PromptAiResponse<> {
     success: boolean

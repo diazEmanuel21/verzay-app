@@ -5,6 +5,7 @@ import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
     addDays,
+    addMinutes,
     differenceInCalendarDays,
     endOfDay,
     format,
@@ -18,6 +19,7 @@ import { ResponseFormat, SOON_DAYS_BILLING } from "@/types/billing";
 import { onlyDigitsPhone, pickTemplate } from "./helpers/billing-helpers";
 import { assertAdminOrReseller } from "./helpers/billing-helpers.server";
 import { SERVER_TIME_ZONE } from "@/types/schedule";
+import { ADMIN_USER_ID } from "@/types/generic";
 
 type BillingJobLogEntry = {
     at: string;
@@ -117,26 +119,29 @@ function buildEmptyReport(now: Date): BillingReport {
     };
 }
 
-async function runBillingDailyJobInternal(requireAuth: boolean): Promise<BillingJobResult> {
+export async function runBillingDailyJobInternal(requireAuth: boolean): Promise<BillingJobResult> {
     const now = new Date();
     const nowZ = toZonedTime(now, SERVER_TIME_ZONE);
     const emptyReport = buildEmptyReport(now);
 
     try {
         const BILLING_SEGUIMIENTO_TYPE = "billing-text";
+        const rawDelay = Number(process.env.BILLING_ENQUEUE_DELAY_MINUTES ?? "2");
+        const enqueueDelayMinutes = Number.isFinite(rawDelay) && rawDelay >= 0 ? rawDelay : 2;
         const logs: BillingJobLogEntry[] = [];
         const created: BillingCreatedItem[] = [];
         const skipped: BillingSkippedItem[] = [];
         const pushLog = (entry: BillingJobLogEntry) => {
             logs.push(entry);
-            const payload = {
+            const payload: Record<string, string> = {
                 at: entry.at,
+                level: entry.level,
                 message: entry.message,
-                userBillingId: entry.userBillingId,
-                userId: entry.userId,
-                template: entry.template,
-                idempotencyKey: entry.idempotencyKey,
             };
+            if (entry.userBillingId) payload.userBillingId = entry.userBillingId;
+            if (entry.userId) payload.userId = entry.userId;
+            if (entry.template) payload.template = entry.template;
+            if (entry.idempotencyKey) payload.idempotencyKey = entry.idempotencyKey;
             if (entry.level === "ERROR") {
                 console.error("[billing-job]", payload);
                 return;
@@ -173,6 +178,62 @@ async function runBillingDailyJobInternal(requireAuth: boolean): Promise<Billing
             assertAdminOrReseller(me.role);
         }
 
+        const dispatcherUser = await db.user.findUnique({
+            where: { id: ADMIN_USER_ID },
+            select: {
+                id: true,
+                notificationNumber: true,
+                apiKey: { select: { url: true } },
+                instancias: { select: { instanceId: true, instanceName: true } },
+            },
+        });
+
+        if (!dispatcherUser) {
+            pushLog({
+                at: new Date().toISOString(),
+                level: "ERROR",
+                message: `No existe el usuario dispatcher de billing (${ADMIN_USER_ID}).`,
+            });
+            return {
+                success: false,
+                message: "No existe el usuario dispatcher de billing.",
+                data: {
+                    attempted: 0,
+                    enqueued: 0,
+                    sent: 0,
+                    suspendedApplied: 0,
+                    errors: 1,
+                    logs,
+                    report: emptyReport,
+                },
+            };
+        }
+
+        const dispatcherUrl = dispatcherUser.apiKey?.url?.trim();
+        const dispatcherInstance = dispatcherUser.instancias?.[0];
+        if (!dispatcherUrl || !dispatcherInstance?.instanceName || !dispatcherInstance?.instanceId) {
+            pushLog({
+                at: new Date().toISOString(),
+                level: "ERROR",
+                message:
+                    "El usuario dispatcher no tiene configuración completa (apiUrl/instanceName/instanceId).",
+                userId: dispatcherUser.id,
+            });
+            return {
+                success: false,
+                message: "Dispatcher sin configuración completa de envío.",
+                data: {
+                    attempted: 0,
+                    enqueued: 0,
+                    sent: 0,
+                    suspendedApplied: 0,
+                    errors: 1,
+                    logs,
+                    report: emptyReport,
+                },
+            };
+        }
+
         const candidates = await db.userBilling.findMany({
             where: {
                 billingStatus: "UNPAID",
@@ -189,8 +250,6 @@ async function runBillingDailyJobInternal(requireAuth: boolean): Promise<Billing
                         company: true,
                         notificationNumber: true,
                         plan: true,
-                        apiKey: { select: { url: true } },
-                        instancias: { select: { instanceId: true, instanceName: true } },
                     },
                 },
             },
@@ -201,6 +260,11 @@ async function runBillingDailyJobInternal(requireAuth: boolean): Promise<Billing
         let suspendedApplied = 0;
         let errors = 0;
 
+        pushLog({
+            at: new Date().toISOString(),
+            level: "INFO",
+            message: `Delay de encolado: ${enqueueDelayMinutes} minuto(s).`,
+        });
         pushLog({
             at: new Date().toISOString(),
             level: "INFO",
@@ -282,24 +346,30 @@ async function runBillingDailyJobInternal(requireAuth: boolean): Promise<Billing
                     }
                 }
 
-                const user = b.user;
-                const urlevo = user.apiKey?.url?.trim();
-                const instance = user.instancias?.[0];
-                const target = (b.notifyRemoteJid?.trim() || user.notificationNumber || "").trim();
+                const candidateUser = b.user;
+                const target = (
+                    b.notifyRemoteJid?.trim() ||
+                    candidateUser.notificationNumber ||
+                    dispatcherUser.notificationNumber ||
+                    ""
+                ).trim();
                 const remoteJid = target.includes("@") ? target : onlyDigitsPhone(target);
 
-                if (!urlevo || !instance?.instanceName || !instance?.instanceId || !remoteJid) {
+                const missingFields: string[] = [];
+                if (!remoteJid) missingFields.push("remoteJid");
+
+                if (missingFields.length > 0) {
                     skipped.push({
                         userBillingId: b.id,
                         userId: b.userId,
                         name: candidateName,
                         template,
-                        reason: "MISSING_DATA",
+                        reason: `MISSING_DATA:${missingFields.join(",")}`,
                     });
                     pushLog({
                         at: new Date().toISOString(),
                         level: "WARN",
-                        message: "Datos incompletos para crear seguimiento (url/instancia/remoteJid).",
+                        message: `Datos incompletos para crear seguimiento: ${missingFields.join(", ")}.`,
                         userBillingId: b.id,
                         userId: b.userId,
                         template,
@@ -328,7 +398,10 @@ async function runBillingDailyJobInternal(requireAuth: boolean): Promise<Billing
 
                 attempted++;
 
-                const scheduleAt = format(toZonedTime(new Date(), SERVER_TIME_ZONE), "dd/MM/yyyy HH:mm");
+                const scheduleAt = format(
+                    toZonedTime(addMinutes(new Date(), enqueueDelayMinutes), SERVER_TIME_ZONE),
+                    "dd/MM/yyyy HH:mm"
+                );
                 const dueDateYmd = format(toZonedTime(due, SERVER_TIME_ZONE), "yyyy-MM-dd");
                 const idempotencyKey = `billing:${b.id}:${dueDateYmd}:${template}`;
 
@@ -360,9 +433,9 @@ async function runBillingDailyJobInternal(requireAuth: boolean): Promise<Billing
                     await db.seguimiento.create({
                         data: {
                             idNodo: "",
-                            serverurl: `https://${urlevo}`,
-                            instancia: instance.instanceName,
-                            apikey: instance.instanceId,
+                            serverurl: `https://${dispatcherUrl}`,
+                            instancia: dispatcherInstance.instanceName,
+                            apikey: dispatcherInstance.instanceId,
                             remoteJid,
                             mensaje: text,
                             tipo: BILLING_SEGUIMIENTO_TYPE,
@@ -399,7 +472,7 @@ async function runBillingDailyJobInternal(requireAuth: boolean): Promise<Billing
                     userBillingId: b.id,
                     userId: b.userId,
                     name: candidateName,
-                    plan: user.plan ?? null,
+                    plan: candidateUser.plan ?? null,
                     remoteJid,
                     template,
                     scheduleAt,
@@ -539,7 +612,10 @@ async function runBillingDailyJobInternal(requireAuth: boolean): Promise<Billing
             debtors,
             followups: {
                 createdToday: followupItems.length,
-                nextToSendAt: format(toZonedTime(now, SERVER_TIME_ZONE), "dd/MM/yyyy HH:mm"),
+                nextToSendAt: format(
+                    toZonedTime(addMinutes(now, enqueueDelayMinutes), SERVER_TIME_ZONE),
+                    "dd/MM/yyyy HH:mm"
+                ),
                 items: followupItems,
             },
         };
