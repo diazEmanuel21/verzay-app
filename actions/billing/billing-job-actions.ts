@@ -237,7 +237,7 @@ export async function runBillingDailyJobInternal(requireAuth: boolean): Promise<
         const candidates = await db.userBilling.findMany({
             where: {
                 billingStatus: "UNPAID",
-                accessStatus: "ACTIVE",
+                accessStatus: { in: ["ACTIVE", "SUSPENDED"] },
                 dueDate: {
                     lte: endOfDay(addDays(now, SOON_DAYS_BILLING)),
                 },
@@ -500,7 +500,7 @@ export async function runBillingDailyJobInternal(requireAuth: boolean): Promise<
                     },
                 });
 
-                if (template === "EXPIRED") {
+                if (template === "EXPIRED" && b.accessStatus === "ACTIVE") {
                     await db.userBilling.update({
                         where: { id: b.id },
                         data: {
