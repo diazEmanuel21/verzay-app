@@ -34,6 +34,15 @@ export function onlyDigitsPhone(value: string) {
     return (value ?? "").replace(/[^\d]/g, "");
 }
 
+export function normalizeWhatsAppJid(value: string) {
+    const raw = (value ?? "").trim();
+    if (!raw) return "";
+    if (raw.includes("@")) return raw;
+    const digits = onlyDigitsPhone(raw);
+    if (!digits) return "";
+    return `${digits}@s.whatsapp.net`;
+}
+
 /**
  * Decide qué plantilla usar:
  * - 3 días antes => REMINDER_3D

@@ -16,7 +16,7 @@ import { toZonedTime } from "date-fns-tz";
 import { Prisma } from "@prisma/client";
 import { buildBillingMessage } from "./billing-message-templates";
 import { ResponseFormat, SOON_DAYS_BILLING } from "@/types/billing";
-import { onlyDigitsPhone, pickTemplate } from "./helpers/billing-helpers";
+import { normalizeWhatsAppJid, pickTemplate } from "./helpers/billing-helpers";
 import { assertAdminOrReseller } from "./helpers/billing-helpers.server";
 import { SERVER_TIME_ZONE } from "@/types/schedule";
 import { ADMIN_USER_ID } from "@/types/generic";
@@ -353,7 +353,7 @@ export async function runBillingDailyJobInternal(requireAuth: boolean): Promise<
                     dispatcherUser.notificationNumber ||
                     ""
                 ).trim();
-                const remoteJid = target.includes("@") ? target : onlyDigitsPhone(target);
+                const remoteJid = normalizeWhatsAppJid(target);
 
                 const missingFields: string[] = [];
                 if (!remoteJid) missingFields.push("remoteJid");
