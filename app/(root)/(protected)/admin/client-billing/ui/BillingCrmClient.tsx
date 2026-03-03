@@ -775,7 +775,7 @@ export function BillingCrmClient({
                                                 </div>
 
                                                 <div className="grid gap-1">
-                                                    <label className="text-muted-foreground">Medio de pago</label>
+                                                    <label className="text-muted-foreground">Metodo de pago</label>
                                                     <Input
                                                         value={dialog.form.paymentMethodLabel}
                                                         onChange={(e) =>
@@ -791,7 +791,7 @@ export function BillingCrmClient({
 
                                                 <div className="grid gap-1">
                                                     <label className="text-muted-foreground">
-                                                        Instrucciones / notas
+                                                        Medio de pago
                                                     </label>
                                                     <Input
                                                         value={dialog.form.paymentNotes}

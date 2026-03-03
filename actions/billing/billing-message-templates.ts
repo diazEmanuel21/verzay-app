@@ -10,7 +10,7 @@ export function buildBillingMessage(args: {
     dueDate: Date;
     daysRemaining: number; // puede ser negativo
     planLabel: string; // ej: "🤖 Agente IA" (o lo que quieras)
-    licenseLabel: string; // ej: "🗓️ Licencia 30 días"
+    licenseLabel: string; // ej: "🗓️ *Licencia 30 días*"
     price: any;
     currencyCode: string; // ej: "USD"
     currencyFlag?: string | null; // ej: "🇺🇸"
@@ -34,24 +34,24 @@ export function buildBillingMessage(args: {
         type === "REMINDER_3D"
             ? `👨🏻‍💼 ${clientName || "Cliente"}:`
             : type === "DUE_TODAY"
-                ? `🔔 Hoy vence su servicio:`
-                : `🚫 Servicio expirado:`;
+                ? `🔔 *Hoy vence su servicio:*`
+                : `🚫 *Servicio expirado:*`;
 
     return [
         header,
-        type === "REMINDER_3D" ? `📋 Detalles de su servicio:` : "",
+        type === "REMINDER_3D" ? `📋 *Servicio a vencer:*` : "",
         `--------•--------•--------•--------`,
-        `📆 Vence: ${fmtDateDDMMYYYY(dueDate)}`,
-        `⏳ Dias restantes: ${daysRemaining}`,
+        `📆 *Vence:* ${fmtDateDDMMYYYY(dueDate)}`,
+        `⏳ *Dias restantes:* ${daysRemaining}`,
         `--------•--------•--------•--------`,
-        `${planLabel}`,
-        `${licenseLabel}`,
-        fmtPriceLine({ price, currencyCode, currencyFlag }),
+        `🛠️ ${planLabel}`,
+        `🗓️ ${licenseLabel}`,
+        `💵 ${fmtPriceLine({ price, currencyCode, currencyFlag })}`,
         `--------•--------•--------•--------`,
-        `💱 Medios de pago:`,
+        `💱 *Medios de pago:*`,
         `👉${paymentLinkOrText}`,
         `--------•--------•--------•--------`,
-        `Una vez realizado el pago, envíe el comprobante a este chat`,
+        `Una vez realizado, enviar el soporte a este chat`,
     ]
         .filter(Boolean)
         .join("\n");
