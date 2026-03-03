@@ -71,6 +71,7 @@ import {
     EditDialogState,
     emptyDialog,
     ResponseFormat,
+    SOON_DAYS_BILLING,
     UserBilling,
 } from "@/types/billing";
 
@@ -79,8 +80,6 @@ import { COLUMNS_LABELS, daysLeftService, exportExcelAllFiltered, getExportValue
 import { BillingCrmFiltersCards, BillingSkeletton, DaysLeftCell } from "../components";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-export const soonDays = 5;
 
 export function BillingCrmClient({
     initial,
@@ -352,7 +351,7 @@ export function BillingCrmClient({
                     const left = parseInt(daysLeftService(due));
                     if (!Number.isFinite(left)) return false;
 
-                    return left >= 0 && left <= soonDays;
+                    return left >= 0 && left <= SOON_DAYS_BILLING;
                 },
                 cell: ({ row }) => {
                     const b = row.original.billing ?? null;
@@ -566,7 +565,7 @@ export function BillingCrmClient({
                 <div className="flex justify-between items-center gap-2">
                     <div className="flex flex-row flex-1 gap-2">
                         <div className="flex flex-col gap-2 flex-1">
-                            <BillingCrmFiltersCards table={table} data={data} soonDays={soonDays} />
+                            <BillingCrmFiltersCards table={table} data={data} soonDays={SOON_DAYS_BILLING} />
                             <div className="flex flex-row gap-1">
                                 <Input
                                     value={globalFilter}

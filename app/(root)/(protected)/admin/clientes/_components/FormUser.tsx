@@ -34,7 +34,7 @@ export const FormUser = ({ onSubmit, apikeys, countries }: { onSubmit: (values: 
         super_admin: 'Super administrador',
     };
 
-    // const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone ?? "America/Bogota";
+    // const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone ?? "SERVER_TIME_ZONE";
 
     const form = useForm<UserFormValues>({
         resolver: zodResolver(userSchema),

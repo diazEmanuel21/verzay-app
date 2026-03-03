@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { SERVER_TIME_ZONE } from "@/types/schedule";
 
 type Employee = {
   id: string;
@@ -44,7 +45,7 @@ const employeesMock: Employee[] = [
     role: "Fisioterapeuta",
     email: "maria.perez@empresa.com",
     phone: "+57 3001234567",
-    timezone: "America/Bogota",
+    timezone: SERVER_TIME_ZONE,
     isActive: true,
   },
   {
@@ -54,7 +55,7 @@ const employeesMock: Employee[] = [
     role: "Quiropráctico",
     email: "juan.rodriguez@empresa.com",
     phone: "+57 3012345678",
-    timezone: "America/Bogota",
+    timezone: SERVER_TIME_ZONE,
     isActive: true,
   },
   {

@@ -7,7 +7,7 @@
  * Retorna la zona horaria principal asociada a un país.
  *
  * @param countryName - Nombre del país (ej. "Colombia", "Afghanistan").
- * @returns La zona horaria en formato IANA (ej. "America/Bogota", "Asia/Kabul") o `null` si no se encuentra.
+ * @returns La zona horaria en formato IANA (ej. "SERVER_TIME_ZONE", "Asia/Kabul") o `null` si no se encuentra.
  *
  * @example
  * const timezone = getTimezoneByCountry("Colombia");

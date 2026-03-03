@@ -19,10 +19,9 @@ import { formatDateLabel, formatServiceMessage, normalizeTimeToSeconds, normaliz
 
 import { CalendarIcon, CheckCircle2, Clock, ScrollText, User2 } from "lucide-react";
 import { es } from "date-fns/locale";
-import { DateHourComponent, EmployeesComponent, ScheduleForm, ServiceComponent, SummaryComponent } from "./steps";
+import { DateHourComponent, ScheduleForm, ServiceComponent, SummaryComponent } from "./steps";
 import { SummaryItem } from "./";
-
-const serverTimeZone = 'America/Bogota';
+import { SERVER_TIME_ZONE } from "@/types/schedule";
 
 export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInterface) => {
     // ── UI Steeps
@@ -69,7 +68,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
     useEffect(() => {
         if (!user.id || !selectedDateYmd) return;
         (async () => {
-            const res = await getAvailableSlots(user.id as string, selectedDateYmd, slotDuration, serverTimeZone);
+            const res = await getAvailableSlots(user.id as string, selectedDateYmd, slotDuration, SERVER_TIME_ZONE);
             if (res.success) setSlots(res.data || []);
             else toast.error(res.message);
         })();
@@ -122,7 +121,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
             secondsReminders.forEach((rem) => {
                 if (!rem.normalizedSeconds) return;
                 // const startLocal = toZonedTime(new Date(startTime), timezone);
-                const startLocal = toZonedTime(new Date(startTime), serverTimeZone);
+                const startLocal = toZonedTime(new Date(startTime), SERVER_TIME_ZONE);
                 const seguimientoTime = subtractSecondsFromTime(startLocal, rem.normalizedSeconds);
                 const dataSeguimiento: SeguimientoInput = {
                     idNodo: "",
@@ -160,7 +159,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                     : `${user.notificationNumber}@s.whatsapp.net`;
 
                 // Datos de fecha/hora legibles en la TZ de la cita - antes era timezone ahora serverTimeZone
-                const startLocal = toZonedTime(new Date(startTime), serverTimeZone);
+                const startLocal = toZonedTime(new Date(startTime), SERVER_TIME_ZONE);
                 // const dateLabel = format(selectedDate!, "PPP");
                 const dateLabel = format(selectedDate!, "d 'de' MMMM 'de' yyyy", { locale: es });
 
@@ -318,7 +317,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                                 selectedSlot={selectedSlot}
                                 setSlots={setSlots}
                                 timezone={timezone}
-                                serverTimeZone={serverTimeZone}
+                                serverTimeZone={SERVER_TIME_ZONE}
                                 slots={slots}
                                 selectedDate={selectedDate}
                                 slotDuration={slotDuration}

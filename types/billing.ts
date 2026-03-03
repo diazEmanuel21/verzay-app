@@ -1,3 +1,5 @@
+export const SOON_DAYS_BILLING = 5;
+
 /**
  * Formato estándar de respuesta (backend)
  */

@@ -3,6 +3,8 @@ import { Country } from '@/components/custom/CountryCodeSelect';
 import { UserWithApiKeys } from '@/schema/schema';
 import { AppointmentStatus } from "@prisma/client";
 
+export const SERVER_TIME_ZONE = 'America/Bogota';
+
 export interface ServiceInterface {
     selectedService: string;
     setSelectedService: (serviceId: string) => void; // compatible con <Select onValueChange />

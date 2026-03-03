@@ -1,3 +1,5 @@
+import { SERVER_TIME_ZONE } from "./schedule";
+
 //  cooldown anti-spam
 export const DISCONNECT_COOLDOWN_MS = 30 * 60 * 1000; // 30 min
 export const EVO_FETCH_TIMEOUT_MS = 12_000; // timeout para detectar "no responde"
@@ -12,7 +14,7 @@ export type EvoHealthCacheEntry = {
 };
 
 export const getDayKeyBogota = (ts = Date.now()) =>
-  new Date(ts).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); // YYYY-MM-DD
+  new Date(ts).toLocaleDateString('en-CA', { timeZone: SERVER_TIME_ZONE }); // YYYY-MM-DD
 
 export const getEvoCache = (): Map<string, EvoHealthCacheEntry> => {
   const g = globalThis as any;

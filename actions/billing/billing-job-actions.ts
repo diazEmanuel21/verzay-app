@@ -6,15 +6,16 @@ import { db } from "@/lib/db";
 import { addDays, endOfDay, differenceInCalendarDays, format, isSameDay } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { buildBillingMessage } from "./billing-message-templates";
-import { ResponseFormat } from "@/types/billing";
+import { ResponseFormat, SOON_DAYS_BILLING } from "@/types/billing";
 import { onlyDigitsPhone, pickTemplate } from "./helpers/billing-helpers";
 import { assertAdminOrReseller } from "./helpers/billing-helpers.server";
+import { SERVER_TIME_ZONE } from "@/types/schedule";
 
 /**
  * Job:
- * - Encola recordatorio en tabla `seguimientos` a 3 días antes
+ * - Encola recordatorio en tabla `seguimientos` a SOON_DAYS_BILLING días antes
  * - Encola "Hoy vence" el mismo día
- * - Encola "Expirado" cuando ya pasó el graceDays (o si graceDays=3, justo a -3)
+ * - Encola "Expirado" cuando ya pasó el graceDays (o si graceDays=SOON_DAYS_BILLING, justo a -SOON_DAYS_BILLING)
  * - Suspende servicio cuando sobrepasa graceDays
  */
 type BillingJobResult = ResponseFormat<{
@@ -40,17 +41,16 @@ async function runBillingDailyJobInternal(requireAuth: boolean): Promise<
             assertAdminOrReseller(me.role);
         }
 
-        const BILLING_TZ = "America/Bogota";
         const now = new Date();
 
-        // Tomamos todos los UNPAID ACTIVE con dueDate <= +3 días (para cubrir 3d antes, hoy y vencidos recientes)
+        // Tomamos todos los UNPAID ACTIVE con dueDate <= +SOON_DAYS_BILLING días (para cubrir SOON_DAYS_BILLING antes, hoy y vencidos recientes)
         // y también los vencidos para evaluar expired por graceDays.
         const candidates = await db.userBilling.findMany({
             where: {
                 billingStatus: "UNPAID",
                 accessStatus: "ACTIVE",
                 dueDate: {
-                    lte: endOfDay(addDays(now, 3)), // hasta +3 días
+                    lte: endOfDay(addDays(now, SOON_DAYS_BILLING)), // hasta SOON_DAYS_BILLING días
                 },
             },
             include: {
@@ -81,10 +81,10 @@ async function runBillingDailyJobInternal(requireAuth: boolean): Promise<
                 const daysRemaining = differenceInCalendarDays(due, now);
 
                 // Ventanas:
-                const is3DaysBefore = daysRemaining === 3;
+                const is3DaysBefore = daysRemaining === SOON_DAYS_BILLING;
                 const isDueToday = daysRemaining === 0;
 
-                // EXPIRED cuando ya pasó el graceDays (por ej graceDays=3 => daysRemaining <= -3)
+                // EXPIRED cuando ya pasó el graceDays (por ej graceDays=SOON_DAYS_BILLING => daysRemaining <= -SOON_DAYS_BILLING)
                 const grace = Number(b.graceDays || 0);
                 const isExpiredBeyondGrace = daysRemaining <= -grace && daysRemaining < 0 && grace > 0;
 
@@ -145,7 +145,7 @@ async function runBillingDailyJobInternal(requireAuth: boolean): Promise<
 
                 attempted++;
 
-                const scheduleAt = format(toZonedTime(new Date(), BILLING_TZ), "dd/MM/yyyy HH:mm");
+                const scheduleAt = format(toZonedTime(new Date(), SERVER_TIME_ZONE), "dd/MM/yyyy HH:mm");
 
                 await db.seguimiento.create({
                     data: {
