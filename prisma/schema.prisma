@@ -752,6 +752,7 @@ model Seguimiento {
   remoteJid   String?
   mensaje     String?
   tipo        String?
+  idempotencyKey String? @unique
   time        String?
   nameFile    String?  @map("name_file")
   consecutivo String?

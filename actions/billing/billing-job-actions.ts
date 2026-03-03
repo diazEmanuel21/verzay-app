@@ -5,6 +5,7 @@ import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { addDays, endOfDay, differenceInCalendarDays, format, isSameDay } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
+import { Prisma } from "@prisma/client";
 import { buildBillingMessage } from "./billing-message-templates";
 import { ResponseFormat, SOON_DAYS_BILLING } from "@/types/billing";
 import { onlyDigitsPhone, pickTemplate } from "./helpers/billing-helpers";
@@ -146,19 +147,34 @@ async function runBillingDailyJobInternal(requireAuth: boolean): Promise<
                 attempted++;
 
                 const scheduleAt = format(toZonedTime(new Date(), SERVER_TIME_ZONE), "dd/MM/yyyy HH:mm");
+                const dueDateYmd = format(toZonedTime(due, SERVER_TIME_ZONE), "yyyy-MM-dd");
+                const idempotencyKey = `billing:${b.id}:${dueDateYmd}:${template}`;
 
-                await db.seguimiento.create({
-                    data: {
-                        idNodo: "",
-                        serverurl: `https://${urlevo}`,
-                        instancia: instance.instanceName,
-                        apikey: instance.instanceId,
-                        remoteJid,
-                        mensaje: text,
-                        tipo: BILLING_SEGUIMIENTO_TYPE,
-                        time: scheduleAt,
-                    },
+                const existingReminder = await db.seguimiento.findUnique({
+                    where: { idempotencyKey },
                 });
+                if (existingReminder) continue;
+
+                try {
+                    await db.seguimiento.create({
+                        data: {
+                            idNodo: "",
+                            serverurl: `https://${urlevo}`,
+                            instancia: instance.instanceName,
+                            apikey: instance.instanceId,
+                            remoteJid,
+                            mensaje: text,
+                            tipo: BILLING_SEGUIMIENTO_TYPE,
+                            idempotencyKey,
+                            time: scheduleAt,
+                        },
+                    });
+                } catch (error) {
+                    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+                        continue;
+                    }
+                    throw error;
+                }
 
                 sent++;
 
