@@ -127,7 +127,26 @@ async function runBillingDailyJobInternal(requireAuth: boolean): Promise<Billing
         const logs: BillingJobLogEntry[] = [];
         const created: BillingCreatedItem[] = [];
         const skipped: BillingSkippedItem[] = [];
-        const pushLog = (entry: BillingJobLogEntry) => logs.push(entry);
+        const pushLog = (entry: BillingJobLogEntry) => {
+            logs.push(entry);
+            const payload = {
+                at: entry.at,
+                message: entry.message,
+                userBillingId: entry.userBillingId,
+                userId: entry.userId,
+                template: entry.template,
+                idempotencyKey: entry.idempotencyKey,
+            };
+            if (entry.level === "ERROR") {
+                console.error("[billing-job]", payload);
+                return;
+            }
+            if (entry.level === "WARN") {
+                console.warn("[billing-job]", payload);
+                return;
+            }
+            console.info("[billing-job]", payload);
+        };
 
         if (requireAuth) {
             const me = await currentUser();
