@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog";
 import { deleteAgentPromptsByUserId } from "@/actions/prompt-actions";
-import { runBillingDailyJobInternal } from "@/actions/billing/billing-job-actions";
 
 
 export const TYPE_AI_LABELS = {
@@ -145,9 +144,8 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
     const prompt = useMemo(() => buildPrompt(values), [values]);
 
     return (
-        <>
-            <Button onClick={() => runBillingDailyJobInternal(false)}>Reminders</Button>
 
+        <>
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabKey)} className="w-full">
                 {/* header de tabs (idéntico al tuyo) */}
                 <div className="sticky w-full top-0 z-10 -mx-4 lg:mx-0 bg-slate-100 dark:bg-black">
