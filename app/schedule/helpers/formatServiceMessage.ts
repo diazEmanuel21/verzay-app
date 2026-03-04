@@ -32,7 +32,7 @@ export function formatServiceMessage(
 
     try {
         // Nombre del cliente
-        formatted = formatted.replace(/@client_name\b/gi, `*${nameClient}*`);
+        formatted = formatted.replace(/@client_name\b/gi, `${nameClient}`);
 
         // Fecha y hora local formateada como "17/10/2025 3:00 PM."
         if (selectedDate && selectedSlot) {

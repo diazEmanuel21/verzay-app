@@ -6,9 +6,17 @@ import useSWRInfinite from "swr/infinite";
 import { CrmDashboard } from "./CrmDashboard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { getCrmDashboardStatsByUserId, getRegistrosByUserId, RegistrosFilters, updateRegistroEstado } from "@/actions/registro-action";
+import { useRouter } from "next/navigation";
+import {
+  getCrmDashboardStatsByUserId,
+  getRegistrosByUserId,
+  RegistrosFilters,
+  updateRegistroDetalle,
+  updateRegistroEstado
+} from "@/actions/registro-action";
 import { LoadingProgress } from "@/components/shared/LoadingProgress";
 import { RegistroWithSession, TipoRegistro } from "@/types/session";
+import { toast } from "sonner";
 
 export type MainDashboardProps = { userId: string };
 export type DashboardStats = {
@@ -21,6 +29,7 @@ export type DashboardStats = {
 const PAGE_SIZE = 50;
 
 export const MainDashboard = ({ userId }: MainDashboardProps) => {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"TODOS" | TipoRegistro>("TODOS");
   const [filters, setFilters] = useState<RegistrosFilters>({});
   const [isPending, startTransition] = useTransition();
@@ -139,6 +148,21 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
     setSize(1);
   }, [setSize]);
 
+  const handleChangeDetalle = useCallback(
+    async (registroId: number, nuevoDetalle: string) => {
+      const res = await updateRegistroDetalle(registroId, nuevoDetalle);
+      if (!res?.success) {
+        toast.error(res?.message ?? "No se pudo actualizar el detalle");
+        return false;
+      }
+
+      await mutate();
+      router.refresh();
+      return true;
+    },
+    [mutate, router]
+  );
+
   const handleFiltersChange = useCallback((next: RegistrosFilters) => {
     loadingMoreRef.current = false;
     setFilters(next);
@@ -178,6 +202,7 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
         onFiltersChange={handleFiltersChange}
         registros={registros}
         onChangeEstado={handleChangeEstado}
+        onChangeDetalle={handleChangeDetalle}
         sentinelRef={sentinelRef}
         onScrollRootReady={handleScrollRootReady}
       />

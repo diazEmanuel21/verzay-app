@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
     Card,
     CardHeader,
@@ -9,6 +9,7 @@ import {
     CardContent,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
     SelectTrigger,
@@ -43,6 +44,7 @@ import {
 import { RegistroWithSession, TipoRegistro } from "@/types/session";
 import { formatFecha, getTipoLabel } from "../../helpers";
 import { getDisplayNombreFromRegistro, getEstadoOptions } from "../helpers";
+import { getDetalleRawValue, isDetalleChanged } from "../helpers/detalleEdit";
 import { MetricCard } from "./MetricCard";
 import { DashboardStats } from "./MainDashboard";
 import { RegistrosFilters } from "@/actions/registro-action";
@@ -68,6 +70,7 @@ export const CrmDashboard = ({
     filters,
     onFiltersChange,
     onChangeEstado,
+    onChangeDetalle,
     userId,
     sentinelRef,
     onScrollRootReady,
@@ -79,11 +82,23 @@ export const CrmDashboard = ({
     filters: RegistrosFilters;
     onFiltersChange: (filters: RegistrosFilters) => void;
     onChangeEstado?: (registroId: number, nuevoEstado: string) => void;
+    onChangeDetalle?: (registroId: number, nuevoDetalle: string) => Promise<boolean>;
     userId: string;
     sentinelRef: React.RefObject<HTMLDivElement>;
     onScrollRootReady: (el: HTMLDivElement | null) => void;
 }) => {
     const scrollAreaWrapRef = useRef<HTMLDivElement | null>(null);
+    const [openDetallePopoverId, setOpenDetallePopoverId] = useState<number | null>(null);
+    const [detalleDrafts, setDetalleDrafts] = useState<Record<number, string>>({});
+    const [savingDetalleId, setSavingDetalleId] = useState<number | null>(null);
+
+    const resetDetalleDraft = (registroId: number) => {
+        setDetalleDrafts((prev) => {
+            const next = { ...prev };
+            delete next[registroId];
+            return next;
+        });
+    };
 
     useEffect(() => {
         const wrap = scrollAreaWrapRef.current;
@@ -459,9 +474,11 @@ export const CrmDashboard = ({
 
                                             {registrosFiltrados.map((r) => {
                                                 const nombre = getDisplayNombreFromRegistro(r);
-                                                const tipoLabel = getTipoLabel(r.tipo);
-                                                const detalle =
-                                                    r.resumen || r.detalles || "Sin detalles";
+                                                const detalleRaw = getDetalleRawValue(r);
+                                                const detalle = detalleRaw || "Sin detalles";
+                                                const detalleDraft = detalleDrafts[r.id] ?? detalleRaw;
+                                                const detalleChanged = isDetalleChanged(detalleRaw, detalleDraft);
+                                                const isSavingDetalle = savingDetalleId === r.id;
 
                                                 return (
                                                     <TableRow key={r.id} className="hover:bg-accent/40">
@@ -475,7 +492,22 @@ export const CrmDashboard = ({
                                                             {formatFecha(r.fecha || '')}
                                                         </TableCell>
                                                         <TableCell className="py-1.5 align-top max-w-[280px]">
-                                                            <Popover>
+                                                            <Popover
+                                                                open={openDetallePopoverId === r.id}
+                                                                onOpenChange={(open) => {
+                                                                    if (open) {
+                                                                        setOpenDetallePopoverId(r.id);
+                                                                        setDetalleDrafts((prev) => ({
+                                                                            ...prev,
+                                                                            [r.id]: detalleRaw,
+                                                                        }));
+                                                                        return;
+                                                                    }
+
+                                                                    setOpenDetallePopoverId((curr) => (curr === r.id ? null : curr));
+                                                                    resetDetalleDraft(r.id);
+                                                                }}
+                                                            >
                                                                 <PopoverTrigger asChild>
                                                                     <button
                                                                         type="button"
@@ -489,19 +521,56 @@ export const CrmDashboard = ({
                                                                 <PopoverContent
                                                                     side="top"
                                                                     align="start"
-                                                                    className="w-[520px] p-0"
+                                                                    className="w-[520px] p-3"
                                                                 >
-                                                                    <div className="border-b px-3 py-2">
+                                                                    <div className="pb-2">
                                                                         <p className="text-muted-foreground">
-                                                                            Detalle completo
+                                                                            Detalle editable
                                                                         </p>
                                                                     </div>
 
-                                                                    <ScrollArea className="max-h-[260px] px-3 py-2">
-                                                                        <p className="leading-relaxed whitespace-pre-wrap break-words">
-                                                                            {detalle}
-                                                                        </p>
-                                                                    </ScrollArea>
+                                                                    <Textarea
+                                                                        value={detalleDraft}
+                                                                        onChange={(e) =>
+                                                                            setDetalleDrafts((prev) => ({
+                                                                                ...prev,
+                                                                                [r.id]: e.target.value,
+                                                                            }))
+                                                                        }
+                                                                        className="min-h-[150px] resize-y"
+                                                                        placeholder="Escribe el detalle del registro..."
+                                                                    />
+
+                                                                    <div className="mt-3 flex items-center justify-end gap-2">
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            onClick={() => {
+                                                                                setOpenDetallePopoverId(null);
+                                                                                resetDetalleDraft(r.id);
+                                                                            }}
+                                                                            disabled={isSavingDetalle}
+                                                                        >
+                                                                            Cancelar
+                                                                        </Button>
+                                                                        <Button
+                                                                            size="sm"
+                                                                            disabled={!onChangeDetalle || !detalleChanged || isSavingDetalle}
+                                                                            onClick={async () => {
+                                                                                if (!onChangeDetalle) return;
+
+                                                                                setSavingDetalleId(r.id);
+                                                                                const ok = await onChangeDetalle(r.id, detalleDraft.trim());
+                                                                                setSavingDetalleId(null);
+
+                                                                                if (!ok) return;
+                                                                                setOpenDetallePopoverId(null);
+                                                                                resetDetalleDraft(r.id);
+                                                                            }}
+                                                                        >
+                                                                            Guardar
+                                                                        </Button>
+                                                                    </div>
                                                                 </PopoverContent>
                                                             </Popover>
                                                         </TableCell>

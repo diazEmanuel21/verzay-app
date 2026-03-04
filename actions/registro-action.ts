@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { ActionResult } from "@/types/registro";
 import { TipoRegistro } from "@/types/session";
+import { normalizeDetalleDraft } from "@/app/(root)/crm/dashboard/helpers/detalleEdit";
 
 export type RegistrosFilters = {
     estado?: string;
@@ -296,6 +297,43 @@ export async function getSessionTagStatsByUserId(userId: string) {
         return {
             success: false as const,
             message: "Error al obtener estadísticas de tags",
+        };
+    }
+}
+
+export async function updateRegistroDetalle(registroId: number, nuevoDetalle: string) {
+    try {
+        const registro = await db.registro.findUnique({
+            where: { id: registroId },
+            select: { tipo: true },
+        });
+
+        if (!registro) {
+            return {
+                success: false,
+                message: "Registro no encontrado",
+            };
+        }
+
+        const detalleValue = normalizeDetalleDraft(nuevoDetalle);
+
+        await db.registro.update({
+            where: { id: registroId },
+            data:
+                registro.tipo === "REPORTE"
+                    ? { resumen: detalleValue }
+                    : { detalles: detalleValue },
+        });
+
+        return {
+            success: true,
+            message: "Detalle actualizado correctamente",
+        };
+    } catch (error) {
+        console.error("[UPDATE_REGISTRO_DETALLE]", error);
+        return {
+            success: false,
+            message: "No se pudo actualizar el detalle del registro",
         };
     }
 }
