@@ -208,18 +208,6 @@ export const CrmDashboard = ({
 
     return (
         <div className="flex flex-col gap-4 h-full">
-            {/* Header */}
-            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h1 className="text-2xl font-semibold tracking-tight">
-                        Dashboard CRM
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Vista general de registros, leads y clientes asociados al CRM.
-                    </p>
-                </div>
-            </div>
-
             {/* Métricas rápidas */}
             <div className="grid gap-3 md:grid-cols-2">
                 <MetricCard
@@ -242,13 +230,13 @@ export const CrmDashboard = ({
                 <Card className="h-[260px] md:h-[300px] border-border">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-base">Registros por tipo</CardTitle>
-                        <CardDescription className="text-xs">
+                        <CardDescription>
                             Distribución general por módulo (reportes, pedidos, pagos, etc.).
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="h-[200px] md:h-[230px]">
                         {totalRegistros === 0 ? (
-                            <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
+                            <div className="h-full flex items-center justify-center text-muted-foreground">
                                 Aún no hay registros para mostrar en el gráfico.
                             </div>
                         ) : (
@@ -281,7 +269,7 @@ export const CrmDashboard = ({
                     </CardHeader>
                     <CardContent className="h-[200px] md:h-[230px]">
                         {totalRegistros === 0 ? (
-                            <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
+                            <div className="h-full flex items-center justify-center text-muted-foreground">
                                 Aún no hay registros para mostrar en el gráfico.
                             </div>
                         ) : (
@@ -316,7 +304,7 @@ export const CrmDashboard = ({
                 <CardHeader className="pb-3 flex flex-row items-center justify-between gap-2">
                     <div>
                         <CardTitle className="text-base">Registros globales</CardTitle>
-                        <CardDescription className="text-xs">
+                        <CardDescription>
                             Vista consolidada de todos los registros del CRM, sin filtrar por
                             cliente.
                         </CardDescription>
@@ -326,7 +314,7 @@ export const CrmDashboard = ({
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-8 text-[11px] px-2"
+                                className="h-8 px-2"
                             >
                                 <Filter className="h-3 w-3 mr-1" />
                                 Filtros
@@ -335,7 +323,7 @@ export const CrmDashboard = ({
                         <PopoverContent align="end" className="w-[320px] p-3">
                             <div className="grid gap-3">
                                 <div className="grid gap-1">
-                                    <label className="text-xs text-muted-foreground">Estado</label>
+                                    <label className="text-muted-foreground">Estado</label>
                                     <Select
                                         value={filters.estado ?? "__all__"}
                                         onValueChange={(value) =>
@@ -345,7 +333,7 @@ export const CrmDashboard = ({
                                             })
                                         }
                                     >
-                                        <SelectTrigger className="h-8 text-xs">
+                                        <SelectTrigger className="h-8">
                                             <SelectValue placeholder="Todos" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -361,10 +349,10 @@ export const CrmDashboard = ({
 
                                 <div className="grid grid-cols-2 gap-2">
                                     <div className="grid gap-1">
-                                        <label className="text-xs text-muted-foreground">Desde</label>
+                                        <label className="text-muted-foreground">Desde</label>
                                         <Input
                                             type="date"
-                                            className="h-8 text-xs"
+                                            className="h-8"
                                             value={filters.fechaDesde ?? ""}
                                             onChange={(e) =>
                                                 onFiltersChange({
@@ -375,10 +363,10 @@ export const CrmDashboard = ({
                                         />
                                     </div>
                                     <div className="grid gap-1">
-                                        <label className="text-xs text-muted-foreground">Hasta</label>
+                                        <label className="text-muted-foreground">Hasta</label>
                                         <Input
                                             type="date"
-                                            className="h-8 text-xs"
+                                            className="h-8"
                                             value={filters.fechaHasta ?? ""}
                                             onChange={(e) =>
                                                 onFiltersChange({
@@ -394,7 +382,7 @@ export const CrmDashboard = ({
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-8 text-xs"
+                                        className="h-8"
                                         onClick={() => onFiltersChange({})}
                                     >
                                         Limpiar filtros
@@ -413,25 +401,25 @@ export const CrmDashboard = ({
                         className="flex flex-col min-h-0"
                     >
                         <TabsList className="grid grid-cols-4 md:grid-cols-7 gap-1 mb-2">
-                            <TabsTrigger value="TODOS" className="text-[11px] px-2">
+                            <TabsTrigger value="TODOS" className="px-2">
                                 Todos ({totalRegistros})
                             </TabsTrigger>
-                            <TabsTrigger value="REPORTE" className="text-[11px] px-2">
+                            <TabsTrigger value="REPORTE" className="px-2">
                                 Reportes ({countsByTipo.REPORTE})
                             </TabsTrigger>
-                            <TabsTrigger value="SOLICITUD" className="text-[11px] px-2">
+                            <TabsTrigger value="SOLICITUD" className="px-2">
                                 Solicitudes ({countsByTipo.SOLICITUD})
                             </TabsTrigger>
-                            <TabsTrigger value="PEDIDO" className="text-[11px] px-2">
+                            <TabsTrigger value="PEDIDO" className="px-2">
                                 Pedidos ({countsByTipo.PEDIDO})
                             </TabsTrigger>
-                            <TabsTrigger value="RECLAMO" className="text-[11px] px-2">
+                            <TabsTrigger value="RECLAMO" className="px-2">
                                 Reclamos ({countsByTipo.RECLAMO})
                             </TabsTrigger>
-                            <TabsTrigger value="PAGO" className="text-[11px] px-2">
+                            <TabsTrigger value="PAGO" className="px-2">
                                 Pagos ({countsByTipo.PAGO})
                             </TabsTrigger>
-                            <TabsTrigger value="RESERVA" className="text-[11px] px-2">
+                            <TabsTrigger value="RESERVA" className="px-2">
                                 Reservas ({countsByTipo.RESERVA})
                             </TabsTrigger>
                         </TabsList>
@@ -439,7 +427,7 @@ export const CrmDashboard = ({
                         <TabsContent value={activeTab} className="mt-0">
                             <div ref={scrollAreaWrapRef}>
                                 <ScrollArea className="h-[320px] rounded-md border">
-                                    <Table className="text-xs">
+                                    <Table>
                                         <TableHeader>
                                             <TableRow className="hover:bg-transparent">
                                                 <TableHead className="h-8 py-1.5 whitespace-nowrap">
@@ -462,7 +450,7 @@ export const CrmDashboard = ({
                                                 <TableRow>
                                                     <TableCell
                                                         colSpan={6}
-                                                        className="h-16 text-center text-[11px] text-muted-foreground"
+                                                        className="h-16 text-center text-muted-foreground"
                                                     >
                                                         No hay registros para este filtro.
                                                     </TableCell>
@@ -491,7 +479,7 @@ export const CrmDashboard = ({
                                                                 <PopoverTrigger asChild>
                                                                     <button
                                                                         type="button"
-                                                                        className="w-full text-left truncate whitespace-nowrap text-xs leading-5 cursor-pointer hover:underline underline-offset-2"
+                                                                        className="w-full text-left truncate whitespace-nowrap leading-5 cursor-pointer hover:underline underline-offset-2"
                                                                         title="Ver detalle completo"
                                                                     >
                                                                         {detalle}
@@ -504,13 +492,13 @@ export const CrmDashboard = ({
                                                                     className="w-[520px] p-0"
                                                                 >
                                                                     <div className="border-b px-3 py-2">
-                                                                        <p className="text-[11px] text-muted-foreground">
+                                                                        <p className="text-muted-foreground">
                                                                             Detalle completo
                                                                         </p>
                                                                     </div>
 
                                                                     <ScrollArea className="max-h-[260px] px-3 py-2">
-                                                                        <p className="text-[12px] leading-relaxed whitespace-pre-wrap break-words">
+                                                                        <p className="leading-relaxed whitespace-pre-wrap break-words">
                                                                             {detalle}
                                                                         </p>
                                                                     </ScrollArea>
@@ -525,7 +513,7 @@ export const CrmDashboard = ({
                                                                     onChangeEstado?.(r.id, value);
                                                                 }}
                                                             >
-                                                                <SelectTrigger className="h-7 w-[150px] text-[10px] justify-between">
+                                                                <SelectTrigger className="h-7 w-[150px] justify-between">
                                                                     <SelectValue placeholder="Seleccionar estado" />
                                                                 </SelectTrigger>
                                                                 <SelectContent>
@@ -533,7 +521,6 @@ export const CrmDashboard = ({
                                                                         <SelectItem
                                                                             key={estado}
                                                                             value={estado}
-                                                                            className="text-[11px]"
                                                                         >
                                                                             {estado}
                                                                         </SelectItem>

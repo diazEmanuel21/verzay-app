@@ -107,36 +107,37 @@ export function FunnelChart({ stats }: FunnelChartProps) {
     }
 
     return (
-        <Card className="border-border">
-            <CardHeader>
-                <CardTitle>Embudo de ventas</CardTitle>
-            </CardHeader>
-            <CardContent className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                        data={data}
-                        layout="vertical"
-                        margin={{ top: 8, right: 16, bottom: 8, left: 80 }}
-                    >
-                        <XAxis type="number" allowDecimals={false} />
-                        <YAxis
-                            type="category"
-                            dataKey="stage"
-                            tick={{ fontSize: 11 }}
-                            width={120}
-                        />
-                        <Tooltip
-                            formatter={(value) => [`${value} contactos`, "Cantidad"]}
-                        />
-                        <Bar
-                            dataKey="count"
-                            radius={[0, 8, 8, 0]}
-                            fill="hsl(var(--primary))"
-                        />
-                    </BarChart>
-                </ResponsiveContainer>
-            </CardContent>
-        </Card>
+        // <Card className="border-border">
+        //     <CardHeader>
+        //         <CardTitle>Embudo de ventas</CardTitle>
+        //     </CardHeader>
+        //     <CardContent className="h-64">
+        //         <ResponsiveContainer width="100%" height="100%">
+        //             <BarChart
+        //                 data={data}
+        //                 layout="vertical"
+        //                 margin={{ top: 8, right: 16, bottom: 8, left: 80 }}
+        //             >
+        //                 <XAxis type="number" allowDecimals={false} />
+        //                 <YAxis
+        //                     type="category"
+        //                     dataKey="stage"
+        //                     tick={{ fontSize: 11 }}
+        //                     width={120}
+        //                 />
+        //                 <Tooltip
+        //                     formatter={(value) => [`${value} contactos`, "Cantidad"]}
+        //                 />
+        //                 <Bar
+        //                     dataKey="count"
+        //                     radius={[0, 8, 8, 0]}
+        //                     fill="hsl(var(--primary))"
+        //                 />
+        //             </BarChart>
+        //         </ResponsiveContainer>
+        //     </CardContent>
+        // </Card>
+        <></>
     );
 }
 
@@ -221,16 +222,17 @@ export function RelationBarChart({ stats }: RelationBarChartProps) {
 
     if (!data.length) {
         return (
-            <Card className="border-border">
-                <CardHeader>
-                    <CardTitle>Madurez de contactos</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-xs text-muted-foreground">
-                        No hay datos de Lead / Prospecto / Cliente.
-                    </p>
-                </CardContent>
-            </Card>
+            // <Card className="border-border">
+            //     <CardHeader>
+            //         <CardTitle>Madurez de contactos</CardTitle>
+            //     </CardHeader>
+            //     <CardContent>
+            //         <p className="text-xs text-muted-foreground">
+            //             No hay datos de Lead / Prospecto / Cliente.
+            //         </p>
+            //     </CardContent>
+            // </Card>
+            <></>
         );
     }
 

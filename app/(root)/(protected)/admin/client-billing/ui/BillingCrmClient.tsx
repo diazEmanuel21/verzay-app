@@ -80,6 +80,8 @@ import { COLUMNS_LABELS, daysLeftService, exportExcelAllFiltered, getExportValue
 import { BillingCrmFiltersCards, BillingSkeletton, DaysLeftCell } from "../components";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const BILLING_COLUMN_FILTERS_STORAGE_KEY = "billing-crm-column-filters";
+const BILLING_COLUMN_VISIBILITY_STORAGE_KEY = "billing-crm-column-visibility";
 
 export function BillingCrmClient({
     initial,
@@ -99,6 +101,63 @@ export function BillingCrmClient({
         pageIndex: 0,
         pageSize: 9,
     });
+    const [hasLoadedPersistedFilters, setHasLoadedPersistedFilters] = useState(false);
+
+    React.useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        try {
+            const rawColumnFilters = localStorage.getItem(BILLING_COLUMN_FILTERS_STORAGE_KEY);
+            if (rawColumnFilters) {
+                const parsedColumnFilters = JSON.parse(rawColumnFilters);
+                if (Array.isArray(parsedColumnFilters)) {
+                    setColumnFilters(parsedColumnFilters);
+                }
+            }
+
+            const rawColumnVisibility = localStorage.getItem(BILLING_COLUMN_VISIBILITY_STORAGE_KEY);
+            if (rawColumnVisibility) {
+                const parsedColumnVisibility = JSON.parse(rawColumnVisibility);
+                if (
+                    parsedColumnVisibility &&
+                    typeof parsedColumnVisibility === "object" &&
+                    !Array.isArray(parsedColumnVisibility)
+                ) {
+                    setColumnVisibility(parsedColumnVisibility);
+                }
+            }
+        } catch {
+            // ignore corrupted localStorage payloads
+        } finally {
+            setHasLoadedPersistedFilters(true);
+        }
+    }, []);
+
+    React.useEffect(() => {
+        if (typeof window === "undefined" || !hasLoadedPersistedFilters) return;
+
+        try {
+            localStorage.setItem(
+                BILLING_COLUMN_FILTERS_STORAGE_KEY,
+                JSON.stringify(columnFilters)
+            );
+        } catch {
+            // localStorage may be unavailable
+        }
+    }, [columnFilters, hasLoadedPersistedFilters]);
+
+    React.useEffect(() => {
+        if (typeof window === "undefined" || !hasLoadedPersistedFilters) return;
+
+        try {
+            localStorage.setItem(
+                BILLING_COLUMN_VISIBILITY_STORAGE_KEY,
+                JSON.stringify(columnVisibility)
+            );
+        } catch {
+            // localStorage may be unavailable
+        }
+    }, [columnVisibility, hasLoadedPersistedFilters]);
 
 
 
