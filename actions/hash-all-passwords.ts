@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { isAdminLike } from "@/lib/rbac";
+import { LENGTH_PASSWORD_HASH } from "@/types/generic";
 
 type HashProgress = {
     success: boolean;
@@ -80,7 +81,7 @@ export async function hashAllPasswords(): Promise<HashProgress> {
         }
 
         // 2) Hash una sola vez (misma password para todos)
-        const hash = await bcrypt.hash(PLAIN_PASSWORD, 10);
+        const hash = await bcrypt.hash(PLAIN_PASSWORD, LENGTH_PASSWORD_HASH);
 
         // 3) Procesar en batches
         const batchesTotal = Math.ceil(totalToUpdate / batchSize);

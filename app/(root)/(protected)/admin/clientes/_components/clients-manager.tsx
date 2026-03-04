@@ -16,6 +16,9 @@ import { CreateDialog, DeleteDialog, ToolsDialog, EditDialog, ClientStatusPanel,
 import { ApiKey } from '@prisma/client';
 import { UserFormValues } from '@/schema/user';
 import { Country } from '@/components/custom/CountryCodeSelect';
+import bcrypt from "bcryptjs";
+import { LENGTH_PASSWORD_HASH } from '@/types/generic';
+
 
 export type DialogType = 'editar' | 'tools' | 'delete'
 
@@ -56,10 +59,12 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             timezone
         } = formData;
 
+        const passwordHash = await bcrypt.hash(password, LENGTH_PASSWORD_HASH);
+
         const result = await createUserWithPausar({
             name,
             email,
-            password,
+            password: passwordHash,
             company,
             notificationNumber,
             role,
@@ -70,7 +75,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             apiUrl,
             timezone,
             status: true,
-            passPlainTxt: 'IA@verzay.1234',
+            passPlainTxt: password,
             meetingDuration: 60,//tiempo en minutos
             meetingUrl: null,//tiempo en minutos
             delayTimeGpt: '12',//tiempo en minutos

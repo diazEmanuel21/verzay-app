@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import { z } from "zod";
 import { cookies } from "next/headers";
+import { LENGTH_PASSWORD_HASH } from "@/types/generic";
 
 export const loginAction = async (values: z.infer<typeof loginSchema>) => {
   try {
@@ -63,7 +64,7 @@ export const registerAction = async (
     }
 
     // hash de la contraseña
-    const passwordHash = await bcrypt.hash(data.password, 10);
+    const passwordHash = await bcrypt.hash(data.password, LENGTH_PASSWORD_HASH);
 
     // crear el usuario
     await db.user.create({
