@@ -27,6 +27,8 @@ export async function getClientsWithBilling(): Promise<ResponseFormat<any[]>> {
         .map((assignment) => assignment.userId)
         .filter((id): id is string => Boolean(id));
 
+      assignedUserIds = Array.from(new Set(assignedUserIds));
+
       if (!assignedUserIds.length) {
         return { success: true, message: "No hay usuarios asignados.", data: [] };
       }

@@ -3,11 +3,11 @@
 
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { isAdminOrReseller } from "@/lib/rbac";
 import { differenceInCalendarDays } from "date-fns";
 import { BillingTemplateType, ResponseFormat } from "@/types/billing";
 import { buildBillingMessage } from "./billing-message-templates";
 import { pickPreviewTemplate } from "./helpers/billing-helpers";
+import { assertBillingScope } from "./helpers/billing-helpers.server";
 
 
 
@@ -16,12 +16,10 @@ export async function previewBillingReminderMessage(
 ): Promise<ResponseFormat<{ text: string; template: BillingTemplateType; daysRemaining: number }>> {
     try {
         const me = await currentUser();
-        if (!me) return { success: false, message: "No autorizado." };
-        if (!isAdminOrReseller(me.role))
-            return { success: false, message: "No autorizado." };
+        const scopedUserId = await assertBillingScope(me ?? {}, userId);
 
         const billing = await db.userBilling.findUnique({
-            where: { userId },
+            where: { userId: scopedUserId },
             include: {
                 user: { select: { name: true, company: true, plan: true } },
             },

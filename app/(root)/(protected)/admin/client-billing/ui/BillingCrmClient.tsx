@@ -281,8 +281,9 @@ export function BillingCrmClient({
 
         try {
             setDialog((s) => ({ ...s, loading: true }));
+            let saveMessage = "Pagos actualizados.";
 
-            // Solo actualiza config si cambió algo del config (sin contar dueDate)
+            // Solo actualiza config si cambio algo del config (sin contar dueDate)
             const curr = normalizeEditForm(dialog.form);
             const prev = original ? normalizeEditForm(original) : null;
 
@@ -322,6 +323,15 @@ export function BillingCrmClient({
             }
 
             if (dueChanged) {
+                if (curr.dueDate) {
+                    const parsedDue = new Date(`${curr.dueDate}T00:00:00`);
+                    if (Number.isNaN(parsedDue.getTime())) {
+                        toast.error("La fecha de pago no es valida.");
+                        setDialog((s) => ({ ...s, loading: false }));
+                        return;
+                    }
+                }
+
                 const due = curr.dueDate ? curr.dueDate : null;
                 const dueRes = await setUserBillingDueDate(u.id, due);
 
@@ -330,9 +340,11 @@ export function BillingCrmClient({
                     setDialog((s) => ({ ...s, loading: false }));
                     return;
                 }
+
+                if (dueRes.message) saveMessage = dueRes.message;
             }
 
-            toast.success("Pagos actualizados.");
+            toast.success(saveMessage);
             await refreshBillingForUser(u.id);
             setDialog(emptyDialog);
         } catch (e: any) {
@@ -976,3 +988,6 @@ export function BillingCrmClient({
         </div>
     );
 }
+
+
+
