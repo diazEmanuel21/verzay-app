@@ -7,13 +7,6 @@ import { isAdminOrReseller } from "@/lib/rbac";
 import { ResponseFormat } from "@/types/billing";
 import { serializeUserBilling } from "./helpers/billing-helpers";
 
-/**
- * devuelve users + billing (sin tocar getClientsPageData).
- *
- * Nota: aquí no filtro por reseller porque tu getClientsPageData ya lo hace,
- * pero como pediste "no modificar", lo hacemos independiente y simple.
- */
-
 export async function getClientsWithBilling(): Promise<ResponseFormat<any[]>> {
   try {
     const me = await currentUser();
@@ -22,9 +15,29 @@ export async function getClientsWithBilling(): Promise<ResponseFormat<any[]>> {
       return { success: false, message: "No autorizado." };
     }
 
+    let assignedUserIds: string[] | undefined;
+
+    if (me.role === "reseller") {
+      const assignments = await db.reseller.findMany({
+        where: { resellerid: me.id },
+        select: { userId: true },
+      });
+
+      assignedUserIds = assignments
+        .map((assignment) => assignment.userId)
+        .filter((id): id is string => Boolean(id));
+
+      if (!assignedUserIds.length) {
+        return { success: true, message: "No hay usuarios asignados.", data: [] };
+      }
+    }
+
     const users = await db.user.findMany({
       orderBy: { createdAt: "desc" },
-      where: { status: true },
+      where: {
+        status: true,
+        ...(assignedUserIds ? { id: { in: assignedUserIds } } : {}),
+      },
       select: {
         id: true,
         name: true,
@@ -38,11 +51,12 @@ export async function getClientsWithBilling(): Promise<ResponseFormat<any[]>> {
       },
     });
 
-    // Serializa antes de enviar al Client Component
-    const safeUsers = users.map((u) => ({
-      ...u,
-      createdAt: u.createdAt ? u.createdAt.toISOString() : null,
-    })).map(serializeUserBilling);
+    const safeUsers = users
+      .map((u) => ({
+        ...u,
+        createdAt: u.createdAt ? u.createdAt.toISOString() : null,
+      }))
+      .map(serializeUserBilling);
 
     return { success: true, message: "Clientes cargados.", data: safeUsers };
   } catch (e: any) {
