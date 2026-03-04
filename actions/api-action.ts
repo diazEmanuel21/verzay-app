@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
 import { sendingMessages } from "./sending-messages-actions";
 import { ClientResponse, DISCONNECT_COOLDOWN_MS, DISCONNECTION_MSG, EVO_FETCH_TIMEOUT_MS, GenerateQrInterface, getDayKeyBogota, getEvoCache, isApiConnected, isWhatsappLike, QRCodeResponse } from "@/types/evo-api";
+import { assertUserCanUseApp } from "./billing/helpers/app-access-guard";
 
 /* =========================
    Server-Action: Generar QR
@@ -13,6 +14,12 @@ import { ClientResponse, DISCONNECT_COOLDOWN_MS, DISCONNECTION_MSG, EVO_FETCH_TI
    - Mantiene TUS mensajes originales.
 ========================= */
 export async function generateQRCode({ instanceName, userId }: GenerateQrInterface): Promise<QRCodeResponse> {
+  try {
+    await assertUserCanUseApp(userId);
+  } catch (error: any) {
+    return { success: false, message: error?.message ?? "No autorizado." };
+  }
+
   // Buscar el usuario y su ApiKey asignada (lo necesitas para el key del cache y para notificar)
   const user = await db.user.findUnique({
     where: { id: userId },
@@ -276,6 +283,8 @@ export async function createInstance(data: FormData) {
   const userId = data.get('userId') as string;
 
   try {
+    await assertUserCanUseApp(userId);
+
     // Validación de campos obligatorios
     if (!instanceName || !userId || !instanceType) {
       throw new Error('Todos los campos son obligatorios');
@@ -350,6 +359,8 @@ export async function createInstance(data: FormData) {
 
 export async function deleteInstance(userId: string, instanceType: string = 'Whatsapp') {
   try {
+    await assertUserCanUseApp(userId);
+
     // Verificar si el usuario tiene una instancia activa
     const instanciaActiva = await checkActiveInstance(userId, instanceType);
     if (!instanciaActiva) {
@@ -445,6 +456,8 @@ export async function checkActiveInstance(userId: string, instanceType: string =
 // Funcion para traer datos del cliente
 export async function getInstances(userId: string) {
   try {
+    await assertUserCanUseApp(userId);
+
     const instance = await db.instancia.findMany({
       where: { userId: userId },
       select: { instanceName: true, instanceId: true, instanceType: true },
@@ -526,6 +539,8 @@ export async function createBotAction(data: FormData) {
 //Datos para api status
 export async function getDataApi(userId: string, apiKeyId: string) {
   try {
+    await assertUserCanUseApp(userId);
+
     const apiKey = await db.apiKey.findFirst({
       where: { id: apiKeyId },
       select: { id: true, url: true, key: true },

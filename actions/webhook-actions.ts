@@ -1,6 +1,7 @@
 'use server';
 
 import { getInstances } from "./api-action";
+import { assertUserCanUseApp } from "./billing/helpers/app-access-guard";
 
 interface ToggleWebhookParams {
     userId: string;
@@ -14,6 +15,8 @@ export async function toggleWebhook({
     webhookUrl,
 }: ToggleWebhookParams): Promise<{ success: boolean; message: string }> {
     try {
+        await assertUserCanUseApp(userId);
+
         if (!userId || !webhookUrl) {
             return { success: false, message: 'No se pudo desactivar el webhook por falta de parámetros.' };
         };

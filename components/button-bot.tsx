@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -10,12 +11,13 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogCancel,
-  AlertDialogAction
+  AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Power } from "lucide-react";
 import { getInstances } from "@/actions/api-action";
 import { toast } from "sonner";
+import { getBillingServiceAccessSnapshot } from "@/actions/billing/billing-access-actions";
 
 interface EnableToggleButtonProps {
   userId: string;
@@ -27,10 +29,7 @@ interface EnableToggleButtonProps {
 
 const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
   userId,
-  userName,
-  apiurl,
-  apikey,
-  webhookUrl
+  webhookUrl,
 }) => {
   const [isEnabled, setIsEnabled] = useState<boolean | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -42,30 +41,9 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
   } | null>(null);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const loadInstanceData = async () => {
-    try {
-      const instances = await getInstances(userId);
-      if (instances && instances.length > 0) {
-        const whatsappInstance = instances.findIndex(i => i.instanceType == 'Whatsapp')
-        const { instanceName, instanceId,serverUrl } = instances[whatsappInstance];
-        // const { instanceName, instanceId, serverUrl } = instances[0];
-        setInstanceData({ instanceName, instanceId, serverUrl });
-        await fetchWebhookStatus(instanceName, instanceId, serverUrl);
-      } else {
-        setError("No se encontraron instancias para este usuario.");
-      }
-    } catch (err) {
-      setError(
-        `Error al cargar las instancias: ${err instanceof Error ? err.message : String(err)
-        }`
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const baseUrl = "https://" + instanceData?.serverUrl;
+  const [serviceLocked, setServiceLocked] = useState(false);
+  const [serviceLockReason, setServiceLockReason] = useState<string | null>(null);
+  const autoDisableAttemptedRef = useRef(false);
 
   const fetchWebhookStatus = async (
     instanceName: string,
@@ -73,35 +51,78 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
     serverUrl: string
   ) => {
     try {
-      const response = await fetch(
-        `https://${serverUrl}/webhook/find/${instanceName}`,
-        {
-          method: "GET",
-          headers: { apikey: instanceId },
-        }
-      );
+      const response = await fetch(`https://${serverUrl}/webhook/find/${instanceName}`, {
+        method: "GET",
+        headers: { apikey: instanceId },
+      });
 
-      if (!response.ok)
-        throw new Error("Error al obtener el estado del webhook.");
+      if (!response.ok) throw new Error("Error al obtener el estado del webhook.");
 
       const data = await response.json();
-
-      if (data === null || data.enabled === undefined) {
-        setIsEnabled(false);
-      } else {
-        setIsEnabled(data.enabled);
-      }
+      setIsEnabled(data?.enabled === true);
     } catch (err) {
       setError(
-        `Error al obtener el estado del webhook: ${err instanceof Error ? err.message : String(err)
-        }`
+        `Error al obtener el estado del webhook: ${err instanceof Error ? err.message : String(err)}`
       );
     }
   };
 
-  const toggleEnable = async () => {
+  const loadInstanceData = async () => {
+    try {
+      const instances = await getInstances(userId);
+      if (!instances || instances.length === 0) {
+        setError("No se encontraron instancias para este usuario.");
+        return;
+      }
+
+      const whatsappIndex = instances.findIndex((i) => i.instanceType === "Whatsapp");
+      const selected = whatsappIndex >= 0 ? instances[whatsappIndex] : instances[0];
+
+      if (!selected?.instanceName || !selected?.instanceId || !selected?.serverUrl) {
+        setError("Instancia incompleta: faltan datos requeridos.");
+        return;
+      }
+
+      const { instanceName, instanceId, serverUrl } = selected;
+      setInstanceData({ instanceName, instanceId, serverUrl });
+      await fetchWebhookStatus(instanceName, instanceId, serverUrl);
+    } catch (err) {
+      setError(`Error al cargar las instancias: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadBillingAccessStatus = async () => {
+    const res = await getBillingServiceAccessSnapshot(userId);
+    if (!res.success || !res.data) return;
+
+    const locked = res.data.shouldDisableAgent;
+    setServiceLocked(locked);
+
+    if (!locked) {
+      setServiceLockReason(null);
+      return;
+    }
+
+    const reason =
+      res.data.reason === "SUSPENDED_STATUS"
+        ? "Servicio suspendido"
+        : res.data.reason === "OVERDUE_BEYOND_GRACE"
+          ? "Servicio vencido fuera de gracia"
+          : "Servicio inactivo";
+
+    setServiceLockReason(reason);
+  };
+
+  const setWebhookEnabled = async (nextEnabled: boolean) => {
     if (!instanceData) {
-      toast.error("No se encontró información de la instancia.");
+      toast.error("No se encontro informacion de la instancia.");
+      return;
+    }
+
+    if (nextEnabled && serviceLocked) {
+      toast.error("Servicio suspendido por billing. No puedes activar el agente.");
       return;
     }
 
@@ -119,8 +140,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
           },
           body: JSON.stringify({
             webhook: {
-              enabled: !isEnabled,
-              // url: `https://n8npro.verzay.co/webhook/${userName}`,
+              enabled: nextEnabled,
               url: webhookUrl,
               base64: true,
               events: ["MESSAGES_UPSERT"],
@@ -131,17 +151,14 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
 
       if (!response.ok) throw new Error("Error al cambiar el estado.");
 
-      const newState = !isEnabled;
-      setIsEnabled(newState);
-
-      if (newState) {
+      setIsEnabled(nextEnabled);
+      if (nextEnabled) {
         toast.success("Robot encendido correctamente.");
       } else {
         toast.warning("Robot apagado correctamente.");
       }
     } catch (err) {
-      const errorMessage = `Error al cambiar el estado: ${err instanceof Error ? err.message : String(err)
-        }`;
+      const errorMessage = `Error al cambiar el estado: ${err instanceof Error ? err.message : String(err)}`;
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -149,17 +166,34 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
     }
   };
 
+  const toggleEnable = async () => {
+    await setWebhookEnabled(!(isEnabled ?? false));
+  };
+
   useEffect(() => {
-    loadInstanceData();
+    void loadInstanceData();
+    void loadBillingAccessStatus();
   }, [userId]);
+
+  useEffect(() => {
+    if (!serviceLocked) {
+      autoDisableAttemptedRef.current = false;
+      return;
+    }
+    if (!instanceData) return;
+    if (isEnabled !== true) return;
+    if (autoDisableAttemptedRef.current) return;
+
+    autoDisableAttemptedRef.current = true;
+    void setWebhookEnabled(false);
+  }, [serviceLocked, instanceData, isEnabled]);
 
   return (
     <>
-      {/* BOTÓN DE ENCENDIDO */}
       {!isEnabled ? (
         <Button
           onClick={toggleEnable}
-          disabled={loading || !instanceData}
+          disabled={loading || !instanceData || serviceLocked}
           className="bg-green-600 hover:bg-green-700 w-full"
           variant="default"
         >
@@ -176,14 +210,9 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
           )}
         </Button>
       ) : (
-        // BOTÓN DE APAGADO CON ALERT DIALOG
         <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <AlertDialogTrigger asChild>
-            <Button
-              className="w-full"
-              disabled={loading || !instanceData}
-              variant="destructive"
-            >
+            <Button className="w-full" disabled={loading || !instanceData} variant="destructive">
               {loading ? (
                 <>
                   <Loader2 className="animate-spin w-5 h-5" />
@@ -200,16 +229,14 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
 
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+              <AlertDialogTitle>Estas seguro?</AlertDialogTitle>
               <AlertDialogDescription>
-                Esto apagará el Robot de la instancia. Las respuestas
-                automáticas se detendrán hasta que vuelvas a encenderlo.
+                Esto apagara el Robot de la instancia. Las respuestas automaticas se detendran
+                hasta que vuelvas a encenderlo.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setIsDialogOpen(false)}>
-                Cancelar
-              </AlertDialogCancel>
+              <AlertDialogCancel onClick={() => setIsDialogOpen(false)}>Cancelar</AlertDialogCancel>
               <AlertDialogAction
                 onClick={async () => {
                   setIsDialogOpen(false);
@@ -222,6 +249,21 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+      )}
+
+      {serviceLocked && (
+        <Alert className="mt-2 border-destructive/40 bg-destructive/10">
+          <AlertDescription className="text-xs">
+            {(serviceLockReason ?? "Servicio suspendido") +
+              ". Debes regularizar billing para volver a encender el agente."}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {error && (
+        <Alert className="mt-2">
+          <AlertDescription className="text-xs">{error}</AlertDescription>
+        </Alert>
       )}
     </>
   );

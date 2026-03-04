@@ -6,6 +6,7 @@ import { Session } from '@prisma/client';
 import { z } from 'zod';
 import { ActionResponse } from './tag-actions';
 import { SessionResponse, SessionResponseCrm, SessionsListResponse, SessionWithRegistrosAndTags, SingleSessionResponse } from '@/types/session';
+import { assertUserCanUseApp } from './billing/helpers/app-access-guard';
 
 // 👉 schema para agregar varios tags a una sesión
 const addTagsToSessionSchema = z.object({
@@ -117,6 +118,16 @@ export async function getSessionsByUserId(
 
 export async function updateSessionStatus(sessionId: number, status: boolean): Promise<SessionsListResponse> {
   try {
+    const session = await db.session.findUnique({
+      where: { id: sessionId },
+      select: { userId: true },
+    });
+    if (!session?.userId) {
+      return { success: false, message: 'Sesion no encontrada.' };
+    }
+
+    await assertUserCanUseApp(session.userId);
+
     await db.session.update({
       where: { id: sessionId },
       data: { status }
@@ -541,6 +552,16 @@ export async function getSessionsByUserIdToCRM(
 
 export async function toggleAgentDisabled(userId: string, sessionId: number, agentDisabled: boolean) {
   try {
+    await assertUserCanUseApp(userId);
+
+    const session = await db.session.findUnique({
+      where: { id: sessionId },
+      select: { userId: true },
+    });
+    if (!session || session.userId !== userId) {
+      return { success: false, message: 'Sesion no encontrada o no autorizada.' };
+    }
+
     await db.session.update({
       where: { id: sessionId },
       data: { agentDisabled },
