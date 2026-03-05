@@ -55,7 +55,7 @@ const FormLogin = ({ isVerified, OAuthAccountNotLinked }: FormLoginProps) => {
         );
       } else {
         router.refresh();
-        redirect("/profile");
+        redirect("/");
       }
     });
   }

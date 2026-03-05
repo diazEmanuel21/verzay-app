@@ -222,7 +222,7 @@ export const CrmDashboard = ({
     const registrosFiltrados = registros;
 
     return (
-        <div className="flex flex-col gap-4 h-full">
+        <div className="flex flex-col gap-4 h-full min-w-0">
             {/* Métricas rápidas */}
             <div className="grid gap-3 md:grid-cols-2">
                 <MetricCard
@@ -315,7 +315,7 @@ export const CrmDashboard = ({
 
 
             {/* TABLAS GLOBALES */}
-            <Card className="flex flex-col border-border">
+            <Card className="flex flex-col border-border min-w-0">
                 <CardHeader className="pb-3 flex flex-row items-center justify-between gap-2">
                     <div>
                         <CardTitle className="text-base">Registros globales</CardTitle>
@@ -415,7 +415,7 @@ export const CrmDashboard = ({
                         }}
                         className="flex flex-col min-h-0"
                     >
-                        <TabsList className="grid grid-cols-4 md:grid-cols-7 gap-1 mb-2">
+                        <TabsList className="mb-2 flex w-full flex-nowrap gap-1 overflow-x-auto whitespace-nowrap">
                             <TabsTrigger value="TODOS" className="px-2">
                                 Todos ({totalRegistros})
                             </TabsTrigger>
@@ -440,9 +440,10 @@ export const CrmDashboard = ({
                         </TabsList>
 
                         <TabsContent value={activeTab} className="mt-0">
-                            <div ref={scrollAreaWrapRef}>
-                                <ScrollArea className="h-[320px] rounded-md border">
-                                    <Table>
+                            <div ref={scrollAreaWrapRef} className="min-w-0">
+                                <ScrollArea className="h-[320px] rounded-md border w-full">
+                                    <div className="w-full overflow-x-auto">
+                                        <Table className="min-w-[760px]">
                                         <TableHeader>
                                             <TableRow className="hover:bg-transparent">
                                                 <TableHead className="h-8 py-1.5 whitespace-nowrap">
@@ -601,7 +602,8 @@ export const CrmDashboard = ({
                                                 );
                                             })}
                                         </TableBody>
-                                    </Table>
+                                        </Table>
+                                    </div>
                                     <div ref={sentinelRef} className="h-8" />
                                 </ScrollArea>
                             </div>

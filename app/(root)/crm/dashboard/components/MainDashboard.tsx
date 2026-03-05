@@ -192,7 +192,7 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-w-0">
       <CrmDashboard
         stats={stats}
         userId={userId}

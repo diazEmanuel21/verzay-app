@@ -29,7 +29,7 @@ export default auth((req) => {
   if (publicRoutes.includes(currentPath)) return NextResponse.next();
 
   if (isLoggedIn && authRoutes.includes(currentPath)) {
-    return NextResponse.redirect(new URL("/profile", nextUrl));
+    return NextResponse.redirect(new URL("/", nextUrl));
   }
   const isPublicRoute =
     publicRoutes.includes(currentPath) || currentPath.startsWith("/schedule/");
