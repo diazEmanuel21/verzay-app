@@ -24,7 +24,7 @@ export default function BillingLockScreen(props: Props) {
   } = props;
 
   return (
-    <main className="min-h-screen w-full bg-background p-6 md:p-10">
+    <main className="min-h-screen w-full flex justify-center items-center bg-background p-6 md:p-10">
       <section className="mx-auto max-w-3xl rounded-xl border border-destructive/40 bg-destructive/10 p-6 md:p-8">
         <h1 className="text-2xl font-semibold text-destructive">Acceso suspendido por facturación</h1>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -38,7 +38,7 @@ export default function BillingLockScreen(props: Props) {
           {amountDue ? <p><b>Saldo pendiente:</b> {amountDue} {currencyCode ?? "COP"}</p> : null}
           {dueDateIso ? <p><b>Fecha de vencimiento:</b> {dueDateIso.slice(0, 10)}</p> : null}
           {paymentMethodLabel ? <p><b>Medio de pago:</b> {paymentMethodLabel}</p> : null}
-          {paymentNotes ? <p><b>Instrucciones:</b> {paymentNotes}</p> : null}
+          {/* {paymentNotes ? <p><b>Instrucciones:</b> {paymentNotes}</p> : null} */}
           {paymentUrl ? (
             <p>
               <b>URL de pago:</b>{" "}
