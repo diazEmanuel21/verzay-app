@@ -19,6 +19,7 @@
     "@fullcalendar/interaction": "^6.1.17",
     "@fullcalendar/react": "^6.1.17",
     "@fullcalendar/timegrid": "^6.1.17",
+    "@google/genai": "^1.44.0",
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^3.9.0",
     "@prisma/client": "^5.16.1",
