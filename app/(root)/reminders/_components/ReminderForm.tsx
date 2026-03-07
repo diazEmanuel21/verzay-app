@@ -115,7 +115,7 @@ export const ReminderForm = ({
         if (instanceNameReminder && v.instanceName !== instanceNameReminder) {
             setValue("instanceName", instanceNameReminder);
         }
-    }, [apikey, serverUrl, instanceNameReminder, register, setValue]);
+    }, [apikey, serverUrl, instanceNameReminder, reminderForm, setValue]);
 
     const modalTitle = isCampaignPage ? 'campaña' : 'recordatorio';
 

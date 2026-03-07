@@ -43,7 +43,7 @@ export default function AppInitializer({ onReseller, modules, user }: AppInitial
             toast.info(`Acceso denegado por:", ${access.reason ?? 'Desconocido'}`);
             router.push("/credits"); // 👈 redirección en cliente
         }
-    }, [pathname, user, modules, router]);
+    }, [pathname, user, modules, labelModule, router]);
 
     //Setear modulos de la app
     useEffect(() => {
@@ -62,7 +62,7 @@ export default function AppInitializer({ onReseller, modules, user }: AppInitial
         } else {
             clearReseller();
         }
-    }, [onReseller, setReseller])
+    }, [onReseller, setReseller, clearReseller])
 
     return <></>
 }

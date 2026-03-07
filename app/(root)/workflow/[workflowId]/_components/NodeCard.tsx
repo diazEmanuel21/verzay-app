@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Action, ACTIONS, CARD_ACTIONS, MAX_MESSAGE_LENGTH, PropsNodeCard } from "@/types/workflow-node";
 import { EmbeddingNode } from '.';
+import { SafeImage } from "@/components/custom/SafeImage";
 
 export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCard) => {
   const router = useRouter();
@@ -273,7 +274,7 @@ export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCar
     if (hasContent) {
       return (
         <div className="flex items-center w-full rounded nodrag">
-          {baseType === 'image' && <img src={nodes.url!} alt="Contenido" className="rounded-md w-full h-auto object-contain" />}
+          {baseType === 'image' && <SafeImage src={nodes.url!} alt="Contenido" className="rounded-md w-full h-auto object-contain" />}
           {baseType === 'video' && <video src={nodes.url!} controls className="rounded-md w-full h-auto" />}
           {baseType === 'audio' && <audio src={nodes.url!} controls className="w-full" />}
           {baseType === 'document' && (

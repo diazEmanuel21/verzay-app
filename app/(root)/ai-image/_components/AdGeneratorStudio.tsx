@@ -15,6 +15,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react'
 import { generateAdImage } from '@/actions/ai-image-actions'
 
+import { SafeImage } from '@/components/custom/SafeImage'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -320,9 +321,11 @@ export const AdGeneratorStudio = () => {
                       className={`relative h-24 w-24 shrink-0 cursor-pointer overflow-hidden rounded-xl border transition
                         ${activeImageIndex === idx ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/40'}`}
                     >
-                      <img
+                      <SafeImage
                         src={img}
                         alt={`Producto ${idx + 1}`}
+                        fill
+                        sizes="96px"
                         className="h-full w-full object-cover"
                         referrerPolicy="no-referrer"
                       />

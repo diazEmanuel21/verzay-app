@@ -19,7 +19,7 @@ export const MainReminders = ({ isCampaignPage, user, apiKey, reminders, leads, 
 
   useEffect(() => {
     setCampaignPage(isCampaignPage);
-  }, [isCampaignPage]);
+  }, [isCampaignPage, setCampaignPage]);
 
   const [search, setSearch] = useState("");
   const [sortAsc, setSortAsc] = useState(true);

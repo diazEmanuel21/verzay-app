@@ -1,7 +1,7 @@
 // app/(admin)/services/_components/ServiceList.tsx
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { toast } from "sonner"
@@ -13,7 +13,7 @@ export const ServiceList = ({ userId }: { userId: string }) => {
     const [services, setServices] = useState<Service[]>([])
     const [loading, setLoading] = useState(false)
 
-    const loadServices = async () => {
+    const loadServices = useCallback(async () => {
         setLoading(true)
         const res = await getServicesByUser(userId)
         if (res.success && res.data) {
@@ -22,21 +22,21 @@ export const ServiceList = ({ userId }: { userId: string }) => {
             toast.error(res.message)
         }
         setLoading(false)
-    }
+    }, [userId])
 
     const handleDelete = async (id: string) => {
         const res = await deleteService(id)
         if (res.success) {
             toast.success(res.message)
-            loadServices()
+            void loadServices()
         } else {
             toast.error(res.message)
         }
     }
 
     useEffect(() => {
-        loadServices()
-    }, [userId])
+        void loadServices()
+    }, [loadServices])
 
     if (loading) return <p className="text-muted-foreground">Cargando servicios...</p>
 

@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -161,7 +161,7 @@ export function BillingCrmClient({
 
 
 
-    async function refreshBillingForUser(userId: string) {
+    const refreshBillingForUser = useCallback(async (userId: string) => {
         const res = await getUserBillingByUserId(userId);
         if (!res.success) {
             toast.error(res.message);
@@ -171,45 +171,45 @@ export function BillingCrmClient({
         setData((prev) =>
             prev.map((u) => (u.id === userId ? { ...u, billing: res.data ?? null } : u))
         );
-    }
+    }, []);
 
-    const canSave = useMemo(() => {
+    const canSave = (() => {
         if (!dialog.open) return false;
         if (dialog.loading) return false;
         if (!dialog.user) return false;
         if (!dialog.original) return true;
         return hasChanges(dialog.form, dialog.original);
-    }, [dialog.open, dialog.loading, dialog.user, dialog.form, dialog.original]);
+    })();
 
-    async function handleMarkPaid(userId: string) {
+    const handleMarkPaid = useCallback(async (userId: string) => {
         const res = await markUserAsPaid(userId);
         if (!res.success) return toast.error(res.message);
         toast.success(res.message);
         await refreshBillingForUser(userId);
-    }
+    }, [refreshBillingForUser]);
 
-    async function handleMarkUnpaid(userId: string) {
+    const handleMarkUnpaid = useCallback(async (userId: string) => {
         const res = await markUserAsUnpaid(userId);
         if (!res.success) return toast.error(res.message);
         toast.success(res.message);
         await refreshBillingForUser(userId);
-    }
+    }, [refreshBillingForUser]);
 
-    async function handleSuspend(userId: string) {
+    const handleSuspend = useCallback(async (userId: string) => {
         const res = await suspendUserService(userId, "Vencido sin pago");
         if (!res.success) return toast.error(res.message);
         toast.success(res.message);
         await refreshBillingForUser(userId);
-    }
+    }, [refreshBillingForUser]);
 
-    async function handleActivate(userId: string) {
+    const handleActivate = useCallback(async (userId: string) => {
         const res = await activateUserService(userId);
         if (!res.success) return toast.error(res.message);
         toast.success(res.message);
         await refreshBillingForUser(userId);
-    }
+    }, [refreshBillingForUser]);
 
-    async function openEdit(u: ClientRow) {
+    const openEdit = useCallback(async (u: ClientRow) => {
         setDialog((s) => ({ ...s, open: true, user: u, loading: true }));
 
         const res = await getUserBillingByUserId(u.id);
@@ -244,7 +244,7 @@ export function BillingCrmClient({
             form: original,
             original,
         });
-    }
+    }, []);
 
     function normalizeEditForm(f: any) {
         return {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -45,7 +45,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
   const [serviceLockReason, setServiceLockReason] = useState<string | null>(null);
   const autoDisableAttemptedRef = useRef(false);
 
-  const fetchWebhookStatus = async (
+  const fetchWebhookStatus = useCallback(async (
     instanceName: string,
     instanceId: string,
     serverUrl: string
@@ -65,9 +65,9 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
         `Error al obtener el estado del webhook: ${err instanceof Error ? err.message : String(err)}`
       );
     }
-  };
+  }, []);
 
-  const loadInstanceData = async () => {
+  const loadInstanceData = useCallback(async () => {
     try {
       const instances = await getInstances(userId);
       if (!instances || instances.length === 0) {
@@ -91,9 +91,9 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchWebhookStatus, userId]);
 
-  const loadBillingAccessStatus = async () => {
+  const loadBillingAccessStatus = useCallback(async () => {
     const res = await getBillingServiceAccessSnapshot(userId);
     if (!res.success || !res.data) return;
 
@@ -113,9 +113,9 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
           : "Servicio inactivo";
 
     setServiceLockReason(reason);
-  };
+  }, [userId]);
 
-  const setWebhookEnabled = async (nextEnabled: boolean) => {
+  const setWebhookEnabled = useCallback(async (nextEnabled: boolean) => {
     if (!instanceData) {
       toast.error("No se encontro informacion de la instancia.");
       return;
@@ -164,7 +164,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [instanceData, serviceLocked, webhookUrl]);
 
   const toggleEnable = async () => {
     await setWebhookEnabled(!(isEnabled ?? false));
@@ -173,7 +173,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
   useEffect(() => {
     void loadInstanceData();
     void loadBillingAccessStatus();
-  }, [userId]);
+  }, [loadBillingAccessStatus, loadInstanceData]);
 
   useEffect(() => {
     if (!serviceLocked) {
@@ -186,7 +186,7 @@ const EnableToggleButton: React.FC<EnableToggleButtonProps> = ({
 
     autoDisableAttemptedRef.current = true;
     void setWebhookEnabled(false);
-  }, [serviceLocked, instanceData, isEnabled]);
+  }, [serviceLocked, instanceData, isEnabled, setWebhookEnabled]);
 
   return (
     <>

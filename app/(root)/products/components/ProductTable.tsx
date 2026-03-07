@@ -14,6 +14,7 @@ import { ProductForm } from "./ProductForm";
 import { deleteProduct } from "@/actions/products-actions";
 import { Trash2 } from "lucide-react";
 import { ProductTableInterface, ProductType } from "@/types/products";
+import { SafeImage } from "@/components/custom/SafeImage";
 
 
 export const ProductTable = ({
@@ -72,9 +73,11 @@ export const ProductTable = ({
             cell: ({ row }) => (
                 <div>
                     {row.original.images.length > 0 ? (
-                        <img
+                        <SafeImage
                             src={row.original.images[0]}
                             alt="Product"
+                            width={64}
+                            height={64}
                             className="w-16 h-16 object-cover"
                         />
                     ) : (

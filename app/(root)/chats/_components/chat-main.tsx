@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { AttachmentMenu, type ComposeMedia, type MediaType } from './attachment-menu';
 import { SwitchStatus } from '../../sessions/_components';
+import { SafeImage } from '@/components/custom/SafeImage';
 
 /*  Importaciones de Acciones y Tipos de Servidor */
 import { getMediaBase64FromMessage } from '@/actions/chat-actions';
@@ -273,7 +274,7 @@ const MediaRenderer: React.FC<{ media: MediaData | undefined }> = React.memo(({ 
       )}
     >
       {type === 'image' && (
-        <img
+        <SafeImage
           src={url}
           alt={caption || 'Imagen'}
           className="w-full h-auto object-cover max-h-[300px] cursor-pointer"
@@ -548,11 +549,10 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
 
   /* Construye UI con caché */
   const reversed = useMemo(() => messages.slice().reverse(), [messages]);
-  const uiMessages = useMemo(
-    () => toUIMessages(reversed, userJid, header.avatarSrc, mediaCacheRef.current),
-    // incluye mediaCacheTick para re-computar cuando se actualiza el ref
-    [reversed, userJid, header.avatarSrc, mediaCacheTick]
-  );
+  const uiMessages = useMemo(() => {
+    void mediaCacheTick;
+    return toUIMessages(reversed, userJid, header.avatarSrc, mediaCacheRef.current);
+  }, [reversed, userJid, header.avatarSrc, mediaCacheTick]);
 
   /* Scroll to bottom (useLayoutEffect minimiza “salto” visual) */
   const scrollToBottom = useCallback(() => {
@@ -667,7 +667,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         setTempMessage(null);
       }
     }
-  }, [recordedAudio, composeMedia, input, onSend, isSending]);
+  }, [recordedAudio, composeMedia, input, onSend]);
 
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -676,7 +676,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         void sendNow();
       }
     },
-    [sendNow, isRecording, recordedAudio, isSending]
+    [sendNow, isRecording, recordedAudio]
   );
 
   /* Grabación de Audio */
@@ -836,9 +836,11 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
           <div className="mb-2 flex items-center gap-2">
             {composeMedia.mediatype === 'image' ? (
               <div className="relative w-16 h-16 rounded-md overflow-hidden border bg-white dark:bg-gray-800">
-                <img
+                <SafeImage
                   src={composeMedia.dataUrl}
                   alt={composeMedia.fileName}
+                  fill
+                  sizes="64px"
                   className="w-full h-full object-cover"
                 />
                 <button

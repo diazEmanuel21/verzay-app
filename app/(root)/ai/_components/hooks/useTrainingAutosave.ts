@@ -60,9 +60,9 @@ export function useTrainingAutosave(opts: {
     const lastHashRef = useRef<string>("");
     const stepsHash = useMemo(() => JSON.stringify(steps), [steps]);
 
-    const notifyStatus = (status: AutosaveStatus) => {
+    const notifyStatus = useCallback((status: AutosaveStatus) => {
         onStatusChange?.(status);
-    };
+    }, [onStatusChange]);
 
     // Lógica de guardado REAL (sin debounce)
     const saveFn = useCallback(
@@ -102,7 +102,7 @@ export function useTrainingAutosave(opts: {
                 toast.error("Error al guardar el entrenamiento automáticamente.");
             }
         },
-        [promptId, onVersionChange] // notifyStatus usa onStatusChange directamente
+        [notifyStatus, promptId, onVersionChange]
     );
 
     // Versión con debounce para AUTO

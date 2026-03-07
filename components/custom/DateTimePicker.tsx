@@ -31,7 +31,7 @@ export function DateTimePicker({
     useEffect(() => {
         const updated = setMinutes(setHours(date, hour), minute)
         onChange(format(updated, "dd/MM/yyyy HH:mm"))
-    }, []) // solo al montar
+    }, [date, hour, minute, onChange])
 
     const updateDateTime = (newDate?: Date, newHour?: number, newMinute?: number) => {
         const base = newDate ?? date
@@ -42,8 +42,6 @@ export function DateTimePicker({
         setDate(updated)
         setHour(h)
         setMinute(m)
-        onChange(format(updated, "dd/MM/yyyy HH:mm"))
-
     }
 
     return (

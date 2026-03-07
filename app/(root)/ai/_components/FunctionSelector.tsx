@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     Popover,
     PopoverTrigger,
@@ -129,7 +129,7 @@ export const FunctionSelector = ({
     });
 
     /** Inserta en step o crea bloque (raíz) */
-    const insertOrCreate = (el: ElementItem) => {
+    const insertOrCreate = useCallback((el: ElementItem) => {
         if (step && setSteps) {
             setSteps((prev) =>
                 prev.map((s) =>
@@ -142,7 +142,7 @@ export const FunctionSelector = ({
             onCreateBlock(el);
             setOpenRoot(false);
         }
-    };
+    }, [onCreateBlock, setSteps, step]);
 
     /** Actions (compatibles con ambos modos) */
     const addText = () => insertOrCreate(makeText());
@@ -169,7 +169,7 @@ export const FunctionSelector = ({
         if (isManagement && open) {
             insertOrCreate(makeCaptura());
         }
-    }, [isManagement, open]);
+    }, [insertOrCreate, isManagement, open]);
 
     return (
         <>

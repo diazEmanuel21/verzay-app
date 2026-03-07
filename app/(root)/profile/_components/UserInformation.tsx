@@ -18,6 +18,7 @@ import { ConnectionMain } from "../../connection/_components";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { optimizeFile } from "../../workflow/[workflowId]/helpers";
+import { SafeImage } from "@/components/custom/SafeImage";
 
 // ============================
 // Tipado
@@ -91,8 +92,8 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
     }, [userId]);
 
     useEffect(() => {
-        fetchClientData();
-    }, [userId]);
+        void fetchClientData();
+    }, [fetchClientData]);
 
     // ============================
     // Guardar campo en onBlur
@@ -301,9 +302,11 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                 className="relative w-14 h-14 rounded-full overflow-hidden border border-border cursor-pointer hover:ring-2 hover:ring-primary transition"
                                 onClick={() => fileRef.current?.click()}
                             >
-                                <img
+                                <SafeImage
                                     src={(user?.image as string) ?? defaultImgUrl}
                                     alt="avatar-preview"
+                                    fill
+                                    sizes="56px"
                                     className="w-full h-full object-cover"
                                 />
                                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition">

@@ -11,6 +11,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { SafeImage } from '@/components/custom/SafeImage';
 
 type ExpenseRow = {
     id: string;
@@ -117,11 +118,12 @@ export function buildExpenseColumns(opts: {
                 return (
                     <div className="flex items-center gap-1">
                         {show.map((a, idx) => (
-                            // usamos <img> para evitar config de next/image
-                            <img
+                            <SafeImage
                                 key={idx}
                                 src={a.url}
                                 alt="support"
+                                width={24}
+                                height={24}
                                 className="h-6 w-6 rounded-md border object-cover"
                             />
                         ))}

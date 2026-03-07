@@ -49,9 +49,9 @@ export function useBusinessAutosave(opts: {
         versionRef.current = version;
     }, [version]);
 
-    const notifyStatus = (status: AutosaveStatus) => {
+    const notifyStatus = useCallback((status: AutosaveStatus) => {
         onStatusChange?.(status);
-    };
+    }, [onStatusChange]);
 
     // 👇 Lógica REAL de guardado (sin debounce)
     const saveFn = useCallback(
@@ -108,7 +108,7 @@ export function useBusinessAutosave(opts: {
                 toast.error("Error al guardar automáticamente los cambios.");
             }
         },
-        [promptId, onConflict, onVersionChange]
+        [notifyStatus, promptId, onConflict, onVersionChange]
     );
 
     // 👇 Versión con debounce, solo usada en modo "auto"

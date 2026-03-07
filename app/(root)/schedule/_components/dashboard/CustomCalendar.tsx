@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -63,7 +63,7 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
     const [newStatus, setNewStatus] = useState<AppointmentStatus>("CONFIRMADA");
     const [openCancelAlert, setOpenCancelAlert] = useState(false);
 
-    const loadAppointments = async () => {
+    const loadAppointments = useCallback(async () => {
         const res = await getAppointmentsByUser(user.id);
         if (res.success) {
             setAppointments((res.data || []) as AppointmentWithSession[]);
@@ -71,14 +71,14 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
         } else {
             toast.error(res.message, { id: toastId });
         }
-    };
+    }, [user.id, toastId]);
 
     useEffect(() => {
         toast.loading("Cargando su agenda, un momento por favor...", {
             id: toastId,
         });
-        loadAppointments();
-    }, [user.id]);
+        void loadAppointments();
+    }, [loadAppointments]);
 
     const handleStatusChange = async (id: string, status: AppointmentStatus) => {
         toast.loading("Actualizando el estado de la cita...", { id: toastId });

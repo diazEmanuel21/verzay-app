@@ -128,9 +128,11 @@ export const LeadsManagement = ({
             PAGO: 0,
             RESERVA: 0,
         };
-        // for (const r of registros) {
-        //     counts[r.tipo] = (counts[r.tipo] ?? 0) + 1;
-        // }
+        for (const r of registros as Registro[]) {
+            const tipo = r.tipo as TipoRegistro;
+            if (!tipo) continue;
+            counts[tipo] = (counts[tipo] ?? 0) + 1;
+        }
         return counts;
     }, [registros]);
 

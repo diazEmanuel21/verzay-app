@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
@@ -31,6 +31,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { SafeImage } from '@/components/custom/SafeImage';
 
 import {
   CalendarDays,
@@ -500,7 +501,7 @@ export default function MainSales({
   const totalsMonth = useMemo(() => sumByCurrency(monthRows), [monthRows]);
   const totalsAll = useMemo(() => sumByCurrency(rows), [rows]);
 
-  const orderedEntries = (totals: Record<string, number>) => {
+  const orderedEntries = useCallback((totals: Record<string, number>) => {
     const entries = Object.entries(totals);
     if (!entries.length) return [];
 
@@ -511,19 +512,19 @@ export default function MainSales({
       ...entries.filter(([code]) => code === safe),
       ...entries.filter(([code]) => code !== safe),
     ];
-  };
+  }, [currencies, primaryCurrencyCode, defaultCurrency]);
 
   const monthTotalText = useMemo(() => {
     const entries = orderedEntries(totalsMonth);
     if (!entries.length) return '—';
     return entries.map(([code, v]) => moneyFormat(currencies, code, v)).join(' • ');
-  }, [totalsMonth, currencies, primaryCurrencyCode, defaultCurrency]);
+  }, [totalsMonth, currencies, orderedEntries]);
 
   const grandTotalText = useMemo(() => {
     const entries = orderedEntries(totalsAll);
     if (!entries.length) return '—';
     return entries.map(([code, v]) => moneyFormat(currencies, code, v)).join(' • ');
-  }, [totalsAll, currencies, primaryCurrencyCode, defaultCurrency]);
+  }, [totalsAll, currencies, orderedEntries]);
 
   const detailAccountName = useMemo(() => {
     if (!detailRow?.accountId) return '';
@@ -789,9 +790,11 @@ export default function MainSales({
                       >
                         <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border bg-muted/10">
                           {isImg ? (
-                            <img
+                            <SafeImage
                               src={a.url}
                               alt={a.fileName || 'soporte'}
+                              width={44}
+                              height={44}
                               className="h-11 w-11 object-cover"
                             />
                           ) : isPdf ? (
@@ -1164,7 +1167,13 @@ export default function MainSales({
                             <div key={a.id ?? `${a.url}-${idx}`} className="flex items-center gap-3 rounded-xl border p-3 hover:bg-muted/30">
                               <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border bg-muted/10">
                                 {guessIsImage(a.mimeType, a.url) ? (
-                                  <img src={a.url} alt={a.fileName || 'soporte'} className="h-10 w-10 object-cover" />
+                                  <SafeImage
+                                    src={a.url}
+                                    alt={a.fileName || 'soporte'}
+                                    width={40}
+                                    height={40}
+                                    className="h-10 w-10 object-cover"
+                                  />
                                 ) : guessIsPdf(a.mimeType, a.url) ? (
                                   <FileText className="h-5 w-5 text-muted-foreground" />
                                 ) : (

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { getInstances } from '@/actions/api-action'; // Importa la server action
 
 interface OpenAICredentialProps {
@@ -40,7 +40,7 @@ const OpenAICredentialManager: React.FC<OpenAICredentialComponentProps> = ({ use
         setInstanceData({ instanceName, instanceId });
 
         // Obtener la API Key de la credencial almacenada
-        fetchOpenAICredential(instanceName, instanceId); // Consulta la credencial al cargar
+        await fetchOpenAICredential(instanceName, instanceId); // Consulta la credencial al cargar
       } else {
         setError('No se encontraron instancias para este usuario.');
       }
@@ -50,7 +50,7 @@ const OpenAICredentialManager: React.FC<OpenAICredentialComponentProps> = ({ use
   };
 
   // Consulta las credenciales de OpenAI
-  const fetchOpenAICredential = async (instanceName: string, instanceId: string) => {
+  const fetchOpenAICredential = useCallback(async (instanceName: string, instanceId: string) => {
     setLoading(true);
     setError(null);
     try {
@@ -77,7 +77,7 @@ const OpenAICredentialManager: React.FC<OpenAICredentialComponentProps> = ({ use
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const createOpenAICredential = async (instanceName: string, instanceId: string, apiKey: string) => {
     if (!apiKey) {
@@ -140,8 +140,24 @@ const OpenAICredentialManager: React.FC<OpenAICredentialComponentProps> = ({ use
   };
 
   useEffect(() => {
-    fetchInstancesAndApiKey();
-  }, [userId]);
+    const loadInstancesAndApiKey = async () => {
+      try {
+        const instances = await getInstances(userId);
+
+        if (Array.isArray(instances) && instances.length > 0) {
+          const { instanceName, instanceId } = instances[0];
+          setInstanceData({ instanceName, instanceId });
+          await fetchOpenAICredential(instanceName, instanceId);
+        } else {
+          setError('No se encontraron instancias para este usuario.');
+        }
+      } catch (err) {
+        setError('Error al cargar las instancias: ' + (err instanceof Error ? err.message : String(err)));
+      }
+    };
+
+    void loadInstancesAndApiKey();
+  }, [fetchOpenAICredential, userId]);
 
   if (loading) return <p className="text-center text-lg text-gray-500">Cargando...</p>;
   if (error) return <p className="text-center text-lg text-red-500">{error}</p>;

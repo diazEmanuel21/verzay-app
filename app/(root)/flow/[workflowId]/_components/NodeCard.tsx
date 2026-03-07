@@ -38,6 +38,7 @@ import { GenericTextarea } from "@/components/shared/GenericTextarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { CSS } from '@dnd-kit/utilities'
+import { SafeImage } from "@/components/custom/SafeImage";
 
 interface Props {
   workflowId: string;
@@ -377,7 +378,7 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
       return (
         <div className="flex items-center w-full rounded">
           {baseType === 'image' && (
-            <img src={nodes.url!} alt="Contenido del nodo" className="rounded-md w-full h-auto object-contain" />
+            <SafeImage src={nodes.url!} alt="Contenido del nodo" className="rounded-md w-full h-auto object-contain" />
           )}
           {baseType === 'video' && (
             <video src={nodes.url!} controls className="rounded-md w-full h-auto" />

@@ -72,7 +72,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
             if (res.success) setSlots(res.data || []);
             else toast.error(res.message);
         })();
-    }, [user.id, selectedDateYmd]);
+    }, [user.id, selectedDateYmd, slotDuration]);
 
     // ── Confirmación + notificación (con envío al owner)
     const handleConfirmAppointment = async () => {

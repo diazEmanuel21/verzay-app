@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     createAvailability,
     getUserAvailability,
@@ -38,7 +38,7 @@ export const UserAvailabilityForm = ({ userId }: { userId: string }) => {
 
     const hours = generateHourOptions();
 
-    const loadAvailability = async () => {
+    const loadAvailability = useCallback(async () => {
         setLoading(true);
         const res = await getUserAvailability(userId);
         if (res.success) {
@@ -50,9 +50,9 @@ export const UserAvailabilityForm = ({ userId }: { userId: string }) => {
             toast.error(res.message ?? "Error al cargar");
         }
         setLoading(false);
-    };
+    }, [userId]);
 
-    useEffect(() => { loadAvailability(); }, [userId]);
+    useEffect(() => { void loadAvailability(); }, [loadAvailability]);
 
     const handleAdd = async (day: number) => {
         const res = await createAvailability({

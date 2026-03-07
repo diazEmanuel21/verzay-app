@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { ProductFormInterface, productSchema, type ProductInput } from "@/lib/validators/product";
 import { createProduct, updateProduct, checkIfSkuExists } from "@/actions/products-actions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -14,6 +14,7 @@ import { Pencil, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { nanoid } from "nanoid";
 import { optimizeFile } from "../../workflow/[workflowId]/helpers";
+import { SafeImage } from "@/components/custom/SafeImage";
 
 export const ProductForm = ({
     userId,
@@ -42,6 +43,7 @@ export const ProductForm = ({
             tags: product?.tags ?? [],
         },
     });
+    const sku = useWatch({ control: form.control, name: "sku" });
 
     useEffect(() => {
         const checkSku = async (sku: string | null | undefined) => {
@@ -52,8 +54,8 @@ export const ProductForm = ({
                 setIsSkuDuplicate(false);
             }
         };
-        checkSku(form.watch("sku"));
-    }, [form.watch("sku"), userId]);
+        void checkSku(sku);
+    }, [sku, userId]);
 
     useEffect(() => {
         if (!open) return;
@@ -195,7 +197,7 @@ export const ProductForm = ({
                         <Input type="file" accept="image/*" onChange={handleImageUpload} />
                         {imagePreview && (
                             <div className="flex justify-center items-center mt-2">
-                                <img src={imagePreview} alt="Vista previa" className="w-32" />
+                                <SafeImage src={imagePreview} alt="Vista previa" className="w-32" />
                                 <Button type="button" variant={"destructive"} onClick={handleImageDelete} className="ml-2">
                                     Eliminar imagen
                                 </Button>

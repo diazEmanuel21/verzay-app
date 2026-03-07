@@ -60,7 +60,7 @@ export function usePromptActions(opts: {
         } finally {
             setLoading(null);
         }
-    }, [promptId, publishedBy, revalidatePath, handleConflict, handleOk]);
+    }, [promptId, publishedBy, revalidatePath, handleOk]);
 
 
     return {

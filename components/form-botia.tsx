@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { getInstances } from '@/actions/api-action';
 import { createBotAction } from '@/actions/api-action'; // Importa la server action
 
@@ -21,7 +21,7 @@ const CreateBotComponent = ({ userId }: UserIdProps) => {
   const [botCreated, setBotCreated] = useState(false);
 
   // Obtener instancias
-  const fetchInstances = async () => {
+  const fetchInstances = useCallback(async () => {
     try {
       const instances = await getInstances(userId);
       if (Array.isArray(instances) && instances.length > 0) {
@@ -33,7 +33,7 @@ const CreateBotComponent = ({ userId }: UserIdProps) => {
     } catch (err) {
       setError('Error al cargar las instancias: ' + (err instanceof Error ? err.message : String(err)));
     }
-  };
+  }, [userId]);
 
   // Crear bot usando la server action
   const handleCreateBot = async () => {
@@ -60,8 +60,8 @@ const CreateBotComponent = ({ userId }: UserIdProps) => {
   };
 
   useEffect(() => {
-    fetchInstances();
-  }, [userId]);
+    void fetchInstances();
+  }, [fetchInstances]);
 
   return (
     <div className="p-2">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getInstances, generateQRCode } from '@/actions/api-action';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -40,7 +40,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
     const isWhatsappConnected = connectionStatus === "open";
     const isApiDisconnected = evoStatus === "disconnected";
 
-    const fetchQRCode = async (instanceName: string) => {
+    const fetchQRCode = useCallback(async (instanceName: string) => {
         setLoading(true);
 
         const response = await generateQRCode({ instanceName, userId });
@@ -71,7 +71,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
         }
 
         setLoading(false);
-    };
+    }, [router, userId]);
 
     useEffect(() => {
         let mounted = true;
@@ -99,7 +99,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
 
                 if (intervalRef.current) clearInterval(intervalRef.current);
                 intervalRef.current = setInterval(() => {
-                    fetchQRCode(instanceName);
+                    void fetchQRCode(instanceName);
                 }, 40000);
 
             } catch (err) {
@@ -107,7 +107,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
             }
         };
 
-        loadInstances();
+        void loadInstances();
 
         return () => {
             mounted = false;
@@ -116,7 +116,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorComponentProps> = ({ userId }) =>
                 intervalRef.current = null;
             }
         };
-    }, [userId]);
+    }, [fetchQRCode, userId]);
 
     const handleBackdropClick = (event: React.MouseEvent) => {
         if (event.currentTarget === event.target) {
