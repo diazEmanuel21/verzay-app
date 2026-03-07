@@ -1,5 +1,6 @@
 'use server';
 
+import { buildChatHistorySessionId } from "@/lib/chat-history/build-session-id";
 import { db } from "@/lib/db";
 import { N8nChatHistory } from "@prisma/client";
 
@@ -37,7 +38,7 @@ export async function deleteConversationN8N(
     }
 
     // 3. Eliminar TODAS las conversaciones con ese session_id
-    const sessionIdentifier = `${instance.instanceName}-${remoteJid}`;
+    const sessionIdentifier = buildChatHistorySessionId(instance.instanceName, remoteJid);
 
     const deleteResult = await db.n8nChatHistory.deleteMany({
       where: { sessionId: sessionIdentifier }
@@ -90,7 +91,7 @@ export async function clearAllHistory(userId: string): Promise<N8nOperationRespo
       };
     }
 
-    const instancePrefix = `${instance.instanceName}-`;
+    const instancePrefix = `${instance.instanceName.trim()}-`;
 
     // 3. Eliminar todos los historiales con session_id que comiencen con el instanceName
     const deleteResult = await db.n8nChatHistory.deleteMany({

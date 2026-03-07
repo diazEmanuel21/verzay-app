@@ -138,6 +138,15 @@ export async function generateQRCode({ instanceName, userId }: GenerateQrInterfa
           apikey: apiKey,
           remoteJid,
           text: DISCONNECTION_MSG,
+          history: {
+            instanceName: instanceNameAdmin,
+            type: 'notification',
+            additionalKwargs: {
+              source: 'generateQRCode',
+              userId,
+              reason: 'evolution_disconnect',
+            },
+          },
         });
       } catch {
         // best-effort

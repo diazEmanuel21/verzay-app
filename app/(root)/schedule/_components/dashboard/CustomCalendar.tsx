@@ -50,7 +50,7 @@ import {
 } from "@/components/ui/select";
 import { ScheduleInterface } from "@/schema/schema";
 import { XCircleIcon } from 'lucide-react';
-import { sendingMessages } from "@/actions/sending-messages-actions";
+import { sendMessageWithHistoryAction } from "@/actions/chat-history/send-message-with-history-action";
 import { STATUS_LABELS } from "@/types/schedule";
 
 export const CustomCalendar = ({ user }: ScheduleInterface) => {
@@ -102,7 +102,7 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
         if (!user.apiKey || !user.instancias || !currentAppointment) return toast.info('Campos incompletos o vacios');
 
         const urlevo = user.apiKey?.url;
-        const apikey = user.instancias[0].instanceId;
+        const apikey = user.apiKey.key;
         const instanceName = user.instancias[0]?.instanceName ?? "";
 
         const url = `https://${urlevo}/message/sendText/${instanceName}`;
@@ -112,10 +112,22 @@ export const CustomCalendar = ({ user }: ScheduleInterface) => {
             userId: user.id
         });
 
-        const remoteJid = currentAppointment.session.remoteJid.split('@')[0];
+        const remoteJid = currentAppointment.session.remoteJid;
 
         try {
-            const result = await sendingMessages({ url, apikey, remoteJid, text });
+            const result = await sendMessageWithHistoryAction({
+                instanceName,
+                url,
+                apikey,
+                remoteJid,
+                message: text,
+                historyType: 'notification',
+                additionalKwargs: {
+                    source: 'CustomCalendar',
+                    appointmentId: currentAppointment.id,
+                    nextStatus: newStatus,
+                },
+            });
 
             if (result.success) {
                 toast.success(result.message);

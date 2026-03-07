@@ -2,14 +2,14 @@
 
 import * as React from 'react'
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, Send } from 'lucide-react'
-import { sendingMessages } from '@/actions/sending-messages-actions'
+import { useSendMessageWithHistory } from '@/hooks/useSendMessageWithHistory'
 import { toast } from 'sonner'
 import type { UserWithApiKeys } from '../../../../schema/schema'
 
@@ -22,43 +22,44 @@ export default function SendMessageCard({ user }: Props) {
     const userApiKey = user.apiKey?.key
     const userInstance = user.instancias?.[0]?.instanceName
 
-    // OJO: si userUrl ya viene con https://, elimina el "https://"
     const sendTextUrl = userUrl && userInstance ? `https://${userUrl}/message/sendText/${userInstance}` : ''
 
     const [remoteJid, setRemoteJid] = React.useState('573107964105@s.whatsapp.net')
     const [text, setText] = React.useState('')
-    const [loading, setLoading] = React.useState(false)
+
+    const { sendMessage, isPending } = useSendMessageWithHistory({
+        instanceName: userInstance ?? '',
+        url: sendTextUrl,
+        apikey: userApiKey ?? '',
+        remoteJid,
+        additionalKwargs: {
+            source: 'SendMessageCard',
+            userId: user.id,
+        },
+    })
 
     const hasConfig = !!sendTextUrl && !!userApiKey
-    const canSend = hasConfig && remoteJid.trim().length > 0 && text.trim().length > 0 && !loading
+    const canSend = hasConfig && remoteJid.trim().length > 0 && text.trim().length > 0 && !isPending
 
-    const onSend = async () => {
+    const onSend = () => {
         if (!hasConfig) {
-            return toast.error('Este usuario no tiene configuración (url/apikey/instancia) para enviar mensajes.')
+            return toast.error('Este usuario no tiene configuracion (url/apikey/instancia) para enviar mensajes.')
         }
         if (!remoteJid.trim() || !text.trim()) {
             return toast.error('Faltan datos: RemoteJid y mensaje.')
         }
-        if (loading) return
+        if (isPending) return
 
-        setLoading(true)
-        try {
-            const res = await sendingMessages({
-                url: sendTextUrl,
-                apikey: userApiKey!,
-                remoteJid,
-                text,
-            })
-
-            if (!res.success) return toast.error(res.message || 'No se pudo enviar')
-
-            toast.success(res.message || 'Mensaje enviado')
-            setText('')
-        } catch (e: any) {
-            toast.error(`Fallo inesperado: ${e?.message ?? String(e)}`)
-        } finally {
-            setLoading(false)
-        }
+        sendMessage(text, {
+            historyType: 'notification',
+            onSuccess: () => {
+                toast.success('Mensaje enviado')
+                setText('')
+            },
+            onError: (error) => {
+                toast.error(error || 'No se pudo enviar')
+            },
+        })
     }
 
     return (
@@ -78,7 +79,7 @@ export default function SendMessageCard({ user }: Props) {
 
                 {!hasConfig && (
                     <p className="text-xs text-destructive mt-2">
-                        Falta configuración del usuario (apiKey / url / instancia).
+                        Falta configuracion del usuario (apiKey / url / instancia).
                     </p>
                 )}
             </CardHeader>
@@ -110,7 +111,7 @@ export default function SendMessageCard({ user }: Props) {
 
                 <div className="flex items-center justify-end gap-2">
                     <Button onClick={onSend} disabled={!canSend} className="gap-2">
-                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                         Enviar
                     </Button>
                 </div>

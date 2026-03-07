@@ -12,8 +12,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ScheduleInterface } from "@/schema/schema";
 import { SeguimientoInput } from "@/schema/seguimientos";
 import { createAppointment } from "@/actions/appointments-actions";
+import { sendMessageWithHistoryAction } from "@/actions/chat-history/send-message-with-history-action";
 import { getAvailableSlots } from "@/actions/getAvailableSlots-actions";
-import { sendingMessages } from "@/actions/sending-messages-actions";
 import { createSeguimiento } from "@/actions/seguimientos-actions";
 import { formatDateLabel, formatServiceMessage, normalizeTimeToSeconds, normalizeToE164, subtractSecondsFromTime, toRemoteJid } from "../helpers";
 
@@ -97,7 +97,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
             const res = await createAppointment({
                 userId: user.id,
                 pushName: nameClient,
-                phone: remoteJid, 
+                phone: remoteJid,
                 instanceName,
                 startTime,
                 endTime,
@@ -151,6 +151,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
             if (user.apiKey && user.instancias?.[0] && user.notificationNumber) {
                 const urlevo = user.apiKey.url;
                 const apikey = user.instancias[0].instanceId;
+
                 const url = `https://${urlevo}/message/sendText/${instanceName}`;
 
                 // Asegura el sufijo del JID del owner
@@ -179,7 +180,19 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
 👉 ${displayPhone}`;
 
                 try {
-                    const ownerRes = await sendingMessages({ url, apikey, remoteJid: ownerJid, text: ownerText });
+                    const ownerRes = await sendMessageWithHistoryAction({
+                        instanceName,
+                        url,
+                        apikey,
+                        remoteJid: ownerJid,
+                        message: ownerText,
+                        historyType: 'notification',
+                        additionalKwargs: {
+                            source: 'SchedulePageClient',
+                            recipient: 'owner',
+                            appointmentUserId: user.id,
+                        },
+                    });
                     if (!ownerRes.success) {
                         toast.warning(`No se pudo notificar al dueño: ${ownerRes.message}`);
                     }
@@ -224,7 +237,19 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
 
         try {
             await handleConfirmAppointment();
-            const result = await sendingMessages({ url, apikey, remoteJid, text });
+            const result = await sendMessageWithHistoryAction({
+                instanceName,
+                url,
+                apikey,
+                remoteJid,
+                message: text,
+                historyType: 'notification',
+                additionalKwargs: {
+                    source: 'SchedulePageClient',
+                    recipient: 'client',
+                    serviceId: selectedService,
+                },
+            });
             if (result.success) toast.success(result.message);
             else {
                 toast.info(`No se envió el mensaje de notificación`);
