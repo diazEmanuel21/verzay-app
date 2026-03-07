@@ -355,7 +355,7 @@ export const AdGeneratorStudio = () => {
           </div>
 
           <div className="space-y-0">
-            <CardTitle className="text-2xl leading-tight lg:text-3xl">Generador de anuncios con IA</CardTitle>
+            <CardTitle className="text-2xl leading-tight lg:text-3xl">Generador de imagenes</CardTitle>
           </div>
 
           <div className="grid gap-2 sm:grid-cols-3">
