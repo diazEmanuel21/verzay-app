@@ -87,23 +87,23 @@ export function ModulesSelector() {
                                                 <CommandInput placeholder="Buscar..." />
                                                 <CommandEmpty>No se encontraron resultados.</CommandEmpty>
                                                 <CommandGroup>
-                                                    {modules.map(module => (
+                                                    {modules.map(moduleComponent => (
                                                         <>
                                                             {
-                                                                !module.hiddenModuleToSelector && (
+                                                                !moduleComponent.hiddenModuleToSelector && (
                                                                     <CommandItem
-                                                                        key={module.label}
-                                                                        onSelect={() => toggleOption(module.id)}
+                                                                        key={moduleComponent.label}
+                                                                        onSelect={() => toggleOption(moduleComponent.id)}
                                                                     >
                                                                         <div
                                                                             className={cn(
                                                                                 'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
-                                                                                selectedValues.includes(module.id) && 'bg-blue-500 text-white'
+                                                                                selectedValues.includes(moduleComponent.id) && 'bg-blue-500 text-white'
                                                                             )}
                                                                         >
-                                                                            {selectedValues.includes(module.id) && <Check className="h-4 w-4" />}
+                                                                            {selectedValues.includes(moduleComponent.id) && <Check className="h-4 w-4" />}
                                                                         </div>
-                                                                        <span>{module.label}</span>
+                                                                        <span>{moduleComponent.label}</span>
                                                                     </CommandItem>
                                                                 )
                                                             }

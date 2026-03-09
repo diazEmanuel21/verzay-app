@@ -197,7 +197,6 @@ export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
                 open={delTraining}
                 setOpen={setDelTraining}
                 itemName="Entrenamiento IA"
-                // itemId={module.id}
                 itemId={userId}
                 mutationFn={() => deletePromptAiByUserId(userId)}
                 entityLabel="Todo el entrenamiento IA"

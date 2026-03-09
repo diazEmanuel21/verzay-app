@@ -56,14 +56,14 @@ export function MainHome({
 
   const accessibleModules = useMemo(() => {
     return modules
-      .filter((module) => module.showInSidebar)
-      .filter((module) => {
+      .filter((moduleComponent) => moduleComponent.showInSidebar)
+      .filter((moduleComponent) => {
         const access = canAccessRoute({
-          route: module.route,
+          route: moduleComponent.route,
           userRole: user.role,
           userPlan: user.plan,
           modules,
-          label: module.label,
+          label: moduleComponent.label,
         });
         return access.allowed;
       });
@@ -87,7 +87,7 @@ export function MainHome({
     router.push(route);
   };
 
-  const displayName = user.name?.trim() || user.company?.trim() || 'Usuario';
+  const displayName = user.company?.trim() || user.name?.trim() || 'Usuario';
 
   return (
     <div className="min-h-full space-y-8 p-2 md:p-4">
@@ -151,20 +151,20 @@ export function MainHome({
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {accessibleModules.map((module) => {
-            const Icon = iconMap[module.icon as keyof typeof iconMap] || HomeIcon;
+          {accessibleModules.map((moduleComponent) => {
+            const Icon = iconMap[moduleComponent.icon as keyof typeof iconMap] || HomeIcon;
             return (
               <button
-                key={module.id}
+                key={moduleComponent.id}
                 type="button"
-                onClick={() => handleGoToModule(module.label, module.route)}
+                onClick={() => handleGoToModule(moduleComponent.label, moduleComponent.route)}
                 className="rounded-2xl border border-zinc-200 bg-white p-5 text-left transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-blue-700"
               >
                 <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600/10 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300">
                   <Icon className="h-6 w-6" />
                 </div>
-                <p className="text-base font-bold text-zinc-900 dark:text-zinc-100">{module.label}</p>
-                <p className="mt-1 line-clamp-1 text-xs text-zinc-500 dark:text-zinc-400">{module.route}</p>
+                <p className="text-base font-bold text-zinc-900 dark:text-zinc-100">{moduleComponent.label}</p>
+                <p className="mt-1 line-clamp-1 text-xs text-zinc-500 dark:text-zinc-400">{moduleComponent.route}</p>
               </button>
             );
           })}

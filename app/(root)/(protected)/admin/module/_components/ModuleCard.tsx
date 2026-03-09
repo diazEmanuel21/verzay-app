@@ -31,14 +31,14 @@ import {
 } from "@/components/ui/accordion"
 
 export const ModuleCard = ({
-    module,
+    module: moduleComponent,
     setOpenModule
 }: {
     module: ModuleWithItems
     setOpenModule: (state: boolean, module: ModuleWithItems) => void
 }) => {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-    const Icon = iconMap[module.icon as keyof typeof iconMap]
+    const Icon = iconMap[moduleComponent.icon as keyof typeof iconMap]
 
     const {
         attributes,
@@ -46,7 +46,7 @@ export const ModuleCard = ({
         setNodeRef,
         transform,
         transition
-    } = useSortable({ id: module.id })
+    } = useSortable({ id: moduleComponent.id })
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -71,24 +71,24 @@ export const ModuleCard = ({
             <CardHeader className="pl-8 pr-4 pt-2 pb-1">
                 <CardTitle className="flex items-center gap-2 text-lg">
                     {Icon && <Icon className="h-5 w-5 text-primary" />}
-                    {module.label}
+                    {moduleComponent.label}
                 </CardTitle>
-                <p className="text-xs text-muted-foreground truncate">{module.route}</p>
+                <p className="text-xs text-muted-foreground truncate">{moduleComponent.route}</p>
             </CardHeader>
 
             <CardContent className="pl-8 pr-4 pt-2 pb-2 space-y-4 text-sm">
                 <div className="flex flex-wrap gap-2">
-                    {module.adminOnly && (
+                    {moduleComponent.adminOnly && (
                         <Badge variant="secondary" className="flex items-center gap-1">
                             <ShieldCheck className="h-4 w-4" /> Admin
                         </Badge>
                     )}
-                    {module.requiresPremium && (
+                    {moduleComponent.requiresPremium && (
                         <Badge variant="default" className="flex items-center gap-1">
                             <Star className="h-4 w-4" /> Premium
                         </Badge>
                     )}
-                    {module.showInSidebar ? (
+                    {moduleComponent.showInSidebar ? (
                         <Badge variant="outline" className="flex items-center gap-1">
                             <Eye className="h-4 w-4" /> Sidebar
                         </Badge>
@@ -99,9 +99,9 @@ export const ModuleCard = ({
                     )}
                 </div>
 
-                {module.allowedPlans?.length > 0 && (
+                {moduleComponent.allowedPlans?.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-1">
-                        {module.allowedPlans.map(plan => (
+                        {moduleComponent.allowedPlans.map(plan => (
                             <Badge key={plan} variant="outline" className="text-xs">
                                 {plan}
                             </Badge>
@@ -109,15 +109,15 @@ export const ModuleCard = ({
                     </div>
                 )}
 
-                {module.moduleItems?.length > 0 && (
+                {moduleComponent.moduleItems?.length > 0 && (
                     <Accordion type="single" collapsible className="pt-1">
                         <AccordionItem value="items">
                             <AccordionTrigger className="text-sm text-muted-foreground hover:no-underline">
-                                Ver submódulos ({module.moduleItems.length})
+                                Ver submódulos ({moduleComponent.moduleItems.length})
                             </AccordionTrigger>
                             <AccordionContent>
                                 <ul className="list-disc list-inside text-muted-foreground text-xs space-y-1">
-                                    {module.moduleItems.map((item, index) => (
+                                    {moduleComponent.moduleItems.map((item, index) => (
                                         <li key={index}>
                                             <span className="font-medium">{item.title}</span> –{' '}
                                             <span className="text-muted-foreground">{item.url}</span>
@@ -134,7 +134,7 @@ export const ModuleCard = ({
                 <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => setOpenModule(true, module)}
+                    onClick={() => setOpenModule(true, moduleComponent)}
                 >
                     <Edit2Icon className="w-4 h-4" />
                 </Button>
@@ -151,8 +151,8 @@ export const ModuleCard = ({
                 open={showDeleteDialog}
                 setOpen={setShowDeleteDialog}
                 itemName="modulo"
-                itemId={module.id}
-                mutationFn={() => deleteModule(module.id)}
+                itemId={moduleComponent.id}
+                mutationFn={() => deleteModule(moduleComponent.id)}
                 entityLabel="modulo"
             />
         </Card>

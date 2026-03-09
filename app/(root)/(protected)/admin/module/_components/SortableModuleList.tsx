@@ -77,10 +77,10 @@ export function SortableModuleList({ modules, setOpenModule }: SortableListProps
             onDragEnd={handleDragEnd}
         >
             <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                {items.map((module) => (
+                {items.map((moduleComponent) => (
                     <ModuleCard
-                        key={module.id}
-                        module={module}
+                        key={moduleComponent.id}
+                        module={moduleComponent}
                         setOpenModule={setOpenModule}
                     />
                 ))}

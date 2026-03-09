@@ -13,7 +13,7 @@ import { updateIntentionNodeConfig } from '@/actions/workflow-node-action';
 
 type Props = { node: WorkflowNodeDB };
 
-export function EmbeddingNode({ node }: Props) {
+export const EmbeddingNode = ({ node }: Props) => {
     const router = useRouter();
 
     const [message, setMessage] = useState(node.message ?? '');
@@ -35,7 +35,7 @@ export function EmbeddingNode({ node }: Props) {
         maxAttempts: node.intentionMaxAttempts ?? 3,
     });
 
-    const save = async () => {
+    const save: () => Promise<void> = async () => {
         const payload = {
             message: message.trim(),
             intentionPrompt: intentionPrompt.trim(),
@@ -58,15 +58,16 @@ export function EmbeddingNode({ node }: Props) {
         try {
             const res = await updateIntentionNodeConfig({
                 nodeId: node.id,
-
                 message: payload.message,
-
                 intentionPrompt: payload.intentionPrompt,
-
                 intentionMaxAttempts: payload.maxAttempts,
             });
 
             if (!res?.success) {
+                if (res.message.startsWith('NO_TOAST')) {
+                    toast.dismiss(toastId);
+                    return;
+                }
                 toast.error(res?.message ?? 'No se pudo guardar', { id: toastId });
                 return;
             }
@@ -81,9 +82,9 @@ export function EmbeddingNode({ node }: Props) {
         }
     };
 
-    const onBlurSave = () => {
+    const onBlurSave: () => void = () => {
         if (maxAttempts < 1 || maxAttempts > 10) return;
-        save();
+        void save();
     };
 
     return (

@@ -27,22 +27,22 @@ export const MainModule = () => {
     const [modalOpen, setModalOpen] = useState(false);
     const [editModule, setEditModule] = useState<ModuleWithItems | undefined>();
 
-    const normalizeModule = (module: ModuleWithItems): FormModuleValues => ({
-        id: module.id,
-        label: module.label,
-        route: module.route,
-        customUrl: module.customUrl ?? '',
-        icon: module.icon,
-        adminOnly: module.adminOnly,
-        requiresPremium: module.requiresPremium,
-        showInSidebar: module.showInSidebar ?? true,
-        allowedPlans: module.allowedPlans,
-        items: module.moduleItems
+    const normalizeModule = (moduleComponent: ModuleWithItems): FormModuleValues => ({
+        id: moduleComponent.id,
+        label: moduleComponent.label,
+        route: moduleComponent.route,
+        customUrl: moduleComponent.customUrl ?? '',
+        icon: moduleComponent.icon,
+        adminOnly: moduleComponent.adminOnly,
+        requiresPremium: moduleComponent.requiresPremium,
+        showInSidebar: moduleComponent.showInSidebar ?? true,
+        allowedPlans: moduleComponent.allowedPlans,
+        items: moduleComponent.moduleItems
     });
 
     useEffect(() => {
-        const filtered = modules.filter((module) =>
-            module.label.toLowerCase().includes(search.toLowerCase())
+        const filtered = modules.filter((moduleComponent) =>
+            moduleComponent.label.toLowerCase().includes(search.toLowerCase())
         );
         setFilteredModules(filtered);
     }, [search, modules]);

@@ -581,7 +581,7 @@ export async function updateIntentionNodeConfig(params: {
 
   if (params.message !== undefined) {
     const msg = params.message.trim();
-    if (msg.length < 1) return { success: false, message: "El mensaje es requerido" };
+    if (msg.length < 1) return { success: false, message: "NO_TOAST El mensaje es requerido" };
     data.message = msg;
   }
 
@@ -607,7 +607,7 @@ export async function updateIntentionNodeConfig(params: {
   // --- intention
   if (params.intentionPrompt !== undefined) {
     if (params.intentionPrompt.trim().length < 3)
-      return { success: false, message: "El prompt es muy corto" };
+      return { success: false, message: "NO_TOAST El prompt es muy corto" };
     data.intentionPrompt = params.intentionPrompt.trim();
   }
 

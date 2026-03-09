@@ -63,7 +63,7 @@ export const CreateNodeComponent = ({ workflowId, plan, totalNodes, seguimientoN
     const handleActionSelect = useCallback(
         (actionType: Action['type']) => {
             const defaultMessage = "";
-            const allActions = [...baseActions, ...seguimientoActions];
+            const allActions = [...actionCreateNode, ...seguimientoActions];
             const actionSelected = allActions.find(action => action.type === actionType);
 
             if (!actionSelected) {
@@ -108,6 +108,7 @@ export const CreateNodeComponent = ({ workflowId, plan, totalNodes, seguimientoN
         }, [form, mutate, workflowId, totalNodes, seguimientoNodes]
     );
 
+    const actionCreateNode = baseActions.filter(actions => actions.type !== 'seguimiento');
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -143,7 +144,7 @@ export const CreateNodeComponent = ({ workflowId, plan, totalNodes, seguimientoN
                     {/* Body con scroll */}
                     <div className="px-4 pb-4 flex-1 min-h-0 overflow-y-auto pr-2">
                         <div className="flex flex-col gap-2">
-                            {baseActions.map((action) => (
+                            {actionCreateNode.map((action) => (
                                 <ActionPopoverButton
                                     key={action.type}
                                     action={action}

@@ -107,7 +107,7 @@ export function NavMain({ user }: { user: User }) {
                         );
                     }
 
-                    // 📂 Si hay subitems, renderizar como Collapsible
+                    // Si hay subitems, renderizar como Collapsible
                     return (
                         <Collapsible
                             key={route}
