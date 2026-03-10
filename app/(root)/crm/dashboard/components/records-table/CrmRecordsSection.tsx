@@ -301,6 +301,7 @@ export function CrmRecordsSection({
         filters.query,
         patchFilters,
     ]);
+    
 
     return (
         <Card className="min-w-0 border-border/70">
