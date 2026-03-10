@@ -194,7 +194,6 @@ export function TrainingBuilder({
     }
   }, [autosaveStatus]);
 
-  // Para compatibilidad con tu API onChange antigua, usamos el primer paso
   const firstStep = steps[0];
 
   /* -------------------- Construcción del trainingPrompt -------------------- */
