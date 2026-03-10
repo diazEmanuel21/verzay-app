@@ -1,5 +1,7 @@
 "use server";
 
+import type { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
 import { ActionResult } from "@/types/registro";
 import {
@@ -15,6 +17,8 @@ export type RegistrosFilters = {
     fechaDesde?: string;
     fechaHasta?: string;
     followUpStatus?: FollowUpStatus | "none";
+    query?: string;
+    leadOnly?: boolean;
 };
 
 type SessionLookup = {
@@ -306,6 +310,8 @@ export async function getRegistrosByUserId(
 ) {
     try {
         const estado = (filters?.estado ?? "").trim();
+        const query = (filters?.query ?? "").trim();
+        const leadOnly = Boolean(filters?.leadOnly);
         const followUpStatus = filters?.followUpStatus;
 
         const fechaDesde = filters?.fechaDesde
@@ -335,18 +341,56 @@ export async function getRegistrosByUserId(
             };
         }
 
-        const registros = await db.registro.findMany({
-            where: {
+        const whereClauses: Prisma.RegistroWhereInput[] = [
+            {
                 session: {
                     userId,
                     ...(sessionIdsByFollowUp
                         ? { id: { in: sessionIdsByFollowUp } }
                         : {}),
                 },
-                ...(tipo ? { tipo } : {}),
-                ...(estado ? { estado } : {}),
-                ...(fechaWhere ? { fecha: fechaWhere } : {}),
             },
+        ];
+
+        if (tipo) {
+            whereClauses.push({ tipo });
+        }
+
+        if (estado) {
+            whereClauses.push({ estado });
+        }
+
+        if (fechaWhere) {
+            whereClauses.push({ fecha: fechaWhere });
+        }
+
+        if (leadOnly) {
+            whereClauses.push({ lead: true });
+        }
+
+        if (query) {
+            whereClauses.push({
+                OR: [
+                    { nombre: { contains: query, mode: "insensitive" } },
+                    { resumen: { contains: query, mode: "insensitive" } },
+                    { detalles: { contains: query, mode: "insensitive" } },
+                    { estado: { contains: query, mode: "insensitive" } },
+                    {
+                        session: {
+                            OR: [
+                                { pushName: { contains: query, mode: "insensitive" } },
+                                { remoteJid: { contains: query, mode: "insensitive" } },
+                                { remoteJidAlt: { contains: query, mode: "insensitive" } },
+                                { instanceId: { contains: query, mode: "insensitive" } },
+                            ],
+                        },
+                    },
+                ],
+            });
+        }
+
+        const registros = await db.registro.findMany({
+            where: { AND: whereClauses },
             include: {
                 session: {
                     include: {

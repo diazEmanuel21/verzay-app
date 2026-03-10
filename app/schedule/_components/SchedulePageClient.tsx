@@ -146,7 +146,7 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
             });
 
             // ─────────────────────────────────────────────
-            // 📩 Enviar mensaje al owner (dueño de la app)
+            // Enviar mensaje al owner (dueño de la app)
             // ─────────────────────────────────────────────
             if (user.apiKey && user.instancias?.[0] && user.notificationNumber) {
                 const urlevo = user.apiKey.url;

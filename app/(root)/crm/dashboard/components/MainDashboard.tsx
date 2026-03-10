@@ -18,6 +18,7 @@ import { LoadingProgress } from "@/components/shared/LoadingProgress";
 import { RegistroWithSession, TipoRegistro } from "@/types/session";
 import { toast } from "sonner";
 import { processDueFollowUpsNow } from "@/actions/follow-up-actions";
+import { ESTADOS_POR_TIPO } from "@/types/registro";
 
 export type MainDashboardProps = {
   userId: string;
@@ -40,6 +41,14 @@ export type DashboardStats = {
 
 const PAGE_SIZE = 50;
 
+type CrmPageKeyPayload = {
+  resource: "crm-registros";
+  userId: string;
+  activeTab: "TODOS" | TipoRegistro;
+  filters: RegistrosFilters;
+  pageIndex: number;
+};
+
 export const MainDashboard = ({
   userId,
 }: MainDashboardProps) => {
@@ -56,30 +65,32 @@ export const MainDashboard = ({
 
   const getKey = (pageIndex: number, previousPageData: RegistroWithSession[] | null) => {
     if (previousPageData && previousPageData.length < PAGE_SIZE) return null;
-    return `crm:${userId}:${activeTab}:${filters.estado ?? ""}:${filters.fechaDesde ?? ""}:${filters.fechaHasta ?? ""}:${filters.followUpStatus ?? ""}:${pageIndex}`;
+    const payload: CrmPageKeyPayload = {
+      resource: "crm-registros",
+      userId,
+      activeTab,
+      filters,
+      pageIndex,
+    };
+
+    return JSON.stringify(payload);
   };
 
   const { data, size, setSize, mutate, isLoading, isValidating, error } =
     useSWRInfinite<RegistroWithSession[]>(
       getKey,
       async (key: string) => {
-        const parts = key.split(":");
-        const pageIndexRaw = parts[parts.length - 1] ?? "0";
-        const toRaw = parts[parts.length - 2] ?? "";
-        const fromRaw = parts[parts.length - 3] ?? "";
-        const estadoRaw = parts[parts.length - 4] ?? "";
-        const followUpStatusRaw = parts[parts.length - 5] ?? "";
-        const tabRaw = parts[parts.length - 6] as "TODOS" | TipoRegistro;
-        const page = parseInt(pageIndexRaw, 10);
-        const tipo = tabRaw === "TODOS" ? undefined : tabRaw;
-        const serverFilters: RegistrosFilters = {
-          ...(estadoRaw ? { estado: estadoRaw } : {}),
-          ...(fromRaw ? { fechaDesde: fromRaw } : {}),
-          ...(toRaw ? { fechaHasta: toRaw } : {}),
-          ...(followUpStatusRaw ? { followUpStatus: followUpStatusRaw as RegistrosFilters["followUpStatus"] } : {}),
-        };
+        const payload = JSON.parse(key) as CrmPageKeyPayload;
+        const tipo = payload.activeTab === "TODOS" ? undefined : payload.activeTab;
 
-        const res = await getRegistrosByUserId(userId, page * PAGE_SIZE, PAGE_SIZE, tipo, serverFilters);
+        const res = await getRegistrosByUserId(
+          payload.userId,
+          payload.pageIndex * PAGE_SIZE,
+          PAGE_SIZE,
+          tipo,
+          payload.filters
+        );
+
         if (!res.success) throw new Error(res.message || "No se pudieron cargar los registros");
         return res.data || [];
       },
@@ -88,6 +99,7 @@ export const MainDashboard = ({
 
   const registros = useMemo(() => (data ? data.flat() : []), [data]);
   const hasMore = !data || (data[data.length - 1]?.length === PAGE_SIZE);
+  const isLoadingMore = isValidating && size > 1;
 
   const handleScrollRootReady = useCallback((el: HTMLDivElement | null) => {
     setScrollRootEl(el);
@@ -162,6 +174,22 @@ export const MainDashboard = ({
   const handleTabChange = useCallback((tab: "TODOS" | TipoRegistro) => {
     loadingMoreRef.current = false;
     setActiveTab(tab);
+    setFilters((current) => {
+      const next = { ...current };
+
+      if (tab !== "TODOS") {
+        const validEstados = ESTADOS_POR_TIPO[tab];
+        if (next.estado && !validEstados.includes(next.estado)) {
+          delete next.estado;
+        }
+      }
+
+      if (tab !== "TODOS" && tab !== "REPORTE" && next.leadOnly) {
+        delete next.leadOnly;
+      }
+
+      return next;
+    });
     setSize(1);
   }, [setSize]);
 
@@ -256,6 +284,9 @@ export const MainDashboard = ({
         onFollowUpChanged={handleFollowUpChanged}
         onProcessFollowUps={handleProcessFollowUps}
         isProcessingFollowUps={isProcessingFollowUps}
+        isUpdatingRegistros={isPending}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
         sentinelRef={sentinelRef}
         onScrollRootReady={handleScrollRootReady}
       />
