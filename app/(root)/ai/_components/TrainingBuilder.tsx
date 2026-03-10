@@ -54,7 +54,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-const WELCOME_TITLE = "***Inicio Bienvenida***";
+const WELCOME_TITLE = "Inicio Bienvenida";
 
 /* utilidad: type-guard para pedidos */
 function isPedidoFn(el: ElementItem): el is PedidoFunctionEl {
@@ -235,7 +235,8 @@ export function TrainingBuilder({
         {
           id: nanoid(),
           title: WELCOME_TITLE,
-          mainMessage: `Cuando un **Usuario:** inicie la conversación con frases como:\n\n\> Hola / Buenos días / Buenas tardes / Buenas noches/Información / Precio / Me interesa / Etc. (Que no tenga un contexto claro)\n\n***Enviar mensaje de Bienvenida:**\n\nTu único mensaje de bienvenida es:`,
+          mainMessage: `Al iniciar un chat, la *Prioridad:* es analizar si el *chat es nuevo* para seguir el *orden exacto* definido, *sin omitir ninguna*. en WhatsApp para recopilar información clave antes de atender otras consultas.\n\nCuando un *Usuario:* inicie la conversación con frases como:\n> Hola / Buenos días / Buenas tardes / Buenas noches / Información / Precio / Me interesa / Etc.\n* *Enviar mensaje de Bienvenida:*\nTu único mensaje de bienvenida es:`,
+          // mainMessage: `Cuando un **Usuario:** inicie la conversación con frases como:\n\n\> Hola / Buenos días / Buenas tardes / Buenas noches/Información / Precio / Me interesa / Etc. (Que no tenga un contexto claro)\n\n***Enviar mensaje de Bienvenida:**\n\nTu único mensaje de bienvenida es:`,
           elements: [
             {
               id: nanoid(),

@@ -141,7 +141,7 @@ function formatElement(el: AnyEl, k: number, flowBehaviorText: string, cfg: Prom
                     const ruleParam = trimOrUndefined(el.ruleParam);
 
                     const datosBlock = el.fields?.length ? el.fields.map((f) => `* ${f}`).join("\n") : "* * *Datos*: [escritos por el cliente]";
-                    const ejemplo = getGestionEjemplo(newSubtype ?? info.label);
+                    // const ejemplo = getGestionEjemplo(newSubtype ?? info.label);
 
                     out.push(
                         [
@@ -149,7 +149,7 @@ function formatElement(el: AnyEl, k: number, flowBehaviorText: string, cfg: Prom
                             `**(${k}) Toma de ${info.label}**`,
                             `- (${k}) Para procesar tu *${info.label}*, ${el.prompt ?? "por favor indicame los siguientes datos."}`,
                             `${datosBlock}`,
-                            ejemplo ? `${ejemplo}` : "",
+                            // ejemplo ? `${ejemplo}` : "",
                             ``,
                             `> Para la toma de tu ${info.label} correctamente.`,
                             ``,
