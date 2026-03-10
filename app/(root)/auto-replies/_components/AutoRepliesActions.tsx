@@ -18,15 +18,23 @@ import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog";
 import { deleteRR } from "@/actions/rr-actions";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { getWorkflowEditorPath } from "@/types/workflow";
 
 interface AutoRepliesActionsProps {
     mensaje: string;
     autoReplieId: number;
     workflowId: string;
+    workflowIsPro?: boolean;
 }
 
-export const AutoRepliesActions = ({ mensaje, autoReplieId, workflowId}: AutoRepliesActionsProps) => {
+export const AutoRepliesActions = ({
+    mensaje,
+    autoReplieId,
+    workflowId,
+    workflowIsPro = false,
+}: AutoRepliesActionsProps) => {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const editorPath = getWorkflowEditorPath(workflowId, workflowIsPro);
 
     return (
         <>
@@ -39,7 +47,7 @@ export const AutoRepliesActions = ({ mensaje, autoReplieId, workflowId}: AutoRep
                 entityLabel="respuesta rápida"
             />
 
-            <Link href={`flow/${workflowId}`} className={cn(
+            <Link href={editorPath} className={cn(
                 buttonVariants({
                     variant: "outline",
                     size: "sm"

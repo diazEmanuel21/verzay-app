@@ -17,31 +17,46 @@ import {
 import { LoadingProgress } from "@/components/shared/LoadingProgress";
 import { RegistroWithSession, TipoRegistro } from "@/types/session";
 import { toast } from "sonner";
+import { processDueFollowUpsNow } from "@/actions/follow-up-actions";
 
-export type MainDashboardProps = { userId: string };
+export type MainDashboardProps = {
+  userId: string;
+};
 export type DashboardStats = {
   totalRegistros: number;
   leadsConMovimientos: number;
   countsByTipo: Record<TipoRegistro, number>;
   chartDataByDay: { fecha: string; cantidad: number }[];
+  followUps: {
+    total: number;
+    active: number;
+    pending: number;
+    processing: number;
+    sent: number;
+    failed: number;
+    cancelled: number;
+  };
 };
 
 const PAGE_SIZE = 50;
 
-export const MainDashboard = ({ userId }: MainDashboardProps) => {
+export const MainDashboard = ({
+  userId,
+}: MainDashboardProps) => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"TODOS" | TipoRegistro>("TODOS");
   const [filters, setFilters] = useState<RegistrosFilters>({});
   const [isPending, startTransition] = useTransition();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [scrollRootEl, setScrollRootEl] = useState<HTMLDivElement | null>(null);
+  const [isProcessingFollowUps, setIsProcessingFollowUps] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const loadingMoreRef = useRef(false);
   const ioRef = useRef<IntersectionObserver | null>(null);
 
   const getKey = (pageIndex: number, previousPageData: RegistroWithSession[] | null) => {
     if (previousPageData && previousPageData.length < PAGE_SIZE) return null;
-    return `crm:${userId}:${activeTab}:${filters.estado ?? ""}:${filters.fechaDesde ?? ""}:${filters.fechaHasta ?? ""}:${pageIndex}`;
+    return `crm:${userId}:${activeTab}:${filters.estado ?? ""}:${filters.fechaDesde ?? ""}:${filters.fechaHasta ?? ""}:${filters.followUpStatus ?? ""}:${pageIndex}`;
   };
 
   const { data, size, setSize, mutate, isLoading, isValidating, error } =
@@ -53,13 +68,15 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
         const toRaw = parts[parts.length - 2] ?? "";
         const fromRaw = parts[parts.length - 3] ?? "";
         const estadoRaw = parts[parts.length - 4] ?? "";
-        const tabRaw = parts[parts.length - 5] as "TODOS" | TipoRegistro;
+        const followUpStatusRaw = parts[parts.length - 5] ?? "";
+        const tabRaw = parts[parts.length - 6] as "TODOS" | TipoRegistro;
         const page = parseInt(pageIndexRaw, 10);
         const tipo = tabRaw === "TODOS" ? undefined : tabRaw;
         const serverFilters: RegistrosFilters = {
           ...(estadoRaw ? { estado: estadoRaw } : {}),
           ...(fromRaw ? { fechaDesde: fromRaw } : {}),
           ...(toRaw ? { fechaHasta: toRaw } : {}),
+          ...(followUpStatusRaw ? { followUpStatus: followUpStatusRaw as RegistrosFilters["followUpStatus"] } : {}),
         };
 
         const res = await getRegistrosByUserId(userId, page * PAGE_SIZE, PAGE_SIZE, tipo, serverFilters);
@@ -169,6 +186,39 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
     setSize(1);
   }, [setSize]);
 
+  const handleFollowUpChanged = useCallback(async () => {
+    await mutate();
+    await refreshStats();
+  }, [mutate, refreshStats]);
+
+  const handleProcessFollowUps = useCallback(async () => {
+    const toastId = "crm-follow-up-runner";
+    toast.loading("Procesando follow-ups vencidos...", { id: toastId });
+    setIsProcessingFollowUps(true);
+
+    try {
+      const res = await processDueFollowUpsNow(userId);
+      if (!res.success) {
+        toast.error(res.message, { id: toastId });
+        return;
+      }
+
+      await mutate();
+      await refreshStats();
+      router.refresh();
+      toast.success(res.message, { id: toastId });
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "No se pudo ejecutar el runner de follow-up.",
+        { id: toastId }
+      );
+    } finally {
+      setIsProcessingFollowUps(false);
+    }
+  }, [mutate, refreshStats, router, userId]);
+
   if (isLoading && size === 1) {
     return (
       <LoadingProgress
@@ -203,6 +253,9 @@ export const MainDashboard = ({ userId }: MainDashboardProps) => {
         registros={registros}
         onChangeEstado={handleChangeEstado}
         onChangeDetalle={handleChangeDetalle}
+        onFollowUpChanged={handleFollowUpChanged}
+        onProcessFollowUps={handleProcessFollowUps}
+        isProcessingFollowUps={isProcessingFollowUps}
         sentinelRef={sentinelRef}
         onScrollRootReady={handleScrollRootReady}
       />

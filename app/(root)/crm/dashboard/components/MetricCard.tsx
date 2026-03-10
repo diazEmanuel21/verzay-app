@@ -22,7 +22,7 @@ export const MetricCard = ({
                 </div>
                 <div className="text-xl font-semibold leading-none">{value}</div>
                 {helper && (
-                    <p className="text-[11px] text-muted-foreground">{helper}</p>
+                    <p className="text-muted-foreground">{helper}</p>
                 )}
             </CardContent>
         </Card>

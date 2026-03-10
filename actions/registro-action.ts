@@ -2,14 +2,201 @@
 
 import { db } from "@/lib/db";
 import { ActionResult } from "@/types/registro";
-import { TipoRegistro } from "@/types/session";
+import {
+    FollowUpStatus,
+    SessionFollowUpHistoryItem,
+    SessionFollowUpSummary,
+    TipoRegistro,
+} from "@/types/session";
 import { normalizeDetalleDraft } from "@/app/(root)/crm/dashboard/helpers/detalleEdit";
 
 export type RegistrosFilters = {
     estado?: string;
     fechaDesde?: string;
     fechaHasta?: string;
+    followUpStatus?: FollowUpStatus | "none";
 };
+
+type SessionLookup = {
+    remoteJid: string;
+    instanceId: string;
+};
+
+function buildSessionFollowUpKey(remoteJid?: string | null, instanceId?: string | null) {
+    const remote = (remoteJid ?? "").trim();
+    const instance = (instanceId ?? "").trim();
+    if (!remote || !instance) return "";
+    return `${instance}::${remote}`;
+}
+
+function createEmptyFollowUpSummary(): SessionFollowUpSummary {
+    return {
+        total: 0,
+        active: 0,
+        pending: 0,
+        processing: 0,
+        sent: 0,
+        failed: 0,
+        cancelled: 0,
+        latestStatus: null,
+        latestGeneratedMessage: null,
+        latestCreatedAt: null,
+        recentItems: [],
+    };
+}
+
+async function getFollowUpSummaryMapBySessions(sessions: SessionLookup[]) {
+    const uniqueSessionsMap = new Map<string, SessionLookup>();
+    for (const session of sessions) {
+        const key = buildSessionFollowUpKey(session.remoteJid, session.instanceId);
+        if (!key) continue;
+        uniqueSessionsMap.set(key, session);
+    }
+    const uniqueSessions = Array.from(uniqueSessionsMap.values());
+
+    if (!uniqueSessions.length) return new Map<string, SessionFollowUpSummary>();
+
+    const followUps = await db.seguimiento.findMany({
+        where: {
+            OR: uniqueSessions.map((session) => ({
+                remoteJid: session.remoteJid,
+                instancia: session.instanceId,
+            })),
+        },
+        select: {
+            id: true,
+            remoteJid: true,
+            instancia: true,
+            followUpStatus: true,
+            followUpMode: true,
+            followUpAttempt: true,
+            generatedMessage: true,
+            mensaje: true,
+            errorReason: true,
+            createdAt: true,
+            updatedAt: true,
+        },
+        orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+    });
+
+    const summaryMap = new Map<string, SessionFollowUpSummary>();
+
+    for (const followUp of followUps) {
+        const key = buildSessionFollowUpKey(followUp.remoteJid, followUp.instancia);
+        if (!key) continue;
+
+        const summary = summaryMap.get(key) ?? createEmptyFollowUpSummary();
+        summary.total += 1;
+
+        const status = (followUp.followUpStatus ?? "pending") as FollowUpStatus;
+        switch (status) {
+            case "pending":
+                summary.pending += 1;
+                summary.active += 1;
+                break;
+            case "processing":
+                summary.processing += 1;
+                summary.active += 1;
+                break;
+            case "sent":
+                summary.sent += 1;
+                break;
+            case "failed":
+                summary.failed += 1;
+                break;
+            case "cancelled":
+                summary.cancelled += 1;
+                break;
+        }
+
+        if (!summary.latestStatus) {
+            summary.latestStatus = status;
+            summary.latestGeneratedMessage = followUp.generatedMessage ?? followUp.mensaje ?? null;
+            summary.latestCreatedAt = followUp.createdAt?.toISOString?.() ?? null;
+        }
+
+        if (summary.recentItems.length < 5) {
+            const item: SessionFollowUpHistoryItem = {
+                id: followUp.id,
+                status,
+                mode: followUp.followUpMode === "ai" ? "ai" : "static",
+                attempt: Math.max(followUp.followUpAttempt ?? 0, 0),
+                message: followUp.generatedMessage ?? followUp.mensaje ?? null,
+                errorReason: followUp.errorReason ?? null,
+                createdAt: followUp.createdAt?.toISOString?.() ?? null,
+                updatedAt: followUp.updatedAt?.toISOString?.() ?? null,
+            };
+            summary.recentItems.push(item);
+        }
+
+        summaryMap.set(key, summary);
+    }
+
+    return summaryMap;
+}
+
+async function getSessionIdsByFollowUpFilter(
+    userId: string,
+    followUpStatus?: FollowUpStatus | "none"
+) {
+    if (!followUpStatus) return null;
+
+    const sessions = await db.session.findMany({
+        where: { userId },
+        select: {
+            id: true,
+            remoteJid: true,
+            instanceId: true,
+        },
+    });
+
+    if (!sessions.length) return [];
+
+    const pairMap = new Map<string, { remoteJid: string; instanceId: string }>();
+    for (const session of sessions) {
+        const key = buildSessionFollowUpKey(session.remoteJid, session.instanceId);
+        if (!key) continue;
+        pairMap.set(key, {
+            remoteJid: session.remoteJid,
+            instanceId: session.instanceId,
+        });
+    }
+
+    const pairs = Array.from(pairMap.values());
+    if (!pairs.length) return [];
+
+    const seguimientoWhere = {
+        OR: pairs.map((pair) => ({
+            remoteJid: pair.remoteJid,
+            instancia: pair.instanceId,
+        })),
+        ...(followUpStatus === "none" ? {} : { followUpStatus }),
+    };
+
+    const followUps = await db.seguimiento.findMany({
+        where: seguimientoWhere,
+        select: {
+            remoteJid: true,
+            instancia: true,
+        },
+    });
+
+    const followUpKeys = new Set(
+        followUps.map((followUp) =>
+            buildSessionFollowUpKey(followUp.remoteJid, followUp.instancia)
+        )
+    );
+
+    return sessions
+        .filter((session) => {
+            const key = buildSessionFollowUpKey(session.remoteJid, session.instanceId);
+            if (!key) return false;
+            return followUpStatus === "none"
+                ? !followUpKeys.has(key)
+                : followUpKeys.has(key);
+        })
+        .map((session) => session.id);
+}
 
 export async function createRegistro(input: {
     sessionId: number;
@@ -119,6 +306,7 @@ export async function getRegistrosByUserId(
 ) {
     try {
         const estado = (filters?.estado ?? "").trim();
+        const followUpStatus = filters?.followUpStatus;
 
         const fechaDesde = filters?.fechaDesde
             ? new Date(`${filters.fechaDesde}T00:00:00.000`)
@@ -135,10 +323,25 @@ export async function getRegistrosByUserId(
                 }
                 : undefined;
 
+        const sessionIdsByFollowUp = await getSessionIdsByFollowUpFilter(
+            userId,
+            followUpStatus
+        );
+
+        if (sessionIdsByFollowUp && sessionIdsByFollowUp.length === 0) {
+            return {
+                success: true as const,
+                data: [],
+            };
+        }
+
         const registros = await db.registro.findMany({
             where: {
                 session: {
                     userId,
+                    ...(sessionIdsByFollowUp
+                        ? { id: { in: sessionIdsByFollowUp } }
+                        : {}),
                 },
                 ...(tipo ? { tipo } : {}),
                 ...(estado ? { estado } : {}),
@@ -156,9 +359,31 @@ export async function getRegistrosByUserId(
             take,
         });
 
+        const followUpSummaryMap = await getFollowUpSummaryMapBySessions(
+            registros.map((registro) => ({
+                remoteJid: registro.session.remoteJid,
+                instanceId: registro.session.instanceId,
+            }))
+        );
+
+        const data = registros.map((registro) => {
+            const summaryKey = buildSessionFollowUpKey(
+                registro.session.remoteJid,
+                registro.session.instanceId
+            );
+
+            return {
+                ...registro,
+                session: {
+                    ...registro.session,
+                    followUpSummary: followUpSummaryMap.get(summaryKey) ?? null,
+                },
+            };
+        });
+
         return {
             success: true as const,
-            data: registros,
+            data,
         };
     } catch (error) {
         console.error("[getRegistrosByUserId] Error:", error);
@@ -238,6 +463,62 @@ export async function getCrmDashboardStatsByUserId(userId: string) {
             cantidad: count,
         }));
 
+        const sessions = await db.session.findMany({
+            where: { userId },
+            select: { remoteJid: true, instanceId: true },
+        });
+
+        const uniqueSessionsMap = new Map<string, { remoteJid: string; instanceId: string }>();
+        for (const session of sessions) {
+            const key = buildSessionFollowUpKey(session.remoteJid, session.instanceId);
+            if (!key) continue;
+            uniqueSessionsMap.set(key, session);
+        }
+        const uniqueSessions = Array.from(uniqueSessionsMap.values());
+
+        const followUps = {
+            total: 0,
+            active: 0,
+            pending: 0,
+            processing: 0,
+            sent: 0,
+            failed: 0,
+            cancelled: 0,
+        };
+
+        if (uniqueSessions.length) {
+            const followUpCounts = await db.seguimiento.groupBy({
+                by: ["followUpStatus"],
+                where: {
+                    OR: uniqueSessions.map((session) => ({
+                        remoteJid: session.remoteJid,
+                        instancia: session.instanceId,
+                    })),
+                },
+                _count: { _all: true },
+            });
+
+            for (const row of followUpCounts) {
+                const status = (row.followUpStatus ?? "pending") as FollowUpStatus;
+                const count = row._count._all;
+                followUps.total += count;
+
+                if (status === "pending") {
+                    followUps.pending += count;
+                    followUps.active += count;
+                } else if (status === "processing") {
+                    followUps.processing += count;
+                    followUps.active += count;
+                } else if (status === "sent") {
+                    followUps.sent += count;
+                } else if (status === "failed") {
+                    followUps.failed += count;
+                } else if (status === "cancelled") {
+                    followUps.cancelled += count;
+                }
+            }
+        }
+
         return {
             success: true as const,
             data: {
@@ -245,6 +526,7 @@ export async function getCrmDashboardStatsByUserId(userId: string) {
                 leadsConMovimientos: leadsConMovimientos.length,
                 countsByTipo,
                 chartDataByDay,
+                followUps,
             },
         };
     } catch (error) {

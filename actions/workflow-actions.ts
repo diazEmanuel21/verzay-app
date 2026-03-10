@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { createWorkflowSchema, createWorkflowSchemaType } from "@/schema/workflow";
-import { WorkflowStatus } from "@/types/workflow";
+import { getWorkflowEditorPath, WorkflowStatus } from "@/types/workflow";
 import { Workflow } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { deleteAllNodes, deleteFileNode } from "./workflow-node-action";
@@ -70,7 +70,7 @@ export const createWorkflow = async (form: createWorkflowSchemaType) => {
     });
     if (!result) return { success: false, message: 'Fallo la creación del flujo.' };
 
-    redirect(`flow/${result.id}`);
+    redirect(getWorkflowEditorPath(result.id, result.isPro));
 };
 
 export const deleteWorkflow = async (id: string) => {

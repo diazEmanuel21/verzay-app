@@ -6,6 +6,10 @@ export enum WorkflowStatus {
 export const MAX_NODES_PER_WORKFLOW = 50;
 export const MAX_SEGUIMIENTOS_PER_WORKFLOW = 50;
 
+export function getWorkflowEditorPath(workflowId: string, isPro = false) {
+  return isPro ? `/workflow/${workflowId}` : `/flow/${workflowId}`;
+}
+
 export type UpdateNodePositionInput = {
   nodeId: string;
   posX: number;

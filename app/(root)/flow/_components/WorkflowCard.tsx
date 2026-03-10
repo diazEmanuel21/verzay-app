@@ -14,6 +14,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { workflowShema } from "@/lib/zod";
 import { z } from "zod";
+import { getWorkflowEditorPath } from "@/types/workflow";
 
 type MatchType = "Exacta" | "Contiene";
 
@@ -27,6 +28,7 @@ export const WorkflowCard = ({
     userId: string;
 }) => {
     const router = useRouter();
+    const editorPath = getWorkflowEditorPath(workflow.id, workflow.isPro);
     const [editing, setEditing] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -211,7 +213,7 @@ export const WorkflowCard = ({
                 <div className="flex flex-1 gap-4 justify-center items-center">
                     <div
                         className="w-10 h-10 rounded-sm flex items-center justify-center bg-blue-500 cursor-pointer"
-                        onClick={() => router.push(`flow/${workflow.id}`)}
+                        onClick={() => router.push(editorPath)}
                     >
                         <FileTextIcon />
                     </div>

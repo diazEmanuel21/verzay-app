@@ -16,7 +16,8 @@ import { GenericTextarea } from "@/components/shared/GenericTextarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Action, ACTIONS, CARD_ACTIONS, MAX_MESSAGE_LENGTH, PropsNodeCard } from "@/types/workflow-node";
-import { EmbeddingNode } from '.';
+import { EmbeddingNode } from "./EmbeddingNode";
+import { FollowUpNodeFields } from "./FollowUpNodeFields";
 import { SafeImage } from "@/components/custom/SafeImage";
 
 export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCard) => {
@@ -369,24 +370,28 @@ export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCar
           )}
 
           {isSeguimiento && (
-            <div className="flex items-center gap-1 pt-2 text-sm nodrag">
-              <Switch
-                id={`inactividad-${nodes.id}`}
-                checked={inactivity}
-                onCheckedChange={handleInactivity}
-                disabled={loading}
-                className="scale-75"
-              />
-              <Label htmlFor={`inactividad-${nodes.id}`}>Activar Inactividad</Label>
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center gap-1 text-sm nodrag">
+                <Switch
+                  id={`inactividad-${nodes.id}`}
+                  checked={inactivity}
+                  onCheckedChange={handleInactivity}
+                  disabled={loading}
+                  className="scale-75"
+                />
+                <Label htmlFor={`inactividad-${nodes.id}`}>Activar Inactividad</Label>
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger className="w-5 h-5 flex items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">?</TooltipTrigger>
-                  <TooltipContent>
-                    <p>Seguimiento solo si no responden</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger className="w-5 h-5 flex items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">?</TooltipTrigger>
+                    <TooltipContent>
+                      <p>Seguimiento solo si no responden</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+
+              <FollowUpNodeFields node={nodes} />
             </div>
           )}
         </CardContent>

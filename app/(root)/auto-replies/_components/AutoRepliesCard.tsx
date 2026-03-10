@@ -146,6 +146,7 @@ export const AutoRepliesCard = ({ autoReplie, workflows }: autoReplies) => {
                         mensaje={autoReplie.mensaje ?? ""}
                         autoReplieId={autoReplie.id}
                         workflowId={relatedWorkflows[0]?.id ?? "404"}
+                        workflowIsPro={relatedWorkflows[0]?.isPro ?? false}
                     />
                 </div>
             </CardContent>

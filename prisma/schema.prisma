@@ -559,6 +559,11 @@ model WorkflowNode {
   miniPrompt            String?
   noMatchMessage        String?
   threshold             Float?
+  followUpMode          String                 @default("static")
+  followUpPrompt        String?
+  followUpGoal          String?
+  followUpCancelOnReply Boolean                @default(true)
+  followUpMaxAttempts   Int                    @default(3)
   sessionWorkflowStates SessionWorkflowState[]
   outgoingEdges         WorkflowEdge[]         @relation("EdgeSource")
   incomingEdges         WorkflowEdge[]         @relation("EdgeTarget")
@@ -744,21 +749,30 @@ model QuickReply {
 }
 
 model Seguimiento {
-  id          Int      @id @default(autoincrement())
-  idNodo      String?
-  serverurl   String?
-  instancia   String?
-  apikey      String?
-  remoteJid   String?
-  mensaje     String?
-  tipo        String?
+  id                  Int      @id @default(autoincrement())
+  idNodo              String?
+  serverurl           String?
+  instancia           String?
+  apikey              String?
+  remoteJid           String?
+  mensaje             String?
+  tipo                String?
   idempotencyKey String? @unique
-  time        String?
-  nameFile    String?  @map("name_file")
-  consecutivo String?
-  media       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now()) @updatedAt
+  time                String?
+  nameFile            String?  @map("name_file")
+  consecutivo         String?
+  media               String?
+  followUpMode        String   @default("static")
+  followUpPrompt      String?
+  followUpGoal        String?
+  followUpCancelOnReply Boolean @default(true)
+  followUpMaxAttempts Int      @default(3)
+  followUpAttempt     Int      @default(0)
+  followUpStatus      String   @default("pending")
+  generatedMessage    String?  @map("generated_message")
+  errorReason         String?  @map("error_reason")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @default(now()) @updatedAt
 
   @@map("seguimientos")
 }

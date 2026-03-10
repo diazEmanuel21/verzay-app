@@ -625,3 +625,62 @@ export async function updateIntentionNodeConfig(params: {
 
   return { success: true, message: "Configuración guardada", data: updated };
 }
+
+export async function updateFollowUpNodeConfig(params: {
+  nodeId: string;
+  followUpMode?: "static" | "ai";
+  followUpPrompt?: string;
+  followUpGoal?: string;
+  followUpCancelOnReply?: boolean;
+  followUpMaxAttempts?: number;
+}) {
+  const user = await currentUser();
+  if (!user) return { success: false, message: 'Usuario no autenticado.' };
+
+  const { nodeId } = params;
+  if (!nodeId) return { success: false, message: "nodeId requerido" };
+
+  const data: any = {};
+
+  if (params.followUpMode !== undefined) {
+    if (!["static", "ai"].includes(params.followUpMode)) {
+      return { success: false, message: "followUpMode inválido" };
+    }
+    data.followUpMode = params.followUpMode;
+  }
+
+  if (params.followUpPrompt !== undefined) {
+    const prompt = params.followUpPrompt.trim();
+    if (prompt.length > 4000) {
+      return { success: false, message: "followUpPrompt muy largo (máx 4000)" };
+    }
+    data.followUpPrompt = prompt || null;
+  }
+
+  if (params.followUpGoal !== undefined) {
+    const goal = params.followUpGoal.trim();
+    if (goal.length > 500) {
+      return { success: false, message: "followUpGoal muy largo (máx 500)" };
+    }
+    data.followUpGoal = goal || null;
+  }
+
+  if (params.followUpCancelOnReply !== undefined) {
+    data.followUpCancelOnReply = params.followUpCancelOnReply;
+  }
+
+  if (params.followUpMaxAttempts !== undefined) {
+    const n = Number(params.followUpMaxAttempts);
+    if (!Number.isFinite(n) || n < 1 || n > 10) {
+      return { success: false, message: "followUpMaxAttempts debe ser 1..10" };
+    }
+    data.followUpMaxAttempts = n;
+  }
+
+  const updated = await db.workflowNode.update({
+    where: { id: nodeId },
+    data,
+  });
+
+  return { success: true, message: "Configuración de follow-up guardada", data: updated };
+}

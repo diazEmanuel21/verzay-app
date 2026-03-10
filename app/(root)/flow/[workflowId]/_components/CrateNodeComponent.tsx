@@ -22,6 +22,8 @@ import { ActionPopoverButton } from "./ActionPopoverButton";
 import { cn } from "@/lib/utils";
 import { MAX_NODES_PER_WORKFLOW, MAX_SEGUIMIENTOS_PER_WORKFLOW } from "@/types/workflow";
 
+const actionCreateNode = baseActions.filter(actions => actions.type !== 'seguimiento');
+
 interface PropsCreateNodeComponent {
     workflowId: Workflow['id'];
     plan: Plan;
@@ -108,8 +110,6 @@ export const CreateNodeComponent = ({ workflowId, plan, totalNodes, seguimientoN
         }, [form, mutate, workflowId, totalNodes, seguimientoNodes]
     );
 
-    const actionCreateNode = baseActions.filter(actions => actions.type !== 'seguimiento');
-
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -127,7 +127,7 @@ export const CreateNodeComponent = ({ workflowId, plan, totalNodes, seguimientoN
                 className={cn(
                     "p-0 overflow-hidden", // 👈 importante: p-0, overflow-hidden
                     "w-[320px]",
-                    "h-[420px] sm:h-[460px] md:h-[460px] lg:h-[460px]"
+                    "h-[330px] sm:h-[410px] md:h-[410px] lg:h-[410px]"
                 )}
             >
                 {/*  flexbox interno */}
