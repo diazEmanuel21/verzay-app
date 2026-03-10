@@ -14,6 +14,7 @@ import {
 
 import { CrmRecordDetailCell } from "./CrmRecordDetailCell";
 import { CrmRecordStatusCell } from "./CrmRecordStatusCell";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 function SortableHeader({
     column,
@@ -83,7 +84,7 @@ export function createCrmRecordColumns({
                     sessionName.trim() !== nombre.trim();
 
                 return (
-                    <div className="min-w-[180px]">
+                    <div className="max-w-[150px] truncate">
                         <p className="font-medium">{nombre}</p>
                         {showSessionName ? (
                             <p className="text-xs text-muted-foreground">

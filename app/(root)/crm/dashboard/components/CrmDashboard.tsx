@@ -22,6 +22,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import type { RegistroWithSession, TipoRegistro } from "@/types/session";
 import { getTipoLabel } from "../../helpers";
 import { MetricCard } from "./MetricCard";
@@ -112,27 +113,8 @@ export const CrmDashboard = ({
     }, [stats]);
 
     return (
-        <div className="flex h-full min-w-0 flex-col gap-4">
-            <CrmRecordsSection
-                activeTab={activeTab}
-                registros={registros}
-                totalRegistros={totalRegistros}
-                countsByTipo={countsByTipo}
-                filters={filters}
-                onActiveTabChange={onActiveTabChange}
-                onFiltersChange={onFiltersChange}
-                onChangeEstado={onChangeEstado}
-                onChangeDetalle={onChangeDetalle}
-                onFollowUpChanged={onFollowUpChanged}
-                onProcessFollowUps={onProcessFollowUps}
-                isProcessingFollowUps={isProcessingFollowUps}
-                isUpdatingRegistros={isUpdatingRegistros}
-                userId={userId}
-                hasMore={hasMore}
-                isLoadingMore={isLoadingMore}
-                sentinelRef={sentinelRef}
-                onScrollRootReady={onScrollRootReady}
-            />
+        <TooltipProvider delayDuration={120}>
+            <div className="flex h-full min-w-0 flex-col gap-2">
             <div className="flex flex-wrap gap-3">
                 <div className="flex-1">
                     <MetricCard
@@ -170,6 +152,28 @@ export const CrmDashboard = ({
                     />
                 </div>
             </div>
+
+            <CrmRecordsSection
+                activeTab={activeTab}
+                registros={registros}
+                totalRegistros={totalRegistros}
+                countsByTipo={countsByTipo}
+                filters={filters}
+                onActiveTabChange={onActiveTabChange}
+                onFiltersChange={onFiltersChange}
+                onChangeEstado={onChangeEstado}
+                onChangeDetalle={onChangeDetalle}
+                onFollowUpChanged={onFollowUpChanged}
+                onProcessFollowUps={onProcessFollowUps}
+                isProcessingFollowUps={isProcessingFollowUps}
+                isUpdatingRegistros={isUpdatingRegistros}
+                userId={userId}
+                hasMore={hasMore}
+                isLoadingMore={isLoadingMore}
+                sentinelRef={sentinelRef}
+                onScrollRootReady={onScrollRootReady}
+            />
+
             <div className="grid gap-4 lg:grid-cols-2">
                 <Card className="border-border">
                     <CardHeader className="pb-2">
@@ -230,7 +234,8 @@ export const CrmDashboard = ({
                 </Card>
             </div>
 
-            <TagStatsCard userId={userId} />
-        </div>
+                <TagStatsCard userId={userId} />
+            </div>
+        </TooltipProvider>
     );
 };

@@ -34,12 +34,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     Tooltip,
     TooltipContent,
-    TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { getTipoLabel } from "../../../helpers";
 
 import {
+    CRM_COLUMN_VISIBILITY_STORAGE_KEY,
     CRM_DEFAULT_COLUMN_VISIBILITY,
     CRM_TABS,
     FOLLOW_UP_FILTER_OPTIONS,
@@ -92,11 +92,70 @@ export function CrmRecordsSection({
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
         CRM_DEFAULT_COLUMN_VISIBILITY
     );
+    const [hasLoadedPersistedColumnVisibility, setHasLoadedPersistedColumnVisibility] =
+        useState(false);
     const [searchValue, setSearchValue] = useState(filters.query ?? "");
 
     useEffect(() => {
         setSearchValue(filters.query ?? "");
     }, [filters.query]);
+
+    useEffect(() => {
+        try {
+            const rawColumnVisibility = localStorage.getItem(
+                CRM_COLUMN_VISIBILITY_STORAGE_KEY
+            );
+
+            if (!rawColumnVisibility) return;
+
+            const parsedColumnVisibility = JSON.parse(rawColumnVisibility);
+            if (
+                !parsedColumnVisibility ||
+                typeof parsedColumnVisibility !== "object" ||
+                Array.isArray(parsedColumnVisibility)
+            ) {
+                return;
+            }
+
+            const nextColumnVisibility = Object.entries(
+                parsedColumnVisibility as Record<string, unknown>
+            ).reduce<VisibilityState>((acc, [key, value]) => {
+                if (
+                    Object.prototype.hasOwnProperty.call(
+                        CRM_DEFAULT_COLUMN_VISIBILITY,
+                        key
+                    ) &&
+                    typeof value === "boolean"
+                ) {
+                    acc[key] = value;
+                }
+
+                return acc;
+            }, {});
+
+            setColumnVisibility((current) => ({
+                ...current,
+                ...nextColumnVisibility,
+            }));
+        } catch {
+            // ignore corrupted localStorage payloads
+        } finally {
+            setHasLoadedPersistedColumnVisibility(true);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!hasLoadedPersistedColumnVisibility) return;
+
+        try {
+            localStorage.setItem(
+                CRM_COLUMN_VISIBILITY_STORAGE_KEY,
+                JSON.stringify(columnVisibility)
+            );
+        } catch {
+            // localStorage may be unavailable
+        }
+    }, [columnVisibility, hasLoadedPersistedColumnVisibility]);
 
     const patchFilters = useCallback(
         (patch: Partial<RegistrosFilters>) => {
@@ -244,26 +303,8 @@ export function CrmRecordsSection({
     ]);
 
     return (
-        <TooltipProvider delayDuration={120}>
-            <Card className="min-w-0 border-border/70">
+        <Card className="min-w-0 border-border/70">
                 <CardHeader className="space-y-4">
-                    <div className="flex flex-col gap-2 xl:flex-row xl:items-end xl:justify-between">
-                        <div className="space-y-1">
-                            <CardTitle className="text-base">Registros globales</CardTitle>
-                            <CardDescription>
-                                Vista tabular del CRM con búsqueda, filtros server-side y
-                                edición inline.
-                            </CardDescription>
-                        </div>
-
-                        <Badge variant="outline" className="w-fit rounded-md px-3 py-1">
-                            <span className="sm:hidden">{registros.length} filas</span>
-                            <span className="hidden sm:inline">
-                                {registros.length} filas cargadas en esta vista
-                            </span>
-                        </Badge>
-                    </div>
-
                     <Tabs
                         value={activeTab}
                         onValueChange={(value) => {
@@ -273,7 +314,7 @@ export function CrmRecordsSection({
                         }}
                         className="w-full"
                     >
-                        <TabsList className="flex h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto whitespace-nowrap rounded-xl border border-border/70 bg-muted/40 p-1">
+                        <TabsList className="flex h-auto w-full flex-nowrap justify-between gap-1 overflow-x-auto whitespace-nowrap rounded-xl border border-border/70 bg-muted/40 p-1">
                             {CRM_TABS.map((tab) => {
                                 const label =
                                     tab === "TODOS"
@@ -359,7 +400,6 @@ export function CrmRecordsSection({
                         onScrollRootReady={onScrollRootReady}
                     />
                 </CardContent>
-            </Card>
-        </TooltipProvider>
+        </Card>
     );
 }

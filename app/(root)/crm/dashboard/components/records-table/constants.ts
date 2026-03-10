@@ -45,6 +45,9 @@ export const CRM_DEFAULT_COLUMN_VISIBILITY: Record<CrmTableColumnId, boolean> = 
     estado: true,
 };
 
+export const CRM_COLUMN_VISIBILITY_STORAGE_KEY =
+    "crm-dashboard-records-column-visibility";
+
 export function isCrmTabValue(value: string): value is CrmDashboardTab {
     return (CRM_TABS as readonly string[]).includes(value);
 }
