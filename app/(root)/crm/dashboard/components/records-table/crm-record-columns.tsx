@@ -1,16 +1,18 @@
 "use client";
 
+import { type CSSProperties } from "react";
 import type { Column, ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import type { RegistroWithSession } from "@/types/session";
+import type { RegistroWithSession, TipoRegistro } from "@/types/session";
 import { FollowUpSummaryBadge } from "../FollowUpSummaryBadge";
 import { formatFecha, getTipoLabel } from "../../../helpers";
 import {
     getDisplayNombreFromRegistro,
     getDisplayWhatsappFromSession,
 } from "../../helpers";
+import { CRM_TAB_COLORS } from "./constants";
 
 import { CrmRecordDetailCell } from "./CrmRecordDetailCell";
 import { CrmRecordStatusCell } from "./CrmRecordStatusCell";
@@ -61,7 +63,7 @@ export function createCrmRecordColumns({
                 const whatsapp = getDisplayWhatsappFromSession(row.original.session);
 
                 return (
-                    <div className="min-w-[120px]">
+                    <div className="min-w-[80px]">
                         <p className="font-medium">{whatsapp}</p>
                         <p className="text-xs text-muted-foreground">
                             {row.original.session.instanceId}
@@ -99,11 +101,24 @@ export function createCrmRecordColumns({
             id: "tipo",
             accessorFn: (row) => getTipoLabel(row.tipo),
             header: ({ column }) => <SortableHeader column={column} label="Tipo" />,
-            cell: ({ row }) => (
-                <span className="inline-flex rounded-full border border-border/80 px-2 py-1 text-xs font-medium">
-                    {getTipoLabel(row.original.tipo)}
-                </span>
-            ),
+            cell: ({ row }) => {
+                const tipo = row.original.tipo as TipoRegistro;
+                const tipoColor = CRM_TAB_COLORS[tipo];
+
+                return (
+                    <span
+                        className="inline-flex rounded-full border px-2 py-1 text-xs font-medium text-white"
+                        style={
+                            {
+                                backgroundColor: tipoColor,
+                                borderColor: tipoColor,
+                            } as CSSProperties
+                        }
+                    >
+                        {getTipoLabel(tipo)}
+                    </span>
+                );
+            },
         },
         {
             id: "fecha",

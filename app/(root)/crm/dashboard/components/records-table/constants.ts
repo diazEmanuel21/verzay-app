@@ -13,6 +13,16 @@ export const CRM_TABS = [
     "RESERVA",
 ] as const;
 
+export const CRM_TAB_COLORS: Record<CrmDashboardTab, string> = {
+    TODOS: "#374151",
+    REPORTE: "#3B82F6",
+    SOLICITUD: "#8B5CF6",
+    PEDIDO: "#F97316",
+    RECLAMO: "#EF4444",
+    PAGO: "#22C55E",
+    RESERVA: "#0EA5E9",
+};
+
 export const FOLLOW_UP_FILTER_OPTIONS: Array<{
     value: FollowUpStatus | "none";
     label: string;

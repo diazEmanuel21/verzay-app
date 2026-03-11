@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 
 import {
     getCoreRowModel,
@@ -26,9 +26,7 @@ import { Button } from "@/components/ui/button";
 import {
     Card,
     CardContent,
-    CardDescription,
     CardHeader,
-    CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -41,6 +39,7 @@ import { getTipoLabel } from "../../../helpers";
 import {
     CRM_COLUMN_VISIBILITY_STORAGE_KEY,
     CRM_DEFAULT_COLUMN_VISIBILITY,
+    CRM_TAB_COLORS,
     CRM_TABS,
     FOLLOW_UP_FILTER_OPTIONS,
     isCrmTabValue,
@@ -301,106 +300,112 @@ export function CrmRecordsSection({
         filters.query,
         patchFilters,
     ]);
-    
+
 
     return (
         <Card className="min-w-0 border-border/70">
-                <CardHeader className="space-y-4">
-                    <Tabs
-                        value={activeTab}
-                        onValueChange={(value) => {
-                            if (isCrmTabValue(value)) {
-                                onActiveTabChange(value);
-                            }
-                        }}
-                        className="w-full"
-                    >
-                        <TabsList className="flex h-auto w-full flex-nowrap justify-between gap-1 overflow-x-auto whitespace-nowrap rounded-xl border border-border/70 bg-muted/40 p-1">
-                            {CRM_TABS.map((tab) => {
-                                const label =
-                                    tab === "TODOS"
-                                        ? `Todos (${totalRegistros})`
-                                        : `${getTipoLabel(tab)} (${countsByTipo[tab]})`;
-                                const Icon = CRM_TAB_ICONS[tab];
+            <CardHeader className="space-y-4">
+                <Tabs
+                    value={activeTab}
+                    onValueChange={(value) => {
+                        if (isCrmTabValue(value)) {
+                            onActiveTabChange(value);
+                        }
+                    }}
+                    className="w-full"
+                >
+                    <TabsList className="flex h-auto w-full flex-nowrap justify-between gap-1 overflow-x-auto border-border bg-muted/40 p-0">
+                        {CRM_TABS.map((tab) => {
+                            const label =
+                                tab === "TODOS"
+                                    ? `Todos (${totalRegistros})`
+                                    : `${getTipoLabel(tab)} (${countsByTipo[tab]})`;
+                            const Icon = CRM_TAB_ICONS[tab];
+                            const tabColor = CRM_TAB_COLORS[tab];
 
-                                return (
-                                    <Tooltip key={tab}>
-                                        <TooltipTrigger asChild>
-                                            <TabsTrigger
-                                                value={tab}
-                                                className="gap-2 px-3 max-sm:w-10 max-sm:px-0"
-                                            >
-                                                <Icon className="h-4 w-4 shrink-0 sm:hidden" />
-                                                <span className="hidden sm:inline">{label}</span>
-                                                <span className="sr-only sm:hidden">{label}</span>
-                                            </TabsTrigger>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="bottom">{label}</TooltipContent>
-                                    </Tooltip>
-                                );
-                            })}
-                        </TabsList>
-                    </Tabs>
+                            return (
+                                <Tooltip key={tab}>
+                                    <TooltipTrigger asChild>
+                                        <TabsTrigger
+                                            value={tab}
+                                            className="flex-1 gap-2 bg-[color:var(--crm-tab-color)] px-3 text-white hover:opacity-95 data-[state=active]:bg-[color:var(--crm-tab-color)] data-[state=active]:text-white data-[state=active]:shadow-md max-sm:w-10 max-sm:px-0"
+                                            style={
+                                                {
+                                                    "--crm-tab-color": tabColor,
+                                                } as CSSProperties
+                                            }
+                                        >
+                                            <Icon className="h-4 w-4 shrink-0 sm:hidden" />
+                                            <span className="hidden sm:inline">{label}</span>
+                                            <span className="sr-only sm:hidden">{label}</span>
+                                        </TabsTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom">{label}</TooltipContent>
+                                </Tooltip>
+                            );
+                        })}
+                    </TabsList>
+                </Tabs>
 
-                    <CrmRecordsToolbar
-                        table={table}
-                        activeTab={activeTab}
-                        filters={filters}
-                        filterCount={activeFilterCount}
-                        searchValue={searchValue}
-                        totalRegistros={totalRegistros}
-                        loadedCount={registros.length}
-                        isUpdatingRegistros={isUpdatingRegistros}
-                        isProcessingFollowUps={isProcessingFollowUps}
-                        onSearchChange={setSearchValue}
-                        onPatchFilters={patchFilters}
-                        onResetFilters={resetFilters}
-                        onProcessFollowUps={onProcessFollowUps}
-                    />
+                <CrmRecordsToolbar
+                    table={table}
+                    activeTab={activeTab}
+                    filters={filters}
+                    filterCount={activeFilterCount}
+                    searchValue={searchValue}
+                    totalRegistros={totalRegistros}
+                    loadedCount={registros.length}
+                    isUpdatingRegistros={isUpdatingRegistros}
+                    isProcessingFollowUps={isProcessingFollowUps}
+                    onSearchChange={setSearchValue}
+                    onPatchFilters={patchFilters}
+                    onResetFilters={resetFilters}
+                    onProcessFollowUps={onProcessFollowUps}
+                />
 
-                    {activeFilterBadges.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                            {activeFilterBadges.map((filterBadge) => (
-                                <Badge
-                                    key={filterBadge.key}
-                                    variant="secondary"
-                                    className="gap-2 rounded-full px-3 py-1 text-xs"
-                                >
-                                    {filterBadge.label}
-                                    <button
-                                        type="button"
-                                        className="text-muted-foreground transition-colors hover:text-foreground"
-                                        onClick={filterBadge.onClear}
-                                        title={`Quitar filtro ${filterBadge.label}`}
-                                    >
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            ))}
-
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 px-2"
-                                onClick={resetFilters}
+                {activeFilterBadges.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                        {activeFilterBadges.map((filterBadge) => (
+                            <Badge
+                                key={filterBadge.key}
+                                variant="secondary"
+                                className="gap-2 rounded-full px-3 py-1 text-xs"
                             >
-                                Limpiar todo
-                            </Button>
-                        </div>
-                    ) : null}
-                </CardHeader>
+                                {filterBadge.label}
+                                <button
+                                    type="button"
+                                    className="text-muted-foreground transition-colors hover:text-foreground"
+                                    onClick={filterBadge.onClear}
+                                    title={`Quitar filtro ${filterBadge.label}`}
+                                >
+                                    <X className="h-3 w-3" />
+                                </button>
+                            </Badge>
+                        ))}
 
-                <CardContent className="pt-0">
-                    <CrmRecordsDataTable
-                        table={table}
-                        activeTab={activeTab}
-                        dataLength={registros.length}
-                        hasMore={hasMore}
-                        isLoadingMore={isLoadingMore}
-                        sentinelRef={sentinelRef}
-                        onScrollRootReady={onScrollRootReady}
-                    />
-                </CardContent>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2"
+                            onClick={resetFilters}
+                        >
+                            Limpiar todo
+                        </Button>
+                    </div>
+                ) : null}
+            </CardHeader>
+
+            <CardContent className="pt-0">
+                <CrmRecordsDataTable
+                    table={table}
+                    activeTab={activeTab}
+                    dataLength={registros.length}
+                    hasMore={hasMore}
+                    isLoadingMore={isLoadingMore}
+                    sentinelRef={sentinelRef}
+                    onScrollRootReady={onScrollRootReady}
+                />
+            </CardContent>
         </Card>
     );
 }

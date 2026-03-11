@@ -135,7 +135,7 @@ export function CrmRecordsToolbar({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline" className="h-9 rounded-md px-3 text-xs">
+                    <Badge variant="outline" className="h-9 rounded-md px-3 text-xs border-border">
                         <span className="sm:hidden">{loadedCount} filas</span>
                         <span className="hidden sm:inline">
                             {filterCount > 0

@@ -30,6 +30,13 @@ import type { DashboardStats } from "./MainDashboard";
 import { TagStatsCard } from "./TagStatsCard";
 import { CrmRecordsSection } from "./records-table/CrmRecordsSection";
 
+const CRM_METRIC_COLORS = {
+    totalRegistros: "#3B82F6",
+    leadsConMovimientos: "#8B5CF6",
+    followUpsActivos: "#F97316",
+    followUpsEnviados: "#22C55E",
+} as const;
+
 export const CrmDashboard = ({
     stats,
     registros,
@@ -115,126 +122,130 @@ export const CrmDashboard = ({
     return (
         <TooltipProvider delayDuration={120}>
             <div className="flex h-full min-w-0 flex-col gap-2">
-            <div className="flex flex-wrap gap-3">
-                <div className="flex-1">
-                    <MetricCard
-                        icon={<BarChart3 className="h-4 w-4" />}
-                        label="Total registros"
-                        value={totalRegistros}
-                        helper="Todos los movimientos en CRM"
-                    />
+                <div className="flex flex-wrap gap-3">
+                    <div className="flex-1">
+                        <MetricCard
+                            icon={<BarChart3 className="h-4 w-4" />}
+                            label="Total registros"
+                            value={totalRegistros}
+                            helper="Todos los movimientos en CRM"
+                            color={CRM_METRIC_COLORS.totalRegistros}
+                        />
+                    </div>
+
+                    <div className="flex-1">
+                        <MetricCard
+                            icon={<Activity className="h-4 w-4" />}
+                            label="Leads con movimientos"
+                            value={leadsConMovimientos}
+                            helper="Sesiones con al menos un registro"
+                            color={CRM_METRIC_COLORS.leadsConMovimientos}
+                        />
+                    </div>
+
+                    <div className="flex-1">
+                        <MetricCard
+                            icon={<Clock3 className="h-4 w-4" />}
+                            label="Follow-ups activos"
+                            value={stats?.followUps.active ?? 0}
+                            helper="Pendientes o en procesamiento"
+                            color={CRM_METRIC_COLORS.followUpsActivos}
+                        />
+                    </div>
+
+                    <div className="flex-1">
+                        <MetricCard
+                            icon={<CheckCheck className="h-4 w-4" />}
+                            label="Follow-ups enviados"
+                            value={stats?.followUps.sent ?? 0}
+                            helper="Seguimientos completados"
+                            color={CRM_METRIC_COLORS.followUpsEnviados}
+                        />
+                    </div>
                 </div>
 
-                <div className="flex-1">
-                    <MetricCard
-                        icon={<Activity className="h-4 w-4" />}
-                        label="Leads con movimientos"
-                        value={leadsConMovimientos}
-                        helper="Sesiones con al menos un registro"
-                    />
-                </div>
+                <CrmRecordsSection
+                    activeTab={activeTab}
+                    registros={registros}
+                    totalRegistros={totalRegistros}
+                    countsByTipo={countsByTipo}
+                    filters={filters}
+                    onActiveTabChange={onActiveTabChange}
+                    onFiltersChange={onFiltersChange}
+                    onChangeEstado={onChangeEstado}
+                    onChangeDetalle={onChangeDetalle}
+                    onFollowUpChanged={onFollowUpChanged}
+                    onProcessFollowUps={onProcessFollowUps}
+                    isProcessingFollowUps={isProcessingFollowUps}
+                    isUpdatingRegistros={isUpdatingRegistros}
+                    userId={userId}
+                    hasMore={hasMore}
+                    isLoadingMore={isLoadingMore}
+                    sentinelRef={sentinelRef}
+                    onScrollRootReady={onScrollRootReady}
+                />
 
-                <div className="flex-1">
-                    <MetricCard
-                        icon={<Clock3 className="h-4 w-4" />}
-                        label="Follow-ups activos"
-                        value={stats?.followUps.active ?? 0}
-                        helper="Pendientes o en procesamiento"
-                    />
-                </div>
+                {/* <div className="grid gap-4 lg:grid-cols-2">
+                    <Card className="border-border">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base">Registros por tipo</CardTitle>
+                            <CardDescription>
+                                Distribución general por módulo del CRM.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="h-[200px] md:h-[230px]">
+                            {totalRegistros === 0 ? (
+                                <div className="flex h-full items-center justify-center text-muted-foreground">
+                                    Aún no hay registros para mostrar en el gráfico.
+                                </div>
+                            ) : (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={chartDataByTipo}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="tipo" tick={{ fontSize: 11 }} />
+                                        <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                                        <Tooltip
+                                            cursor={{ opacity: 0.1 }}
+                                            contentStyle={{ fontSize: 11 }}
+                                        />
+                                        <Bar dataKey="cantidad" fill="hsl(var(--primary))" />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            )}
+                        </CardContent>
+                    </Card>
 
-                <div className="flex-1">
-                    <MetricCard
-                        icon={<CheckCheck className="h-4 w-4" />}
-                        label="Follow-ups enviados"
-                        value={stats?.followUps.sent ?? 0}
-                        helper="Seguimientos completados"
-                    />
-                </div>
-            </div>
+                    <Card className="border-border">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base">Actividad últimos 7 días</CardTitle>
+                            <CardDescription className="text-xs">
+                                Cantidad de registros creados por día.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="h-[200px] md:h-[230px]">
+                            {totalRegistros === 0 ? (
+                                <div className="flex h-full items-center justify-center text-muted-foreground">
+                                    Aún no hay registros para mostrar en el gráfico.
+                                </div>
+                            ) : (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={chartDataByDay}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="fecha" tick={{ fontSize: 11 }} />
+                                        <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                                        <Tooltip
+                                            cursor={{ opacity: 0.1 }}
+                                            contentStyle={{ fontSize: 11 }}
+                                        />
+                                        <Line type="monotone" dataKey="cantidad" dot={{ r: 3 }} />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div> */}
 
-            <CrmRecordsSection
-                activeTab={activeTab}
-                registros={registros}
-                totalRegistros={totalRegistros}
-                countsByTipo={countsByTipo}
-                filters={filters}
-                onActiveTabChange={onActiveTabChange}
-                onFiltersChange={onFiltersChange}
-                onChangeEstado={onChangeEstado}
-                onChangeDetalle={onChangeDetalle}
-                onFollowUpChanged={onFollowUpChanged}
-                onProcessFollowUps={onProcessFollowUps}
-                isProcessingFollowUps={isProcessingFollowUps}
-                isUpdatingRegistros={isUpdatingRegistros}
-                userId={userId}
-                hasMore={hasMore}
-                isLoadingMore={isLoadingMore}
-                sentinelRef={sentinelRef}
-                onScrollRootReady={onScrollRootReady}
-            />
-
-            <div className="grid gap-4 lg:grid-cols-2">
-                <Card className="border-border">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-base">Registros por tipo</CardTitle>
-                        <CardDescription>
-                            Distribución general por módulo del CRM.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="h-[200px] md:h-[230px]">
-                        {totalRegistros === 0 ? (
-                            <div className="flex h-full items-center justify-center text-muted-foreground">
-                                Aún no hay registros para mostrar en el gráfico.
-                            </div>
-                        ) : (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={chartDataByTipo}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="tipo" tick={{ fontSize: 11 }} />
-                                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                                    <Tooltip
-                                        cursor={{ opacity: 0.1 }}
-                                        contentStyle={{ fontSize: 11 }}
-                                    />
-                                    <Bar dataKey="cantidad" fill="hsl(var(--primary))" />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        )}
-                    </CardContent>
-                </Card>
-
-                <Card className="border-border">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-base">Actividad últimos 7 días</CardTitle>
-                        <CardDescription className="text-xs">
-                            Cantidad de registros creados por día.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="h-[200px] md:h-[230px]">
-                        {totalRegistros === 0 ? (
-                            <div className="flex h-full items-center justify-center text-muted-foreground">
-                                Aún no hay registros para mostrar en el gráfico.
-                            </div>
-                        ) : (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={chartDataByDay}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="fecha" tick={{ fontSize: 11 }} />
-                                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                                    <Tooltip
-                                        cursor={{ opacity: 0.1 }}
-                                        contentStyle={{ fontSize: 11 }}
-                                    />
-                                    <Line type="monotone" dataKey="cantidad" dot={{ r: 3 }} />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-
-                <TagStatsCard userId={userId} />
+                {/* <TagStatsCard userId={userId} /> */}
             </div>
         </TooltipProvider>
     );
