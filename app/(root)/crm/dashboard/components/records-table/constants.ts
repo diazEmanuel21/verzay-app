@@ -1,5 +1,6 @@
 import { ESTADOS_POR_TIPO } from "@/types/registro";
-import type { FollowUpStatus } from "@/types/session";
+import type { CrmFollowUpStatus, FollowUpStatus } from "@/types/session";
+import { LEAD_STATUS_FILTER_OPTIONS } from "../../helpers";
 
 import type { CrmDashboardTab, CrmTableColumnId } from "./types";
 
@@ -35,12 +36,27 @@ export const FOLLOW_UP_FILTER_OPTIONS: Array<{
     { value: "none", label: "Sin follow-up" },
 ];
 
+export const CRM_FOLLOW_UP_FILTER_OPTIONS: Array<{
+    value: CrmFollowUpStatus | "none";
+    label: string;
+}> = [
+    { value: "PENDING", label: "Pendiente" },
+    { value: "PROCESSING", label: "Procesando" },
+    { value: "SENT", label: "Enviado" },
+    { value: "FAILED", label: "Fallido" },
+    { value: "CANCELLED", label: "Cancelado" },
+    { value: "SKIPPED", label: "Omitido" },
+    { value: "none", label: "Sin CRM follow-up" },
+];
+
 export const CRM_TABLE_COLUMN_LABELS: Record<CrmTableColumnId, string> = {
     whatsapp: "WhatsApp",
     nombre: "Nombre",
     tipo: "Tipo",
     fecha: "Fecha",
     detalle: "Detalle",
+    leadStatus: "Lead",
+    crmFollowUp: "CRM follow-up",
     followUp: "Follow-up",
     estado: "Estado",
 };
@@ -51,9 +67,13 @@ export const CRM_DEFAULT_COLUMN_VISIBILITY: Record<CrmTableColumnId, boolean> = 
     tipo: true,
     fecha: true,
     detalle: true,
+    leadStatus: true,
+    crmFollowUp: true,
     followUp: true,
     estado: true,
 };
+
+export { LEAD_STATUS_FILTER_OPTIONS };
 
 export const CRM_COLUMN_VISIBILITY_STORAGE_KEY =
     "crm-dashboard-records-column-visibility";

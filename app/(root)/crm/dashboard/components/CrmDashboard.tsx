@@ -35,6 +35,8 @@ const CRM_METRIC_COLORS = {
     leadsConMovimientos: "#8B5CF6",
     followUpsActivos: "#F97316",
     followUpsEnviados: "#22C55E",
+    crmFollowUpsActivos: "#0EA5E9",
+    crmFollowUpsEnviados: "#14B8A6",
 } as const;
 
 export const CrmDashboard = ({
@@ -48,7 +50,9 @@ export const CrmDashboard = ({
     onChangeDetalle,
     onFollowUpChanged,
     onProcessFollowUps,
+    onProcessCrmFollowUps,
     isProcessingFollowUps,
+    isProcessingCrmFollowUps,
     isUpdatingRegistros,
     userId,
     hasMore,
@@ -66,7 +70,9 @@ export const CrmDashboard = ({
     onChangeDetalle?: (registroId: number, nuevoDetalle: string) => Promise<boolean>;
     onFollowUpChanged?: () => Promise<void> | void;
     onProcessFollowUps?: () => Promise<void> | void;
+    onProcessCrmFollowUps?: () => Promise<void> | void;
     isProcessingFollowUps?: boolean;
+    isProcessingCrmFollowUps?: boolean;
     isUpdatingRegistros?: boolean;
     userId: string;
     hasMore?: boolean;
@@ -162,6 +168,26 @@ export const CrmDashboard = ({
                             color={CRM_METRIC_COLORS.followUpsEnviados}
                         />
                     </div>
+
+                    <div className="flex-1">
+                        <MetricCard
+                            icon={<Clock3 className="h-4 w-4" />}
+                            label="CRM follow-ups activos"
+                            value={stats?.crmFollowUps.active ?? 0}
+                            helper="Cola inteligente del CRM"
+                            color={CRM_METRIC_COLORS.crmFollowUpsActivos}
+                        />
+                    </div>
+
+                    <div className="flex-1">
+                        <MetricCard
+                            icon={<CheckCheck className="h-4 w-4" />}
+                            label="CRM follow-ups enviados"
+                            value={stats?.crmFollowUps.sent ?? 0}
+                            helper="Contactos trabajados por estado"
+                            color={CRM_METRIC_COLORS.crmFollowUpsEnviados}
+                        />
+                    </div>
                 </div>
 
                 <CrmRecordsSection
@@ -176,7 +202,9 @@ export const CrmDashboard = ({
                     onChangeDetalle={onChangeDetalle}
                     onFollowUpChanged={onFollowUpChanged}
                     onProcessFollowUps={onProcessFollowUps}
+                    onProcessCrmFollowUps={onProcessCrmFollowUps}
                     isProcessingFollowUps={isProcessingFollowUps}
+                    isProcessingCrmFollowUps={isProcessingCrmFollowUps}
                     isUpdatingRegistros={isUpdatingRegistros}
                     userId={userId}
                     hasMore={hasMore}

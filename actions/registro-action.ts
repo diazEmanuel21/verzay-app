@@ -5,7 +5,11 @@ import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { ActionResult } from "@/types/registro";
 import {
+    CrmFollowUpStatus,
     FollowUpStatus,
+    LeadStatus,
+    SessionCrmFollowUpHistoryItem,
+    SessionCrmFollowUpSummary,
     SessionFollowUpHistoryItem,
     SessionFollowUpSummary,
     TipoRegistro,
@@ -14,6 +18,8 @@ import { normalizeDetalleDraft } from "@/app/(root)/crm/dashboard/helpers/detall
 
 export type RegistrosFilters = {
     estado?: string;
+    leadStatus?: LeadStatus | "none";
+    crmFollowUpStatus?: CrmFollowUpStatus | "none";
     fechaDesde?: string;
     fechaHasta?: string;
     followUpStatus?: FollowUpStatus | "none";
@@ -45,6 +51,23 @@ function createEmptyFollowUpSummary(): SessionFollowUpSummary {
         latestStatus: null,
         latestGeneratedMessage: null,
         latestCreatedAt: null,
+        recentItems: [],
+    };
+}
+
+function createEmptyCrmFollowUpSummary(): SessionCrmFollowUpSummary {
+    return {
+        total: 0,
+        active: 0,
+        pending: 0,
+        processing: 0,
+        sent: 0,
+        failed: 0,
+        cancelled: 0,
+        skipped: 0,
+        latestStatus: null,
+        latestGeneratedMessage: null,
+        latestScheduledFor: null,
         recentItems: [],
     };
 }
@@ -139,6 +162,100 @@ async function getFollowUpSummaryMapBySessions(sessions: SessionLookup[]) {
     return summaryMap;
 }
 
+async function getCrmFollowUpSummaryMapBySessions(sessions: SessionLookup[]) {
+    const uniqueSessionsMap = new Map<string, SessionLookup>();
+    for (const session of sessions) {
+        const key = buildSessionFollowUpKey(session.remoteJid, session.instanceId);
+        if (!key) continue;
+        uniqueSessionsMap.set(key, session);
+    }
+    const uniqueSessions = Array.from(uniqueSessionsMap.values());
+
+    if (!uniqueSessions.length) return new Map<string, SessionCrmFollowUpSummary>();
+
+    const crmFollowUps = await db.crmFollowUp.findMany({
+        where: {
+            OR: uniqueSessions.map((session) => ({
+                remoteJid: session.remoteJid,
+                instanceId: session.instanceId,
+            })),
+        },
+        select: {
+            id: true,
+            remoteJid: true,
+            instanceId: true,
+            status: true,
+            leadStatusSnapshot: true,
+            attemptCount: true,
+            generatedMessage: true,
+            errorReason: true,
+            scheduledFor: true,
+            createdAt: true,
+            updatedAt: true,
+        },
+        orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+    });
+
+    const summaryMap = new Map<string, SessionCrmFollowUpSummary>();
+
+    for (const followUp of crmFollowUps) {
+        const key = buildSessionFollowUpKey(followUp.remoteJid, followUp.instanceId);
+        if (!key) continue;
+
+        const summary = summaryMap.get(key) ?? createEmptyCrmFollowUpSummary();
+        summary.total += 1;
+
+        const status = followUp.status as CrmFollowUpStatus;
+        switch (status) {
+            case "PENDING":
+                summary.pending += 1;
+                summary.active += 1;
+                break;
+            case "PROCESSING":
+                summary.processing += 1;
+                summary.active += 1;
+                break;
+            case "SENT":
+                summary.sent += 1;
+                break;
+            case "FAILED":
+                summary.failed += 1;
+                break;
+            case "CANCELLED":
+                summary.cancelled += 1;
+                break;
+            case "SKIPPED":
+                summary.skipped += 1;
+                break;
+        }
+
+        if (!summary.latestStatus) {
+            summary.latestStatus = status;
+            summary.latestGeneratedMessage = followUp.generatedMessage ?? null;
+            summary.latestScheduledFor = followUp.scheduledFor?.toISOString?.() ?? null;
+        }
+
+        if (summary.recentItems.length < 5) {
+            const item: SessionCrmFollowUpHistoryItem = {
+                id: followUp.id,
+                status,
+                leadStatusSnapshot: followUp.leadStatusSnapshot,
+                attemptCount: Math.max(followUp.attemptCount ?? 0, 0),
+                message: followUp.generatedMessage ?? null,
+                errorReason: followUp.errorReason ?? null,
+                scheduledFor: followUp.scheduledFor?.toISOString?.() ?? null,
+                createdAt: followUp.createdAt?.toISOString?.() ?? null,
+                updatedAt: followUp.updatedAt?.toISOString?.() ?? null,
+            };
+            summary.recentItems.push(item);
+        }
+
+        summaryMap.set(key, summary);
+    }
+
+    return summaryMap;
+}
+
 async function getSessionIdsByFollowUpFilter(
     userId: string,
     followUpStatus?: FollowUpStatus | "none"
@@ -198,6 +315,69 @@ async function getSessionIdsByFollowUpFilter(
             return followUpStatus === "none"
                 ? !followUpKeys.has(key)
                 : followUpKeys.has(key);
+        })
+        .map((session) => session.id);
+}
+
+async function getSessionIdsByCrmFollowUpFilter(
+    userId: string,
+    crmFollowUpStatus?: CrmFollowUpStatus | "none"
+) {
+    if (!crmFollowUpStatus) return null;
+
+    const sessions = await db.session.findMany({
+        where: { userId },
+        select: {
+            id: true,
+            remoteJid: true,
+            instanceId: true,
+        },
+    });
+
+    if (!sessions.length) return [];
+
+    const pairMap = new Map<string, { remoteJid: string; instanceId: string }>();
+    for (const session of sessions) {
+        const key = buildSessionFollowUpKey(session.remoteJid, session.instanceId);
+        if (!key) continue;
+        pairMap.set(key, {
+            remoteJid: session.remoteJid,
+            instanceId: session.instanceId,
+        });
+    }
+
+    const pairs = Array.from(pairMap.values());
+    if (!pairs.length) return [];
+
+    const crmFollowUpWhere = {
+        OR: pairs.map((pair) => ({
+            remoteJid: pair.remoteJid,
+            instanceId: pair.instanceId,
+        })),
+        ...(crmFollowUpStatus === "none" ? {} : { status: crmFollowUpStatus }),
+    };
+
+    const crmFollowUps = await db.crmFollowUp.findMany({
+        where: crmFollowUpWhere,
+        select: {
+            remoteJid: true,
+            instanceId: true,
+        },
+    });
+
+    const crmFollowUpKeys = new Set(
+        crmFollowUps.map((followUp) =>
+            buildSessionFollowUpKey(followUp.remoteJid, followUp.instanceId)
+        )
+    );
+
+    return sessions
+        .filter((session) => {
+            const key = buildSessionFollowUpKey(session.remoteJid, session.instanceId);
+            if (!key) return false;
+            return crmFollowUpStatus === "none"
+                ? !crmFollowUpKeys.has(key)
+                : crmFollowUpKeys.has(key);
         })
         .map((session) => session.id);
 }
@@ -310,6 +490,8 @@ export async function getRegistrosByUserId(
 ) {
     try {
         const estado = (filters?.estado ?? "").trim();
+        const leadStatus = filters?.leadStatus;
+        const crmFollowUpStatus = filters?.crmFollowUpStatus;
         const query = (filters?.query ?? "").trim();
         const leadOnly = Boolean(filters?.leadOnly);
         const followUpStatus = filters?.followUpStatus;
@@ -333,8 +515,27 @@ export async function getRegistrosByUserId(
             userId,
             followUpStatus
         );
+        const sessionIdsByCrmFollowUp = await getSessionIdsByCrmFollowUpFilter(
+            userId,
+            crmFollowUpStatus
+        );
 
-        if (sessionIdsByFollowUp && sessionIdsByFollowUp.length === 0) {
+        if (
+            (sessionIdsByFollowUp && sessionIdsByFollowUp.length === 0)
+            || (sessionIdsByCrmFollowUp && sessionIdsByCrmFollowUp.length === 0)
+        ) {
+            return {
+                success: true as const,
+                data: [],
+            };
+        }
+
+        const combinedSessionIds =
+            sessionIdsByFollowUp && sessionIdsByCrmFollowUp
+                ? sessionIdsByFollowUp.filter((id) => sessionIdsByCrmFollowUp.includes(id))
+                : sessionIdsByFollowUp ?? sessionIdsByCrmFollowUp ?? null;
+
+        if (combinedSessionIds && combinedSessionIds.length === 0) {
             return {
                 success: true as const,
                 data: [],
@@ -345,8 +546,13 @@ export async function getRegistrosByUserId(
             {
                 session: {
                     userId,
-                    ...(sessionIdsByFollowUp
-                        ? { id: { in: sessionIdsByFollowUp } }
+                    ...(leadStatus === "none"
+                        ? { leadStatus: null }
+                        : leadStatus
+                            ? { leadStatus }
+                            : {}),
+                    ...(combinedSessionIds
+                        ? { id: { in: combinedSessionIds } }
                         : {}),
                 },
             },
@@ -409,6 +615,12 @@ export async function getRegistrosByUserId(
                 instanceId: registro.session.instanceId,
             }))
         );
+        const crmFollowUpSummaryMap = await getCrmFollowUpSummaryMapBySessions(
+            registros.map((registro) => ({
+                remoteJid: registro.session.remoteJid,
+                instanceId: registro.session.instanceId,
+            }))
+        );
 
         const data = registros.map((registro) => {
             const summaryKey = buildSessionFollowUpKey(
@@ -421,6 +633,7 @@ export async function getRegistrosByUserId(
                 session: {
                     ...registro.session,
                     followUpSummary: followUpSummaryMap.get(summaryKey) ?? null,
+                    crmFollowUpSummary: crmFollowUpSummaryMap.get(summaryKey) ?? null,
                 },
             };
         });
@@ -529,6 +742,16 @@ export async function getCrmDashboardStatsByUserId(userId: string) {
             failed: 0,
             cancelled: 0,
         };
+        const crmFollowUps = {
+            total: 0,
+            active: 0,
+            pending: 0,
+            processing: 0,
+            sent: 0,
+            failed: 0,
+            cancelled: 0,
+            skipped: 0,
+        };
 
         if (uniqueSessions.length) {
             const followUpCounts = await db.seguimiento.groupBy({
@@ -561,6 +784,39 @@ export async function getCrmDashboardStatsByUserId(userId: string) {
                     followUps.cancelled += count;
                 }
             }
+
+            const crmFollowUpCounts = await db.crmFollowUp.groupBy({
+                by: ["status"],
+                where: {
+                    OR: uniqueSessions.map((session) => ({
+                        remoteJid: session.remoteJid,
+                        instanceId: session.instanceId,
+                    })),
+                },
+                _count: { _all: true },
+            });
+
+            for (const row of crmFollowUpCounts) {
+                const status = row.status as CrmFollowUpStatus;
+                const count = row._count._all;
+                crmFollowUps.total += count;
+
+                if (status === "PENDING") {
+                    crmFollowUps.pending += count;
+                    crmFollowUps.active += count;
+                } else if (status === "PROCESSING") {
+                    crmFollowUps.processing += count;
+                    crmFollowUps.active += count;
+                } else if (status === "SENT") {
+                    crmFollowUps.sent += count;
+                } else if (status === "FAILED") {
+                    crmFollowUps.failed += count;
+                } else if (status === "CANCELLED") {
+                    crmFollowUps.cancelled += count;
+                } else if (status === "SKIPPED") {
+                    crmFollowUps.skipped += count;
+                }
+            }
         }
 
         return {
@@ -571,6 +827,7 @@ export async function getCrmDashboardStatsByUserId(userId: string) {
                 countsByTipo,
                 chartDataByDay,
                 followUps,
+                crmFollowUps,
             },
         };
     } catch (error) {

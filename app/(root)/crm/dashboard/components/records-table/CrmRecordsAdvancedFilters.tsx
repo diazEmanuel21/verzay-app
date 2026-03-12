@@ -26,7 +26,9 @@ import {
 } from "@/components/ui/tooltip";
 
 import {
+    CRM_FOLLOW_UP_FILTER_OPTIONS,
     FOLLOW_UP_FILTER_OPTIONS,
+    LEAD_STATUS_FILTER_OPTIONS,
     canUseLeadFilter,
     getEstadoOptionsForTab,
 } from "./constants";
@@ -132,6 +134,65 @@ export function CrmRecordsAdvancedFilters({
                             <SelectContent>
                                 <SelectItem value="__all__">Todos</SelectItem>
                                 {FOLLOW_UP_FILTER_OPTIONS.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="grid gap-2">
+                        <label className="text-xs font-medium text-muted-foreground">
+                            CRM follow-up
+                        </label>
+                        <Select
+                            value={filters.crmFollowUpStatus ?? "__all__"}
+                            onValueChange={(value) =>
+                                onPatchFilters({
+                                    crmFollowUpStatus:
+                                        value === "__all__"
+                                            ? undefined
+                                            : (value as RegistrosFilters["crmFollowUpStatus"]),
+                                })
+                            }
+                        >
+                            <SelectTrigger className="h-9">
+                                <SelectValue placeholder="Todos" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="__all__">Todos</SelectItem>
+                                {CRM_FOLLOW_UP_FILTER_OPTIONS.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="grid gap-2">
+                        <label className="text-xs font-medium text-muted-foreground">
+                            Estado del lead
+                        </label>
+                        <Select
+                            value={filters.leadStatus ?? "__all__"}
+                            onValueChange={(value) =>
+                                onPatchFilters({
+                                    leadStatus:
+                                        value === "__all__"
+                                            ? undefined
+                                            : (value as RegistrosFilters["leadStatus"]),
+                                })
+                            }
+                        >
+                            <SelectTrigger className="h-9">
+                                <SelectValue placeholder="Todos" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="__all__">Todos</SelectItem>
+                                <SelectItem value="none">Sin clasificar</SelectItem>
+                                {LEAD_STATUS_FILTER_OPTIONS.map((option) => (
                                     <SelectItem key={option.value} value={option.value}>
                                         {option.label}
                                     </SelectItem>

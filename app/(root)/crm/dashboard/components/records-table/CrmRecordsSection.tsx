@@ -38,10 +38,12 @@ import { getTipoLabel } from "../../../helpers";
 
 import {
     CRM_COLUMN_VISIBILITY_STORAGE_KEY,
+    CRM_FOLLOW_UP_FILTER_OPTIONS,
     CRM_DEFAULT_COLUMN_VISIBILITY,
     CRM_TAB_COLORS,
     CRM_TABS,
     FOLLOW_UP_FILTER_OPTIONS,
+    LEAD_STATUS_FILTER_OPTIONS,
     isCrmTabValue,
 } from "./constants";
 import { createCrmRecordColumns } from "./crm-record-columns";
@@ -77,7 +79,9 @@ export function CrmRecordsSection({
     onChangeDetalle,
     onFollowUpChanged,
     onProcessFollowUps,
+    onProcessCrmFollowUps,
     isProcessingFollowUps,
+    isProcessingCrmFollowUps,
     isUpdatingRegistros,
     userId,
     hasMore,
@@ -221,7 +225,9 @@ export function CrmRecordsSection({
         let count = 0;
         if (filters.query?.trim()) count += 1;
         if (filters.estado) count += 1;
+        if (filters.leadStatus) count += 1;
         if (filters.followUpStatus) count += 1;
+        if (filters.crmFollowUpStatus) count += 1;
         if (filters.fechaDesde || filters.fechaHasta) count += 1;
         if (filters.leadOnly) count += 1;
         return count;
@@ -230,6 +236,8 @@ export function CrmRecordsSection({
         filters.fechaDesde,
         filters.fechaHasta,
         filters.followUpStatus,
+        filters.crmFollowUpStatus,
+        filters.leadStatus,
         filters.leadOnly,
         filters.query,
     ]);
@@ -257,6 +265,21 @@ export function CrmRecordsSection({
             });
         }
 
+        if (filters.leadStatus) {
+            const leadStatusLabel =
+                filters.leadStatus === "none"
+                    ? "Sin clasificar"
+                    : LEAD_STATUS_FILTER_OPTIONS.find(
+                        (option) => option.value === filters.leadStatus
+                    )?.label ?? filters.leadStatus;
+
+            badges.push({
+                key: "lead-status",
+                label: `Lead: ${leadStatusLabel}`,
+                onClear: () => patchFilters({ leadStatus: undefined }),
+            });
+        }
+
         if (filters.followUpStatus) {
             const followUpLabel =
                 FOLLOW_UP_FILTER_OPTIONS.find(
@@ -267,6 +290,19 @@ export function CrmRecordsSection({
                 key: "follow-up",
                 label: `Follow-up: ${followUpLabel}`,
                 onClear: () => patchFilters({ followUpStatus: undefined }),
+            });
+        }
+
+        if (filters.crmFollowUpStatus) {
+            const crmFollowUpLabel =
+                CRM_FOLLOW_UP_FILTER_OPTIONS.find(
+                    (option) => option.value === filters.crmFollowUpStatus
+                )?.label ?? filters.crmFollowUpStatus;
+
+            badges.push({
+                key: "crm-follow-up",
+                label: `CRM follow-up: ${crmFollowUpLabel}`,
+                onClear: () => patchFilters({ crmFollowUpStatus: undefined }),
             });
         }
 
@@ -296,6 +332,8 @@ export function CrmRecordsSection({
         filters.fechaDesde,
         filters.fechaHasta,
         filters.followUpStatus,
+        filters.crmFollowUpStatus,
+        filters.leadStatus,
         filters.leadOnly,
         filters.query,
         patchFilters,
@@ -357,10 +395,12 @@ export function CrmRecordsSection({
                     loadedCount={registros.length}
                     isUpdatingRegistros={isUpdatingRegistros}
                     isProcessingFollowUps={isProcessingFollowUps}
+                    isProcessingCrmFollowUps={isProcessingCrmFollowUps}
                     onSearchChange={setSearchValue}
                     onPatchFilters={patchFilters}
                     onResetFilters={resetFilters}
                     onProcessFollowUps={onProcessFollowUps}
+                    onProcessCrmFollowUps={onProcessCrmFollowUps}
                 />
 
                 {activeFilterBadges.length > 0 ? (

@@ -1,5 +1,6 @@
 import type {
   Prisma,
+  LeadStatus as PrismaLeadStatus,
   Registro as PrismaRegistro,
   TipoRegistro as PrismaTipoRegistro,
   Session as PrismaSession,
@@ -26,6 +27,16 @@ export type FollowUpStatus =
   | "failed"
   | "cancelled";
 
+export type LeadStatus = PrismaLeadStatus;
+
+export type CrmFollowUpStatus =
+  | "PENDING"
+  | "PROCESSING"
+  | "SENT"
+  | "FAILED"
+  | "CANCELLED"
+  | "SKIPPED";
+
 export type SessionFollowUpHistoryItem = {
   id: number;
   status: FollowUpStatus;
@@ -51,11 +62,39 @@ export type SessionFollowUpSummary = {
   recentItems: SessionFollowUpHistoryItem[];
 };
 
+export type SessionCrmFollowUpHistoryItem = {
+  id: string;
+  status: CrmFollowUpStatus;
+  leadStatusSnapshot: LeadStatus;
+  attemptCount: number;
+  message: string | null;
+  errorReason: string | null;
+  scheduledFor: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type SessionCrmFollowUpSummary = {
+  total: number;
+  active: number;
+  pending: number;
+  processing: number;
+  sent: number;
+  failed: number;
+  cancelled: number;
+  skipped: number;
+  latestStatus: CrmFollowUpStatus | null;
+  latestGeneratedMessage: string | null;
+  latestScheduledFor: string | null;
+  recentItems: SessionCrmFollowUpHistoryItem[];
+};
+
 /* ===== SESSION (EXTENDIENDO PRISMA) ===== */
 
 export type Session = PrismaSession & {
   tags?: SimpleTag[];       // opcional si no siempre los cargas
   followUpSummary?: SessionFollowUpSummary | null;
+  crmFollowUpSummary?: SessionCrmFollowUpSummary | null;
 };
 
 /* ===== RESPUESTAS GENÉRICAS ===== */

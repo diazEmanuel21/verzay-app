@@ -34,10 +34,12 @@ export function CrmRecordsToolbar({
     loadedCount,
     isUpdatingRegistros,
     isProcessingFollowUps,
+    isProcessingCrmFollowUps,
     onSearchChange,
     onPatchFilters,
     onResetFilters,
     onProcessFollowUps,
+    onProcessCrmFollowUps,
 }: {
     table: Table<RegistroWithSession>;
     activeTab: CrmDashboardTab;
@@ -48,15 +50,20 @@ export function CrmRecordsToolbar({
     loadedCount: number;
     isUpdatingRegistros?: boolean;
     isProcessingFollowUps?: boolean;
+    isProcessingCrmFollowUps?: boolean;
     onSearchChange: (value: string) => void;
     onPatchFilters: (patch: Partial<RegistrosFilters>) => void;
     onResetFilters: () => void;
     onProcessFollowUps?: () => Promise<void> | void;
+    onProcessCrmFollowUps?: () => Promise<void> | void;
 }) {
-    const isBusy = Boolean(isUpdatingRegistros || isProcessingFollowUps);
+    const isBusy = Boolean(isUpdatingRegistros || isProcessingFollowUps || isProcessingCrmFollowUps);
     const processButtonLabel = isProcessingFollowUps
         ? "Procesando follow-ups..."
         : "Procesar follow-ups";
+    const processCrmButtonLabel = isProcessingCrmFollowUps
+        ? "Procesando CRM follow-ups..."
+        : "Procesar CRM follow-ups";
 
     return (
         <div className="space-y-3">
@@ -163,6 +170,27 @@ export function CrmRecordsToolbar({
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent side="bottom">{processButtonLabel}</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9 gap-2 max-sm:w-9 max-sm:px-0"
+                                onClick={() => onProcessCrmFollowUps?.()}
+                                disabled={isBusy || !onProcessCrmFollowUps}
+                            >
+                                {isProcessingCrmFollowUps ? (
+                                    <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                                ) : (
+                                    <Play className="h-4 w-4 shrink-0" />
+                                )}
+                                <span className="hidden sm:inline">{processCrmButtonLabel}</span>
+                                <span className="sr-only sm:hidden">{processCrmButtonLabel}</span>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">{processCrmButtonLabel}</TooltipContent>
                     </Tooltip>
                 </div>
             </div>

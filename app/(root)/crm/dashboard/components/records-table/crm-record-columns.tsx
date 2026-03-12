@@ -6,6 +6,7 @@ import { ArrowUpDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { RegistroWithSession, TipoRegistro } from "@/types/session";
+import { CrmFollowUpSummaryBadge } from "../CrmFollowUpSummaryBadge";
 import { FollowUpSummaryBadge } from "../FollowUpSummaryBadge";
 import { formatFecha, getTipoLabel } from "../../../helpers";
 import {
@@ -16,6 +17,7 @@ import { CRM_TAB_COLORS } from "./constants";
 
 import { CrmRecordDetailCell } from "./CrmRecordDetailCell";
 import { CrmRecordStatusCell } from "./CrmRecordStatusCell";
+import { LeadStatusBadge } from "./LeadStatusBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 function SortableHeader({
@@ -145,6 +147,37 @@ export function createCrmRecordColumns({
                     registro={row.original}
                     onChangeDetalle={onChangeDetalle}
                 />
+            ),
+        },
+        {
+            id: "leadStatus",
+            accessorFn: (row) => row.session.leadStatus ?? "",
+            header: ({ column }) => <SortableHeader column={column} label="Lead" />,
+            cell: ({ row }) => (
+                <div className="min-w-[120px]">
+                    <LeadStatusBadge status={row.original.session.leadStatus ?? null} />
+                </div>
+            ),
+        },
+        {
+            id: "crmFollowUp",
+            accessorFn: (row) => {
+                const latestScheduledFor = row.session.crmFollowUpSummary?.latestScheduledFor;
+                return latestScheduledFor ? new Date(latestScheduledFor).getTime() : 0;
+            },
+            header: ({ column }) => (
+                <SortableHeader column={column} label="CRM follow-up" />
+            ),
+            cell: ({ row }) => (
+                <div className="min-w-[240px]">
+                    <CrmFollowUpSummaryBadge
+                        summary={row.original.session.crmFollowUpSummary}
+                        userId={userId}
+                        remoteJid={row.original.session.remoteJid}
+                        instanceId={row.original.session.instanceId}
+                        onUpdated={onFollowUpChanged}
+                    />
+                </div>
             ),
         },
         {
