@@ -86,12 +86,12 @@ export type SessionWithRegistros = Session & {
   registros: PrismaRegistro[];
 };
 
-// ==== NUEVO: tipo EXACTO que devuelve Prisma con include { registros, tags: { tag } } ====
+// Tipo exacto que devuelve Prisma con include { registros, sessionTags: { tag } }
 
 export type PrismaSessionWithRegistrosAndTags = Prisma.SessionGetPayload<{
   include: {
     registros: true;
-    tags: {
+    sessionTags: {
       include: {
         tag: true;
       };
@@ -101,9 +101,9 @@ export type PrismaSessionWithRegistrosAndTags = Prisma.SessionGetPayload<{
 
 // Nuestro tipo final para el CRM:
 // - Mantiene todo lo que Prisma devuelve
-// - Pero transformamos "tags" a SimpleTag[]
+// - Pero transformamos "sessionTags" a SimpleTag[]
 export type SessionWithRegistrosAndTags =
-  Omit<PrismaSessionWithRegistrosAndTags, "tags"> & {
+  Omit<PrismaSessionWithRegistrosAndTags, "sessionTags"> & {
     tags: SimpleTag[];
   };
 

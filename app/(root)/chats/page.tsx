@@ -16,6 +16,8 @@ import {
 import { getApiKeyById } from "@/actions/api-action";
 import type { ApiKey, Instancia } from "@prisma/client";
 import { ChatsClient } from "./_components/chats-client";
+import { buildChatHistorySessionId } from "@/lib/chat-history/build-session-id";
+import { saveChatHistoryMessage } from "@/lib/chat-history/chat-history.helper";
 
 // Tipos importados desde ChatMain (cliente)
 import type { OutgoingMessagePayload } from "./_components/chat-main";
@@ -36,6 +38,46 @@ function hasInstancias(
 }
 function hasApikey(result: { data?: ApiKey | null }): result is { data: ApiKey } {
   return !!result.data;
+}
+
+function buildOutgoingHistoryEntry(payload: OutgoingMessagePayload) {
+  if (payload.kind === "text") {
+    return {
+      content: payload.text.trim(),
+      additionalKwargs: {
+        messageKind: "text",
+      },
+    };
+  }
+
+  const mediaLabel =
+    payload.mediatype === "image"
+      ? "[Imagen]"
+      : payload.mediatype === "video"
+        ? "[Video]"
+        : payload.mediatype === "audio"
+          ? payload.ptt
+            ? "[Nota de voz]"
+            : "[Audio]"
+          : "[Documento]";
+
+  const fileName = payload.fileName?.trim();
+  const caption = payload.caption?.trim();
+  const content = [fileName ? `${mediaLabel} ${fileName}` : mediaLabel, caption]
+    .filter(Boolean)
+    .join("\n");
+
+  return {
+    content,
+    additionalKwargs: {
+      messageKind: "media",
+      mediatype: payload.mediatype,
+      fileName: fileName || null,
+      mimetype: payload.mimetype || null,
+      hasCaption: Boolean(caption),
+      ptt: payload.ptt ?? false,
+    },
+  };
 }
 
 export default async function ChatsPage({
@@ -134,18 +176,15 @@ export default async function ChatsPage({
         const base = { url: apiKey!.url, key: apiKey!.key } as const;
         const instance = whatsappInstancia!.instanceName;
 
-        if (payload.kind === "text") {
-          return sendTextMessage(base, instance, remoteJid, payload.text, {
+        const result = payload.kind === "text"
+          ? await sendTextMessage(base, instance, remoteJid, payload.text, {
             delay: payload.delay,
             linkPreview: payload.linkPreview,
             mentionsEveryOne: payload.mentionsEveryOne,
             mentioned: payload.mentioned,
             quotedMessage: payload.quotedMessage,
-          });
-        }
-
-        // kind === 'media'
-        return sendMediaByUrl(base, instance, remoteJid, {
+          })
+          : await sendMediaByUrl(base, instance, remoteJid, {
           mediatype: payload.mediatype,
           mediaUrl: payload.mediaUrl,
           mimetype: payload.mimetype,
@@ -158,6 +197,34 @@ export default async function ChatsPage({
           mentioned: payload.mentioned,
           quotedMessage: payload.quotedMessage,
         });
+
+        if (result.success) {
+          const historyEntry = buildOutgoingHistoryEntry(payload);
+
+          try {
+            await saveChatHistoryMessage({
+              sessionId: buildChatHistorySessionId(instance, remoteJid),
+              content: historyEntry.content,
+              type: "notification",
+              additionalKwargs: {
+                channel: "whatsapp",
+                provider: "evolution",
+                direction: "outbound",
+                source: "manual_chat_ui",
+                remoteJid,
+                ...historyEntry.additionalKwargs,
+              },
+              responseMetadata: {
+                sentAt: new Date().toISOString(),
+                instanceName: instance,
+              },
+            });
+          } catch (historyError) {
+            console.error("[CHATS] No se pudo guardar el historial del mensaje enviado.", historyError);
+          }
+        }
+
+        return result;
       }
       : async (remoteJid: string): Promise<SendMessageResult> => ({
         success: false,

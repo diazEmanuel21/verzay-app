@@ -374,14 +374,20 @@ export async function findMessagesByRemoteJid(
     if (items.length > 0) {
 
 
-      const messagesToMark = items.map(msg => ({
-        remoteJid: msg.key?.remoteJid || remoteJid,
-        messageId: msg.key?.id || '',
-        fromMe: msg.key?.fromMe ?? false,
-      })).filter(m => m.messageId); // Filtramos mensajes sin ID
+      const messagesToMark = items
+        .filter((msg) => !(msg.key?.fromMe ?? false))
+        .map((msg) => ({
+          remoteJid: msg.key?.remoteJid || remoteJid,
+          messageId: msg.key?.id || '',
+          fromMe: false,
+        }))
+        .filter((m) => m.messageId);
 
       // Se utiliza la función eficiente para enviar un ARRAY de mensajes
-      const resultRead = await markMessagesAsReadByIds(apiKeyData, instanceName, messagesToMark);
+      const resultRead =
+        messagesToMark.length > 0
+          ? await markMessagesAsReadByIds(apiKeyData, instanceName, messagesToMark)
+          : { success: true, message: 'No había mensajes entrantes pendientes por marcar.' };
 
       if (resultRead.success) {
 

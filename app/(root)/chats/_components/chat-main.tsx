@@ -9,6 +9,7 @@ import React, {
   useLayoutEffect,
 } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowRight, Mic, Send, Trash2, X, Clock, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -16,22 +17,16 @@ import { Button } from '@/components/ui/button';
 import { AttachmentMenu, type ComposeMedia, type MediaType } from './attachment-menu';
 import { SwitchStatus } from '../../sessions/_components';
 import { SafeImage } from '@/components/custom/SafeImage';
+import { toast } from 'sonner';
 
 /*  Importaciones de Acciones y Tipos de Servidor */
-import { getMediaBase64FromMessage } from '@/actions/chat-actions';
+import { getMediaBase64FromMessage, type EvolutionMessage } from '@/actions/chat-actions';
 import { getSessionByRemoteJid } from '@/actions/session-action';
-// 🚨 NUEVA IMPORTACIÓN ASUMIDA (DEBE SER CREADA POR TI)
-import { currentUser } from '@/lib/auth';
 import { SessionTagsCombobox } from '../../tags/components';
-import { Session, SimpleTag } from '@/types/session';
-
-// ⚠️ Asumo esta interfaz para el tipo de respuesta de UNA SOLA SESIÓN
-
-interface SessionResponseSingle {
-  success: boolean;
-  message: string;
-  data?: Session;
-}
+import { Session, SimpleTag, SingleSessionResponse } from '@/types/session';
+import { CrmFollowUpSummaryBadge } from '../../crm/dashboard/components/CrmFollowUpSummaryBadge';
+import { LeadStatusBadge } from '../../crm/dashboard/components/records-table/LeadStatusBadge';
+import { getDisplayWhatsappFromSession } from '../../crm/dashboard/helpers';
 
 type ChatMainProps = {
   userId: string;
@@ -72,18 +67,6 @@ export type OutgoingMediaPayload = {
 export type OutgoingMessagePayload = OutgoingTextPayload | OutgoingMediaPayload;
 
 /* -------- Evolution / UI Tipos Básicos -------- */
-export type EvolutionMessage = {
-  id?: string;
-  key?: { id?: string; fromMe?: boolean; remoteJid?: string };
-  messageType?: string;
-  messageTimestamp?: number;
-  pushName?: string | null;
-  participant?: string | null;
-  status?: string;
-  message?: Record<string, unknown>;
-  contextInfo?: Record<string, unknown> | null;
-  remoteJid?: string;
-};
 type ChatHeader = { name: string; avatarSrc?: string; status?: string };
 type ChatInfoMeta = {
   total?: number;
@@ -149,7 +132,6 @@ function extractMediaInfo(msg: any, type: MediaType): MediaData | null {
 /** Convierte EvolutionMessage -> UIBubble (inyectando media desde caché si existe) */
 function toUIMessages(
   messages: EvolutionMessage[],
-  userJid: string | undefined,
   avatarUrl: string | undefined,
   base64Map: Map<string, { dataUrl: string; mime: string; length: number }>
 ): UIBubble[] {
@@ -442,7 +424,22 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
   const [mediaCacheTick, setMediaCacheTick] = useState(0); // solo para re-render controlado cuando se actualiza la caché
   const inflightRef = useRef<Set<string>>(new Set());
 
+  useEffect(() => {
+    mediaCacheRef.current.clear();
+    inflightRef.current.clear();
+    setMediaCacheTick((tick) => tick + 1);
+  }, [userJid]);
+
   const initialSelectedTagIds = session?.tags?.map((t) => t?.id).filter(Boolean) ?? [];
+  const displayedWhatsapp =
+    session
+      ? getDisplayWhatsappFromSession(session)
+      : userJid?.includes('@')
+        ? userJid.split('@')[0]
+        : userJid || '';
+  const sessionStatusTone = session?.status
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+    : 'border-amber-200 bg-amber-50 text-amber-700';
 
   // Detectores memoizados
   const isMediaMsg = useCallback((m: EvolutionMessage) => {
@@ -507,40 +504,32 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
   /* 🚀 Lógica para obtener el estado de la sesión (SwitchStatus) */
   const fetchSessionStatus = useCallback(async () => {
     // Utilizamos userId y info?.remoteJid directamente en el cuerpo del useCallback
-    console.log('ahora se obtiene la session', userId, 'con userid')
     if (!userId || !info?.remoteJid) {
       setSession(null);
       return;
     }
 
     try {
-      // Asumo que getSessionByRemoteJid recibe el userId
-      const result: SessionResponseSingle = await getSessionByRemoteJid(userId, info.remoteJid);
-      console.log('obtuve como resultado...', JSON.stringify(result), 'fueron...')
+      const result: SingleSessionResponse = await getSessionByRemoteJid(userId, info.remoteJid, {
+        instanceId: info.instanceName,
+        pushName: header.name,
+        ensureExists: true,
+      });
 
       if (result.success && result.data) {
         setSession(result.data);
-        //  CORRECCIÓN: Imprimimos el dato que acabamos de guardar
-        console.log('ahora el session es...', JSON.stringify(result.data))
       } else {
         setSession(null);
-        console.warn("No se encontró la sesión o hubo un error:", result.message);
-        // Para consistencia en el log de error
-        console.log('ahora el session es...', JSON.stringify(null))
       }
     } catch (error) {
       setSession(null);
-      console.error("Error al obtener el estado de la sesión:", JSON.stringify(error));
-      console.log('ahora el session es...', JSON.stringify(null))
+      console.error("Error al obtener el estado de la sesión:", error);
     }
-
-    //  CORRECCIÓN: Asegurar que userId y info?.remoteJid estén en las dependencias
-  }, [userId, info?.remoteJid]);
+  }, [header.name, info?.instanceName, info?.remoteJid, userId]);
 
   // Llama a la función de obtención de estado cuando cambie el JID o el usuario
   useEffect(() => {
     // Solo llama si el usuario ha sido cargado y no está nulo
-    console.log('ejecutando/// para obtener session')
     if (userId && info?.remoteJid) { // También verifica que remoteJid esté presente
       void fetchSessionStatus();
     }
@@ -551,8 +540,8 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
   const reversed = useMemo(() => messages.slice().reverse(), [messages]);
   const uiMessages = useMemo(() => {
     void mediaCacheTick;
-    return toUIMessages(reversed, userJid, header.avatarSrc, mediaCacheRef.current);
-  }, [reversed, userJid, header.avatarSrc, mediaCacheTick]);
+    return toUIMessages(reversed, header.avatarSrc, mediaCacheRef.current);
+  }, [reversed, header.avatarSrc, mediaCacheTick]);
 
   /* Scroll to bottom (useLayoutEffect minimiza “salto” visual) */
   const scrollToBottom = useCallback(() => {
@@ -662,6 +651,9 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
         await onSend(payload);
       } catch (error) {
         console.error('Error al enviar mensaje:', error);
+        toast.error(
+          error instanceof Error ? error.message : 'No se pudo enviar el mensaje.',
+        );
       } finally {
         setIsSending(false);
         setTempMessage(null);
@@ -768,7 +760,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
     <div className="flex flex-col h-[95%] md:h-full w-full min-w-[100px] bg-white dark:bg-gray-800 border-l border-r">
       {/* Header */}
       <div className="flex items-center justify-between p-2 border-b dark:border-gray-700 shadow-md bg-white dark:bg-gray-800 z-10">
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
 
           {/* FIN BOTÓN DE REGRESO */}
           <Button
@@ -790,34 +782,58 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
 
           {/* ◀️ BOTÓN DE REGRESO A LA LISTA (VISIBLE SOLO EN MÓVIL) */}
 
-          <div className='flex flex-row w-full justify-center items-center gap-2'>
-            <p className="font-semibold text-md dark:text-white max-w-36 text-nowrap overflow-auto text-sm sm:text-base">{header.name}</p>
-          {session &&
-            <SessionTagsCombobox
-              userId={session.userId}
-              sessionId={session.id}
-              allTags={allTags}
-              initialSelectedIds={initialSelectedTagIds}
-            />
-          }
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <p className="truncate text-sm font-semibold dark:text-white sm:text-base">
+                {header.name}
+              </p>
+              {session && (
+                <SessionTagsCombobox
+                  userId={session.userId}
+                  sessionId={session.id}
+                  allTags={allTags}
+                  initialSelectedIds={initialSelectedTagIds}
+                />
+              )}
+            </div>
+
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              {displayedWhatsapp && (
+                <span className="font-medium text-foreground/80">
+                  {displayedWhatsapp}
+                </span>
+              )}
+
+              {session ? (
+                <>
+                  <Badge variant="outline" className={sessionStatusTone}>
+                    {session.status ? 'Activa' : 'Pausada'}
+                  </Badge>
+                  <LeadStatusBadge status={session.leadStatus ?? null} />
+                  <CrmFollowUpSummaryBadge
+                    summary={session.crmFollowUpSummary}
+                    userId={session.userId}
+                    remoteJid={session.remoteJid}
+                    instanceId={session.instanceId}
+                    onUpdated={fetchSessionStatus}
+                  />
+                </>
+              ) : (
+                <span>Sin sesión CRM sincronizada</span>
+              )}
+            </div>
           </div>
 
-          <div className='sm:hidden'>
-            {(
-              session &&
+          {session && (
+            <div className="sm:hidden">
               <SwitchStatus
-                key={`${session?.id}-${session?.status ? 'on' : 'off'}`}
-                checked={session?.status ?? false} // Usamos el status de la sesión
-                sessionId={session?.id ?? -1} // Usamos el JID del chat como ID de sesión
-                mutateSessions={fetchSessionStatus} // Función para refrescar el estado de la sesión
-              ></SwitchStatus>
-            )}
-          </div>
-
-          {/* 🟢 SWITCH DE ESTADO DE SESIÓN CORREGIDO 🟢 */}
-          {/* Ahora solo se renderiza si el usuario ha sido cargado */}
-
-
+                key={`${session.id}-${session.status ? 'on' : 'off'}`}
+                checked={session.status ?? false}
+                sessionId={session.id ?? -1}
+                mutateSessions={fetchSessionStatus}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -959,7 +975,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyPress}
-
+            disabled={!isInputActive}
             rows={1}
             aria-label="Escribe tu mensaje"
             className={cn(
@@ -991,6 +1007,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
                 className="rounded-full bg-blue-500 hover:bg-blue-600"
                 aria-label="Enviar"
                 title="Enviar"
+                disabled={!isPreviewingAudio && !isSendButtonVisible}
                 type="button"
               >
                 <ArrowRight className="w-5 h-5 text-white" />

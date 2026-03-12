@@ -1,38 +1,13 @@
 "use client";
 
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Users, Inbox, X, Image as ImageIcon, Video, FileText, AudioLines, Mic } from "lucide-react";
+import { Search, Users, Inbox, X, Image as ImageIcon, Video, FileText, Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { LucideIcon } from "lucide-react";
-// Importamos el tipo MessageRecord y el hook
-import { useLocalStorageObjectArray, MessageRecord } from "@/hooks/chats/useSeenMessages"; 
-
-
-/* ---------- Tipos del fetch (Se mantiene) ---------- */
-type MessageKey = {
-    id: string;
-    fromMe: boolean; // <-- USADO EN lastTextFrom
-    remoteJid: string;
-};
-
-type LastMessage = {
-    message?: { conversation?: string };
-    messageTimestamp?: number;
-    messageType?: string;
-    key: MessageKey;
-};
-type ChatData = {
-    remoteJid: string;
-    pushName: string | null;
-    profilePicUrl: string | null;
-    lastMessage: LastMessage | null;
-    unreadCount: number; // No usado, pero debe estar en el tipo si viene del fetch
-};
-export type FetchChatsResult =
-    | { success: true; message: string; data: ChatData[] }
-    | { success: false; message: string };
+import type { ChatData, FetchChatsResult } from "@/actions/chat-actions";
+import { useLocalStorageObjectArray, MessageRecord } from "@/hooks/chats/useSeenMessages";
 
 /* ---------- Props y Helpers (Modificado: lastTextFrom) ---------- */
 type ChatSidebarProps = {
@@ -172,15 +147,12 @@ export function ChatSidebar({ result, onSelectRemoteJid, selectedJid }: ChatSide
             const lastMessageId = lastMsgData.id;
             
             // --- NUEVA LÓGICA DE LECTURA COMBINADA ---
-            const isFromMe = lastMsgData.fromMe; // 1. Fue enviado por mí
-            const isSelected = c.remoteJid === selectedJid; // 2. Es el chat seleccionado
-            const wasSeenPreviously = lastMessageId ? isMessageSeen(c.remoteJid, lastMessageId) : false; // 3. Visto previamente
-
-            // El chat se considera LEÍDO si CUALQUIERA de estas condiciones es verdadera:
-            const isRead = wasSeenPreviously || isFromMe || isSelected;
-
-            // Es NO LEÍDO localmente si NO está marcado como leído por la lógica combinada.
-            const isUnreadLocal = lastMessageId ? !isRead : false;
+            const isFromMe = lastMsgData.fromMe;
+            const isSelected = c.remoteJid === selectedJid;
+            const wasSeenPreviously = lastMessageId ? isMessageSeen(c.remoteJid, lastMessageId) : false;
+            const hasUnreadFromServer = (c.unreadCount ?? 0) > 0;
+            const isRead = wasSeenPreviously || isFromMe || isSelected || !hasUnreadFromServer;
+            const isUnreadLocal = Boolean(lastMessageId) && !isRead;
             
             return {
                 id: c.remoteJid,

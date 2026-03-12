@@ -52,7 +52,7 @@ export function CrmRecordsDataTable({
                 <div className="grid grid-cols-1 gap-4">
                     <div
                         ref={scrollContainerRef}
-                        className="h-[450px] min-w-0 overflow-auto rounded-xl border border-border/70 bg-background lg:h-[570px]"
+                        className="h-[420px] min-w-0 overflow-auto rounded-xl border border-border/70 bg-background lg:h-[540px]"
                     >
                         <div className="min-w-max">
                             <table className="w-max min-w-full border-separate border-spacing-0 text-sm">

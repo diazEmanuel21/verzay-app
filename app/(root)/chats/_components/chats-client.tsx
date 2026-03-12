@@ -11,7 +11,6 @@ import type {
   SendMessageResult,
 } from "@/actions/chat-actions";
 import type { OutgoingMessagePayload } from "./chat-main";
-import { number } from "zod";
 import { SimpleTag } from "@/types/session";
 
 /* -------------------------------------
@@ -227,23 +226,26 @@ export function ChatsClient({
 
   const handleSendAny = useCallback(
     async (payload: OutgoingMessagePayload) => {
-      if (!selectedJid || !sendAny) return;
+      if (!selectedJid || !sendAny) {
+        throw new Error("No hay un chat seleccionado para enviar el mensaje.");
+      }
 
       const result = await sendAny(selectedJid, payload);
 
-      if (result.success) {
-        if (warmMessages) await pollAndCompareMessages(selectedJid);
-        const chatRefreshResult = await refetchChats();
-        if (chatRefreshResult.success) {
-          //  Mantener el filtro al refrescar también
-          const filtered = {
-            ...chatRefreshResult,
-            data: chatRefreshResult.data.filter(
-              (c) => c.remoteJid && c.remoteJid !== "status@broadcast"
-            ),
-          };
-          setCurrentChatsResult(filtered);
-        }
+      if (!result.success) {
+        throw new Error(result.message || "No se pudo enviar el mensaje.");
+      }
+
+      if (warmMessages) await pollAndCompareMessages(selectedJid);
+      const chatRefreshResult = await refetchChats();
+      if (chatRefreshResult.success) {
+        const filtered = {
+          ...chatRefreshResult,
+          data: chatRefreshResult.data.filter(
+            (c) => c.remoteJid && c.remoteJid !== "status@broadcast"
+          ),
+        };
+        setCurrentChatsResult(filtered);
       }
     },
     [selectedJid, sendAny, warmMessages, refetchChats, pollAndCompareMessages]

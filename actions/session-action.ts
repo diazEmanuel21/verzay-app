@@ -2,10 +2,20 @@
 
 import { db } from '@/lib/db'
 import { registerSessionSchema } from '@/schema/session';
-import { Session } from '@prisma/client';
+import { Prisma, Session as PrismaSession } from '@prisma/client';
 import { z } from 'zod';
 import { ActionResponse } from './tag-actions';
-import { SessionResponse, SessionResponseCrm, SessionsListResponse, SessionWithRegistrosAndTags, SingleSessionResponse } from '@/types/session';
+import {
+  CrmFollowUpStatus,
+  Session as AppSession,
+  SessionCrmFollowUpHistoryItem,
+  SessionCrmFollowUpSummary,
+  SessionResponse,
+  SessionResponseCrm,
+  SessionsListResponse,
+  SessionWithRegistrosAndTags,
+  SingleSessionResponse,
+} from '@/types/session';
 import { assertUserCanUseApp } from './billing/helpers/app-access-guard';
 
 // 👉 schema para agregar varios tags a una sesión
@@ -14,6 +24,147 @@ const addTagsToSessionSchema = z.object({
   sessionId: z.number().int().positive(),
   tagIds: z.array(z.number().int().positive()).min(1),
 });
+
+type SessionWithTagsRecord = Prisma.SessionGetPayload<{
+  include: {
+    sessionTags: {
+      include: {
+        tag: true;
+      };
+    };
+  };
+}>;
+
+export type GetSessionByRemoteJidOptions = {
+  instanceId?: string;
+  pushName?: string;
+  ensureExists?: boolean;
+};
+
+function buildRemoteJidCandidates(remoteJid: string) {
+  const raw = remoteJid.trim();
+  const digits = raw.replace(/[^\d]/g, '');
+  const set = new Set<string>();
+
+  if (raw) {
+    set.add(raw);
+  }
+
+  if (digits) {
+    set.add(digits);
+    set.add(`${digits}@s.whatsapp.net`);
+    set.add(`${digits}@lid`);
+  }
+
+  return Array.from(set);
+}
+
+function createEmptyCrmFollowUpSummary(): SessionCrmFollowUpSummary {
+  return {
+    total: 0,
+    active: 0,
+    pending: 0,
+    processing: 0,
+    sent: 0,
+    failed: 0,
+    cancelled: 0,
+    skipped: 0,
+    latestStatus: null,
+    latestGeneratedMessage: null,
+    latestScheduledFor: null,
+    recentItems: [],
+  };
+}
+
+function mapSessionRecord(session: SessionWithTagsRecord): AppSession {
+  const { sessionTags, ...sessionData } = session;
+
+  return {
+    ...sessionData,
+    tags: sessionTags.map((item) => ({
+      id: item.tag.id,
+      name: item.tag.name,
+      slug: item.tag.slug,
+      color: item.tag.color,
+    })),
+  };
+}
+
+async function buildCrmFollowUpSummaryForSession(
+  sessionId: number,
+): Promise<SessionCrmFollowUpSummary | null> {
+  const followUps = await db.crmFollowUp.findMany({
+    where: { sessionId },
+    select: {
+      id: true,
+      status: true,
+      leadStatusSnapshot: true,
+      attemptCount: true,
+      generatedMessage: true,
+      errorReason: true,
+      scheduledFor: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+    orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+  });
+
+  if (!followUps.length) return null;
+
+  const summary = createEmptyCrmFollowUpSummary();
+
+  for (const followUp of followUps) {
+    const status = followUp.status as CrmFollowUpStatus;
+
+    summary.total += 1;
+
+    switch (status) {
+      case 'PENDING':
+        summary.pending += 1;
+        summary.active += 1;
+        break;
+      case 'PROCESSING':
+        summary.processing += 1;
+        summary.active += 1;
+        break;
+      case 'SENT':
+        summary.sent += 1;
+        break;
+      case 'FAILED':
+        summary.failed += 1;
+        break;
+      case 'CANCELLED':
+        summary.cancelled += 1;
+        break;
+      case 'SKIPPED':
+        summary.skipped += 1;
+        break;
+    }
+
+    if (!summary.latestStatus) {
+      summary.latestStatus = status;
+      summary.latestGeneratedMessage = followUp.generatedMessage ?? null;
+      summary.latestScheduledFor = followUp.scheduledFor?.toISOString?.() ?? null;
+    }
+
+    if (summary.recentItems.length < 5) {
+      const item: SessionCrmFollowUpHistoryItem = {
+        id: followUp.id,
+        status,
+        leadStatusSnapshot: followUp.leadStatusSnapshot,
+        attemptCount: Math.max(followUp.attemptCount ?? 0, 0),
+        message: followUp.generatedMessage ?? null,
+        errorReason: followUp.errorReason ?? null,
+        scheduledFor: followUp.scheduledFor?.toISOString?.() ?? null,
+        createdAt: followUp.createdAt?.toISOString?.() ?? null,
+        updatedAt: followUp.updatedAt?.toISOString?.() ?? null,
+      };
+      summary.recentItems.push(item);
+    }
+  }
+
+  return summary;
+}
 
 export async function getSessionsCountByUserId(userId: string) {
   try {
@@ -316,7 +467,7 @@ export async function deleteAllSessions(userId: string): Promise<SessionsListRes
   }
 };
 
-export async function registerSession(input: z.infer<typeof registerSessionSchema>): Promise<SessionResponse<Session>> {
+export async function registerSession(input: z.infer<typeof registerSessionSchema>): Promise<SessionResponse<PrismaSession>> {
   const validation = registerSessionSchema.safeParse(input);
 
   if (!validation.success) {
@@ -377,33 +528,102 @@ export async function registerSession(input: z.infer<typeof registerSessionSchem
 /**
 * 🔎 Obtiene una única sesión por su remoteJid asociado a un userId.
 */
-export async function getSessionByRemoteJid(userId: string, remoteJid: string): Promise<SingleSessionResponse> {
+export async function getSessionByRemoteJid(
+  userId: string,
+  remoteJid: string,
+  options?: GetSessionByRemoteJidOptions,
+): Promise<SingleSessionResponse> {
   try {
-    if (!userId || !remoteJid) return {
-      success: false,
-      message: 'Se requieren userId y remoteJid.',
-      data: {} as Session // Aseguramos el tipo de retorno aunque esté vacío
-    };
+    if (!userId || !remoteJid) {
+      return {
+        success: false,
+        message: 'Se requieren userId y remoteJid.',
+      };
+    }
 
-    const session = await db.session.findFirst({
+    const candidates = buildRemoteJidCandidates(remoteJid);
+    const trimmedInstanceId = options?.instanceId?.trim();
+
+    const sessions = await db.session.findMany({
       where: {
         userId,
-        remoteJid,
+        ...(trimmedInstanceId ? { instanceId: trimmedInstanceId } : {}),
+        OR: [
+          { remoteJid: { in: candidates } },
+          { remoteJidAlt: { in: candidates } },
+        ],
+      },
+      include: {
+        sessionTags: {
+          include: {
+            tag: true,
+          },
+        },
       },
     });
 
-    if (!session) {
+    const preferredSession = sessions.sort((a, b) => {
+      const aScore =
+        a.remoteJid === remoteJid
+          ? 0
+          : a.remoteJidAlt === remoteJid
+            ? 1
+            : candidates.includes(a.remoteJid)
+              ? 2
+              : a.remoteJidAlt && candidates.includes(a.remoteJidAlt)
+                ? 3
+                : 99;
+
+      const bScore =
+        b.remoteJid === remoteJid
+          ? 0
+          : b.remoteJidAlt === remoteJid
+            ? 1
+            : candidates.includes(b.remoteJid)
+              ? 2
+              : b.remoteJidAlt && candidates.includes(b.remoteJidAlt)
+                ? 3
+                : 99;
+
+      if (aScore !== bScore) return aScore - bScore;
+      return b.updatedAt.getTime() - a.updatedAt.getTime();
+    })[0];
+
+    let resolvedSession = preferredSession;
+
+    if (!resolvedSession && options?.ensureExists && trimmedInstanceId) {
+      resolvedSession = await db.session.create({
+        data: {
+          userId,
+          remoteJid: remoteJid.trim(),
+          pushName: options.pushName?.trim() || 'Desconocido',
+          instanceId: trimmedInstanceId,
+          status: true,
+        },
+        include: {
+          sessionTags: {
+            include: {
+              tag: true,
+            },
+          },
+        },
+      });
+    }
+
+    if (!resolvedSession) {
       return {
         success: false,
         message: `No se encontró sesión para el JID ${remoteJid} en el usuario ${userId}.`,
-        data: {} as Session
       };
     }
+
+    const mappedSession = mapSessionRecord(resolvedSession);
+    mappedSession.crmFollowUpSummary = await buildCrmFollowUpSummaryForSession(resolvedSession.id);
 
     return {
       success: true,
       message: 'Sesión obtenida correctamente.',
-      data: session
+      data: mappedSession,
     };
 
   } catch (error) {
