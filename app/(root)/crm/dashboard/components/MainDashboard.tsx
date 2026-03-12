@@ -17,7 +17,6 @@ import {
 import { LoadingProgress } from "@/components/shared/LoadingProgress";
 import { RegistroWithSession, TipoRegistro } from "@/types/session";
 import { toast } from "sonner";
-import { processDueFollowUpsNow } from "@/actions/follow-up-actions";
 import { processDueCrmFollowUpsNow } from "@/actions/crm-follow-up-actions";
 import { ESTADOS_POR_TIPO } from "@/types/registro";
 
@@ -29,15 +28,6 @@ export type DashboardStats = {
   leadsConMovimientos: number;
   countsByTipo: Record<TipoRegistro, number>;
   chartDataByDay: { fecha: string; cantidad: number }[];
-  followUps: {
-    total: number;
-    active: number;
-    pending: number;
-    processing: number;
-    sent: number;
-    failed: number;
-    cancelled: number;
-  };
   crmFollowUps: {
     total: number;
     active: number;
@@ -69,7 +59,6 @@ export const MainDashboard = ({
   const [isPending, startTransition] = useTransition();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [scrollRootEl, setScrollRootEl] = useState<HTMLDivElement | null>(null);
-  const [isProcessingFollowUps, setIsProcessingFollowUps] = useState(false);
   const [isProcessingCrmFollowUps, setIsProcessingCrmFollowUps] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const loadingMoreRef = useRef(false);
@@ -231,37 +220,9 @@ export const MainDashboard = ({
     await refreshStats();
   }, [mutate, refreshStats]);
 
-  const handleProcessFollowUps = useCallback(async () => {
-    const toastId = "crm-follow-up-runner";
-    toast.loading("Procesando follow-ups vencidos...", { id: toastId });
-    setIsProcessingFollowUps(true);
-
-    try {
-      const res = await processDueFollowUpsNow(userId);
-      if (!res.success) {
-        toast.error(res.message, { id: toastId });
-        return;
-      }
-
-      await mutate();
-      await refreshStats();
-      router.refresh();
-      toast.success(res.message, { id: toastId });
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "No se pudo ejecutar el runner de follow-up.",
-        { id: toastId }
-      );
-    } finally {
-      setIsProcessingFollowUps(false);
-    }
-  }, [mutate, refreshStats, router, userId]);
-
   const handleProcessCrmFollowUps = useCallback(async () => {
     const toastId = "crm-smart-follow-up-runner";
-    toast.loading("Procesando CRM follow-ups vencidos...", { id: toastId });
+    toast.loading("Procesando follow-ups vencidos...", { id: toastId });
     setIsProcessingCrmFollowUps(true);
 
     try {
@@ -279,7 +240,7 @@ export const MainDashboard = ({
       toast.error(
         error instanceof Error
           ? error.message
-          : "No se pudo ejecutar el runner de CRM follow-up.",
+          : "No se pudo ejecutar el runner de follow-up.",
         { id: toastId }
       );
     } finally {
@@ -322,9 +283,7 @@ export const MainDashboard = ({
         onChangeEstado={handleChangeEstado}
         onChangeDetalle={handleChangeDetalle}
         onFollowUpChanged={handleFollowUpChanged}
-        onProcessFollowUps={handleProcessFollowUps}
         onProcessCrmFollowUps={handleProcessCrmFollowUps}
-        isProcessingFollowUps={isProcessingFollowUps}
         isProcessingCrmFollowUps={isProcessingCrmFollowUps}
         isUpdatingRegistros={isPending}
         hasMore={hasMore}

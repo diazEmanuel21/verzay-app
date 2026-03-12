@@ -75,7 +75,6 @@ export const PALETTE: PaletteItem[] = [
   { type: "customNode", label: "Audio", nodeTipo: "audio" },
   { type: "customNode", label: "Documento", nodeTipo: "documento" },
   { type: "customNode", label: "Intención", nodeTipo: "intention" },
-  { type: "customNode", label: "Seguimiento Video", nodeTipo: "seguimiento-video" },
 ];
 
 // Tipos base (acciones generales)
@@ -119,14 +118,17 @@ export const baseActions: Action[] = [
   { type: "intention", label: "Intención", icon: Brain, iconClassName: "text-cyan-500" },
 ];
 
-//  Acciones de seguimiento (sub-tipos)
-export const seguimientoActions: Action[] = [
+// Legacy: se mantienen solo para renderizar workflows antiguos.
+export const legacySeguimientoActions: Action[] = [
   { type: "seguimiento-text", label: "Texto", icon: FileText, iconClassName: `text-purple-600` },
   { type: "seguimiento-image", label: "Imagen", icon: ImageIcon, iconClassName: `text-blue-500` },
   { type: "seguimiento-video", label: "Video", icon: Video, iconClassName: `text-red-500` },
   { type: "seguimiento-document", label: "Documento", icon: File, iconClassName: `text-gray-500` },
   { type: "seguimiento-audio", label: "Audio", icon: Music, iconClassName: `text-green-500` },
 ];
+
+// Ya no se permiten nuevos seguimientos desde workflows.
+export const seguimientoActions: Action[] = [];
 
 export const cardBaseActions: Action[] = [
   { type: "text", label: "Texto", icon: FileText, bg: "bg-gray-500", iconClassName: "h-4 w-4 text-white" },
@@ -147,5 +149,5 @@ export const cardSeguimientoActions: Action[] = [
   { type: "seguimiento-audio", label: "Audio", icon: Music, bg: "bg-green-500", iconClassName: `h-4 w-4 text-white ${stylesSeguimiento}` },
 ];
 
-export const ACTIONS = [...baseActions, ...seguimientoActions];
+export const ACTIONS = [...baseActions, ...legacySeguimientoActions];
 export const CARD_ACTIONS = [...cardBaseActions, ...cardSeguimientoActions];

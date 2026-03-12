@@ -2,14 +2,13 @@
 
 import { ChangeEvent, useState, useTransition } from "react";
 import { useRouter } from 'next/navigation';
-import { updateNode, deleteNode, updateUrlNode, updateDelayNode, deleteFileNode, updateInactivityNode } from "@/actions/workflow-node-action";
+import { updateNode, deleteNode, updateUrlNode, updateDelayNode, deleteFileNode } from "@/actions/workflow-node-action";
 import { ACCEPT_TYPES, getAcceptTypeString, optimizeFile, validateFileType } from "../helpers";
 import { NodeActions } from "./NodeActions";
-import { Card, CardHeader, CardFooter, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { MessageSquareIcon, UploadIcon } from "lucide-react";
 import { TimeInput } from "@/components/shared/TimeInput";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { GenericTextarea } from "@/components/shared/GenericTextarea";
@@ -17,7 +16,6 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Action, ACTIONS, CARD_ACTIONS, MAX_MESSAGE_LENGTH, PropsNodeCard } from "@/types/workflow-node";
 import { EmbeddingNode } from "./EmbeddingNode";
-import { FollowUpNodeFields } from "./FollowUpNodeFields";
 import { SafeImage } from "@/components/custom/SafeImage";
 
 export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCard) => {
@@ -28,9 +26,7 @@ export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCar
   const [isPending, startTransition] = useTransition();
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [isDraggingFile, setIsDragging] = useState(false);
-  const [inactivity, setInactivity] = useState(nodes.inactividad ?? false);
   const [iaEnabled, setIaEnabled] = useState(false);
 
   const nodeType = nodes.tipo?.toLowerCase() as Action['type'];
@@ -52,24 +48,6 @@ export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCar
   const labelSegumientoCategory = isSeguimiento
     ? `Seguimiento ${currentAction?.label.replace('Seguimiento ', '')}`
     : currentAction?.label;
-
-  const handleInactivity = async (checked: boolean) => {
-    if (loading) return;
-    setLoading(true);
-    setInactivity(checked);
-    const toastId = `update-inactivity`;
-
-    try {
-      const res = await updateInactivityNode(nodes.id, checked);
-      if (!res?.success) return toast.error(res?.message ?? 'Error', { id: toastId });
-      toast.success(res.message, { id: toastId });
-    } catch (error) {
-      toast.error(`Server err: ${error}`, { id: toastId });
-    } finally {
-      setLoading(false);
-      router.refresh();
-    }
-  };
 
   const handleSave = () => {
     if (message !== nodes.message) {
@@ -371,44 +349,12 @@ export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCar
 
           {isSeguimiento && (
             <div className="space-y-3 pt-2">
-              <div className="flex items-center gap-1 text-sm nodrag">
-                <Switch
-                  id={`inactividad-${nodes.id}`}
-                  checked={inactivity}
-                  onCheckedChange={handleInactivity}
-                  disabled={loading}
-                  className="scale-75"
-                />
-                <Label htmlFor={`inactividad-${nodes.id}`}>Activar Inactividad</Label>
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger className="w-5 h-5 flex items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">?</TooltipTrigger>
-                    <TooltipContent>
-                      <p>Seguimiento solo si no responden</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 nodrag">
+                Este nodo es legacy. Los follow-ups válidos ahora se gestionan desde el CRM con IA.
               </div>
-
-              <FollowUpNodeFields node={nodes} />
             </div>
           )}
         </CardContent>
-
-        {isSeguimiento && (
-          <>
-            <Separator />
-            <CardFooter className="pt-2 nodrag">
-              <TimeInput
-                className="text-xs text-muted-foreground"
-                onChange={handleTimeChange}
-                onBlur={handleOnBlurTime}
-                currentValue={nodes.delay || 'minutes-0'}
-              />
-            </CardFooter>
-          </>
-        )}
       </Card>
     </div>
   );

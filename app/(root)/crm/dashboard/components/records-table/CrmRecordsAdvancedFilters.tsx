@@ -27,7 +27,6 @@ import {
 
 import {
     CRM_FOLLOW_UP_FILTER_OPTIONS,
-    FOLLOW_UP_FILTER_OPTIONS,
     LEAD_STATUS_FILTER_OPTIONS,
     canUseLeadFilter,
     getEstadoOptionsForTab,
@@ -116,35 +115,6 @@ export function CrmRecordsAdvancedFilters({
                     <div className="grid gap-2">
                         <label className="text-xs font-medium text-muted-foreground">
                             Follow-up
-                        </label>
-                        <Select
-                            value={filters.followUpStatus ?? "__all__"}
-                            onValueChange={(value) =>
-                                onPatchFilters({
-                                    followUpStatus:
-                                        value === "__all__"
-                                            ? undefined
-                                            : (value as RegistrosFilters["followUpStatus"]),
-                                })
-                            }
-                        >
-                            <SelectTrigger className="h-9">
-                                <SelectValue placeholder="Todos" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="__all__">Todos</SelectItem>
-                                {FOLLOW_UP_FILTER_OPTIONS.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="grid gap-2">
-                        <label className="text-xs font-medium text-muted-foreground">
-                            CRM follow-up
                         </label>
                         <Select
                             value={filters.crmFollowUpStatus ?? "__all__"}

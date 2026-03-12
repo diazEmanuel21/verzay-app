@@ -1,5 +1,5 @@
 import { ESTADOS_POR_TIPO } from "@/types/registro";
-import type { CrmFollowUpStatus, FollowUpStatus } from "@/types/session";
+import type { CrmFollowUpStatus } from "@/types/session";
 import { LEAD_STATUS_FILTER_OPTIONS } from "../../helpers";
 
 import type { CrmDashboardTab, CrmTableColumnId } from "./types";
@@ -24,18 +24,6 @@ export const CRM_TAB_COLORS: Record<CrmDashboardTab, string> = {
     RESERVA: "#0EA5E9",
 };
 
-export const FOLLOW_UP_FILTER_OPTIONS: Array<{
-    value: FollowUpStatus | "none";
-    label: string;
-}> = [
-    { value: "pending", label: "Pendiente" },
-    { value: "processing", label: "Procesando" },
-    { value: "sent", label: "Enviado" },
-    { value: "failed", label: "Fallido" },
-    { value: "cancelled", label: "Cancelado" },
-    { value: "none", label: "Sin follow-up" },
-];
-
 export const CRM_FOLLOW_UP_FILTER_OPTIONS: Array<{
     value: CrmFollowUpStatus | "none";
     label: string;
@@ -46,7 +34,7 @@ export const CRM_FOLLOW_UP_FILTER_OPTIONS: Array<{
     { value: "FAILED", label: "Fallido" },
     { value: "CANCELLED", label: "Cancelado" },
     { value: "SKIPPED", label: "Omitido" },
-    { value: "none", label: "Sin CRM follow-up" },
+    { value: "none", label: "Sin follow-up" },
 ];
 
 export const CRM_TABLE_COLUMN_LABELS: Record<CrmTableColumnId, string> = {
@@ -56,8 +44,7 @@ export const CRM_TABLE_COLUMN_LABELS: Record<CrmTableColumnId, string> = {
     fecha: "Fecha",
     detalle: "Detalle",
     leadStatus: "Lead",
-    crmFollowUp: "CRM follow-up",
-    followUp: "Follow-up",
+    crmFollowUp: "Follow-up",
     estado: "Estado",
 };
 
@@ -69,7 +56,6 @@ export const CRM_DEFAULT_COLUMN_VISIBILITY: Record<CrmTableColumnId, boolean> = 
     detalle: true,
     leadStatus: true,
     crmFollowUp: true,
-    followUp: true,
     estado: true,
 };
 

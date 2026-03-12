@@ -7,7 +7,6 @@ import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { RegistroWithSession, TipoRegistro } from "@/types/session";
 import { CrmFollowUpSummaryBadge } from "../CrmFollowUpSummaryBadge";
-import { FollowUpSummaryBadge } from "../FollowUpSummaryBadge";
 import { formatFecha, getTipoLabel } from "../../../helpers";
 import {
     getDisplayNombreFromRegistro,
@@ -166,33 +165,12 @@ export function createCrmRecordColumns({
                 return latestScheduledFor ? new Date(latestScheduledFor).getTime() : 0;
             },
             header: ({ column }) => (
-                <SortableHeader column={column} label="CRM follow-up" />
+                <SortableHeader column={column} label="Follow-up" />
             ),
             cell: ({ row }) => (
                 <div className="min-w-[240px]">
                     <CrmFollowUpSummaryBadge
                         summary={row.original.session.crmFollowUpSummary}
-                        userId={userId}
-                        remoteJid={row.original.session.remoteJid}
-                        instanceId={row.original.session.instanceId}
-                        onUpdated={onFollowUpChanged}
-                    />
-                </div>
-            ),
-        },
-        {
-            id: "followUp",
-            accessorFn: (row) => {
-                const latestCreatedAt = row.session.followUpSummary?.latestCreatedAt;
-                return latestCreatedAt ? new Date(latestCreatedAt).getTime() : 0;
-            },
-            header: ({ column }) => (
-                <SortableHeader column={column} label="Follow-up" />
-            ),
-            cell: ({ row }) => (
-                <div className="min-w-[220px]">
-                    <FollowUpSummaryBadge
-                        summary={row.original.session.followUpSummary}
                         userId={userId}
                         remoteJid={row.original.session.remoteJid}
                         instanceId={row.original.session.instanceId}

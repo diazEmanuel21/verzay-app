@@ -76,7 +76,7 @@ async function ensureSessionOwnership(input: CrmFollowUpSessionInput) {
       ok: false as const,
       result: {
         success: false,
-        message: "Faltan datos para operar el CRM follow-up.",
+        message: "Faltan datos para operar el follow-up.",
       } satisfies CrmFollowUpSessionActionResult,
     };
   }
@@ -135,17 +135,17 @@ export async function cancelSessionCrmFollowUps(
       success: true,
       message:
         result.count === 0
-          ? "No hay CRM follow-ups activos para cancelar."
+          ? "No hay follow-ups activos para cancelar."
           : result.count === 1
-            ? "Se cancelo 1 CRM follow-up activo."
-            : `Se cancelaron ${result.count} CRM follow-ups activos.`,
+            ? "Se cancelo 1 follow-up activo."
+            : `Se cancelaron ${result.count} follow-ups activos.`,
       data: { count: result.count },
     };
   } catch (error) {
     console.error("[cancelSessionCrmFollowUps]", error);
     return {
       success: false,
-      message: "No se pudieron cancelar los CRM follow-ups.",
+      message: "No se pudieron cancelar los follow-ups.",
     };
   }
 }
@@ -179,17 +179,17 @@ export async function retrySessionFailedCrmFollowUps(
       success: true,
       message:
         result.count === 0
-          ? "No hay CRM follow-ups fallidos para reactivar."
+          ? "No hay follow-ups fallidos para reactivar."
           : result.count === 1
-            ? "Se reactivó 1 CRM follow-up fallido."
-            : `Se reactivaron ${result.count} CRM follow-ups fallidos.`,
+            ? "Se reactivó 1 follow-up fallido."
+            : `Se reactivaron ${result.count} follow-ups fallidos.`,
       data: { count: result.count },
     };
   } catch (error) {
     console.error("[retrySessionFailedCrmFollowUps]", error);
     return {
       success: false,
-      message: "No se pudieron reactivar los CRM follow-ups fallidos.",
+      message: "No se pudieron reactivar los follow-ups fallidos.",
     };
   }
 }
@@ -237,7 +237,7 @@ export async function processDueCrmFollowUpsNow(
     if (!runnerUrlSource) {
       return {
         success: false,
-        message: "No hay URL configurada para ejecutar el runner de CRM follow-up.",
+        message: "No hay URL configurada para ejecutar el runner de follow-up.",
       };
     }
 
@@ -277,7 +277,7 @@ export async function processDueCrmFollowUpsNow(
 
       return {
         success: false,
-        message: detail || "No se pudo ejecutar el runner de CRM follow-up.",
+        message: detail || "No se pudo ejecutar el runner de follow-up.",
       };
     }
 
@@ -294,11 +294,11 @@ export async function processDueCrmFollowUpsNow(
       message:
         data.due === 0
           ? remoteJid && instanceId
-            ? "No habia CRM follow-ups vencidos para esta sesion."
-            : "No habia CRM follow-ups vencidos para procesar."
+            ? "No habia follow-ups vencidos para esta sesion."
+            : "No habia follow-ups vencidos para procesar."
           : remoteJid && instanceId
-            ? `CRM follow-up de la sesion procesado. Enviados: ${data.sent}, fallidos: ${data.failed}, omitidos: ${data.skipped}.`
-            : `Runner de CRM follow-up ejecutado. Enviados: ${data.sent}, fallidos: ${data.failed}, omitidos: ${data.skipped}.`,
+            ? `Follow-up de la sesion procesado. Enviados: ${data.sent}, fallidos: ${data.failed}, omitidos: ${data.skipped}.`
+            : `Runner de follow-up ejecutado. Enviados: ${data.sent}, fallidos: ${data.failed}, omitidos: ${data.skipped}.`,
       data,
     };
   } catch (error) {
@@ -308,7 +308,7 @@ export async function processDueCrmFollowUpsNow(
       message:
         error instanceof Error
           ? error.message
-          : "No se pudo ejecutar el runner de CRM follow-up.",
+          : "No se pudo ejecutar el runner de follow-up.",
     };
   }
 }

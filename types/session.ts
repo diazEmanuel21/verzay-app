@@ -20,13 +20,6 @@ export type SimpleTag = {
   color?: string | null;
 };
 
-export type FollowUpStatus =
-  | "pending"
-  | "processing"
-  | "sent"
-  | "failed"
-  | "cancelled";
-
 export type LeadStatus = PrismaLeadStatus;
 
 export type CrmFollowUpStatus =
@@ -36,31 +29,6 @@ export type CrmFollowUpStatus =
   | "FAILED"
   | "CANCELLED"
   | "SKIPPED";
-
-export type SessionFollowUpHistoryItem = {
-  id: number;
-  status: FollowUpStatus;
-  mode: "static" | "ai";
-  attempt: number;
-  message: string | null;
-  errorReason: string | null;
-  createdAt: string | null;
-  updatedAt: string | null;
-};
-
-export type SessionFollowUpSummary = {
-  total: number;
-  active: number;
-  pending: number;
-  processing: number;
-  sent: number;
-  failed: number;
-  cancelled: number;
-  latestStatus: FollowUpStatus | null;
-  latestGeneratedMessage: string | null;
-  latestCreatedAt: string | null;
-  recentItems: SessionFollowUpHistoryItem[];
-};
 
 export type SessionCrmFollowUpHistoryItem = {
   id: string;
@@ -93,7 +61,6 @@ export type SessionCrmFollowUpSummary = {
 
 export type Session = PrismaSession & {
   tags?: SimpleTag[];       // opcional si no siempre los cargas
-  followUpSummary?: SessionFollowUpSummary | null;
   crmFollowUpSummary?: SessionCrmFollowUpSummary | null;
 };
 

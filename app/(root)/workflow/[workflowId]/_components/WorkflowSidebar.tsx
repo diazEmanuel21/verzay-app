@@ -18,9 +18,9 @@ import {
     useSidebar,
 } from '@/components/ui/sidebar';
 
-import { MAX_NODES_PER_WORKFLOW, MAX_SEGUIMIENTOS_PER_WORKFLOW } from '@/types/workflow';
+import { MAX_NODES_PER_WORKFLOW } from '@/types/workflow';
 import type { Action, PropsWorkflowSidebar } from '@/types/workflow-node';
-import { baseActions, seguimientoActions } from '@/types/workflow-node';
+import { baseActions } from '@/types/workflow-node';
 
 export function WorkflowSidebarTrigger() {
     const { toggleSidebar, open, openMobile, isMobile } = useSidebar();
@@ -43,7 +43,6 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes, onCreateNode }: 
     const qLower = q.trim().toLowerCase();
 
     const reachedTotalLimit = totalNodes >= MAX_NODES_PER_WORKFLOW;
-    const reachedSeguimientoLimit = seguimientoNodes >= MAX_SEGUIMIENTOS_PER_WORKFLOW;
 
     const filteredBase = useMemo(() => {
         if (!qLower) return baseActions;
@@ -52,24 +51,9 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes, onCreateNode }: 
         );
     }, [qLower]);
 
-    const filteredSeguimientos = useMemo(() => {
-        if (!qLower) return seguimientoActions;
-        return seguimientoActions.filter(
-            (a) => a.label.toLowerCase().includes(qLower) || a.type.toLowerCase().includes(qLower)
-        );
-    }, [qLower]);
-
     const validateCanCreate = (action: Action) => {
         if (reachedTotalLimit) {
             toast.error(`Este flujo ya alcanzó el límite de ${MAX_NODES_PER_WORKFLOW} nodos.`, {
-                id: 'sidebar-create-limit',
-            });
-            return false;
-        }
-
-        const isSeguimiento = action.type.startsWith('seguimiento-') || action.type === 'seguimiento';
-        if (isSeguimiento && reachedSeguimientoLimit) {
-            toast.error(`Este flujo ya tiene el máximo de ${MAX_SEGUIMIENTOS_PER_WORKFLOW} seguimientos.`, {
                 id: 'sidebar-create-limit',
             });
             return false;
@@ -142,11 +126,11 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes, onCreateNode }: 
                 </SidebarGroup>
 
                 <SidebarGroup>
-                    <SidebarGroupLabel>Seguimientos</SidebarGroupLabel>
-                    <SidebarGroupContent className="flex flex-col gap-1">
-                        {filteredSeguimientos.map((action) =>
-                            renderTile(action, reachedTotalLimit || reachedSeguimientoLimit)
-                        )}
+                    <SidebarGroupLabel>Follow-up</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                            Los follow-ups ya no se crean desde workflows. Ahora se gestionan desde el CRM con IA.
+                        </div>
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>

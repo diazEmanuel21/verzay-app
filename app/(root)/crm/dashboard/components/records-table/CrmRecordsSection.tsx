@@ -42,7 +42,6 @@ import {
     CRM_DEFAULT_COLUMN_VISIBILITY,
     CRM_TAB_COLORS,
     CRM_TABS,
-    FOLLOW_UP_FILTER_OPTIONS,
     LEAD_STATUS_FILTER_OPTIONS,
     isCrmTabValue,
 } from "./constants";
@@ -78,9 +77,7 @@ export function CrmRecordsSection({
     onChangeEstado,
     onChangeDetalle,
     onFollowUpChanged,
-    onProcessFollowUps,
     onProcessCrmFollowUps,
-    isProcessingFollowUps,
     isProcessingCrmFollowUps,
     isUpdatingRegistros,
     userId,
@@ -226,7 +223,6 @@ export function CrmRecordsSection({
         if (filters.query?.trim()) count += 1;
         if (filters.estado) count += 1;
         if (filters.leadStatus) count += 1;
-        if (filters.followUpStatus) count += 1;
         if (filters.crmFollowUpStatus) count += 1;
         if (filters.fechaDesde || filters.fechaHasta) count += 1;
         if (filters.leadOnly) count += 1;
@@ -235,7 +231,6 @@ export function CrmRecordsSection({
         filters.estado,
         filters.fechaDesde,
         filters.fechaHasta,
-        filters.followUpStatus,
         filters.crmFollowUpStatus,
         filters.leadStatus,
         filters.leadOnly,
@@ -280,19 +275,6 @@ export function CrmRecordsSection({
             });
         }
 
-        if (filters.followUpStatus) {
-            const followUpLabel =
-                FOLLOW_UP_FILTER_OPTIONS.find(
-                    (option) => option.value === filters.followUpStatus
-                )?.label ?? filters.followUpStatus;
-
-            badges.push({
-                key: "follow-up",
-                label: `Follow-up: ${followUpLabel}`,
-                onClear: () => patchFilters({ followUpStatus: undefined }),
-            });
-        }
-
         if (filters.crmFollowUpStatus) {
             const crmFollowUpLabel =
                 CRM_FOLLOW_UP_FILTER_OPTIONS.find(
@@ -301,7 +283,7 @@ export function CrmRecordsSection({
 
             badges.push({
                 key: "crm-follow-up",
-                label: `CRM follow-up: ${crmFollowUpLabel}`,
+                label: `Follow-up: ${crmFollowUpLabel}`,
                 onClear: () => patchFilters({ crmFollowUpStatus: undefined }),
             });
         }
@@ -331,7 +313,6 @@ export function CrmRecordsSection({
         filters.estado,
         filters.fechaDesde,
         filters.fechaHasta,
-        filters.followUpStatus,
         filters.crmFollowUpStatus,
         filters.leadStatus,
         filters.leadOnly,
@@ -394,12 +375,10 @@ export function CrmRecordsSection({
                     totalRegistros={totalRegistros}
                     loadedCount={registros.length}
                     isUpdatingRegistros={isUpdatingRegistros}
-                    isProcessingFollowUps={isProcessingFollowUps}
                     isProcessingCrmFollowUps={isProcessingCrmFollowUps}
                     onSearchChange={setSearchValue}
                     onPatchFilters={patchFilters}
                     onResetFilters={resetFilters}
-                    onProcessFollowUps={onProcessFollowUps}
                     onProcessCrmFollowUps={onProcessCrmFollowUps}
                 />
 

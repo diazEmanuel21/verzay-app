@@ -25,6 +25,7 @@ import {
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { RegistroWithSession, TipoRegistro } from "@/types/session";
 import { getTipoLabel } from "../../helpers";
+import { CrmFollowUpRulesPanel } from "./CrmFollowUpRulesPanel";
 import { MetricCard } from "./MetricCard";
 import type { DashboardStats } from "./MainDashboard";
 import { TagStatsCard } from "./TagStatsCard";
@@ -33,8 +34,6 @@ import { CrmRecordsSection } from "./records-table/CrmRecordsSection";
 const CRM_METRIC_COLORS = {
     totalRegistros: "#3B82F6",
     leadsConMovimientos: "#8B5CF6",
-    followUpsActivos: "#F97316",
-    followUpsEnviados: "#22C55E",
     crmFollowUpsActivos: "#0EA5E9",
     crmFollowUpsEnviados: "#14B8A6",
 } as const;
@@ -49,9 +48,7 @@ export const CrmDashboard = ({
     onChangeEstado,
     onChangeDetalle,
     onFollowUpChanged,
-    onProcessFollowUps,
     onProcessCrmFollowUps,
-    isProcessingFollowUps,
     isProcessingCrmFollowUps,
     isUpdatingRegistros,
     userId,
@@ -69,9 +66,7 @@ export const CrmDashboard = ({
     onChangeEstado?: (registroId: number, nuevoEstado: string) => void;
     onChangeDetalle?: (registroId: number, nuevoDetalle: string) => Promise<boolean>;
     onFollowUpChanged?: () => Promise<void> | void;
-    onProcessFollowUps?: () => Promise<void> | void;
     onProcessCrmFollowUps?: () => Promise<void> | void;
-    isProcessingFollowUps?: boolean;
     isProcessingCrmFollowUps?: boolean;
     isUpdatingRegistros?: boolean;
     userId: string;
@@ -128,6 +123,21 @@ export const CrmDashboard = ({
     return (
         <TooltipProvider delayDuration={120}>
             <div className="flex h-full min-w-0 flex-col gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
+                    <div className="space-y-1">
+                        <p className="text-sm font-semibold">Follow-up IA del CRM</p>
+                        <p className="text-sm text-muted-foreground">
+                            Una sola cola inteligente basada en el estado del lead,
+                            el resumen del CRM y las reglas de envio configurables.
+                        </p>
+                    </div>
+
+                    <CrmFollowUpRulesPanel
+                        userId={userId}
+                        onUpdated={onFollowUpChanged}
+                    />
+                </div>
+
                 <div className="flex flex-wrap gap-3">
                     <div className="flex-1">
                         <MetricCard
@@ -153,28 +163,8 @@ export const CrmDashboard = ({
                         <MetricCard
                             icon={<Clock3 className="h-4 w-4" />}
                             label="Follow-ups activos"
-                            value={stats?.followUps.active ?? 0}
-                            helper="Pendientes o en procesamiento"
-                            color={CRM_METRIC_COLORS.followUpsActivos}
-                        />
-                    </div>
-
-                    <div className="flex-1">
-                        <MetricCard
-                            icon={<CheckCheck className="h-4 w-4" />}
-                            label="Follow-ups enviados"
-                            value={stats?.followUps.sent ?? 0}
-                            helper="Seguimientos completados"
-                            color={CRM_METRIC_COLORS.followUpsEnviados}
-                        />
-                    </div>
-
-                    <div className="flex-1">
-                        <MetricCard
-                            icon={<Clock3 className="h-4 w-4" />}
-                            label="CRM follow-ups activos"
                             value={stats?.crmFollowUps.active ?? 0}
-                            helper="Cola inteligente del CRM"
+                            helper="Pendientes o en procesamiento"
                             color={CRM_METRIC_COLORS.crmFollowUpsActivos}
                         />
                     </div>
@@ -182,7 +172,7 @@ export const CrmDashboard = ({
                     <div className="flex-1">
                         <MetricCard
                             icon={<CheckCheck className="h-4 w-4" />}
-                            label="CRM follow-ups enviados"
+                            label="Follow-ups enviados"
                             value={stats?.crmFollowUps.sent ?? 0}
                             helper="Contactos trabajados por estado"
                             color={CRM_METRIC_COLORS.crmFollowUpsEnviados}
@@ -201,9 +191,7 @@ export const CrmDashboard = ({
                     onChangeEstado={onChangeEstado}
                     onChangeDetalle={onChangeDetalle}
                     onFollowUpChanged={onFollowUpChanged}
-                    onProcessFollowUps={onProcessFollowUps}
                     onProcessCrmFollowUps={onProcessCrmFollowUps}
-                    isProcessingFollowUps={isProcessingFollowUps}
                     isProcessingCrmFollowUps={isProcessingCrmFollowUps}
                     isUpdatingRegistros={isUpdatingRegistros}
                     userId={userId}

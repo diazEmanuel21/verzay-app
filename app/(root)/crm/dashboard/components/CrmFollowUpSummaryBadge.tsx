@@ -81,7 +81,7 @@ export function CrmFollowUpSummaryBadge({
   if (!summary || summary.total === 0) {
     return (
       <span className="text-xs text-muted-foreground">
-        Sin CRM follow-up
+        Sin follow-up
       </span>
     );
   }
@@ -129,10 +129,10 @@ export function CrmFollowUpSummaryBadge({
     const toastId = `crm-follow-up-${action}-${instanceId}-${remoteJid}`;
     toast.loading(
       action === "cancel"
-        ? "Cancelando CRM follow-ups..."
+        ? "Cancelando follow-ups..."
         : action === "retry"
-          ? "Reactivando CRM follow-ups..."
-          : "Procesando CRM follow-ups de esta sesion...",
+          ? "Reactivando follow-ups..."
+          : "Procesando follow-ups de esta sesion...",
       { id: toastId }
     );
     setPendingAction(action);
@@ -168,7 +168,7 @@ export function CrmFollowUpSummaryBadge({
       toast.error(
         error instanceof Error
           ? error.message
-          : "No se pudo actualizar el CRM follow-up.",
+          : "No se pudo actualizar el follow-up.",
         { id: toastId }
       );
     } finally {
@@ -184,7 +184,7 @@ export function CrmFollowUpSummaryBadge({
         <button
           type="button"
           className="text-left"
-          title="Ver CRM follow-up"
+          title="Ver follow-up"
         >
           {renderBadges()}
         </button>
@@ -192,7 +192,7 @@ export function CrmFollowUpSummaryBadge({
       <PopoverContent align="start" className="w-[380px] p-3">
         <div className="space-y-3">
           <div className="space-y-1">
-            <p className="text-sm font-medium">CRM follow-up</p>
+            <p className="text-sm font-medium">Follow-up IA</p>
             <p className="text-xs text-muted-foreground">
               {formattedLatestDate
                 ? `Proximo envio: ${formattedLatestDate}`
