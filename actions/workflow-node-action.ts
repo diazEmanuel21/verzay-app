@@ -5,7 +5,11 @@ import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { minioClient } from "@/lib/minio";
 import { createNodeflowSchema, createNodeflowSchemaType } from "@/schema/nodeflow";
-import { MAX_NODES_PER_WORKFLOW, UpdateNodePositionInput } from "@/types/workflow";
+import {
+  MAX_NODES_PER_WORKFLOW,
+  MAX_SEGUIMIENTOS_PER_WORKFLOW,
+  UpdateNodePositionInput,
+} from "@/types/workflow";
 import { WorkflowNode } from "@prisma/client";
 import { redirect } from "next/navigation";
 
@@ -35,12 +39,18 @@ export async function createNode(form: createNodeflowSchemaType) {
   };
 
   const requestedTipo = (data.tipo ?? "").toLowerCase();
-  const isSeguimiento =
-    requestedTipo === "seguimiento" || requestedTipo.startsWith("seguimiento-");
+  const isSeguimiento = requestedTipo.startsWith("seguimiento-");
   if (isSeguimiento) {
-    return {
+    const totalSeguimientos = await db.workflowNode.count({
+      where: {
+        workflowId: data.workflowId,
+        tipo: { startsWith: "seguimiento-" },
+      },
+    });
+
+    if (totalSeguimientos >= MAX_SEGUIMIENTOS_PER_WORKFLOW) return {
       success: false,
-      message: "Los follow-ups ya no se crean desde workflows. Configúralos desde el CRM con IA.",
+      message: `Este flujo ya alcanzó el límite de ${MAX_SEGUIMIENTOS_PER_WORKFLOW} seguimientos.`,
     };
   }
 
@@ -513,11 +523,18 @@ export async function createNodeFromCanvas(form: createNodeflowSchemaType & { po
   };
 
   const requestedTipo = (form.tipo ?? "").toLowerCase();
-  const isSeguimiento = requestedTipo === "seguimiento" || requestedTipo.startsWith("seguimiento-");
+  const isSeguimiento = requestedTipo.startsWith("seguimiento-");
   if (isSeguimiento) {
-    return {
+    const totalSeguimientos = await db.workflowNode.count({
+      where: {
+        workflowId: form.workflowId,
+        tipo: { startsWith: "seguimiento-" },
+      },
+    });
+
+    if (totalSeguimientos >= MAX_SEGUIMIENTOS_PER_WORKFLOW) return {
       success: false,
-      message: "Los follow-ups ya no se crean desde workflows. Configúralos desde el CRM con IA.",
+      message: `Este flujo ya alcanzó el límite de ${MAX_SEGUIMIENTOS_PER_WORKFLOW} seguimientos.`,
     };
   }
 
@@ -622,8 +639,42 @@ export async function updateFollowUpNodeConfig(params: {
   const user = await currentUser();
   if (!user) return { success: false, message: 'Usuario no autenticado.' };
 
-  return {
-    success: false,
-    message: "La configuración de follow-up se movió al CRM con IA.",
-  };
+  const data: Record<string, unknown> = {};
+
+  if (params.followUpMode !== undefined) {
+    data.followUpMode = params.followUpMode === "ai" ? "ai" : "static";
+  }
+
+  if (params.followUpPrompt !== undefined) {
+    data.followUpPrompt = params.followUpPrompt.trim();
+  }
+
+  if (params.followUpGoal !== undefined) {
+    data.followUpGoal = params.followUpGoal.trim();
+  }
+
+  if (params.followUpCancelOnReply !== undefined) {
+    data.followUpCancelOnReply = Boolean(params.followUpCancelOnReply);
+  }
+
+  if (params.followUpMaxAttempts !== undefined) {
+    const maxAttempts = Number(params.followUpMaxAttempts);
+    if (!Number.isFinite(maxAttempts) || maxAttempts < 1 || maxAttempts > 10) {
+      return {
+        success: false,
+        message: "followUpMaxAttempts debe ser 1..10",
+      };
+    }
+
+    data.followUpMaxAttempts = maxAttempts;
+  }
+
+  const updated = await db.workflowNode.update({
+    where: { id: params.nodeId },
+    data,
+  });
+
+  return { success: true, message: "Configuracion guardada", data: updated };
 }
+
+

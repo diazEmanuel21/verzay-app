@@ -6,21 +6,19 @@ import { Plus, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
 import {
     Sidebar,
-    SidebarHeader,
     SidebarContent,
     SidebarGroup,
-    SidebarGroupLabel,
     SidebarGroupContent,
+    SidebarGroupLabel,
+    SidebarHeader,
     SidebarSeparator,
     useSidebar,
 } from '@/components/ui/sidebar';
-
-import { MAX_NODES_PER_WORKFLOW } from '@/types/workflow';
+import { MAX_NODES_PER_WORKFLOW, MAX_SEGUIMIENTOS_PER_WORKFLOW } from '@/types/workflow';
 import type { Action, PropsWorkflowSidebar } from '@/types/workflow-node';
-import { baseActions } from '@/types/workflow-node';
+import { baseActions, seguimientoActions } from '@/types/workflow-node';
 
 export function WorkflowSidebarTrigger() {
     const { toggleSidebar, open, openMobile, isMobile } = useSidebar();
@@ -31,7 +29,7 @@ export function WorkflowSidebarTrigger() {
             size="icon"
             className="h-10 w-10 rounded-full shadow"
             onClick={toggleSidebar}
-            title={isOpen ? 'Cerrar menú' : 'Agregar nodo'}
+            title={isOpen ? 'Cerrar menu' : 'Agregar nodo'}
         >
             {isOpen ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
         </Button>
@@ -43,32 +41,52 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes, onCreateNode }: 
     const qLower = q.trim().toLowerCase();
 
     const reachedTotalLimit = totalNodes >= MAX_NODES_PER_WORKFLOW;
+    const reachedSeguimientoLimit = seguimientoNodes >= MAX_SEGUIMIENTOS_PER_WORKFLOW;
 
     const filteredBase = useMemo(() => {
         if (!qLower) return baseActions;
         return baseActions.filter(
-            (a) => a.label.toLowerCase().includes(qLower) || a.type.toLowerCase().includes(qLower)
+            (action) =>
+                action.label.toLowerCase().includes(qLower) || action.type.toLowerCase().includes(qLower)
+        );
+    }, [qLower]);
+
+    const filteredSeguimientos = useMemo(() => {
+        if (!qLower) return seguimientoActions;
+        return seguimientoActions.filter(
+            (action) =>
+                action.label.toLowerCase().includes(qLower) || action.type.toLowerCase().includes(qLower)
         );
     }, [qLower]);
 
     const validateCanCreate = (action: Action) => {
         if (reachedTotalLimit) {
-            toast.error(`Este flujo ya alcanzó el límite de ${MAX_NODES_PER_WORKFLOW} nodos.`, {
+            toast.error(`Este flujo ya alcanzo el limite de ${MAX_NODES_PER_WORKFLOW} nodos.`, {
                 id: 'sidebar-create-limit',
             });
+            return false;
+        }
+
+        if (action.type.startsWith('seguimiento-') && reachedSeguimientoLimit) {
+            toast.error(
+                `Este flujo ya alcanzo el limite de ${MAX_SEGUIMIENTOS_PER_WORKFLOW} seguimientos.`,
+                {
+                    id: 'sidebar-create-seguimiento-limit',
+                }
+            );
             return false;
         }
 
         return true;
     };
 
-    const onDragStart = (evt: React.DragEvent, action: Action) => {
+    const onDragStart = (event: React.DragEvent, action: Action) => {
         if (!validateCanCreate(action)) {
-            evt.preventDefault();
+            event.preventDefault();
             return;
         }
 
-        evt.dataTransfer.setData(
+        event.dataTransfer.setData(
             'application/reactflow',
             JSON.stringify({
                 type: 'customNode',
@@ -76,7 +94,7 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes, onCreateNode }: 
                 nodeTipo: action.type,
             })
         );
-        evt.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.effectAllowed = 'move';
     };
 
     const onClickCreate = (action: Action) => {
@@ -91,12 +109,12 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes, onCreateNode }: 
             <Button
                 key={action.type}
                 type="button"
-                variant={'outline'}
+                variant="outline"
                 disabled={disabled}
                 draggable={!disabled}
-                onDragStart={(evt) => onDragStart(evt, action)}
+                onDragStart={(event) => onDragStart(event, action)}
                 onClick={() => onClickCreate(action)}
-                className="flex justify-start w-full"
+                className="flex w-full justify-start"
             >
                 <Icon className={`h-4 w-4 ${action.iconClassName ?? ''}`} />
                 <span className="truncate">{action.label}</span>
@@ -109,15 +127,15 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes, onCreateNode }: 
             side="right"
             variant="sidebar"
             collapsible="offcanvas"
-            className="bg-white dark:bg-gray-900 text-gray-800 dark:text-zinc-100 border-l border-zinc-200 dark:border-gray-800"
+            className="border-l border-zinc-200 bg-white text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-zinc-100"
         >
             <SidebarHeader className="p-2">
-                <Input placeholder="Buscar..." value={q} onChange={(e) => setQ(e.target.value)} />
+                <Input placeholder="Buscar..." value={q} onChange={(event) => setQ(event.target.value)} />
             </SidebarHeader>
 
             <SidebarSeparator />
 
-            <SidebarContent className="p-2 gap-2">
+            <SidebarContent className="gap-2 p-2">
                 <SidebarGroup>
                     <SidebarGroupLabel>Base</SidebarGroupLabel>
                     <SidebarGroupContent className="flex flex-col gap-1">
@@ -126,11 +144,11 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes, onCreateNode }: 
                 </SidebarGroup>
 
                 <SidebarGroup>
-                    <SidebarGroupLabel>Follow-up</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                            Los follow-ups ya no se crean desde workflows. Ahora se gestionan desde el CRM con IA.
-                        </div>
+                    <SidebarGroupLabel>Seguimientos</SidebarGroupLabel>
+                    <SidebarGroupContent className="flex flex-col gap-1">
+                        {filteredSeguimientos.map((action) =>
+                            renderTile(action, reachedTotalLimit || reachedSeguimientoLimit)
+                        )}
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>

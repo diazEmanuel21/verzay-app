@@ -29,7 +29,7 @@ const legacySeguimientoActions: Action[] = [
     { type: "seguimiento-audio", label: "Audio", icon: <Music className={`${iconSize} text-green-500`} /> },
 ];
 
-export const seguimientoActions: Action[] = [];
+export const seguimientoActions: Action[] = legacySeguimientoActions;
 
 export const cardBaseActions: Action[] = [
     { type: "text", label: "Texto", icon: <FileText className={`text-white`} />, bg: "bg-gray-500" },

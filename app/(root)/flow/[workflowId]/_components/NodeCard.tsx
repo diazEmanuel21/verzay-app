@@ -503,13 +503,9 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
               />
             </div>
           }
-          {isSeguimiento &&
-            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              Este nodo es legacy. Los nuevos follow-ups solo se gestionan desde el CRM con IA.
-            </div>
-          }
         </CardContent>
       </Card>
     </div>
   );
 };
+

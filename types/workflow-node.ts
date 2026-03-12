@@ -127,8 +127,7 @@ export const legacySeguimientoActions: Action[] = [
   { type: "seguimiento-audio", label: "Audio", icon: Music, iconClassName: `text-green-500` },
 ];
 
-// Ya no se permiten nuevos seguimientos desde workflows.
-export const seguimientoActions: Action[] = [];
+export const seguimientoActions: Action[] = legacySeguimientoActions;
 
 export const cardBaseActions: Action[] = [
   { type: "text", label: "Texto", icon: FileText, bg: "bg-gray-500", iconClassName: "h-4 w-4 text-white" },
@@ -149,5 +148,5 @@ export const cardSeguimientoActions: Action[] = [
   { type: "seguimiento-audio", label: "Audio", icon: Music, bg: "bg-green-500", iconClassName: `h-4 w-4 text-white ${stylesSeguimiento}` },
 ];
 
-export const ACTIONS = [...baseActions, ...legacySeguimientoActions];
+export const ACTIONS = [...baseActions, ...seguimientoActions];
 export const CARD_ACTIONS = [...cardBaseActions, ...cardSeguimientoActions];
