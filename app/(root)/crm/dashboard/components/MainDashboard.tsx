@@ -17,7 +17,6 @@ import {
 import { LoadingProgress } from "@/components/shared/LoadingProgress";
 import { RegistroWithSession, TipoRegistro } from "@/types/session";
 import { toast } from "sonner";
-import { processDueCrmFollowUpsNow } from "@/actions/crm-follow-up-actions";
 import { ESTADOS_POR_TIPO } from "@/types/registro";
 
 export type MainDashboardProps = {
@@ -59,7 +58,6 @@ export const MainDashboard = ({
   const [isPending, startTransition] = useTransition();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [scrollRootEl, setScrollRootEl] = useState<HTMLDivElement | null>(null);
-  const [isProcessingCrmFollowUps, setIsProcessingCrmFollowUps] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const loadingMoreRef = useRef(false);
   const ioRef = useRef<IntersectionObserver | null>(null);
@@ -220,34 +218,6 @@ export const MainDashboard = ({
     await refreshStats();
   }, [mutate, refreshStats]);
 
-  const handleProcessCrmFollowUps = useCallback(async () => {
-    const toastId = "crm-smart-follow-up-runner";
-    toast.loading("Procesando follow-ups vencidos...", { id: toastId });
-    setIsProcessingCrmFollowUps(true);
-
-    try {
-      const res = await processDueCrmFollowUpsNow(userId);
-      if (!res.success) {
-        toast.error(res.message, { id: toastId });
-        return;
-      }
-
-      await mutate();
-      await refreshStats();
-      router.refresh();
-      toast.success(res.message, { id: toastId });
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "No se pudo ejecutar el runner de follow-up.",
-        { id: toastId }
-      );
-    } finally {
-      setIsProcessingCrmFollowUps(false);
-    }
-  }, [mutate, refreshStats, router, userId]);
-
   if (isLoading && size === 1) {
     return (
       <LoadingProgress
@@ -283,8 +253,6 @@ export const MainDashboard = ({
         onChangeEstado={handleChangeEstado}
         onChangeDetalle={handleChangeDetalle}
         onFollowUpChanged={handleFollowUpChanged}
-        onProcessCrmFollowUps={handleProcessCrmFollowUps}
-        isProcessingCrmFollowUps={isProcessingCrmFollowUps}
         isUpdatingRegistros={isPending}
         hasMore={hasMore}
         isLoadingMore={isLoadingMore}

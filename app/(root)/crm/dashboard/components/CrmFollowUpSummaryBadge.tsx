@@ -4,7 +4,6 @@ import { useState } from "react";
 
 import {
   cancelSessionCrmFollowUps,
-  processDueCrmFollowUpsNow,
   retrySessionFailedCrmFollowUps,
 } from "@/actions/crm-follow-up-actions";
 import { Badge } from "@/components/ui/badge";
@@ -76,7 +75,7 @@ export function CrmFollowUpSummaryBadge({
   instanceId?: string | null;
   onUpdated?: () => Promise<void> | void;
 }) {
-  const [pendingAction, setPendingAction] = useState<"cancel" | "retry" | "process" | null>(null);
+  const [pendingAction, setPendingAction] = useState<"cancel" | "retry" | null>(null);
 
   if (!summary || summary.total === 0) {
     return (
@@ -95,7 +94,6 @@ export function CrmFollowUpSummaryBadge({
   const canManage = Boolean(userId && remoteJid && instanceId);
   const canCancel = canManage && summary.active > 0;
   const canRetry = canManage && summary.failed > 0;
-  const canProcessNow = canManage && summary.pending > 0;
 
   const renderBadges = () => (
     <div className="flex max-w-[220px] flex-wrap gap-1">
@@ -123,16 +121,14 @@ export function CrmFollowUpSummaryBadge({
     </div>
   );
 
-  const handleAction = async (action: "cancel" | "retry" | "process") => {
+  const handleAction = async (action: "cancel" | "retry") => {
     if (!userId || !remoteJid || !instanceId) return;
 
     const toastId = `crm-follow-up-${action}-${instanceId}-${remoteJid}`;
     toast.loading(
       action === "cancel"
         ? "Cancelando follow-ups..."
-        : action === "retry"
-          ? "Reactivando follow-ups..."
-          : "Procesando follow-ups de esta sesion...",
+        : "Reactivando follow-ups...",
       { id: toastId }
     );
     setPendingAction(action);
@@ -145,17 +141,11 @@ export function CrmFollowUpSummaryBadge({
               remoteJid,
               instanceId,
             })
-          : action === "retry"
-            ? await retrySessionFailedCrmFollowUps({
-                userId,
-                remoteJid,
-                instanceId,
-              })
-            : await processDueCrmFollowUpsNow(userId, {
-                remoteJid,
-                instanceId,
-                limit: 25,
-              });
+          : await retrySessionFailedCrmFollowUps({
+              userId,
+              remoteJid,
+              instanceId,
+            });
 
       if (!result.success) {
         toast.error(result.message, { id: toastId });
@@ -176,7 +166,7 @@ export function CrmFollowUpSummaryBadge({
     }
   };
 
-  const hasActions = canCancel || canRetry || canProcessNow;
+  const hasActions = canCancel || canRetry;
 
   return (
     <Popover>
@@ -272,17 +262,6 @@ export function CrmFollowUpSummaryBadge({
 
           {hasActions && (
             <div className="flex flex-wrap justify-end gap-2 border-t pt-3">
-              {canProcessNow && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={pendingAction !== null}
-                  onClick={() => handleAction("process")}
-                >
-                  Procesar ahora
-                </Button>
-              )}
-
               {canRetry && (
                 <Button
                   size="sm"

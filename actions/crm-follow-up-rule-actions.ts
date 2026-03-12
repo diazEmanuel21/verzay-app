@@ -4,6 +4,7 @@ import type { LeadStatus } from "@/types/session";
 import { assertUserCanUseApp } from "@/actions/billing/helpers/app-access-guard";
 import { db } from "@/lib/db";
 import {
+  computeCrmFollowUpScheduledFor,
   CRM_FOLLOW_UP_RULE_DEFAULTS,
   CRM_FOLLOW_UP_RULE_STATUS_ORDER,
   type CrmFollowUpRuleConfig,
@@ -190,6 +191,11 @@ export async function updateCrmFollowUpRule(
       };
     }
 
+    const user = await db.user.findUnique({
+      where: { id: normalized.userId },
+      select: { timezone: true },
+    });
+
     const updated = await db.crmFollowUpRule.upsert({
       where: {
         userId_leadStatus: {
@@ -250,6 +256,32 @@ export async function updateCrmFollowUpRule(
         data: {
           status: "CANCELLED",
           cancelledAt: new Date(),
+        },
+      });
+    } else {
+      const scheduledFor = computeCrmFollowUpScheduledFor({
+        delayMinutes: normalized.delayMinutes,
+        timeZone: user?.timezone ?? null,
+        allowedWeekdays: normalized.allowedWeekdays,
+        sendStartTime: normalized.sendStartTime,
+        sendEndTime: normalized.sendEndTime,
+      });
+
+      await db.crmFollowUp.updateMany({
+        where: {
+          userId: normalized.userId,
+          leadStatusSnapshot: normalized.leadStatus,
+          status: "PENDING",
+        },
+        data: {
+          scheduledFor,
+          maxAttempts: normalized.maxAttempts,
+          goalSnapshot: normalized.goal,
+          promptSnapshot: normalized.prompt,
+          fallbackMessageSnapshot: normalized.fallbackMessage,
+          allowedWeekdaysSnapshot: normalized.allowedWeekdays,
+          sendStartTimeSnapshot: normalized.sendStartTime,
+          sendEndTimeSnapshot: normalized.sendEndTime,
         },
       });
     }

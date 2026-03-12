@@ -25,8 +25,6 @@ export type CrmRecordsSectionProps = {
     onChangeEstado?: (registroId: number, nuevoEstado: string) => void;
     onChangeDetalle?: (registroId: number, nuevoDetalle: string) => Promise<boolean>;
     onFollowUpChanged?: () => Promise<void> | void;
-    onProcessCrmFollowUps?: () => Promise<void> | void;
-    isProcessingCrmFollowUps?: boolean;
     isUpdatingRegistros?: boolean;
     userId: string;
     hasMore?: boolean;

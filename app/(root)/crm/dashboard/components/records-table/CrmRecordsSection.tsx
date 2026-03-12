@@ -77,8 +77,6 @@ export function CrmRecordsSection({
     onChangeEstado,
     onChangeDetalle,
     onFollowUpChanged,
-    onProcessCrmFollowUps,
-    isProcessingCrmFollowUps,
     isUpdatingRegistros,
     userId,
     hasMore,
@@ -374,12 +372,9 @@ export function CrmRecordsSection({
                     searchValue={searchValue}
                     totalRegistros={totalRegistros}
                     loadedCount={registros.length}
-                    isUpdatingRegistros={isUpdatingRegistros}
-                    isProcessingCrmFollowUps={isProcessingCrmFollowUps}
                     onSearchChange={setSearchValue}
                     onPatchFilters={patchFilters}
                     onResetFilters={resetFilters}
-                    onProcessCrmFollowUps={onProcessCrmFollowUps}
                 />
 
                 {activeFilterBadges.length > 0 ? (

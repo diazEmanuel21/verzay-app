@@ -48,8 +48,6 @@ export const CrmDashboard = ({
     onChangeEstado,
     onChangeDetalle,
     onFollowUpChanged,
-    onProcessCrmFollowUps,
-    isProcessingCrmFollowUps,
     isUpdatingRegistros,
     userId,
     hasMore,
@@ -66,8 +64,6 @@ export const CrmDashboard = ({
     onChangeEstado?: (registroId: number, nuevoEstado: string) => void;
     onChangeDetalle?: (registroId: number, nuevoDetalle: string) => Promise<boolean>;
     onFollowUpChanged?: () => Promise<void> | void;
-    onProcessCrmFollowUps?: () => Promise<void> | void;
-    isProcessingCrmFollowUps?: boolean;
     isUpdatingRegistros?: boolean;
     userId: string;
     hasMore?: boolean;
@@ -191,8 +187,6 @@ export const CrmDashboard = ({
                     onChangeEstado={onChangeEstado}
                     onChangeDetalle={onChangeDetalle}
                     onFollowUpChanged={onFollowUpChanged}
-                    onProcessCrmFollowUps={onProcessCrmFollowUps}
-                    isProcessingCrmFollowUps={isProcessingCrmFollowUps}
                     isUpdatingRegistros={isUpdatingRegistros}
                     userId={userId}
                     hasMore={hasMore}

@@ -34,6 +34,27 @@ export const CRM_FOLLOW_UP_WEEKDAY_OPTIONS = [
   { value: 0, label: "Dom" },
 ] as const;
 
+const DEFAULT_CRM_FOLLOW_UP_TIMEZONE = "America/Bogota";
+const CRM_FOLLOW_UP_WEEKDAY_MAP: Record<string, number> = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+};
+
+type CrmFollowUpZonedParts = {
+  year: number;
+  month: number;
+  day: number;
+  weekday: number;
+  hour: number;
+  minute: number;
+  second: number;
+};
+
 export const CRM_FOLLOW_UP_RULE_DEFAULTS: Record<
   LeadStatus,
   Omit<CrmFollowUpRuleConfig, "id" | "userId" | "leadStatus" | "updatedAt">
@@ -134,6 +155,188 @@ export function sanitizeCrmFollowUpTimeValue(
 ) {
   const clean = String(value ?? "").trim();
   return /^([01]\d|2[0-3]):([0-5]\d)$/.test(clean) ? clean : fallback;
+}
+
+export function sanitizeCrmFollowUpTimezone(timezone?: string | null) {
+  const clean = String(timezone ?? "").trim();
+  return clean || DEFAULT_CRM_FOLLOW_UP_TIMEZONE;
+}
+
+function parseCrmFollowUpTimeToMinutes(value: string) {
+  const [hourText, minuteText] = value.split(":");
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+
+  if (!Number.isInteger(hour) || !Number.isInteger(minute)) {
+    return 0;
+  }
+
+  return hour * 60 + minute;
+}
+
+function getCrmFollowUpZonedParts(date: Date, timeZone: string): CrmFollowUpZonedParts {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+
+  const parts = formatter.formatToParts(date);
+  const read = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((item) => item.type === type)?.value ?? "";
+
+  return {
+    year: Number(read("year")),
+    month: Number(read("month")),
+    day: Number(read("day")),
+    weekday: CRM_FOLLOW_UP_WEEKDAY_MAP[read("weekday")] ?? 0,
+    hour: Number(read("hour")),
+    minute: Number(read("minute")),
+    second: Number(read("second")),
+  };
+}
+
+function getCrmFollowUpTimezoneOffsetMs(date: Date, timeZone: string) {
+  const zoned = getCrmFollowUpZonedParts(date, timeZone);
+  const utcFromLocal = Date.UTC(
+    zoned.year,
+    zoned.month - 1,
+    zoned.day,
+    zoned.hour,
+    zoned.minute,
+    zoned.second
+  );
+
+  return utcFromLocal - date.getTime();
+}
+
+function crmFollowUpZonedDateTimeToUtc(args: {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second?: number;
+  timeZone: string;
+}) {
+  const guess = new Date(
+    Date.UTC(args.year, args.month - 1, args.day, args.hour, args.minute, args.second ?? 0)
+  );
+  const initialOffset = getCrmFollowUpTimezoneOffsetMs(guess, args.timeZone);
+  const firstPass = new Date(guess.getTime() - initialOffset);
+  const correctedOffset = getCrmFollowUpTimezoneOffsetMs(firstPass, args.timeZone);
+
+  if (correctedOffset === initialOffset) {
+    return firstPass;
+  }
+
+  return new Date(guess.getTime() - correctedOffset);
+}
+
+export function isWithinCrmFollowUpWindow(args: {
+  date: Date;
+  timeZone?: string | null;
+  allowedWeekdays?: number[] | null;
+  sendStartTime?: string | null;
+  sendEndTime?: string | null;
+}) {
+  const timeZone = sanitizeCrmFollowUpTimezone(args.timeZone);
+  const allowedWeekdays = sanitizeCrmFollowUpWeekdays(args.allowedWeekdays);
+  const sendStartTime = sanitizeCrmFollowUpTimeValue(args.sendStartTime, "09:00");
+  const sendEndTime = sanitizeCrmFollowUpTimeValue(args.sendEndTime, "18:00");
+
+  const zoned = getCrmFollowUpZonedParts(args.date, timeZone);
+  const localMinutes = zoned.hour * 60 + zoned.minute;
+  const startMinutes = parseCrmFollowUpTimeToMinutes(sendStartTime);
+  const endMinutes = parseCrmFollowUpTimeToMinutes(sendEndTime);
+
+  return (
+    allowedWeekdays.includes(zoned.weekday) &&
+    localMinutes >= startMinutes &&
+    localMinutes <= endMinutes
+  );
+}
+
+export function computeNextCrmFollowUpDate(args: {
+  baseDate: Date;
+  timeZone?: string | null;
+  allowedWeekdays?: number[] | null;
+  sendStartTime?: string | null;
+  sendEndTime?: string | null;
+}) {
+  const timeZone = sanitizeCrmFollowUpTimezone(args.timeZone);
+  const allowedWeekdays = sanitizeCrmFollowUpWeekdays(args.allowedWeekdays);
+  const sendStartTime = sanitizeCrmFollowUpTimeValue(args.sendStartTime, "09:00");
+  const sendEndTime = sanitizeCrmFollowUpTimeValue(args.sendEndTime, "18:00");
+
+  if (
+    isWithinCrmFollowUpWindow({
+      date: args.baseDate,
+      timeZone,
+      allowedWeekdays,
+      sendStartTime,
+      sendEndTime,
+    })
+  ) {
+    return args.baseDate;
+  }
+
+  const [startHourText, startMinuteText] = sendStartTime.split(":");
+  const startHour = Number(startHourText);
+  const startMinute = Number(startMinuteText);
+  const baseZoned = getCrmFollowUpZonedParts(args.baseDate, timeZone);
+  const calendarBase = new Date(Date.UTC(baseZoned.year, baseZoned.month - 1, baseZoned.day));
+
+  for (let offset = 0; offset < 21; offset += 1) {
+    const localDate = new Date(calendarBase.getTime() + offset * 24 * 60 * 60 * 1000);
+    const weekday = localDate.getUTCDay();
+
+    if (!allowedWeekdays.includes(weekday)) {
+      continue;
+    }
+
+    const candidate = crmFollowUpZonedDateTimeToUtc({
+      year: localDate.getUTCFullYear(),
+      month: localDate.getUTCMonth() + 1,
+      day: localDate.getUTCDate(),
+      hour: startHour,
+      minute: startMinute,
+      timeZone,
+    });
+
+    if (candidate.getTime() >= args.baseDate.getTime()) {
+      return candidate;
+    }
+  }
+
+  return args.baseDate;
+}
+
+export function computeCrmFollowUpScheduledFor(args: {
+  delayMinutes: number;
+  timeZone?: string | null;
+  allowedWeekdays?: number[] | null;
+  sendStartTime?: string | null;
+  sendEndTime?: string | null;
+  from?: Date;
+}) {
+  const delayMinutes = Math.max(Number(args.delayMinutes) || 0, 0);
+  const from = args.from ?? new Date();
+  const baseDate = new Date(from.getTime() + delayMinutes * 60_000);
+
+  return computeNextCrmFollowUpDate({
+    baseDate,
+    timeZone: args.timeZone,
+    allowedWeekdays: args.allowedWeekdays,
+    sendStartTime: args.sendStartTime,
+    sendEndTime: args.sendEndTime,
+  });
 }
 
 export function normalizeCrmFollowUpRule(input: {

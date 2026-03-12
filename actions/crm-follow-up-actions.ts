@@ -1,7 +1,10 @@
 "use server";
 
-import { assertUserCanUseApp } from "@/actions/billing/helpers/app-access-guard";
 import { db } from "@/lib/db";
+import {
+  computeCrmFollowUpScheduledFor,
+  normalizeCrmFollowUpRule,
+} from "@/lib/crm-follow-up-rules";
 
 export type CrmFollowUpSessionActionResult = {
   success: boolean;
@@ -11,54 +14,11 @@ export type CrmFollowUpSessionActionResult = {
   };
 };
 
-export type CrmFollowUpRunnerActionResult = {
-  success: boolean;
-  message: string;
-  data?: {
-    scanned: number;
-    due: number;
-    sent: number;
-    failed: number;
-    skipped: number;
-  };
-};
-
-type ProcessCrmFollowUpOptions = {
-  limit?: number;
-  remoteJid?: string;
-  instanceId?: string;
-};
-
 type CrmFollowUpSessionInput = {
   userId: string;
   remoteJid: string;
   instanceId: string;
 };
-
-function buildCrmFollowUpRunnerUrl(webhookUrl: string) {
-  const trimmed = webhookUrl.trim().replace(/\/+$/, "");
-  const normalized = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-  const url = new URL(normalized);
-  const pathname = url.pathname.replace(/\/+$/, "");
-
-  if (!pathname || pathname === "/") {
-    url.pathname = "/lead-funnel/crm-follow-up/process";
-    return url.toString();
-  }
-
-  if (pathname.endsWith("/crm-follow-up/process")) {
-    url.pathname = pathname;
-    return url.toString();
-  }
-
-  if (pathname.endsWith("/webhook")) {
-    url.pathname = `${pathname.slice(0, -"/webhook".length)}/lead-funnel/crm-follow-up/process`;
-    return url.toString();
-  }
-
-  url.pathname = `${pathname}/crm-follow-up/process`;
-  return url.toString();
-}
 
 function normalizeSessionInput(input: CrmFollowUpSessionInput) {
   return {
@@ -157,158 +117,126 @@ export async function retrySessionFailedCrmFollowUps(
     const sessionCheck = await ensureSessionOwnership(input);
     if (!sessionCheck.ok) return sessionCheck.result;
 
-    const resetAt = new Date();
-    const result = await db.crmFollowUp.updateMany({
+    const failedFollowUps = await db.crmFollowUp.findMany({
       where: {
         sessionId: sessionCheck.input.id,
         status: "FAILED",
       },
-      data: {
-        status: "PENDING",
-        attemptCount: 0,
-        generatedMessage: null,
-        errorReason: null,
-        lastProcessedAt: null,
-        sentAt: null,
-        cancelledAt: null,
-        scheduledFor: resetAt,
+      select: {
+        id: true,
+        leadStatusSnapshot: true,
       },
     });
+
+    if (failedFollowUps.length === 0) {
+      return {
+        success: true,
+        message: "No hay follow-ups fallidos para reactivar.",
+        data: { count: 0 },
+      };
+    }
+
+    const [user, rules] = await Promise.all([
+      db.user.findUnique({
+        where: { id: sessionCheck.input.userId },
+        select: { timezone: true },
+      }),
+      db.crmFollowUpRule.findMany({
+        where: {
+          userId: sessionCheck.input.userId,
+          leadStatus: {
+            in: Array.from(new Set(failedFollowUps.map((item) => item.leadStatusSnapshot))),
+          },
+        },
+        select: {
+          id: true,
+          userId: true,
+          leadStatus: true,
+          enabled: true,
+          delayMinutes: true,
+          maxAttempts: true,
+          goal: true,
+          prompt: true,
+          fallbackMessage: true,
+          allowedWeekdays: true,
+          sendStartTime: true,
+          sendEndTime: true,
+          updatedAt: true,
+        },
+      }),
+    ]);
+
+    const rulesByStatus = new Map(
+      rules.map((rule) => [
+        rule.leadStatus,
+        normalizeCrmFollowUpRule({
+          ...rule,
+          updatedAt: rule.updatedAt?.toISOString?.() ?? null,
+        }),
+      ])
+    );
+
+    const updates = failedFollowUps.flatMap((followUp) => {
+      const rule = rulesByStatus.get(followUp.leadStatusSnapshot);
+
+      if (!rule || !rule.enabled) {
+        return [];
+      }
+
+      const scheduledFor = computeCrmFollowUpScheduledFor({
+        delayMinutes: rule.delayMinutes,
+        timeZone: user?.timezone ?? null,
+        allowedWeekdays: rule.allowedWeekdays,
+        sendStartTime: rule.sendStartTime,
+        sendEndTime: rule.sendEndTime,
+      });
+
+      return [
+        db.crmFollowUp.update({
+          where: { id: followUp.id },
+          data: {
+            status: "PENDING",
+            attemptCount: 0,
+            generatedMessage: null,
+            errorReason: null,
+            lastProcessedAt: null,
+            sentAt: null,
+            cancelledAt: null,
+            scheduledFor,
+            maxAttempts: rule.maxAttempts,
+            goalSnapshot: rule.goal,
+            promptSnapshot: rule.prompt,
+            fallbackMessageSnapshot: rule.fallbackMessage,
+            allowedWeekdaysSnapshot: rule.allowedWeekdays,
+            sendStartTimeSnapshot: rule.sendStartTime,
+            sendEndTimeSnapshot: rule.sendEndTime,
+          },
+        }),
+      ];
+    });
+
+    if (updates.length === 0) {
+      return {
+        success: false,
+        message: "Las reglas actuales no permiten reactivar los follow-ups fallidos.",
+      };
+    }
+
+    await db.$transaction(updates);
 
     return {
       success: true,
       message:
-        result.count === 0
-          ? "No hay follow-ups fallidos para reactivar."
-          : result.count === 1
-            ? "Se reactivó 1 follow-up fallido."
-            : `Se reactivaron ${result.count} follow-ups fallidos.`,
-      data: { count: result.count },
+        updates.length === 1
+          ? "Se reactivo 1 follow-up fallido."
+          : `Se reactivaron ${updates.length} follow-ups fallidos.`,
+      data: { count: updates.length },
     };
   } catch (error) {
     console.error("[retrySessionFailedCrmFollowUps]", error);
     return {
       success: false,
       message: "No se pudieron reactivar los follow-ups fallidos.",
-    };
-  }
-}
-
-export async function processDueCrmFollowUpsNow(
-  userId: string,
-  options?: ProcessCrmFollowUpOptions
-): Promise<CrmFollowUpRunnerActionResult> {
-  try {
-    await assertUserCanUseApp(userId);
-
-    const safeUserId = userId.trim();
-    const remoteJid = options?.remoteJid?.trim();
-    const instanceId = options?.instanceId?.trim();
-
-    if ((remoteJid && !instanceId) || (!remoteJid && instanceId)) {
-      return {
-        success: false,
-        message: "Para procesar una sesion debes enviar remoteJid e instanceId.",
-      };
-    }
-
-    if (remoteJid && instanceId) {
-      const sessionCheck = await ensureSessionOwnership({
-        userId: safeUserId,
-        remoteJid,
-        instanceId,
-      });
-
-      if (!sessionCheck.ok) {
-        return {
-          success: false,
-          message: sessionCheck.result.message,
-        };
-      }
-    }
-
-    const user = await db.user.findUnique({
-      where: { id: safeUserId },
-      select: { webhookUrl: true },
-    });
-
-    const configuredWebhookUrl = (user?.webhookUrl ?? "").trim();
-    const runnerUrlSource = (process.env.CRM_FOLLOW_UP_RUNNER_URL ?? "").trim() || configuredWebhookUrl;
-    if (!runnerUrlSource) {
-      return {
-        success: false,
-        message: "No hay URL configurada para ejecutar el runner de follow-up.",
-      };
-    }
-
-    const endpoint = buildCrmFollowUpRunnerUrl(runnerUrlSource);
-    const requestedLimit = Number(options?.limit ?? 25);
-    const safeLimit =
-      Number.isFinite(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 100) : 25;
-    const runnerKey =
-      (process.env.CRM_FOLLOW_UP_RUNNER_KEY ?? "").trim()
-      || (process.env.FOLLOW_UP_RUNNER_KEY ?? "").trim();
-
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(runnerKey ? { "x-runner-key": runnerKey } : {}),
-      },
-      body: JSON.stringify({
-        limit: safeLimit,
-        userId: safeUserId,
-        remoteJid: remoteJid || undefined,
-        instanceId: instanceId || undefined,
-      }),
-      cache: "no-store",
-    });
-
-    const contentType = response.headers.get("content-type") ?? "";
-    const payload = contentType.includes("application/json")
-      ? await response.json().catch(() => null)
-      : await response.text().catch(() => "");
-
-    if (!response.ok) {
-      const detail =
-        typeof payload === "string"
-          ? payload
-          : payload?.message || JSON.stringify(payload);
-
-      return {
-        success: false,
-        message: detail || "No se pudo ejecutar el runner de follow-up.",
-      };
-    }
-
-    const data = {
-      scanned: Number(payload?.scanned ?? 0),
-      due: Number(payload?.due ?? 0),
-      sent: Number(payload?.sent ?? 0),
-      failed: Number(payload?.failed ?? 0),
-      skipped: Number(payload?.skipped ?? 0),
-    };
-
-    return {
-      success: true,
-      message:
-        data.due === 0
-          ? remoteJid && instanceId
-            ? "No habia follow-ups vencidos para esta sesion."
-            : "No habia follow-ups vencidos para procesar."
-          : remoteJid && instanceId
-            ? `Follow-up de la sesion procesado. Enviados: ${data.sent}, fallidos: ${data.failed}, omitidos: ${data.skipped}.`
-            : `Runner de follow-up ejecutado. Enviados: ${data.sent}, fallidos: ${data.failed}, omitidos: ${data.skipped}.`,
-      data,
-    };
-  } catch (error) {
-    console.error("[processDueCrmFollowUpsNow]", error);
-    return {
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "No se pudo ejecutar el runner de follow-up.",
     };
   }
 }
