@@ -221,23 +221,16 @@ export function CrmFollowUpRulesPanel({
       onValueChange={setActiveTab}
       className="flex min-h-0 flex-1 flex-col"
     >
-      <TabsList className="flex h-auto w-full flex-wrap justify-start gap-2 rounded-none pb-2">
-        <TabsTrigger
-          value="followUps"
-          className="border border-border/70 px-4 py-2 data-[state=active]:border-blue-300 data-[state=active]:bg-blue-50"
-        >
+      <TabsList className="flex justify-start">
+        <TabsTrigger value="followUps">
           Follow-ups
         </TabsTrigger>
-        <TabsTrigger
-          value="leadStatus"
-          className="border border-border/70 px-4 py-2 data-[state=active]:border-blue-300 data-[state=active]:bg-blue-50"
-        >
+
+        <TabsTrigger value="leadStatus">
           Clasificacion lead
         </TabsTrigger>
-        <TabsTrigger
-          value="leadFunnel"
-          className="border border-border/70 px-4 py-2 data-[state=active]:border-blue-300 data-[state=active]:bg-blue-50"
-        >
+
+        <TabsTrigger value="leadFunnel">
           Sintetizador
         </TabsTrigger>
       </TabsList>

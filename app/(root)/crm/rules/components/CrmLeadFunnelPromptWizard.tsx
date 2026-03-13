@@ -48,7 +48,7 @@ const STEPS: CrmWizardStep[] = [
   },
   {
     id: "preview",
-    title: "Preview",
+    title: "Previsualización",
     description: "Revisa el prompt final que consumira el backend.",
   },
 ];
@@ -349,7 +349,7 @@ export function CrmLeadFunnelPromptWizard({
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              <p className="font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                 Ultima actualizacion
               </p>
               <p className="mt-2 text-sm font-medium">
@@ -383,7 +383,7 @@ export function CrmLeadFunnelPromptWizard({
               readOnly
               rows={24}
               value={promptPreview}
-              className="min-h-[520px] font-mono text-xs"
+              className="min-h-[520px] font-mono"
             />
           </CardContent>
         </Card>
@@ -392,9 +392,9 @@ export function CrmLeadFunnelPromptWizard({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b border-border/70 px-6 py-4">
-        <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-1 flex-col gap-2">
+      <div className="flex flex-col flex-1 gap-4">
+        <div className="flex flex-row items-center gap-2 text-sm">
           <Badge variant="outline" className="border-blue-200 text-blue-700">
             <Sparkles className="mr-1 h-3.5 w-3.5" />
             Sintetizador IA
@@ -405,20 +405,18 @@ export function CrmLeadFunnelPromptWizard({
           </span>
         </div>
 
-        <div className="mt-4">
-          <CrmWizardStepper
-            steps={STEPS}
-            currentStep={currentStep}
-            onStepChange={setCurrentStep}
-          />
-        </div>
+        <CrmWizardStepper
+          steps={STEPS}
+          currentStep={currentStep}
+          onStepChange={setCurrentStep}
+        />
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="px-6 py-6">{content}</div>
+        {content}
       </ScrollArea>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 px-6 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4">
         <div className="flex gap-2">
           <Button
             type="button"

@@ -1,7 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { InfoIcon } from "lucide-react";
 
 export type CrmWizardStep = {
   id: string;
@@ -24,28 +26,41 @@ export function CrmWizardStepper({
         const isActive = step.id === currentStep;
 
         return (
-          <Button
-            key={step.id}
-            type="button"
-            variant="ghost"
-            className={cn(
-              "h-auto items-start justify-start rounded-2xl border px-4 py-3 text-left",
-              isActive
-                ? "border-blue-300 bg-blue-50 text-blue-900"
-                : "border-border/70 bg-background text-muted-foreground"
-            )}
-            onClick={() => onStepChange(step.id)}
-          >
-            <div className="space-y-1">
-              <div className="text-xs font-semibold uppercase tracking-[0.18em]">
-                Paso {index + 1}
-              </div>
-              <div className="text-sm font-semibold">{step.title}</div>
-              <div className="text-xs text-muted-foreground">
-                {step.description}
-              </div>
-            </div>
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  key={step.id}
+                  type="button"
+                  variant={"outline"}
+                  className={cn(
+                    "h-auto items-start justify-start rounded-2xl border px-4 py-3 text-left",
+                    isActive
+                      ? "border-blue-300"
+                      : "border-border/70"
+                  )}
+                  onClick={() => onStepChange(step.id)}
+                >
+                  <div className="space-y-1">
+                    <div className="flex flex-row gap-2">
+                      <InfoIcon className="text-blue-300"/>
+                      <div className="font-semibold uppercase tracking-[0.18em]">
+                        Paso {index + 1}
+                      </div>
+                    </div>
+
+                    <div>{step.title}</div>
+                  </div>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {step.description}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
         );
       })}
     </div>

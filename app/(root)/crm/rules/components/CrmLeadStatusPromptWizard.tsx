@@ -29,6 +29,7 @@ import {
 import { toast } from "sonner";
 import { getLeadStatusLabel } from "../../dashboard/helpers";
 import { CrmWizardStep, CrmWizardStepper } from "./CrmWizardStepper";
+import { themeClass } from "@/types/generic";
 
 const STEPS: CrmWizardStep[] = [
   {
@@ -48,7 +49,7 @@ const STEPS: CrmWizardStep[] = [
   },
   {
     id: "preview",
-    title: "Preview",
+    title: "Previsualización",
     description: "Audita el prompt final antes de publicarlo.",
   },
 ];
@@ -220,7 +221,7 @@ export function CrmLeadStatusPromptWizard({
                   patchDraft({ extraInstructions: event.target.value })
                 }
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground">
                 Cada linea adicional se agrega como una regla nueva del prompt.
               </p>
             </div>
@@ -313,7 +314,7 @@ export function CrmLeadStatusPromptWizard({
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              <p className="font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                 Ultima actualizacion
               </p>
               <p className="mt-2 text-sm font-medium">
@@ -350,7 +351,7 @@ export function CrmLeadStatusPromptWizard({
               readOnly
               rows={24}
               value={promptPreview}
-              className="min-h-[520px] font-mono text-xs"
+              className="min-h-[520px] font-mono"
             />
           </CardContent>
         </Card>
@@ -359,9 +360,9 @@ export function CrmLeadStatusPromptWizard({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b border-border/70 px-6 py-4">
-        <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-1 flex-col gap-2">
+      <div className="flex flex-col flex-1 gap-4">
+        <div className="flex flex-row items-center gap-2 text-sm">
           <Badge variant="outline" className="border-blue-200 text-blue-700">
             <Sparkles className="mr-1 h-3.5 w-3.5" />
             Lead status IA
@@ -372,71 +373,71 @@ export function CrmLeadStatusPromptWizard({
           </span>
         </div>
 
-        <div className="mt-4">
-          <CrmWizardStepper
-            steps={STEPS}
-            currentStep={currentStep}
-            onStepChange={setCurrentStep}
-          />
-        </div>
+        <CrmWizardStepper
+          steps={STEPS}
+          currentStep={currentStep}
+          onStepChange={setCurrentStep}
+        />
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="px-6 py-6">{content}</div>
+        {content}
       </ScrollArea>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 px-6 py-4">
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!canGoBack}
-            onClick={() => setCurrentStep(STEPS[Math.max(stepIndex - 1, 0)].id)}
-          >
-            <ChevronLeft className="mr-2 h-4 w-4" />
-            Anterior
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!canGoForward}
-            onClick={() =>
-              setCurrentStep(
-                STEPS[Math.min(stepIndex + 1, STEPS.length - 1)].id
-              )
-            }
-          >
-            Siguiente
-            <ChevronRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
+      <div className="fixed bottom-0">
+        <div className={`flex flex-1 flex-wrap items-center justify-between gap-3 border-t border-border/70 py-2 ${themeClass}`}>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!canGoBack}
+              onClick={() => setCurrentStep(STEPS[Math.max(stepIndex - 1, 0)].id)}
+            >
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Anterior
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!canGoForward}
+              onClick={() =>
+                setCurrentStep(
+                  STEPS[Math.min(stepIndex + 1, STEPS.length - 1)].id
+                )
+              }
+            >
+              Siguiente
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => setDraft(record.config)}
-            disabled={!hasChanges || isSaving}
-          >
-            Resetear cambios
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => setDraft(CRM_LEAD_STATUS_PROMPT_DEFAULTS)}
-            disabled={isSaving}
-          >
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Defaults actuales
-          </Button>
-          <Button type="button" onClick={handleSave} disabled={!hasChanges || isSaving}>
-            {isSaving ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="mr-2 h-4 w-4" />
-            )}
-            Guardar clasificacion
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setDraft(record.config)}
+              disabled={!hasChanges || isSaving}
+            >
+              Resetear cambios
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setDraft(CRM_LEAD_STATUS_PROMPT_DEFAULTS)}
+              disabled={isSaving}
+            >
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Defaults actuales
+            </Button>
+            <Button type="button" onClick={handleSave} disabled={!hasChanges || isSaving}>
+              {isSaving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              Guardar clasificacion
+            </Button>
+          </div>
         </div>
       </div>
     </div>

@@ -61,7 +61,7 @@ export function CrmFollowUpWizard({
 
     return (
         <div className="flex flex-1 flex-col gap-2">
-            <div className="flex flex-col flex-1 gap-2">
+            <div className="flex flex-col flex-1 gap-4">
                 <div className="flex flex-row items-center gap-2 text-sm">
                     <Badge variant="outline" className="border-blue-200 text-blue-700">
                         <Sparkles className="mr-1 h-3.5 w-3.5" />
@@ -278,7 +278,7 @@ export function CrmFollowUpWizard({
                 </ScrollArea>
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border/70 px-6 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4">
                 <Button
                     variant="ghost"
                     onClick={handleResetAll}

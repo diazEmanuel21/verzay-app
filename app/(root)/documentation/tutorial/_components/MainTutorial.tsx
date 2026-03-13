@@ -198,8 +198,7 @@ export const MainTutorial = ({ user }: { user: User }) => {
                                             <CardTitle>{guide.title}</CardTitle>
                                         </CardHeader>
                                         <CardContent className="flex flex-1 justify-stretch items-center">
-                                            <p className="text-sm text-muted-foreground">{guide.description}</p>
-                                            {/* <p className="text-xs text-muted-foreground mb-2">Module: {guide.path}</p> */}
+                                            <p className="text-muted-foreground">{guide.description}</p>
                                         </CardContent>
                                         <CardFooter className="flex mt-auto gap-2 w-full">
                                             <Button
