@@ -25,7 +25,7 @@ import {
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { RegistroWithSession, TipoRegistro } from "@/types/session";
 import { getTipoLabel } from "../../helpers";
-import { CrmFollowUpRulesPanel } from "./CrmFollowUpRulesPanel";
+import { CrmFollowUpRulesPanel } from "../../rules/components/CrmFollowUpRulesPanel";
 import { MetricCard } from "./MetricCard";
 import type { DashboardStats } from "./MainDashboard";
 import { TagStatsCard } from "./TagStatsCard";
@@ -128,10 +128,10 @@ export const CrmDashboard = ({
                         </p>
                     </div>
 
-                    <CrmFollowUpRulesPanel
+                    {/* <CrmFollowUpRulesPanel
                         userId={userId}
                         onUpdated={onFollowUpChanged}
-                    />
+                    /> */}
                 </div>
 
                 <div className="flex flex-wrap gap-3">
