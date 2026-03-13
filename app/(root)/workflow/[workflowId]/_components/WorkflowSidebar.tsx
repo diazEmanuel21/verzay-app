@@ -6,16 +6,18 @@ import { Plus, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+
 import {
     Sidebar,
+    SidebarHeader,
     SidebarContent,
     SidebarGroup,
-    SidebarGroupContent,
     SidebarGroupLabel,
-    SidebarHeader,
+    SidebarGroupContent,
     SidebarSeparator,
     useSidebar,
 } from '@/components/ui/sidebar';
+
 import { MAX_NODES_PER_WORKFLOW, MAX_SEGUIMIENTOS_PER_WORKFLOW } from '@/types/workflow';
 import type { Action, PropsWorkflowSidebar } from '@/types/workflow-node';
 import { baseActions, seguimientoActions } from '@/types/workflow-node';
@@ -29,7 +31,7 @@ export function WorkflowSidebarTrigger() {
             size="icon"
             className="h-10 w-10 rounded-full shadow"
             onClick={toggleSidebar}
-            title={isOpen ? 'Cerrar menu' : 'Agregar nodo'}
+            title={isOpen ? 'Cerrar menú' : 'Agregar nodo'}
         >
             {isOpen ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
         </Button>
@@ -46,47 +48,43 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes, onCreateNode }: 
     const filteredBase = useMemo(() => {
         if (!qLower) return baseActions;
         return baseActions.filter(
-            (action) =>
-                action.label.toLowerCase().includes(qLower) || action.type.toLowerCase().includes(qLower)
+            (a) => a.label.toLowerCase().includes(qLower) || a.type.toLowerCase().includes(qLower)
         );
     }, [qLower]);
 
     const filteredSeguimientos = useMemo(() => {
         if (!qLower) return seguimientoActions;
         return seguimientoActions.filter(
-            (action) =>
-                action.label.toLowerCase().includes(qLower) || action.type.toLowerCase().includes(qLower)
+            (a) => a.label.toLowerCase().includes(qLower) || a.type.toLowerCase().includes(qLower)
         );
     }, [qLower]);
 
     const validateCanCreate = (action: Action) => {
         if (reachedTotalLimit) {
-            toast.error(`Este flujo ya alcanzo el limite de ${MAX_NODES_PER_WORKFLOW} nodos.`, {
+            toast.error(`Este flujo ya alcanzó el límite de ${MAX_NODES_PER_WORKFLOW} nodos.`, {
                 id: 'sidebar-create-limit',
             });
             return false;
         }
 
-        if (action.type.startsWith('seguimiento-') && reachedSeguimientoLimit) {
-            toast.error(
-                `Este flujo ya alcanzo el limite de ${MAX_SEGUIMIENTOS_PER_WORKFLOW} seguimientos.`,
-                {
-                    id: 'sidebar-create-seguimiento-limit',
-                }
-            );
+        const isSeguimiento = action.type.startsWith('seguimiento-') || action.type === 'seguimiento';
+        if (isSeguimiento && reachedSeguimientoLimit) {
+            toast.error(`Este flujo ya tiene el máximo de ${MAX_SEGUIMIENTOS_PER_WORKFLOW} seguimientos.`, {
+                id: 'sidebar-create-limit',
+            });
             return false;
         }
 
         return true;
     };
 
-    const onDragStart = (event: React.DragEvent, action: Action) => {
+    const onDragStart = (evt: React.DragEvent, action: Action) => {
         if (!validateCanCreate(action)) {
-            event.preventDefault();
+            evt.preventDefault();
             return;
         }
 
-        event.dataTransfer.setData(
+        evt.dataTransfer.setData(
             'application/reactflow',
             JSON.stringify({
                 type: 'customNode',
@@ -94,7 +92,7 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes, onCreateNode }: 
                 nodeTipo: action.type,
             })
         );
-        event.dataTransfer.effectAllowed = 'move';
+        evt.dataTransfer.effectAllowed = 'move';
     };
 
     const onClickCreate = (action: Action) => {
@@ -109,12 +107,12 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes, onCreateNode }: 
             <Button
                 key={action.type}
                 type="button"
-                variant="outline"
+                variant={'outline'}
                 disabled={disabled}
                 draggable={!disabled}
-                onDragStart={(event) => onDragStart(event, action)}
+                onDragStart={(evt) => onDragStart(evt, action)}
                 onClick={() => onClickCreate(action)}
-                className="flex w-full justify-start"
+                className="flex justify-start w-full"
             >
                 <Icon className={`h-4 w-4 ${action.iconClassName ?? ''}`} />
                 <span className="truncate">{action.label}</span>
@@ -127,15 +125,15 @@ export function WorkflowSidebar({ totalNodes, seguimientoNodes, onCreateNode }: 
             side="right"
             variant="sidebar"
             collapsible="offcanvas"
-            className="border-l border-zinc-200 bg-white text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-zinc-100"
+            className="bg-white dark:bg-gray-900 text-gray-800 dark:text-zinc-100 border-l border-zinc-200 dark:border-gray-800"
         >
             <SidebarHeader className="p-2">
-                <Input placeholder="Buscar..." value={q} onChange={(event) => setQ(event.target.value)} />
+                <Input placeholder="Buscar..." value={q} onChange={(e) => setQ(e.target.value)} />
             </SidebarHeader>
 
             <SidebarSeparator />
 
-            <SidebarContent className="gap-2 p-2">
+            <SidebarContent className="p-2 gap-2">
                 <SidebarGroup>
                     <SidebarGroupLabel>Base</SidebarGroupLabel>
                     <SidebarGroupContent className="flex flex-col gap-1">

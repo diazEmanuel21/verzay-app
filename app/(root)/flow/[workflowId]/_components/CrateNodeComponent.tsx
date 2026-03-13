@@ -121,7 +121,7 @@ export const CreateNodeComponent = ({ workflowId, plan, totalNodes, seguimientoN
 
             <PopoverContent
                 align="center"
-                side="top"          // 👈 por defecto arriba (Radix flipa si no cabe)
+                side="top"          
                 sideOffset={8}
                 collisionPadding={12}
                 className={cn(

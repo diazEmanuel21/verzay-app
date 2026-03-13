@@ -75,6 +75,7 @@ export const PALETTE: PaletteItem[] = [
   { type: "customNode", label: "Audio", nodeTipo: "audio" },
   { type: "customNode", label: "Documento", nodeTipo: "documento" },
   { type: "customNode", label: "Intención", nodeTipo: "intention" },
+  { type: "customNode", label: "Seguimiento Video", nodeTipo: "seguimiento-video" },
 ];
 
 // Tipos base (acciones generales)
@@ -118,16 +119,14 @@ export const baseActions: Action[] = [
   { type: "intention", label: "Intención", icon: Brain, iconClassName: "text-cyan-500" },
 ];
 
-// Legacy: se mantienen solo para renderizar workflows antiguos.
-export const legacySeguimientoActions: Action[] = [
+//  Acciones de seguimiento (sub-tipos)
+export const seguimientoActions: Action[] = [
   { type: "seguimiento-text", label: "Texto", icon: FileText, iconClassName: `text-purple-600` },
   { type: "seguimiento-image", label: "Imagen", icon: ImageIcon, iconClassName: `text-blue-500` },
   { type: "seguimiento-video", label: "Video", icon: Video, iconClassName: `text-red-500` },
   { type: "seguimiento-document", label: "Documento", icon: File, iconClassName: `text-gray-500` },
   { type: "seguimiento-audio", label: "Audio", icon: Music, iconClassName: `text-green-500` },
 ];
-
-export const seguimientoActions: Action[] = legacySeguimientoActions;
 
 export const cardBaseActions: Action[] = [
   { type: "text", label: "Texto", icon: FileText, bg: "bg-gray-500", iconClassName: "h-4 w-4 text-white" },
