@@ -384,60 +384,58 @@ export function CrmLeadStatusPromptWizard({
         {content}
       </ScrollArea>
 
-      <div className="fixed bottom-0">
-        <div className={`flex flex-1 flex-wrap items-center justify-between gap-3 border-t border-border/70 py-2 ${themeClass}`}>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={!canGoBack}
-              onClick={() => setCurrentStep(STEPS[Math.max(stepIndex - 1, 0)].id)}
-            >
-              <ChevronLeft className="mr-2 h-4 w-4" />
-              Anterior
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={!canGoForward}
-              onClick={() =>
-                setCurrentStep(
-                  STEPS[Math.min(stepIndex + 1, STEPS.length - 1)].id
-                )
-              }
-            >
-              Siguiente
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
+      <div className={`flex flex-1 flex-wrap items-center justify-between gap-3 border-t border-border/70 py-2`}>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!canGoBack}
+            onClick={() => setCurrentStep(STEPS[Math.max(stepIndex - 1, 0)].id)}
+          >
+            <ChevronLeft className="mr-2 h-4 w-4" />
+            Anterior
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!canGoForward}
+            onClick={() =>
+              setCurrentStep(
+                STEPS[Math.min(stepIndex + 1, STEPS.length - 1)].id
+              )
+            }
+          >
+            Siguiente
+            <ChevronRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setDraft(record.config)}
-              disabled={!hasChanges || isSaving}
-            >
-              Resetear cambios
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setDraft(CRM_LEAD_STATUS_PROMPT_DEFAULTS)}
-              disabled={isSaving}
-            >
-              <RotateCcw className="mr-2 h-4 w-4" />
-              Defaults actuales
-            </Button>
-            <Button type="button" onClick={handleSave} disabled={!hasChanges || isSaving}>
-              {isSaving ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="mr-2 h-4 w-4" />
-              )}
-              Guardar clasificacion
-            </Button>
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setDraft(record.config)}
+            disabled={!hasChanges || isSaving}
+          >
+            Resetear cambios
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setDraft(CRM_LEAD_STATUS_PROMPT_DEFAULTS)}
+            disabled={isSaving}
+          >
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Defaults actuales
+          </Button>
+          <Button type="button" onClick={handleSave} disabled={!hasChanges || isSaving}>
+            {isSaving ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="mr-2 h-4 w-4" />
+            )}
+            Guardar clasificacion
+          </Button>
         </div>
       </div>
     </div>
