@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, type RefObject } from "react";
-import { Activity, BarChart3, CheckCheck, Clock3 } from "lucide-react";
+import { Activity, BarChart3, CheckCheck, Clock3, Settings2 } from "lucide-react";
 import {
     Bar,
     BarChart,
@@ -22,10 +23,10 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { RegistroWithSession, TipoRegistro } from "@/types/session";
 import { getTipoLabel } from "../../helpers";
-import { CrmFollowUpRulesPanel } from "../../rules/components/CrmFollowUpRulesPanel";
 import { MetricCard } from "./MetricCard";
 import type { DashboardStats } from "./MainDashboard";
 import { TagStatsCard } from "./TagStatsCard";
@@ -121,17 +122,19 @@ export const CrmDashboard = ({
             <div className="flex h-full min-w-0 flex-col gap-2">
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
                     <div className="space-y-1">
-                        <p className="text-sm font-semibold">Follow-up IA del CRM</p>
+                        <p className="text-sm font-semibold">Reglas IA del CRM</p>
                         <p className="text-sm text-muted-foreground">
-                            Una sola cola inteligente basada en el estado del lead,
-                            el resumen del CRM y las reglas de envio configurables.
+                            Gestiona en una vista dedicada los follow-ups, la
+                            clasificacion de lead y el sintetizador del CRM.
                         </p>
                     </div>
 
-                    {/* <CrmFollowUpRulesPanel
-                        userId={userId}
-                        onUpdated={onFollowUpChanged}
-                    /> */}
+                    <Button asChild>
+                        <Link href="/crm/rules">
+                            <Settings2 className="h-4 w-4" />
+                            Reglas
+                        </Link>
+                    </Button>
                 </div>
 
                 <div className="flex flex-wrap gap-3">

@@ -34,7 +34,7 @@ function getStatusClassName(status: SessionCrmFollowUpSummary["latestStatus"]) {
     case "PENDING":
       return "border-amber-200 bg-amber-50 text-amber-700";
     case "PROCESSING":
-      return "border-sky-200 bg-sky-50 text-sky-700";
+      return "border-blue-200 bg-blue-50 text-blue-700";
     case "SENT":
       return "border-emerald-200 bg-emerald-50 text-emerald-700";
     case "FAILED":
@@ -102,7 +102,7 @@ export function CrmFollowUpSummaryBadge({
       </Badge>
 
       {summary.active > 0 && (
-        <Badge variant="outline" className="border-sky-200 text-sky-700">
+        <Badge variant="outline" className="border-blue-200 text-blue-700">
           Activos {summary.active}
         </Badge>
       )}

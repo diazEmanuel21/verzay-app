@@ -17,6 +17,7 @@ export const navigationRoutes: NavigationRoutesInterface[] = [
     { route: "/connection" },
     { route: "/crm" },
     { route: "/crm/dashboard" },
+    { route: "/crm/rules" },
     { route: "/ia" },
     { route: "/tags" },
     { route: "/ai" },

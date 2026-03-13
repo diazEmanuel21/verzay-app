@@ -28,7 +28,7 @@ import {
 } from "@/lib/crm-ai-prompt-rules";
 import { toast } from "sonner";
 import { getTipoLabel } from "@/app/(root)/crm/helpers/getTipoLabel";
-import { CrmWizardStepper, type CrmWizardStep } from "./CrmWizardStepper";
+import { CrmWizardStep, CrmWizardStepper } from "./CrmWizardStepper";
 
 const STEPS: CrmWizardStep[] = [
   {
@@ -362,11 +362,11 @@ export function CrmLeadFunnelPromptWizard({
               <Input readOnly value={CRM_LEAD_NAME_JSON_PLACEHOLDER} />
             </div>
 
-            <div className="rounded-2xl border border-border/70 bg-sky-50 p-4 text-sky-900">
+            <div className="rounded-2xl border border-border/70 bg-blue-50 p-4 text-blue-900">
               <p className="text-sm font-medium">
                 El nombre del lead se inyecta de forma segura al ejecutar.
               </p>
-              <p className="mt-2 text-sm text-sky-800/80">
+              <p className="mt-2 text-sm text-blue-800/80">
                 El front define el prompt y el backend solo reemplaza el token
                 `{CRM_LEAD_NAME_JSON_PLACEHOLDER}` por el valor serializado.
               </p>
@@ -395,7 +395,7 @@ export function CrmLeadFunnelPromptWizard({
     <div className="flex h-full min-h-0 flex-col">
       <div className="border-b border-border/70 px-6 py-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className="border-sky-200 text-sky-700">
+          <Badge variant="outline" className="border-blue-200 text-blue-700">
             <Sparkles className="mr-1 h-3.5 w-3.5" />
             Sintetizador IA
           </Badge>

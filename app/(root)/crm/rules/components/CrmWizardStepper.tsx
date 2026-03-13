@@ -31,7 +31,7 @@ export function CrmWizardStepper({
             className={cn(
               "h-auto items-start justify-start rounded-2xl border px-4 py-3 text-left",
               isActive
-                ? "border-sky-300 bg-sky-50 text-sky-900"
+                ? "border-blue-300 bg-blue-50 text-blue-900"
                 : "border-border/70 bg-background text-muted-foreground"
             )}
             onClick={() => onStepChange(step.id)}
