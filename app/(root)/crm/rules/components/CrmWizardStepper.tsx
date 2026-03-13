@@ -21,29 +21,26 @@ export function CrmWizardStepper({
   onStepChange: (stepId: string) => void;
 }) {
   return (
-    <div className="grid gap-2 lg:grid-cols-4">
-      {steps.map((step, index) => {
-        const isActive = step.id === currentStep;
+    <TooltipProvider>
+      <div className="grid gap-2 lg:grid-cols-4">
+        {steps.map((step, index) => {
+          const isActive = step.id === currentStep;
 
-        return (
-          <TooltipProvider>
-            <Tooltip>
+          return (
+            <Tooltip key={step.id}>
               <TooltipTrigger asChild>
                 <Button
-                  key={step.id}
                   type="button"
-                  variant={"outline"}
+                  variant="outline"
                   className={cn(
                     "h-auto items-start justify-start rounded-2xl border px-4 py-3 text-left",
-                    isActive
-                      ? "border-blue-300"
-                      : "border-border/70"
+                    isActive ? "border-blue-300" : "border-border/70"
                   )}
                   onClick={() => onStepChange(step.id)}
                 >
                   <div className="space-y-1">
                     <div className="flex flex-row gap-2">
-                      <InfoIcon className="text-blue-300"/>
+                      <InfoIcon className="text-blue-300" />
                       <div className="font-semibold uppercase tracking-[0.18em]">
                         Paso {index + 1}
                       </div>
@@ -54,15 +51,12 @@ export function CrmWizardStepper({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>
-                  {step.description}
-                </p>
+                <p>{step.description}</p>
               </TooltipContent>
             </Tooltip>
-          </TooltipProvider>
-
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+    </TooltipProvider>
   );
 }
