@@ -5,6 +5,7 @@ import { ESTADOS_POR_TIPO } from "@/types/registro";
 export const CRM_AGENT_PROMPT_IDS = {
   leadStatus: "crm-lead-status-classifier",
   leadFunnel: "crm-lead-funnel-synthesizer",
+  systemPrompAI: "system-prompt-ai",
 } as const;
 
 export type CrmPromptKind = keyof typeof CRM_AGENT_PROMPT_IDS;
