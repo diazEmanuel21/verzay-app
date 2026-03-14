@@ -1,7 +1,7 @@
 "use server";
 
 import type { LeadStatus } from "@/types/session";
-import { assertUserCanUseApp } from "@/actions/billing/helpers/app-access-guard";
+import { assertAuthorizedCrmFeatureEnabled } from "@/actions/crm-feature-access";
 import { db } from "@/lib/db";
 import {
   computeCrmFollowUpScheduledFor,
@@ -124,7 +124,7 @@ export async function getCrmFollowUpRules(
   userId: string
 ): Promise<RuleActionResult<{ rules: CrmFollowUpRuleConfig[]; timezone: string | null }>> {
   try {
-    await assertUserCanUseApp(userId);
+    await assertAuthorizedCrmFeatureEnabled(userId, "crmFollowUps");
 
     const [user, rules] = await Promise.all([
       db.user.findUnique({
@@ -146,7 +146,10 @@ export async function getCrmFollowUpRules(
     console.error("[getCrmFollowUpRules]", error);
     return {
       success: false,
-      message: "No se pudieron cargar las reglas de follow-up.",
+      message:
+        error instanceof Error
+          ? error.message
+          : "No se pudieron cargar las reglas de follow-up.",
     };
   }
 }
@@ -155,7 +158,7 @@ export async function updateCrmFollowUpRule(
   input: UpdateCrmFollowUpRuleInput
 ): Promise<RuleActionResult<CrmFollowUpRuleConfig>> {
   try {
-    await assertUserCanUseApp(input.userId);
+    await assertAuthorizedCrmFeatureEnabled(input.userId, "crmFollowUps");
 
     const normalized = normalizeCrmFollowUpRule({
       ...input,
@@ -298,7 +301,10 @@ export async function updateCrmFollowUpRule(
     console.error("[updateCrmFollowUpRule]", error);
     return {
       success: false,
-      message: "No se pudo actualizar la regla de follow-up.",
+      message:
+        error instanceof Error
+          ? error.message
+          : "No se pudo actualizar la regla de follow-up.",
     };
   }
 }

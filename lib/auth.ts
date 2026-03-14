@@ -54,6 +54,8 @@ export async function currentUser(request?: Request) {
             timezone: true,
             meetingUrl: true,
             enabledSynthesizer: true,
+            enabledLeadStatusClassifier: true,
+            enabledCrmFollowUps: true,
         },
     });
 

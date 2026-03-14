@@ -52,11 +52,11 @@ export function normalizeWhatsAppJid(value: string) {
 export function pickTemplate(args: {
     daysRemaining: number;
     graceDays: number;
-    is3DaysBefore: boolean;
+    isDaysBefore: boolean;
     isDueToday: boolean;
     isExpiredBeyondGrace: boolean;
 }): BillingTemplateType | null {
-    if (args.is3DaysBefore) return "REMINDER_3D";
+    if (args.isDaysBefore) return "REMINDER_3D";
     if (args.isDueToday) return "DUE_TODAY";
     if (args.isExpiredBeyondGrace) return "EXPIRED";
     return null;

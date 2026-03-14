@@ -22,7 +22,15 @@ type FilterOptions = {
   resellerId?: string;
 };
 const RESTRICTED_FIELDS = new Set<string>(['openMsg']);
-const BOOLEAN_FIELDS = ['muteAgentResponses', 'onFacebook', 'onInstagram', 'enabledSynthesizer', 'status'] as const;
+const BOOLEAN_FIELDS = [
+  'muteAgentResponses',
+  'onFacebook',
+  'onInstagram',
+  'enabledSynthesizer',
+  'enabledLeadStatusClassifier',
+  'enabledCrmFollowUps',
+  'status',
+] as const;
 
 /** Normaliza un booleano desde FormData (soporta hidden+checkbox, "true"/"on") */
 const normalizeBoolean = (fd: FormData, key: string): boolean | undefined => {

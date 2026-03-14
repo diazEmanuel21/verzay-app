@@ -294,7 +294,7 @@ export async function runBillingDailyJobInternal(requireAuth: boolean): Promise<
 
                 const due = new Date(b.dueDate);
                 const daysRemaining = differenceInCalendarDays(due, now);
-                const is3DaysBefore = daysRemaining === SOON_DAYS_BILLING;
+                const isDaysBefore = daysRemaining === SOON_DAYS_BILLING;
                 const isDueToday = daysRemaining === 0;
                 const grace = Number(b.graceDays || 0);
                 const isExpiredBeyondGrace = daysRemaining <= -grace && daysRemaining < 0 && grace > 0;
@@ -302,7 +302,7 @@ export async function runBillingDailyJobInternal(requireAuth: boolean): Promise<
                 const template = pickTemplate({
                     daysRemaining,
                     graceDays: grace,
-                    is3DaysBefore,
+                    isDaysBefore,
                     isDueToday,
                     isExpiredBeyondGrace,
                 });

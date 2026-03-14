@@ -81,6 +81,8 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             delayTimeGpt: '12',//tiempo en minutos
             muteAgentResponses: false,
             enabledSynthesizer: false,
+            enabledLeadStatusClassifier: false,
+            enabledCrmFollowUps: false,
             onFacebook: false,
             onInstagram: false,
             preferredCurrencyCode: 'COP',

@@ -7,7 +7,16 @@ const CrmRulesPage = async () => {
     const user = await currentUser();
     if (!user) redirect("/login");
 
-    return <MainCrmRules userId={user.id} />;
+    return (
+        <MainCrmRules
+            userId={user.id}
+            features={{
+                enabledSynthesizer: user.enabledSynthesizer ?? false,
+                enabledLeadStatusClassifier: user.enabledLeadStatusClassifier ?? false,
+                enabledCrmFollowUps: user.enabledCrmFollowUps ?? false,
+            }}
+        />
+    );
 };
 
 export default CrmRulesPage;

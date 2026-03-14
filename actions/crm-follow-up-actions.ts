@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { assertAuthorizedCrmFeatureEnabled } from "@/actions/crm-feature-access";
 import {
   computeCrmFollowUpScheduledFor,
   normalizeCrmFollowUpRule,
@@ -116,6 +117,7 @@ export async function retrySessionFailedCrmFollowUps(
   try {
     const sessionCheck = await ensureSessionOwnership(input);
     if (!sessionCheck.ok) return sessionCheck.result;
+    await assertAuthorizedCrmFeatureEnabled(sessionCheck.input.userId, "crmFollowUps");
 
     const failedFollowUps = await db.crmFollowUp.findMany({
       where: {
@@ -236,7 +238,10 @@ export async function retrySessionFailedCrmFollowUps(
     console.error("[retrySessionFailedCrmFollowUps]", error);
     return {
       success: false,
-      message: "No se pudieron reactivar los follow-ups fallidos.",
+      message:
+        error instanceof Error
+          ? error.message
+          : "No se pudieron reactivar los follow-ups fallidos.",
     };
   }
 }

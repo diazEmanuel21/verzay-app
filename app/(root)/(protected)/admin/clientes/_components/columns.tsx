@@ -15,6 +15,15 @@ const resellerFilterFn = (row: Row<any>, columnId: string, filterValue: string) 
   return resellerName.includes(filterValue.toLowerCase())
 };
 
+const renderFeatureBadge = (enabled: boolean) => (
+  <Badge
+    variant="outline"
+    className={enabled ? "border-emerald-200 text-emerald-700" : "border-rose-200 text-rose-700"}
+  >
+    {enabled ? "Activo" : "Inactivo"}
+  </Badge>
+);
+
 export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogType, state: boolean) => void, currentUserRol: string): ColumnDef<ClientInterface>[] => [
   {
     accessorKey: 'status',
@@ -141,6 +150,34 @@ export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogT
       </Button>
     ),
     cell: ({ row }) => <StatusCell enabledSynthesizer={row.original.enabledSynthesizer} />,
+  },
+  {
+    accessorKey: 'enabledLeadStatusClassifier',
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        className="text-sm"
+      >
+        Lead status
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => renderFeatureBadge(row.original.enabledLeadStatusClassifier),
+  },
+  {
+    accessorKey: 'enabledCrmFollowUps',
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        className="text-sm"
+      >
+        Follow-ups IA
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => renderFeatureBadge(row.original.enabledCrmFollowUps),
   },
   // {
   //   accessorKey: 'messagePause',

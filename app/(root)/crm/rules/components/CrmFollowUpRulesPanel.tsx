@@ -20,6 +20,9 @@ import { CrmLeadFunnelPromptWizard } from "./CrmLeadFunnelPromptWizard";
 import { CrmLeadStatusPromptWizard } from "./CrmLeadStatusPromptWizard";
 import { LoadingState } from "./LoadingState";
 import { Separator } from "@/components/ui/separator";
+import type { CrmFeatureFlags } from "@/types/crm-feature-flags";
+
+type ManagedCrmPromptKind = keyof CrmPromptRecordMap;
 
 function serializeRules(rules: CrmFollowUpRuleConfig[]) {
   return JSON.stringify(
@@ -32,24 +35,55 @@ function serializeRules(rules: CrmFollowUpRuleConfig[]) {
 
 export function CrmFollowUpRulesPanel({
   userId,
+  features,
   onUpdated,
 }: {
   userId: string;
+  features: CrmFeatureFlags;
   onUpdated?: () => Promise<void> | void;
 }) {
-  const [activeTab, setActiveTab] = useState("followUps");
+  const availableTabs = useMemo(() => {
+    const tabs: Array<{
+      value: "followUps" | "leadStatus" | "leadFunnel";
+      label: string;
+    }> = [];
+
+    if (features.enabledCrmFollowUps) {
+      tabs.push({ value: "followUps", label: "Follow-ups" });
+    }
+
+    if (features.enabledLeadStatusClassifier) {
+      tabs.push({ value: "leadStatus", label: "Clasificacion lead" });
+    }
+
+    if (features.enabledSynthesizer) {
+      tabs.push({ value: "leadFunnel", label: "Sintetizador" });
+    }
+
+    return tabs;
+  }, [features]);
+  const [activeTab, setActiveTab] = useState<
+    "followUps" | "leadStatus" | "leadFunnel"
+  >(availableTabs[0]?.value ?? "followUps");
   const [rulesLoading, setRulesLoading] = useState(false);
   const [promptsLoading, setPromptsLoading] = useState(false);
   const [timezone, setTimezone] = useState<string | null>(null);
   const [rules, setRules] = useState<CrmFollowUpRuleConfig[]>([]);
   const [initialRules, setInitialRules] = useState<CrmFollowUpRuleConfig[]>([]);
-  const [promptRecords, setPromptRecords] = useState<CrmPromptRecordMap | null>(
+  const [promptRecords, setPromptRecords] = useState<Partial<CrmPromptRecordMap> | null>(
     null
   );
   const [isSaving, startSavingTransition] = useTransition();
   const timeOptions = useMemo(() => generateCrmFollowUpTimeOptions(), []);
 
   const loadRules = useCallback(async () => {
+    if (!features.enabledCrmFollowUps) {
+      setRules([]);
+      setInitialRules([]);
+      setTimezone(null);
+      return;
+    }
+
     setRulesLoading(true);
 
     try {
@@ -71,13 +105,26 @@ export function CrmFollowUpRulesPanel({
     } finally {
       setRulesLoading(false);
     }
-  }, [userId]);
+  }, [features.enabledCrmFollowUps, userId]);
 
   const loadPrompts = useCallback(async () => {
+    const kinds: ManagedCrmPromptKind[] = [];
+    if (features.enabledLeadStatusClassifier) {
+      kinds.push("leadStatus");
+    }
+    if (features.enabledSynthesizer) {
+      kinds.push("leadFunnel");
+    }
+
+    if (kinds.length === 0) {
+      setPromptRecords({});
+      return;
+    }
+
     setPromptsLoading(true);
 
     try {
-      const result = await getCrmPromptRules(userId);
+      const result = await getCrmPromptRules(userId, kinds);
       if (!result.success || !result.data) {
         toast.error(result.message);
         return;
@@ -93,17 +140,36 @@ export function CrmFollowUpRulesPanel({
     } finally {
       setPromptsLoading(false);
     }
-  }, [userId]);
+  }, [
+    features.enabledLeadStatusClassifier,
+    features.enabledSynthesizer,
+    userId,
+  ]);
 
   useEffect(() => {
-    if (rules.length === 0 && !rulesLoading) {
+    if (availableTabs.length === 0) return;
+
+    if (!availableTabs.some((tab) => tab.value === activeTab)) {
+      setActiveTab(availableTabs[0].value);
+    }
+  }, [activeTab, availableTabs]);
+
+  useEffect(() => {
+    if (features.enabledCrmFollowUps && rules.length === 0 && !rulesLoading) {
       void loadRules();
     }
 
-    if (!promptRecords && !promptsLoading) {
+    if (
+      (features.enabledLeadStatusClassifier || features.enabledSynthesizer) &&
+      !promptRecords &&
+      !promptsLoading
+    ) {
       void loadPrompts();
     }
   }, [
+    features.enabledCrmFollowUps,
+    features.enabledLeadStatusClassifier,
+    features.enabledSynthesizer,
     loadPrompts,
     loadRules,
     promptRecords,
@@ -215,24 +281,28 @@ export function CrmFollowUpRulesPanel({
     });
   }, [initialRules, loadRules, onUpdated, rules, userId]);
 
+  if (availableTabs.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed border-border/70 px-4 py-6 text-sm text-muted-foreground">
+        No hay funciones CRM IA habilitadas para este usuario.
+      </div>
+    );
+  }
+
   return (
     <Tabs
       value={activeTab}
-      onValueChange={setActiveTab}
+      onValueChange={(value) =>
+        setActiveTab(value as "followUps" | "leadStatus" | "leadFunnel")
+      }
       className="flex min-h-0 flex-1 flex-col"
     >
       <TabsList className="flex justify-start">
-        <TabsTrigger value="followUps">
-          Follow-ups
-        </TabsTrigger>
-
-        <TabsTrigger value="leadStatus">
-          Clasificacion lead
-        </TabsTrigger>
-
-        <TabsTrigger value="leadFunnel">
-          Sintetizador
-        </TabsTrigger>
+        {availableTabs.map((tab) => (
+          <TabsTrigger key={tab.value} value={tab.value}>
+            {tab.label}
+          </TabsTrigger>
+        ))}
       </TabsList>
 
       <Separator />
@@ -254,9 +324,9 @@ export function CrmFollowUpRulesPanel({
       </TabsContent>
 
       <TabsContent value="leadStatus">
-        {promptsLoading && !promptRecords ? (
+        {promptsLoading && !promptRecords?.leadStatus ? (
           <LoadingState label="Cargando wizard de clasificacion..." />
-        ) : promptRecords ? (
+        ) : promptRecords?.leadStatus ? (
           <CrmLeadStatusPromptWizard
             userId={userId}
             record={promptRecords.leadStatus}
@@ -277,9 +347,9 @@ export function CrmFollowUpRulesPanel({
       </TabsContent>
 
       <TabsContent value="leadFunnel">
-        {promptsLoading && !promptRecords ? (
+        {promptsLoading && !promptRecords?.leadFunnel ? (
           <LoadingState label="Cargando wizard del sintetizador..." />
-        ) : promptRecords ? (
+        ) : promptRecords?.leadFunnel ? (
           <CrmLeadFunnelPromptWizard
             userId={userId}
             record={promptRecords.leadFunnel}

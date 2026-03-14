@@ -53,13 +53,29 @@ export const EditDialog = ({
 
   const [tz, setTz] = useState<string>(user.timezone ?? "");
   const [enSi, setEnSi] = useState<boolean>(user.enabledSynthesizer ?? false);
+  const [enLeadStatus, setEnLeadStatus] = useState<boolean>(
+    user.enabledLeadStatusClassifier ?? false
+  );
+  const [enCrmFollowUps, setEnCrmFollowUps] = useState<boolean>(
+    user.enabledCrmFollowUps ?? false
+  );
   const [userStatus, setUserStatus] = useState<boolean>(user.status ?? false);
 
   useEffect(() => {
     setTz(user.timezone ?? "");
     setEnSi(user.enabledSynthesizer ?? false);
+    setEnLeadStatus(user.enabledLeadStatusClassifier ?? false);
+    setEnCrmFollowUps(user.enabledCrmFollowUps ?? false);
     setUserStatus(user.status ?? false);
-  }, [user.id, openEditDialog, user.timezone, user.enabledSynthesizer, user.status]);
+  }, [
+    user.id,
+    openEditDialog,
+    user.timezone,
+    user.enabledSynthesizer,
+    user.enabledLeadStatusClassifier,
+    user.enabledCrmFollowUps,
+    user.status,
+  ]);
 
   let fields = [
     {
@@ -78,6 +94,18 @@ export const EditDialog = ({
       id: "enabledSynthesizer",
       label: "Activar sintetizador",
       defaultValue: user.enabledSynthesizer ?? false,
+      readOnly: false,
+    },
+    {
+      id: "enabledLeadStatusClassifier",
+      label: "Clasificar lead por estado",
+      defaultValue: user.enabledLeadStatusClassifier ?? false,
+      readOnly: false,
+    },
+    {
+      id: "enabledCrmFollowUps",
+      label: "Follow-ups inteligentes",
+      defaultValue: user.enabledCrmFollowUps ?? false,
       readOnly: false,
     },
 
@@ -209,6 +237,42 @@ export const EditDialog = ({
               id="enabledSynthesizer"
               checked={checked}
               onCheckedChange={(state: boolean) => { setEnSi(state) }}
+              disabled={readOnly}
+            />
+          </div>
+        )
+      }
+      case 'enabledLeadStatusClassifier': {
+        const checked = enLeadStatus;
+        return (
+          <div className="col-span-3 flex items-center gap-3">
+            <input
+              type="hidden"
+              name="enabledLeadStatusClassifier"
+              value={checked ? "true" : "false"}
+            />
+            <Switch
+              id="enabledLeadStatusClassifier"
+              checked={checked}
+              onCheckedChange={(state: boolean) => { setEnLeadStatus(state) }}
+              disabled={readOnly}
+            />
+          </div>
+        )
+      }
+      case 'enabledCrmFollowUps': {
+        const checked = enCrmFollowUps;
+        return (
+          <div className="col-span-3 flex items-center gap-3">
+            <input
+              type="hidden"
+              name="enabledCrmFollowUps"
+              value={checked ? "true" : "false"}
+            />
+            <Switch
+              id="enabledCrmFollowUps"
+              checked={checked}
+              onCheckedChange={(state: boolean) => { setEnCrmFollowUps(state) }}
               disabled={readOnly}
             />
           </div>
