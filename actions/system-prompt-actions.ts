@@ -140,7 +140,7 @@ export async function patchExtrasSection(input: {
 }
 
 /** Obtiene o crea el draft del agente. */
-export async function getOrCreatePrompt(opts: { userId: string; agentId?: string }) {
+export async function getOrCreatePrompt(opts: { userId: string; agentId: string }) {
     const { userId, agentId } = opts;
 
     let prompt = await db.agentPrompt.findFirst({
@@ -189,9 +189,9 @@ export async function getOrCreatePrompt(opts: { userId: string; agentId?: string
 }
 
 /** Obtiene el prompt por id (rehidratación de UI). */
-export async function getCurrentPrompt(promptId: string) {
+export async function getCurrentPrompt(promptId: string, agentId: string) {
     return db.agentPrompt.findUnique({
-        where: { id: promptId },
+        where: { id: promptId, agentId },
     });
 }
 
