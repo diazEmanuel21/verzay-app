@@ -216,6 +216,34 @@ export async function updateInactivityNode(nodeId: string, inactividad: boolean)
   }
 }
 
+export async function updateNodeAiEnabled(nodeId: string, aiEnabled: boolean) {
+  try {
+    if (!nodeId) {
+      return {
+        success: false,
+        message: 'Parámetros inválidos.',
+      };
+    }
+
+    const updatedNode = await db.workflowNode.update({
+      where: { id: nodeId },
+      data: { aiEnabled },
+    });
+
+    return {
+      success: true,
+      message: 'Configuración de IA actualizada con éxito.',
+      data: updatedNode,
+    };
+  } catch (error) {
+    console.error('Error update node ai enabled', error);
+    return {
+      success: false,
+      message: 'Ocurrió un error al actualizar la configuración de IA.',
+    };
+  }
+}
+
 // Método para eliminar un nodo
 export async function deleteNode(nodeId: string, workflowId: string) {
   try {

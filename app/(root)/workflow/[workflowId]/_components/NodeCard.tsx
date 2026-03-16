@@ -1,8 +1,8 @@
 'use client';
 
-import { ChangeEvent, useState, useTransition } from "react";
+import { ChangeEvent, useEffect, useState, useTransition } from "react";
 import { useRouter } from 'next/navigation';
-import { updateNode, deleteNode, updateUrlNode, updateDelayNode, deleteFileNode, updateInactivityNode } from "@/actions/workflow-node-action";
+import { updateNode, deleteNode, updateUrlNode, updateDelayNode, deleteFileNode, updateInactivityNode, updateNodeAiEnabled } from "@/actions/workflow-node-action";
 import { ACCEPT_TYPES, getAcceptTypeString, optimizeFile, validateFileType } from "../helpers";
 import { NodeActions } from "./NodeActions";
 import { Card, CardHeader, CardFooter, CardContent } from "@/components/ui/card";
@@ -31,7 +31,8 @@ export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCar
   const [loading, setLoading] = useState(false);
   const [isDraggingFile, setIsDragging] = useState(false);
   const [inactivity, setInactivity] = useState(nodes.inactividad ?? false);
-  const [iaEnabled, setIaEnabled] = useState(false);
+  const [iaEnabled, setIaEnabled] = useState(nodes.aiEnabled ?? false);
+  const [isSavingAiEnabled, setIsSavingAiEnabled] = useState(false);
 
   const nodeType = nodes.tipo?.toLowerCase() as Action['type'];
   const baseType = nodeType.startsWith('seguimiento-')
@@ -52,6 +53,10 @@ export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCar
   const labelSegumientoCategory = isSeguimiento
     ? `Seguimiento ${currentAction?.label.replace('Seguimiento ', '')}`
     : currentAction?.label;
+
+  useEffect(() => {
+    setIaEnabled(nodes.aiEnabled ?? false);
+  }, [nodes.aiEnabled]);
 
   const handleInactivity = async (checked: boolean) => {
     if (loading) return;
@@ -83,6 +88,31 @@ export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCar
       });
     }
     setIsEditing(false);
+  };
+
+  const handleAiEnabled = async (checked: boolean) => {
+    if (isSavingAiEnabled) return;
+
+    const previousValue = iaEnabled;
+    setIaEnabled(checked);
+    setIsSavingAiEnabled(true);
+
+    const toastId = `update-ai-enabled-${nodes.id}`;
+
+    try {
+      const res = await updateNodeAiEnabled(nodes.id, checked);
+      if (!res?.success) {
+        setIaEnabled(previousValue);
+        return toast.error(res?.message ?? 'Error', { id: toastId });
+      }
+
+      toast.success(res.message, { id: toastId });
+    } catch (error) {
+      setIaEnabled(previousValue);
+      toast.error(`Server err: ${error}`, { id: toastId });
+    } finally {
+      setIsSavingAiEnabled(false);
+    }
   };
 
   const handleDeleteNode = async () => {
@@ -226,7 +256,8 @@ export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCar
                 <Switch
                   id={`ai-enabled-${nodes.id}`}
                   checked={iaEnabled}
-                  onCheckedChange={setIaEnabled}
+                  onCheckedChange={handleAiEnabled}
+                  disabled={isSavingAiEnabled}
                   className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-400"
                 />
                 <Label htmlFor={`ai-enabled-${nodes.id}`} className="text-sm font-semibold">

@@ -1,10 +1,10 @@
 'use client';
 
-import { ChangeEvent, useState, useTransition } from "react";
+import { ChangeEvent, useEffect, useState, useTransition } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { useRouter } from 'next/navigation';
 import { User, WorkflowNode } from "@prisma/client";
-import { updateNode, deleteNode, updateUrlNode, updateDelayNode, deleteFileNode } from "@/actions/workflow-node-action";
+import { updateNode, deleteNode, updateUrlNode, updateDelayNode, deleteFileNode, updateNodeAiEnabled } from "@/actions/workflow-node-action";
 import { ACCEPT_TYPES, baseActions, getAcceptTypeString, legacySeguimientoActions, optimizeFile, validateFileType } from "../helpers";
 import { Action } from "../types";
 import { NodeActions } from "./NodeActions";
@@ -56,7 +56,8 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDraggingFile, setIsDragging] = useState(false);
-  const [iaEnabled, setIaEnabled] = useState(false); // true = muestra el TimeInput al inicio
+  const [iaEnabled, setIaEnabled] = useState(nodes.aiEnabled ?? false); // true = muestra el TimeInput al inicio
+  const [isSavingAiEnabled, setIsSavingAiEnabled] = useState(false);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -91,6 +92,10 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
   const labelSegumientoCategory = isSeguimiento
     ? `Seguimiento ${currentAction?.label.replace('Seguimiento ', '')}`
     : currentAction?.label;
+
+  useEffect(() => {
+    setIaEnabled(nodes.aiEnabled ?? false);
+  }, [nodes.aiEnabled]);
 
   const handleSave = () => {
     if (message !== nodes.message) {
@@ -271,6 +276,31 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
     setDelay(delay);
   };
 
+  const handleAiEnabled = async (checked: boolean) => {
+    if (isSavingAiEnabled) return;
+
+    const previousValue = iaEnabled;
+    setIaEnabled(checked);
+    setIsSavingAiEnabled(true);
+    const toastId = `update-ai-enabled-${nodes.id}`;
+
+    try {
+      const res = await updateNodeAiEnabled(nodes.id, checked);
+
+      if (!res?.success) {
+        setIaEnabled(previousValue);
+        return toast.error(res?.message ?? 'Error', { id: toastId });
+      }
+
+      toast.success(res.message, { id: toastId });
+    } catch (error) {
+      setIaEnabled(previousValue);
+      toast.error(`Error actualizando IA: ${error}`, { id: toastId });
+    } finally {
+      setIsSavingAiEnabled(false);
+    }
+  };
+
   const handleOnBlurTime = async () => {
     if (!delay) return;
     if (parseInt(delay) === 0) return;
@@ -302,7 +332,8 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
                 <Switch
                   id="airplane-mode"
                   checked={iaEnabled}
-                  onCheckedChange={setIaEnabled}
+                  onCheckedChange={handleAiEnabled}
+                  disabled={isSavingAiEnabled}
                   className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-400"
                 />
                 <Label
