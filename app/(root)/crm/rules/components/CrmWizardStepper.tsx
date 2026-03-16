@@ -33,7 +33,7 @@ export function CrmWizardStepper({
                   type="button"
                   variant="outline"
                   className={cn(
-                    "h-auto items-start justify-start rounded-2xl border px-4 py-3 text-left",
+                    "h-auto items-start justify-start rounded-2xl border text-left",
                     isActive ? "border-blue-300" : "border-border/70"
                   )}
                   onClick={() => onStepChange(step.id)}

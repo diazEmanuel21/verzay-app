@@ -392,8 +392,8 @@ export function CrmLeadFunnelPromptWizard({
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-2">
-      <div className="flex flex-col flex-1 gap-4">
+    <div className="flex h-full min-h-0 flex-col gap-4">
+      <div className="shrink-0 space-y-4">
         <div className="flex flex-row items-center gap-2 text-sm">
           <Badge variant="outline" className="border-blue-200 text-blue-700">
             <Sparkles className="mr-1 h-3.5 w-3.5" />
@@ -412,11 +412,13 @@ export function CrmLeadFunnelPromptWizard({
         />
       </div>
 
-      <ScrollArea className="flex-1">
-        {content}
-      </ScrollArea>
+      <div className="min-h-0 flex-1">
+        <ScrollArea className="h-full pr-4">
+          <div className="space-y-4">{content}</div>
+        </ScrollArea>
+      </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4">
         <div className="flex gap-2">
           <Button
             type="button"
@@ -460,7 +462,11 @@ export function CrmLeadFunnelPromptWizard({
             <RotateCcw className="mr-2 h-4 w-4" />
             Defaults actuales
           </Button>
-          <Button type="button" onClick={handleSave} disabled={!hasChanges || isSaving}>
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={!hasChanges || isSaving}
+          >
             {isSaving ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (

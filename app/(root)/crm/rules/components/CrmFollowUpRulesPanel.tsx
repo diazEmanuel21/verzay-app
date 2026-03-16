@@ -295,9 +295,9 @@ export function CrmFollowUpRulesPanel({
       onValueChange={(value) =>
         setActiveTab(value as "followUps" | "leadStatus" | "leadFunnel")
       }
-      className="flex min-h-0 flex-1 flex-col"
+      className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
     >
-      <TabsList className="flex justify-start">
+      <TabsList className="flex justify-start shrink-0">
         {availableTabs.map((tab) => (
           <TabsTrigger key={tab.value} value={tab.value}>
             {tab.label}
@@ -305,9 +305,12 @@ export function CrmFollowUpRulesPanel({
         ))}
       </TabsList>
 
-      <Separator />
+      <Separator className="shrink-0 mb-2" />
 
-      <TabsContent value="followUps">
+      <TabsContent
+        value="followUps"
+        className="mt-0 flex-1 min-h-0 overflow-hidden"
+      >
         <CrmFollowUpWizard
           rules={rules}
           loading={rulesLoading}
@@ -323,7 +326,10 @@ export function CrmFollowUpRulesPanel({
         />
       </TabsContent>
 
-      <TabsContent value="leadStatus">
+      <TabsContent
+        value="leadStatus"
+        className="mt-0 flex-1 min-h-0 overflow-hidden"
+      >
         {promptsLoading && !promptRecords?.leadStatus ? (
           <LoadingState label="Cargando wizard de clasificacion..." />
         ) : promptRecords?.leadStatus ? (
@@ -346,7 +352,10 @@ export function CrmFollowUpRulesPanel({
         )}
       </TabsContent>
 
-      <TabsContent value="leadFunnel">
+      <TabsContent
+        value="leadFunnel"
+        className="mt-0 flex-1 min-h-0 overflow-hidden"
+      >
         {promptsLoading && !promptRecords?.leadFunnel ? (
           <LoadingState label="Cargando wizard del sintetizador..." />
         ) : promptRecords?.leadFunnel ? (
