@@ -19,6 +19,11 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   CRM_LEAD_FUNNEL_PROMPT_DEFAULTS,
   CRM_LEAD_NAME_JSON_PLACEHOLDER,
   CRM_PROMPT_RECORD_TYPES,
@@ -362,11 +367,11 @@ export function CrmLeadFunnelPromptWizard({
               <Input readOnly value={CRM_LEAD_NAME_JSON_PLACEHOLDER} />
             </div>
 
-            <div className="rounded-2xl border border-border/70 bg-blue-50 p-4 text-blue-900">
+            <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 text-foreground">
               <p className="text-sm font-medium">
                 El nombre del lead se inyecta de forma segura al ejecutar.
               </p>
-              <p className="mt-2 text-sm text-blue-800/80">
+              <p className="mt-2 text-sm text-muted-foreground">
                 El front define el prompt y el backend solo reemplaza el token
                 `{CRM_LEAD_NAME_JSON_PLACEHOLDER}` por el valor serializado.
               </p>
@@ -395,11 +400,28 @@ export function CrmLeadFunnelPromptWizard({
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div className="shrink-0 space-y-4">
         <div className="flex flex-row items-center gap-2 text-sm">
-          <Badge variant="outline" className="border-blue-200 text-blue-700">
-            <Sparkles className="mr-1 h-3.5 w-3.5" />
-            Sintetizador IA
-          </Badge>
-          <span className="text-sm text-muted-foreground">
+          <Tooltip delayDuration={120}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label="Informacion sobre Sintetizador IA"
+                className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <Badge
+                  variant="outline"
+                  className="border-primary/20 bg-primary/5 text-primary"
+                >
+                  <Sparkles className="mr-1 h-3.5 w-3.5" />
+                  Sintetizador IA
+                </Badge>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-72 sm:hidden">
+              Controla como la IA decide si un mensaje es reporte o registro del
+              CRM y como resume cada caso.
+            </TooltipContent>
+          </Tooltip>
+          <span className="hidden text-sm text-muted-foreground sm:inline">
             Controla como la IA decide si un mensaje es reporte o registro del
             CRM y como resume cada caso.
           </span>

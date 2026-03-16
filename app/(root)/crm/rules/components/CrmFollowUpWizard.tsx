@@ -117,11 +117,11 @@ export function CrmFollowUpWizard({
                             </p>
                         </div>
 
-                        <div className="rounded-2xl border border-border/70 bg-blue-50 p-4 text-blue-900">
+                        <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 text-foreground">
                             <p className="text-sm font-medium">
                                 Cada estado tiene su propia regla de recontacto.
                             </p>
-                            <p className="mt-2 text-sm text-blue-800/80">
+                            <p className="mt-2 text-sm text-muted-foreground">
                                 El sistema usa delay, dias habilitados, ventana horaria, prompt y fallback
                                 para decidir cuando y como enviar cada follow-up.
                             </p>
@@ -299,7 +299,7 @@ export function CrmFollowUpWizard({
                                         className={cn(
                                             "rounded-full border px-3 py-1 text-sm transition-colors",
                                             selected
-                                                ? "border-blue-300 bg-blue-50 text-blue-700"
+                                                ? "border-primary/25 bg-primary/10 text-primary"
                                                 : "border-border bg-background text-muted-foreground",
                                             !currentRule.enabled && "cursor-not-allowed opacity-60"
                                         )}
@@ -370,15 +370,18 @@ export function CrmFollowUpWizard({
     return (
         <div className="flex h-full min-h-0 flex-col gap-4">
             <div className="shrink-0 space-y-4">
-                <div className="flex items-center gap-2 text-sm">
-                    <Badge variant="outline" className="border-blue-200 text-blue-700">
+                {/* <div className="flex items-center gap-2 text-sm">
+                    <Badge
+                        variant="outline"
+                        className="border-primary/20 bg-primary/5 text-primary"
+                    >
                         <Sparkles className="mr-1 h-3.5 w-3.5" />
                         IA CRM
                     </Badge>
                     <span className="text-muted-foreground">
                         Zona horaria actual: {timezone || "America/Bogota"}
                     </span>
-                </div>
+                </div> */}
 
                 <CrmWizardStepper
                     steps={steps}

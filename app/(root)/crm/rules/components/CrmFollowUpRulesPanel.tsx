@@ -305,8 +305,6 @@ export function CrmFollowUpRulesPanel({
         ))}
       </TabsList>
 
-      <Separator className="shrink-0 mb-2" />
-
       <TabsContent
         value="followUps"
         className="mt-0 flex-1 min-h-0 overflow-hidden"

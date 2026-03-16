@@ -396,7 +396,7 @@ export function WorkflowCanvas({
       >
         <Background />
         <Controls />
-        <MiniMap />
+        {/* <MiniMap /> */}
       </ReactFlow>
     </div>
   );
