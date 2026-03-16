@@ -48,16 +48,16 @@ export function CrmFollowUpRulesPanel({
       label: string;
     }> = [];
 
-    if (features.enabledCrmFollowUps) {
-      tabs.push({ value: "followUps", label: "Follow-ups" });
+    if (features.enabledSynthesizer) {
+      tabs.push({ value: "leadFunnel", label: "Sintetizador" });
     }
 
     if (features.enabledLeadStatusClassifier) {
       tabs.push({ value: "leadStatus", label: "Clasificacion lead" });
     }
 
-    if (features.enabledSynthesizer) {
-      tabs.push({ value: "leadFunnel", label: "Sintetizador" });
+    if (features.enabledCrmFollowUps) {
+      tabs.push({ value: "followUps", label: "Follow-ups" });
     }
 
     return tabs;
