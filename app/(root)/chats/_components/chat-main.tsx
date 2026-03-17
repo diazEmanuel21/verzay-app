@@ -105,10 +105,40 @@ const CHAT_TIME_FORMATTER = new Intl.DateTimeFormat('es-CO', {
   hour12: true,
   timeZone: SERVER_TIME_ZONE,
 });
+const CHAT_DAY_KEY_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  timeZone: SERVER_TIME_ZONE,
+});
+const CHAT_DATE_BADGE_FORMATTER = new Intl.DateTimeFormat('es-CO', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: SERVER_TIME_ZONE,
+});
 
 /* -------- Helpers -------- */
 function two(n: number) {
   return n.toString().padStart(2, '0');
+}
+function getCalendarDayKey(timestamp?: number) {
+  if (!timestamp) return '';
+
+  const parts = CHAT_DAY_KEY_FORMATTER.formatToParts(new Date(timestamp));
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+  const day = parts.find((part) => part.type === 'day')?.value;
+
+  if (!year || !month || !day) return '';
+  return `${year}-${month}-${day}`;
+}
+function formatConversationDateLabel(timestamp?: number) {
+  if (!timestamp) return '';
+
+  const formatted = CHAT_DATE_BADGE_FORMATTER.format(new Date(timestamp));
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 function base64FromBlob(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -369,6 +399,14 @@ const MessageBubble: React.FC<{
   );
 };
 
+const ConversationDateBadge: React.FC<{ label: string }> = ({ label }) => (
+  <div className="sticky top-2 z-10 my-3 flex justify-center pointer-events-none">
+    <div className="rounded-full border border-slate-200/80 bg-white/90 px-3 py-1 text-[0.68rem] font-medium text-slate-600 shadow-sm backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/85 dark:text-slate-200">
+      {label}
+    </div>
+  </div>
+);
+
 const ChatMessageList: React.FC<{
   uiMessages: UIBubble[];
   loading?: boolean;
@@ -380,21 +418,46 @@ const ChatMessageList: React.FC<{
     if (tempMessage) list.push(tempMessage);
     return list;
   }, [uiMessages, tempMessage]);
+  const renderedList = useMemo(() => {
+    const items: Array<
+      | { type: 'date'; id: string; label: string }
+      | { type: 'message'; id: string; message: UIBubble }
+    > = [];
+    let previousDayKey = '';
+
+    for (const msg of fullList) {
+      const currentDayKey = getCalendarDayKey(msg.ts);
+      if (currentDayKey && currentDayKey !== previousDayKey) {
+        items.push({
+          type: 'date',
+          id: `date-${currentDayKey}`,
+          label: formatConversationDateLabel(msg.ts),
+        });
+        previousDayKey = currentDayKey;
+      }
+
+      items.push({ type: 'message', id: msg.id, message: msg });
+    }
+
+    return items;
+  }, [fullList]);
 
   return (
     <div className="flex-1 overflow-y-auto p-4 flex flex-col custom-scrollbar w-full" ref={listRef}>
       {loading && <div className="text-center text-gray-500 py-4">Cargando mensajes…</div>}
-      {fullList.map((msg) =>
-        msg.status === 'sending' ? (
-          <SendingMessageSkeleton key={msg.id} tempMessage={msg} />
+      {renderedList.map((item) =>
+        item.type === 'date' ? (
+          <ConversationDateBadge key={item.id} label={item.label} />
+        ) : item.message.status === 'sending' ? (
+          <SendingMessageSkeleton key={item.id} tempMessage={item.message} />
         ) : (
           <MessageBubble
-            key={msg.id}
-            message={msg.content}
-            isUserMessage={msg.sender === 'user'}
-            avatarSrc={msg.avatarSrc}
-            timestamp={msg.ts}
-            media={msg.media}
+            key={item.id}
+            message={item.message.content}
+            isUserMessage={item.message.sender === 'user'}
+            avatarSrc={item.message.avatarSrc}
+            timestamp={item.message.ts}
+            media={item.message.media}
           />
         )
       )}
