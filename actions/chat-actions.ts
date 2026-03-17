@@ -5,6 +5,7 @@ import { Buffer } from 'buffer';
 import {
   buildWhatsAppJidCandidates,
   normalizeWhatsAppConversationJid,
+  pickExplicitWhatsAppPhoneJid,
   pickPreferredWhatsAppRemoteJid,
 } from '@/lib/whatsapp-jid';
 
@@ -91,11 +92,28 @@ const mergeAliases = (...values: Array<Array<string | null | undefined> | undefi
 const getObservedChatAliases = (chat: ChatData) =>
   mergeAliases(
     [chat.remoteJid],
+    [chat.remoteJidAlt ?? null, chat.senderPn ?? null],
     chat.aliases,
-    [chat.lastMessage?.key?.remoteJid ?? null, chat.lastMessage?.key?.senderLid ?? null],
+    [
+      chat.lastMessage?.key?.remoteJid ?? null,
+      chat.lastMessage?.key?.remoteJidAlt ?? null,
+      chat.lastMessage?.key?.senderLid ?? null,
+      chat.lastMessage?.key?.senderPn ?? null,
+      chat.lastMessage?.senderPn ?? null,
+    ],
   );
 const getChatIdentityCandidates = (chat: ChatData) =>
   buildWhatsAppJidCandidates(chat.remoteJid, getObservedChatAliases(chat));
+const getObservedPhoneJid = (chat: ChatData) =>
+  pickExplicitWhatsAppPhoneJid([
+    chat.remoteJid,
+    chat.remoteJidAlt,
+    chat.senderPn,
+    chat.lastMessage?.key?.remoteJid,
+    chat.lastMessage?.key?.remoteJidAlt,
+    chat.lastMessage?.key?.senderPn,
+    chat.lastMessage?.senderPn,
+  ]);
 const hasLidSignal = (chat: ChatData) =>
   getObservedChatAliases(chat).some((alias) => alias.toLowerCase().endsWith('@lid')) ||
   Boolean(trimText(chat.lastMessage?.key?.senderLid));
@@ -112,6 +130,9 @@ const normalizeLastMessage = (
   const normalizedRemoteJid =
     pickPreferredWhatsAppRemoteJid([
       lastMessage.key?.remoteJid,
+      lastMessage.key?.remoteJidAlt,
+      lastMessage.key?.senderPn,
+      lastMessage.senderPn,
       fallbackRemoteJid,
       lastMessage.key?.senderLid,
     ]) || fallbackRemoteJid;
@@ -136,7 +157,13 @@ const mergeChatEntries = (current: ChatData, next: ChatData) => {
     [current.lastMessage?.key?.senderLid ?? null, next.lastMessage?.key?.senderLid ?? null],
   );
   const mergedRemoteJid =
-    pickPreferredWhatsAppRemoteJid([primary.remoteJid, secondary.remoteJid, ...aliases]) ||
+    pickPreferredWhatsAppRemoteJid([
+      getObservedPhoneJid(primary),
+      getObservedPhoneJid(secondary),
+      primary.remoteJid,
+      secondary.remoteJid,
+      ...aliases,
+    ]) ||
     primary.remoteJid ||
     secondary.remoteJid;
   const primaryLastMessageTs = epochToMs(primary.lastMessage?.messageTimestamp);
@@ -149,6 +176,8 @@ const mergeChatEntries = (current: ChatData, next: ChatData) => {
     ...primary,
     remoteJid: mergedRemoteJid,
     pushName: primary.pushName || secondary.pushName,
+    remoteJidAlt: primary.remoteJidAlt || secondary.remoteJidAlt,
+    senderPn: primary.senderPn || secondary.senderPn,
     profilePicUrl: primary.profilePicUrl || secondary.profilePicUrl,
     lastMessage: normalizeLastMessage(latestLastMessage, mergedRemoteJid),
     unreadCount: Number(current.unreadCount ?? 0) + Number(next.unreadCount ?? 0),
@@ -195,7 +224,11 @@ const mergeChatDataByConversation = (chats: ChatData[]) => {
       aliases: getObservedChatAliases(chat),
     };
     normalizedChat.remoteJid =
-      pickPreferredWhatsAppRemoteJid([normalizedChat.remoteJid, ...(normalizedChat.aliases ?? [])]) ||
+      pickPreferredWhatsAppRemoteJid([
+        getObservedPhoneJid(normalizedChat),
+        normalizedChat.remoteJid,
+        ...(normalizedChat.aliases ?? []),
+      ]) ||
       normalizedChat.remoteJid;
     normalizedChat.lastMessage = normalizeLastMessage(
       normalizedChat.lastMessage,
@@ -445,8 +478,16 @@ export type MessageContent = {
 
 export type EvolutionMessage = {
   id?: string;
-  key?: { id?: string; fromMe?: boolean; remoteJid?: string; senderLid?: string };
+  key?: {
+    id?: string;
+    fromMe?: boolean;
+    remoteJid?: string;
+    remoteJidAlt?: string;
+    senderLid?: string;
+    senderPn?: string;
+  };
   pushName?: string | null;
+  senderPn?: string | null;
   participant?: string | null;
   messageType?: string;
   message: MessageContent;
@@ -461,8 +502,16 @@ export type EvolutionMessage = {
 
 export type LastMessage = {
   id: string | null;
-  key: { id: string; fromMe: boolean; remoteJid: string; senderLid?: string };
+  key: {
+    id: string;
+    fromMe: boolean;
+    remoteJid: string;
+    remoteJidAlt?: string;
+    senderLid?: string;
+    senderPn?: string;
+  };
   pushName: string | null;
+  senderPn?: string | null;
   participant: string | null;
   messageType: string;
   message: MessageContent;
@@ -477,6 +526,8 @@ export type LastMessage = {
 export type ChatData = {
   id: string | null;
   remoteJid: string;
+  remoteJidAlt?: string | null;
+  senderPn?: string | null;
   aliases?: string[];
   pushName: string | null;
   profilePicUrl: string | null;

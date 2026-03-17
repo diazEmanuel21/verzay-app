@@ -71,25 +71,21 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
 
     try {
         // Buscar o registrar sesión
-        let session = await db.session.findFirst({ where: { userId, remoteJid: phone } });
+        const register = await registerSession({
+            userId,
+            remoteJid: phone,
+            pushName,
+            instanceId: instanceName,
+        });
 
-        if (!session) {
-            const register = await registerSession({
-                userId,
-                remoteJid: phone,
-                pushName,
-                instanceId: instanceName,
-            });
-
-            if (!register.success || !register.data) {
-                return {
-                    success: false,
-                    message: register.message || 'Error al registrar sesión.',
-                };
-            }
-
-            session = register.data;
+        if (!register.success || !register.data) {
+            return {
+                success: false,
+                message: register.message || 'Error al registrar sesión.',
+            };
         }
+
+        const session = register.data;
 
         if (pushName && session?.id) {
             await db.session.update({

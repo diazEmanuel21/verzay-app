@@ -591,6 +591,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
           instanceId: info.instanceName,
           pushName: header.name,
           ensureExists: candidate === info.remoteJid,
+          aliases: remoteJidCandidates,
         });
 
         if (result.success && result.data) {

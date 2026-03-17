@@ -20,6 +20,7 @@ import { assertUserCanUseApp } from './billing/helpers/app-access-guard';
 import {
   buildWhatsAppJidCandidates,
   normalizeWhatsAppConversationJid,
+  pickExplicitWhatsAppPhoneJid,
   pickObservedAlternateRemoteJid,
   pickPreferredWhatsAppRemoteJid,
 } from '@/lib/whatsapp-jid';
@@ -45,10 +46,26 @@ export type GetSessionByRemoteJidOptions = {
   instanceId?: string;
   pushName?: string;
   ensureExists?: boolean;
+  aliases?: Array<string | null | undefined>;
+  remoteJidAlt?: string;
+  senderPn?: string;
 };
 
-function buildRemoteJidCandidates(remoteJid: string) {
-  return buildWhatsAppJidCandidates(remoteJid);
+function buildRemoteJidCandidates(
+  remoteJid: string,
+  extras: Array<string | null | undefined> = [],
+) {
+  return buildWhatsAppJidCandidates(remoteJid, extras);
+}
+
+function resolvePreferredRemoteJid(values: Array<string | null | undefined>) {
+  return (
+    pickExplicitWhatsAppPhoneJid(values) ||
+    pickPreferredWhatsAppRemoteJid(values) ||
+    normalizeWhatsAppConversationJid(values.find((value) => value?.trim()) ?? '') ||
+    values.find((value) => value?.trim())?.trim() ||
+    ''
+  );
 }
 
 function scoreSessionMatch(
@@ -492,16 +509,18 @@ export async function registerSession(input: z.infer<typeof registerSessionSchem
     };
   }
 
-  const { userId, remoteJid, pushName, instanceId } = validation.data; //TODO: ELIMINAR PARA CAMBIOS ALEXANDER. Se debe cambiar el schema
+  const { userId, remoteJid, remoteJidAlt, senderPn, pushName, instanceId } = validation.data; //TODO: ELIMINAR PARA CAMBIOS ALEXANDER. Se debe cambiar el schema
 
   try {
     const trimmedRemoteJid = remoteJid.trim();
     const trimmedInstanceId = instanceId.trim();
-    const candidates = buildRemoteJidCandidates(trimmedRemoteJid);
-    const preferredRemoteJid =
-      pickPreferredWhatsAppRemoteJid([trimmedRemoteJid]) ||
-      normalizeWhatsAppConversationJid(trimmedRemoteJid) ||
-      trimmedRemoteJid;
+    const observedAliases = [
+      trimmedRemoteJid,
+      remoteJidAlt?.trim(),
+      senderPn?.trim(),
+    ];
+    const candidates = buildRemoteJidCandidates(trimmedRemoteJid, observedAliases);
+    const preferredRemoteJid = resolvePreferredRemoteJid(observedAliases);
 
     const existingSession = await db.session.findFirst({
       where: {
@@ -517,7 +536,7 @@ export async function registerSession(input: z.infer<typeof registerSessionSchem
 
     if (existingSession) {
       const remoteJidAlt = pickObservedAlternateRemoteJid(preferredRemoteJid, [
-        trimmedRemoteJid,
+        ...observedAliases,
         existingSession.remoteJid,
         existingSession.remoteJidAlt,
       ]);
@@ -543,7 +562,7 @@ export async function registerSession(input: z.infer<typeof registerSessionSchem
       data: {
         userId,
         remoteJid: preferredRemoteJid,
-        remoteJidAlt: pickObservedAlternateRemoteJid(preferredRemoteJid, [trimmedRemoteJid]),
+        remoteJidAlt: pickObservedAlternateRemoteJid(preferredRemoteJid, observedAliases),
         pushName,
         instanceId: trimmedInstanceId, //TODO: ELIMINAR PARA CAMBIOS ALEXANDER. Se debe cambiar el schema
         status: true,
@@ -581,11 +600,14 @@ export async function getSessionByRemoteJid(
     }
 
     const trimmedRemoteJid = remoteJid.trim();
-    const candidates = buildRemoteJidCandidates(trimmedRemoteJid);
-    const preferredRemoteJid =
-      pickPreferredWhatsAppRemoteJid([trimmedRemoteJid]) ||
-      normalizeWhatsAppConversationJid(trimmedRemoteJid) ||
-      trimmedRemoteJid;
+    const observedAliases = [
+      trimmedRemoteJid,
+      options?.remoteJidAlt?.trim(),
+      options?.senderPn?.trim(),
+      ...(options?.aliases ?? []),
+    ];
+    const candidates = buildRemoteJidCandidates(trimmedRemoteJid, observedAliases);
+    const preferredRemoteJid = resolvePreferredRemoteJid(observedAliases);
     const trimmedInstanceId = options?.instanceId?.trim();
 
     const sessions = await db.session.findMany({
@@ -621,7 +643,7 @@ export async function getSessionByRemoteJid(
         data: {
           userId,
           remoteJid: preferredRemoteJid,
-          remoteJidAlt: pickObservedAlternateRemoteJid(preferredRemoteJid, [trimmedRemoteJid]),
+          remoteJidAlt: pickObservedAlternateRemoteJid(preferredRemoteJid, observedAliases),
           pushName: options.pushName?.trim() || 'Desconocido',
           instanceId: trimmedInstanceId,
           status: true,
@@ -649,8 +671,10 @@ export async function getSessionByRemoteJid(
       resolvedSession.remoteJid;
     const normalizedRemoteJidAlt = pickObservedAlternateRemoteJid(normalizedRemoteJid, [
       trimmedRemoteJid,
+      options?.remoteJidAlt?.trim(),
       resolvedSession.remoteJid,
       resolvedSession.remoteJidAlt,
+      ...(options?.aliases ?? []),
     ]);
     const normalizedPushName = options?.pushName?.trim() || resolvedSession.pushName;
 

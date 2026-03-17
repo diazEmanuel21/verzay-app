@@ -6,6 +6,7 @@ import {
   computeCrmFollowUpScheduledFor,
   normalizeCrmFollowUpRule,
 } from "@/lib/crm-follow-up-rules";
+import { buildWhatsAppJidCandidates } from "@/lib/whatsapp-jid";
 
 export type CrmFollowUpSessionActionResult = {
   success: boolean;
@@ -31,6 +32,7 @@ function normalizeSessionInput(input: CrmFollowUpSessionInput) {
 
 async function ensureSessionOwnership(input: CrmFollowUpSessionInput) {
   const normalized = normalizeSessionInput(input);
+  const candidates = buildWhatsAppJidCandidates(normalized.remoteJid);
 
   if (!normalized.userId || !normalized.remoteJid || !normalized.instanceId) {
     return {
@@ -45,8 +47,11 @@ async function ensureSessionOwnership(input: CrmFollowUpSessionInput) {
   const session = await db.session.findFirst({
     where: {
       userId: normalized.userId,
-      remoteJid: normalized.remoteJid,
       instanceId: normalized.instanceId,
+      OR: [
+        { remoteJid: { in: candidates } },
+        { remoteJidAlt: { in: candidates } },
+      ],
     },
     select: {
       id: true,

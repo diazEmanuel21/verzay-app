@@ -64,6 +64,27 @@ export function normalizeWhatsAppConversationJid(value: string) {
   return `${digits}${WHATSAPP_USER_JID_SUFFIX}`;
 }
 
+export function pickExplicitWhatsAppPhoneJid(values: Array<string | null | undefined>) {
+  const cleanedValues = values.map((value) => cleanValue(value)).filter(Boolean);
+
+  const explicitUserJid = cleanedValues.find((value) =>
+    value.toLowerCase().endsWith(WHATSAPP_USER_JID_SUFFIX),
+  );
+  if (explicitUserJid) {
+    return explicitUserJid;
+  }
+
+  const digitsOnlyValue = cleanedValues.find((value) => !value.includes('@') && extractWhatsAppDigits(value));
+  if (digitsOnlyValue) {
+    const digits = extractWhatsAppDigits(digitsOnlyValue);
+    if (digits) {
+      return `${digits}${WHATSAPP_USER_JID_SUFFIX}`;
+    }
+  }
+
+  return '';
+}
+
 export function buildWhatsAppJidCandidates(
   value: string,
   extraValues: Array<string | null | undefined> = [],
