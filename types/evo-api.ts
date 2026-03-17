@@ -1,4 +1,4 @@
-import { SERVER_TIME_ZONE } from "./schedule";
+import { SERVER_TIME_ZONE } from "@/lib/utils";
 
 //  cooldown anti-spam
 export const DISCONNECT_COOLDOWN_MS = 30 * 60 * 1000; // 30 min

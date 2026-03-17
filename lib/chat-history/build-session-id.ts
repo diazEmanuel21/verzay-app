@@ -1,6 +1,24 @@
-const WHATSAPP_JID_SUFFIX = '@s.whatsapp.net';
+import {
+  buildWhatsAppJidCandidates,
+  normalizeWhatsAppConversationJid,
+} from '@/lib/whatsapp-jid';
 
 export function normalizeChatHistoryRemoteJid(remoteJid: string): string {
+  const safeRemoteJid = remoteJid?.trim();
+
+  if (!safeRemoteJid) {
+    throw new Error('remoteJid es requerido para construir el sessionId.');
+  }
+
+  const normalizedRemoteJid = normalizeWhatsAppConversationJid(safeRemoteJid);
+  if (!normalizedRemoteJid) {
+    throw new Error('remoteJid no es valido para construir el sessionId.');
+  }
+
+  return normalizedRemoteJid;
+}
+
+function normalizeLegacyChatHistoryRemoteJid(remoteJid: string): string {
   const safeRemoteJid = remoteJid?.trim();
 
   if (!safeRemoteJid) {
@@ -17,7 +35,7 @@ export function normalizeChatHistoryRemoteJid(remoteJid: string): string {
     throw new Error('remoteJid no es valido para construir el sessionId.');
   }
 
-  return `${digitsOnly}${WHATSAPP_JID_SUFFIX}`;
+  return `${digitsOnly}@s.whatsapp.net`;
 }
 
 export function extractInstanceNameFromSendTextUrl(url: string): string | null {
@@ -52,4 +70,34 @@ export function buildChatHistorySessionId(instanceName: string, remoteJid: strin
   }
 
   return `${safeInstance}-${normalizeChatHistoryRemoteJid(remoteJid)}`;
+}
+
+export function buildChatHistorySessionIdCandidates(
+  instanceName: string,
+  remoteJid: string,
+): string[] {
+  const safeInstance = instanceName?.trim();
+
+  if (!safeInstance) {
+    throw new Error('instanceName es requerido para construir el sessionId.');
+  }
+
+  const candidates = buildWhatsAppJidCandidates(remoteJid);
+  const sessionIds = new Set<string>();
+
+  for (const candidate of candidates) {
+    try {
+      sessionIds.add(`${safeInstance}-${normalizeLegacyChatHistoryRemoteJid(candidate)}`);
+    } catch {
+      // Ignora aliases invalidos.
+    }
+
+    try {
+      sessionIds.add(`${safeInstance}-${normalizeChatHistoryRemoteJid(candidate)}`);
+    } catch {
+      // Ignora aliases invalidos.
+    }
+  }
+
+  return Array.from(sessionIds);
 }

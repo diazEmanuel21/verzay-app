@@ -1,4 +1,5 @@
 import type { LeadStatus } from "@/types/session";
+import { SERVER_TIME_ZONE } from "./utils";
 
 export type CrmFollowUpRuleConfig = {
   id: string;
@@ -34,7 +35,7 @@ export const CRM_FOLLOW_UP_WEEKDAY_OPTIONS = [
   { value: 0, label: "Dom" },
 ] as const;
 
-const DEFAULT_CRM_FOLLOW_UP_TIMEZONE = "America/Bogota";
+const DEFAULT_CRM_FOLLOW_UP_TIMEZONE = SERVER_TIME_ZONE;
 const CRM_FOLLOW_UP_WEEKDAY_MAP: Record<string, number> = {
   Sun: 0,
   Mon: 1,

@@ -24,7 +24,7 @@ import {
     CRM_FOLLOW_UP_WEEKDAY_OPTIONS,
     type CrmFollowUpRuleConfig,
 } from "@/lib/crm-follow-up-rules";
-import { cn } from "@/lib/utils";
+import { cn, SERVER_TIME_ZONE } from "@/lib/utils";
 import { getLeadStatusLabel } from "../../dashboard/helpers";
 import { LoadingState } from "./LoadingState";
 import { CrmWizardStep, CrmWizardStepper } from "./CrmWizardStepper";
@@ -113,7 +113,7 @@ export function CrmFollowUpWizard({
                                 Zona horaria activa
                             </p>
                             <p className="mt-2 text-sm font-medium">
-                                {timezone || "America/Bogota"}
+                                {SERVER_TIME_ZONE || "America/Bogota"}
                             </p>
                         </div>
 
@@ -379,7 +379,7 @@ export function CrmFollowUpWizard({
                         IA CRM
                     </Badge>
                     <span className="text-muted-foreground">
-                        Zona horaria actual: {timezone || "America/Bogota"}
+                        Zona horaria actual: {SERVER_TIME_ZONE || "America/Bogota"}
                     </span>
                 </div> */}
 

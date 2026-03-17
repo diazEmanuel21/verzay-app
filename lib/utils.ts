@@ -10,6 +10,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export const SERVER_TIME_ZONE = 'America/Bogota';
+
 // ERROR HANDLER
 export const handleError = (error: unknown) => {
   if (error instanceof Error) {

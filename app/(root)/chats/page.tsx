@@ -18,6 +18,7 @@ import type { ApiKey, Instancia } from "@prisma/client";
 import { ChatsClient } from "./_components/chats-client";
 import { buildChatHistorySessionId } from "@/lib/chat-history/build-session-id";
 import { saveChatHistoryMessage } from "@/lib/chat-history/chat-history.helper";
+import { normalizeWhatsAppConversationJid } from "@/lib/whatsapp-jid";
 
 // Tipos importados desde ChatMain (cliente)
 import type { OutgoingMessagePayload } from "./_components/chat-main";
@@ -109,12 +110,21 @@ export default async function ChatsPage({
     };
   }
 
+  const requestedJid = searchParams?.jid
+    ? normalizeWhatsAppConversationJid(searchParams.jid) || searchParams.jid
+    : "";
+  const initialSelectedChat =
+    chatsResult.success && requestedJid
+      ? chatsResult.data.find(
+        (chat) => chat.remoteJid === requestedJid || chat.aliases?.includes(requestedJid)
+      )
+      : undefined;
   const initialSelectedJid =
-    chatsResult.success && searchParams?.jid
-      ? searchParams.jid
+    initialSelectedChat?.remoteJid
+      ? initialSelectedChat.remoteJid
       : chatsResult.success && chatsResult.data.length > 0
         ? chatsResult.data[0].remoteJid
-        : "";
+        : requestedJid;
 
   // Precarga inicial de mensajes
   let initialMessages: EvoMsgFromAction[] = [];
@@ -123,7 +133,11 @@ export default async function ChatsPage({
       { url: apiKey.url, key: apiKey.key },
       whatsappInstancia.instanceName,
       initialSelectedJid,
-      { page: 1, pageSize: 50 }
+      {
+        page: 1,
+        pageSize: 50,
+        remoteJidAliases: initialSelectedChat?.aliases,
+      }
     );
     if (msgsRes.success) {
       initialMessages = msgsRes.data || [];
@@ -137,7 +151,7 @@ export default async function ChatsPage({
     whatsappInstancia && apiKey
       ? async (
         remoteJid: string,
-        options?: { page?: number; pageSize?: number }
+        options?: { page?: number; pageSize?: number; remoteJidAliases?: string[] }
       ) => {
         "use server";
         return findMessagesByRemoteJid(

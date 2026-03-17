@@ -21,7 +21,7 @@ import { CalendarIcon, CheckCircle2, Clock, ScrollText, User2 } from "lucide-rea
 import { es } from "date-fns/locale";
 import { DateHourComponent, ScheduleForm, ServiceComponent, SummaryComponent } from "./steps";
 import { SummaryItem } from "./";
-import { SERVER_TIME_ZONE } from "@/types/schedule";
+import { SERVER_TIME_ZONE } from "@/lib/utils";
 
 export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInterface) => {
     // ── UI Steeps

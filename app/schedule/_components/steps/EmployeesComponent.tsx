@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Search, Users, Check, X, Clock } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn, SERVER_TIME_ZONE } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,6 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { SERVER_TIME_ZONE } from "@/types/schedule";
 
 type Employee = {
   id: string;

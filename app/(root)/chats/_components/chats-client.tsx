@@ -5,6 +5,7 @@ import { ChatSidebar } from "./chat-sidebar";
 import { ChatMain } from "./chat-main";
 
 import type {
+  ChatData,
   EvolutionMessage,
   FetchChatsResult,
   FindMessagesResult,
@@ -47,7 +48,7 @@ interface ChatsClientProps {
 
   warmMessages?: (
     remoteJid: string,
-    opts?: { page?: number; pageSize?: number }
+    opts?: { page?: number; pageSize?: number; remoteJidAliases?: string[] }
   ) => Promise<FindMessagesResult>;
 
   /** Server Action unificada para enviar texto o media */
@@ -77,6 +78,12 @@ export function ChatsClient({
   userId,
   allTags
 }: ChatsClientProps) {
+  const initialSelectedChat =
+    initialChatsResult.success && initialSelectedJid
+      ? initialChatsResult.data.find(
+        (chat) => chat.remoteJid === initialSelectedJid || chat.aliases?.includes(initialSelectedJid)
+      )
+      : undefined;
   const [selectedJid, setSelectedJid] = useState(initialSelectedJid || "");
   const [currentChatsResult, setCurrentChatsResult] = useState(initialChatsResult);
   const [messages, setMessages] = useState<EvolutionMessage[]>(initialMessages || []);
@@ -88,12 +95,18 @@ export function ChatsClient({
       nextPage?: number | null;
       instanceName?: string;
       remoteJid?: string;
+      remoteJidAliases?: string[];
       apiKeyData?: ApiKeyData;
     }
     | undefined
   >(
     initialSelectedJid
-      ? { instanceName, remoteJid: initialSelectedJid, apiKeyData }
+      ? {
+        instanceName,
+        remoteJid: initialSelectedJid,
+        remoteJidAliases: initialSelectedChat?.aliases,
+        apiKeyData,
+      }
       : undefined
   );
 
@@ -119,7 +132,7 @@ export function ChatsClient({
 
   const currentContact = useMemo(() => {
     if (!contacts.length || !selectedJid) return undefined;
-    return contacts.find((c) => c.remoteJid === selectedJid);
+    return contacts.find((c) => c.remoteJid === selectedJid || c.aliases?.includes(selectedJid));
   }, [contacts, selectedJid]);
 
   const header = useMemo(() => {
@@ -133,9 +146,16 @@ export function ChatsClient({
   // Autoselección inicial si no hay JID seleccionado
   useEffect(() => {
     if (!selectedJid && contacts.length > 0) {
-      const first = contacts[0].remoteJid;
+      const firstContact = contacts[0];
+      const first = firstContact.remoteJid;
       setSelectedJid(first);
-      setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid: first, apiKeyData }));
+      setInfo((i) => ({
+        ...(i ?? {}),
+        instanceName,
+        remoteJid: first,
+        remoteJidAliases: firstContact.aliases,
+        apiKeyData,
+      }));
       if (!initialSelectedJid) setMessages([]);
       // 🆕 En la autoselección inicial, si hay un JID inicial, oculta la sidebar (comportamiento de móvil)
       if (initialSelectedJid) setIsSidebarVisible(false);
@@ -148,24 +168,24 @@ export function ChatsClient({
   }, []);
 
   const pollAndCompareMessages = useCallback(
-    async (remoteJid: string) => {
+    async (remoteJid: string, remoteJidAliases?: string[]) => {
       if (!warmMessages || inFlightRef.current) return;
       if (typeof document !== "undefined" && document.hidden) return;
 
       inFlightRef.current = true;
-      try {
-        const page = 1;
-        const pageSize = 50;
-        const res = await warmMessages(remoteJid, { page, pageSize });
+        try {
+          const page = 1;
+          const pageSize = 50;
+          const res = await warmMessages(remoteJid, { page, pageSize, remoteJidAliases });
 
-        if (res?.success) {
-          const newMessages = res.data || [];
-          setMessages((prevMsgs) => {
-            if (areListsDifferent(prevMsgs, newMessages)) {
-              setInfo({ ...res, instanceName, remoteJid, apiKeyData });
-              return newMessages;
-            }
-            return prevMsgs;
+          if (res?.success) {
+            const newMessages = res.data || [];
+            setMessages((prevMsgs) => {
+              if (areListsDifferent(prevMsgs, newMessages)) {
+                setInfo({ ...res, instanceName, remoteJid, remoteJidAliases, apiKeyData });
+                return newMessages;
+              }
+              return prevMsgs;
           });
           backoffRef.current = 0;
         } else {
@@ -188,12 +208,17 @@ export function ChatsClient({
 
   const handleSelectFromSidebar = useCallback(
     async (remoteJid: string) => {
+      const selectedContact = contacts.find(
+        (contact) => contact.remoteJid === remoteJid || contact.aliases?.includes(remoteJid)
+      );
+      const remoteJidAliases = selectedContact?.aliases;
+
       if (selectedJid !== remoteJid) setSelectedJid(remoteJid);
 
       // 🆕 LÓGICA DE VISIBILIDAD: Oculta la Sidebar al seleccionar un chat (para móvil)
       if (isSidebarVisible) setIsSidebarVisible(false);
 
-      setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid, apiKeyData }));
+      setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid, remoteJidAliases, apiKeyData }));
       setLoading(true);
       setMessages([]);
 
@@ -205,23 +230,23 @@ export function ChatsClient({
       try {
         const page = 1;
         const pageSize = 50;
-        const res = await warmMessages(remoteJid, { page, pageSize });
+        const res = await warmMessages(remoteJid, { page, pageSize, remoteJidAliases });
 
         if (res?.success) {
           setMessages(res.data || []);
-          setInfo({ ...res, instanceName, remoteJid, apiKeyData });
+          setInfo({ ...res, instanceName, remoteJid, remoteJidAliases, apiKeyData });
         } else {
           setMessages([]);
-          setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid, apiKeyData }));
+          setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid, remoteJidAliases, apiKeyData }));
         }
       } catch {
         setMessages([]);
-        setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid, apiKeyData }));
+        setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid, remoteJidAliases, apiKeyData }));
       } finally {
         setLoading(false);
       }
     },
-    [selectedJid, warmMessages, instanceName, apiKeyData, isSidebarVisible]
+    [selectedJid, warmMessages, instanceName, apiKeyData, isSidebarVisible, contacts]
   );
 
   const handleSendAny = useCallback(
@@ -236,7 +261,7 @@ export function ChatsClient({
         throw new Error(result.message || "No se pudo enviar el mensaje.");
       }
 
-      if (warmMessages) await pollAndCompareMessages(selectedJid);
+      if (warmMessages) await pollAndCompareMessages(selectedJid, currentContact?.aliases);
       const chatRefreshResult = await refetchChats();
       if (chatRefreshResult.success) {
         const filtered = {
@@ -248,7 +273,7 @@ export function ChatsClient({
         setCurrentChatsResult(filtered);
       }
     },
-    [selectedJid, sendAny, warmMessages, refetchChats, pollAndCompareMessages]
+    [selectedJid, sendAny, warmMessages, refetchChats, pollAndCompareMessages, currentContact]
   );
 
   // Polling sidebar
@@ -296,7 +321,7 @@ export function ChatsClient({
         if (messages.length === 0 && !loading) {
           await handleSelectFromSidebar(selectedJid);
         } else {
-          await pollAndCompareMessages(selectedJid);
+          await pollAndCompareMessages(selectedJid, currentContact?.aliases);
         }
       }
 
@@ -331,6 +356,7 @@ export function ChatsClient({
     };
   }, [
     selectedJid,
+    currentContact,
     warmMessages,
     pollAndCompareMessages,
     handleSelectFromSidebar,

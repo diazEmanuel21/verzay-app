@@ -17,6 +17,12 @@ import {
   SingleSessionResponse,
 } from '@/types/session';
 import { assertUserCanUseApp } from './billing/helpers/app-access-guard';
+import {
+  buildWhatsAppJidCandidates,
+  normalizeWhatsAppConversationJid,
+  pickObservedAlternateRemoteJid,
+  pickPreferredWhatsAppRemoteJid,
+} from '@/lib/whatsapp-jid';
 
 // 👉 schema para agregar varios tags a una sesión
 const addTagsToSessionSchema = z.object({
@@ -42,21 +48,22 @@ export type GetSessionByRemoteJidOptions = {
 };
 
 function buildRemoteJidCandidates(remoteJid: string) {
-  const raw = remoteJid.trim();
-  const digits = raw.replace(/[^\d]/g, '');
-  const set = new Set<string>();
+  return buildWhatsAppJidCandidates(remoteJid);
+}
 
-  if (raw) {
-    set.add(raw);
-  }
-
-  if (digits) {
-    set.add(digits);
-    set.add(`${digits}@s.whatsapp.net`);
-    set.add(`${digits}@lid`);
-  }
-
-  return Array.from(set);
+function scoreSessionMatch(
+  session: Pick<PrismaSession, 'remoteJid' | 'remoteJidAlt' | 'updatedAt'>,
+  requestedRemoteJid: string,
+  preferredRemoteJid: string,
+  candidates: string[],
+) {
+  if (session.remoteJid === preferredRemoteJid) return 0;
+  if (session.remoteJidAlt === preferredRemoteJid) return 1;
+  if (session.remoteJid === requestedRemoteJid) return 2;
+  if (session.remoteJidAlt === requestedRemoteJid) return 3;
+  if (candidates.includes(session.remoteJid)) return 4;
+  if (session.remoteJidAlt && candidates.includes(session.remoteJidAlt)) return 5;
+  return 99;
 }
 
 function createEmptyCrmFollowUpSummary(): SessionCrmFollowUpSummary {
@@ -310,12 +317,18 @@ export async function deleteSession(
   remoteJid: string
 ): Promise<SessionsListResponse> {
   try {
+    const candidates = buildRemoteJidCandidates(remoteJid);
     const session = await db.session.findFirst({
       where: {
         AND: [
           { id: sessionId },
           { userId: userId },
-          { remoteJid: remoteJid }
+          {
+            OR: [
+              { remoteJid: { in: candidates } },
+              { remoteJidAlt: { in: candidates } },
+            ],
+          },
         ]
       }
     });
@@ -366,6 +379,7 @@ export async function searchSessionsByUserId(
         OR: [
           { pushName: { contains: query, mode: "insensitive" } },
           { remoteJid: { contains: query, mode: "insensitive" } },
+          { remoteJidAlt: { contains: query, mode: "insensitive" } },
         ],
       },
       orderBy: { createdAt: "desc" },
@@ -481,15 +495,39 @@ export async function registerSession(input: z.infer<typeof registerSessionSchem
   const { userId, remoteJid, pushName, instanceId } = validation.data; //TODO: ELIMINAR PARA CAMBIOS ALEXANDER. Se debe cambiar el schema
 
   try {
+    const trimmedRemoteJid = remoteJid.trim();
+    const trimmedInstanceId = instanceId.trim();
+    const candidates = buildRemoteJidCandidates(trimmedRemoteJid);
+    const preferredRemoteJid =
+      pickPreferredWhatsAppRemoteJid([trimmedRemoteJid]) ||
+      normalizeWhatsAppConversationJid(trimmedRemoteJid) ||
+      trimmedRemoteJid;
+
     const existingSession = await db.session.findFirst({
-      where: { remoteJid, instanceId },  //TODO: ELIMINAR PARA CAMBIOS ALEXANDER. Se debe cambiar el schema
+      where: {
+        userId,
+        instanceId: trimmedInstanceId,
+        OR: [
+          { remoteJid: { in: candidates } },
+          { remoteJidAlt: { in: candidates } },
+        ],
+      },  //TODO: ELIMINAR PARA CAMBIOS ALEXANDER. Se debe cambiar el schema
+      orderBy: { updatedAt: 'desc' },
     });
 
     if (existingSession) {
+      const remoteJidAlt = pickObservedAlternateRemoteJid(preferredRemoteJid, [
+        trimmedRemoteJid,
+        existingSession.remoteJid,
+        existingSession.remoteJidAlt,
+      ]);
+
       const updated = await db.session.update({
         where: { id: existingSession.id },
         data: {
           pushName,
+          remoteJid: preferredRemoteJid,
+          remoteJidAlt,
           updatedAt: new Date(),
         },
       });
@@ -504,9 +542,10 @@ export async function registerSession(input: z.infer<typeof registerSessionSchem
     const created = await db.session.create({
       data: {
         userId,
-        remoteJid,
+        remoteJid: preferredRemoteJid,
+        remoteJidAlt: pickObservedAlternateRemoteJid(preferredRemoteJid, [trimmedRemoteJid]),
         pushName,
-        instanceId, //TODO: ELIMINAR PARA CAMBIOS ALEXANDER. Se debe cambiar el schema
+        instanceId: trimmedInstanceId, //TODO: ELIMINAR PARA CAMBIOS ALEXANDER. Se debe cambiar el schema
         status: true,
       },
     });
@@ -541,7 +580,12 @@ export async function getSessionByRemoteJid(
       };
     }
 
-    const candidates = buildRemoteJidCandidates(remoteJid);
+    const trimmedRemoteJid = remoteJid.trim();
+    const candidates = buildRemoteJidCandidates(trimmedRemoteJid);
+    const preferredRemoteJid =
+      pickPreferredWhatsAppRemoteJid([trimmedRemoteJid]) ||
+      normalizeWhatsAppConversationJid(trimmedRemoteJid) ||
+      trimmedRemoteJid;
     const trimmedInstanceId = options?.instanceId?.trim();
 
     const sessions = await db.session.findMany({
@@ -563,27 +607,8 @@ export async function getSessionByRemoteJid(
     });
 
     const preferredSession = sessions.sort((a, b) => {
-      const aScore =
-        a.remoteJid === remoteJid
-          ? 0
-          : a.remoteJidAlt === remoteJid
-            ? 1
-            : candidates.includes(a.remoteJid)
-              ? 2
-              : a.remoteJidAlt && candidates.includes(a.remoteJidAlt)
-                ? 3
-                : 99;
-
-      const bScore =
-        b.remoteJid === remoteJid
-          ? 0
-          : b.remoteJidAlt === remoteJid
-            ? 1
-            : candidates.includes(b.remoteJid)
-              ? 2
-              : b.remoteJidAlt && candidates.includes(b.remoteJidAlt)
-                ? 3
-                : 99;
+      const aScore = scoreSessionMatch(a, trimmedRemoteJid, preferredRemoteJid, candidates);
+      const bScore = scoreSessionMatch(b, trimmedRemoteJid, preferredRemoteJid, candidates);
 
       if (aScore !== bScore) return aScore - bScore;
       return b.updatedAt.getTime() - a.updatedAt.getTime();
@@ -595,7 +620,8 @@ export async function getSessionByRemoteJid(
       resolvedSession = await db.session.create({
         data: {
           userId,
-          remoteJid: remoteJid.trim(),
+          remoteJid: preferredRemoteJid,
+          remoteJidAlt: pickObservedAlternateRemoteJid(preferredRemoteJid, [trimmedRemoteJid]),
           pushName: options.pushName?.trim() || 'Desconocido',
           instanceId: trimmedInstanceId,
           status: true,
@@ -615,6 +641,39 @@ export async function getSessionByRemoteJid(
         success: false,
         message: `No se encontró sesión para el JID ${remoteJid} en el usuario ${userId}.`,
       };
+    }
+
+    const normalizedRemoteJid =
+      preferredRemoteJid ||
+      normalizeWhatsAppConversationJid(resolvedSession.remoteJid) ||
+      resolvedSession.remoteJid;
+    const normalizedRemoteJidAlt = pickObservedAlternateRemoteJid(normalizedRemoteJid, [
+      trimmedRemoteJid,
+      resolvedSession.remoteJid,
+      resolvedSession.remoteJidAlt,
+    ]);
+    const normalizedPushName = options?.pushName?.trim() || resolvedSession.pushName;
+
+    if (
+      resolvedSession.remoteJid !== normalizedRemoteJid ||
+      (resolvedSession.remoteJidAlt ?? null) !== normalizedRemoteJidAlt ||
+      resolvedSession.pushName !== normalizedPushName
+    ) {
+      resolvedSession = await db.session.update({
+        where: { id: resolvedSession.id },
+        data: {
+          remoteJid: normalizedRemoteJid,
+          remoteJidAlt: normalizedRemoteJidAlt,
+          pushName: normalizedPushName,
+        },
+        include: {
+          sessionTags: {
+            include: {
+              tag: true,
+            },
+          },
+        },
+      });
     }
 
     const mappedSession = mapSessionRecord(resolvedSession);

@@ -1,6 +1,6 @@
 'use server';
 
-import { buildChatHistorySessionId } from "@/lib/chat-history/build-session-id";
+import { buildChatHistorySessionIdCandidates } from "@/lib/chat-history/build-session-id";
 import { db } from "@/lib/db";
 import { N8nChatHistory } from "@prisma/client";
 
@@ -38,10 +38,10 @@ export async function deleteConversationN8N(
     }
 
     // 3. Eliminar TODAS las conversaciones con ese session_id
-    const sessionIdentifier = buildChatHistorySessionId(instance.instanceName, remoteJid);
+    const sessionIdentifiers = buildChatHistorySessionIdCandidates(instance.instanceName, remoteJid);
 
     const deleteResult = await db.n8nChatHistory.deleteMany({
-      where: { sessionId: sessionIdentifier }
+      where: { sessionId: { in: sessionIdentifiers } }
     });
 
     if (deleteResult.count === 0) {

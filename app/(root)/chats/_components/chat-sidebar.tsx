@@ -16,6 +16,13 @@ type ChatSidebarProps = {
     selectedJid?: string;
 };
 
+const CHAT_TIME_FORMATTER = new Intl.DateTimeFormat("es-CO", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "America/Bogota",
+});
+
 function epochToMs(epoch?: number): number {
     if (!epoch) return 0;
     return epoch < 2_000_000_000 ? epoch * 1000 : epoch; 
@@ -23,7 +30,7 @@ function epochToMs(epoch?: number): number {
 function formatTimeFromEpoch(epoch?: number): string {
     const ms = epochToMs(epoch);
     if (!ms) return "";
-    return new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return CHAT_TIME_FORMATTER.format(new Date(ms));
 }
 function nameFrom(chat: ChatData): string {
     const name = chat.pushName?.trim();

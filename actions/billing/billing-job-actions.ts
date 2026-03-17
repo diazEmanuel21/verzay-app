@@ -18,8 +18,8 @@ import { buildBillingMessage } from "./billing-message-templates";
 import { ResponseFormat, SOON_DAYS_BILLING } from "@/types/billing";
 import { normalizeWhatsAppJid, pickTemplate } from "./helpers/billing-helpers";
 import { assertAdminOrReseller } from "./helpers/billing-helpers.server";
-import { SERVER_TIME_ZONE } from "@/types/schedule";
 import { ADMIN_USER_ID } from "@/types/generic";
+import { SERVER_TIME_ZONE } from "@/lib/utils";
 
 type BillingJobLogEntry = {
     at: string;

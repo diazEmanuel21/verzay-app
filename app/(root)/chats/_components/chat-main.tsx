@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowRight, Mic, Send, Trash2, X, Clock, Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, SERVER_TIME_ZONE } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { AttachmentMenu, type ComposeMedia, type MediaType } from './attachment-menu';
 import { SwitchStatus } from '../../sessions/_components';
@@ -75,6 +75,7 @@ type ChatInfoMeta = {
   nextPage?: number | null;
   instanceName?: string;
   remoteJid?: string;
+  remoteJidAliases?: string[];
 
   /** ⬇️ OPCIONAL: si el padre lo pasa, podemos resolver el base64 sin tocar más código */
   apiKeyData?: { url: string; key: string };
@@ -97,6 +98,13 @@ type RecordedAudioData = {
   mimetype: string;
   durationSecs: number;
 };
+
+const CHAT_TIME_FORMATTER = new Intl.DateTimeFormat('es-CO', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: true,
+  timeZone: SERVER_TIME_ZONE,
+});
 
 /* -------- Helpers -------- */
 function two(n: number) {
@@ -347,7 +355,7 @@ const MessageBubble: React.FC<{
               )}
               aria-label="Hora del mensaje"
             >
-              {new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {CHAT_TIME_FORMATTER.format(new Date(timestamp))}
             </span>
           )}
           {isUserMessage && (
@@ -510,14 +518,26 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
     }
 
     try {
-      const result: SingleSessionResponse = await getSessionByRemoteJid(userId, info.remoteJid, {
-        instanceId: info.instanceName,
-        pushName: header.name,
-        ensureExists: true,
-      });
+      const remoteJidCandidates = Array.from(
+        new Set([info.remoteJid, ...(info.remoteJidAliases ?? [])].filter(Boolean))
+      );
 
-      if (result.success && result.data) {
-        setSession(result.data);
+      let resolvedSession: SingleSessionResponse | null = null;
+      for (const candidate of remoteJidCandidates) {
+        const result: SingleSessionResponse = await getSessionByRemoteJid(userId, candidate, {
+          instanceId: info.instanceName,
+          pushName: header.name,
+          ensureExists: candidate === info.remoteJid,
+        });
+
+        if (result.success && result.data) {
+          resolvedSession = result;
+          break;
+        }
+      }
+
+      if (resolvedSession?.success && resolvedSession.data) {
+        setSession(resolvedSession.data);
       } else {
         setSession(null);
       }
@@ -525,7 +545,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
       setSession(null);
       console.error("Error al obtener el estado de la sesión:", error);
     }
-  }, [header.name, info?.instanceName, info?.remoteJid, userId]);
+  }, [header.name, info?.instanceName, info?.remoteJid, info?.remoteJidAliases, userId]);
 
   // Llama a la función de obtención de estado cuando cambie el JID o el usuario
   useEffect(() => {

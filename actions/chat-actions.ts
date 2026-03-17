@@ -2,6 +2,11 @@
 
 import type { ApiKey } from '@prisma/client';
 import { Buffer } from 'buffer';
+import {
+  buildWhatsAppJidCandidates,
+  normalizeWhatsAppConversationJid,
+  pickPreferredWhatsAppRemoteJid,
+} from '@/lib/whatsapp-jid';
 
 /* ===== Utils compactos ===== */
 
@@ -50,6 +55,289 @@ const normalizeFindMessagesPayload = (p: any) => {
   const items = (Array.isArray(p) && p) || (p?.data && Array.isArray(p.data) && p.data) || [];
   return { items: items as EvolutionMessage[], meta: {} };
 };
+const trimText = (value?: string | null) => value?.trim() ?? '';
+const epochToMs = (epoch?: number | null) => {
+  if (!epoch) return 0;
+  return epoch < 2_000_000_000 ? epoch * 1000 : epoch;
+};
+const normalizeComparableChatLabel = (value?: string | null) =>
+  trimText(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+const isJidLikeChatLabel = (value?: string | null) => {
+  const raw = trimText(value);
+  if (!raw) return true;
+  if (raw.includes('@')) return true;
+
+  const digits = raw.replace(/[^\d]/g, '');
+  return digits.length >= 6 && digits.length === raw.replace(/\s+/g, '').length;
+};
+const isHumanReadableChatLabel = (value?: string | null) => {
+  const raw = trimText(value);
+  return Boolean(raw) && !isJidLikeChatLabel(raw);
+};
+const mergeAliases = (...values: Array<Array<string | null | undefined> | undefined>) =>
+  Array.from(
+    new Set(
+      values
+        .flatMap((list) => list ?? [])
+        .map((value) => trimText(value))
+        .filter(Boolean),
+    ),
+  );
+const getObservedChatAliases = (chat: ChatData) =>
+  mergeAliases(
+    [chat.remoteJid],
+    chat.aliases,
+    [chat.lastMessage?.key?.remoteJid ?? null, chat.lastMessage?.key?.senderLid ?? null],
+  );
+const getChatIdentityCandidates = (chat: ChatData) =>
+  buildWhatsAppJidCandidates(chat.remoteJid, getObservedChatAliases(chat));
+const hasLidSignal = (chat: ChatData) =>
+  getObservedChatAliases(chat).some((alias) => alias.toLowerCase().endsWith('@lid')) ||
+  Boolean(trimText(chat.lastMessage?.key?.senderLid));
+const chatActivityTimestamp = (chat: ChatData) =>
+  epochToMs(chat.lastMessage?.messageTimestamp) ||
+  (chat.updatedAt ? new Date(chat.updatedAt).getTime() : 0) ||
+  (chat.windowStart ? new Date(chat.windowStart).getTime() : 0);
+const normalizeLastMessage = (
+  lastMessage: LastMessage | null,
+  fallbackRemoteJid: string,
+): LastMessage | null => {
+  if (!lastMessage) return null;
+
+  const normalizedRemoteJid =
+    pickPreferredWhatsAppRemoteJid([
+      lastMessage.key?.remoteJid,
+      fallbackRemoteJid,
+      lastMessage.key?.senderLid,
+    ]) || fallbackRemoteJid;
+
+  return {
+    ...lastMessage,
+    key: {
+      ...lastMessage.key,
+      remoteJid: normalizedRemoteJid,
+    },
+  };
+};
+const mergeChatEntries = (current: ChatData, next: ChatData) => {
+  const currentTs = chatActivityTimestamp(current);
+  const nextTs = chatActivityTimestamp(next);
+  const primary = nextTs >= currentTs ? next : current;
+  const secondary = primary === next ? current : next;
+  const aliases = mergeAliases(
+    getObservedChatAliases(current),
+    getObservedChatAliases(next),
+    [current.lastMessage?.key?.remoteJid ?? null, next.lastMessage?.key?.remoteJid ?? null],
+    [current.lastMessage?.key?.senderLid ?? null, next.lastMessage?.key?.senderLid ?? null],
+  );
+  const mergedRemoteJid =
+    pickPreferredWhatsAppRemoteJid([primary.remoteJid, secondary.remoteJid, ...aliases]) ||
+    primary.remoteJid ||
+    secondary.remoteJid;
+  const primaryLastMessageTs = epochToMs(primary.lastMessage?.messageTimestamp);
+  const secondaryLastMessageTs = epochToMs(secondary.lastMessage?.messageTimestamp);
+  const latestLastMessage =
+    primaryLastMessageTs >= secondaryLastMessageTs ? primary.lastMessage : secondary.lastMessage;
+
+  return {
+    ...secondary,
+    ...primary,
+    remoteJid: mergedRemoteJid,
+    pushName: primary.pushName || secondary.pushName,
+    profilePicUrl: primary.profilePicUrl || secondary.profilePicUrl,
+    lastMessage: normalizeLastMessage(latestLastMessage, mergedRemoteJid),
+    unreadCount: Number(current.unreadCount ?? 0) + Number(next.unreadCount ?? 0),
+    updatedAt: primary.updatedAt || secondary.updatedAt,
+    windowStart: primary.windowStart || secondary.windowStart,
+    windowExpires: primary.windowExpires || secondary.windowExpires,
+    windowActive: Boolean(current.windowActive || next.windowActive),
+    isSaved: primary.isSaved ?? secondary.isSaved,
+    aliases,
+  };
+};
+const canMergeChatsByProfileHeuristic = (current: ChatData, next: ChatData) => {
+  const currentProfilePic = trimText(current.profilePicUrl);
+  const nextProfilePic = trimText(next.profilePicUrl);
+
+  if (!currentProfilePic || currentProfilePic !== nextProfilePic) {
+    return false;
+  }
+
+  const currentName = normalizeComparableChatLabel(current.pushName);
+  const nextName = normalizeComparableChatLabel(next.pushName);
+  const currentHuman = isHumanReadableChatLabel(current.pushName);
+  const nextHuman = isHumanReadableChatLabel(next.pushName);
+  const currentJidLike = isJidLikeChatLabel(current.pushName);
+  const nextJidLike = isJidLikeChatLabel(next.pushName);
+
+  if (currentHuman && nextHuman && currentName && currentName === nextName) {
+    return true;
+  }
+
+  if (!(hasLidSignal(current) || hasLidSignal(next))) {
+    return false;
+  }
+
+  return (currentHuman && nextJidLike) || (nextHuman && currentJidLike);
+};
+const mergeChatDataByConversation = (chats: ChatData[]) => {
+  const groupedChats = new Map<string, ChatData>();
+  const aliasToGroupKey = new Map<string, string>();
+
+  for (const chat of chats) {
+    const normalizedChat: ChatData = {
+      ...chat,
+      aliases: getObservedChatAliases(chat),
+    };
+    normalizedChat.remoteJid =
+      pickPreferredWhatsAppRemoteJid([normalizedChat.remoteJid, ...(normalizedChat.aliases ?? [])]) ||
+      normalizedChat.remoteJid;
+    normalizedChat.lastMessage = normalizeLastMessage(
+      normalizedChat.lastMessage,
+      normalizedChat.remoteJid,
+    );
+
+    const matchedGroupKey = getChatIdentityCandidates(normalizedChat).find((alias) =>
+      aliasToGroupKey.has(alias),
+    );
+    if (!matchedGroupKey) {
+      const groupKey = normalizedChat.remoteJid;
+      groupedChats.set(groupKey, normalizedChat);
+      for (const alias of getChatIdentityCandidates(normalizedChat)) {
+        aliasToGroupKey.set(alias, groupKey);
+      }
+      continue;
+    }
+
+    const existingGroupKey = aliasToGroupKey.get(matchedGroupKey) ?? matchedGroupKey;
+    const current = groupedChats.get(existingGroupKey);
+    if (!current) {
+      groupedChats.set(existingGroupKey, normalizedChat);
+      for (const alias of getChatIdentityCandidates(normalizedChat)) {
+        aliasToGroupKey.set(alias, existingGroupKey);
+      }
+      continue;
+    }
+
+    const mergedChat = mergeChatEntries(current, normalizedChat);
+    groupedChats.set(existingGroupKey, mergedChat);
+    for (const alias of getChatIdentityCandidates(mergedChat)) {
+      aliasToGroupKey.set(alias, existingGroupKey);
+    }
+  }
+
+  const profileMergedChats: ChatData[] = [];
+  for (const chat of Array.from(groupedChats.values())) {
+    const existingIndex = profileMergedChats.findIndex((candidate) =>
+      canMergeChatsByProfileHeuristic(candidate, chat),
+    );
+
+    if (existingIndex === -1) {
+      profileMergedChats.push(chat);
+      continue;
+    }
+
+    profileMergedChats[existingIndex] = mergeChatEntries(profileMergedChats[existingIndex], chat);
+  }
+
+  return profileMergedChats.sort(
+    (a, b) => chatActivityTimestamp(b) - chatActivityTimestamp(a),
+  );
+};
+const buildEvolutionMessageFingerprint = (message: EvolutionMessage) => {
+  const explicitId = message.key?.id || message.id;
+  if (explicitId) return explicitId;
+
+  const body = message.message || {};
+  const content =
+    body.conversation ||
+    body.extendedTextMessage?.text ||
+    body.imageMessage?.caption ||
+    body.videoMessage?.caption ||
+    body.documentMessage?.caption ||
+    '';
+
+  return JSON.stringify([
+    message.messageType ?? '',
+    message.messageTimestamp ?? 0,
+    message.key?.fromMe ?? false,
+    content,
+  ]);
+};
+const sortMessagesNewestFirst = (messages: EvolutionMessage[]) =>
+  [...messages].sort((a, b) => {
+    const tsDiff = epochToMs(b.messageTimestamp) - epochToMs(a.messageTimestamp);
+    if (tsDiff !== 0) return tsDiff;
+
+    const aId = a.key?.id || a.id || '';
+    const bId = b.key?.id || b.id || '';
+    return bId.localeCompare(aId);
+  });
+
+async function fetchMessagesForRemoteJid(
+  endpoint: string,
+  apiKey: string,
+  remoteJid: string,
+  options?: {
+    timeoutMs?: number;
+    page?: number;
+    pageSize?: number;
+    limit?: number;
+  },
+) {
+  const payload: Record<string, any> = {
+    where: {
+      key: { remoteJid },
+    },
+  };
+
+  if (options?.page) payload.page = options.page;
+  if (options?.pageSize) payload.offset = options.pageSize;
+  else if (options?.limit) payload.offset = options.limit;
+
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), options?.timeoutMs ?? 15000);
+
+  try {
+    const res = await doRequest(endpoint, apiKey, ctrl.signal, 'POST', payload);
+    clearTimeout(t);
+    const raw = await res.json().catch(() => null);
+
+    if (!res.ok) {
+      return {
+        success: false as const,
+        message: (raw?.message as string) || `Error ${res.status} en la API.`,
+        raw,
+      };
+    }
+
+    if (!raw) {
+      return {
+        success: false as const,
+        message: 'Respuesta inválida o vacía.',
+      };
+    }
+
+    const { items, meta } = normalizeFindMessagesPayload(raw);
+    return {
+      success: true as const,
+      items,
+      meta,
+      raw,
+    };
+  } catch (e: any) {
+    clearTimeout(t);
+    return {
+      success: false as const,
+      message: e?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${e?.message || String(e)}`,
+    };
+  }
+}
 
 async function doRequest(
   url: string,
@@ -189,6 +477,7 @@ export type LastMessage = {
 export type ChatData = {
   id: string | null;
   remoteJid: string;
+  aliases?: string[];
   pushName: string | null;
   profilePicUrl: string | null;
   updatedAt?: string;
@@ -302,7 +591,7 @@ export async function fetchChatsFromEvolution(
       return { success: false, message: 'Respuesta inválida o vacía.' };
     }
 
-    const chatData = ensureArrayResponse(raw);
+    const chatData = mergeChatDataByConversation(ensureArrayResponse(raw));
     // LOG 4: Éxito
     return { success: true, message: `OK findChats ${instanceName}`, data: chatData };
   } catch (e: any) {
@@ -325,6 +614,7 @@ export async function findMessagesByRemoteJid(
     page?: number;
     pageSize?: number;
     limit?: number;
+    remoteJidAliases?: string[];
     // La lectura ahora es obligatoria, se eliminó la opción 'fetchAndMarkAsRead'
   }
 ): Promise<FindMessagesResult> {
@@ -340,84 +630,105 @@ export async function findMessagesByRemoteJid(
 
   const baseURL = normalizeBaseUrl(baseUrlRaw);
   const endpoint = `${baseURL}/chat/findMessages/${encodeURIComponent(instanceName)}`;
+  const requestedRemoteJid = remoteJid.trim();
+  const normalizedRemoteJid =
+    normalizeWhatsAppConversationJid(requestedRemoteJid) || requestedRemoteJid;
+  const rawCandidates = buildWhatsAppJidCandidates(
+    requestedRemoteJid,
+    options?.remoteJidAliases ?? [],
+  );
+  const apiCandidates = rawCandidates.filter((candidate) => candidate.includes('@'));
+  const candidatesToQuery = apiCandidates.length ? apiCandidates : rawCandidates;
+  const successfulResponses: Array<{
+    remoteJid: string;
+    items: EvolutionMessage[];
+    raw: unknown;
+  }> = [];
+  let firstFailure: { message: string; raw?: unknown } | null = null;
 
-  // 1. Construcción del Payload: Buscamos TODOS los mensajes
-  const payload: Record<string, any> = {
-    where: {
-      key: { remoteJid },
-    },
-  };
+  for (const candidateRemoteJid of candidatesToQuery) {
+    const response = await fetchMessagesForRemoteJid(endpoint, key, candidateRemoteJid, options);
 
-  if (options?.page) payload.page = options.page;
-  if (options?.pageSize) payload.offset = options.pageSize;
-  else if (options?.limit) payload.offset = options.limit;
-
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), options?.timeoutMs ?? 15000);
-
-  try {
-
-    const res = await doRequest(endpoint, key, ctrl.signal, 'POST', payload);
-    clearTimeout(t);
-    const raw = await res.json().catch(() => null);
-
-    if (!res.ok) {
-      const apiMsg = (raw?.message as string) || `Error ${res.status} en la API.`;
-      return { success: false, message: apiMsg, raw, queriedRemoteJid: remoteJid };
-    }
-
-    if (!raw) return { success: false, message: 'Respuesta inválida o vacía.', queriedRemoteJid: remoteJid };
-
-    const { items, meta } = normalizeFindMessagesPayload(raw);
-
-    // 2. Lógica de Marcado como Leído (MANDATORIA)
-    if (items.length > 0) {
-
-
-      const messagesToMark = items
-        .filter((msg) => !(msg.key?.fromMe ?? false))
-        .map((msg) => ({
-          remoteJid: msg.key?.remoteJid || remoteJid,
-          messageId: msg.key?.id || '',
-          fromMe: false,
-        }))
-        .filter((m) => m.messageId);
-
-      // Se utiliza la función eficiente para enviar un ARRAY de mensajes
-      const resultRead =
-        messagesToMark.length > 0
-          ? await markMessagesAsReadByIds(apiKeyData, instanceName, messagesToMark)
-          : { success: true, message: 'No había mensajes entrantes pendientes por marcar.' };
-
-      if (resultRead.success) {
-
-      } else {
-        console.warn(`[READ] ⚠️ Falló la Lectura Mandatoria en ${remoteJid}: ${resultRead.message}`);
+    if (!response.success) {
+      if (!firstFailure) {
+        firstFailure = {
+          message: response.message,
+          raw: response.raw,
+        };
       }
-    } else {
-
+      continue;
     }
 
-    // 3. Retorno de Resultados
-    return {
-      success: true,
-      message: `OK findMessages ${instanceName} ${remoteJid}`,
-      data: items,
-      total: meta.total as number,
-      pages: meta.pages as number,
-      currentPage: meta.currentPage as number,
-      nextPage: meta.nextPage as number | null,
-      raw,
-      queriedRemoteJid: remoteJid,
-    };
-  } catch (e: any) {
-    clearTimeout(t);
+    successfulResponses.push({
+      remoteJid: candidateRemoteJid,
+      items: response.items,
+      raw: response.raw,
+    });
+  }
+
+  if (!successfulResponses.length) {
     return {
       success: false,
-      message: e?.name === 'AbortError' ? 'Timeout de solicitud.' : `Error de red: ${e?.message || String(e)}`,
-      queriedRemoteJid: remoteJid,
+      message: firstFailure?.message || 'Respuesta inválida o vacía.',
+      raw: firstFailure?.raw,
+      queriedRemoteJid: normalizedRemoteJid,
     };
   }
+
+  const uniqueMessages = new Map<string, EvolutionMessage>();
+  for (const response of successfulResponses) {
+    for (const item of response.items) {
+      const fingerprint = buildEvolutionMessageFingerprint(item);
+      if (!uniqueMessages.has(fingerprint)) {
+        uniqueMessages.set(fingerprint, item);
+      }
+    }
+  }
+
+  const items = sortMessagesNewestFirst(Array.from(uniqueMessages.values()));
+
+  if (items.length > 0) {
+    const messagesToMarkMap = new Map<string, MessageReadKey>();
+    for (const msg of items) {
+      if (msg.key?.fromMe ?? false) {
+        continue;
+      }
+
+      const messageId = msg.key?.id || '';
+      const messageRemoteJid = msg.key?.remoteJid || normalizedRemoteJid;
+      if (!messageId || !messageRemoteJid) {
+        continue;
+      }
+
+      messagesToMarkMap.set(`${messageRemoteJid}:${messageId}`, {
+        remoteJid: messageRemoteJid,
+        messageId,
+        fromMe: false,
+      });
+    }
+
+    const messagesToMark = Array.from(messagesToMarkMap.values());
+    const resultRead =
+      messagesToMark.length > 0
+        ? await markMessagesAsReadByIds(apiKeyData, instanceName, messagesToMark)
+        : { success: true, message: 'No había mensajes entrantes pendientes por marcar.' };
+
+    if (!resultRead.success) {
+      console.warn(`[READ] ⚠️ Falló la Lectura Mandatoria en ${normalizedRemoteJid}: ${resultRead.message}`);
+    }
+  }
+
+  return {
+    success: true,
+    message: `OK findMessages ${instanceName} ${normalizedRemoteJid}`,
+    data: items,
+    total: items.length,
+    pages: 1,
+    currentPage: 1,
+    nextPage: null,
+    raw: successfulResponses.map((response) => response.raw),
+    queriedRemoteJid: normalizedRemoteJid,
+  };
 }
 export async function sendTextMessage(
   apiKeyData: Pick<ApiKey, 'url' | 'key'>,
