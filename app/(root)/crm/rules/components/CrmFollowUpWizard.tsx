@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     ChevronLeft,
     ChevronRight,
@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TimeInput } from "@/components/shared/TimeInput";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -50,6 +51,91 @@ type CrmFollowUpWizardProps = {
         leadStatus: CrmFollowUpRuleConfig["leadStatus"]
     ) => void;
 };
+
+const MAX_DELAY_MINUTES = 43_200;
+
+function formatDelayMinutesForTimeInput(delayMinutes: number) {
+    const safeDelayMinutes = Math.min(
+        Math.max(Number(delayMinutes) || 0, 0),
+        MAX_DELAY_MINUTES
+    );
+
+    if (safeDelayMinutes > 0 && safeDelayMinutes % (24 * 60) === 0) {
+        return `days-${safeDelayMinutes / (24 * 60)}`;
+    }
+
+    if (safeDelayMinutes > 0 && safeDelayMinutes % 60 === 0) {
+        return `hours-${safeDelayMinutes / 60}`;
+    }
+
+    return `minutes-${safeDelayMinutes}`;
+}
+
+function parseTimeInputValueToDelayMinutes(value: string) {
+    const [unit, rawAmount] = value.split("-");
+    const amount = Math.max(Number.parseInt(rawAmount ?? "0", 10) || 0, 0);
+
+    switch (unit) {
+        case "seconds":
+            return Math.min(Math.floor(amount / 60), MAX_DELAY_MINUTES);
+        case "minutes":
+            return Math.min(amount, MAX_DELAY_MINUTES);
+        case "hours":
+            return Math.min(amount * 60, MAX_DELAY_MINUTES);
+        case "days":
+            return Math.min(amount * 24 * 60, MAX_DELAY_MINUTES);
+        default:
+            return 0;
+    }
+}
+
+function DelayTimeInput({
+    value,
+    disabled,
+    onChange,
+}: {
+    value: number;
+    disabled: boolean;
+    onChange: (delayMinutes: number) => void;
+}) {
+    const safeValue = Math.min(Math.max(Number(value) || 0, 0), MAX_DELAY_MINUTES);
+    const [draftValue, setDraftValue] = useState(() =>
+        formatDelayMinutesForTimeInput(safeValue)
+    );
+    const [instanceKey, setInstanceKey] = useState(0);
+
+    useEffect(() => {
+        if (parseTimeInputValueToDelayMinutes(draftValue) === safeValue) {
+            return;
+        }
+
+        setDraftValue(formatDelayMinutesForTimeInput(safeValue));
+        setInstanceKey((current) => current + 1);
+    }, [draftValue, safeValue]);
+
+    const handleChange = useCallback(
+        (nextValue: string) => {
+            setDraftValue(nextValue);
+            const nextDelayMinutes = parseTimeInputValueToDelayMinutes(nextValue);
+
+            if (!disabled && nextDelayMinutes !== safeValue) {
+                onChange(nextDelayMinutes);
+            }
+        },
+        [disabled, onChange, safeValue]
+    );
+
+    return (
+        <fieldset disabled={disabled} className={cn(disabled && "opacity-60 h-full")}>
+            <TimeInput
+                key={instanceKey}
+                className={cn("text-lg", disabled && "pointer-events-none")}
+                currentValue={draftValue}
+                onChange={handleChange}
+            />
+        </fieldset>
+    );
+}
 
 export function CrmFollowUpWizard({
     rules,
@@ -97,6 +183,15 @@ export function CrmFollowUpWizard({
         currentStep !== "summary"
             ? rules.find((item) => item.leadStatus === currentStep)
             : null;
+    const currentLeadStatus = currentRule?.leadStatus ?? null;
+    const handleDelayMinutesChange = useCallback(
+        (delayMinutes: number) => {
+            if (!currentLeadStatus) return;
+
+            onPatchRule(currentLeadStatus, { delayMinutes });
+        },
+        [currentLeadStatus, onPatchRule]
+    );
 
     let content = null;
 
@@ -203,21 +298,10 @@ export function CrmFollowUpWizard({
                 <CardContent className="space-y-6">
                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                         <div className="space-y-2">
-                            <Label>Delay base (min)</Label>
-                            <Input
-                                type="number"
-                                min={0}
-                                max={43200}
+                            <DelayTimeInput
                                 value={currentRule.delayMinutes}
                                 disabled={!currentRule.enabled}
-                                onChange={(event) =>
-                                    onPatchRule(leadStatus, {
-                                        delayMinutes: Math.max(
-                                            Number(event.target.value || 0),
-                                            0
-                                        ),
-                                    })
-                                }
+                                onChange={handleDelayMinutesChange}
                             />
                         </div>
 

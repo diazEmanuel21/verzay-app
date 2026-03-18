@@ -74,7 +74,7 @@ export function TimeInput({ onChange, className, onBlur, currentValue }: TimeInp
     return (
         <div className={cn(className)}>
             <Label className="text-xs">Duración de retraso. Máximo 365 días</Label>
-            <div className="flex flex-row gap-2 mt-2">
+            <div className="flex flex-row gap-2 mt-[4px]">
                 <Select value={unit} onValueChange={handleUnitChange}>
                     <SelectTrigger className="w-full">
                         <SelectValue placeholder="Selecciona unidad" />
