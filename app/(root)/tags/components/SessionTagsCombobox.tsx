@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { ChevronsUpDown, Check, Tag as TagIcon } from "lucide-react";
 import {
@@ -46,11 +46,14 @@ export function SessionTagsCombobox({
     const [open, setOpen] = useState(false);
     const [selectedIds, setSelectedIds] = useState<number[]>(initialSelectedIds);
     const [isPending, startTransition] = useTransition();
-    const initialSelectedIdsKey = [...initialSelectedIds].sort((a, b) => a - b).join(",");
+    const normalizedInitialSelectedIds = useMemo(
+        () => [...initialSelectedIds].sort((a, b) => a - b),
+        [initialSelectedIds]
+    );
 
     useEffect(() => {
-        setSelectedIds(initialSelectedIds);
-    }, [initialSelectedIdsKey]);
+        setSelectedIds(normalizedInitialSelectedIds);
+    }, [normalizedInitialSelectedIds]);
 
     const isSelected = (id: number) => selectedIds.includes(id);
 

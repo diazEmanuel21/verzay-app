@@ -171,10 +171,6 @@ export function CrmFollowUpWizard({
 
     const [currentStep, setCurrentStep] = useState<string>(steps[0]?.id ?? "summary");
 
-    if (loading && rules.length === 0) {
-        return <LoadingState label="Cargando reglas de follow-up..." />;
-    }
-
     const stepIndex = steps.findIndex((step) => step.id === currentStep);
     const canGoBack = stepIndex > 0;
     const canGoForward = stepIndex < steps.length - 1;
@@ -192,6 +188,10 @@ export function CrmFollowUpWizard({
         },
         [currentLeadStatus, onPatchRule]
     );
+
+    if (loading && rules.length === 0) {
+        return <LoadingState label="Cargando reglas de follow-up..." />;
+    }
 
     let content = null;
 
