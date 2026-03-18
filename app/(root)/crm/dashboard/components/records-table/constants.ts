@@ -46,6 +46,7 @@ export const CRM_TABLE_COLUMN_LABELS: Record<CrmTableColumnId, string> = {
     leadStatus: "Lead",
     crmFollowUp: "Follow-up",
     estado: "Estado",
+    actions: "Acciones",
 };
 
 export const CRM_DEFAULT_COLUMN_VISIBILITY: Record<CrmTableColumnId, boolean> = {
@@ -57,6 +58,7 @@ export const CRM_DEFAULT_COLUMN_VISIBILITY: Record<CrmTableColumnId, boolean> = 
     leadStatus: true,
     crmFollowUp: true,
     estado: true,
+    actions: true,
 };
 
 export { LEAD_STATUS_FILTER_OPTIONS };

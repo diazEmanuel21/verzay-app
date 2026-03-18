@@ -3,33 +3,14 @@
 import Link from "next/link";
 import { useMemo, type RefObject } from "react";
 import { Activity, BarChart3, CheckCheck, Clock3, Settings2 } from "lucide-react";
-import {
-    Bar,
-    BarChart,
-    CartesianGrid,
-    Line,
-    LineChart,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis,
-} from "recharts";
 
 import type { RegistrosFilters } from "@/actions/registro-action";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { RegistroWithSession, TipoRegistro } from "@/types/session";
-import { getTipoLabel } from "../../helpers";
 import { MetricCard } from "./MetricCard";
+import { CrmGlobalActionsMenu } from "./CrmGlobalActionsMenu";
 import type { DashboardStats } from "./MainDashboard";
-import { TagStatsCard } from "./TagStatsCard";
 import { CrmRecordsSection } from "./records-table/CrmRecordsSection";
 
 const CRM_METRIC_COLORS = {
@@ -49,6 +30,7 @@ export const CrmDashboard = ({
     onChangeEstado,
     onChangeDetalle,
     onFollowUpChanged,
+    onRecordsChanged,
     isUpdatingRegistros,
     userId,
     hasMore,
@@ -65,6 +47,7 @@ export const CrmDashboard = ({
     onChangeEstado?: (registroId: number, nuevoEstado: string) => void;
     onChangeDetalle?: (registroId: number, nuevoDetalle: string) => Promise<boolean>;
     onFollowUpChanged?: () => Promise<void> | void;
+    onRecordsChanged?: () => Promise<void> | void;
     isUpdatingRegistros?: boolean;
     userId: string;
     hasMore?: boolean;
@@ -104,19 +87,6 @@ export const CrmDashboard = ({
         return base;
     }, [registros, stats?.countsByTipo]);
 
-    const chartDataByTipo = useMemo(
-        () =>
-            (Object.keys(countsByTipo) as TipoRegistro[]).map((tipo) => ({
-                tipo: getTipoLabel(tipo),
-                cantidad: countsByTipo[tipo],
-            })),
-        [countsByTipo]
-    );
-
-    const chartDataByDay = useMemo(() => {
-        return stats?.chartDataByDay ?? [];
-    }, [stats]);
-
     return (
         <TooltipProvider delayDuration={120}>
             <div className="flex h-full min-w-0 flex-col gap-2">
@@ -129,12 +99,20 @@ export const CrmDashboard = ({
                         </p>
                     </div>
 
-                    <Button asChild>
-                        <Link href="/crm/rules">
-                            <Settings2 className="h-4 w-4" />
-                            Reglas
-                        </Link>
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <CrmGlobalActionsMenu
+                            userId={userId}
+                            stats={stats}
+                            onDataChanged={onRecordsChanged}
+                        />
+
+                        <Button asChild>
+                            <Link href="/crm/rules">
+                                <Settings2 className="h-4 w-4" />
+                                Reglas
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="flex flex-wrap gap-3">
@@ -190,6 +168,7 @@ export const CrmDashboard = ({
                     onChangeEstado={onChangeEstado}
                     onChangeDetalle={onChangeDetalle}
                     onFollowUpChanged={onFollowUpChanged}
+                    onRecordsChanged={onRecordsChanged}
                     isUpdatingRegistros={isUpdatingRegistros}
                     userId={userId}
                     hasMore={hasMore}

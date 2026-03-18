@@ -77,6 +77,7 @@ export function CrmRecordsSection({
     onChangeEstado,
     onChangeDetalle,
     onFollowUpChanged,
+    onRecordsChanged,
     isUpdatingRegistros,
     userId,
     hasMore,
@@ -193,6 +194,7 @@ export function CrmRecordsSection({
                 onChangeEstado,
                 onChangeDetalle,
                 onFollowUpChanged,
+                onRecordsChanged,
             }),
         [
             userId,
@@ -200,6 +202,7 @@ export function CrmRecordsSection({
             onChangeEstado,
             onChangeDetalle,
             onFollowUpChanged,
+            onRecordsChanged,
         ]
     );
 

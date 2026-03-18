@@ -15,9 +15,9 @@ import {
 import { CRM_TAB_COLORS } from "./constants";
 
 import { CrmRecordDetailCell } from "./CrmRecordDetailCell";
+import { CrmRecordActionsCell } from "./CrmRecordActionsCell";
 import { CrmRecordStatusCell } from "./CrmRecordStatusCell";
 import { LeadStatusBadge } from "./LeadStatusBadge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 function SortableHeader({
     column,
@@ -45,12 +45,14 @@ export function createCrmRecordColumns({
     onChangeEstado,
     onChangeDetalle,
     onFollowUpChanged,
+    onRecordsChanged,
 }: {
     userId: string;
     isUpdatingRegistros?: boolean;
     onChangeEstado?: (registroId: number, nuevoEstado: string) => void;
     onChangeDetalle?: (registroId: number, nuevoDetalle: string) => Promise<boolean>;
     onFollowUpChanged?: () => Promise<void> | void;
+    onRecordsChanged?: () => Promise<void> | void;
 }): ColumnDef<RegistroWithSession>[] {
     return [
         {
@@ -189,6 +191,23 @@ export function createCrmRecordColumns({
                     disabled={isUpdatingRegistros}
                     onChangeEstado={onChangeEstado}
                 />
+            ),
+        },
+        {
+            id: "actions",
+            enableSorting: false,
+            header: () => (
+                <span className="text-xs font-medium text-muted-foreground">
+                    Acciones
+                </span>
+            ),
+            cell: ({ row }) => (
+                <div className="flex justify-end">
+                    <CrmRecordActionsCell
+                        registro={row.original}
+                        onUpdated={onRecordsChanged}
+                    />
+                </div>
             ),
         },
     ];

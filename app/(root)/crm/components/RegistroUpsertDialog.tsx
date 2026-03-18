@@ -257,7 +257,7 @@ export function RegistroUpsertDialog({
                                 <Label>Resumen *</Label>
                                 <Textarea value={resumen} onChange={(e) => setResumen(e.target.value)} />
                             </div>
-
+{/* 
                             <div className="flex items-center justify-between rounded-md border p-3">
                                 <div className="flex flex-col">
                                     <span className="font-medium">Lead</span>
@@ -266,7 +266,7 @@ export function RegistroUpsertDialog({
                                     </span>
                                 </div>
                                 <Switch checked={lead} onCheckedChange={setLead} />
-                            </div>
+                            </div> */}
                         </>
                     ) : (
                         <div className="grid gap-2">

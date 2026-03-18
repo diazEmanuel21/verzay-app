@@ -18,7 +18,9 @@ import {
   SessionCrmFollowUpSummary,
 } from "@/types/session";
 import { toast } from "sonner";
-import { getLeadStatusLabel } from "../helpers";
+import { CrmConfirmActionDialog } from "./CrmConfirmActionDialog";
+import { CrmFollowUpItemActions } from "./CrmFollowUpItemActions";
+import { LeadStatusBadge } from "./records-table/LeadStatusBadge";
 
 const STATUS_LABELS = {
   PENDING: "Pendiente",
@@ -76,6 +78,7 @@ export function CrmFollowUpSummaryBadge({
   onUpdated?: () => Promise<void> | void;
 }) {
   const [pendingAction, setPendingAction] = useState<"cancel" | "retry" | null>(null);
+  const [confirmAction, setConfirmAction] = useState<"cancel" | "retry" | null>(null);
 
   if (!summary || summary.total === 0) {
     return (
@@ -148,8 +151,7 @@ export function CrmFollowUpSummaryBadge({
             });
 
       if (!result.success) {
-        toast.error(result.message, { id: toastId });
-        return;
+        throw new Error(result.message);
       }
 
       await onUpdated?.();
@@ -221,19 +223,25 @@ export function CrmFollowUpSummaryBadge({
                       key={item.id}
                       className="rounded-md border border-border/70 bg-muted/20 p-2"
                     >
-                      <div className="flex flex-wrap items-center gap-1">
-                        <Badge
-                          variant="outline"
-                          className={getStatusClassName(item.status)}
-                        >
-                          {STATUS_LABELS[item.status]}
-                        </Badge>
-                        <Badge variant="outline" className="border-slate-200 text-slate-700">
-                          {getLeadStatusLabel(item.leadStatusSnapshot)}
-                        </Badge>
-                        <span className="text-[11px] text-muted-foreground">
-                          {getHistoryAttemptLabel(item)}
-                        </span>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-1">
+                          <Badge
+                            variant="outline"
+                            className={getStatusClassName(item.status)}
+                          >
+                            {STATUS_LABELS[item.status]}
+                          </Badge>
+                          <LeadStatusBadge status={item.leadStatusSnapshot} />
+                          <span className="text-[11px] text-muted-foreground">
+                            {getHistoryAttemptLabel(item)}
+                          </span>
+                        </div>
+
+                        <CrmFollowUpItemActions
+                          item={item}
+                          userId={userId}
+                          onUpdated={onUpdated}
+                        />
                       </div>
 
                       <div className="mt-2 grid gap-1 text-[11px] text-muted-foreground">
@@ -267,7 +275,7 @@ export function CrmFollowUpSummaryBadge({
                   size="sm"
                   variant="outline"
                   disabled={pendingAction !== null}
-                  onClick={() => handleAction("retry")}
+                  onClick={() => setConfirmAction("retry")}
                 >
                   Reactivar fallidos
                 </Button>
@@ -278,7 +286,7 @@ export function CrmFollowUpSummaryBadge({
                   size="sm"
                   variant="outline"
                   disabled={pendingAction !== null}
-                  onClick={() => handleAction("cancel")}
+                  onClick={() => setConfirmAction("cancel")}
                 >
                   Cancelar activos
                 </Button>
@@ -287,6 +295,31 @@ export function CrmFollowUpSummaryBadge({
           )}
         </div>
       </PopoverContent>
+
+      <CrmConfirmActionDialog
+        open={confirmAction !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+        title={
+          confirmAction === "cancel"
+            ? "Cancelar follow-ups activos"
+            : "Reactivar follow-ups fallidos"
+        }
+        description={
+          confirmAction === "cancel"
+            ? "Los follow-ups pendientes o en proceso de este lead pasaran a estado cancelado."
+            : "Los follow-ups fallidos de este lead se reprogramaran usando las reglas actuales."
+        }
+        confirmLabel={
+          confirmAction === "cancel" ? "Cancelar activos" : "Reactivar fallidos"
+        }
+        tone={confirmAction === "cancel" ? "destructive" : "default"}
+        onConfirm={async () => {
+          if (!confirmAction) return;
+          await handleAction(confirmAction);
+        }}
+      />
     </Popover>
   );
 }

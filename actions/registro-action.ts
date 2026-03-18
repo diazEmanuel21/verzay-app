@@ -2,6 +2,7 @@
 
 import type { Prisma } from "@prisma/client";
 
+import { assertUserCanUseApp } from "@/actions/billing/helpers/app-access-guard";
 import { db } from "@/lib/db";
 import { ActionResult } from "@/types/registro";
 import {
@@ -28,11 +29,63 @@ type SessionLookup = {
     instanceId: string;
 };
 
+export type CrmRegistroManagementActionResult = {
+    success: boolean;
+    message: string;
+    data?: {
+        count: number;
+    };
+};
+
 function buildSessionFollowUpKey(remoteJid?: string | null, instanceId?: string | null) {
     const remote = (remoteJid ?? "").trim();
     const instance = (instanceId ?? "").trim();
     if (!remote || !instance) return "";
     return `${instance}::${remote}`;
+}
+
+async function ensureAuthorizedSessionById(sessionId: number) {
+    const session = await db.session.findUnique({
+        where: { id: sessionId },
+        select: {
+            id: true,
+            userId: true,
+            remoteJid: true,
+            instanceId: true,
+        },
+    });
+
+    if (!session) {
+        throw new Error("Sesion no encontrada.");
+    }
+
+    await assertUserCanUseApp(session.userId);
+    return session;
+}
+
+async function ensureAuthorizedRegistroById(registroId: number) {
+    const registro = await db.registro.findUnique({
+        where: { id: registroId },
+        select: {
+            id: true,
+            sessionId: true,
+            tipo: true,
+            session: {
+                select: {
+                    userId: true,
+                    remoteJid: true,
+                    instanceId: true,
+                },
+            },
+        },
+    });
+
+    if (!registro) {
+        throw new Error("Registro no encontrado.");
+    }
+
+    await assertUserCanUseApp(registro.session.userId);
+    return registro;
 }
 
 function createEmptyCrmFollowUpSummary(): SessionCrmFollowUpSummary {
@@ -224,6 +277,8 @@ export async function createRegistro(input: {
     detalles?: string;
 }): Promise<ActionResult<unknown>> {
     try {
+        await ensureAuthorizedSessionById(input.sessionId);
+
         const created = await db.registro.create({
             data: {
                 sessionId: input.sessionId,
@@ -258,6 +313,8 @@ export async function updateRegistro(input: {
     detalles?: string;
 }): Promise<ActionResult<unknown>> {
     try {
+        await ensureAuthorizedRegistroById(input.id);
+
         const updated = await db.registro.update({
             where: { id: input.id },
             data: {
@@ -281,7 +338,14 @@ export async function updateRegistro(input: {
 
 export async function deleteRegistro(id: number): Promise<ActionResult<true>> {
     try {
-        await db.registro.delete({ where: { id } });
+        await ensureAuthorizedRegistroById(id);
+        await db.$transaction([
+            db.crmFollowUp.updateMany({
+                where: { sourceReportId: id },
+                data: { sourceReportId: null },
+            }),
+            db.registro.delete({ where: { id } }),
+        ]);
         return { success: true, data: true };
     } catch (e: any) {
         return { success: false, message: e?.message ?? "No se pudo eliminar el registro" };
@@ -290,6 +354,7 @@ export async function deleteRegistro(id: number): Promise<ActionResult<true>> {
 
 export async function updateRegistroEstado(registroId: number, nuevoEstado: string) {
     try {
+        await ensureAuthorizedRegistroById(registroId);
         await db.registro.update({
             where: { id: registroId },
             data: { estado: nuevoEstado },
@@ -316,6 +381,8 @@ export async function getRegistrosByUserId(
     filters?: RegistrosFilters
 ) {
     try {
+        await assertUserCanUseApp(userId);
+
         const estado = (filters?.estado ?? "").trim();
         const leadStatus = filters?.leadStatus;
         const crmFollowUpStatus = filters?.crmFollowUpStatus;
@@ -463,6 +530,8 @@ export async function getRegistrosByUserId(
 
 export async function getCrmDashboardStatsByUserId(userId: string) {
     try {
+        await assertUserCanUseApp(userId);
+
         // 1) total registros
         const totalRegistros = await db.registro.count({
             where: { session: { userId } },
@@ -609,6 +678,8 @@ export async function getCrmDashboardStatsByUserId(userId: string) {
 
 export async function getSessionTagStatsByUserId(userId: string) {
     try {
+        await assertUserCanUseApp(userId);
+
         // 1) Agrupamos en la tabla pivote SessionTag
         const grouped = await db.sessionTag.groupBy({
             by: ["tagId"],
@@ -654,17 +725,7 @@ export async function getSessionTagStatsByUserId(userId: string) {
 
 export async function updateRegistroDetalle(registroId: number, nuevoDetalle: string) {
     try {
-        const registro = await db.registro.findUnique({
-            where: { id: registroId },
-            select: { tipo: true },
-        });
-
-        if (!registro) {
-            return {
-                success: false,
-                message: "Registro no encontrado",
-            };
-        }
+        const registro = await ensureAuthorizedRegistroById(registroId);
 
         const detalleValue = normalizeDetalleDraft(nuevoDetalle);
 
@@ -685,6 +746,100 @@ export async function updateRegistroDetalle(registroId: number, nuevoDetalle: st
         return {
             success: false,
             message: "No se pudo actualizar el detalle del registro",
+        };
+    }
+}
+
+export async function deleteRegistrosBySessionId(
+    sessionId: number
+): Promise<CrmRegistroManagementActionResult> {
+    try {
+        const session = await ensureAuthorizedSessionById(sessionId);
+
+        const [, result] = await db.$transaction([
+            db.crmFollowUp.updateMany({
+                where: {
+                    sourceReport: {
+                        is: {
+                            sessionId: session.id,
+                        },
+                    },
+                },
+                data: { sourceReportId: null },
+            }),
+            db.registro.deleteMany({
+                where: { sessionId: session.id },
+            }),
+        ]);
+
+        return {
+            success: true,
+            message:
+                result.count === 0
+                    ? "El lead no tiene movimientos para eliminar."
+                    : result.count === 1
+                        ? "Se elimino 1 movimiento del lead."
+                        : `Se eliminaron ${result.count} movimientos del lead.`,
+            data: { count: result.count },
+        };
+    } catch (error) {
+        console.error("[deleteRegistrosBySessionId]", error);
+        return {
+            success: false,
+            message:
+                error instanceof Error
+                    ? error.message
+                    : "No se pudieron eliminar los movimientos del lead.",
+        };
+    }
+}
+
+export async function deleteAllRegistrosByUserId(
+    userId: string
+): Promise<CrmRegistroManagementActionResult> {
+    try {
+        await assertUserCanUseApp(userId);
+
+        const [, result] = await db.$transaction([
+            db.crmFollowUp.updateMany({
+                where: {
+                    sourceReport: {
+                        is: {
+                            session: {
+                                userId,
+                            },
+                        },
+                    },
+                },
+                data: { sourceReportId: null },
+            }),
+            db.registro.deleteMany({
+                where: {
+                    session: {
+                        userId,
+                    },
+                },
+            }),
+        ]);
+
+        return {
+            success: true,
+            message:
+                result.count === 0
+                    ? "No hay registros en el CRM para eliminar."
+                    : result.count === 1
+                        ? "Se elimino 1 registro del CRM."
+                        : `Se eliminaron ${result.count} registros del CRM.`,
+            data: { count: result.count },
+        };
+    } catch (error) {
+        console.error("[deleteAllRegistrosByUserId]", error);
+        return {
+            success: false,
+            message:
+                error instanceof Error
+                    ? error.message
+                    : "No se pudieron eliminar los registros del CRM.",
         };
     }
 }

@@ -213,10 +213,14 @@ export const MainDashboard = ({
     setSize(1);
   }, [setSize]);
 
-  const handleFollowUpChanged = useCallback(async () => {
+  const handleRecordsChanged = useCallback(async () => {
     await mutate();
     await refreshStats();
   }, [mutate, refreshStats]);
+
+  const handleFollowUpChanged = useCallback(async () => {
+    await handleRecordsChanged();
+  }, [handleRecordsChanged]);
 
   if (isLoading && size === 1) {
     return (
@@ -253,6 +257,7 @@ export const MainDashboard = ({
         onChangeEstado={handleChangeEstado}
         onChangeDetalle={handleChangeDetalle}
         onFollowUpChanged={handleFollowUpChanged}
+        onRecordsChanged={handleRecordsChanged}
         isUpdatingRegistros={isPending}
         hasMore={hasMore}
         isLoadingMore={isLoadingMore}

@@ -12,7 +12,8 @@ export type CrmTableColumnId =
     | "detalle"
     | "leadStatus"
     | "crmFollowUp"
-    | "estado";
+    | "estado"
+    | "actions";
 
 export type CrmRecordsSectionProps = {
     activeTab: CrmDashboardTab;
@@ -25,6 +26,7 @@ export type CrmRecordsSectionProps = {
     onChangeEstado?: (registroId: number, nuevoEstado: string) => void;
     onChangeDetalle?: (registroId: number, nuevoDetalle: string) => Promise<boolean>;
     onFollowUpChanged?: () => Promise<void> | void;
+    onRecordsChanged?: () => Promise<void> | void;
     isUpdatingRegistros?: boolean;
     userId: string;
     hasMore?: boolean;
