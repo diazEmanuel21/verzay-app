@@ -19,6 +19,7 @@ import { ChatsClient } from "./_components/chats-client";
 import { buildChatHistorySessionId } from "@/lib/chat-history/build-session-id";
 import { saveChatHistoryMessage } from "@/lib/chat-history/chat-history.helper";
 import { normalizeWhatsAppConversationJid } from "@/lib/whatsapp-jid";
+import { getChatContactSessions } from "@/actions/session-action";
 
 // Tipos importados desde ChatMain (cliente)
 import type { OutgoingMessagePayload } from "./_components/chat-main";
@@ -246,8 +247,24 @@ export default async function ChatsPage({
         remoteJid,
       });
 
-
-  const tagsRes = await listTagsAction(user.id);
+  const [tagsRes, chatSessionsRes] = await Promise.all([
+    listTagsAction(user.id),
+    chatsResult.success
+      ? getChatContactSessions(
+        user.id,
+        chatsResult.data.map((chat) => ({
+          remoteJid: chat.remoteJid,
+          remoteJidAlt: chat.remoteJidAlt,
+          senderPn: chat.senderPn,
+          pushName: chat.pushName,
+          aliases: chat.aliases,
+        })),
+      )
+      : Promise.resolve({
+        success: false as const,
+        message: "No se pudieron cargar las sesiones del sidebar.",
+      }),
+  ]);
 
   const allTags =
     tagsRes.data?.map((t) => ({
@@ -259,8 +276,13 @@ export default async function ChatsPage({
 
     })) ?? [];
 
+  const initialChatSessions = chatSessionsRes.success
+    ? (chatSessionsRes.data ?? {})
+    : {};
+
   return (
     <ChatsClient
+      initialChatSessions={initialChatSessions}
       allTags={allTags}
       chatsResult={chatsResult}
       initialSelectedJid={initialSelectedJid}

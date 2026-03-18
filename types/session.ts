@@ -64,6 +64,25 @@ export type Session = PrismaSession & {
   crmFollowUpSummary?: SessionCrmFollowUpSummary | null;
 };
 
+export type ChatContactDescriptor = {
+  remoteJid: string;
+  remoteJidAlt?: string | null;
+  senderPn?: string | null;
+  pushName?: string | null;
+  aliases?: string[];
+};
+
+export type ChatContactSessionSummary = {
+  id: number;
+  userId: string;
+  remoteJid: string;
+  remoteJidAlt?: string | null;
+  pushName?: string | null;
+  tags: SimpleTag[];
+};
+
+export type ChatContactSessionMap = Record<string, ChatContactSessionSummary>;
+
 /* ===== RESPUESTAS GENÉRICAS ===== */
 
 export type SessionResponse<T> = {

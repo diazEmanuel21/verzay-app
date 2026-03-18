@@ -1,16 +1,29 @@
 "use client";
 
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Users, Inbox, X, Image as ImageIcon, Video, FileText, Mic } from "lucide-react";
+import {
+    Search,
+    Users,
+    Inbox,
+    X,
+    Image as ImageIcon,
+    Video,
+    FileText,
+    Mic,
+    type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { LucideIcon } from "lucide-react";
 import type { ChatData, FetchChatsResult } from "@/actions/chat-actions";
 import { useLocalStorageObjectArray, MessageRecord } from "@/hooks/chats/useSeenMessages";
+import { SessionTagsCombobox } from "../../tags/components";
+import type { ChatContactSessionMap, SimpleTag } from "@/types/session";
 
-/* ---------- Props y Helpers (Modificado: lastTextFrom) ---------- */
 type ChatSidebarProps = {
+    allTags: SimpleTag[];
+    chatSessions: ChatContactSessionMap;
+    onSessionTagsChange?: (remoteJid: string, selectedIds: number[]) => void;
     result: FetchChatsResult;
     onSelectRemoteJid?: (remoteJid: string) => void | Promise<void>;
     selectedJid?: string;
@@ -25,13 +38,15 @@ const CHAT_TIME_FORMATTER = new Intl.DateTimeFormat("es-CO", {
 
 function epochToMs(epoch?: number): number {
     if (!epoch) return 0;
-    return epoch < 2_000_000_000 ? epoch * 1000 : epoch; 
+    return epoch < 2_000_000_000 ? epoch * 1000 : epoch;
 }
+
 function formatTimeFromEpoch(epoch?: number): string {
     const ms = epochToMs(epoch);
     if (!ms) return "";
     return CHAT_TIME_FORMATTER.format(new Date(ms));
 }
+
 function nameFrom(chat: ChatData): string {
     const name = chat.pushName?.trim();
     if (name) return name;
@@ -39,35 +54,39 @@ function nameFrom(chat: ChatData): string {
     return jid.includes("@") ? jid.split("@")[0] : jid;
 }
 
-function getIconForMessageType(type?: string): LucideIcon | null { 
+function getIconForMessageType(type?: string): LucideIcon | null {
     if (!type) return null;
 
     switch (type) {
-        case 'conversation':
-        case 'extendedTextMessage':
+        case "conversation":
+        case "extendedTextMessage":
             return null;
-        case 'imageMessage':
+        case "imageMessage":
             return ImageIcon;
-        case 'videoMessage':
+        case "videoMessage":
             return Video;
-        case 'audioMessage':
+        case "audioMessage":
             return Mic;
-        case 'documentMessage':
-        case 'fileMessage':
+        case "documentMessage":
+        case "fileMessage":
             return FileText;
-        case 'locationMessage':
-            return null; 
+        case "locationMessage":
+            return null;
         default:
             return null;
     }
 }
 
-// MODIFICADO: Ahora devuelve fromMe
-function lastTextFrom(chat: ChatData): { text: string; messageType?: string, id: string, fromMe: boolean } {
+function lastTextFrom(chat: ChatData): {
+    text: string;
+    messageType?: string;
+    id: string;
+    fromMe: boolean;
+} {
     const msg = chat.lastMessage?.message;
     const type = chat.lastMessage?.messageType;
-    const id = chat.lastMessage?.key.id ?? '' 
-    const fromMe = chat.lastMessage?.key.fromMe ?? false; // <-- EXTRAEMOS fromMe
+    const id = chat.lastMessage?.key.id ?? "";
+    const fromMe = chat.lastMessage?.key.fromMe ?? false;
     let text = "";
 
     if (!msg) {
@@ -76,205 +95,193 @@ function lastTextFrom(chat: ChatData): { text: string; messageType?: string, id:
         text = msg.conversation;
     } else {
         switch (type) {
-            case 'imageMessage':
+            case "imageMessage":
                 text = "Imagen";
                 break;
-            case 'videoMessage':
+            case "videoMessage":
                 text = "Video";
                 break;
-            case 'audioMessage':
+            case "audioMessage":
                 text = "Nota de voz";
                 break;
-            case 'documentMessage':
-            case 'fileMessage':
+            case "documentMessage":
+            case "fileMessage":
                 text = "Documento";
                 break;
-            case 'locationMessage':
-                text = "Ubicación";
+            case "locationMessage":
+                text = "Ubicacion";
                 break;
             default:
-                text = `[${type || 'Mensaje desconocido'}]`;
+                text = `[${type || "Mensaje desconocido"}]`;
                 break;
         }
     }
 
-    return { text, messageType: type, id, fromMe }; // <-- DEVOLVEMOS fromMe
+    return { text, messageType: type, id, fromMe };
 }
 
 function avatarFrom(chat: ChatData): string {
     return chat.profilePicUrl || "/placeholder.svg?height=40&width=40";
 }
+
 function isGroupJid(jid: string) {
     return jid?.includes("@g.us");
 }
 
-/* ---------- Componente UI ---------- */
-export function ChatSidebar({ result, onSelectRemoteJid, selectedJid }: ChatSidebarProps) {
-
+export function ChatSidebar({
+    allTags,
+    chatSessions,
+    onSessionTagsChange,
+    result,
+    onSelectRemoteJid,
+    selectedJid,
+}: ChatSidebarProps) {
     const [q, setQ] = useState("");
     const [tab, setTab] = useState<"all" | "dm" | "groups">("all");
-    
-    // Hook para el almacenamiento local de mensajes vistos
-    const [seenMessages, setSeenMessages] = useLocalStorageObjectArray('seenMessages', [] as MessageRecord[]);
+    const [seenMessages, setSeenMessages] = useLocalStorageObjectArray("seenMessages", [] as MessageRecord[]);
 
-
-    // FUNCIÓN PARA MARCAR UN MENSAJE COMO VISTO (Guarda el remoteJid y el messageId)
     const markMessageAsSeen = useCallback((remoteJid: string, messageId: string) => {
         if (!remoteJid || !messageId) return;
 
-        setSeenMessages(prevMsgs => {
-            // Remueve el registro anterior para este chat (remoteJid)
-            const filtered = prevMsgs.filter(m => m.userId !== remoteJid);
-            
-            // Agrega el nuevo registro del último mensaje visto
+        setSeenMessages((prevMsgs) => {
+            const filtered = prevMsgs.filter((message) => message.userId !== remoteJid);
             const newRecord: MessageRecord = { userId: remoteJid, messageId };
             return [...filtered, newRecord];
         });
-        
     }, [setSeenMessages]);
-    
-    // FUNCIÓN PARA COMPROBAR SI UN MENSAJE FUE VISTO LOCALMENTE
+
     const isMessageSeen = useCallback((remoteJid: string, messageId: string) => {
-        if (!messageId) return false; 
-        
-        const record = seenMessages.find(m => m.userId === remoteJid);
-        
-        // Es visto si el ID guardado coincide con el ID del último mensaje
+        if (!messageId) return false;
+
+        const record = seenMessages.find((message) => message.userId === remoteJid);
         return record?.messageId === messageId;
-
     }, [seenMessages]);
-
 
     const contacts = useMemo(() => {
         if (!result.success) return [];
-        
-        const mappedContacts = result.data.map((c) => {
-            const ts = epochToMs(c.lastMessage?.messageTimestamp);
-            const lastMsgData = lastTextFrom(c); 
-            const lastMessageId = lastMsgData.id;
-            
-            // --- NUEVA LÓGICA DE LECTURA COMBINADA ---
-            const isFromMe = lastMsgData.fromMe;
-            const isSelected = c.remoteJid === selectedJid;
-            const wasSeenPreviously = lastMessageId ? isMessageSeen(c.remoteJid, lastMessageId) : false;
-            const hasUnreadFromServer = (c.unreadCount ?? 0) > 0;
-            const isRead = wasSeenPreviously || isFromMe || isSelected || !hasUnreadFromServer;
-            const isUnreadLocal = Boolean(lastMessageId) && !isRead;
-            
-            return {
-                id: c.remoteJid,
-                name: nameFrom(c),
-                avatarSrc: avatarFrom(c),
-                lastMessage: lastMsgData.text,
-                lastMessageId: lastMessageId,
-                messageType: lastMsgData.messageType,
-                timestamp: formatTimeFromEpoch(c.lastMessage?.messageTimestamp),
-                ts,
-                isGroup: isGroupJid(c.remoteJid),
-                isUnreadLocal: isUnreadLocal, // Bandera de estado de lectura local
-            };
-        })
+
+        return result.data
+            .map((chat) => {
+                const ts = epochToMs(chat.lastMessage?.messageTimestamp);
+                const lastMsgData = lastTextFrom(chat);
+                const lastMessageId = lastMsgData.id;
+
+                const isFromMe = lastMsgData.fromMe;
+                const isSelected = chat.remoteJid === selectedJid;
+                const wasSeenPreviously = lastMessageId
+                    ? isMessageSeen(chat.remoteJid, lastMessageId)
+                    : false;
+                const hasUnreadFromServer = (chat.unreadCount ?? 0) > 0;
+                const isRead = wasSeenPreviously || isFromMe || isSelected || !hasUnreadFromServer;
+
+                return {
+                    id: chat.remoteJid,
+                    name: nameFrom(chat),
+                    avatarSrc: avatarFrom(chat),
+                    chatSession: chatSessions[chat.remoteJid] ?? null,
+                    lastMessage: lastMsgData.text,
+                    lastMessageId,
+                    messageType: lastMsgData.messageType,
+                    timestamp: formatTimeFromEpoch(chat.lastMessage?.messageTimestamp),
+                    ts,
+                    isGroup: isGroupJid(chat.remoteJid),
+                    isUnreadLocal: Boolean(lastMessageId) && !isRead,
+                };
+            })
             .sort((a, b) => b.ts - a.ts);
-
-        // Al seleccionar, marcamos el último mensaje del chat como visto
-        // Esto lo hacemos en handleSelectJid para persistencia, pero el useMemo
-        // se recalcula inmediatamente debido a la dependencia [selectedJid]
-        
-        return mappedContacts;
-    }, [result, isMessageSeen, selectedJid]); // <-- selectedJid es la clave para la re-evaluación instantánea
-
+    }, [chatSessions, isMessageSeen, result, selectedJid]);
 
     const filtered = useMemo(() => {
         let list = contacts;
 
         if (tab === "dm") {
-            list = contacts.filter((c) => !c.isGroup);
+            list = contacts.filter((contact) => !contact.isGroup);
         }
+
         if (tab === "groups") {
-            list = contacts.filter((c) => c.isGroup);
+            list = contacts.filter((contact) => contact.isGroup);
         }
 
         if (q.trim()) {
             const term = q.trim().toLowerCase();
             list = list.filter(
-                (c) =>
-                    c.name.toLowerCase().includes(term) ||
-                    c.id.toLowerCase().includes(term) ||
-                    c.lastMessage.toLowerCase().includes(term)
+                (contact) =>
+                    contact.name.toLowerCase().includes(term) ||
+                    contact.id.toLowerCase().includes(term) ||
+                    contact.lastMessage.toLowerCase().includes(term) ||
+                    (contact.chatSession?.tags ?? []).some((tag) =>
+                        tag.name.toLowerCase().includes(term),
+                    ),
             );
         }
 
         return list.slice().sort((a, b) => b.ts - a.ts);
     }, [contacts, q, tab]);
 
-    // Lógica para seleccionar JID y marcar como visto (persistencia)
     const handleSelectJid = useCallback((jid: string, lastMessageId: string) => {
-        
-        // Al seleccionar, marcamos el último mensaje del chat como visto, 
-        // lo que persistirá el estado "leído" en localStorage para el futuro.
         if (jid && lastMessageId) {
             markMessageAsSeen(jid, lastMessageId);
         }
 
-        if (onSelectRemoteJid) {
-            onSelectRemoteJid(jid);
-        }
-    }, [onSelectRemoteJid, markMessageAsSeen]);
-
+        onSelectRemoteJid?.(jid);
+    }, [markMessageAsSeen, onSelectRemoteJid]);
 
     return (
-        <aside className="flex h-full w-full xs:min-w-[200px] max-w-[700px] flex-col border-r bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/50">
-            {/* Top bar, Search, y Tabs (Mismo código) */}
+        <aside className="flex h-full w-full max-w-[700px] flex-col border-r bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/50 xs:min-w-[200px]">
             <div className="sticky top-0 z-10 space-y-3 border-b bg-background/70 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/50">
                 <div className="flex items-center justify-between">
                     <h1 className="text-lg font-semibold tracking-tight">Chats</h1>
-                    <Inbox className="text-muted-foreground h-5 w-5" aria-hidden />
+                    <Inbox className="h-5 w-5 text-muted-foreground" aria-hidden />
                 </div>
-                {/* Search */}
+
                 <div className="relative">
-                    <Search className="text-muted-foreground absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2" />
+                    <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
-                        placeholder="Buscar por nombre o mensaje…"
+                        placeholder="Buscar por nombre, mensaje o etiqueta..."
                         className="pl-8 pr-8"
                         aria-label="Buscar chats"
                     />
                     {q && (
                         <button
-                            aria-label="Limpiar búsqueda"
-                            className="text-muted-foreground absolute right-2 top-1/2 -translate-y-1/2"
+                            type="button"
+                            aria-label="Limpiar busqueda"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
                             onClick={() => setQ("")}
                         >
                             <X className="h-4 w-4" />
                         </button>
                     )}
                 </div>
-                {/* Tabs */}
+
                 <div className="grid grid-cols-3 gap-2">
                     <button
+                        type="button"
                         onClick={() => setTab("all")}
                         className={cn(
                             "inline-flex items-center justify-center gap-2 rounded-xl border text-sm transition",
-                            tab === "all" ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"
+                            tab === "all" ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted",
                         )}
                     >
                         <Inbox className="h-4 w-4" /> Todos
                     </button>
                     <button
+                        type="button"
                         onClick={() => setTab("dm")}
                         className={cn(
                             "inline-flex items-center justify-center gap-2 rounded-xl border text-sm transition",
-                            tab === "dm" ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"
+                            tab === "dm" ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted",
                         )}
                     >
                         Privados
                     </button>
                     <button
+                        type="button"
                         onClick={() => setTab("groups")}
                         className={cn(
                             "inline-flex items-center justify-center gap-2 rounded-xl border text-sm transition",
-                            tab === "groups" ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"
+                            tab === "groups" ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted",
                         )}
                     >
                         Grupos
@@ -282,70 +289,87 @@ export function ChatSidebar({ result, onSelectRemoteJid, selectedJid }: ChatSide
                 </div>
             </div>
 
-
-            {/* Listado */}
             <div role="list" className="flex-1 space-y-1 overflow-y-auto p-1">
                 {result.success && filtered.length > 0 ? (
-                    filtered.map((c) => {
-                        const IconComponent: React.ElementType | null = getIconForMessageType(c.messageType);
-                        
-                        // Determina si el chat se considera NO LEÍDO localmente
-                        const isUnread = c.isUnreadLocal; 
+                    filtered.map((contact) => {
+                        const IconComponent = getIconForMessageType(contact.messageType);
+                        const isUnread = contact.isUnreadLocal;
+                        const selected = selectedJid === contact.id;
 
                         return (
-                            <button
-                                key={c.id}
+                            <div
+                                key={contact.id}
                                 role="listitem"
-                                // El handler marca el mensaje como visto al hacer clic
-                                onClick={() => handleSelectJid(c.id, c.lastMessageId)} 
                                 className={cn(
-                                    "group flex w-full items-center gap-3 rounded-xl border p-2 text-left transition hover:bg-accent hover:text-accent-foreground",
-                                    selectedJid === c.id ? "border-primary bg-primary/10" : "border-transparent"
+                                    "group rounded-xl border p-2 transition hover:bg-accent hover:text-accent-foreground",
+                                    selected ? "border-primary bg-primary/10" : "border-transparent",
                                 )}
-                                aria-current={selectedJid === c.id ? "true" : "false"}
+                                aria-current={selected ? "true" : "false"}
                             >
-                                <div className="relative">
-                                    <Avatar className="h-10 w-10 ring-2 ring-background group-hover:ring-accent">
-                                        <AvatarImage src={c.avatarSrc} alt={c.name || "Contacto"} />
-                                        <AvatarFallback>{c.name?.charAt(0)?.toUpperCase() || "?"}</AvatarFallback>
-                                    </Avatar>
-                                    {c.isGroup && (
-                                        <Users className="absolute -right-1 -bottom-1 h-4 w-4 rounded-full bg-background/90 p-[2px] text-muted-foreground ring-1 ring-border" />
-                                    )}
-                                </div>
-
-                                <div className="min-w-0 flex-1">
-                                    <div className="flex items-center justify-between gap-2">
-                                        {/* Nombre resaltado si no es leído */}
-                                        <span className={cn("truncate font-medium text-sm", isUnread && "text-foreground")}>
-                                            {c.name || "Sin nombre"}
-                                        </span>
-                                        <span className="text-muted-foreground shrink-0 text-xs">
-                                            {c.timestamp}
-                                        </span>
-                                    </div>
-                                    <div className="mt-0.5 flex items-center justify-between gap-2">
-                                        {/* Último mensaje resaltado si no es leído */}
-                                        <p className={cn("truncate text-sm flex items-center gap-1", 
-                                            isUnread ? "text-foreground font-semibold" : "text-muted-foreground"
-                                        )}>
-                                            {IconComponent && (
-                                                <IconComponent className="h-4 w-4 flex-shrink-0 text-muted-foreground opacity-70" />
-                                            )}
-                                            <span>{c.lastMessage || "—"}</span>
-                                        </p>
-                                        
-                                        {/* Indicador visual de NO LEÍDO (Punto) */}
-                                        {isUnread && (
-                                            <span className="bg-primary inline-block h-2 w-2 rounded-full shrink-0"></span>
+                                <button
+                                    type="button"
+                                    onClick={() => handleSelectJid(contact.id, contact.lastMessageId)}
+                                    className="flex w-full items-center gap-3 text-left"
+                                >
+                                    <div className="relative">
+                                        <Avatar className="h-10 w-10 ring-2 ring-background group-hover:ring-accent">
+                                            <AvatarImage src={contact.avatarSrc} alt={contact.name || "Contacto"} />
+                                            <AvatarFallback>{contact.name?.charAt(0)?.toUpperCase() || "?"}</AvatarFallback>
+                                        </Avatar>
+                                        {contact.isGroup && (
+                                            <Users className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-background/90 p-[2px] text-muted-foreground ring-1 ring-border" />
                                         )}
-                                    </div>
-                                </div>
-                            </button>
-                        )
+                                        </div>
+
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className={cn("truncate text-sm font-medium", isUnread && "text-foreground")}>
+                                                {contact.name || "Sin nombre"}
+                                            </span>
+                                            <span className="shrink-0 text-xs text-muted-foreground">
+                                                {contact.timestamp}
+                                            </span>
+                                        </div>
+                                            <div className="mt-0.5 flex items-center justify-between gap-2">
+                                                <div
+                                                    className={cn(
+                                                        "flex items-center gap-1 truncate text-sm",
+                                                        isUnread ? "font-semibold text-foreground" : "text-muted-foreground",
+                                                    )}
+                                                >
+                                                    {IconComponent && (
+                                                        <IconComponent className="h-4 w-4 flex-shrink-0 text-muted-foreground opacity-70" />
+                                                    )}
+                                                    <span>{contact.lastMessage || "—"}</span>
+                                                </div>
+
+                                                {isUnread && (
+                                                    <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-primary" />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </button>
+
+                                    {contact.chatSession && (
+                                        <div className="pl-[52px] pt-2">
+                                            <SessionTagsCombobox
+                                                userId={contact.chatSession.userId}
+                                                sessionId={contact.chatSession.id}
+                                                allTags={allTags}
+                                                initialSelectedIds={contact.chatSession.tags.map((tag) => tag.id)}
+                                                onSelectedIdsChange={(selectedIds) =>
+                                                    onSessionTagsChange?.(contact.id, selectedIds)
+                                                }
+                                            />
+                                        </div>
+                                    )}
+
+
+                            </div>
+                        );
                     })
                 ) : (
-                    <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
+                    <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-muted-foreground">
                         <div className="rounded-2xl border p-6 opacity-70">
                             <Inbox className="h-8 w-8" />
                         </div>

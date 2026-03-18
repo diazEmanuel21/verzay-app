@@ -6,6 +6,9 @@ import { Prisma, Session as PrismaSession } from '@prisma/client';
 import { z } from 'zod';
 import { ActionResponse } from './tag-actions';
 import {
+  ChatContactDescriptor,
+  ChatContactSessionMap,
+  ChatContactSessionSummary,
   CrmFollowUpStatus,
   Session as AppSession,
   SessionCrmFollowUpHistoryItem,
@@ -111,6 +114,21 @@ function mapSessionRecord(session: SessionWithTagsRecord): AppSession {
       slug: item.tag.slug,
       color: item.tag.color,
     })),
+  };
+}
+
+function mapChatContactSessionSummary(
+  session: SessionWithTagsRecord,
+): ChatContactSessionSummary {
+  const mappedSession = mapSessionRecord(session);
+
+  return {
+    id: mappedSession.id,
+    userId: mappedSession.userId,
+    remoteJid: mappedSession.remoteJid,
+    remoteJidAlt: mappedSession.remoteJidAlt,
+    pushName: mappedSession.pushName,
+    tags: mappedSession.tags ?? [],
   };
 }
 
@@ -280,6 +298,151 @@ export async function getSessionsByUserId(
     console.error("Error al obtener las sesiones:", error);
 
     let errorMessage = "No se pudieron cargar las sesiones";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
+    return {
+      success: false,
+      message: errorMessage,
+    };
+  }
+}
+
+export async function getChatContactSessions(
+  userId: string,
+  chats: ChatContactDescriptor[],
+): Promise<SessionResponse<ChatContactSessionMap>> {
+  try {
+    if (!userId) {
+      return {
+        success: false,
+        message: 'Se requiere el userId.',
+      };
+    }
+
+    const parsedChats = z
+      .array(
+        z.object({
+          remoteJid: z.string().trim().min(1),
+          remoteJidAlt: z.string().trim().nullish(),
+          senderPn: z.string().trim().nullish(),
+          pushName: z.string().trim().nullish(),
+          aliases: z.array(z.string().trim()).optional(),
+        }),
+      )
+      .parse(chats ?? []);
+
+    if (parsedChats.length === 0) {
+      return {
+        success: true,
+        message: 'No hay chats para mapear sesiones.',
+        data: {},
+      };
+    }
+
+    const chatsWithCandidates = parsedChats.map((chat) => {
+      const observedAliases = [
+        chat.remoteJid,
+        chat.remoteJidAlt ?? undefined,
+        chat.senderPn ?? undefined,
+        ...(chat.aliases ?? []),
+      ];
+
+      return {
+        chatRemoteJid: chat.remoteJid,
+        preferredRemoteJid: resolvePreferredRemoteJid(observedAliases),
+        candidates: buildRemoteJidCandidates(chat.remoteJid, observedAliases),
+      };
+    });
+
+    const allCandidates = Array.from(
+      new Set(
+        chatsWithCandidates.flatMap((chat) => chat.candidates).filter(Boolean),
+      ),
+    );
+
+    if (allCandidates.length === 0) {
+      return {
+        success: true,
+        message: 'No se generaron candidatos de JID para buscar sesiones.',
+        data: {},
+      };
+    }
+
+    const sessions = await db.session.findMany({
+      where: {
+        userId,
+        OR: [
+          { remoteJid: { in: allCandidates } },
+          { remoteJidAlt: { in: allCandidates } },
+        ],
+      },
+      include: {
+        sessionTags: {
+          include: {
+            tag: true,
+          },
+        },
+      },
+    });
+
+    const sessionsByCandidate = new Map<string, SessionWithTagsRecord[]>();
+    for (const session of sessions) {
+      const sessionCandidates = [session.remoteJid, session.remoteJidAlt].filter(Boolean) as string[];
+
+      for (const candidate of sessionCandidates) {
+        const existing = sessionsByCandidate.get(candidate) ?? [];
+        existing.push(session);
+        sessionsByCandidate.set(candidate, existing);
+      }
+    }
+
+    const data: ChatContactSessionMap = {};
+
+    for (const chat of chatsWithCandidates) {
+      const matchedSessions = new Map<number, SessionWithTagsRecord>();
+
+      for (const candidate of chat.candidates) {
+        const candidateSessions = sessionsByCandidate.get(candidate) ?? [];
+        for (const session of candidateSessions) {
+          matchedSessions.set(session.id, session);
+        }
+      }
+
+      const preferredSession = Array.from(matchedSessions.values())
+        .sort((a, b) => {
+          const aScore = scoreSessionMatch(
+            a,
+            chat.chatRemoteJid,
+            chat.preferredRemoteJid,
+            chat.candidates,
+          );
+          const bScore = scoreSessionMatch(
+            b,
+            chat.chatRemoteJid,
+            chat.preferredRemoteJid,
+            chat.candidates,
+          );
+
+          if (aScore !== bScore) return aScore - bScore;
+          return b.updatedAt.getTime() - a.updatedAt.getTime();
+        })[0];
+
+      if (!preferredSession) continue;
+
+      data[chat.chatRemoteJid] = mapChatContactSessionSummary(preferredSession);
+    }
+
+    return {
+      success: true,
+      message: 'Sesiones de chat obtenidas correctamente.',
+      data,
+    };
+  } catch (error) {
+    console.error('Error al obtener sesiones para contactos de chat:', error);
+
+    let errorMessage = 'No se pudieron mapear las sesiones de los chats.';
     if (error instanceof Error) {
       errorMessage = error.message;
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { ChevronsUpDown, Check, Tag as TagIcon } from "lucide-react";
 import {
@@ -24,8 +24,8 @@ type SimpleTag = {
     id: number;
     name: string;
     slug?: string;
-    color?: string | null;        // ej: "#22c55e" o "hsl(var(--primary))"
-    sessionCount?: number | null; // cantidad de sesiones con esta tag
+    color?: string | null;
+    sessionCount?: number | null;
 };
 
 interface SessionTagsComboboxProps {
@@ -33,6 +33,7 @@ interface SessionTagsComboboxProps {
     sessionId: number;
     allTags: SimpleTag[];
     initialSelectedIds: number[];
+    onSelectedIdsChange?: (selectedIds: number[]) => void;
 }
 
 export function SessionTagsCombobox({
@@ -40,20 +41,27 @@ export function SessionTagsCombobox({
     sessionId,
     allTags,
     initialSelectedIds,
+    onSelectedIdsChange,
 }: SessionTagsComboboxProps) {
     const [open, setOpen] = useState(false);
     const [selectedIds, setSelectedIds] = useState<number[]>(initialSelectedIds);
     const [isPending, startTransition] = useTransition();
+    const initialSelectedIdsKey = [...initialSelectedIds].sort((a, b) => a - b).join(",");
+
+    useEffect(() => {
+        setSelectedIds(initialSelectedIds);
+    }, [initialSelectedIdsKey]);
 
     const isSelected = (id: number) => selectedIds.includes(id);
 
     const handleToggleTag = (tagId: number) => {
         const currentlySelected = isSelected(tagId);
+        const nextSelectedIds = currentlySelected
+            ? selectedIds.filter((id) => id !== tagId)
+            : [...selectedIds, tagId];
 
-        // Optimista
-        setSelectedIds((prev) =>
-            currentlySelected ? prev.filter((id) => id !== tagId) : [...prev, tagId]
-        );
+        setSelectedIds(nextSelectedIds);
+        onSelectedIdsChange?.(nextSelectedIds);
 
         startTransition(async () => {
             const res = currentlySelected
@@ -61,15 +69,17 @@ export function SessionTagsCombobox({
                 : await assignTagToSessionAction({ userId, sessionId, tagId });
 
             if (!res.success) {
-                // revertir si falló
-                setSelectedIds((prev) =>
-                    currentlySelected ? [...prev, tagId] : prev.filter((id) => id !== tagId)
-                );
+                const revertedSelectedIds = currentlySelected
+                    ? [...nextSelectedIds, tagId]
+                    : nextSelectedIds.filter((id) => id !== tagId);
 
+                setSelectedIds(revertedSelectedIds);
+                onSelectedIdsChange?.(revertedSelectedIds);
                 toast.error(res.message || "No se pudo actualizar las etiquetas.");
-            } else {
-                toast.success(res.message || "Etiquetas actualizadas.");
+                return;
             }
+
+            toast.success(res.message || "Etiquetas actualizadas.");
         });
     };
 
@@ -82,17 +92,16 @@ export function SessionTagsCombobox({
             );
         }
 
-        const selectedTags = allTags.filter((t) => selectedIds.includes(t.id));
+        const selectedTags = allTags.filter((tag) => selectedIds.includes(tag.id));
         if (selectedTags.length === 0) {
             return (
                 <span className="flex items-center gap-1 truncate">
                     <TagIcon className="h-3 w-3 opacity-70" />
-                    
                 </span>
             );
         }
 
-        const maxVisible = 4; // cuántos iconos mostrar
+        const maxVisible = 4;
         const visible = selectedTags.slice(0, maxVisible);
         const remaining = selectedTags.length - visible.length;
 
@@ -107,7 +116,6 @@ export function SessionTagsCombobox({
                             className="h-2.5 w-2.5"
                             style={tag.color ? { color: tag.color } : undefined}
                         />
-                        {/* accesibilidad: nombre solo para lectores de pantalla */}
                         <span className="sr-only">{tag.name}</span>
                     </span>
                 ))}
@@ -134,7 +142,7 @@ export function SessionTagsCombobox({
                     <span className="flex items-center gap-1 truncate">
                         <span className="truncate">{summaryLabel()}</span>
                     </span>
-                    <ChevronsUpDown className="" />
+                    <ChevronsUpDown />
                 </Button>
             </PopoverTrigger>
 
@@ -156,29 +164,22 @@ export function SessionTagsCombobox({
                                         onSelect={() => handleToggleTag(tag.id)}
                                         className="flex items-center justify-between gap-2 text-xs"
                                     >
-                                        {/* Lado izquierdo: check + icono de color + nombre */}
-                                        <div className="flex items-center gap-2 min-w-0">
+                                        <div className="flex min-w-0 items-center gap-2">
                                             <Check
                                                 className={cn(
                                                     "h-3 w-3",
-                                                    active ? "opacity-100" : "opacity-0"
+                                                    active ? "opacity-100" : "opacity-0",
                                                 )}
                                             />
 
-                                            {/* Icono Tag con el color propio de la etiqueta */}
                                             <TagIcon
                                                 className="h-3 w-3 shrink-0"
-                                                style={
-                                                    tag.color
-                                                        ? { color: tag.color }
-                                                        : undefined // fallback al color actual
-                                                }
+                                                style={tag.color ? { color: tag.color } : undefined}
                                             />
 
                                             <span className="truncate">{tag.name}</span>
                                         </div>
 
-                                        {/* Lado derecho: badge con cantidad */}
                                         <Badge
                                             variant="outline"
                                             className="shrink-0 px-1.5 py-0.5 text-[10px] leading-none"

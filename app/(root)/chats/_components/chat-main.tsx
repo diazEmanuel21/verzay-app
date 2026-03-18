@@ -37,6 +37,8 @@ type ChatMainProps = {
   onSend: (payload: OutgoingMessagePayload) => void | Promise<void>;
   onBackToList: () => void;
   allTags: SimpleTag[];
+  onSessionResolved?: (remoteJid: string, session: Session | null) => void;
+  onSessionTagsChange?: (remoteJid: string, selectedIds: number[]) => void;
 };
 
 /* -------- Outgoing payload unificado -------- */
@@ -467,7 +469,18 @@ const ChatMessageList: React.FC<{
 };
 
 /* -------- Componente principal con lógica de SwitchStatus corregida -------- */
-export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, loading, onSend, onBackToList, userId, allTags }) => {
+export const ChatMain: React.FC<ChatMainProps> = ({
+  header,
+  messages,
+  info,
+  loading,
+  onSend,
+  onBackToList,
+  userId,
+  allTags,
+  onSessionResolved,
+  onSessionTagsChange,
+}) => {
   const [input, setInput] = useState('');
   const [composeMedia, setComposeMedia] = useState<ComposeMedia | null>(null);
   const [isSending, setIsSending] = useState(false);
@@ -577,6 +590,9 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
     // Utilizamos userId y info?.remoteJid directamente en el cuerpo del useCallback
     if (!userId || !info?.remoteJid) {
       setSession(null);
+      if (info?.remoteJid) {
+        onSessionResolved?.(info.remoteJid, null);
+      }
       return;
     }
 
@@ -602,14 +618,16 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
 
       if (resolvedSession?.success && resolvedSession.data) {
         setSession(resolvedSession.data);
+        onSessionResolved?.(info.remoteJid, resolvedSession.data);
       } else {
         setSession(null);
+        onSessionResolved?.(info.remoteJid, null);
       }
     } catch (error) {
       setSession(null);
       console.error("Error al obtener el estado de la sesión:", error);
     }
-  }, [header.name, info?.instanceName, info?.remoteJid, info?.remoteJidAliases, userId]);
+  }, [header.name, info?.instanceName, info?.remoteJid, info?.remoteJidAliases, onSessionResolved, userId]);
 
   // Llama a la función de obtención de estado cuando cambie el JID o el usuario
   useEffect(() => {
@@ -877,6 +895,10 @@ export const ChatMain: React.FC<ChatMainProps> = ({ header, messages, info, load
                   sessionId={session.id}
                   allTags={allTags}
                   initialSelectedIds={initialSelectedTagIds}
+                  onSelectedIdsChange={(selectedIds) => {
+                    if (!info?.remoteJid) return;
+                    onSessionTagsChange?.(info.remoteJid, selectedIds);
+                  }}
                 />
               )}
             </div>

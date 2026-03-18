@@ -11,8 +11,15 @@ import type {
   FindMessagesResult,
   SendMessageResult,
 } from "@/actions/chat-actions";
+import { getChatContactSessions } from "@/actions/session-action";
 import type { OutgoingMessagePayload } from "./chat-main";
-import { SimpleTag } from "@/types/session";
+import type {
+  ChatContactDescriptor,
+  ChatContactSessionMap,
+  ChatContactSessionSummary,
+  Session,
+  SimpleTag,
+} from "@/types/session";
 
 /* -------------------------------------
    Helpers de comparación y polling
@@ -36,12 +43,36 @@ function areListsDifferent(a: EvolutionMessage[], b: EvolutionMessage[]) {
 -------------------------------------- */
 type ApiKeyData = { url: string; key: string };
 
+function buildChatContactDescriptors(chats: ChatData[]): ChatContactDescriptor[] {
+  return chats
+    .filter((chat) => chat.remoteJid && chat.remoteJid !== "status@broadcast")
+    .map((chat) => ({
+      remoteJid: chat.remoteJid,
+      remoteJidAlt: chat.remoteJidAlt,
+      senderPn: chat.senderPn,
+      pushName: chat.pushName,
+      aliases: chat.aliases,
+    }));
+}
+
+function mapSessionToChatContactSummary(session: Session): ChatContactSessionSummary {
+  return {
+    id: session.id,
+    userId: session.userId,
+    remoteJid: session.remoteJid,
+    remoteJidAlt: session.remoteJidAlt,
+    pushName: session.pushName,
+    tags: session.tags ?? [],
+  };
+}
+
 /* -------------------------------------
    Props del componente
 -------------------------------------- */
 interface ChatsClientProps {
   userId: string;
   chatsResult: FetchChatsResult;
+  initialChatSessions: ChatContactSessionMap;
   initialSelectedJid: string;
   initialMessages: EvolutionMessage[];
   instanceName?: string;
@@ -68,6 +99,7 @@ interface ChatsClientProps {
 -------------------------------------- */
 export function ChatsClient({
   chatsResult: initialChatsResult,
+  initialChatSessions,
   initialSelectedJid,
   initialMessages,
   warmMessages,
@@ -86,6 +118,7 @@ export function ChatsClient({
       : undefined;
   const [selectedJid, setSelectedJid] = useState(initialSelectedJid || "");
   const [currentChatsResult, setCurrentChatsResult] = useState(initialChatsResult);
+  const [chatSessions, setChatSessions] = useState<ChatContactSessionMap>(initialChatSessions);
   const [messages, setMessages] = useState<EvolutionMessage[]>(initialMessages || []);
   const [info, setInfo] = useState<
     | {
@@ -166,6 +199,62 @@ export function ChatsClient({
   const toggleSidebarVisibility = useCallback(() => {
     setIsSidebarVisible((prev) => !prev);
   }, []);
+
+  const refreshChatSessions = useCallback(
+    async (chats: ChatData[]) => {
+      const descriptors = buildChatContactDescriptors(chats);
+
+      if (descriptors.length === 0) {
+        setChatSessions({});
+        return;
+      }
+
+      const result = await getChatContactSessions(userId, descriptors);
+      if (result.success) {
+        setChatSessions(result.data ?? {});
+      }
+    },
+    [userId]
+  );
+
+  const handleSessionResolved = useCallback(
+    (remoteJid: string, session: Session | null) => {
+      setChatSessions((prev) => {
+        if (!remoteJid) return prev;
+
+        if (!session) {
+          if (!(remoteJid in prev)) return prev;
+          const next = { ...prev };
+          delete next[remoteJid];
+          return next;
+        }
+
+        return {
+          ...prev,
+          [remoteJid]: mapSessionToChatContactSummary(session),
+        };
+      });
+    },
+    []
+  );
+
+  const handleSessionTagsChange = useCallback(
+    (remoteJid: string, selectedIds: number[]) => {
+      setChatSessions((prev) => {
+        const currentSession = prev[remoteJid];
+        if (!currentSession) return prev;
+
+        return {
+          ...prev,
+          [remoteJid]: {
+            ...currentSession,
+            tags: allTags.filter((tag) => selectedIds.includes(tag.id)),
+          },
+        };
+      });
+    },
+    [allTags]
+  );
 
   const pollAndCompareMessages = useCallback(
     async (remoteJid: string, remoteJidAliases?: string[]) => {
@@ -271,9 +360,10 @@ export function ChatsClient({
           ),
         };
         setCurrentChatsResult(filtered);
+        await refreshChatSessions(filtered.data);
       }
     },
-    [selectedJid, sendAny, warmMessages, refetchChats, pollAndCompareMessages, currentContact]
+    [selectedJid, sendAny, warmMessages, refetchChats, pollAndCompareMessages, currentContact, refreshChatSessions]
   );
 
   // Polling sidebar
@@ -292,6 +382,7 @@ export function ChatsClient({
           ),
         };
         setCurrentChatsResult(filtered);
+        await refreshChatSessions(filtered.data);
       }
       t = setTimeout(loop, 10000);
     };
@@ -304,7 +395,7 @@ export function ChatsClient({
       stopped = true;
       if (t) clearTimeout(t);
     };
-  }, [refetchChats, initialChatsResult.success]);
+  }, [refetchChats, initialChatsResult.success, refreshChatSessions]);
 
   // Polling mensajes
   useEffect(() => {
@@ -383,7 +474,10 @@ export function ChatsClient({
           }`}
       >
         <ChatSidebar
+          allTags={allTags}
+          chatSessions={chatSessions}
           result={currentChatsResult}
+          onSessionTagsChange={handleSessionTagsChange}
           onSelectRemoteJid={handleSelectFromSidebar}
           selectedJid={selectedJid}
         />
@@ -406,6 +500,8 @@ export function ChatsClient({
             onBackToList={toggleSidebarVisibility}
             userId={userId}
             allTags={allTags}
+            onSessionResolved={handleSessionResolved}
+            onSessionTagsChange={handleSessionTagsChange}
           />
         ) : (
           <div className="flex flex-1 items-center justify-center h-full text-gray-500">
