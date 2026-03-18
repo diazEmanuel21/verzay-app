@@ -113,6 +113,7 @@ export function CrmRecordActionsCell({
         onOpenChange={setEditOpen}
         mode="edit"
         sessionId={registro.sessionId}
+        sessionPushName={registro.session.pushName}
         initialTipo={registro.tipo}
         registro={registro as Registro}
         onSuccess={() => {

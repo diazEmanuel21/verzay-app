@@ -631,6 +631,7 @@ export const LeadsManagement = ({
                                         onOpenChange={setRegistroOpen}
                                         mode={registroMode}
                                         sessionId={selectedSession.id}
+                                        sessionPushName={selectedSession.pushName}
                                         initialTipo={registroTipo as any}
                                         registro={registroEditing}
                                         onSuccess={() => mutateSessions()}

@@ -29,6 +29,13 @@ type SessionLookup = {
     instanceId: string;
 };
 
+type AuthorizedSessionScope = {
+    id: number;
+    userId: string;
+    remoteJid: string;
+    instanceId: string;
+};
+
 export type CrmRegistroManagementActionResult = {
     success: boolean;
     message: string;
@@ -86,6 +93,49 @@ async function ensureAuthorizedRegistroById(registroId: number) {
 
     await assertUserCanUseApp(registro.session.userId);
     return registro;
+}
+
+function normalizeOptionalText(value?: string | null) {
+    const normalized = (value ?? "").trim();
+    return normalized ? normalized : null;
+}
+
+async function syncSessionLeadName(
+    tx: Prisma.TransactionClient,
+    session: AuthorizedSessionScope,
+    nombre: string | null
+) {
+    if (!nombre) return;
+
+    const result = await tx.session.updateMany({
+        where: {
+            id: session.id,
+            userId: session.userId,
+            instanceId: session.instanceId,
+            remoteJid: session.remoteJid,
+        },
+        data: {
+            pushName: nombre,
+        },
+    });
+
+    if (result.count !== 1) {
+        throw new Error("No se pudo sincronizar el nombre del lead para esta instancia.");
+    }
+
+    await tx.registro.updateMany({
+        where: {
+            sessionId: session.id,
+            session: {
+                userId: session.userId,
+                instanceId: session.instanceId,
+                remoteJid: session.remoteJid,
+            },
+        },
+        data: {
+            nombre,
+        },
+    });
 }
 
 function createEmptyCrmFollowUpSummary(): SessionCrmFollowUpSummary {
@@ -268,30 +318,32 @@ export async function createRegistro(input: {
     fecha?: string; // ISO o datetime-local
     estado: string;
 
-    // Campos para REPORTE
     nombre?: string;
     resumen?: string;
     lead?: boolean;
 
-    // Campos para otros tipos
     detalles?: string;
 }): Promise<ActionResult<unknown>> {
     try {
-        await ensureAuthorizedSessionById(input.sessionId);
+        const session = await ensureAuthorizedSessionById(input.sessionId);
+        const normalizedNombre = normalizeOptionalText(input.nombre);
 
-        const created = await db.registro.create({
-            data: {
-                sessionId: input.sessionId,
-                tipo: input.tipo,
-                fecha: input.fecha ? new Date(input.fecha) : new Date(),
-                estado: input.estado,
+        const created = await db.$transaction(async (tx) => {
+            const createdRegistro = await tx.registro.create({
+                data: {
+                    sessionId: input.sessionId,
+                    tipo: input.tipo,
+                    fecha: input.fecha ? new Date(input.fecha) : new Date(),
+                    estado: input.estado,
+                    nombre: normalizedNombre,
+                    resumen: input.resumen ?? null,
+                    lead: input.lead ?? false,
+                    detalles: input.detalles ?? null,
+                },
+            });
 
-                nombre: input.nombre ?? null,
-                resumen: input.resumen ?? null,
-                lead: input.lead ?? false,
-
-                detalles: input.detalles ?? null,
-            },
+            await syncSessionLeadName(tx, session, normalizedNombre);
+            return createdRegistro;
         });
 
         return { success: true, data: created };
@@ -302,6 +354,7 @@ export async function createRegistro(input: {
 
 export async function updateRegistro(input: {
     id: number;
+    sessionId: number;
     tipo: TipoRegistro;
     fecha?: string;
     estado: string;
@@ -313,21 +366,52 @@ export async function updateRegistro(input: {
     detalles?: string;
 }): Promise<ActionResult<unknown>> {
     try {
-        await ensureAuthorizedRegistroById(input.id);
+        const registro = await ensureAuthorizedRegistroById(input.id);
 
-        const updated = await db.registro.update({
-            where: { id: input.id },
-            data: {
-                tipo: input.tipo,
-                fecha: input.fecha ? new Date(input.fecha) : undefined,
-                estado: input.estado,
+        if (registro.sessionId !== input.sessionId) {
+            return {
+                success: false,
+                message: "El registro no coincide con el lead de la instancia seleccionada.",
+            };
+        }
 
-                nombre: input.nombre ?? null,
-                resumen: input.resumen ?? null,
-                lead: input.lead ?? false,
+        const normalizedNombre = normalizeOptionalText(input.nombre);
 
-                detalles: input.detalles ?? null,
-            },
+        const updated = await db.$transaction(async (tx) => {
+            const updateResult = await tx.registro.updateMany({
+                where: {
+                    id: input.id,
+                    sessionId: input.sessionId,
+                },
+                data: {
+                    tipo: input.tipo,
+                    fecha: input.fecha ? new Date(input.fecha) : undefined,
+                    estado: input.estado,
+                    nombre: normalizedNombre,
+                    resumen: input.resumen ?? null,
+                    lead: input.lead ?? false,
+                    detalles: input.detalles ?? null,
+                },
+            });
+
+            if (updateResult.count !== 1) {
+                throw new Error("No se pudo actualizar el registro para la instancia seleccionada.");
+            }
+
+            await syncSessionLeadName(
+                tx,
+                {
+                    id: input.sessionId,
+                    userId: registro.session.userId,
+                    instanceId: registro.session.instanceId,
+                    remoteJid: registro.session.remoteJid,
+                },
+                normalizedNombre
+            );
+
+            return tx.registro.findUnique({
+                where: { id: input.id },
+            });
         });
 
         return { success: true, data: updated };

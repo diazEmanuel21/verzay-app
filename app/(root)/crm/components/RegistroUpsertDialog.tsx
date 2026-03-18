@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -38,6 +37,7 @@ export function RegistroUpsertDialog({
     onOpenChange,
     mode,
     sessionId,
+    sessionPushName,
     initialTipo,
     registro,
     onSuccess,
@@ -46,6 +46,7 @@ export function RegistroUpsertDialog({
     onOpenChange: (v: boolean) => void;
     mode: Mode;
     sessionId: number;
+    sessionPushName?: string | null;
     initialTipo?: TipoRegistro;
     registro?: Registro | null;
     onSuccess: () => void; // aquí llamas mutateSessions()
@@ -72,7 +73,7 @@ export function RegistroUpsertDialog({
             setFecha(toDatetimeLocalValue(registro.fecha));
             setEstado(registro.estado ?? "");
 
-            setNombre(registro.nombre ?? "");
+            setNombre(registro.nombre ?? sessionPushName ?? "");
             setResumen(registro.resumen ?? "");
             setLead(Boolean(registro.lead));
 
@@ -85,11 +86,11 @@ export function RegistroUpsertDialog({
         setFecha(toDatetimeLocalValue(new Date()));
         setEstado("");
 
-        setNombre("");
+        setNombre(sessionPushName ?? "");
         setResumen("");
         setLead(false);
         setDetalles("");
-    }, [open, mode, registro, initialTipo]);
+    }, [open, mode, registro, initialTipo, sessionPushName]);
 
     React.useEffect(() => {
         const options = getEstadoOptions(tipo);
@@ -140,7 +141,7 @@ export function RegistroUpsertDialog({
                     tipo,
                     fecha: fecha || undefined,
                     estado,
-                    nombre: isReporte ? nombre : undefined,
+                    nombre,
                     resumen: isReporte ? resumen : undefined,
                     lead: isReporte ? lead : undefined,
                     detalles: !isReporte ? detalles : undefined,
@@ -160,10 +161,11 @@ export function RegistroUpsertDialog({
 
                 const res = await updateRegistro({
                     id: registro.id,
+                    sessionId,
                     tipo,
                     fecha: fecha || undefined,
                     estado,
-                    nombre: isReporte ? nombre : undefined,
+                    nombre,
                     resumen: isReporte ? resumen : undefined,
                     lead: isReporte ? lead : undefined,
                     detalles: !isReporte ? detalles : undefined,
@@ -223,6 +225,15 @@ export function RegistroUpsertDialog({
                     </div>
 
                     <div className="grid gap-2">
+                        <Label>{isReporte ? "Nombre *" : "Nombre del lead"}</Label>
+                        <Input
+                            value={nombre}
+                            onChange={(e) => setNombre(e.target.value)}
+                            placeholder="Nombre visible del lead para esta instancia"
+                        />
+                    </div>
+
+                    <div className="grid gap-2">
                         <Label>Estado *</Label>
 
                         <Select
@@ -248,11 +259,6 @@ export function RegistroUpsertDialog({
 
                     {isReporte ? (
                         <>
-                            <div className="grid gap-2">
-                                <Label>Nombre *</Label>
-                                <Input value={nombre} onChange={(e) => setNombre(e.target.value)} />
-                            </div>
-
                             <div className="grid gap-2">
                                 <Label>Resumen *</Label>
                                 <Textarea value={resumen} onChange={(e) => setResumen(e.target.value)} />
