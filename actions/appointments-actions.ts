@@ -14,6 +14,7 @@ interface AppointmentOperationResponse {
 
 interface CreateAppointmentInput {
     userId: string;
+    sessionId?: number;
     pushName: string;
     phone: string;
     instanceName: string;
@@ -51,9 +52,20 @@ export async function getAppointmentsByUser(userId: string): Promise<Appointment
 
 //Crear una cita
 export async function createAppointment(input: CreateAppointmentInput): Promise<AppointmentOperationResponse> {
-    const { userId, pushName, phone, instanceName, startTime, endTime, timezone, serviceId } = input;
+    const {
+        userId,
+        sessionId: requestedSessionId,
+        pushName,
+        phone,
+        instanceName,
+        startTime,
+        endTime,
+        timezone,
+        serviceId,
+    } = input;
+    const normalizedPushName = pushName.trim();
 
-    if (!userId || !pushName || !phone || !instanceName || !startTime || !endTime || !timezone || !serviceId) {
+    if (!userId || !normalizedPushName || !phone || !instanceName || !startTime || !endTime || !timezone || !serviceId) {
         return {
             success: false,
             message: 'Faltan campos requeridos.',
@@ -70,36 +82,57 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
     }
 
     try {
-        // Buscar o registrar sesión
-        const register = await registerSession({
-            userId,
-            remoteJid: phone,
-            pushName,
-            instanceId: instanceName,
-        });
+        let sessionId = requestedSessionId;
 
-        if (!register.success || !register.data) {
-            return {
-                success: false,
-                message: register.message || 'Error al registrar sesión.',
-            };
-        }
-
-        const session = register.data;
-
-        if (pushName && session?.id) {
-            await db.session.update({
-                where: { id: session.id },
-                data: {
-                    pushName: pushName.trim(),
+        if (sessionId) {
+            const existingSession = await db.session.findFirst({
+                where: {
+                    id: sessionId,
+                    userId,
+                },
+                select: {
+                    id: true,
+                    pushName: true,
                 },
             });
+
+            if (!existingSession) {
+                return {
+                    success: false,
+                    message: 'No se encontr\u00f3 la sesi\u00f3n asociada a la cita.',
+                };
+            }
+
+            if ((existingSession.pushName ?? '').trim() !== normalizedPushName) {
+                await db.session.update({
+                    where: { id: existingSession.id },
+                    data: {
+                        pushName: normalizedPushName,
+                    },
+                });
+            }
+        } else {
+            const register = await registerSession({
+                userId,
+                remoteJid: phone,
+                pushName: normalizedPushName,
+                instanceId: instanceName,
+            });
+
+            if (!register.success || !register.data) {
+                return {
+                    success: false,
+                    message: register.message || 'Error al registrar sesi\u00f3n.',
+                };
+            }
+
+            sessionId = register.data.id;
         }
 
         const overlap = await db.appointment.findFirst({
             where: {
                 userId,
-                status: { in: ["PENDIENTE", "CONFIRMADA", "ATENDIDA"] },
+                status: { in: ['PENDIENTE', 'CONFIRMADA', 'ATENDIDA'] },
                 OR: [
                     {
                         startTime: {
@@ -123,12 +156,12 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
         const created = await db.appointment.create({
             data: {
                 userId,
-                sessionId: session.id,
+                sessionId,
                 startTime: start,
                 endTime: end,
                 timezone,
                 status: AppointmentStatus.PENDIENTE,
-                serviceId
+                serviceId,
             },
         });
 
@@ -156,16 +189,15 @@ export async function updateAppointmentStatus(
             where: { id },
             data: { status },
             include: {
-                session: true
-            }
+                session: true,
+            },
         });
 
-        if (status === "CANCELADA") {
+        if (status === 'CANCELADA') {
             const userId = updated.userId;
             const instanceName = updated.session.instanceId;
             const remoteJid = updated.session.remoteJid;
 
-            // Solo invocar si están los 3 datos
             if (instanceName && userId && remoteJid) {
                 const del = await deleteReminderByInstanceUserRemote(
                     instanceName,
@@ -173,43 +205,40 @@ export async function updateAppointmentStatus(
                     remoteJid
                 );
 
-                // Si falla el borrado, NO rompemos la actualización de estado
                 if (!del.success) {
-                    console.warn("[updateAppointmentStatus] No se pudieron eliminar seguimientos:", del.message);
+                    console.warn('[updateAppointmentStatus] No se pudieron eliminar seguimientos:', del.message);
 
                     return {
                         success: false,
-                        message: " No se pudieron eliminar seguimientos.",
+                        message: 'No se pudieron eliminar seguimientos.',
                     };
                 }
             } else {
                 console.warn(
-                    "[updateAppointmentStatus] Faltan datos para eliminar seguimientos:",
+                    '[updateAppointmentStatus] Faltan datos para eliminar seguimientos:',
                     { instanceName, userId, remoteJid }
                 );
 
                 return {
                     success: false,
-                    message: "Faltan datos para eliminar seguimientos.",
+                    message: 'Faltan datos para eliminar seguimientos.',
                 };
             }
         }
 
         return {
             success: true,
-            message: "Estado actualizado correctamente.",
+            message: 'Estado actualizado correctamente.',
             data: updated,
         };
-
     } catch (error) {
-        console.error("Error al actualizar estado de la cita:", error);
+        console.error('Error al actualizar estado de la cita:', error);
         return {
             success: false,
-            message: "No se pudo actualizar el estado.",
+            message: 'No se pudo actualizar el estado.',
         };
     }
 }
-
 
 //Eliminar una cita
 export async function deleteAppointment(id: string): Promise<AppointmentOperationResponse> {
