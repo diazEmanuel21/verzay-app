@@ -1,7 +1,7 @@
 // components/forms/ReminderForm.tsx
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { useMutation } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
@@ -77,7 +77,16 @@ export const ReminderForm = ({
         fetchReminders()
     }, [userId]);
 
-    const { register, handleSubmit, setValue, watch, formState: { errors } } = reminderForm;
+    const {
+        control,
+        getValues,
+        register,
+        handleSubmit,
+        reset,
+        setValue,
+        watch,
+        formState: { errors }
+    } = reminderForm;
 
     const initialLeadValue = initialData && initialData?.remoteJid
         ? `${initialData.pushName || 'Sin nombre'} ${initialData?.remoteJid.split('@')[0]}`
@@ -96,7 +105,7 @@ export const ReminderForm = ({
             return isEdit ? updateReminder(reminderId?.toString() ?? '', data) : createReminder(data);
         },
         onSuccess: (res) => {
-            reminderForm.reset()
+            reset()
             if (!res.success) return toast.error(res.message)
             toast.success(res.message)
             router.refresh()
@@ -109,13 +118,17 @@ export const ReminderForm = ({
     });
 
     useEffect(() => {
-        const v = reminderForm.getValues();
+        const v = getValues();
         if (apikey && v.apikey !== apikey) setValue("apikey", apikey);
         if (serverUrl && v.serverUrl !== serverUrl) setValue("serverUrl", serverUrl);
         if (instanceNameReminder && v.instanceName !== instanceNameReminder) {
             setValue("instanceName", instanceNameReminder);
         }
-    }, [apikey, serverUrl, instanceNameReminder, reminderForm, setValue]);
+    }, [apikey, serverUrl, getValues, instanceNameReminder, setValue]);
+
+    const handleTimeChange = useCallback((value: string) => {
+        setValue("time", value);
+    }, [setValue]);
 
     const modalTitle = isCampaignPage ? 'campaña' : 'recordatorio';
 
@@ -154,12 +167,12 @@ export const ReminderForm = ({
                     <DateTimePicker
                         isSchedule={false}
                         value={watch("time")}
-                        onChange={(val) => setValue("time", val)}
+                        onChange={handleTimeChange}
                     />
                 ) : (
                     <TimeInput
                         className="text-xs text-muted-foreground"
-                        onChange={(val) => setValue("time", val)}
+                        onChange={handleTimeChange}
                         currentValue={initialData?.time ?? 'minutes-0'}
                     />
                 )}
@@ -169,7 +182,7 @@ export const ReminderForm = ({
                 {!isSchedule &&
                     <div>
                         <Controller
-                            control={reminderForm.control}
+                            control={control}
                             name="repeatType"
                             render={({ field }) => (
                                 <Select onValueChange={field.onChange} value={field.value}>

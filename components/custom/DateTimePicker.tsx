@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
@@ -27,11 +27,16 @@ export function DateTimePicker({
     const [date, setDate] = useState<Date>(initialDate)
     const [hour, setHour] = useState(initialDate.getHours())
     const [minute, setMinute] = useState(initialDate.getMinutes())
+    const onChangeRef = useRef(onChange)
+
+    useEffect(() => {
+        onChangeRef.current = onChange
+    }, [onChange])
 
     useEffect(() => {
         const updated = setMinutes(setHours(date, hour), minute)
-        onChange(format(updated, "dd/MM/yyyy HH:mm"))
-    }, [date, hour, minute, onChange])
+        onChangeRef.current(format(updated, "dd/MM/yyyy HH:mm"))
+    }, [date, hour, minute])
 
     const updateDateTime = (newDate?: Date, newHour?: number, newMinute?: number) => {
         const base = newDate ?? date

@@ -75,19 +75,19 @@ const CampaignsPage = async () => {
   const isCampaignPage = true;
 
   return (
-    <div className="flex h-full w-full justify-center items-center">
-      <UnderConstruction />
-    </div>
+    // <div className="flex h-full w-full justify-center items-center">
+    //   <UnderConstruction />
+    // </div>
 
-    // <MainReminders
-    //   isCampaignPage={isCampaignPage}
-    //   user={user}
-    //   apiKey={resApikey.data}
-    //   reminders={reminders}
-    //   leads={sessions}
-    //   workflows={workflows}
-    //   instancia={resInstancia.data}
-    // />
+    <MainReminders
+      isCampaignPage={isCampaignPage}
+      user={user}
+      apiKey={resApikey.data}
+      reminders={reminders}
+      leads={sessions}
+      workflows={workflows}
+      instancia={resInstancia.data[0]}
+    />
 
   )
 

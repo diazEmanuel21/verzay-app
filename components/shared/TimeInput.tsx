@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -43,13 +43,18 @@ export function TimeInput({ onChange, className, onBlur, currentValue }: TimeInp
 
     const [unit, setUnit] = useState<TimeUnit>(initialUnit)
     const [value, setValue] = useState<number>(initialValue)
+    const onChangeRef = useRef(onChange)
+
+    useEffect(() => {
+        onChangeRef.current = onChange
+    }, [onChange])
 
     // Llama a onChange con formato 'unit-value'
     useEffect(() => {
-        if (onChange) {
-            onChange(`${unit}-${value}`)
+        if (onChangeRef.current) {
+            onChangeRef.current(`${unit}-${value}`)
         }
-    }, [unit, value, onChange])
+    }, [unit, value])
 
     // Lógica cuando se cambia la unidad
     const handleUnitChange = (newUnit: TimeUnit) => {
