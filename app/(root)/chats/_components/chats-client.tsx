@@ -168,13 +168,18 @@ export function ChatsClient({
     return contacts.find((c) => c.remoteJid === selectedJid || c.aliases?.includes(selectedJid));
   }, [contacts, selectedJid]);
 
+  const currentContactSession = useMemo(() => {
+    if (!selectedJid) return undefined;
+    return chatSessions[selectedJid];
+  }, [chatSessions, selectedJid]);
+
   const header = useMemo(() => {
     return {
-      name: currentContact?.pushName || selectedJid || "Sin contacto",
+      name: currentContactSession?.pushName?.trim() || currentContact?.pushName || selectedJid || "Sin contacto",
       avatarSrc: currentContact?.profilePicUrl || "/placeholder.svg",
       status: currentContact?.lastMessage?.messageTimestamp ? "último mensaje" : "—",
     };
-  }, [currentContact, selectedJid]);
+  }, [currentContact, currentContactSession, selectedJid]);
 
   // Autoselección inicial si no hay JID seleccionado
   useEffect(() => {

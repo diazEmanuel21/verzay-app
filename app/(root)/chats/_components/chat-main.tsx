@@ -11,17 +11,28 @@ import React, {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowRight, Mic, Send, Trash2, X, Clock, Check } from 'lucide-react';
+import { ArrowRight, Mic, Send, Trash2, X, Clock, Check, CheckCheck, CircleAlert, PencilLine, UserRound } from 'lucide-react';
 import { cn, SERVER_TIME_ZONE } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { AttachmentMenu, type ComposeMedia, type MediaType } from './attachment-menu';
 import { SwitchStatus } from '../../sessions/_components';
 import { SafeImage } from '@/components/custom/SafeImage';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 /*  Importaciones de Acciones y Tipos de Servidor */
 import { getMediaBase64FromMessage, type EvolutionMessage } from '@/actions/chat-actions';
 import { getSessionByRemoteJid } from '@/actions/session-action';
+import { updateLeadPushNameAction } from '@/actions/registro-action';
 import { SessionTagsCombobox } from '../../tags/components';
 import { Session, SimpleTag, SingleSessionResponse } from '@/types/session';
 import { CrmFollowUpSummaryBadge } from '../../crm/dashboard/components/CrmFollowUpSummaryBadge';
@@ -83,6 +94,12 @@ type ChatInfoMeta = {
   apiKeyData?: { url: string; key: string };
 };
 export type MediaData = { type: MediaType; url: string; mimeType: string; caption?: string };
+type MessageDeliveryState =
+  | 'sending'
+  | 'sent'
+  | 'delivered'
+  | 'read'
+  | 'failed';
 type UIBubble = {
   id: string;
   sender: 'user' | 'other';
@@ -90,7 +107,7 @@ type UIBubble = {
   avatarSrc?: string;
   ts?: number;
   media?: MediaData;
-  status?: 'sending';
+  status?: MessageDeliveryState;
 };
 
 // Estado de previsualización de audio
@@ -169,6 +186,60 @@ function extractMediaInfo(msg: any, type: MediaType): MediaData | null {
   return null;
 }
 
+function resolveEvolutionMessageStatus(message: EvolutionMessage): string {
+  const updates = Array.isArray(message.MessageUpdate) ? message.MessageUpdate : [];
+
+  for (let index = updates.length - 1; index >= 0; index -= 1) {
+    const candidate = updates[index];
+    const statusFromUpdate =
+      candidate?.status ||
+      candidate?.messageStatus ||
+      candidate?.update?.status ||
+      candidate?.update?.messageStatus;
+
+    if (typeof statusFromUpdate === 'string' && statusFromUpdate.trim()) {
+      return statusFromUpdate.trim();
+    }
+  }
+
+  return message.status?.trim() || '';
+}
+
+function normalizeDeliveryState(status?: string): MessageDeliveryState {
+  const normalized = status?.trim().toUpperCase();
+
+  if (!normalized || normalized === 'PENDING' || normalized === 'SENT' || normalized === 'SERVER_ACK') {
+    return 'sent';
+  }
+
+  if (
+    normalized === 'DELIVERY_ACK' ||
+    normalized === 'DELIVERED' ||
+    normalized === 'DEVICE_ACK'
+  ) {
+    return 'delivered';
+  }
+
+  if (
+    normalized === 'READ' ||
+    normalized === 'READ_ACK' ||
+    normalized === 'PLAYED' ||
+    normalized === 'PLAYED_ACK'
+  ) {
+    return 'read';
+  }
+
+  if (
+    normalized === 'ERROR' ||
+    normalized === 'FAILED' ||
+    normalized === 'FAIL'
+  ) {
+    return 'failed';
+  }
+
+  return 'sent';
+}
+
 /** Convierte EvolutionMessage -> UIBubble (inyectando media desde caché si existe) */
 function toUIMessages(
   messages: EvolutionMessage[],
@@ -225,6 +296,7 @@ function toUIMessages(
       avatarSrc: sender === 'user' ? '/default.png' : avatarUrl,
       ts: ts ? ts * 1000 : undefined,
       media: media || undefined,
+      status: isUser ? normalizeDeliveryState(resolveEvolutionMessageStatus(m)) : undefined,
     };
   });
 }
@@ -347,13 +419,33 @@ const MediaRenderer: React.FC<{ media: MediaData | undefined }> = React.memo(({ 
 });
 MediaRenderer.displayName = 'MediaRenderer';
 
+const MessageStatusIndicator: React.FC<{ status?: MessageDeliveryState }> = ({ status }) => {
+  if (status === 'sending') {
+    return <Clock className="h-3 w-3 text-gray-300" aria-label="Enviando" />;
+  }
+
+  if (status === 'failed') {
+    return <CircleAlert className="h-3 w-3 text-red-300" aria-label="No enviado" />;
+  }
+
+  if (status === 'read') {
+    return <CheckCheck className="h-3 w-3 text-sky-300" aria-label="Leido" />;
+  }
+
+  if (status === 'delivered') {
+    return <CheckCheck className="h-3 w-3 text-gray-300" aria-label="Entregado" />;
+  }
+
+  return <Check className="h-3 w-3 text-gray-300" aria-label="Enviado" />;
+};
+
 const MessageBubble: React.FC<{
   message: string;
   isUserMessage: boolean;
   avatarSrc?: string;
   timestamp?: number;
   media?: MediaData;
-  status?: 'sending';
+  status?: MessageDeliveryState;
 }> = ({ message, isUserMessage, avatarSrc, timestamp, media, status }) => {
   const bubbleClass = isUserMessage
     ? 'bg-primary text-white rounded-xl rounded-br-sm self-end'
@@ -391,8 +483,8 @@ const MessageBubble: React.FC<{
             </span>
           )}
           {isUserMessage && (
-            <span className="text-[0.6rem] mt-1 block" aria-label={status === 'sending' ? 'Enviando' : 'Enviado'}>
-              {status === 'sending' ? <Clock className="w-3 h-3 text-gray-300" /> : <Check className="w-3 h-3 text-gray-300" />}
+            <span className="text-[0.6rem] mt-1 block">
+              <MessageStatusIndicator status={status} />
             </span>
           )}
         </div>
@@ -407,6 +499,92 @@ const ConversationDateBadge: React.FC<{ label: string }> = ({ label }) => (
       {label}
     </div>
   </div>
+);
+
+const ContactEditDialog: React.FC<{
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  currentName: string;
+  phoneLabel?: string;
+  draft: string;
+  onDraftChange: (value: string) => void;
+  onSave: () => void | Promise<void>;
+  isPending: boolean;
+}> = ({
+  open,
+  onOpenChange,
+  currentName,
+  phoneLabel,
+  draft,
+  onDraftChange,
+  onSave,
+  isPending,
+}) => (
+  <Dialog open={open} onOpenChange={onOpenChange}>
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <span className="rounded-xl bg-primary/10 p-2 text-primary">
+            <UserRound className="h-4 w-4" />
+          </span>
+          Editar contacto
+        </DialogTitle>
+        <DialogDescription>
+          Actualiza el nombre del lead sincronizado en CRM para que se refleje en esta conversación.
+        </DialogDescription>
+      </DialogHeader>
+
+      <div className="space-y-4">
+        <div className="rounded-2xl border bg-muted/30 p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Vista previa</p>
+          <div className="mt-3 space-y-1">
+            <p className="text-base font-semibold text-foreground">{draft.trim() || 'Sin nombre'}</p>
+            {phoneLabel && (
+              <p className="text-xs text-muted-foreground">{phoneLabel}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Nombre actual: <span className="font-medium text-foreground/80">{currentName || 'Sin nombre'}</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="chat-contact-name">Nombre del contacto</Label>
+          <Input
+            id="chat-contact-name"
+            value={draft}
+            onChange={(event) => onDraftChange(event.target.value)}
+            placeholder="Ej. Maria Fernanda"
+            maxLength={120}
+            disabled={isPending}
+          />
+          <p className="text-xs text-muted-foreground">
+            Este cambio actualiza la sesion CRM y los registros asociados a este lead.
+          </p>
+        </div>
+      </div>
+
+      <DialogFooter>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+          disabled={isPending}
+        >
+          Cancelar
+        </Button>
+        <Button
+          type="button"
+          onClick={() => void onSave()}
+          disabled={isPending || !draft.trim()}
+          className="gap-2"
+        >
+          {isPending ? <Clock className="h-4 w-4 animate-spin" /> : <PencilLine className="h-4 w-4" />}
+          Guardar nombre
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 );
 
 const ChatMessageList: React.FC<{
@@ -460,6 +638,7 @@ const ChatMessageList: React.FC<{
             avatarSrc={item.message.avatarSrc}
             timestamp={item.message.ts}
             media={item.message.media}
+            status={item.message.status}
           />
         )
       )}
@@ -493,6 +672,9 @@ export const ChatMain: React.FC<ChatMainProps> = ({
 
   // ESTADOS PARA EL SWITCH: Almacena la sesión
   const [session, setSession] = useState<Session | null>(null);
+  const [isContactEditorOpen, setIsContactEditorOpen] = useState(false);
+  const [contactNameDraft, setContactNameDraft] = useState('');
+  const [isContactUpdatePending, setIsContactUpdatePending] = useState(false);
 
   // Grabación de audio (resto de tu código de grabación...)
   const [isRecording, setIsRecording] = useState(false);
@@ -515,6 +697,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({
   }, [userJid]);
 
   const initialSelectedTagIds = session?.tags?.map((t) => t?.id).filter(Boolean) ?? [];
+  const displayedContactName = session?.pushName?.trim() || header.name;
   const displayedWhatsapp =
     session
       ? getDisplayWhatsappFromSession(session)
@@ -524,6 +707,10 @@ export const ChatMain: React.FC<ChatMainProps> = ({
   const sessionStatusTone = session?.status
     ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
     : 'border-amber-200 bg-amber-50 text-amber-700';
+
+  useEffect(() => {
+    setContactNameDraft(displayedContactName || '');
+  }, [displayedContactName]);
 
   // Detectores memoizados
   const isMediaMsg = useCallback((m: EvolutionMessage) => {
@@ -586,7 +773,13 @@ export const ChatMain: React.FC<ChatMainProps> = ({
 
 
   /* 🚀 Lógica para obtener el estado de la sesión (SwitchStatus) */
-  const fetchSessionStatus = useCallback(async () => {
+  const fetchSessionStatus = useCallback(async (
+    preferredPushNameOrUpdater?: string | ((prevData: any) => any),
+    _shouldRevalidate?: boolean,
+  ) => {
+    const preferredPushName =
+      typeof preferredPushNameOrUpdater === 'string' ? preferredPushNameOrUpdater : undefined;
+
     // Utilizamos userId y info?.remoteJid directamente en el cuerpo del useCallback
     if (!userId || !info?.remoteJid) {
       setSession(null);
@@ -605,7 +798,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({
       for (const candidate of remoteJidCandidates) {
         const result: SingleSessionResponse = await getSessionByRemoteJid(userId, candidate, {
           instanceId: info.instanceName,
-          pushName: header.name,
+          pushName: preferredPushName || session?.pushName || header.name,
           ensureExists: candidate === info.remoteJid,
           aliases: remoteJidCandidates,
         });
@@ -627,7 +820,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({
       setSession(null);
       console.error("Error al obtener el estado de la sesión:", error);
     }
-  }, [header.name, info?.instanceName, info?.remoteJid, info?.remoteJidAliases, onSessionResolved, userId]);
+  }, [header.name, info?.instanceName, info?.remoteJid, info?.remoteJidAliases, onSessionResolved, session?.pushName, userId]);
 
   // Llama a la función de obtención de estado cuando cambie el JID o el usuario
   useEffect(() => {
@@ -639,6 +832,14 @@ export const ChatMain: React.FC<ChatMainProps> = ({
 
 
   /* Construye UI con caché */
+  const refreshSessionStatus = useCallback(async () => {
+    await fetchSessionStatus();
+  }, [fetchSessionStatus]);
+
+  const mutateSessionStatus = useCallback(() => {
+    void fetchSessionStatus();
+  }, [fetchSessionStatus]);
+
   const reversed = useMemo(() => messages.slice().reverse(), [messages]);
   const uiMessages = useMemo(() => {
     void mediaCacheTick;
@@ -668,6 +869,35 @@ export const ChatMain: React.FC<ChatMainProps> = ({
     if (m) setInput('');
   }, []);
   const clearComposeMedia = useCallback(() => setComposeMedia(null), []);
+
+  const handleSaveContactName = useCallback(async () => {
+    if (!session) return;
+
+    const normalizedName = contactNameDraft.trim();
+    if (!normalizedName) {
+      toast.error('El nombre del contacto es obligatorio.');
+      return;
+    }
+
+    try {
+      setIsContactUpdatePending(true);
+      const result = await updateLeadPushNameAction({
+        sessionId: session.id,
+        pushName: normalizedName,
+      });
+
+      if (!result.success) {
+        toast.error(result.message || 'No se pudo actualizar el contacto.');
+        return;
+      }
+
+      toast.success('Nombre del contacto actualizado.');
+      setIsContactEditorOpen(false);
+      await fetchSessionStatus(result.data.pushName);
+    } finally {
+      setIsContactUpdatePending(false);
+    }
+  }, [contactNameDraft, fetchSessionStatus, session]);
 
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
@@ -878,7 +1108,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({
 
           <Avatar className="w-10 h-10">
             <AvatarImage src={header.avatarSrc || '/default-avatar.png'} />
-            <AvatarFallback>{initialFromName(header.name)}</AvatarFallback>
+            <AvatarFallback>{initialFromName(displayedContactName)}</AvatarFallback>
           </Avatar>
 
 
@@ -887,8 +1117,21 @@ export const ChatMain: React.FC<ChatMainProps> = ({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <p className="truncate text-sm font-semibold dark:text-white sm:text-base">
-                {header.name}
+                {displayedContactName}
               </p>
+              {session && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 rounded-full border border-border/60 bg-background/70"
+                  onClick={() => setIsContactEditorOpen(true)}
+                  aria-label="Editar contacto"
+                  title="Editar contacto"
+                >
+                  <PencilLine className="h-4 w-4" />
+                </Button>
+              )}
               {session && (
                 <SessionTagsCombobox
                   userId={session.userId}
@@ -921,7 +1164,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({
                     userId={session.userId}
                     remoteJid={session.remoteJid}
                     instanceId={session.instanceId}
-                    onUpdated={fetchSessionStatus}
+                    onUpdated={refreshSessionStatus}
                   />
                 </>
               ) : (
@@ -936,12 +1179,23 @@ export const ChatMain: React.FC<ChatMainProps> = ({
                 key={`${session.id}-${session.status ? 'on' : 'off'}`}
                 checked={session.status ?? false}
                 sessionId={session.id ?? -1}
-                mutateSessions={fetchSessionStatus}
+                mutateSessions={mutateSessionStatus}
               />
             </div>
           )}
         </div>
       </div>
+
+      <ContactEditDialog
+        open={isContactEditorOpen}
+        onOpenChange={setIsContactEditorOpen}
+        currentName={displayedContactName}
+        phoneLabel={displayedWhatsapp}
+        draft={contactNameDraft}
+        onDraftChange={setContactNameDraft}
+        onSave={handleSaveContactName}
+        isPending={isContactUpdatePending}
+      />
 
       {/* Mensajes */}
       <ChatMessageList

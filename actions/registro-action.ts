@@ -1,6 +1,7 @@
 "use server";
 
 import type { Prisma } from "@prisma/client";
+import { z } from "zod";
 
 import { assertUserCanUseApp } from "@/actions/billing/helpers/app-access-guard";
 import { db } from "@/lib/db";
@@ -35,6 +36,11 @@ type AuthorizedSessionScope = {
     remoteJid: string;
     instanceId: string;
 };
+
+const updateLeadPushNameSchema = z.object({
+    sessionId: z.number().int().positive(),
+    pushName: z.string().trim().min(1, "El nombre es obligatorio.").max(120, "El nombre es demasiado largo."),
+});
 
 export type CrmRegistroManagementActionResult = {
     success: boolean;
@@ -136,6 +142,41 @@ async function syncSessionLeadName(
             nombre,
         },
     });
+}
+
+export async function updateLeadPushNameAction(
+    input: z.infer<typeof updateLeadPushNameSchema>
+): Promise<ActionResult<{ pushName: string }>> {
+    try {
+        const { sessionId, pushName } = updateLeadPushNameSchema.parse(input);
+        const session = await ensureAuthorizedSessionById(sessionId);
+        const normalizedPushName = normalizeOptionalText(pushName);
+
+        if (!normalizedPushName) {
+            return {
+                success: false,
+                message: "El nombre del contacto es obligatorio.",
+            };
+        }
+
+        await db.$transaction(async (tx) => {
+            await syncSessionLeadName(tx, session, normalizedPushName);
+        });
+
+        return {
+            success: true,
+            data: {
+                pushName: normalizedPushName,
+            },
+        };
+    } catch (error) {
+        console.error("Error al actualizar el nombre del lead:", error);
+
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : "No se pudo actualizar el nombre del contacto.",
+        };
+    }
 }
 
 function createEmptyCrmFollowUpSummary(): SessionCrmFollowUpSummary {
