@@ -3,11 +3,11 @@
 
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { differenceInCalendarDays } from "date-fns";
 import { BillingTemplateType, ResponseFormat } from "@/types/billing";
 import { buildBillingMessage } from "./billing-message-templates";
 import { pickPreviewTemplate } from "./helpers/billing-helpers";
 import { assertBillingScope } from "./helpers/billing-helpers.server";
+import { getBillingDaysRemaining } from "./helpers/billing-lifecycle";
 
 
 
@@ -29,16 +29,18 @@ export async function previewBillingReminderMessage(
             return { success: false, message: "Cliente sin dueDate configurado." };
         }
 
-        const now = new Date();
         const due = new Date(billing.dueDate);
-        const daysRemaining = differenceInCalendarDays(due, now);
+        const daysRemaining = getBillingDaysRemaining(due, new Date());
+        if (daysRemaining === null) {
+            return { success: false, message: "No fue posible calcular los dias restantes." };
+        }
 
         const paymentText =
             (billing.paymentNotes?.trim() ||
                 billing.paymentMethodLabel?.trim() ||
                 "").trim() || "—";
 
-        const template = pickPreviewTemplate(daysRemaining, Number(billing.graceDays || 0));
+        const template = pickPreviewTemplate(daysRemaining);
 
         // Por ahora igual que el job: fijo (luego lo hacemos dinámico por plan)
         const planLabel = billing.serviceName ? `🤖 ${billing.serviceName}` : `🤖 Agente IA`;

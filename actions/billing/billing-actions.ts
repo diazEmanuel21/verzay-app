@@ -1,11 +1,19 @@
-// app/actions/billing-actions.ts
 "use server";
 
-import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
-import { serializeUserBilling, toDate } from "./helpers/billing-helpers";
+
 import { currentUser } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { BillingUpsertInput, ResponseFormat } from "@/types/billing";
+
+import {
+    loadBillingDispatcherConfig,
+    getBillingUserRecord,
+    sendBillingStateChangeMessage,
+    setUserBillingWebhookEnabled,
+    syncUserBillingLifecycle,
+} from "./helpers/billing-notifications.server";
+import { serializeUserBilling, toDate } from "./helpers/billing-helpers";
 import {
     assertBillingScope,
     normalizeCurrencyCode,
@@ -14,11 +22,68 @@ import {
     toDecimal,
 } from "./helpers/billing-helpers.server";
 
-const isProvided = (v: unknown) => v !== null && v !== undefined && String(v).trim() !== "";
+const isProvided = (value: unknown) =>
+    value !== null && value !== undefined && String(value).trim() !== "";
 
-/**
- * 1) Obtener billing de un cliente
- */
+async function runManualStatusSideEffects(args: {
+    userId: string;
+    previousBillingStatus?: string | null;
+    previousAccessStatus?: string | null;
+    source: string;
+}) {
+    const updated = await getBillingUserRecord(args.userId);
+    if (!updated) {
+        return {
+            billing: null,
+            changed: false,
+            notificationSent: false,
+            notificationFailed: false,
+            webhookFailed: false,
+        };
+    }
+
+    const changed =
+        updated.billingStatus !== (args.previousBillingStatus ?? null) ||
+        updated.accessStatus !== (args.previousAccessStatus ?? null);
+
+    if (!changed) {
+        return {
+            billing: updated,
+            changed: false,
+            notificationSent: false,
+            notificationFailed: false,
+            webhookFailed: false,
+        };
+    }
+
+    const dispatcher = await loadBillingDispatcherConfig();
+    const webhookResult = await setUserBillingWebhookEnabled({
+        userId: updated.userId,
+        enable: updated.billingStatus !== "UNPAID" || updated.accessStatus !== "SUSPENDED",
+    });
+    const notificationResult = await sendBillingStateChangeMessage({
+        billing: updated,
+        dispatcher,
+        source: args.source,
+    });
+
+    if (!webhookResult.success && !webhookResult.skipped) {
+        console.warn("[billing-actions:webhook]", webhookResult);
+    }
+
+    if (!notificationResult.success) {
+        console.warn("[billing-actions:notification]", notificationResult);
+    }
+
+    return {
+        billing: updated,
+        changed: true,
+        notificationSent: notificationResult.success,
+        notificationFailed: !notificationResult.success,
+        webhookFailed: !webhookResult.success && !webhookResult.skipped,
+    };
+}
+
 export async function getUserBillingByUserId(
     userId: string
 ): Promise<ResponseFormat<any>> {
@@ -35,18 +100,15 @@ export async function getUserBillingByUserId(
             message: billing ? "Billing encontrado." : "Cliente sin billing configurado.",
             data: serializeUserBilling(billing),
         };
-    } catch (e: any) {
-        console.error("[getUserBillingByUserId]", e);
+    } catch (error: any) {
+        console.error("[getUserBillingByUserId]", error);
         return {
             success: false,
-            message: e?.message ?? "Error obteniendo billing.",
+            message: error?.message ?? "Error obteniendo billing.",
         };
     }
 }
 
-/**
- * 2) Upsert de configuracion billing (precio/medio/notas/moneda/graceDays)
- */
 export async function upsertUserBillingConfig(
     input: BillingUpsertInput
 ): Promise<ResponseFormat<any>> {
@@ -109,19 +171,26 @@ export async function upsertUserBillingConfig(
             update: data,
         });
 
-        return { success: true, message: "Billing actualizado.", data: billing };
-    } catch (e: any) {
-        console.error("[upsertUserBillingConfig]", e);
-        return { success: false, message: e?.message ?? "Error actualizando billing." };
+        const syncResult = await syncUserBillingLifecycle({
+            userId: scopedUserId,
+            source: "billing-config-update",
+        });
+
+        const suffix = syncResult.stateChanged
+            ? " Estados sincronizados con dueDate y graceDays."
+            : "";
+
+        return {
+            success: true,
+            message: `Billing actualizado.${suffix}`,
+            data: syncResult.billing ?? billing,
+        };
+    } catch (error: any) {
+        console.error("[upsertUserBillingConfig]", error);
+        return { success: false, message: error?.message ?? "Error actualizando billing." };
     }
 }
 
-/**
- * 3) Setear fecha de vencimiento (dueDate)
- *    - Si llega dueDate valida, intenta regularizar: PAID + ACTIVE
- *    - Si falla regularizacion, conserva dueDate y aplica fallback de activacion cuando corresponde
- *    - Resetea lastReminderDueDate si cambias de ciclo
- */
 export async function setUserBillingDueDate(
     userId: string,
     dueDate: string | Date | null
@@ -142,7 +211,7 @@ export async function setUserBillingDueDate(
                 dueDate: parsed,
                 serviceEndsAt: parsed,
                 currencyCode: "COP",
-                billingStatus: "UNPAID",
+                billingStatus: "PAID",
                 accessStatus: "ACTIVE",
                 graceDays: 0,
             },
@@ -150,83 +219,34 @@ export async function setUserBillingDueDate(
                 dueDate: parsed,
                 serviceEndsAt: parsed,
                 lastReminderDueDate: null,
+                lastReminderAt: null,
             },
         });
 
-        if (!parsed) {
-            return { success: true, message: "Fecha de pago actualizada.", data: billing };
-        }
+        const syncResult = await syncUserBillingLifecycle({
+            userId: scopedUserId,
+            source: "billing-due-date-update",
+        });
 
-        const needsAutoRegularization =
-            billing.billingStatus !== "PAID" || billing.accessStatus === "SUSPENDED";
-
-        if (!needsAutoRegularization) {
-            return { success: true, message: "Fecha de pago actualizada.", data: billing };
-        }
-
-        const now = new Date();
-
-        try {
-            const regularized = await db.userBilling.update({
-                where: { userId: scopedUserId },
-                data: {
-                    billingStatus: "PAID",
-                    accessStatus: "ACTIVE",
-                    lastPaymentAt: now,
-                    suspendedAt: null,
-                    suspendedReason: null,
-                    serviceStartAt: billing.serviceStartAt ?? now,
-                    serviceEndAt: null,
-                },
-            });
-
+        if (parsed && syncResult.stateChanged) {
             return {
                 success: true,
-                message: "Fecha de pago actualizada. Cliente marcado como pagado y servicio activo.",
-                data: regularized,
-            };
-        } catch (regularizeError: any) {
-            console.error("[setUserBillingDueDate:auto-regularize]", regularizeError);
-
-            if (billing.accessStatus === "SUSPENDED") {
-                try {
-                    const activated = await db.userBilling.update({
-                        where: { userId: scopedUserId },
-                        data: {
-                            accessStatus: "ACTIVE",
-                            suspendedAt: null,
-                            suspendedReason: null,
-                            serviceStartAt: billing.serviceStartAt ?? now,
-                            serviceEndAt: null,
-                        },
-                    });
-
-                    return {
-                        success: true,
-                        message:
-                            "Fecha actualizada y servicio activado, pero no se pudo marcar como pagado automaticamente.",
-                        data: activated,
-                    };
-                } catch (activateError) {
-                    console.error("[setUserBillingDueDate:fallback-activate]", activateError);
-                }
-            }
-
-            return {
-                success: true,
-                message: "Fecha actualizada, pero no se pudo regularizar el estado de pago automaticamente.",
-                data: billing,
+                message: "Fecha de pago actualizada y estados sincronizados.",
+                data: syncResult.billing ?? billing,
             };
         }
-    } catch (e: any) {
-        console.error("[setUserBillingDueDate]", e);
-        return { success: false, message: e?.message ?? "Error actualizando dueDate." };
+
+        return {
+            success: true,
+            message: "Fecha de pago actualizada.",
+            data: syncResult.billing ?? billing,
+        };
+    } catch (error: any) {
+        console.error("[setUserBillingDueDate]", error);
+        return { success: false, message: error?.message ?? "Error actualizando dueDate." };
     }
 }
 
-/**
- * 4) Marcar como pagado (reactiva servicio)
- */
 export async function markUserAsPaid(
     userId: string
 ): Promise<ResponseFormat<any>> {
@@ -237,7 +257,7 @@ export async function markUserAsPaid(
         const now = new Date();
         const existing = await db.userBilling.findUnique({ where: { userId: scopedUserId } });
 
-        const billing = await db.userBilling.upsert({
+        await db.userBilling.upsert({
             where: { userId: scopedUserId },
             create: {
                 userId: scopedUserId,
@@ -260,24 +280,35 @@ export async function markUserAsPaid(
             },
         });
 
-        return { success: true, message: "Pago registrado. Servicio activo.", data: billing };
-    } catch (e: any) {
-        console.error("[markUserAsPaid]", e);
-        return { success: false, message: e?.message ?? "Error marcando pago." };
+        const sideEffects = await runManualStatusSideEffects({
+            userId: scopedUserId,
+            previousBillingStatus: existing?.billingStatus ?? null,
+            previousAccessStatus: existing?.accessStatus ?? null,
+            source: "billing-mark-paid",
+        });
+
+        return {
+            success: true,
+            message: sideEffects.changed
+                ? "Pago registrado. Servicio activo y cliente notificado."
+                : "Pago registrado. Servicio activo.",
+            data: sideEffects.billing,
+        };
+    } catch (error: any) {
+        console.error("[markUserAsPaid]", error);
+        return { success: false, message: error?.message ?? "Error marcando pago." };
     }
 }
 
-/**
- * 5) Marcar como no pagado (no suspende automaticamente)
- */
 export async function markUserAsUnpaid(
     userId: string
 ): Promise<ResponseFormat<any>> {
     try {
         const me = await currentUser();
         const scopedUserId = await assertBillingScope(me ?? {}, userId);
+        const existing = await db.userBilling.findUnique({ where: { userId: scopedUserId } });
 
-        const billing = await db.userBilling.upsert({
+        await db.userBilling.upsert({
             where: { userId: scopedUserId },
             create: {
                 userId: scopedUserId,
@@ -288,19 +319,30 @@ export async function markUserAsUnpaid(
             },
             update: {
                 billingStatus: "UNPAID",
+                accessStatus: "ACTIVE",
             },
         });
 
-        return { success: true, message: "Estado actualizado: NO PAGADO.", data: billing };
-    } catch (e: any) {
-        console.error("[markUserAsUnpaid]", e);
-        return { success: false, message: e?.message ?? "Error marcando no pagado." };
+        const sideEffects = await runManualStatusSideEffects({
+            userId: scopedUserId,
+            previousBillingStatus: existing?.billingStatus ?? null,
+            previousAccessStatus: existing?.accessStatus ?? null,
+            source: "billing-mark-unpaid",
+        });
+
+        return {
+            success: true,
+            message: sideEffects.changed
+                ? "Estado actualizado: NO PAGADO. Cliente notificado."
+                : "Estado actualizado: NO PAGADO.",
+            data: sideEffects.billing,
+        };
+    } catch (error: any) {
+        console.error("[markUserAsUnpaid]", error);
+        return { success: false, message: error?.message ?? "Error marcando no pagado." };
     }
 }
 
-/**
- * 6) Suspender manualmente (corte)
- */
 export async function suspendUserService(
     userId: string,
     reason?: string | null
@@ -311,8 +353,9 @@ export async function suspendUserService(
         const normalizedReason = normalizeOptionalText(reason, 180);
 
         const now = new Date();
+        const existing = await db.userBilling.findUnique({ where: { userId: scopedUserId } });
 
-        const billing = await db.userBilling.upsert({
+        await db.userBilling.upsert({
             where: { userId: scopedUserId },
             create: {
                 userId: scopedUserId,
@@ -325,6 +368,7 @@ export async function suspendUserService(
                 serviceEndAt: now,
             },
             update: {
+                billingStatus: "UNPAID",
                 accessStatus: "SUSPENDED",
                 suspendedAt: now,
                 suspendedReason: normalizedReason ?? "Suspendido manualmente",
@@ -332,16 +376,26 @@ export async function suspendUserService(
             },
         });
 
-        return { success: true, message: "Servicio suspendido.", data: billing };
-    } catch (e: any) {
-        console.error("[suspendUserService]", e);
-        return { success: false, message: e?.message ?? "Error suspendiendo servicio." };
+        const sideEffects = await runManualStatusSideEffects({
+            userId: scopedUserId,
+            previousBillingStatus: existing?.billingStatus ?? null,
+            previousAccessStatus: existing?.accessStatus ?? null,
+            source: "billing-suspend-service",
+        });
+
+        return {
+            success: true,
+            message: sideEffects.changed
+                ? "Servicio suspendido y cliente notificado."
+                : "Servicio suspendido.",
+            data: sideEffects.billing,
+        };
+    } catch (error: any) {
+        console.error("[suspendUserService]", error);
+        return { success: false, message: error?.message ?? "Error suspendiendo servicio." };
     }
 }
 
-/**
- * 7) Reactivar manualmente (sin marcar pagado)
- */
 export async function activateUserService(
     userId: string
 ): Promise<ResponseFormat<any>> {
@@ -352,18 +406,19 @@ export async function activateUserService(
         const now = new Date();
         const existing = await db.userBilling.findUnique({ where: { userId: scopedUserId } });
 
-        const billing = await db.userBilling.upsert({
+        await db.userBilling.upsert({
             where: { userId: scopedUserId },
             create: {
                 userId: scopedUserId,
                 currencyCode: "COP",
-                billingStatus: "UNPAID",
+                billingStatus: "PAID",
                 accessStatus: "ACTIVE",
                 graceDays: 0,
                 serviceStartAt: now,
                 serviceEndAt: null,
             },
             update: {
+                billingStatus: "PAID",
                 accessStatus: "ACTIVE",
                 suspendedAt: null,
                 suspendedReason: null,
@@ -372,9 +427,22 @@ export async function activateUserService(
             },
         });
 
-        return { success: true, message: "Servicio activado.", data: billing };
-    } catch (e: any) {
-        console.error("[activateUserService]", e);
-        return { success: false, message: e?.message ?? "Error activando servicio." };
+        const sideEffects = await runManualStatusSideEffects({
+            userId: scopedUserId,
+            previousBillingStatus: existing?.billingStatus ?? null,
+            previousAccessStatus: existing?.accessStatus ?? null,
+            source: "billing-activate-service",
+        });
+
+        return {
+            success: true,
+            message: sideEffects.changed
+                ? "Servicio activado y cliente notificado."
+                : "Servicio activado.",
+            data: sideEffects.billing,
+        };
+    } catch (error: any) {
+        console.error("[activateUserService]", error);
+        return { success: false, message: error?.message ?? "Error activando servicio." };
     }
 }

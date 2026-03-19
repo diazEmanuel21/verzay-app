@@ -1,5 +1,9 @@
 import { format } from "date-fns";
-import { BillingTemplateType } from "@/types/billing";
+import {
+    BillingTemplateType,
+    OVERDUE_DAYS_BILLING,
+    SOON_DAYS_BILLING,
+} from "@/types/billing";
 
 
 export function toDate(value?: string | Date | null): Date | null {
@@ -44,33 +48,22 @@ export function normalizeWhatsAppJid(value: string) {
 }
 
 /**
- * Decide qué plantilla usar:
+ * Decide qué plantilla usar para los hitos fijos del cron:
  * - 3 días antes => REMINDER_3D
  * - día de vencimiento => DUE_TODAY
- * - expirado => EXPIRED (cuando ya pasó y sobrepasó graceDays)
+ * - 3 días después => EXPIRED
  */
-export function pickTemplate(args: {
-    daysRemaining: number;
-    graceDays: number;
-    isDaysBefore: boolean;
-    isDueToday: boolean;
-    isExpiredBeyondGrace: boolean;
-}): BillingTemplateType | null {
-    if (args.isDaysBefore) return "REMINDER_3D";
-    if (args.isDueToday) return "DUE_TODAY";
-    if (args.isExpiredBeyondGrace) return "EXPIRED";
+export function pickTemplate(daysRemaining: number | null): BillingTemplateType | null {
+    if (daysRemaining === SOON_DAYS_BILLING) return "REMINDER_3D";
+    if (daysRemaining === 0) return "DUE_TODAY";
+    if (daysRemaining === -OVERDUE_DAYS_BILLING) return "EXPIRED";
     return null;
 }
 
-export function pickPreviewTemplate(daysRemaining: number, graceDays: number): BillingTemplateType {
-    // Vista previa coherente con el job:
-    // 3 => recordatorio 3 días antes
-    // 0 => hoy vence
-    // <= -graceDays (y graceDays>0) => expirado
-    if (daysRemaining === 3) return "REMINDER_3D";
+export function pickPreviewTemplate(daysRemaining: number): BillingTemplateType {
+    if (daysRemaining === SOON_DAYS_BILLING) return "REMINDER_3D";
     if (daysRemaining === 0) return "DUE_TODAY";
-    if (graceDays > 0 && daysRemaining <= -graceDays && daysRemaining < 0) return "EXPIRED";
-    // default: si no cae en un caso especial, mostramos el recordatorio “normal”
+    if (daysRemaining === -OVERDUE_DAYS_BILLING) return "EXPIRED";
     return "REMINDER_3D";
 }
 

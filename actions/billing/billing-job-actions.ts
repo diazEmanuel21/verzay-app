@@ -1,25 +1,22 @@
-// app/actions/billing-job-actions.ts
 "use server";
 
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import {
-    addDays,
-    addMinutes,
-    differenceInCalendarDays,
-    endOfDay,
-    format,
-    isSameDay,
-    startOfDay,
-} from "date-fns";
-import { toZonedTime } from "date-fns-tz";
-import { Prisma } from "@prisma/client";
-import { buildBillingMessage } from "./billing-message-templates";
-import { ResponseFormat, SOON_DAYS_BILLING } from "@/types/billing";
-import { normalizeWhatsAppJid, pickTemplate } from "./helpers/billing-helpers";
-import { assertAdminOrReseller } from "./helpers/billing-helpers.server";
-import { ADMIN_USER_ID } from "@/types/generic";
 import { SERVER_TIME_ZONE } from "@/lib/utils";
+import { endOfDay, format } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
+
+import { ResponseFormat, SOON_DAYS_BILLING } from "@/types/billing";
+import { assertAdminOrReseller } from "./helpers/billing-helpers.server";
+import {
+    evaluateBillingLifecycle,
+    getBillingDaysRemaining,
+} from "./helpers/billing-lifecycle";
+import {
+    loadBillingDispatcherConfig,
+    sendBillingTemplateMessage,
+    syncUserBillingLifecycle,
+} from "./helpers/billing-notifications.server";
 
 type BillingJobLogEntry = {
     at: string;
@@ -28,7 +25,6 @@ type BillingJobLogEntry = {
     userBillingId?: string;
     userId?: string;
     template?: string;
-    idempotencyKey?: string;
 };
 
 type BillingCreatedItem = {
@@ -38,12 +34,9 @@ type BillingCreatedItem = {
     plan?: string | null;
     remoteJid: string;
     template: string;
-    scheduleAt: string;
+    sentAt: string;
     dueDateYmd: string;
-    daysRemaining: number;
-    idempotencyKey: string;
-    price?: Prisma.Decimal | null;
-    currencyCode?: string | null;
+    daysRemaining: number | null;
 };
 
 type BillingSkippedItem = {
@@ -52,7 +45,6 @@ type BillingSkippedItem = {
     name: string;
     template?: string;
     reason: string;
-    idempotencyKey?: string;
 };
 
 type BillingDebtorItem = {
@@ -68,15 +60,16 @@ type BillingDebtorItem = {
     lastReminderAt?: string | null;
 };
 
-type BillingFollowupsItem = {
-    id: string;
+type BillingMessageReportItem = {
+    userBillingId: string;
+    userId: string;
+    name: string;
     remoteJid: string;
-    time: string;
-    tipo: string;
-    status?: string | null;
-    sentAt?: string | null;
+    template: string;
+    kind: "STATE_CHANGE" | "DAILY_REMINDER";
+    success: boolean;
+    sentAt: string;
     error?: string | null;
-    idempotencyKey?: string | null;
 };
 
 type BillingReport = {
@@ -86,10 +79,9 @@ type BillingReport = {
     created: BillingCreatedItem[];
     skipped: BillingSkippedItem[];
     debtors: BillingDebtorItem[];
-    followups: {
-        createdToday: number;
-        nextToSendAt?: string | null;
-        items?: BillingFollowupsItem[];
+    messages: {
+        sentToday: number;
+        items: BillingMessageReportItem[];
     };
 };
 
@@ -111,26 +103,27 @@ function buildEmptyReport(now: Date): BillingReport {
         created: [],
         skipped: [],
         debtors: [],
-        followups: {
-            createdToday: 0,
-            nextToSendAt: null,
+        messages: {
+            sentToday: 0,
             items: [],
         },
     };
 }
 
+function formatBillingDate(date: Date): string {
+    return format(toZonedTime(date, SERVER_TIME_ZONE), "yyyy-MM-dd");
+}
+
 export async function runBillingDailyJobInternal(requireAuth: boolean): Promise<BillingJobResult> {
     const now = new Date();
-    const nowZ = toZonedTime(now, SERVER_TIME_ZONE);
     const emptyReport = buildEmptyReport(now);
 
     try {
-        const BILLING_SEGUIMIENTO_TYPE = "billing-text";
-        const rawDelay = Number(process.env.BILLING_ENQUEUE_DELAY_MINUTES ?? "2");
-        const enqueueDelayMinutes = Number.isFinite(rawDelay) && rawDelay >= 0 ? rawDelay : 2;
         const logs: BillingJobLogEntry[] = [];
         const created: BillingCreatedItem[] = [];
         const skipped: BillingSkippedItem[] = [];
+        const sentItems: BillingMessageReportItem[] = [];
+
         const pushLog = (entry: BillingJobLogEntry) => {
             logs.push(entry);
             const payload: Record<string, string> = {
@@ -138,29 +131,27 @@ export async function runBillingDailyJobInternal(requireAuth: boolean): Promise<
                 level: entry.level,
                 message: entry.message,
             };
+
             if (entry.userBillingId) payload.userBillingId = entry.userBillingId;
             if (entry.userId) payload.userId = entry.userId;
             if (entry.template) payload.template = entry.template;
-            if (entry.idempotencyKey) payload.idempotencyKey = entry.idempotencyKey;
+
             if (entry.level === "ERROR") {
                 console.error("[billing-job]", payload);
                 return;
             }
+
             if (entry.level === "WARN") {
                 console.warn("[billing-job]", payload);
                 return;
             }
+
             console.info("[billing-job]", payload);
         };
 
         if (requireAuth) {
             const me = await currentUser();
             if (!me) {
-                pushLog({
-                    at: new Date().toISOString(),
-                    level: "ERROR",
-                    message: "No autorizado para ejecutar job de billing.",
-                });
                 return {
                     success: false,
                     message: "No autorizado.",
@@ -170,58 +161,32 @@ export async function runBillingDailyJobInternal(requireAuth: boolean): Promise<
                         sent: 0,
                         suspendedApplied: 0,
                         errors: 1,
-                        logs,
+                        logs: [
+                            {
+                                at: now.toISOString(),
+                                level: "ERROR",
+                                message: "No autorizado para ejecutar job de billing.",
+                            },
+                        ],
                         report: emptyReport,
                     },
                 };
             }
+
             assertAdminOrReseller(me.role);
         }
 
-        const dispatcherUser = await db.user.findUnique({
-            where: { id: ADMIN_USER_ID },
-            select: {
-                id: true,
-                notificationNumber: true,
-                apiKey: { select: { url: true } },
-                instancias: { select: { instanceId: true, instanceName: true } },
-            },
-        });
-
-        if (!dispatcherUser) {
+        const dispatcher = await loadBillingDispatcherConfig();
+        if (!dispatcher) {
             pushLog({
-                at: new Date().toISOString(),
+                at: now.toISOString(),
                 level: "ERROR",
-                message: `No existe el usuario dispatcher de billing (${ADMIN_USER_ID}).`,
+                message: "El dispatcher de billing no tiene configuracion completa.",
             });
+
             return {
                 success: false,
-                message: "No existe el usuario dispatcher de billing.",
-                data: {
-                    attempted: 0,
-                    enqueued: 0,
-                    sent: 0,
-                    suspendedApplied: 0,
-                    errors: 1,
-                    logs,
-                    report: emptyReport,
-                },
-            };
-        }
-
-        const dispatcherUrl = dispatcherUser.apiKey?.url?.trim();
-        const dispatcherInstance = dispatcherUser.instancias?.[0];
-        if (!dispatcherUrl || !dispatcherInstance?.instanceName || !dispatcherInstance?.instanceId) {
-            pushLog({
-                at: new Date().toISOString(),
-                level: "ERROR",
-                message:
-                    "El usuario dispatcher no tiene configuración completa (apiUrl/instanceName/instanceId).",
-                userId: dispatcherUser.id,
-            });
-            return {
-                success: false,
-                message: "Dispatcher sin configuración completa de envío.",
+                message: "Dispatcher sin configuracion completa de envio.",
                 data: {
                     attempted: 0,
                     enqueued: 0,
@@ -236,11 +201,225 @@ export async function runBillingDailyJobInternal(requireAuth: boolean): Promise<
 
         const candidates = await db.userBilling.findMany({
             where: {
-                billingStatus: "UNPAID",
-                accessStatus: { in: ["ACTIVE", "SUSPENDED"] },
                 dueDate: {
-                    lte: endOfDay(addDays(now, SOON_DAYS_BILLING)),
+                    not: null,
+                    lte: endOfDay(
+                        new Date(now.getTime() + SOON_DAYS_BILLING * 24 * 60 * 60 * 1000)
+                    ),
                 },
+            },
+            select: {
+                id: true,
+                userId: true,
+            },
+        });
+
+        let attempted = 0;
+        let sent = 0;
+        let errors = 0;
+        let suspendedApplied = 0;
+
+        pushLog({
+            at: now.toISOString(),
+            level: "INFO",
+            message: `Candidatos cargados: ${candidates.length}.`,
+        });
+
+        for (const candidate of candidates) {
+            try {
+                const syncResult = await syncUserBillingLifecycle({
+                    userId: candidate.userId,
+                    now,
+                    dispatcher,
+                    source: "billing-cron-state",
+                });
+
+                if (!syncResult.success || !syncResult.billing || !syncResult.evaluation) {
+                    skipped.push({
+                        userBillingId: candidate.id,
+                        userId: candidate.userId,
+                        name: "Cliente",
+                        reason: "SYNC_FAILED",
+                    });
+                    if (!syncResult.success) errors++;
+                    pushLog({
+                        at: new Date().toISOString(),
+                        level: "WARN",
+                        message: syncResult.message,
+                        userBillingId: candidate.id,
+                        userId: candidate.userId,
+                    });
+                    continue;
+                }
+
+                const billing = syncResult.billing;
+                const evaluation = syncResult.evaluation;
+                const candidateName = billing.user?.name || billing.user?.company || "Cliente";
+
+                if (syncResult.stateChanged && billing.accessStatus === "SUSPENDED") {
+                    suspendedApplied++;
+                }
+
+                if (syncResult.webhookResult && !syncResult.webhookResult.success && !syncResult.webhookResult.skipped) {
+                    pushLog({
+                        at: new Date().toISOString(),
+                        level: "WARN",
+                        message: syncResult.webhookResult.message,
+                        userBillingId: billing.id,
+                        userId: billing.userId,
+                    });
+                }
+
+                if (syncResult.notificationResult) {
+                    attempted++;
+
+                    if (syncResult.notificationResult.success) {
+                        sent++;
+                        sentItems.push({
+                            userBillingId: billing.id,
+                            userId: billing.userId,
+                            name: candidateName,
+                            remoteJid: syncResult.notificationResult.remoteJid ?? "",
+                            template: syncResult.notificationResult.template,
+                            kind: "STATE_CHANGE",
+                            success: true,
+                            sentAt: new Date().toISOString(),
+                            error: null,
+                        });
+                    } else {
+                        errors++;
+                        pushLog({
+                            at: new Date().toISOString(),
+                            level: "ERROR",
+                            message: syncResult.notificationResult.message,
+                            userBillingId: billing.id,
+                            userId: billing.userId,
+                            template: syncResult.notificationResult.template,
+                        });
+                    }
+                }
+
+                const template = evaluation.reminderTemplate;
+                if (!template) {
+                    skipped.push({
+                        userBillingId: billing.id,
+                        userId: billing.userId,
+                        name: candidateName,
+                        reason: "NO_TEMPLATE",
+                    });
+                    continue;
+                }
+
+                if (evaluation.shouldSkipReminderToday) {
+                    skipped.push({
+                        userBillingId: billing.id,
+                        userId: billing.userId,
+                        name: candidateName,
+                        template,
+                        reason: "ANTI_SPAM_SAME_DAY",
+                    });
+                    pushLog({
+                        at: new Date().toISOString(),
+                        level: "INFO",
+                        message: "Omitido por anti-spam del mismo dia y mismo ciclo.",
+                        userBillingId: billing.id,
+                        userId: billing.userId,
+                        template,
+                    });
+                    continue;
+                }
+
+                attempted++;
+
+                const reminderResult = await sendBillingTemplateMessage({
+                    billing,
+                    template,
+                    dispatcher,
+                    now,
+                    source: "billing-cron-reminder",
+                });
+
+                if (!reminderResult.success) {
+                    errors++;
+                    skipped.push({
+                        userBillingId: billing.id,
+                        userId: billing.userId,
+                        name: candidateName,
+                        template,
+                        reason: reminderResult.error ?? "SEND_FAILED",
+                    });
+                    pushLog({
+                        at: new Date().toISOString(),
+                        level: "ERROR",
+                        message: reminderResult.message,
+                        userBillingId: billing.id,
+                        userId: billing.userId,
+                        template,
+                    });
+                    continue;
+                }
+
+                await db.userBilling.update({
+                    where: { id: billing.id },
+                    data: {
+                        lastReminderAt: now,
+                        lastReminderDueDate: evaluation.dueDate,
+                    },
+                });
+
+                sent++;
+                created.push({
+                    userBillingId: billing.id,
+                    userId: billing.userId,
+                    name: candidateName,
+                    plan: billing.user?.plan ?? null,
+                    remoteJid: reminderResult.remoteJid ?? "",
+                    template,
+                    sentAt: new Date().toISOString(),
+                    dueDateYmd: evaluation.dueDate ? formatBillingDate(evaluation.dueDate) : "",
+                    daysRemaining: evaluation.daysRemaining,
+                });
+                sentItems.push({
+                    userBillingId: billing.id,
+                    userId: billing.userId,
+                    name: candidateName,
+                    remoteJid: reminderResult.remoteJid ?? "",
+                    template,
+                    kind: "DAILY_REMINDER",
+                    success: true,
+                    sentAt: new Date().toISOString(),
+                    error: null,
+                });
+
+                pushLog({
+                    at: new Date().toISOString(),
+                    level: "INFO",
+                    message: "Notificacion diaria de billing enviada.",
+                    userBillingId: billing.id,
+                    userId: billing.userId,
+                    template,
+                });
+            } catch (error: any) {
+                errors++;
+                skipped.push({
+                    userBillingId: candidate.id,
+                    userId: candidate.userId,
+                    name: "Cliente",
+                    reason: "INTERNAL_ERROR",
+                });
+                pushLog({
+                    at: new Date().toISOString(),
+                    level: "ERROR",
+                    message: error?.message ?? "Error no controlado en iteracion del job.",
+                    userBillingId: candidate.id,
+                    userId: candidate.userId,
+                });
+            }
+        }
+
+        const debtorsRaw = await db.userBilling.findMany({
+            where: {
+                dueDate: { not: null },
             },
             include: {
                 user: {
@@ -248,360 +427,37 @@ export async function runBillingDailyJobInternal(requireAuth: boolean): Promise<
                         id: true,
                         name: true,
                         company: true,
-                        notificationNumber: true,
                         plan: true,
                     },
                 },
-            },
-        });
-
-        let attempted = 0;
-        let enqueued = 0;
-        let suspendedApplied = 0;
-        let errors = 0;
-
-        pushLog({
-            at: new Date().toISOString(),
-            level: "INFO",
-            message: `Delay de encolado: ${enqueueDelayMinutes} minuto(s).`,
-        });
-        pushLog({
-            at: new Date().toISOString(),
-            level: "INFO",
-            message: `Candidatos cargados: ${candidates.length}.`,
-        });
-
-        for (const b of candidates) {
-            try {
-                const candidateName = b.user?.name || b.user?.company || "Cliente";
-
-                if (!b.dueDate) {
-                    skipped.push({
-                        userBillingId: b.id,
-                        userId: b.userId,
-                        name: candidateName,
-                        reason: "NO_DUE_DATE",
-                    });
-                    pushLog({
-                        at: new Date().toISOString(),
-                        level: "WARN",
-                        message: "Se omite registro sin dueDate.",
-                        userBillingId: b.id,
-                        userId: b.userId,
-                    });
-                    continue;
-                }
-
-                const due = new Date(b.dueDate);
-                const daysRemaining = differenceInCalendarDays(due, now);
-                const isDaysBefore = daysRemaining === SOON_DAYS_BILLING;
-                const isDueToday = daysRemaining === 0;
-                const grace = Number(b.graceDays || 0);
-                const isExpiredBeyondGrace = daysRemaining <= -grace && daysRemaining < 0 && grace > 0;
-
-                const template = pickTemplate({
-                    daysRemaining,
-                    graceDays: grace,
-                    isDaysBefore,
-                    isDueToday,
-                    isExpiredBeyondGrace,
-                });
-
-                if (!template) {
-                    skipped.push({
-                        userBillingId: b.id,
-                        userId: b.userId,
-                        name: candidateName,
-                        reason: "NO_TEMPLATE",
-                    });
-                    pushLog({
-                        at: new Date().toISOString(),
-                        level: "INFO",
-                        message: "Sin plantilla aplicable para hoy.",
-                        userBillingId: b.id,
-                        userId: b.userId,
-                    });
-                    continue;
-                }
-
-                if (b.lastReminderDueDate) {
-                    const last = new Date(b.lastReminderDueDate);
-                    if (isSameDay(last, due)) {
-                        skipped.push({
-                            userBillingId: b.id,
-                            userId: b.userId,
-                            name: candidateName,
-                            template,
-                            reason: "ANTI_SPAM_SAME_DUEDATE",
-                        });
-                        pushLog({
-                            at: new Date().toISOString(),
-                            level: "INFO",
-                            message: "Omitido por anti-spam de same dueDate.",
-                            userBillingId: b.id,
-                            userId: b.userId,
-                            template,
-                        });
-                        continue;
-                    }
-                }
-
-                const candidateUser = b.user;
-                const target = (
-                    b.notifyRemoteJid?.trim() ||
-                    candidateUser.notificationNumber ||
-                    dispatcherUser.notificationNumber ||
-                    ""
-                ).trim();
-                const remoteJid = normalizeWhatsAppJid(target);
-
-                const missingFields: string[] = [];
-                if (!remoteJid) missingFields.push("remoteJid");
-
-                if (missingFields.length > 0) {
-                    skipped.push({
-                        userBillingId: b.id,
-                        userId: b.userId,
-                        name: candidateName,
-                        template,
-                        reason: `MISSING_DATA:${missingFields.join(",")}`,
-                    });
-                    pushLog({
-                        at: new Date().toISOString(),
-                        level: "WARN",
-                        message: `Datos incompletos para crear seguimiento: ${missingFields.join(", ")}.`,
-                        userBillingId: b.id,
-                        userId: b.userId,
-                        template,
-                    });
-                    continue;
-                }
-
-                const paymentText =
-                    (b.paymentNotes?.trim() || b.paymentMethodLabel?.trim() || "").trim() || "-";
-                const planLabel = b.serviceName ? `Plan ${b.serviceName}` : "Plan Agente IA";
-                const licenseLabel = "Licencia 30 dias";
-                const currencyFlag = b.currencyCode === "USD" ? "US" : null;
-
-                const text = buildBillingMessage({
-                    type: template,
-                    dueDate: due,
-                    daysRemaining,
-                    planLabel,
-                    licenseLabel,
-                    price: b.price,
-                    currencyCode: b.currencyCode || "COP",
-                    currencyFlag,
-                    paymentLinkOrText: paymentText,
-                    clientName: candidateName,
-                });
-
-                attempted++;
-
-                const scheduleAt = format(
-                    toZonedTime(addMinutes(new Date(), enqueueDelayMinutes), SERVER_TIME_ZONE),
-                    "dd/MM/yyyy HH:mm"
-                );
-                const dueDateYmd = format(toZonedTime(due, SERVER_TIME_ZONE), "yyyy-MM-dd");
-                const idempotencyKey = `billing:${b.id}:${dueDateYmd}:${template}`;
-
-                const existingReminder = await db.seguimiento.findUnique({
-                    where: { idempotencyKey },
-                });
-                if (existingReminder) {
-                    skipped.push({
-                        userBillingId: b.id,
-                        userId: b.userId,
-                        name: candidateName,
-                        template,
-                        reason: "IDEMPOTENT_EXISTS",
-                        idempotencyKey,
-                    });
-                    pushLog({
-                        at: new Date().toISOString(),
-                        level: "INFO",
-                        message: "Omitido por idempotencia: seguimiento ya existe.",
-                        userBillingId: b.id,
-                        userId: b.userId,
-                        template,
-                        idempotencyKey,
-                    });
-                    continue;
-                }
-
-                try {
-                    await db.seguimiento.create({
-                        data: {
-                            idNodo: "",
-                            serverurl: `https://${dispatcherUrl}`,
-                            instancia: dispatcherInstance.instanceName,
-                            apikey: dispatcherInstance.instanceId,
-                            remoteJid,
-                            mensaje: text,
-                            tipo: BILLING_SEGUIMIENTO_TYPE,
-                            idempotencyKey,
-                            time: scheduleAt,
-                        },
-                    });
-                } catch (error) {
-                    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-                        skipped.push({
-                            userBillingId: b.id,
-                            userId: b.userId,
-                            name: candidateName,
-                            template,
-                            reason: "IDEMPOTENT_RACE_P2002",
-                            idempotencyKey,
-                        });
-                        pushLog({
-                            at: new Date().toISOString(),
-                            level: "INFO",
-                            message: "Colision de idempotencia detectada (P2002), se omite duplicado.",
-                            userBillingId: b.id,
-                            userId: b.userId,
-                            template,
-                            idempotencyKey,
-                        });
-                        continue;
-                    }
-                    throw error;
-                }
-
-                enqueued++;
-                created.push({
-                    userBillingId: b.id,
-                    userId: b.userId,
-                    name: candidateName,
-                    plan: candidateUser.plan ?? null,
-                    remoteJid,
-                    template,
-                    scheduleAt,
-                    dueDateYmd,
-                    daysRemaining,
-                    idempotencyKey,
-                    price: b.price,
-                    currencyCode: b.currencyCode ?? null,
-                });
-                pushLog({
-                    at: new Date().toISOString(),
-                    level: "INFO",
-                    message: "Seguimiento de billing encolado.",
-                    userBillingId: b.id,
-                    userId: b.userId,
-                    template,
-                    idempotencyKey,
-                });
-
-                await db.userBilling.update({
-                    where: { id: b.id },
-                    data: {
-                        lastReminderAt: new Date(),
-                        lastReminderDueDate: due,
-                    },
-                });
-
-                if (template === "EXPIRED" && b.accessStatus === "ACTIVE") {
-                    await db.userBilling.update({
-                        where: { id: b.id },
-                        data: {
-                            accessStatus: "SUSPENDED",
-                            suspendedAt: new Date(),
-                            suspendedReason: "Vencido sin pago",
-                        },
-                    });
-                    suspendedApplied++;
-                    pushLog({
-                        at: new Date().toISOString(),
-                        level: "WARN",
-                        message: "Acceso suspendido por vencimiento sin pago.",
-                        userBillingId: b.id,
-                        userId: b.userId,
-                        template,
-                    });
-                }
-            } catch (e: any) {
-                console.error("[runBillingDailyJob.loop]", e);
-                errors++;
-                skipped.push({
-                    userBillingId: b.id,
-                    userId: b.userId,
-                    name: b.user?.name || b.user?.company || "Cliente",
-                    reason: "INTERNAL_ERROR",
-                });
-                pushLog({
-                    at: new Date().toISOString(),
-                    level: "ERROR",
-                    message: e?.message ?? "Error no controlado en iteracion del job.",
-                    userBillingId: b.id,
-                    userId: b.userId,
-                });
-            }
-        }
-
-        const debtorsRaw = await db.userBilling.findMany({
-            where: { billingStatus: "UNPAID" },
-            include: {
-                user: { select: { id: true, name: true, company: true, plan: true } },
             },
             orderBy: { dueDate: "asc" },
             take: 300,
         });
 
-        const debtors = debtorsRaw
-            .filter((x) => !!x.dueDate)
-            .map((x) => {
-                const due = new Date(x.dueDate as Date);
-                const daysRemaining = differenceInCalendarDays(due, now);
-                return {
-                    userBillingId: x.id,
-                    userId: x.userId,
-                    name: x.user?.name || x.user?.company || "Cliente",
-                    plan: x.user?.plan ?? null,
-                    dueDateYmd: format(toZonedTime(due, SERVER_TIME_ZONE), "yyyy-MM-dd"),
-                    daysRemaining,
-                    graceDays: Number(x.graceDays || 0),
-                    accessStatus: x.accessStatus,
-                    billingStatus: x.billingStatus,
-                    lastReminderAt: x.lastReminderAt ? x.lastReminderAt.toISOString() : null,
-                };
-            })
-            .filter((d) => d.daysRemaining < 0);
+        const debtors: BillingDebtorItem[] = [];
+        for (const item of debtorsRaw) {
+            const dueDate = item.dueDate ? new Date(item.dueDate) : null;
+            const daysRemaining = getBillingDaysRemaining(dueDate, now);
 
-        const followupsRaw = await db.seguimiento.findMany({
-            where: {
-                tipo: BILLING_SEGUIMIENTO_TYPE,
-                createdAt: {
-                    gte: startOfDay(nowZ),
-                    lte: endOfDay(nowZ),
-                },
-            },
-            orderBy: { createdAt: "desc" },
-            take: 200,
-            select: {
-                id: true,
-                remoteJid: true,
-                time: true,
-                tipo: true,
-                idempotencyKey: true,
-            },
-        });
+            if (!dueDate || daysRemaining === null || daysRemaining >= 0) {
+                continue;
+            }
 
-        const followupItems: BillingFollowupsItem[] = followupsRaw.map((row) => ({
-            id: String(row.id),
-            remoteJid: row.remoteJid ?? "",
-            time: row.time ?? "",
-            tipo: row.tipo ?? BILLING_SEGUIMIENTO_TYPE,
-            status: null,
-            sentAt: null,
-            error: null,
-            idempotencyKey: row.idempotencyKey ?? null,
-        }));
-
-        pushLog({
-            at: new Date().toISOString(),
-            level: "INFO",
-            message: `Resumen job billing: attempted=${attempted}, enqueued=${enqueued}, suspended=${suspendedApplied}, errors=${errors}.`,
-        });
+            const evaluation = evaluateBillingLifecycle(item, now);
+            debtors.push({
+                userBillingId: item.id,
+                userId: item.userId,
+                name: item.user?.name || item.user?.company || "Cliente",
+                plan: item.user?.plan ?? null,
+                dueDateYmd: formatBillingDate(dueDate),
+                daysRemaining,
+                graceDays: evaluation.graceDays,
+                accessStatus: item.accessStatus,
+                billingStatus: item.billingStatus,
+                lastReminderAt: item.lastReminderAt ? item.lastReminderAt.toISOString() : null,
+            });
+        }
 
         const report: BillingReport = {
             ranAt: new Date().toISOString(),
@@ -610,34 +466,37 @@ export async function runBillingDailyJobInternal(requireAuth: boolean): Promise<
             created,
             skipped,
             debtors,
-            followups: {
-                createdToday: followupItems.length,
-                nextToSendAt: format(
-                    toZonedTime(addMinutes(now, enqueueDelayMinutes), SERVER_TIME_ZONE),
-                    "dd/MM/yyyy HH:mm"
-                ),
-                items: followupItems,
+            messages: {
+                sentToday: sentItems.length,
+                items: sentItems,
             },
         };
+
+        pushLog({
+            at: new Date().toISOString(),
+            level: "INFO",
+            message: `Resumen job billing: attempted=${attempted}, sent=${sent}, suspended=${suspendedApplied}, errors=${errors}.`,
+        });
 
         return {
             success: true,
             message: "Job de billing ejecutado.",
             data: {
                 attempted,
-                enqueued,
-                sent: enqueued,
+                enqueued: sent,
+                sent,
                 suspendedApplied,
                 errors,
                 logs,
                 report,
             },
         };
-    } catch (e: any) {
-        console.error("[runBillingDailyJob]", e);
+    } catch (error: any) {
+        console.error("[runBillingDailyJob]", error);
+
         return {
             success: false,
-            message: e?.message ?? "Error ejecutando job.",
+            message: error?.message ?? "Error ejecutando job.",
             data: {
                 attempted: 0,
                 enqueued: 0,
@@ -648,7 +507,7 @@ export async function runBillingDailyJobInternal(requireAuth: boolean): Promise<
                     {
                         at: new Date().toISOString(),
                         level: "ERROR",
-                        message: e?.message ?? "Error ejecutando job.",
+                        message: error?.message ?? "Error ejecutando job.",
                     },
                 ],
                 report: emptyReport,

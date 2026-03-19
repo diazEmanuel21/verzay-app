@@ -1,11 +1,11 @@
 import { Badge } from "@/components/ui/badge";
-import { ServiceAccessStatus } from "@prisma/client";
+import { AccessStatus } from "@/types/billing";
 
-export function StatusBadgeAccess(status?: ServiceAccessStatus) {
+export function StatusBadgeAccess(status?: AccessStatus) {
     if (status === "ACTIVE") return <Badge>Activo</Badge>;
     return (
         <Badge variant="destructive">
-            Suspendido
+            Inactivo
         </Badge>
     );
 }

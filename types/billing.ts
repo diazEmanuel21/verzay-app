@@ -1,4 +1,5 @@
-export const SOON_DAYS_BILLING = 5;
+export const SOON_DAYS_BILLING = 3;
+export const OVERDUE_DAYS_BILLING = 3;
 
 /**
  * Formato estándar de respuesta (backend)
@@ -9,7 +10,13 @@ export interface ResponseFormat<T> {
     data?: T;
 }
 
-export type BillingTemplateType = "REMINDER_3D" | "DUE_TODAY" | "EXPIRED";
+export type BillingTemplateType =
+    | "REMINDER_3D"
+    | "DUE_TODAY"
+    | "EXPIRED"
+    | "STATUS_ACTIVE"
+    | "STATUS_PENDING"
+    | "STATUS_SUSPENDED";
 
 // ------- Types (mantenerlo simple para no tocar tus types existentes)
 export type BillingStatus = "PAID" | "UNPAID";

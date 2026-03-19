@@ -1,21 +1,21 @@
 // app/actions/billing-message-templates.ts
 
-import { BillingTemplateType } from "@/types/billing";
+import { AccessStatus, BillingStatus, BillingTemplateType } from "@/types/billing";
 import { fmtDateDDMMYYYY, fmtPriceLine } from "./helpers/billing-helpers";
-
-
 
 export function buildBillingMessage(args: {
     type: BillingTemplateType;
-    dueDate: Date;
-    daysRemaining: number; // puede ser negativo
-    planLabel: string; // ej: "🤖 Agente IA" (o lo que quieras)
-    licenseLabel: string; // ej: "🗓️ *Licencia 30 días*"
+    dueDate?: Date | null;
+    daysRemaining?: number | null;
+    planLabel: string;
+    licenseLabel: string;
     price: any;
-    currencyCode: string; // ej: "USD"
-    currencyFlag?: string | null; // ej: "🇺🇸"
-    paymentLinkOrText: string; // ej: "https://..."
-    clientName?: string | null; // solo para REMINDER_3D si quieres
+    currencyCode: string;
+    currencyFlag?: string | null;
+    paymentLinkOrText: string;
+    clientName?: string | null;
+    billingStatus?: BillingStatus | null;
+    accessStatus?: AccessStatus | null;
 }) {
     const {
         type,
@@ -28,21 +28,85 @@ export function buildBillingMessage(args: {
         currencyFlag,
         paymentLinkOrText,
         clientName,
+        billingStatus,
+        accessStatus,
     } = args;
 
-    const header =
-        type === "REMINDER_3D"
-            ? `👨🏻‍💼 ${clientName || "Cliente"}:`
-            : type === "DUE_TODAY"
-                ? `🔔 *Hoy vence su servicio:*`
-                : `🚫 *Servicio expirado:*`;
+    const dueDateLine = dueDate ? `📆 *Vence:* ${fmtDateDDMMYYYY(dueDate)}` : "📆 *Vence:* Sin fecha";
+    const daysRemainingLine =
+        typeof daysRemaining === "number"
+            ? `⏳ *Dias restantes:* ${daysRemaining}`
+            : "⏳ *Dias restantes:* Sin calcular";
+
+    if (type === "STATUS_ACTIVE") {
+        return [
+            `✅ *Estado de su servicio actualizado*`,
+            `${clientName || "Cliente"}, su servicio se encuentra activo.`,
+            `--------•--------•--------•--------`,
+            dueDateLine,
+            daysRemainingLine,
+            `--------•--------•--------•--------`,
+            `🛠️ ${planLabel}`,
+            `🗓️ ${licenseLabel}`,
+            `💵 ${fmtPriceLine({ price, currencyCode, currencyFlag })}`,
+            `📌 *Billing:* ${billingStatus ?? "PAID"}`,
+            `📌 *Acceso:* ${accessStatus ?? "ACTIVE"}`,
+            `--------•--------•--------•--------`,
+            `Si ya pagaste, puedes ignorar este mensaje.`,
+        ].join("\n");
+    }
+
+    if (type === "STATUS_PENDING") {
+        return [
+            `🟡 *Estado de su servicio actualizado*`,
+            `${clientName || "Cliente"}, su servicio sigue activo pero el billing figura pendiente.`,
+            `--------•--------•--------•--------`,
+            dueDateLine,
+            daysRemainingLine,
+            `--------•--------•--------•--------`,
+            `🛠️ ${planLabel}`,
+            `🗓️ ${licenseLabel}`,
+            `💵 ${fmtPriceLine({ price, currencyCode, currencyFlag })}`,
+            `📌 *Billing:* ${billingStatus ?? "UNPAID"}`,
+            `📌 *Acceso:* ${accessStatus ?? "ACTIVE"}`,
+            `--------•--------•--------•--------`,
+            `💱 *Medios de pago:*`,
+            `👉 ${paymentLinkOrText}`,
+        ].join("\n");
+    }
+
+    if (type === "STATUS_SUSPENDED") {
+        return [
+            `🚫 *Estado de su servicio actualizado*`,
+            `${clientName || "Cliente"}, su servicio fue suspendido por vencimiento fuera de los dias de gracia.`,
+            `--------•--------•--------•--------`,
+            dueDateLine,
+            daysRemainingLine,
+            `--------•--------•--------•--------`,
+            `🛠️ ${planLabel}`,
+            `🗓️ ${licenseLabel}`,
+            `💵 ${fmtPriceLine({ price, currencyCode, currencyFlag })}`,
+            `📌 *Billing:* ${billingStatus ?? "UNPAID"}`,
+            `📌 *Acceso:* ${accessStatus ?? "SUSPENDED"}`,
+            `--------•--------•--------•--------`,
+            `💱 *Medios de pago:*`,
+            `👉 ${paymentLinkOrText}`,
+            `Regulariza el pago para reactivar el servicio.`,
+        ].join("\n");
+    }
+
+    const header = type === "REMINDER_3D"
+        ? `👨🏻‍💼 ${clientName || "Cliente"}:`
+        : type === "DUE_TODAY"
+            ? `🔔 *Hoy vence su servicio:*`
+            : `🚫 *Han pasado 3 dias desde el vencimiento:*`;
 
     return [
         header,
         type === "REMINDER_3D" ? `📋 *Servicio a vencer:*` : "",
         `--------•--------•--------•--------`,
-        `📆 *Vence:* ${fmtDateDDMMYYYY(dueDate)}`,
-        `⏳ *Dias restantes:* ${daysRemaining}`,
+        dueDateLine,
+        daysRemainingLine,
         `--------•--------•--------•--------`,
         `🛠️ ${planLabel}`,
         `🗓️ ${licenseLabel}`,

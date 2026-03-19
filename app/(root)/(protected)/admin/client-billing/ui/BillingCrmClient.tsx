@@ -78,6 +78,7 @@ import {
 import { fmtDateShort, money } from "@/actions/billing/helpers/billing-helpers";
 import { COLUMNS_LABELS, daysLeftService, exportExcelAllFiltered, getExportValue, StatusBadgeAccess, StatusBadgePaid } from "../helpers";
 import { BillingCrmFiltersCards, BillingSkeletton, DaysLeftCell } from "../components";
+import { useBillingLifecyclePreview } from "../hooks/useBillingLifecyclePreview";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const BILLING_COLUMN_FILTERS_STORAGE_KEY = "billing-crm-column-filters";
@@ -102,6 +103,10 @@ export function BillingCrmClient({
         pageSize: 9,
     });
     const [hasLoadedPersistedFilters, setHasLoadedPersistedFilters] = useState(false);
+    const billingLifecyclePreview = useBillingLifecyclePreview(
+        dialog.form.dueDate,
+        dialog.form.graceDays
+    );
 
     React.useEffect(() => {
         if (typeof window === "undefined") return;
@@ -945,11 +950,11 @@ export function BillingCrmClient({
                                                             />
                                                         </div>
 
-                                                        <div className="grid gap-1">
-                                                            <label className="text-muted-foreground">
-                                                                Fecha de pago (vence)
-                                                            </label>
-                                                            <Input
+                                                         <div className="grid gap-1">
+                                                             <label className="text-muted-foreground">
+                                                                 Fecha de pago (vence)
+                                                             </label>
+                                                             <Input
                                                                 type="date"
                                                                 value={dialog.form.dueDate}
                                                                 onChange={(e) =>
@@ -957,12 +962,15 @@ export function BillingCrmClient({
                                                                         ...s,
                                                                         form: { ...s.form, dueDate: e.target.value },
                                                                     }))
-                                                                }
-                                                                className="h-9"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                                 }
+                                                                 className="h-9"
+                                                             />
+                                                            <p className="text-[11px] text-muted-foreground">
+                                                                {billingLifecyclePreview.summary}
+                                                            </p>
+                                                         </div>
+                                                     </div>
+                                                 </div>
                                             </div>
                                         </ScrollArea>
                                     )}
