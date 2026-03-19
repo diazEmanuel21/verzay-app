@@ -84,6 +84,11 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const BILLING_COLUMN_FILTERS_STORAGE_KEY = "billing-crm-column-filters";
 const BILLING_COLUMN_VISIBILITY_STORAGE_KEY = "billing-crm-column-visibility";
 
+function getDaysRemaining(dueDate?: string | Date | null) {
+    const daysRemaining = Number.parseInt(daysLeftService(dueDate ?? null), 10);
+    return Number.isFinite(daysRemaining) ? daysRemaining : null;
+}
+
 export function BillingCrmClient({
     initial,
 }: {
@@ -94,7 +99,9 @@ export function BillingCrmClient({
 
     // DataTable state (shadcn style)
     const [globalFilter, setGlobalFilter] = useState("");
-    const [sorting, setSorting] = useState<SortingState>([]);
+    const [sorting, setSorting] = useState<SortingState>([
+        { id: "daysLeft", desc: false },
+    ]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
     const [rowSelection, setRowSelection] = useState({})
@@ -437,10 +444,11 @@ export function BillingCrmClient({
             {
                 id: "daysLeft",
                 header: sortableHeader("Días restantes"),
-                accessorFn: (row) => row.billing?.dueDate ?? null,
+                accessorFn: (row) =>
+                    getDaysRemaining(row.billing?.dueDate ?? null) ?? Number.MAX_SAFE_INTEGER,
                 cell: ({ row }) => {
                     const b = row.original.billing ?? null;
-                    const dueDate = parseInt(daysLeftService(b?.dueDate ?? null));
+                    const dueDate = getDaysRemaining(b?.dueDate ?? null);
                     return (
                         <div className="py-2">
                             <DaysLeftCell dueDate={dueDate} />
