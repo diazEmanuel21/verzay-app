@@ -2,8 +2,6 @@
 
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { PremiumModule } from "@/components/shared/PremiumModule";
-import { Plan } from '@prisma/client';
 import { Action } from "@/types/workflow-node";
 
 type Props = {
