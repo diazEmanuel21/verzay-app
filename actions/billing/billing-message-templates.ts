@@ -35,7 +35,11 @@ export function buildBillingMessage(args: {
     const dueDateLine = dueDate ? `📆 *Vence:* ${fmtDateDDMMYYYY(dueDate)}` : "📆 *Vence:* Sin fecha";
     const daysRemainingLine =
         typeof daysRemaining === "number"
-            ? `⏳ *Dias restantes:* ${daysRemaining}`
+            ? daysRemaining < 0
+                ? `⚠️ *Dias de vencido:* ${Math.abs(daysRemaining)}`
+                : daysRemaining === 0
+                    ? `⏳ *Vence:* Hoy`
+                    : `⏳ *Dias restantes:* ${daysRemaining}`
             : "⏳ *Dias restantes:* Sin calcular";
 
     if (type === "STATUS_ACTIVE") {
@@ -95,11 +99,15 @@ export function buildBillingMessage(args: {
         ].join("\n");
     }
 
+    const overdueDays = typeof daysRemaining === "number" && daysRemaining < 0
+        ? Math.abs(daysRemaining)
+        : null;
+
     const header = type === "REMINDER_3D"
         ? `👨🏻‍💼 ${clientName || "Cliente"}:`
         : type === "DUE_TODAY"
             ? `🔔 *Hoy vence su servicio:*`
-            : `🚫 *Han pasado 3 dias desde el vencimiento:*`;
+            : `🚫 *Su servicio esta vencido desde hace ${overdueDays ?? 0} ${overdueDays === 1 ? "dia" : "dias"}:*`;
 
     return [
         header,

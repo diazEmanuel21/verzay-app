@@ -1,7 +1,6 @@
 import { format } from "date-fns";
 import {
     BillingTemplateType,
-    OVERDUE_DAYS_BILLING,
     SOON_DAYS_BILLING,
 } from "@/types/billing";
 
@@ -51,19 +50,19 @@ export function normalizeWhatsAppJid(value: string) {
  * Decide qué plantilla usar para los hitos fijos del cron:
  * - 3 días antes => REMINDER_3D
  * - día de vencimiento => DUE_TODAY
- * - 3 días después => EXPIRED
+ * - vencido desde cualquier día => EXPIRED
  */
 export function pickTemplate(daysRemaining: number | null): BillingTemplateType | null {
     if (daysRemaining === SOON_DAYS_BILLING) return "REMINDER_3D";
     if (daysRemaining === 0) return "DUE_TODAY";
-    if (daysRemaining === -OVERDUE_DAYS_BILLING) return "EXPIRED";
+    if (typeof daysRemaining === "number" && daysRemaining < 0) return "EXPIRED";
     return null;
 }
 
 export function pickPreviewTemplate(daysRemaining: number): BillingTemplateType {
     if (daysRemaining === SOON_DAYS_BILLING) return "REMINDER_3D";
     if (daysRemaining === 0) return "DUE_TODAY";
-    if (daysRemaining === -OVERDUE_DAYS_BILLING) return "EXPIRED";
+    if (daysRemaining < 0) return "EXPIRED";
     return "REMINDER_3D";
 }
 

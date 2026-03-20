@@ -6,7 +6,6 @@ import {
     BillingStatus,
     AccessStatus,
     BillingTemplateType,
-    OVERDUE_DAYS_BILLING,
     SOON_DAYS_BILLING,
 } from "@/types/billing";
 
@@ -75,7 +74,7 @@ export function pickBillingReminderTemplate(
 ): BillingTemplateType | null {
     if (daysRemaining === SOON_DAYS_BILLING) return "REMINDER_3D";
     if (daysRemaining === 0) return "DUE_TODAY";
-    if (daysRemaining === -OVERDUE_DAYS_BILLING) return "EXPIRED";
+    if (typeof daysRemaining === "number" && daysRemaining < 0) return "EXPIRED";
     return null;
 }
 

@@ -672,7 +672,7 @@ export async function registerSession(input: z.infer<typeof registerSessionSchem
     };
   }
 
-  const { userId, remoteJid, remoteJidAlt, senderPn, pushName, instanceId } = validation.data; //TODO: ELIMINAR PARA CAMBIOS ALEXANDER. Se debe cambiar el schema
+  const { userId, remoteJid, remoteJidAlt, senderPn, pushName, instanceId } = validation.data;
 
   try {
     const trimmedRemoteJid = remoteJid.trim();
@@ -693,7 +693,7 @@ export async function registerSession(input: z.infer<typeof registerSessionSchem
           { remoteJid: { in: candidates } },
           { remoteJidAlt: { in: candidates } },
         ],
-      },  //TODO: ELIMINAR PARA CAMBIOS ALEXANDER. Se debe cambiar el schema
+      },
       orderBy: { updatedAt: 'desc' },
     });
 
@@ -704,6 +704,7 @@ export async function registerSession(input: z.infer<typeof registerSessionSchem
         existingSession.remoteJidAlt,
       ]);
 
+      /* TODO: ACTUALIZACIÓN PUSHNAME SOSPECHOSA */
       const updated = await db.session.update({
         where: { id: existingSession.id },
         data: {
@@ -727,7 +728,7 @@ export async function registerSession(input: z.infer<typeof registerSessionSchem
         remoteJid: preferredRemoteJid,
         remoteJidAlt: pickObservedAlternateRemoteJid(preferredRemoteJid, observedAliases),
         pushName,
-        instanceId: trimmedInstanceId, //TODO: ELIMINAR PARA CAMBIOS ALEXANDER. Se debe cambiar el schema
+        instanceId: trimmedInstanceId, 
         status: true,
       },
     });
@@ -747,7 +748,7 @@ export async function registerSession(input: z.infer<typeof registerSessionSchem
 };
 
 /**
-* 🔎 Obtiene una única sesión por su remoteJid asociado a un userId.
+* Obtiene una única sesión por su remoteJid asociado a un userId.
 */
 export async function getSessionByRemoteJid(
   userId: string,
@@ -846,6 +847,7 @@ export async function getSessionByRemoteJid(
       (resolvedSession.remoteJidAlt ?? null) !== normalizedRemoteJidAlt ||
       resolvedSession.pushName !== normalizedPushName
     ) {
+      /* TODO: ACTUALIZACIÓN PUSHNAME SOSPECHOSA */
       resolvedSession = await db.session.update({
         where: { id: resolvedSession.id },
         data: {

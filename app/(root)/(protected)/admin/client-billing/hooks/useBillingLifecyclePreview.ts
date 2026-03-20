@@ -43,17 +43,21 @@ export function useBillingLifecyclePreview(
                 : evaluation.reminderTemplate === "DUE_TODAY"
                     ? "Hoy corresponde el mensaje del dia de vencimiento."
                     : evaluation.reminderTemplate === "EXPIRED"
-                        ? "Hoy corresponde el mensaje de 3 dias despues del vencimiento."
+                        ? "Hoy corresponde el mensaje diario de servicio vencido."
                         : null;
 
         const daysLabel =
-            evaluation.daysRemaining === 1
-                ? "1 dia"
-                : `${evaluation.daysRemaining ?? 0} dias`;
+            typeof evaluation.daysRemaining !== "number"
+                ? "sin dias calculados"
+                : evaluation.daysRemaining < 0
+                    ? `${Math.abs(evaluation.daysRemaining)} ${Math.abs(evaluation.daysRemaining) === 1 ? "dia" : "dias"} de vencido`
+                    : evaluation.daysRemaining === 1
+                        ? "1 dia"
+                        : `${evaluation.daysRemaining} dias`;
 
         return {
             ...evaluation,
-            summary: `Con ${daysLabel} restantes, el cliente ${stateLabel} y quedara ${billingLabel}.${reminderLabel ? ` ${reminderLabel}` : ""}`,
+            summary: `Con ${daysLabel}, el cliente ${stateLabel} y quedara ${billingLabel}.${reminderLabel ? ` ${reminderLabel}` : ""}`,
         };
     }, [dueDate, graceDays]);
 }

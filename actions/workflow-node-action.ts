@@ -390,7 +390,7 @@ export async function getNodeforUser(workflowId: string) {
   })
 }
 
-/* TODO: SE UTILIZA PARA SABER EL ORDEN DE LOS NODOS */
+/* SE UTILIZA PARA SABER EL ORDEN DE LOS NODOS */
 export async function getExecutionNodesForWorkflow(workflowId: string): Promise<WorkflowNode[]> {
   const [nodes, edges] = await Promise.all([
     db.workflowNode.findMany({
