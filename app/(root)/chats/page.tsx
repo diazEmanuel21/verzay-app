@@ -2,84 +2,61 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { redirect } from "next/navigation";
+import type { ApiKey, Instancia, QuickReply, Workflow } from "@prisma/client";
 import { currentUser } from "@/lib/auth";
-import { getInstancesByUserId } from "@/actions/instances-actions";
+import { getApiKeyById } from "@/actions/api-action";
 import {
   fetchChatsFromEvolution,
   findMessagesByRemoteJid,
-  sendTextMessage,
-  sendMediaByUrl, // asegúrate de exportarla en tu action
-  type FetchChatsResult,
   type EvolutionMessage as EvoMsgFromAction,
-  type SendMessageResult,
+  type FetchChatsResult,
 } from "@/actions/chat-actions";
-import { getApiKeyById } from "@/actions/api-action";
-import type { ApiKey, Instancia } from "@prisma/client";
-import { ChatsClient } from "./_components/chats-client";
-import { buildChatHistorySessionId } from "@/lib/chat-history/build-session-id";
-import { saveChatHistoryMessage } from "@/lib/chat-history/chat-history.helper";
-import { normalizeWhatsAppConversationJid } from "@/lib/whatsapp-jid";
+import {
+  refetchChatsManualAction,
+  sendManualChatPayloadAction,
+  sendManualQuickReplyAction,
+  sendManualWorkflowAction,
+  warmChatMessagesAction,
+} from "@/actions/chat-manual-actions";
+import { getChatConversationPreferencesByUserId } from "@/actions/chat-conversation-actions";
+import { getInstancesByUserId } from "@/actions/instances-actions";
+import { getAllRRs } from "@/actions/rr-actions";
 import { getChatContactSessions } from "@/actions/session-action";
-
-// Tipos importados desde ChatMain (cliente)
-import type { OutgoingMessagePayload } from "./_components/chat-main";
 import { listTagsAction } from "@/actions/tag-actions";
+import { getWorkFlowByUser } from "@/actions/workflow-actions";
+import { ChatsClient } from "./_components/chats-client";
+import { normalizeWhatsAppConversationJid } from "@/lib/whatsapp-jid";
+import type {
+  ChatQuickReplyOption,
+  ChatWorkflowOption,
+} from "@/types/chat";
 
-/* ---------- Utils ---------- */
 function pickWhatsappOrNull(arr: Instancia[]) {
   return (
-    arr.find((i) => i.instanceType === "Whatsapp") ??
-    arr.find((i) => i.instanceType == null) ??
+    arr.find((instance) => instance.instanceType === "Whatsapp") ??
+    arr.find((instance) => instance.instanceType == null) ??
     null
   );
 }
+
 function hasInstancias(
-  result: { data?: Instancia[] | null }
+  result: { data?: Instancia[] | null },
 ): result is { data: Instancia[] } {
   return Array.isArray(result.data) && result.data.length > 0;
 }
+
 function hasApikey(result: { data?: ApiKey | null }): result is { data: ApiKey } {
-  return !!result.data;
+  return Boolean(result.data);
 }
 
-function buildOutgoingHistoryEntry(payload: OutgoingMessagePayload) {
-  if (payload.kind === "text") {
-    return {
-      content: payload.text.trim(),
-      additionalKwargs: {
-        messageKind: "text",
-      },
-    };
-  }
+function hasWorkflows(result: { data?: Workflow[] | null }): result is { data: Workflow[] } {
+  return Array.isArray(result.data);
+}
 
-  const mediaLabel =
-    payload.mediatype === "image"
-      ? "[Imagen]"
-      : payload.mediatype === "video"
-        ? "[Video]"
-        : payload.mediatype === "audio"
-          ? payload.ptt
-            ? "[Nota de voz]"
-            : "[Audio]"
-          : "[Documento]";
-
-  const fileName = payload.fileName?.trim();
-  const caption = payload.caption?.trim();
-  const content = [fileName ? `${mediaLabel} ${fileName}` : mediaLabel, caption]
-    .filter(Boolean)
-    .join("\n");
-
-  return {
-    content,
-    additionalKwargs: {
-      messageKind: "media",
-      mediatype: payload.mediatype,
-      fileName: fileName || null,
-      mimetype: payload.mimetype || null,
-      hasCaption: Boolean(caption),
-      ptt: payload.ptt ?? false,
-    },
-  };
+function hasQuickReplies(
+  result: { data?: QuickReply[] | null },
+): result is { data: QuickReply[] } {
+  return Array.isArray(result.data);
 }
 
 export default async function ChatsPage({
@@ -99,38 +76,36 @@ export default async function ChatsPage({
   const whatsappInstancia = pickWhatsappOrNull(instancias);
   const apiKey = hasApikey(resApikey) ? resApikey.data : null;
 
-  let chatsResult: FetchChatsResult;
-  if (whatsappInstancia && apiKey) {
-    chatsResult = await fetchChatsFromEvolution(apiKey, whatsappInstancia.instanceName);
-  } else {
-    chatsResult = {
-      success: false,
-      message: !apiKey
-        ? "No hay API Key configurada."
-        : "No se encontró una instancia 'Whatsapp' ni instancia nula.",
-    };
-  }
+  const chatsResult: FetchChatsResult =
+    whatsappInstancia && apiKey
+      ? await fetchChatsFromEvolution(apiKey, whatsappInstancia.instanceName)
+      : {
+          success: false,
+          message: !apiKey
+            ? "No hay API Key configurada."
+            : "No se encontro una instancia Whatsapp valida.",
+        };
 
   const requestedJid = searchParams?.jid
     ? normalizeWhatsAppConversationJid(searchParams.jid) || searchParams.jid
     : "";
+
   const initialSelectedChat =
     chatsResult.success && requestedJid
       ? chatsResult.data.find(
-        (chat) => chat.remoteJid === requestedJid || chat.aliases?.includes(requestedJid)
-      )
+          (chat) => chat.remoteJid === requestedJid || chat.aliases?.includes(requestedJid),
+        )
       : undefined;
-  const initialSelectedJid =
-    initialSelectedChat?.remoteJid
-      ? initialSelectedChat.remoteJid
-      : chatsResult.success && chatsResult.data.length > 0
-        ? chatsResult.data[0].remoteJid
-        : requestedJid;
 
-  // Precarga inicial de mensajes
+  const initialSelectedJid =
+    initialSelectedChat?.remoteJid ||
+    (chatsResult.success && chatsResult.data.length > 0
+      ? chatsResult.data[0].remoteJid
+      : requestedJid);
+
   let initialMessages: EvoMsgFromAction[] = [];
   if (chatsResult.success && initialSelectedJid && whatsappInstancia && apiKey) {
-    const msgsRes = await findMessagesByRemoteJid(
+    const messagesResponse = await findMessagesByRemoteJid(
       { url: apiKey.url, key: apiKey.key },
       whatsappInstancia.instanceName,
       initialSelectedJid,
@@ -138,161 +113,106 @@ export default async function ChatsPage({
         page: 1,
         pageSize: 50,
         remoteJidAliases: initialSelectedChat?.aliases,
-      }
+      },
     );
-    if (msgsRes.success) {
-      initialMessages = msgsRes.data || [];
+
+    if (messagesResponse.success) {
+      initialMessages = messagesResponse.data || [];
     }
   }
 
-  // --------- Clausuras de Server Actions ---------
+  const workflowsResponse = await getWorkFlowByUser(user.id);
+  const workflows = hasWorkflows(workflowsResponse) ? workflowsResponse.data : [];
+  const workflowOptions: ChatWorkflowOption[] = workflows.map((workflow) => ({
+    id: workflow.id,
+    name: workflow.name,
+    isPro: workflow.isPro,
+  }));
 
-  // 1) Carga mensajes por JID (para ChatsClient)
-  const warmMessages =
-    whatsappInstancia && apiKey
-      ? async (
-        remoteJid: string,
-        options?: { page?: number; pageSize?: number; remoteJidAliases?: string[] }
-      ) => {
-        "use server";
-        return findMessagesByRemoteJid(
-          { url: apiKey!.url, key: apiKey!.key },
-          whatsappInstancia!.instanceName,
-          remoteJid,
-          options
-        );
-      }
-      : undefined;
+  const quickRepliesResponse = await getAllRRs(user.id);
+  const quickReplies = hasQuickReplies(quickRepliesResponse) ? quickRepliesResponse.data : [];
+  const quickReplyOptions: ChatQuickReplyOption[] = quickReplies
+    .map((quickReply) => {
+      const workflow = workflows.find((item) => item.id === quickReply.workflowId);
+      const message = quickReply.mensaje?.trim() ?? "";
+      if (!message) return null;
 
-  // 2) Refrescar lista de chats
-  const refetchChatsAction =
-    whatsappInstancia && apiKey
-      ? async (): Promise<FetchChatsResult> => {
-        "use server";
-        return fetchChatsFromEvolution(
-          { url: apiKey!.url, key: apiKey!.key },
-          whatsappInstancia!.instanceName
-        );
-      }
-      : async (): Promise<FetchChatsResult> => ({
-        success: false,
-        message: "No hay instancia o API key configurada para refrescar chats.",
-      });
+      return {
+        id: quickReply.id,
+        message,
+        workflowId: quickReply.workflowId,
+        workflowName: workflow?.name ?? null,
+      };
+    })
+    .filter((item): item is ChatQuickReplyOption => item !== null);
 
-  // 3) Callback unificado para enviar cualquier formato
-  const sendAnyAction =
-    whatsappInstancia && apiKey
-      ? async (
-        remoteJid: string,
-        payload: OutgoingMessagePayload
-      ): Promise<SendMessageResult> => {
-        "use server";
-
-        const base = { url: apiKey!.url, key: apiKey!.key } as const;
-        const instance = whatsappInstancia!.instanceName;
-
-        const result = payload.kind === "text"
-          ? await sendTextMessage(base, instance, remoteJid, payload.text, {
-            delay: payload.delay,
-            linkPreview: payload.linkPreview,
-            mentionsEveryOne: payload.mentionsEveryOne,
-            mentioned: payload.mentioned,
-            quotedMessage: payload.quotedMessage,
-          })
-          : await sendMediaByUrl(base, instance, remoteJid, {
-          mediatype: payload.mediatype,
-          mediaUrl: payload.mediaUrl,
-          mimetype: payload.mimetype,
-          fileName: payload.fileName,
-          caption: payload.caption,
-          ptt: payload.ptt,
-          delay: payload.delay,
-          linkPreview: payload.linkPreview,
-          mentionsEveryOne: payload.mentionsEveryOne,
-          mentioned: payload.mentioned,
-          quotedMessage: payload.quotedMessage,
-        });
-
-        if (result.success) {
-          const historyEntry = buildOutgoingHistoryEntry(payload);
-
-          try {
-            await saveChatHistoryMessage({
-              sessionId: buildChatHistorySessionId(instance, remoteJid),
-              content: historyEntry.content,
-              type: "notification",
-              additionalKwargs: {
-                channel: "whatsapp",
-                provider: "evolution",
-                direction: "outbound",
-                source: "manual_chat_ui",
-                remoteJid,
-                ...historyEntry.additionalKwargs,
-              },
-              responseMetadata: {
-                sentAt: new Date().toISOString(),
-                instanceName: instance,
-              },
-            });
-          } catch (historyError) {
-            console.error("[CHATS] No se pudo guardar el historial del mensaje enviado.", historyError);
-          }
-        }
-
-        return result;
-      }
-      : async (remoteJid: string): Promise<SendMessageResult> => ({
-        success: false,
-        message: "No hay instancia o API key configurada para enviar mensajes.",
-        remoteJid,
-      });
-
-  const [tagsRes, chatSessionsRes] = await Promise.all([
+  const [tagsRes, chatSessionsRes, chatPreferencesRes] = await Promise.all([
     listTagsAction(user.id),
     chatsResult.success
       ? getChatContactSessions(
-        user.id,
-        chatsResult.data.map((chat) => ({
-          remoteJid: chat.remoteJid,
-          remoteJidAlt: chat.remoteJidAlt,
-          senderPn: chat.senderPn,
-          pushName: chat.pushName,
-          aliases: chat.aliases,
-        })),
-      )
+          user.id,
+          chatsResult.data.map((chat) => ({
+            remoteJid: chat.remoteJid,
+            remoteJidAlt: chat.remoteJidAlt,
+            senderPn: chat.senderPn,
+            pushName: chat.pushName,
+            aliases: chat.aliases,
+          })),
+        )
       : Promise.resolve({
-        success: false as const,
-        message: "No se pudieron cargar las sesiones del sidebar.",
-      }),
+          success: false as const,
+          message: "No se pudieron cargar las sesiones del sidebar.",
+        }),
+    getChatConversationPreferencesByUserId(user.id),
   ]);
 
   const allTags =
-    tagsRes.data?.map((t) => ({
-      id: t.id,
-      name: t.name,
-      slug: t.slug,
-      color: t.color,
-      sessionCount: t._count?.sessionTags ?? 0,
-
+    tagsRes.data?.map((tag) => ({
+      id: tag.id,
+      name: tag.name,
+      slug: tag.slug,
+      color: tag.color,
+      sessionCount: tag._count?.sessionTags ?? 0,
     })) ?? [];
 
-  const initialChatSessions = chatSessionsRes.success
-    ? (chatSessionsRes.data ?? {})
-    : {};
+  const initialChatSessions = chatSessionsRes.success ? chatSessionsRes.data ?? {} : {};
+  const initialChatPreferences =
+    chatPreferencesRes.success ? chatPreferencesRes.data ?? {} : {};
+  const actionContext =
+    whatsappInstancia && apiKey
+      ? {
+          apiKeyData: {
+            url: apiKey.url,
+            key: apiKey.key,
+          },
+          instanceName: whatsappInstancia.instanceName,
+        }
+      : null;
+
+  const warmMessagesAction = warmChatMessagesAction.bind(null, actionContext);
+  const refetchChatsAction = refetchChatsManualAction.bind(null, actionContext);
+  const sendAnyAction = sendManualChatPayloadAction.bind(null, actionContext);
+  const sendWorkflowAction = sendManualWorkflowAction.bind(null, actionContext);
+  const sendQuickReplyAction = sendManualQuickReplyAction.bind(null, actionContext);
 
   return (
     <ChatsClient
-      initialChatSessions={initialChatSessions}
-      allTags={allTags}
+      userId={user.id}
       chatsResult={chatsResult}
+      initialChatPreferences={initialChatPreferences}
+      initialChatSessions={initialChatSessions}
       initialSelectedJid={initialSelectedJid}
       initialMessages={initialMessages}
-      warmMessages={warmMessages}
-      sendAny={sendAnyAction}          /* envío unificado */
-      refetchChats={refetchChatsAction}
       instanceName={whatsappInstancia?.instanceName}
-      apiKeyData={apiKey ? { url: apiKey.url, key: apiKey.key } : undefined} /* ⬅️ clave para media cifrada */
-      userId={user.id}
+      warmMessagesAction={warmMessagesAction}
+      sendAnyAction={sendAnyAction}
+      sendWorkflowAction={sendWorkflowAction}
+      sendQuickReplyAction={sendQuickReplyAction}
+      refetchChatsAction={refetchChatsAction}
+      apiKeyData={apiKey ? { url: apiKey.url, key: apiKey.key } : undefined}
+      allTags={allTags}
+      workflows={workflowOptions}
+      quickReplies={quickReplyOptions}
     />
   );
 }

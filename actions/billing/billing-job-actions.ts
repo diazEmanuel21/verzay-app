@@ -201,6 +201,9 @@ export async function runBillingDailyJobInternal(requireAuth: boolean): Promise<
 
         const candidates = await db.userBilling.findMany({
             where: {
+                user: {
+                    status: true,
+                },
                 dueDate: {
                     not: null,
                     lte: endOfDay(

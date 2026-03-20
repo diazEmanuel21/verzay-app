@@ -10,8 +10,26 @@ import React, {
 } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowRight, Mic, Send, Trash2, X, Clock, Check, CheckCheck, CircleAlert, PencilLine, UserRound } from 'lucide-react';
+import {
+  ArrowRight,
+  Bot,
+  Check,
+  CheckCheck,
+  CircleAlert,
+  Clock,
+  Loader2,
+  MessageCircleMore,
+  Mic,
+  PencilLine,
+  Pin,
+  Send,
+  Trash2,
+  UserRound,
+  Workflow,
+  X,
+} from 'lucide-react';
 import { cn, SERVER_TIME_ZONE } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { AttachmentMenu, type ComposeMedia, type MediaType } from './attachment-menu';
@@ -19,6 +37,14 @@ import { SwitchStatus } from '../../sessions/_components';
 import { SafeImage } from '@/components/custom/SafeImage';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import {
   Dialog,
   DialogContent,
@@ -28,12 +54,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 /*  Importaciones de Acciones y Tipos de Servidor */
 import { getMediaBase64FromMessage, type EvolutionMessage } from '@/actions/chat-actions';
 import { getSessionByRemoteJid } from '@/actions/session-action';
 import { updateLeadPushNameAction } from '@/actions/registro-action';
 import { SessionTagsCombobox } from '../../tags/components';
+import { ChatQuickReplyOption, ChatToolActionResult, ChatWorkflowOption } from '@/types/chat';
 import { Session, SimpleTag, SingleSessionResponse } from '@/types/session';
 import { CrmFollowUpSummaryBadge } from '../../crm/dashboard/components/CrmFollowUpSummaryBadge';
 import { LeadStatusBadge } from '../../crm/dashboard/components/records-table/LeadStatusBadge';
@@ -46,8 +75,12 @@ type ChatMainProps = {
   info?: ChatInfoMeta;
   loading?: boolean;
   onSend: (payload: OutgoingMessagePayload) => void | Promise<void>;
+  onSendWorkflow: (workflowId: string) => Promise<ChatToolActionResult>;
+  onSendQuickReply: (quickReplyId: number) => Promise<ChatToolActionResult>;
   onBackToList: () => void;
   allTags: SimpleTag[];
+  workflows: ChatWorkflowOption[];
+  quickReplies: ChatQuickReplyOption[];
   onSessionResolved?: (remoteJid: string, session: Session | null) => void;
   onSessionTagsChange?: (remoteJid: string, selectedIds: number[]) => void;
 };
@@ -80,7 +113,7 @@ export type OutgoingMediaPayload = {
 export type OutgoingMessagePayload = OutgoingTextPayload | OutgoingMediaPayload;
 
 /* -------- Evolution / UI Tipos Básicos -------- */
-type ChatHeader = { name: string; avatarSrc?: string; status?: string };
+type ChatHeader = { name: string; avatarSrc?: string; status?: string; isPinned?: boolean };
 type ChatInfoMeta = {
   total?: number;
   pages?: number;
@@ -587,6 +620,174 @@ const ContactEditDialog: React.FC<{
   </Dialog>
 );
 
+const ChatMessageListSkeleton: React.FC = () => (
+  <div className="flex-1 space-y-4">
+    <div className="flex justify-center">
+      <Skeleton className="h-7 w-40 rounded-full" />
+    </div>
+
+    {Array.from({ length: 5 }).map((_, index) => {
+      const isUser = index % 2 === 1;
+      return (
+        <div
+          key={index}
+          className={cn("flex items-end gap-2", isUser ? "justify-end" : "justify-start")}
+        >
+          {!isUser && <Skeleton className="h-7 w-7 rounded-full" />}
+          <div className="space-y-2">
+            <Skeleton className={cn("h-4 rounded-full", isUser ? "w-28" : "w-36")} />
+            <Skeleton className={cn("h-16 rounded-2xl", isUser ? "w-56" : "w-64")} />
+          </div>
+        </div>
+      );
+    })}
+  </div>
+);
+
+const ChatAutomationPicker: React.FC<{
+  quickReplies: ChatQuickReplyOption[];
+  workflows: ChatWorkflowOption[];
+  onSendQuickReply: (quickReplyId: number) => Promise<ChatToolActionResult>;
+  onSendWorkflow: (workflowId: string) => Promise<ChatToolActionResult>;
+}> = ({ quickReplies, workflows, onSendQuickReply, onSendWorkflow }) => {
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<'workflows' | 'quickReplies'>('workflows');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleWorkflowSend = useCallback(async (workflowId: string) => {
+    try {
+      setIsSubmitting(true);
+      const result = await onSendWorkflow(workflowId);
+      if (!result.success) {
+        toast.error(result.message || 'No se pudo enviar el workflow.');
+        return;
+      }
+
+      toast.success(result.message);
+      setOpen(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'No se pudo enviar el workflow.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [onSendWorkflow]);
+
+  const handleQuickReplySend = useCallback(async (quickReplyId: number) => {
+    try {
+      setIsSubmitting(true);
+      const result = await onSendQuickReply(quickReplyId);
+      if (!result.success) {
+        toast.error(result.message || 'No se pudo enviar la respuesta rapida.');
+        return;
+      }
+
+      toast.success(result.message);
+      setOpen(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'No se pudo enviar la respuesta rapida.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [onSendQuickReply]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          size="icon"
+          variant="outline"
+          className="rounded-full"
+          title="Enviar workflow o respuesta rapida"
+          aria-label="Enviar workflow o respuesta rapida"
+        >
+          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
+        </Button>
+      </PopoverTrigger>
+
+      <PopoverContent align="start" className="w-[340px] p-3">
+        <div className="mb-3">
+          <p className="text-sm font-semibold text-foreground">Atajos de envio</p>
+          <p className="text-xs text-muted-foreground">
+            Lanza un workflow manual o envia una respuesta rapida.
+          </p>
+        </div>
+
+        <Tabs value={tab} onValueChange={(value) => setTab(value as 'workflows' | 'quickReplies')}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="workflows" className="gap-2 text-xs">
+              <Workflow className="h-3.5 w-3.5" />
+              Workflows
+            </TabsTrigger>
+            <TabsTrigger value="quickReplies" className="gap-2 text-xs">
+              <MessageCircleMore className="h-3.5 w-3.5" />
+              Rapidas
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="workflows">
+            <Command className="rounded-lg border">
+              <CommandInput placeholder="Buscar workflow..." className="h-9 text-xs" />
+              <CommandList>
+                <CommandEmpty className="text-xs">No hay workflows disponibles.</CommandEmpty>
+                <CommandGroup className="max-h-64 overflow-auto">
+                  {workflows.map((workflow) => (
+                    <CommandItem
+                      key={workflow.id}
+                      value={`${workflow.name} ${workflow.isPro ? 'pro' : 'basic'}`}
+                      className="items-start justify-between gap-3 py-3"
+                      disabled={isSubmitting}
+                      onSelect={() => void handleWorkflowSend(workflow.id)}
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{workflow.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {workflow.isPro ? 'Workflow Pro' : 'Workflow estandar'}
+                        </p>
+                      </div>
+                      <Workflow className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </TabsContent>
+
+          <TabsContent value="quickReplies">
+            <Command className="rounded-lg border">
+              <CommandInput placeholder="Buscar respuesta rapida..." className="h-9 text-xs" />
+              <CommandList>
+                <CommandEmpty className="text-xs">No hay respuestas rapidas disponibles.</CommandEmpty>
+                <CommandGroup className="max-h-64 overflow-auto">
+                  {quickReplies.map((quickReply) => (
+                    <CommandItem
+                      key={quickReply.id}
+                      value={`${quickReply.message} ${quickReply.workflowName ?? ''}`}
+                      className="items-start justify-between gap-3 py-3"
+                      disabled={isSubmitting}
+                      onSelect={() => void handleQuickReplySend(quickReply.id)}
+                    >
+                      <div className="min-w-0">
+                        <p className="line-clamp-2 text-sm font-medium">{quickReply.message}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {quickReply.workflowName
+                            ? `Relacionado a ${quickReply.workflowName}`
+                            : 'Sin workflow relacionado'}
+                        </p>
+                      </div>
+                      <MessageCircleMore className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </TabsContent>
+        </Tabs>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 const ChatMessageList: React.FC<{
   uiMessages: UIBubble[];
   loading?: boolean;
@@ -622,8 +823,16 @@ const ChatMessageList: React.FC<{
     return items;
   }, [fullList]);
 
+  if (loading && renderedList.length === 0) {
+    return (
+      <div className="flex flex-1 flex-col overflow-y-auto p-4 custom-scrollbar w-full" ref={listRef}>
+        <ChatMessageListSkeleton />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 overflow-y-auto p-4 flex flex-col custom-scrollbar w-full" ref={listRef}>
+    <div className="flex flex-1 flex-col overflow-y-auto p-4 custom-scrollbar w-full" ref={listRef}>
       {loading && <div className="text-center text-gray-500 py-4">Cargando mensajes…</div>}
       {renderedList.map((item) =>
         item.type === 'date' ? (
@@ -654,9 +863,13 @@ export const ChatMain: React.FC<ChatMainProps> = ({
   info,
   loading,
   onSend,
+  onSendQuickReply,
+  onSendWorkflow,
   onBackToList,
+  quickReplies,
   userId,
   allTags,
+  workflows,
   onSessionResolved,
   onSessionTagsChange,
 }) => {
@@ -1111,6 +1324,9 @@ export const ChatMain: React.FC<ChatMainProps> = ({
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
+              {header.isPinned && (
+                <Pin className="h-4 w-4 shrink-0 fill-current text-amber-500" />
+              )}
               <p className="truncate text-sm font-semibold dark:text-white sm:text-base">
                 {displayedContactName}
               </p>
@@ -1315,6 +1531,13 @@ export const ChatMain: React.FC<ChatMainProps> = ({
                 />
               )}
             </div>
+
+            <ChatAutomationPicker
+              quickReplies={quickReplies}
+              workflows={workflows}
+              onSendQuickReply={onSendQuickReply}
+              onSendWorkflow={onSendWorkflow}
+            />
 
             {(
               <AttachmentMenu

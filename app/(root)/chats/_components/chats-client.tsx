@@ -1,9 +1,13 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChatSidebar } from "./chat-sidebar";
-import { ChatMain } from "./chat-main";
-
+import { toast } from "sonner";
+import {
+  deleteChatConversationAction,
+  setChatArchivedAction,
+  toggleChatPinAction,
+} from "@/actions/chat-conversation-actions";
+import { getChatContactSessions } from "@/actions/session-action";
 import type {
   ChatData,
   EvolutionMessage,
@@ -11,8 +15,16 @@ import type {
   FindMessagesResult,
   SendMessageResult,
 } from "@/actions/chat-actions";
-import { getChatContactSessions } from "@/actions/session-action";
+import { ChatMain } from "./chat-main";
+import { ChatSidebar } from "./chat-sidebar";
 import type { OutgoingMessagePayload } from "./chat-main";
+import type {
+  ChatConversationPreference,
+  ChatConversationPreferenceMap,
+  ChatQuickReplyOption,
+  ChatToolActionResult,
+  ChatWorkflowOption,
+} from "@/types/chat";
 import type {
   ChatContactDescriptor,
   ChatContactSessionMap,
@@ -21,9 +33,6 @@ import type {
   SimpleTag,
 } from "@/types/session";
 
-/* -------------------------------------
-   Helpers de comparación y polling
--------------------------------------- */
 function getLastIdTimestamp(list: EvolutionMessage[]) {
   if (!list || list.length === 0) return { id: undefined as string | undefined, ts: 0 };
   const sorted = [...list].sort((a, b) => (a.messageTimestamp ?? 0) - (b.messageTimestamp ?? 0));
@@ -38,9 +47,6 @@ function areListsDifferent(a: EvolutionMessage[], b: EvolutionMessage[]) {
   return la.id !== lb.id || la.ts !== lb.ts;
 }
 
-/* -------------------------------------
-   Tipos locales
--------------------------------------- */
 type ApiKeyData = { url: string; key: string };
 
 function buildChatContactDescriptors(chats: ChatData[]): ChatContactDescriptor[] {
@@ -66,106 +72,137 @@ function mapSessionToChatContactSummary(session: Session): ChatContactSessionSum
   };
 }
 
-/* -------------------------------------
-   Props del componente
--------------------------------------- */
+function filterChatList(result: FetchChatsResult): FetchChatsResult {
+  if (!result.success) return result;
+
+  return {
+    ...result,
+    data: result.data.filter(
+      (chat) => chat.remoteJid && chat.remoteJid !== "status@broadcast",
+    ),
+  };
+}
+
 interface ChatsClientProps {
   userId: string;
   chatsResult: FetchChatsResult;
+  initialChatPreferences: ChatConversationPreferenceMap;
   initialChatSessions: ChatContactSessionMap;
   initialSelectedJid: string;
   initialMessages: EvolutionMessage[];
   instanceName?: string;
-
-  warmMessages?: (
+  warmMessagesAction: (
     remoteJid: string,
-    opts?: { page?: number; pageSize?: number; remoteJidAliases?: string[] }
+    opts?: { page?: number; pageSize?: number; remoteJidAliases?: string[] },
   ) => Promise<FindMessagesResult>;
-
-  /** Server Action unificada para enviar texto o media */
-  sendAny: (remoteJid: string, payload: OutgoingMessagePayload) => Promise<SendMessageResult>;
-
-  /** Server Action para refrescar la lista de chats */
-  refetchChats: () => Promise<FetchChatsResult>;
-
-  /** NUEVO: credenciales para que ChatMain pueda resolver media cifrada */
+  sendAnyAction: (
+    remoteJid: string,
+    payload: OutgoingMessagePayload,
+  ) => Promise<SendMessageResult>;
+  sendWorkflowAction: (
+    remoteJid: string,
+    workflowId: string,
+  ) => Promise<ChatToolActionResult>;
+  sendQuickReplyAction: (
+    remoteJid: string,
+    quickReplyId: number,
+  ) => Promise<ChatToolActionResult>;
+  refetchChatsAction: () => Promise<FetchChatsResult>;
   apiKeyData?: ApiKeyData;
-
   allTags: SimpleTag[];
+  workflows: ChatWorkflowOption[];
+  quickReplies: ChatQuickReplyOption[];
 }
 
-/* -------------------------------------
-   Componente principal
--------------------------------------- */
 export function ChatsClient({
+  userId,
   chatsResult: initialChatsResult,
+  initialChatPreferences,
   initialChatSessions,
   initialSelectedJid,
   initialMessages,
-  warmMessages,
-  sendAny,
-  refetchChats,
+  warmMessagesAction,
+  sendAnyAction,
+  sendWorkflowAction,
+  sendQuickReplyAction,
+  refetchChatsAction,
   instanceName,
   apiKeyData,
-  userId,
-  allTags
+  allTags,
+  workflows,
+  quickReplies,
 }: ChatsClientProps) {
+  const normalizedInitialChatsResult = useMemo(
+    () => filterChatList(initialChatsResult),
+    [initialChatsResult],
+  );
+
   const initialSelectedChat =
-    initialChatsResult.success && initialSelectedJid
-      ? initialChatsResult.data.find(
-        (chat) => chat.remoteJid === initialSelectedJid || chat.aliases?.includes(initialSelectedJid)
-      )
+    normalizedInitialChatsResult.success && initialSelectedJid
+      ? normalizedInitialChatsResult.data.find(
+          (chat) =>
+            chat.remoteJid === initialSelectedJid || chat.aliases?.includes(initialSelectedJid),
+        )
       : undefined;
+
   const [selectedJid, setSelectedJid] = useState(initialSelectedJid || "");
-  const [currentChatsResult, setCurrentChatsResult] = useState(initialChatsResult);
+  const [currentChatsResult, setCurrentChatsResult] = useState(normalizedInitialChatsResult);
+  const [chatPreferences, setChatPreferences] =
+    useState<ChatConversationPreferenceMap>(initialChatPreferences);
   const [chatSessions, setChatSessions] = useState<ChatContactSessionMap>(initialChatSessions);
   const [messages, setMessages] = useState<EvolutionMessage[]>(initialMessages || []);
   const [info, setInfo] = useState<
     | {
-      total?: number;
-      pages?: number;
-      currentPage?: number;
-      nextPage?: number | null;
-      instanceName?: string;
-      remoteJid?: string;
-      remoteJidAliases?: string[];
-      apiKeyData?: ApiKeyData;
-    }
+        total?: number;
+        pages?: number;
+        currentPage?: number;
+        nextPage?: number | null;
+        instanceName?: string;
+        remoteJid?: string;
+        remoteJidAliases?: string[];
+        apiKeyData?: ApiKeyData;
+      }
     | undefined
   >(
     initialSelectedJid
       ? {
-        instanceName,
-        remoteJid: initialSelectedJid,
-        remoteJidAliases: initialSelectedChat?.aliases,
-        apiKeyData,
-      }
-      : undefined
+          instanceName,
+          remoteJid: initialSelectedJid,
+          remoteJidAliases: initialSelectedChat?.aliases,
+          apiKeyData,
+        }
+      : undefined,
   );
-
   const [loading, setLoading] = useState(false);
-
-  // 🆕 ESTADO: Controla si la barra lateral (Sidebar) es visible
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
 
-  // --- Control del polling del chat
   const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inFlightRef = useRef(false);
   const backoffRef = useRef(0);
   const BASE_INTERVAL = 2000;
   const MAX_BACKOFF = 30000;
 
-  //  Filtro: excluir "status@broadcast"
   const contacts = useMemo(() => {
     if (!currentChatsResult.success) return [];
     return currentChatsResult.data.filter(
-      (c) => c.remoteJid && c.remoteJid !== "status@broadcast"
+      (chat) => chat.remoteJid && chat.remoteJid !== "status@broadcast",
     );
   }, [currentChatsResult]);
 
+  const visibleContacts = useMemo(
+    () =>
+      contacts.filter((contact) => {
+        const preference = chatPreferences[contact.remoteJid];
+        return !preference?.isDeleted && !preference?.isArchived;
+      }),
+    [chatPreferences, contacts],
+  );
+
   const currentContact = useMemo(() => {
     if (!contacts.length || !selectedJid) return undefined;
-    return contacts.find((c) => c.remoteJid === selectedJid || c.aliases?.includes(selectedJid));
+    return contacts.find(
+      (contact) => contact.remoteJid === selectedJid || contact.aliases?.includes(selectedJid),
+    );
   }, [contacts, selectedJid]);
 
   const currentContactSession = useMemo(() => {
@@ -173,36 +210,54 @@ export function ChatsClient({
     return chatSessions[selectedJid];
   }, [chatSessions, selectedJid]);
 
+  const currentPreference = useMemo(
+    () => (selectedJid ? chatPreferences[selectedJid] : undefined),
+    [chatPreferences, selectedJid],
+  );
+
   const header = useMemo(() => {
     return {
-      name: currentContactSession?.pushName?.trim() || currentContact?.pushName || selectedJid || "Sin contacto",
+      name:
+        currentContactSession?.pushName?.trim() ||
+        currentContact?.pushName ||
+        selectedJid ||
+        "Sin contacto",
       avatarSrc: currentContact?.profilePicUrl || "/placeholder.svg",
-      status: currentContact?.lastMessage?.messageTimestamp ? "último mensaje" : "—",
+      status: currentContact?.lastMessage?.messageTimestamp ? "ultimo mensaje" : "-",
+      isPinned: currentPreference?.isPinned ?? false,
     };
-  }, [currentContact, currentContactSession, selectedJid]);
+  }, [currentContact, currentContactSession, currentPreference?.isPinned, selectedJid]);
 
-  // Autoselección inicial si no hay JID seleccionado
   useEffect(() => {
-    if (!selectedJid && contacts.length > 0) {
-      const firstContact = contacts[0];
+    if (!selectedJid && visibleContacts.length > 0) {
+      const firstContact = visibleContacts[0];
       const first = firstContact.remoteJid;
+
       setSelectedJid(first);
-      setInfo((i) => ({
-        ...(i ?? {}),
+      setInfo((currentInfo) => ({
+        ...(currentInfo ?? {}),
         instanceName,
         remoteJid: first,
         remoteJidAliases: firstContact.aliases,
         apiKeyData,
       }));
+
       if (!initialSelectedJid) setMessages([]);
-      // 🆕 En la autoselección inicial, si hay un JID inicial, oculta la sidebar (comportamiento de móvil)
       if (initialSelectedJid) setIsSidebarVisible(false);
     }
-  }, [contacts, selectedJid, instanceName, initialSelectedJid, apiKeyData]);
+  }, [apiKeyData, initialSelectedJid, instanceName, selectedJid, visibleContacts]);
 
-  // 🆕 HANDLER: Alterna la visibilidad de la barra lateral
+  useEffect(() => {
+    if (!selectedJid) return;
+    if (!chatPreferences[selectedJid]?.isDeleted) return;
+
+    setSelectedJid("");
+    setMessages([]);
+    setInfo(undefined);
+  }, [chatPreferences, selectedJid]);
+
   const toggleSidebarVisibility = useCallback(() => {
-    setIsSidebarVisible((prev) => !prev);
+    setIsSidebarVisible((previous) => !previous);
   }, []);
 
   const refreshChatSessions = useCallback(
@@ -219,38 +274,57 @@ export function ChatsClient({
         setChatSessions(result.data ?? {});
       }
     },
-    [userId]
+    [userId],
   );
+
+  const refreshSidebarData = useCallback(async () => {
+    const chatRefreshResult = await refetchChatsAction();
+    if (!chatRefreshResult.success) return;
+
+    const filtered = filterChatList(chatRefreshResult);
+    setCurrentChatsResult(filtered);
+
+    if (filtered.success) {
+      await refreshChatSessions(filtered.data);
+    }
+  }, [refetchChatsAction, refreshChatSessions]);
+
+  const applyChatPreference = useCallback((preference: ChatConversationPreference) => {
+    setChatPreferences((previous) => ({
+      ...previous,
+      [preference.remoteJid]: preference,
+    }));
+  }, []);
 
   const handleSessionResolved = useCallback(
     (remoteJid: string, session: Session | null) => {
-      setChatSessions((prev) => {
-        if (!remoteJid) return prev;
+      setChatSessions((previous) => {
+        if (!remoteJid) return previous;
 
         if (!session) {
-          if (!(remoteJid in prev)) return prev;
-          const next = { ...prev };
+          if (!(remoteJid in previous)) return previous;
+          const next = { ...previous };
           delete next[remoteJid];
           return next;
         }
 
         return {
-          ...prev,
+          ...previous,
           [remoteJid]: mapSessionToChatContactSummary(session),
         };
       });
     },
-    []
+    [],
   );
 
   const handleSessionTagsChange = useCallback(
     (remoteJid: string, selectedIds: number[]) => {
-      setChatSessions((prev) => {
-        const currentSession = prev[remoteJid];
-        if (!currentSession) return prev;
+      setChatSessions((previous) => {
+        const currentSession = previous[remoteJid];
+        if (!currentSession) return previous;
 
         return {
-          ...prev,
+          ...previous,
           [remoteJid]: {
             ...currentSession,
             tags: allTags.filter((tag) => selectedIds.includes(tag.id)),
@@ -258,151 +332,290 @@ export function ChatsClient({
         };
       });
     },
-    [allTags]
+    [allTags],
   );
 
   const pollAndCompareMessages = useCallback(
     async (remoteJid: string, remoteJidAliases?: string[]) => {
-      if (!warmMessages || inFlightRef.current) return;
+      if (inFlightRef.current) return;
       if (typeof document !== "undefined" && document.hidden) return;
 
       inFlightRef.current = true;
-        try {
-          const page = 1;
-          const pageSize = 50;
-          const res = await warmMessages(remoteJid, { page, pageSize, remoteJidAliases });
 
-          if (res?.success) {
-            const newMessages = res.data || [];
-            setMessages((prevMsgs) => {
-              if (areListsDifferent(prevMsgs, newMessages)) {
-                setInfo({ ...res, instanceName, remoteJid, remoteJidAliases, apiKeyData });
-                return newMessages;
-              }
-              return prevMsgs;
+      try {
+        const result = await warmMessagesAction(remoteJid, {
+          page: 1,
+          pageSize: 50,
+          remoteJidAliases,
+        });
+
+        if (result?.success) {
+          const nextMessages = result.data || [];
+          setMessages((previousMessages) => {
+            if (areListsDifferent(previousMessages, nextMessages)) {
+              setInfo({
+                ...result,
+                instanceName,
+                remoteJid,
+                remoteJidAliases,
+                apiKeyData,
+              });
+              return nextMessages;
+            }
+
+            return previousMessages;
           });
           backoffRef.current = 0;
         } else {
           backoffRef.current = Math.min(
             (backoffRef.current || BASE_INTERVAL) * 2,
-            MAX_BACKOFF
+            MAX_BACKOFF,
           );
         }
       } catch {
         backoffRef.current = Math.min(
           (backoffRef.current || BASE_INTERVAL) * 2,
-          MAX_BACKOFF
+          MAX_BACKOFF,
         );
       } finally {
         inFlightRef.current = false;
       }
     },
-    [warmMessages, instanceName, apiKeyData]
+    [apiKeyData, instanceName, warmMessagesAction],
   );
 
   const handleSelectFromSidebar = useCallback(
     async (remoteJid: string) => {
       const selectedContact = contacts.find(
-        (contact) => contact.remoteJid === remoteJid || contact.aliases?.includes(remoteJid)
+        (contact) => contact.remoteJid === remoteJid || contact.aliases?.includes(remoteJid),
       );
       const remoteJidAliases = selectedContact?.aliases;
 
       if (selectedJid !== remoteJid) setSelectedJid(remoteJid);
-
-      // 🆕 LÓGICA DE VISIBILIDAD: Oculta la Sidebar al seleccionar un chat (para móvil)
       if (isSidebarVisible) setIsSidebarVisible(false);
 
-      setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid, remoteJidAliases, apiKeyData }));
+      setInfo((currentInfo) => ({
+        ...(currentInfo ?? {}),
+        instanceName,
+        remoteJid,
+        remoteJidAliases,
+        apiKeyData,
+      }));
       setLoading(true);
       setMessages([]);
 
-      if (!warmMessages) {
-        setLoading(false);
-        return;
-      }
-
       try {
-        const page = 1;
-        const pageSize = 50;
-        const res = await warmMessages(remoteJid, { page, pageSize, remoteJidAliases });
+        const result = await warmMessagesAction(remoteJid, {
+          page: 1,
+          pageSize: 50,
+          remoteJidAliases,
+        });
 
-        if (res?.success) {
-          setMessages(res.data || []);
-          setInfo({ ...res, instanceName, remoteJid, remoteJidAliases, apiKeyData });
+        if (result?.success) {
+          setMessages(result.data || []);
+          setInfo({
+            ...result,
+            instanceName,
+            remoteJid,
+            remoteJidAliases,
+            apiKeyData,
+          });
         } else {
           setMessages([]);
-          setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid, remoteJidAliases, apiKeyData }));
+          setInfo((currentInfo) => ({
+            ...(currentInfo ?? {}),
+            instanceName,
+            remoteJid,
+            remoteJidAliases,
+            apiKeyData,
+          }));
         }
       } catch {
         setMessages([]);
-        setInfo((i) => ({ ...(i ?? {}), instanceName, remoteJid, remoteJidAliases, apiKeyData }));
+        setInfo((currentInfo) => ({
+          ...(currentInfo ?? {}),
+          instanceName,
+          remoteJid,
+          remoteJidAliases,
+          apiKeyData,
+        }));
       } finally {
         setLoading(false);
       }
     },
-    [selectedJid, warmMessages, instanceName, apiKeyData, isSidebarVisible, contacts]
+    [apiKeyData, contacts, instanceName, isSidebarVisible, selectedJid, warmMessagesAction],
   );
 
   const handleSendAny = useCallback(
     async (payload: OutgoingMessagePayload) => {
-      if (!selectedJid || !sendAny) {
+      if (!selectedJid) {
         throw new Error("No hay un chat seleccionado para enviar el mensaje.");
       }
 
-      const result = await sendAny(selectedJid, payload);
-
+      const result = await sendAnyAction(selectedJid, payload);
       if (!result.success) {
         throw new Error(result.message || "No se pudo enviar el mensaje.");
       }
 
-      if (warmMessages) await pollAndCompareMessages(selectedJid, currentContact?.aliases);
-      const chatRefreshResult = await refetchChats();
-      if (chatRefreshResult.success) {
-        const filtered = {
-          ...chatRefreshResult,
-          data: chatRefreshResult.data.filter(
-            (c) => c.remoteJid && c.remoteJid !== "status@broadcast"
-          ),
-        };
-        setCurrentChatsResult(filtered);
-        await refreshChatSessions(filtered.data);
-      }
+      await pollAndCompareMessages(selectedJid, currentContact?.aliases);
+      await refreshSidebarData();
     },
-    [selectedJid, sendAny, warmMessages, refetchChats, pollAndCompareMessages, currentContact, refreshChatSessions]
+    [
+      currentContact?.aliases,
+      pollAndCompareMessages,
+      refreshSidebarData,
+      selectedJid,
+      sendAnyAction,
+    ],
   );
 
-  // Polling sidebar
+  const handleSendWorkflow = useCallback(
+    async (workflowId: string) => {
+      if (!selectedJid) {
+        throw new Error("No hay un chat seleccionado para enviar el workflow.");
+      }
+
+      const result = await sendWorkflowAction(selectedJid, workflowId);
+      if (!result.success) {
+        throw new Error(result.message || "No se pudo enviar el workflow.");
+      }
+
+      await pollAndCompareMessages(selectedJid, currentContact?.aliases);
+      await refreshSidebarData();
+
+      return result;
+    },
+    [
+      currentContact?.aliases,
+      pollAndCompareMessages,
+      refreshSidebarData,
+      selectedJid,
+      sendWorkflowAction,
+    ],
+  );
+
+  const handleSendQuickReply = useCallback(
+    async (quickReplyId: number) => {
+      if (!selectedJid) {
+        throw new Error("No hay un chat seleccionado para enviar la respuesta rapida.");
+      }
+
+      const result = await sendQuickReplyAction(selectedJid, quickReplyId);
+      if (!result.success) {
+        throw new Error(result.message || "No se pudo enviar la respuesta rapida.");
+      }
+
+      await pollAndCompareMessages(selectedJid, currentContact?.aliases);
+      await refreshSidebarData();
+
+      return result;
+    },
+    [
+      currentContact?.aliases,
+      pollAndCompareMessages,
+      refreshSidebarData,
+      selectedJid,
+      sendQuickReplyAction,
+    ],
+  );
+
+  const handleToggleChatPin = useCallback(
+    async (remoteJid: string, isPinned: boolean) => {
+      const result = await toggleChatPinAction({
+        userId,
+        remoteJid,
+        isPinned,
+      });
+
+      if (!result.success || !result.data) {
+        toast.error(result.message || "No se pudo actualizar el anclado del chat.");
+        return;
+      }
+
+      applyChatPreference(result.data);
+      toast.success(result.message);
+    },
+    [applyChatPreference, userId],
+  );
+
+  const handleArchiveChat = useCallback(
+    async (remoteJid: string, archived: boolean) => {
+      const result = await setChatArchivedAction({
+        userId,
+        remoteJid,
+        archived,
+      });
+
+      if (!result.success || !result.data) {
+        toast.error(result.message || "No se pudo actualizar el archivo del chat.");
+        return;
+      }
+
+      applyChatPreference(result.data);
+      toast.success(result.message);
+
+      if (archived && selectedJid === remoteJid) {
+        setSelectedJid("");
+        setMessages([]);
+        setInfo(undefined);
+      }
+    },
+    [applyChatPreference, selectedJid, userId],
+  );
+
+  const handleDeleteChat = useCallback(
+    async (remoteJid: string) => {
+      const result = await deleteChatConversationAction({
+        userId,
+        remoteJid,
+      });
+
+      if (!result.success || !result.data) {
+        toast.error(result.message || "No se pudo eliminar el chat.");
+        return;
+      }
+
+      applyChatPreference(result.data);
+      toast.success(result.message);
+
+      if (selectedJid === remoteJid) {
+        setSelectedJid("");
+        setMessages([]);
+        setInfo(undefined);
+      }
+    },
+    [applyChatPreference, selectedJid, userId],
+  );
+
   useEffect(() => {
     let stopped = false;
-    let t: ReturnType<typeof setTimeout> | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
     const loop = async () => {
       if (stopped) return;
-      const result = await refetchChats();
+
+      const result = await refetchChatsAction();
       if (result.success) {
-        const filtered = {
-          ...result,
-          data: result.data.filter(
-            (c) => c.remoteJid && c.remoteJid !== "status@broadcast"
-          ),
-        };
+        const filtered = filterChatList(result);
         setCurrentChatsResult(filtered);
-        await refreshChatSessions(filtered.data);
+        if (filtered.success) {
+          await refreshChatSessions(filtered.data);
+        }
       }
-      t = setTimeout(loop, 10000);
+
+      timer = setTimeout(loop, 10000);
     };
 
-    if (initialChatsResult.success) {
+    if (normalizedInitialChatsResult.success) {
       void loop();
     }
 
     return () => {
       stopped = true;
-      if (t) clearTimeout(t);
+      if (timer) clearTimeout(timer);
     };
-  }, [refetchChats, initialChatsResult.success, refreshChatSessions]);
+  }, [normalizedInitialChatsResult.success, refetchChatsAction, refreshChatSessions]);
 
-  // Polling mensajes
   useEffect(() => {
     if (pollingRef.current) {
       clearTimeout(pollingRef.current);
@@ -410,10 +623,11 @@ export function ChatsClient({
     }
 
     let stopped = false;
+
     const tick = async () => {
       if (stopped) return;
 
-      if (selectedJid && warmMessages) {
+      if (selectedJid) {
         if (messages.length === 0 && !loading) {
           await handleSelectFromSidebar(selectedJid);
         } else {
@@ -425,7 +639,9 @@ export function ChatsClient({
       pollingRef.current = setTimeout(() => void tick(), wait);
     };
 
-    if (selectedJid && warmMessages) void tick();
+    if (selectedJid) {
+      void tick();
+    }
 
     const onVisibility = () => {
       if (document.hidden) {
@@ -451,65 +667,62 @@ export function ChatsClient({
       }
     };
   }, [
-    selectedJid,
     currentContact,
-    warmMessages,
-    pollAndCompareMessages,
     handleSelectFromSidebar,
     loading,
     messages.length,
+    pollAndCompareMessages,
+    selectedJid,
   ]);
-
 
   return (
     <div className="flex h-full overflow-hidden">
-      {/* LOGICA RESPONSIVE:
-        - Si isSidebarVisible es TRUE: 
-          - En móvil: Muestra la Sidebar (w-full) y oculta ChatMain (ocupa todo el espacio).
-          - En escritorio (sm+): Muestra ambas. Sidebar con ancho fijo, ChatMain con flex-1.
-        - Si isSidebarVisible es FALSE:
-          - En móvil: Oculta la Sidebar y muestra ChatMain (w-full).
-          - En escritorio (sm+): Muestra ambas.
-      */}
-
-      {/* CHAT SIDEBAR */}
       <div
-        className={`${isSidebarVisible ? 'w-full sm:w-80 md:w-96' : 'hidden md:block sm:w-80 md:w-96'
-          } flex-shrink-0 h-full border-r transition-all duration-300 ${!isSidebarVisible ? 'hidden' : '' // Ocultar totalmente en móvil si el chat principal está activo
-          }`}
+        className={`${
+          isSidebarVisible
+            ? "w-full sm:w-80 md:w-96"
+            : "hidden sm:w-80 md:block md:w-96"
+        } h-full flex-shrink-0 border-r transition-all duration-300 ${
+          !isSidebarVisible ? "hidden" : ""
+        }`}
       >
         <ChatSidebar
-          allTags={allTags}
+          chatPreferences={chatPreferences}
           chatSessions={chatSessions}
-          result={currentChatsResult}
-          onSessionTagsChange={handleSessionTagsChange}
+          onArchiveChat={handleArchiveChat}
+          onDeleteChat={handleDeleteChat}
           onSelectRemoteJid={handleSelectFromSidebar}
+          onTogglePin={handleToggleChatPin}
+          result={currentChatsResult}
           selectedJid={selectedJid}
         />
       </div>
 
-      {/* CHAT MAIN */}
       <div
-        className={`${!isSidebarVisible ? 'flex-1 w-full' : 'hidden sm:flex-1'
-          } h-full transition-all duration-300`}
+        className={`${
+          !isSidebarVisible ? "flex-1 w-full" : "hidden sm:flex-1"
+        } h-full transition-all duration-300`}
       >
         {selectedJid ? (
           <ChatMain
             key={selectedJid || "no-jid"}
+            allTags={allTags}
             header={header}
-            messages={messages}
             info={info}
             loading={loading}
-            onSend={handleSendAny}
-            // 🆕 PROP: Función para volver a la lista (usada en un botón dentro de ChatMain)
+            messages={messages}
             onBackToList={toggleSidebarVisibility}
-            userId={userId}
-            allTags={allTags}
+            onSend={handleSendAny}
+            onSendQuickReply={handleSendQuickReply}
+            onSendWorkflow={handleSendWorkflow}
             onSessionResolved={handleSessionResolved}
             onSessionTagsChange={handleSessionTagsChange}
+            quickReplies={quickReplies}
+            userId={userId}
+            workflows={workflows}
           />
         ) : (
-          <div className="flex flex-1 items-center justify-center h-full text-gray-500">
+          <div className="flex h-full flex-1 items-center justify-center text-gray-500">
             {isSidebarVisible ? "Selecciona un chat." : "Cargando chats..."}
           </div>
         )}
