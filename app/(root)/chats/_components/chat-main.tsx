@@ -774,12 +774,9 @@ export const ChatMain: React.FC<ChatMainProps> = ({
 
   /* 🚀 Lógica para obtener el estado de la sesión (SwitchStatus) */
   const fetchSessionStatus = useCallback(async (
-    preferredPushNameOrUpdater?: string | ((prevData: any) => any),
+    _updater?: (prevData: any) => any,
     _shouldRevalidate?: boolean,
   ) => {
-    const preferredPushName =
-      typeof preferredPushNameOrUpdater === 'string' ? preferredPushNameOrUpdater : undefined;
-
     // Utilizamos userId y info?.remoteJid directamente en el cuerpo del useCallback
     if (!userId || !info?.remoteJid) {
       setSession(null);
@@ -798,8 +795,6 @@ export const ChatMain: React.FC<ChatMainProps> = ({
       for (const candidate of remoteJidCandidates) {
         const result: SingleSessionResponse = await getSessionByRemoteJid(userId, candidate, {
           instanceId: info.instanceName,
-          pushName: preferredPushName || session?.pushName || header.name,
-          ensureExists: candidate === info.remoteJid,
           aliases: remoteJidCandidates,
         });
 
@@ -820,7 +815,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({
       setSession(null);
       console.error("Error al obtener el estado de la sesión:", error);
     }
-  }, [header.name, info?.instanceName, info?.remoteJid, info?.remoteJidAliases, onSessionResolved, session?.pushName, userId]);
+  }, [info?.instanceName, info?.remoteJid, info?.remoteJidAliases, onSessionResolved, userId]);
 
   // Llama a la función de obtención de estado cuando cambie el JID o el usuario
   useEffect(() => {
@@ -893,7 +888,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({
 
       toast.success('Nombre del contacto actualizado.');
       setIsContactEditorOpen(false);
-      await fetchSessionStatus(result.data.pushName);
+      await fetchSessionStatus();
     } finally {
       setIsContactUpdatePending(false);
     }

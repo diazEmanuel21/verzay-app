@@ -47,8 +47,6 @@ type SessionWithTagsRecord = Prisma.SessionGetPayload<{
 
 export type GetSessionByRemoteJidOptions = {
   instanceId?: string;
-  pushName?: string;
-  ensureExists?: boolean;
   aliases?: Array<string | null | undefined>;
   remoteJidAlt?: string;
   senderPn?: string;
@@ -800,69 +798,13 @@ export async function getSessionByRemoteJid(
       return b.updatedAt.getTime() - a.updatedAt.getTime();
     })[0];
 
-    let resolvedSession = preferredSession;
-
-    if (!resolvedSession && options?.ensureExists && trimmedInstanceId) {
-      resolvedSession = await db.session.create({
-        data: {
-          userId,
-          remoteJid: preferredRemoteJid,
-          remoteJidAlt: pickObservedAlternateRemoteJid(preferredRemoteJid, observedAliases),
-          pushName: options.pushName?.trim() || 'Desconocido',
-          instanceId: trimmedInstanceId,
-          status: true,
-        },
-        include: {
-          sessionTags: {
-            include: {
-              tag: true,
-            },
-          },
-        },
-      });
-    }
+    const resolvedSession = preferredSession;
 
     if (!resolvedSession) {
       return {
         success: false,
         message: `No se encontró sesión para el JID ${remoteJid} en el usuario ${userId}.`,
       };
-    }
-
-    const normalizedRemoteJid =
-      preferredRemoteJid ||
-      normalizeWhatsAppConversationJid(resolvedSession.remoteJid) ||
-      resolvedSession.remoteJid;
-    const normalizedRemoteJidAlt = pickObservedAlternateRemoteJid(normalizedRemoteJid, [
-      trimmedRemoteJid,
-      options?.remoteJidAlt?.trim(),
-      resolvedSession.remoteJid,
-      resolvedSession.remoteJidAlt,
-      ...(options?.aliases ?? []),
-    ]);
-    const normalizedPushName = options?.pushName?.trim() || resolvedSession.pushName;
-
-    if (
-      resolvedSession.remoteJid !== normalizedRemoteJid ||
-      (resolvedSession.remoteJidAlt ?? null) !== normalizedRemoteJidAlt ||
-      resolvedSession.pushName !== normalizedPushName
-    ) {
-      /* TODO: ACTUALIZACIÓN PUSHNAME SOSPECHOSA */
-      resolvedSession = await db.session.update({
-        where: { id: resolvedSession.id },
-        data: {
-          remoteJid: normalizedRemoteJid,
-          remoteJidAlt: normalizedRemoteJidAlt,
-          pushName: normalizedPushName,
-        },
-        include: {
-          sessionTags: {
-            include: {
-              tag: true,
-            },
-          },
-        },
-      });
     }
 
     const mappedSession = mapSessionRecord(resolvedSession);
