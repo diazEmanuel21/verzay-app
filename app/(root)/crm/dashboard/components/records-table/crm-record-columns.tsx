@@ -5,6 +5,7 @@ import type { Column, ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { RegistroWithSession, TipoRegistro } from "@/types/session";
 import { CrmFollowUpSummaryBadge } from "../CrmFollowUpSummaryBadge";
 import { formatFecha, getTipoLabel } from "../../../helpers";
@@ -46,6 +47,7 @@ export function createCrmRecordColumns({
     onChangeDetalle,
     onFollowUpChanged,
     onRecordsChanged,
+    onNavigateToChat,
 }: {
     userId: string;
     isUpdatingRegistros?: boolean;
@@ -53,6 +55,7 @@ export function createCrmRecordColumns({
     onChangeDetalle?: (registroId: number, nuevoDetalle: string) => Promise<boolean>;
     onFollowUpChanged?: () => Promise<void> | void;
     onRecordsChanged?: () => Promise<void> | void;
+    onNavigateToChat?: (remoteJid: string) => void;
 }): ColumnDef<RegistroWithSession>[] {
     return [
         {
@@ -66,7 +69,13 @@ export function createCrmRecordColumns({
                 const whatsapp = getDisplayWhatsappFromSession(row.original.session);
 
                 return (
-                    <div className="min-w-[80px]">
+                    <div
+                        className={cn(
+                            "min-w-[80px] cursor-pointer text-blue-600 hover:text-blue-800 transition-colors",
+                            onNavigateToChat && "hover:bg-blue-50 rounded p-1"
+                        )}
+                        onClick={() => onNavigateToChat?.(row.original.session.remoteJid)}
+                    >
                         <p className="font-medium">{whatsapp}</p>
                         <p className="text-xs text-muted-foreground">
                             {row.original.session.instanceId}

@@ -147,7 +147,7 @@ export const ClientInstanceCard = ({
                     userName={user.name}
                     apiurl={user.apiUrl}
                     apikey={user.apiKeyId as string}
-                    webhookUrl={user?.webhookUrl ?? 'http://82.29.152.30:4001/webhook'}
+                    webhookUrl={user?.webhookUrl ?? 'https://backend.ia-app.com/webhook'}
                   />
                 </>
               )}

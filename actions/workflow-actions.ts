@@ -40,9 +40,10 @@ export const getWorkFlowByUser = async (userId?: string): Promise<GetWorkFlowRes
             where: {
                 userId,
             },
-            orderBy: {
-                createdAt: "asc",
-            },
+            orderBy: [
+                { order: "asc" },
+                { createdAt: "asc" },
+            ],
         });
 
         return { success: true, data: workflows };
@@ -60,17 +61,51 @@ export const createWorkflow = async (form: createWorkflowSchemaType) => {
 
     if (!success) return { success: false, message: 'Datos del formulario inválidos.' };
 
+    const maxOrder = await db.workflow.aggregate({
+        where: { userId: user.id },
+        _max: {
+            order: true,
+        },
+    });
+
+    const nextOrder = (maxOrder._max.order ?? 0) + 1;
+
     const result = await db.workflow.create({
         data: {
             userId: user?.id!,
             status: WorkflowStatus.DRAFT,
             definition: "workflow",
+            order: nextOrder,
             ...data,
         },
     });
     if (!result) return { success: false, message: 'Fallo la creación del flujo.' };
 
     redirect(getWorkflowEditorPath(result.id, result.isPro));
+};
+
+export async function updateWorkflowOrder(workflowId: string, order: number): Promise<RROperationResponse> {
+    try {
+        if (!workflowId) {
+            return { success: false, message: "Identificador no proporcionado." };
+        }
+
+        await db.workflow.update({
+            where: { id: workflowId },
+            data: { order },
+        });
+
+        return {
+            success: true,
+            message: 'Orden del flujo actualizado correctamente.',
+        };
+    } catch (error) {
+        console.error("Error updateWorkflowOrder:", error);
+        return {
+            success: false,
+            message: 'Error al actualizar el orden del flujo.',
+        };
+    }
 };
 
 export const deleteWorkflow = async (id: string) => {

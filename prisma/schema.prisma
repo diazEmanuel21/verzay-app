@@ -304,15 +304,15 @@ model Session {
 }
 
 model ChatConversationPreference {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   userId     String
   remoteJid  String
   pinnedAt   DateTime?
   archivedAt DateTime?
   deletedAt  DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, remoteJid])
   @@index([userId, pinnedAt])
@@ -380,45 +380,45 @@ model Tool {
 }
 
 model User {
-  id                                 String                @id @default(uuid())
+  id                                 String                       @id @default(uuid())
   name                               String?
-  email                              String                @unique
+  email                              String                       @unique
   password                           String?
   emailVerified                      DateTime?
   image                              String?
-  role                               Role                  @default(user)
-  createdAt                          DateTime              @default(now())
-  updatedAt                          DateTime              @updatedAt
-  apiUrl                             String                @default("https://api.openAI.co")
-  company                            String                @default("Empresa Demo")
-  lat                                String                @default("0.0000")
-  lng                                String                @default("0.0000")
-  mapsUrl                            String                @default("https://maps.google.com/?q=0,0")
-  notificationNumber                 String                @default("0000000000")
-  openingPhrase                      String?               @default("DEPRECATED")
+  role                               Role                         @default(user)
+  createdAt                          DateTime                     @default(now())
+  updatedAt                          DateTime                     @updatedAt
+  apiUrl                             String                       @default("https://api.openAI.co")
+  company                            String                       @default("Empresa Demo")
+  lat                                String                       @default("0.0000")
+  lng                                String                       @default("0.0000")
+  mapsUrl                            String                       @default("https://maps.google.com/?q=0,0")
+  notificationNumber                 String                       @default("0000000000")
+  openingPhrase                      String?                      @default("DEPRECATED")
   apiKeyId                           String?
-  delSeguimiento                     String?               @default("Estamos para servirle.") @map("del_seguimiento")
-  plan                               Plan                  @default(basico)
+  delSeguimiento                     String?                      @default("Estamos para servirle.") @map("del_seguimiento")
+  plan                               Plan                         @default(basico)
   autoReactivate                     String?
-  webhookUrl                         String?               @default("https://n8npro.verzay.co/webhook")
-  theme                              ThemeApp?             @default(Default)
-  muteAgentResponses                 Boolean               @default(false)
+  webhookUrl                         String?                      @default("https://n8npro.verzay.co/webhook")
+  theme                              ThemeApp?                    @default(Default)
+  muteAgentResponses                 Boolean                      @default(false)
   timezone                           String?
   meetingDuration                    Int?
-  onFacebook                         Boolean               @default(false)
-  onInstagram                        Boolean               @default(false)
+  onFacebook                         Boolean                      @default(false)
+  onInstagram                        Boolean                      @default(false)
   aiModelId                          String?
   defaultAiModelId                   String?
   defaultProviderId                  String?
-  delayTimeGpt                       String?               @map("delayTimeGPT")
+  delayTimeGpt                       String?                      @map("delayTimeGPT")
   meetingUrl                         String?
-  preferredCurrencyCode              String                @default("COP")
-  tokenVersion                       Int                   @default(0)
-  passPlainTxt                       String?               @default("IA@verzay.1234")
-  enabledSynthesizer                 Boolean               @default(false)
-  enabledLeadStatusClassifier        Boolean               @default(false)
-  enabledCrmFollowUps                Boolean               @default(false)
-  status                             Boolean               @default(true)
+  preferredCurrencyCode              String                       @default("COP")
+  tokenVersion                       Int                          @default(0)
+  passPlainTxt                       String?                      @default("IA@verzay.1234")
+  enabledSynthesizer                 Boolean                      @default(false)
+  enabledLeadStatusClassifier        Boolean                      @default(false)
+  enabledCrmFollowUps                Boolean                      @default(false)
+  status                             Boolean                      @default(true)
   accounts                           Account[]
   agentPrompts                       AgentPrompt[]
   publishedAgentPromptRevisions      AgentPromptRevision[]
@@ -432,8 +432,8 @@ model User {
   systemMessages                     SystemMessage[]
   tags                               Tag[]
   tools                              Tool[]
-  apiKey                             ApiKey?               @relation(fields: [apiKeyId], references: [id])
-  defaultAiModel                     AiModel?              @relation(fields: [defaultAiModelId], references: [id])
+  apiKey                             ApiKey?                      @relation(fields: [apiKeyId], references: [id])
+  defaultAiModel                     AiModel?                     @relation(fields: [defaultAiModelId], references: [id])
   userAvailability                   UserAvailability[]
   billing                            UserBilling?
   userModules                        UserModule[]
@@ -445,8 +445,8 @@ model User {
   financeCategories                  FinanceCategory[]
   financeTransactions                FinanceTransaction[]
   iaCredits                          IaCredit?
-  reseller_reseller_reselleridToUser Reseller[]            @relation("reseller_reselleridToUser")
-  reseller_reseller_userIdToUser     Reseller[]            @relation("reseller_userIdToUser")
+  reseller_reseller_reselleridToUser Reseller[]                   @relation("reseller_reselleridToUser")
+  reseller_reseller_userIdToUser     Reseller[]                   @relation("reseller_userIdToUser")
   aiConfigs                          UserAiConfig[]
 }
 
@@ -566,6 +566,7 @@ model Workflow {
   id            String                 @id @default(cuid())
   userId        String
   name          String
+  order         Int                    @default(0)
   description   String?
   definition    String
   status        String

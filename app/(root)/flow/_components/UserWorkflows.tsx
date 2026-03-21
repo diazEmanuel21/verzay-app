@@ -4,7 +4,7 @@ import { AlertCircle, InboxIcon } from 'lucide-react';
 import { getWorkFlowByUser } from '@/actions/workflow-actions';
 import { Workflow } from '@prisma/client';
 import CreateWorflowDialog from './CreateWorflowDialog';
-import { WorkflowCard } from '.';
+import { WorkflowCard, SortableWorkflowList } from '.';
 
 function hasWorkflow(result: { data?: Workflow[] }): result is { data: Workflow[] } {
     return !!result.data;
@@ -49,11 +49,7 @@ export async function UserWorkflows({ userId, isPro }: UserWorkflowsProps) {
 
     return (
         <div className="flex-1 overflow-y-auto">
-            <div className="grid grid-cols-1 gap-2">
-                {wichKindWorkflow.map((workflow) => (
-                    <WorkflowCard key={workflow.id} workflow={workflow} userId={userId} />
-                ))}
-            </div>
+            <SortableWorkflowList workflows={wichKindWorkflow} userId={userId} />
         </div>
     );
 }

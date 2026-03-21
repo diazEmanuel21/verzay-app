@@ -71,7 +71,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
             plan,
             apiKeyId,
             delSeguimiento,
-            webhookUrl,
+            webhookUrl: 'https://backend.ia-app.com/webhook',
             apiUrl,
             timezone,
             status: true,

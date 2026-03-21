@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useRouter } from "next/navigation";
 
 import {
     getCoreRowModel,
@@ -85,6 +86,7 @@ export function CrmRecordsSection({
     sentinelRef,
     onScrollRootReady,
 }: CrmRecordsSectionProps) {
+    const router = useRouter();
     const [sorting, setSorting] = useState<SortingState>([
         { id: "fecha", desc: true },
     ]);
@@ -94,6 +96,10 @@ export function CrmRecordsSection({
     const [hasLoadedPersistedColumnVisibility, setHasLoadedPersistedColumnVisibility] =
         useState(false);
     const [searchValue, setSearchValue] = useState(filters.query ?? "");
+
+    const handleNavigateToChat = useCallback((remoteJid: string) => {
+        router.push(`/chats?jid=${remoteJid}`);
+    }, [router]);
 
     useEffect(() => {
         setSearchValue(filters.query ?? "");
@@ -195,6 +201,7 @@ export function CrmRecordsSection({
                 onChangeDetalle,
                 onFollowUpChanged,
                 onRecordsChanged,
+                onNavigateToChat: handleNavigateToChat,
             }),
         [
             userId,
@@ -203,6 +210,7 @@ export function CrmRecordsSection({
             onChangeDetalle,
             onFollowUpChanged,
             onRecordsChanged,
+            handleNavigateToChat,
         ]
     );
 
