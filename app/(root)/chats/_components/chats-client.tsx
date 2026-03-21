@@ -174,7 +174,7 @@ export function ChatsClient({
       : undefined,
   );
   const [loading, setLoading] = useState(false);
-  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(!initialSelectedJid);
 
   const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inFlightRef = useRef(false);

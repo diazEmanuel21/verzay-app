@@ -288,6 +288,16 @@ export function ChatSidebar({
     });
   }, [contacts, q, tab]);
 
+  // Scroll to selected chat when selectedJid changes
+  React.useEffect(() => {
+    if (selectedJid) {
+      const selectedElement = document.querySelector(`[data-chat-id="${selectedJid}"]`);
+      if (selectedElement) {
+        selectedElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  }, [selectedJid]);
+
   const handleSelectJid = useCallback(
     (jid: string, lastMessageId: string) => {
       if (jid && lastMessageId) {
@@ -397,6 +407,7 @@ export function ChatSidebar({
                 <div
                   key={contact.id}
                   role="listitem"
+                  data-chat-id={contact.id}
                   className={cn(
                     "group rounded-xl border p-2 transition hover:bg-accent hover:text-accent-foreground",
                     selected ? "border-primary bg-primary/10" : "border-transparent",
