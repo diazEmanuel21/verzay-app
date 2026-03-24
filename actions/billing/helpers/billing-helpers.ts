@@ -30,7 +30,7 @@ export function fmtDateDDMMYYYY(date: Date) {
 export function fmtPriceLine(args: { price: any; currencyCode: string; currencyFlag?: string | null }) {
     const priceStr = args.price ? String(args.price) : "—";
     const flag = args.currencyFlag ? ` ${args.currencyFlag}` : "";
-    return `💵 $${priceStr} ${args.currencyCode}${flag}`;
+    return `$${priceStr} ${args.currencyCode}${flag}`;
 }
 
 export function onlyDigitsPhone(value: string) {

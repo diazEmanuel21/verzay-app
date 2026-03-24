@@ -1403,7 +1403,6 @@ export const ChatMain: React.FC<ChatMainProps> = ({
               )}
             </div>
           </div>
-
           {session && (
             <div className="sm:hidden">
               <SwitchStatus
@@ -1539,19 +1538,6 @@ export const ChatMain: React.FC<ChatMainProps> = ({
         {/* Input + botones */}
         <div className="relative flex flex-nowrap  ">
           <div className="relative  flex flex-nowrap z-10 items-center justify-center ">
-            <div className='hidden sm:block'>
-
-              {(
-                session &&
-                <SwitchStatus
-                  key={`${session?.id}-${session?.status ? 'on' : 'off'}`}
-                  checked={session?.status ?? false} // Usamos el status de la sesión
-                  sessionId={session?.id ?? -1} // Usamos el JID del chat como ID de sesión
-                  mutateSessions={fetchSessionStatus} // Función para refrescar el estado de la sesión
-                />
-              )}
-            </div>
-
             <ChatAutomationPicker
               quickReplies={quickReplies}
               workflows={workflows}
