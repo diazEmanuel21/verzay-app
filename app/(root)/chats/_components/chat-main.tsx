@@ -34,6 +34,8 @@ import { cn, SERVER_TIME_ZONE } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { AttachmentMenu, type ComposeMedia, type MediaType } from './attachment-menu';
 import { SwitchStatus } from '../../sessions/_components';
+import { ChatSessionActions } from './ChatSessionActions';
+import { extractWhatsAppDigits } from '@/lib/whatsapp-jid';
 import { SafeImage } from '@/components/custom/SafeImage';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
@@ -553,72 +555,72 @@ const ContactEditDialog: React.FC<{
   onSave,
   isPending,
 }) => (
-  <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="sm:max-w-md">
-      <DialogHeader>
-        <DialogTitle className="flex items-center gap-2">
-          <span className="rounded-xl bg-primary/10 p-2 text-primary">
-            <UserRound className="h-4 w-4" />
-          </span>
-          Editar contacto
-        </DialogTitle>
-        <DialogDescription>
-          Actualiza el nombre del lead sincronizado en CRM para que se refleje en esta conversación.
-        </DialogDescription>
-      </DialogHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <span className="rounded-xl bg-primary/10 p-2 text-primary">
+              <UserRound className="h-4 w-4" />
+            </span>
+            Editar contacto
+          </DialogTitle>
+          <DialogDescription>
+            Actualiza el nombre del lead sincronizado en CRM para que se refleje en esta conversación.
+          </DialogDescription>
+        </DialogHeader>
 
-      <div className="space-y-4">
-        <div className="rounded-2xl border bg-muted/30 p-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Vista previa</p>
-          <div className="mt-3 space-y-1">
-            <p className="text-base font-semibold text-foreground">{draft.trim() || 'Sin nombre'}</p>
-            {phoneLabel && (
-              <p className="text-xs text-muted-foreground">{phoneLabel}</p>
-            )}
+        <div className="space-y-4">
+          <div className="rounded-2xl border bg-muted/30 p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Vista previa</p>
+            <div className="mt-3 space-y-1">
+              <p className="text-base font-semibold text-foreground">{draft.trim() || 'Sin nombre'}</p>
+              {phoneLabel && (
+                <p className="text-xs text-muted-foreground">{phoneLabel}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Nombre actual: <span className="font-medium text-foreground/80">{currentName || 'Sin nombre'}</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="chat-contact-name">Nombre del contacto</Label>
+            <Input
+              id="chat-contact-name"
+              value={draft}
+              onChange={(event) => onDraftChange(event.target.value)}
+              placeholder="Ej. Maria Fernanda"
+              maxLength={120}
+              disabled={isPending}
+            />
             <p className="text-xs text-muted-foreground">
-              Nombre actual: <span className="font-medium text-foreground/80">{currentName || 'Sin nombre'}</span>
+              Este cambio actualiza la sesion CRM y los registros asociados a este lead.
             </p>
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="chat-contact-name">Nombre del contacto</Label>
-          <Input
-            id="chat-contact-name"
-            value={draft}
-            onChange={(event) => onDraftChange(event.target.value)}
-            placeholder="Ej. Maria Fernanda"
-            maxLength={120}
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
             disabled={isPending}
-          />
-          <p className="text-xs text-muted-foreground">
-            Este cambio actualiza la sesion CRM y los registros asociados a este lead.
-          </p>
-        </div>
-      </div>
-
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onOpenChange(false)}
-          disabled={isPending}
-        >
-          Cancelar
-        </Button>
-        <Button
-          type="button"
-          onClick={() => void onSave()}
-          disabled={isPending || !draft.trim()}
-          className="gap-2"
-        >
-          {isPending ? <Clock className="h-4 w-4 animate-spin" /> : <PencilLine className="h-4 w-4" />}
-          Guardar nombre
-        </Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
-);
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            onClick={() => void onSave()}
+            disabled={isPending || !draft.trim()}
+            className="gap-2"
+          >
+            {isPending ? <Clock className="h-4 w-4 animate-spin" /> : <PencilLine className="h-4 w-4" />}
+            Guardar nombre
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 
 const ChatMessageListSkeleton: React.FC = () => (
   <div className="flex-1 space-y-4">
@@ -917,6 +919,10 @@ export const ChatMain: React.FC<ChatMainProps> = ({
       : userJid?.includes('@')
         ? userJid.split('@')[0]
         : userJid || '';
+
+  const phoneDigits = extractWhatsAppDigits(session?.remoteJid || info?.remoteJid || displayedWhatsapp);
+  const indicativo = phoneDigits && phoneDigits.length > 10 ? `+${phoneDigits.slice(0, phoneDigits.length - 10)}` : '';
+
   const sessionStatusTone = session?.status
     ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
     : 'border-amber-200 bg-amber-50 text-amber-700';
@@ -1327,8 +1333,13 @@ export const ChatMain: React.FC<ChatMainProps> = ({
               {header.isPinned && (
                 <Pin className="h-4 w-4 shrink-0 fill-current text-amber-500" />
               )}
-              <p className="truncate text-sm font-semibold dark:text-white sm:text-base">
-                {displayedContactName}
+              <p className="truncate text-sm font-bold dark:text-white sm:text-base">
+                <strong>{displayedContactName}</strong>
+                {indicativo ? (
+                  <span className="ml-1 text-xs font-normal text-muted-foreground">
+                    ({indicativo})
+                  </span>
+                ) : null}
               </p>
               {session && (
                 <Button
@@ -1366,17 +1377,26 @@ export const ChatMain: React.FC<ChatMainProps> = ({
 
               {session ? (
                 <>
-                  <Badge variant="outline" className={sessionStatusTone}>
-                    {session.status ? 'Activa' : 'Pausada'}
-                  </Badge>
-                  <LeadStatusBadge status={session.leadStatus ?? null} />
-                  <CrmFollowUpSummaryBadge
-                    summary={session.crmFollowUpSummary}
-                    userId={session.userId}
-                    remoteJid={session.remoteJid}
-                    instanceId={session.instanceId}
-                    onUpdated={refreshSessionStatus}
-                  />
+                  <div className="flex flex-col gap-1">
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="outline" className={sessionStatusTone}>
+                        {session.status ? 'Activa' : 'Pausada'}
+                      </Badge>
+                      <LeadStatusBadge status={session.leadStatus ?? null} />
+                      <CrmFollowUpSummaryBadge
+                        summary={session.crmFollowUpSummary}
+                        userId={session.userId}
+                        remoteJid={session.remoteJid}
+                        instanceId={session.instanceId}
+                        onUpdated={refreshSessionStatus}
+                      />
+                    </div>
+                    <ChatSessionActions
+                      session={session}
+                      userId={userId}
+                      mutateSessions={mutateSessionStatus}
+                    />
+                  </div>
                 </>
               ) : (
                 <span>Sin sesión CRM sincronizada</span>

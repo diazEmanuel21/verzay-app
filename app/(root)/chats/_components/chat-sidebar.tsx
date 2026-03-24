@@ -17,6 +17,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { extractWhatsAppDigits } from "@/lib/whatsapp-jid";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -93,8 +94,13 @@ function formatTimeFromEpoch(epoch?: number): string {
 function nameFrom(chat: ChatData): string {
   const name = chat.pushName?.trim();
   if (name) return name;
+
   const jid = chat.remoteJid || "";
-  return jid.includes("@") ? jid.split("@")[0] : jid;
+  const base = jid.includes("@") ? jid.split("@")[0] : jid;
+  const digits = extractWhatsAppDigits(jid);
+  const indicativo = digits && digits.length > 10 ? `+${digits.slice(0, digits.length - 10)}` : "";
+
+  return indicativo ? `${base} (${indicativo})` : base;
 }
 
 function getIconForMessageType(type?: string): LucideIcon | null {
@@ -443,7 +449,7 @@ export function ChatSidebar({
                             )}
                             <span
                               className={cn(
-                                "truncate text-sm font-medium",
+                                "truncate text-sm font-bold",
                                 isUnread && "text-foreground",
                               )}
                             >

@@ -968,3 +968,56 @@ export async function deleteAllRegistrosByUserId(
         };
     }
 }
+
+export async function deleteRegistrosByTipoAndUserId(
+    userId: string,
+    tipo: TipoRegistro
+): Promise<CrmRegistroManagementActionResult> {
+    try {
+        await assertUserCanUseApp(userId);
+
+        const [, result] = await db.$transaction([
+            db.crmFollowUp.updateMany({
+                where: {
+                    sourceReport: {
+                        is: {
+                            tipo,
+                            session: {
+                                userId,
+                            },
+                        },
+                    },
+                },
+                data: { sourceReportId: null },
+            }),
+            db.registro.deleteMany({
+                where: {
+                    tipo,
+                    session: {
+                        userId,
+                    },
+                },
+            }),
+        ]);
+
+        return {
+            success: true,
+            message:
+                result.count === 0
+                    ? `No hay registros de tipo ${tipo} en el CRM para eliminar.`
+                    : result.count === 1
+                        ? `Se elimino 1 registro de tipo ${tipo} del CRM.`
+                        : `Se eliminaron ${result.count} registros de tipo ${tipo} del CRM.`,
+            data: { count: result.count },
+        };
+    } catch (error) {
+        console.error("[deleteRegistrosByTipoAndUserId]", error);
+        return {
+            success: false,
+            message:
+                error instanceof Error
+                    ? error.message
+                    : `No se pudieron eliminar los registros de tipo ${tipo} del CRM.`,
+        };
+    }
+}
