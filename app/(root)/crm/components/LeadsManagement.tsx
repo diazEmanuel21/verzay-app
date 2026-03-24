@@ -261,7 +261,6 @@ export const LeadsManagement = ({
                                                         {displayNombre}
                                                     </span>
                                                     <div className="flex items-center gap-1">
-
                                                         <SwitchStatus checked={session.status} sessionId={session.id} mutateSessions={mutateSessions} />
                                                         <ActionsCell session={session} />
                                                     </div>

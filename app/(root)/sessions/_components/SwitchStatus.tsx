@@ -1,15 +1,17 @@
-'use client'
+'use client';
 
-import { useState } from "react";
-import { updateSessionStatus } from "@/actions/session-action";
-import { Switch } from "@/components/ui/switch";
-import { toast } from "sonner";
+import { useState } from 'react';
+import * as SwitchPrimitive from '@radix-ui/react-switch';
+import { updateSessionStatus } from '@/actions/session-action';
+import { toast } from 'sonner';
+import { User } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface Props {
   sessionId: number;
   checked: boolean;
-  mutateSessions?: (updater: (prevData: any) => any, shouldRevalidate?: boolean) => void; 
-};
+  mutateSessions?: (updater: (prevData: any) => any, shouldRevalidate?: boolean) => void;
+}
 
 export const SwitchStatus = ({ sessionId, checked, mutateSessions }: Props) => {
   const [localChecked, setLocalChecked] = useState(checked);
@@ -28,34 +30,56 @@ export const SwitchStatus = ({ sessionId, checked, mutateSessions }: Props) => {
     if (result.success) {
       toast.success('Actualizado!', { id: toastId });
 
-      // Mutar datos manualmente para evitar rebote
       if (mutateSessions) {
         mutateSessions((prev: any) => {
           if (!prev) return prev;
           return prev.map((page: any) =>
             page.map((session: any) => {
               if (session.id === sessionId) {
-                return { ...session, status: status };
+                return { ...session, status };
               }
               return session;
             })
           );
-        }, false); // false = no revalidar de nuevo
+        }, false);
       }
     } else {
       toast.error(result.message || 'Error al editar cliente', { id: toastId });
-      setLocalChecked(previous); // Revertir si falla
+      setLocalChecked(previous);
     }
 
     setIsLoading(false);
   };
 
   return (
-    <Switch
+    <SwitchPrimitive.Root
       checked={localChecked}
       disabled={isLoading}
       onCheckedChange={handleUpdateClientStatus}
-      className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-400" // Esto sobrescribiría primary
-    />
+      aria-label={localChecked ? 'Desactivar cliente' : 'Activar cliente'}
+      className={cn(
+        'relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full border transition-colors duration-300',
+        'border-gray-300 bg-gray-400',
+        'data-[state=checked]:border-primary data-[state=checked]:bg-primary',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2',
+        'disabled:cursor-not-allowed disabled:opacity-50'
+      )}
+    >
+      <SwitchPrimitive.Thumb
+        className={cn(
+          'pointer-events-none flex h-6 w-6 items-center justify-center rounded-full bg-background shadow-sm',
+          'transition-transform duration-300 will-change-transform',
+          'translate-x-1 data-[state=checked]:translate-x-7'
+        )}
+      >
+        <User
+          className={cn(
+            'h-3.5 w-3.5 transition-colors duration-300',
+            'text-gray-500',
+            'data-[state=checked]:text-primary'
+          )}
+        />
+      </SwitchPrimitive.Thumb>
+    </SwitchPrimitive.Root>
   );
 };

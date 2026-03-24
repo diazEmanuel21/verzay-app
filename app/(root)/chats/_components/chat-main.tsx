@@ -1304,116 +1304,209 @@ export const ChatMain: React.FC<ChatMainProps> = ({
 
   return (
     <div className="flex flex-col h-[95%] md:h-full w-full min-w-[100px] bg-white dark:bg-gray-800 border-l border-r">
-      {/* Header */}
-      <div className="flex items-center justify-between p-2 border-b dark:border-gray-700 shadow-md bg-white dark:bg-gray-800 z-10">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
+      {/* ===== HEADER MEJORADO ===== */}
+      <div className="border-b border-border/40 bg-gradient-to-r from-background to-background/80 backdrop-blur-sm supports-[backdrop-filter]:bg-background/50 z-10">
+        {/* Mobile Header: Compacto */}
+        <div className="md:hidden p-3 space-y-2">
+          {/* Fila 1: Botón back + Avatar + Nombre + Acciones */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start gap-2 min-w-0 flex-1">
+              <Button
+                onClick={onBackToList}
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 rounded-full hover:bg-muted flex-shrink-0 -ml-1"
+                title="Volver"
+                aria-label="Volver"
+              >
+                <ArrowRight className="w-4 h-4 rotate-180" />
+              </Button>
 
-          {/* FIN BOTÓN DE REGRESO */}
-          <Button
-            onClick={onBackToList}
-            size="icon"
-            variant="ghost"
-            className="md:hidden p-2 hover:bg-gray-200 dark:hover:bg-gray-700 mr-1"
-            title="Volver a la lista de chats"
-            aria-label="Volver a la lista de chats"
-          >
-            <ArrowRight className="w-5 h-5 rotate-180" /> {/* Usa la misma flecha, rotada 180 grados */}
-          </Button>
+              <Avatar className="w-12 h-12 ring-2 ring-border flex-shrink-0">
+                <AvatarImage src={header.avatarSrc || '/default-avatar.png'} />
+                <AvatarFallback className="font-bold">{initialFromName(displayedContactName)}</AvatarFallback>
+              </Avatar>
 
-          <Avatar className="w-10 h-10">
-            <AvatarImage src={header.avatarSrc || '/default-avatar.png'} />
-            <AvatarFallback>{initialFromName(displayedContactName)}</AvatarFallback>
-          </Avatar>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  {header.isPinned && (
+                    <Pin className="h-3.5 w-3.5 fill-current text-amber-500 flex-shrink-0" />
+                  )}
+                  <h2 className="truncate text-sm font-bold leading-tight">
+                    {displayedContactName}
+                  </h2>
+                </div>
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                  {displayedWhatsapp}
+                </p>
+              </div>
+            </div>
 
-
-          {/* ◀️ BOTÓN DE REGRESO A LA LISTA (VISIBLE SOLO EN MÓVIL) */}
-
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              {header.isPinned && (
-                <Pin className="h-4 w-4 shrink-0 fill-current text-amber-500" />
-              )}
-              <p className="truncate text-sm font-bold dark:text-white sm:text-base">
-                <strong>{displayedContactName}</strong>
-                {indicativo ? (
-                  <span className="ml-1 text-xs font-normal text-muted-foreground">
-                    ({indicativo})
-                  </span>
-                ) : null}
-              </p>
+            {/* Acciones rápidas móvil */}
+            <div className="flex items-center gap-1 flex-shrink-0">
               {session && (
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 shrink-0 rounded-full border border-border/60 bg-background/70"
+                  className="h-8 w-8 rounded-full hover:bg-muted"
                   onClick={() => setIsContactEditorOpen(true)}
-                  aria-label="Editar contacto"
-                  title="Editar contacto"
+                  title="Editar"
                 >
                   <PencilLine className="h-4 w-4" />
                 </Button>
               )}
-              {session && (
-                <SessionTagsCombobox
-                  userId={session.userId}
-                  sessionId={session.id}
-                  allTags={allTags}
-                  initialSelectedIds={initialSelectedTagIds}
-                  onSelectedIdsChange={(selectedIds) => {
-                    if (!info?.remoteJid) return;
-                    onSessionTagsChange?.(info.remoteJid, selectedIds);
-                  }}
-                />
-              )}
-            </div>
-
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              {displayedWhatsapp && (
-                <span className="font-medium text-foreground/80">
-                  {displayedWhatsapp}
-                </span>
-              )}
-
-              {session ? (
-                <>
-                  <div className="flex flex-col gap-1">
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant="outline" className={sessionStatusTone}>
-                        {session.status ? 'Activa' : 'Pausada'}
-                      </Badge>
-                      <LeadStatusBadge status={session.leadStatus ?? null} />
-                      <CrmFollowUpSummaryBadge
-                        summary={session.crmFollowUpSummary}
-                        userId={session.userId}
-                        remoteJid={session.remoteJid}
-                        instanceId={session.instanceId}
-                        onUpdated={refreshSessionStatus}
-                      />
-                    </div>
-                    <ChatSessionActions
-                      session={session}
-                      userId={userId}
-                      mutateSessions={mutateSessionStatus}
-                    />
-                  </div>
-                </>
-              ) : (
-                <span>Sin sesión CRM sincronizada</span>
-              )}
+              {/* <SwitchStatus
+                key={`${session?.id}-${session?.status ? 'on' : 'off'}`}
+                checked={session?.status ?? false}                                                                              
+                sessionId={session?.id ?? -1}
+                mutateSessions={mutateSessionStatus}
+              /> */}
             </div>
           </div>
+
+          {/* Fila 2: Status Badges + Tags */}
           {session && (
-            <div className="sm:hidden">
-              <SwitchStatus
-                key={`${session.id}-${session.status ? 'on' : 'off'}`}
-                checked={session.status ?? false}
-                sessionId={session.id ?? -1}
+            <div className="space-y-2 pl-14">
+              {/* Status Badges */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Badge variant="outline" className={`${sessionStatusTone} text-xs py-0.5`}>
+                  {session.status ? 'Activa' : 'Pausada'}
+                </Badge>
+                <LeadStatusBadge status={session.leadStatus ?? null} />
+                <CrmFollowUpSummaryBadge
+                  summary={session.crmFollowUpSummary}
+                  userId={session.userId}
+                  remoteJid={session.remoteJid}
+                  instanceId={session.instanceId}
+                  onUpdated={refreshSessionStatus}
+                />
+              </div>
+
+              {/* Tags */}
+              <SessionTagsCombobox
+                userId={session.userId}
+                sessionId={session.id}
+                allTags={allTags}
+                initialSelectedIds={initialSelectedTagIds}
+                onSelectedIdsChange={(selectedIds) => {
+                  if (!info?.remoteJid) return;
+                  onSessionTagsChange?.(info.remoteJid, selectedIds);
+                }}
+              />
+
+              {/* Chat Actions */}
+              <ChatSessionActions
+                session={session}
+                userId={userId}
                 mutateSessions={mutateSessionStatus}
               />
             </div>
           )}
+          {!session && (
+            <div className="pl-14 text-xs text-muted-foreground">
+              Sin sesión CRM sincronizada
+            </div>
+          )}
         </div>
+
+        {/* Desktop Header: Expandido */}
+        <div className="hidden md:flex items-center justify-between p-4 gap-4">
+          {/* Sección Izquierda: Avatar + Info */}
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <Avatar className="w-14 h-14 ring-2 ring-border flex-shrink-0">
+              <AvatarImage src={header.avatarSrc || '/default-avatar.png'} />
+              <AvatarFallback className="text-lg font-bold">{initialFromName(displayedContactName)}</AvatarFallback>
+            </Avatar>
+
+            <div className="min-w-0 flex-1 space-y-1">
+              {/* Nombre + Pin + Edit */}
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  {header.isPinned && (
+                    <Pin className="h-4 w-4 fill-current text-amber-500 flex-shrink-0" />
+                  )}
+                  <h2 className="truncate text-lg font-bold">
+                    {displayedContactName}
+                  </h2>
+                </div>
+
+                {session && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-full hover:bg-muted flex-shrink-0"
+                    onClick={() => setIsContactEditorOpen(true)}
+                    title="Editar contacto"
+                  >
+                    <PencilLine className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+
+              {/* Número + Status */}
+              {/* <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="font-medium text-foreground/80">
+                  {displayedWhatsapp}
+                </span>
+                {session && (
+                  <>
+                    <span className="text-border">•</span>
+                    <Badge variant="outline" className={`${sessionStatusTone} text-xs py-0`}>
+                      {session.status ? 'Activa' : 'Pausada'}
+                    </Badge>
+                  </>
+                )}
+              </div> */}
+            </div>
+          </div>
+
+          {/* Sección Central: Badges + Tags */}
+          {session && (
+            <div className="flex items-center gap-2 flex-wrap flex-shrink-0 max-w-sm">
+              <div className="flex items-center gap-2 flex-wrap">
+                <LeadStatusBadge status={session.leadStatus ?? null} />
+                <CrmFollowUpSummaryBadge
+                  summary={session.crmFollowUpSummary}
+                  userId={session.userId}
+                  remoteJid={session.remoteJid}
+                  instanceId={session.instanceId}
+                  onUpdated={refreshSessionStatus}
+                />
+              </div>
+
+              <SessionTagsCombobox
+                userId={session.userId}
+                sessionId={session.id}
+                allTags={allTags}
+                initialSelectedIds={initialSelectedTagIds}
+                onSelectedIdsChange={(selectedIds) => {
+                  if (!info?.remoteJid) return;
+                  onSessionTagsChange?.(info.remoteJid, selectedIds);
+                }}
+              />
+            </div>
+          )}
+
+          {/* Sección Derecha: Actions + Switch */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {session && (
+              <ChatSessionActions
+                session={session}
+                userId={userId}
+                mutateSessions={mutateSessionStatus}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Info bar: Sin sesión */}
+        {!session && (
+          <div className="md:hidden px-4 py-2 bg-amber-50/50 dark:bg-amber-950/20 border-t border-amber-200/50 dark:border-amber-800/30 text-xs text-amber-700 dark:text-amber-600">
+            Sin sesión CRM sincronizada
+          </div>
+        )}
       </div>
 
       <ContactEditDialog
@@ -1537,7 +1630,19 @@ export const ChatMain: React.FC<ChatMainProps> = ({
 
         {/* Input + botones */}
         <div className="relative flex flex-nowrap  ">
-          <div className="relative  flex flex-nowrap z-10 items-center justify-center ">
+          <div className="relative flex flex-nowrap z-10 items-center justify-center ">
+            <div className="flex pr-2">
+              {(
+                session &&
+                <SwitchStatus
+                  key={`${session?.id}-${session?.status ? 'on' : 'off'}`}
+                  checked={session?.status ?? false}
+                  sessionId={session?.id ?? -1}
+                  mutateSessions={fetchSessionStatus}
+                />
+              )}
+            </div>
+
             <ChatAutomationPicker
               quickReplies={quickReplies}
               workflows={workflows}
