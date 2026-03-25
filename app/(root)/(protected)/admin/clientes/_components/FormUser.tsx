@@ -63,6 +63,7 @@ export const FormUser = ({ onSubmit, apikeys, countries }: { onSubmit: (values: 
     };
 
     return (
+        <div className="p-2">
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-6 w-full">
                 <FormField
@@ -268,5 +269,6 @@ export const FormUser = ({ onSubmit, apikeys, countries }: { onSubmit: (values: 
                 <Button type="submit" className="w-full">Crear usuario</Button>
             </form>
         </Form>
+        </div>
     );
 }

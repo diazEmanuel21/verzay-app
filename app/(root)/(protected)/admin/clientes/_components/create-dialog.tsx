@@ -34,7 +34,7 @@ export const CreateDialog = ({
             Rellena los campos para crear un nuevo perfil.
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="max-h-[70vh] overflow-auto p-2">
+        <ScrollArea className="max-h-[70vh]">
           <FormUser onSubmit={handleCreate} apikeys={apikeys} countries={countries} />
         </ScrollArea>
       </DialogContent>
