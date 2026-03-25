@@ -457,9 +457,6 @@ export function ChatSidebar({
                             >
                               {contact.name || "Sin nombre"}
                             </span>
-                            {contact.chatSession && contact.chatSession.tags.length > 0 && (
-                              <SessionTagsTooltip tags={contact.chatSession.tags} maxVisible={2} />
-                            )}
                           </div>
                           <span className="shrink-0 text-xs text-muted-foreground">
                             {contact.timestamp}
@@ -469,6 +466,9 @@ export function ChatSidebar({
                         {/* Row 2: lead status badge */}
                         <div className="mt-0.5">
                           <LeadStatusBadge status={contact.chatSession?.leadStatus ?? null} />
+                          {contact.chatSession && contact.chatSession.tags.length > 0 && (
+                            <SessionTagsTooltip tags={contact.chatSession.tags} maxVisible={2} />
+                          )}
                         </div>
 
                         {/* Row 3: last message */}

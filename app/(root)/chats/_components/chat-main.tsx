@@ -1430,20 +1430,19 @@ export const ChatMain: React.FC<ChatMainProps> = ({
                   <h2 className="truncate text-lg font-bold">
                     {displayedContactName}
                   </h2>
+                  {session && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-full hover:bg-muted flex-shrink-0"
+                      onClick={() => setIsContactEditorOpen(true)}
+                      title="Editar contacto"
+                    >
+                      <PencilLine className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
-
-                {session && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-full hover:bg-muted flex-shrink-0"
-                    onClick={() => setIsContactEditorOpen(true)}
-                    title="Editar contacto"
-                  >
-                    <PencilLine className="h-4 w-4" />
-                  </Button>
-                )}
               </div>
 
               {/* Número + Status */}

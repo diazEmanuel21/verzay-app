@@ -69,6 +69,7 @@ function mapSessionToChatContactSummary(session: Session): ChatContactSessionSum
     remoteJidAlt: session.remoteJidAlt,
     pushName: session.pushName,
     tags: session.tags ?? [],
+    leadStatus: session.leadStatus ?? null,
   };
 }
 
