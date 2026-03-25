@@ -7,6 +7,7 @@ import { endOfDay, format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 
 import { ResponseFormat, SOON_DAYS_BILLING } from "@/types/billing";
+import { deleteInstanceInternal } from "@/actions/api-action";
 import { assertAdminOrReseller } from "./helpers/billing-helpers.server";
 import {
     evaluateBillingLifecycle,
@@ -261,6 +262,39 @@ export async function runBillingDailyJobInternal(requireAuth: boolean): Promise<
 
                 if (syncResult.stateChanged && billing.accessStatus === "SUSPENDED") {
                     suspendedApplied++;
+
+                    try {
+                        const deleteResult = await deleteInstanceInternal(billing.userId);
+                        if (deleteResult.success && deleteResult.instanceName) {
+                            await db.userBilling.update({
+                                where: { userId: billing.userId },
+                                data: { lastInstanceName: deleteResult.instanceName },
+                            });
+                            pushLog({
+                                at: new Date().toISOString(),
+                                level: "INFO",
+                                message: `Instancia de Evolution eliminada al suspender: ${deleteResult.instanceName}.`,
+                                userBillingId: billing.id,
+                                userId: billing.userId,
+                            });
+                        } else if (!deleteResult.success && deleteResult.message !== "El usuario no tiene ninguna instancia activa.") {
+                            pushLog({
+                                at: new Date().toISOString(),
+                                level: "WARN",
+                                message: `No se pudo eliminar la instancia de Evolution: ${deleteResult.message}`,
+                                userBillingId: billing.id,
+                                userId: billing.userId,
+                            });
+                        }
+                    } catch (evoErr: any) {
+                        pushLog({
+                            at: new Date().toISOString(),
+                            level: "WARN",
+                            message: `Error inesperado al eliminar instancia de Evolution: ${evoErr?.message}`,
+                            userBillingId: billing.id,
+                            userId: billing.userId,
+                        });
+                    }
                 }
 
                 if (syncResult.webhookResult && !syncResult.webhookResult.success && !syncResult.webhookResult.skipped) {

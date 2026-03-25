@@ -454,6 +454,117 @@ export async function deleteInstance(userId: string, instanceType: string = 'Wha
   }
 }
 
+// Versión interna sin assertUserCanUseApp — para uso exclusivo del sistema (billing cron, activación de servicio)
+export async function deleteInstanceInternal(
+  userId: string,
+  instanceType: string = 'Whatsapp'
+): Promise<{ success: boolean; message: string; instanceName: string | null }> {
+  try {
+    const instanciaActiva = await checkActiveInstance(userId, instanceType);
+    if (!instanciaActiva) {
+      return { success: false, message: "El usuario no tiene ninguna instancia activa.", instanceName: null };
+    }
+
+    const instanceName = instanciaActiva.instanceName;
+
+    if (isWhatsappLike(instanceType)) {
+      const user = await db.user.findUnique({
+        where: { id: userId },
+        include: { apiKey: true },
+      });
+
+      if (!user || !user.apiKey) {
+        return { success: false, message: "El usuario no tiene una ApiKey asignada.", instanceName: null };
+      }
+
+      const { key: apiKey, url: serverUrl } = user.apiKey;
+
+      const logoutResponse = await fetch(`https://${serverUrl}/instance/logout/${instanceName}`, {
+        method: 'DELETE',
+        headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+      });
+      const logoutResult = await logoutResponse.json().catch(() => ({} as any));
+      if (!logoutResponse.ok) {
+        return { success: false, message: logoutResult?.message || 'Error al hacer logout de la instancia.', instanceName: null };
+      }
+
+      const deleteResponse = await fetch(`https://${serverUrl}/instance/delete/${instanceName}`, {
+        method: 'DELETE',
+        headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+      });
+      const deleteResult = await deleteResponse.json().catch(() => ({} as any));
+      if (!deleteResponse.ok) {
+        return { success: false, message: deleteResult?.message || 'Error al eliminar la instancia en la API.', instanceName: null };
+      }
+    }
+
+    const instancia = await db.instancia.findFirst({ where: { instanceName, instanceType } });
+    if (!instancia) {
+      return { success: false, message: "No se encontró la instancia en la base de datos.", instanceName: null };
+    }
+
+    await db.instancia.delete({ where: { id: instancia.id } });
+    return { success: true, message: "Instancia eliminada exitosamente.", instanceName };
+  } catch (error: any) {
+    return { success: false, message: error?.message || "Error al eliminar la instancia.", instanceName: null };
+  }
+}
+
+export async function createInstanceInternal(
+  userId: string,
+  instanceName: string,
+  instanceType: string = 'Whatsapp'
+): Promise<{ success: boolean; message: string }> {
+  try {
+    if (!instanceName || !userId) {
+      return { success: false, message: 'userId e instanceName son obligatorios.' };
+    }
+
+    const instanciaActiva = await checkActiveInstance(userId, instanceType);
+    if (instanciaActiva) {
+      return { success: false, message: "El usuario ya tiene una instancia activa." };
+    }
+
+    if (isWhatsappLike(instanceType)) {
+      const user = await db.user.findUnique({
+        where: { id: userId },
+        include: { apiKey: true },
+      });
+
+      if (!user || !user.apiKey) {
+        return { success: false, message: "El usuario no tiene una ApiKey asignada." };
+      }
+
+      const { key: apiKey, url: serverUrl } = user.apiKey;
+
+      const response = await fetch(`https://${serverUrl}/instance/create`, {
+        method: 'POST',
+        headers: { 'apikey': apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instanceName, qrcode: true, integration: "WHATSAPP-BAILEYS" }),
+      });
+      const apiResult = await response.json();
+      if (!response.ok) {
+        return { success: false, message: apiResult.message || 'Error al crear la instancia en la API.' };
+      }
+
+      const instanceId = apiResult.hash;
+      if (!instanceId) {
+        return { success: false, message: 'No se recibió instanceId en la respuesta de la API.' };
+      }
+
+      await db.instancia.create({ data: { instanceName, instanceType, userId, instanceId } });
+      return { success: true, message: "Instancia creada exitosamente." };
+    } else {
+      await db.instancia.create({
+        data: { instanceName, instanceType, userId, instanceId: `local-${randomUUID()}` },
+      });
+      return { success: true, message: "Instancia creada exitosamente." };
+    }
+  } catch (error: any) {
+    return { success: false, message: error?.message || "Error al crear la instancia." };
+  }
+}
+
 // Función para verificar si el usuario ya tiene una instancia
 export async function checkActiveInstance(userId: string, instanceType: string = 'Whatsapp') {
   const instanciaActiva = await db.instancia.findFirst({

@@ -537,6 +537,7 @@ model UserBilling {
   serviceEndsAt          DateTime?
   serviceName            String?
   serviceStartAt         DateTime?
+  lastInstanceName       String?
   user                   User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([dueDate])

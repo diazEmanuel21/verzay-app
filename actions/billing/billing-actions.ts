@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { BillingUpsertInput, ResponseFormat } from "@/types/billing";
+import { createInstanceInternal } from "@/actions/api-action";
 
 import {
     loadBillingDispatcherConfig,
@@ -433,6 +434,16 @@ export async function activateUserService(
             previousAccessStatus: existing?.accessStatus ?? null,
             source: "billing-activate-service",
         });
+
+        if (existing?.lastInstanceName) {
+            const createResult = await createInstanceInternal(scopedUserId, existing.lastInstanceName);
+            if (createResult.success) {
+                await db.userBilling.update({
+                    where: { userId: scopedUserId },
+                    data: { lastInstanceName: null },
+                });
+            }
+        }
 
         return {
             success: true,
