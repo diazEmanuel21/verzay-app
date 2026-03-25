@@ -1374,7 +1374,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({
                 <Badge variant="outline" className={`${sessionStatusTone} text-xs py-0.5`}>
                   {session.status ? 'Activa' : 'Pausada'}
                 </Badge>
-                <LeadStatusBadge status={session.leadStatus ?? null} />
+                {/* <LeadStatusBadge status={session.leadStatus ?? null} /> */}
                 <CrmFollowUpSummaryBadge
                   summary={session.crmFollowUpSummary}
                   userId={session.userId}
@@ -1467,7 +1467,7 @@ export const ChatMain: React.FC<ChatMainProps> = ({
           {session && (
             <div className="flex items-center gap-2 flex-wrap flex-shrink-0 max-w-sm">
               <div className="flex items-center gap-2 flex-wrap">
-                <LeadStatusBadge status={session.leadStatus ?? null} />
+                {/* <LeadStatusBadge status={session.leadStatus ?? null} /> */}
                 <CrmFollowUpSummaryBadge
                   summary={session.crmFollowUpSummary}
                   userId={session.userId}

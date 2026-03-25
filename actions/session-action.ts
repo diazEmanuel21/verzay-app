@@ -127,6 +127,7 @@ function mapChatContactSessionSummary(
     remoteJidAlt: mappedSession.remoteJidAlt,
     pushName: mappedSession.pushName,
     tags: mappedSession.tags ?? [],
+    leadStatus: mappedSession.leadStatus ?? null,
   };
 }
 

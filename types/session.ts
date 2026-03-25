@@ -79,6 +79,7 @@ export type ChatContactSessionSummary = {
   remoteJidAlt?: string | null;
   pushName?: string | null;
   tags: SimpleTag[];
+  leadStatus?: LeadStatus | null;
 };
 
 export type ChatContactSessionMap = Record<string, ChatContactSessionSummary>;

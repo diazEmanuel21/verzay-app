@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { SessionTagsTooltip } from "../../tags/components";
+import { LeadStatusBadge } from "../../crm/dashboard/components/records-table/LeadStatusBadge";
 import { cn } from "@/lib/utils";
 import type { FetchChatsResult, ChatData } from "@/actions/chat-actions";
 import { useLocalStorageObjectArray, MessageRecord } from "@/hooks/chats/useSeenMessages";
@@ -439,8 +440,9 @@ export function ChatSidebar({
                       </div>
 
                       <div className="min-w-0 flex-1">
+                        {/* Row 1: name + tags + timestamp */}
                         <div className="flex items-center justify-between gap-2">
-                          <div className="flex min-w-0 items-center gap-1.5">
+                          <div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
                             {contact.isPinned && (
                               <Pin className="h-3.5 w-3.5 shrink-0 fill-current text-amber-500" />
                             )}
@@ -449,18 +451,27 @@ export function ChatSidebar({
                             )}
                             <span
                               className={cn(
-                                "truncate text-sm font-bold",
+                                "shrink-0 text-sm font-bold",
                                 isUnread && "text-foreground",
                               )}
                             >
                               {contact.name || "Sin nombre"}
                             </span>
+                            {contact.chatSession && contact.chatSession.tags.length > 0 && (
+                              <SessionTagsTooltip tags={contact.chatSession.tags} maxVisible={2} />
+                            )}
                           </div>
                           <span className="shrink-0 text-xs text-muted-foreground">
                             {contact.timestamp}
                           </span>
                         </div>
 
+                        {/* Row 2: lead status badge */}
+                        <div className="mt-0.5">
+                          <LeadStatusBadge status={contact.chatSession?.leadStatus ?? null} />
+                        </div>
+
+                        {/* Row 3: last message */}
                         <div className="mt-0.5 flex items-center justify-between gap-2">
                           <div
                             className={cn(
@@ -528,12 +539,6 @@ export function ChatSidebar({
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-
-                  {contact.chatSession && (
-                    <div className="pl-[52px] pt-2">
-                      <SessionTagsTooltip tags={contact.chatSession.tags} />
-                    </div>
-                  )}
                 </div>
               );
             })
