@@ -80,6 +80,7 @@ export type ChatContactSessionSummary = {
   pushName?: string | null;
   tags: SimpleTag[];
   leadStatus?: LeadStatus | null;
+  flujos?: string | null;
 };
 
 export type ChatContactSessionMap = Record<string, ChatContactSessionSummary>;

@@ -128,6 +128,7 @@ function mapChatContactSessionSummary(
     pushName: mappedSession.pushName,
     tags: mappedSession.tags ?? [],
     leadStatus: mappedSession.leadStatus ?? null,
+    flujos: mappedSession.flujos ?? null,
   };
 }
 

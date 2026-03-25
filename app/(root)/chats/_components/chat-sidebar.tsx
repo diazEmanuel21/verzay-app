@@ -39,6 +39,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { SessionTagsTooltip } from "../../tags/components";
 import { LeadStatusBadge } from "../../crm/dashboard/components/records-table/LeadStatusBadge";
+import { FlowListOrder } from "../../sessions/_components/FlowListOrder";
 import { cn } from "@/lib/utils";
 import type { FetchChatsResult, ChatData } from "@/actions/chat-actions";
 import { useLocalStorageObjectArray, MessageRecord } from "@/hooks/chats/useSeenMessages";
@@ -464,7 +465,10 @@ export function ChatSidebar({
                         </div>
 
                         {/* Row 2: lead status badge */}
-                        <div className="mt-0.5">
+                        <div className="mt-0.5 flex gap-1">
+                          {contact.chatSession && (
+                            <FlowListOrder raw={contact.chatSession.flujos ?? ""} />
+                          )}
                           <LeadStatusBadge status={contact.chatSession?.leadStatus ?? null} />
                           {contact.chatSession && contact.chatSession.tags.length > 0 && (
                             <SessionTagsTooltip tags={contact.chatSession.tags} maxVisible={2} />

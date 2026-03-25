@@ -60,8 +60,8 @@ export const SwitchStatus = ({ sessionId, checked, mutateSessions }: Props) => {
       className={cn(
         'relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full border transition-colors duration-300',
         'border-gray-300 bg-gray-400',
-        'data-[state=checked]:border-primary data-[state=checked]:bg-primary',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2',
+        'data-[state=checked]:border-green-500 data-[state=checked]:bg-green-500',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/30 focus-visible:ring-offset-2',
         'disabled:cursor-not-allowed disabled:opacity-50'
       )}
     >
@@ -76,7 +76,7 @@ export const SwitchStatus = ({ sessionId, checked, mutateSessions }: Props) => {
           className={cn(
             'h-3.5 w-3.5 transition-colors duration-300',
             'text-gray-500',
-            'data-[state=checked]:text-primary'
+            'data-[state=checked]:text-green-500'
           )}
         />
       </SwitchPrimitive.Thumb>
