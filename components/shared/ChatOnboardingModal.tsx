@@ -4,29 +4,52 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useChatStore } from "@/stores/ai-chat/useChatStore";
-import { HelpCircle, MessageCircle, Search, ArrowRight } from 'lucide-react';
+import { HelpCircle, MessageCircle, Search, ArrowRight } from "lucide-react";
+
+const ONBOARDING_KEY = "chat-onboarding-shown";
 
 export function ChatOnboardingModal() {
     const initOnboarding = useChatStore((s) => s.initOnboarding);
     const setChatOpen = useChatStore((s) => s.setOpen);
 
-    const [open, setOpen] = useState(true);
+    const [open, setOpen] = useState(false);
+    const [ready, setReady] = useState(false);
 
     useEffect(() => {
         initOnboarding();
+
+        const alreadyShown = localStorage.getItem(ONBOARDING_KEY);
+
+        if (!alreadyShown) {
+            setOpen(true);
+        }
+
+        setReady(true);
     }, [initOnboarding]);
 
     const close = () => {
+        localStorage.setItem(ONBOARDING_KEY, "true");
         setOpen(false);
     };
 
     const go = () => {
-        close();
+        localStorage.setItem(ONBOARDING_KEY, "true");
+        setOpen(false);
         setChatOpen(true);
     };
 
+    if (!ready) return null;
+
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog
+            open={open}
+            onOpenChange={(value) => {
+                if (!value) {
+                    localStorage.setItem(ONBOARDING_KEY, "true");
+                }
+                setOpen(value);
+            }}
+        >
             <DialogContent className="border-border sm:max-w-[760px]">
                 <DialogHeader className="space-y-1">
                     <DialogTitle className="text-xl">Guía rápida</DialogTitle>

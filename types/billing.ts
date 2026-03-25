@@ -80,6 +80,7 @@ export type ClientRow = {
     notificationNumber: string;
     plan: string;
     createdAt: string | Date;
+    status: boolean;
     billing?: UserBilling | null;
 };
 

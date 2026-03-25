@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)\")",
+      "Bash(ls \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)/chats\")"
+    ]
+  }
+}

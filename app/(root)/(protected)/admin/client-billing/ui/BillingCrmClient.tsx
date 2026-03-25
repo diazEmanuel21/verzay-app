@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 import {
@@ -63,6 +64,7 @@ import {
     markUserAsUnpaid,
     setUserBillingDueDate,
     suspendUserService,
+    toggleUserStatus,
     upsertUserBillingConfig,
 } from "@/actions/billing/billing-actions";
 
@@ -220,6 +222,21 @@ export function BillingCrmClient({
         toast.success(res.message);
         await refreshBillingForUser(userId);
     }, [refreshBillingForUser]);
+
+    const handleToggleStatus = useCallback(async (userId: string, enable: boolean) => {
+        setData((prev) =>
+            prev.map((u) => (u.id === userId ? { ...u, status: enable } : u))
+        );
+        const res = await toggleUserStatus(userId, enable);
+        if (!res.success) {
+            toast.error(res.message);
+            setData((prev) =>
+                prev.map((u) => (u.id === userId ? { ...u, status: !enable } : u))
+            );
+            return;
+        }
+        toast.success(res.message);
+    }, []);
 
     const openEdit = useCallback(async (u: ClientRow) => {
         setDialog((s) => ({ ...s, open: true, user: u, loading: true }));
@@ -384,6 +401,20 @@ export function BillingCrmClient({
         };
 
         return [
+            {
+                id: "userStatus",
+                header: "Usuario",
+                enableSorting: false,
+                cell: ({ row }) => {
+                    const u = row.original;
+                    return (
+                        <Switch
+                            checked={u.status}
+                            onCheckedChange={(checked) => handleToggleStatus(u.id, checked)}
+                        />
+                    );
+                },
+            },
             {
                 id: "service",
                 header: sortableHeader("Servicio"),
@@ -586,7 +617,7 @@ export function BillingCrmClient({
                 },
             },
         ];
-    }, [openEdit, handleMarkPaid, handleMarkUnpaid, handleSuspend, handleActivate]);
+    }, [openEdit, handleMarkPaid, handleMarkUnpaid, handleSuspend, handleActivate, handleToggleStatus]);
 
     const globalFilterFn = React.useCallback(
         (row: any, _columnId: string, filterValue: string) => {
@@ -958,11 +989,11 @@ export function BillingCrmClient({
                                                             />
                                                         </div>
 
-                                                         <div className="grid gap-1">
-                                                             <label className="text-muted-foreground">
-                                                                 Fecha de pago (vence)
-                                                             </label>
-                                                             <Input
+                                                        <div className="grid gap-1">
+                                                            <label className="text-muted-foreground">
+                                                                Fecha de pago (vence)
+                                                            </label>
+                                                            <Input
                                                                 type="date"
                                                                 value={dialog.form.dueDate}
                                                                 onChange={(e) =>
@@ -970,15 +1001,15 @@ export function BillingCrmClient({
                                                                         ...s,
                                                                         form: { ...s.form, dueDate: e.target.value },
                                                                     }))
-                                                                 }
-                                                                 className="h-9"
-                                                             />
+                                                                }
+                                                                className="h-9"
+                                                            />
                                                             <p className="text-[11px] text-muted-foreground">
                                                                 {billingLifecyclePreview.summary}
                                                             </p>
-                                                         </div>
-                                                     </div>
-                                                 </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </ScrollArea>
                                     )}

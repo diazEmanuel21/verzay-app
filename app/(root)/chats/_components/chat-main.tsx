@@ -29,6 +29,7 @@ import {
   UserRound,
   Workflow,
   X,
+  Zap,
 } from 'lucide-react';
 import { cn, SERVER_TIME_ZONE } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -703,7 +704,7 @@ const ChatAutomationPicker: React.FC<{
           title="Enviar workflow o respuesta rapida"
           aria-label="Enviar workflow o respuesta rapida"
         >
-          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
+          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
         </Button>
       </PopoverTrigger>
 

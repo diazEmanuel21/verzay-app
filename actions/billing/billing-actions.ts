@@ -446,3 +446,29 @@ export async function activateUserService(
         return { success: false, message: error?.message ?? "Error activando servicio." };
     }
 }
+
+export async function toggleUserStatus(
+    userId: string,
+    enable: boolean
+): Promise<ResponseFormat<{ status: boolean }>> {
+    try {
+        const me = await currentUser();
+        if (!me) return { success: false, message: "No autorizado." };
+        await assertBillingScope(me, userId);
+
+        const updated = await db.user.update({
+            where: { id: userId },
+            data: { status: enable },
+            select: { status: true },
+        });
+
+        return {
+            success: true,
+            message: enable ? "Usuario activado." : "Usuario desactivado.",
+            data: { status: updated.status },
+        };
+    } catch (error: any) {
+        console.error("[toggleUserStatus]", error);
+        return { success: false, message: error?.message ?? "Error actualizando estado del usuario." };
+    }
+}

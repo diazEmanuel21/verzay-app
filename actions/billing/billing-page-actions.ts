@@ -49,6 +49,7 @@ export async function getClientsWithBilling(): Promise<ResponseFormat<any[]>> {
         notificationNumber: true,
         plan: true,
         createdAt: true,
+        status: true,
         billing: true,
       },
     });
