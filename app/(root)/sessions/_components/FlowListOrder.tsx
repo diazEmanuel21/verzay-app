@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import {
     Tooltip,
     TooltipContent,
@@ -35,16 +35,21 @@ export const FlowListOrder = ({ raw }: { raw: string }) => {
             <Tooltip>
                 <TooltipTrigger asChild>
                     <span className="inline-flex">
-                        <Badge className="bg-blue-500 text-white dark:bg-blue-600">
-                            {count}
-                        </Badge>
+                        {count === 0 ? (
+                            <span className="inline-flex rounded-full border border-dashed border-border px-2 py-1 text-xs text-muted-foreground">
+                                Sin flujos
+                            </span>
+                        ) : (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-300 bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                                <span className="h-2 w-2 rounded-full bg-blue-500 dark:bg-blue-400" />
+                                {count}
+                            </span>
+                        )}
                     </span>
                 </TooltipTrigger>
 
-                <TooltipContent side="top" sideOffset={6} className="z-[9999] max-w-[420px]">
-                    {count === 0 ? (
-                        <div className="text-xs opacity-80">Sin flujos</div>
-                    ) : (
+                {count > 0 && (
+                    <TooltipContent side="top" sideOffset={6} className="z-[9999] max-w-[420px]">
                         <div className="space-y-1">
                             <div className="text-xs font-medium">Flujos ({count})</div>
                             <ul className="list-disc pl-4 text-xs space-y-0.5">
@@ -55,8 +60,8 @@ export const FlowListOrder = ({ raw }: { raw: string }) => {
                                 ))}
                             </ul>
                         </div>
-                    )}
-                </TooltipContent>
+                    </TooltipContent>
+                )}
             </Tooltip>
         </TooltipProvider>
     );
