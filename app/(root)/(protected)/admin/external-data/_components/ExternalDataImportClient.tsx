@@ -11,6 +11,7 @@ import {
   Info,
   Loader2,
   RotateCcw,
+  User,
   XCircle,
 } from 'lucide-react';
 
@@ -27,6 +28,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { ExternalClientDataImportResult } from '@/types/external-client-data';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -44,8 +52,14 @@ interface ImportResult extends ExternalClientDataImportResult {
   total: number;
 }
 
+interface ClientOption {
+  id: string;
+  label: string;
+  email: string;
+}
+
 interface Props {
-  userId: string;
+  clients: ClientOption[];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -75,7 +89,8 @@ const LOG_TEXT_COLOR: Record<LogType, string> = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function ExternalDataImportClient({ userId }: Props) {
+export function ExternalDataImportClient({ clients }: Props) {
+  const [selectedUserId, setSelectedUserId] = useState('');
   const [url, setUrl] = useState('');
   const [columnName, setColumnName] = useState('WHATSAPP');
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -84,9 +99,10 @@ export function ExternalDataImportClient({ userId }: Props) {
   const [result, setResult] = useState<ImportResult | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const selectedClient = clients.find((c) => c.id === selectedUserId);
+
   const addLog = (message: string, type: LogType) => {
     setLogs((prev) => [...prev, makeLog(message, type)]);
-    // auto-scroll to bottom
     setTimeout(() => {
       if (scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -114,6 +130,10 @@ export function ExternalDataImportClient({ userId }: Props) {
   };
 
   const handleImport = async () => {
+    if (!selectedUserId) {
+      toast.error('Selecciona un cliente antes de importar');
+      return;
+    }
     const trimmedUrl = url.trim();
     if (!trimmedUrl) {
       toast.error('Ingresa la URL de Google Sheets');
@@ -131,22 +151,19 @@ export function ExternalDataImportClient({ userId }: Props) {
     const toastId = 'import-external-data';
 
     try {
-      // ── Paso 1: validación visual ──
+      addLog(`Cliente destino: ${selectedClient?.label} (${selectedClient?.email})`, 'info');
       addLog('Validando URL de Google Sheets...', 'loading');
       await delay(500);
       addLog('URL válida detectada', 'success');
 
-      // ── Paso 2: conexión ──
       addLog('Conectando con la hoja de cálculo...', 'loading');
       toast.loading('Importando datos...', { id: toastId });
 
-      // ── Paso 3: acción real ──
-      const res = await importFromGoogleSheetUrl(userId, trimmedUrl, {
+      const res = await importFromGoogleSheetUrl(selectedUserId, trimmedUrl, {
         remoteJidColumn: columnName.trim() || 'WHATSAPP',
         source: 'google_sheets',
       });
 
-      // ── Paso 4: parseErrors ──
       if (res.parseErrors?.length) {
         for (const err of res.parseErrors) {
           addLog(err, 'error');
@@ -155,9 +172,8 @@ export function ExternalDataImportClient({ userId }: Props) {
         return;
       }
 
-      // ── Paso 5: resultado ──
       const total = res.created + res.updated + res.errors;
-      addLog(`Se encontraron ${total} fila(s) con número de WhatsApp`, 'info');
+      addLog(`${total} fila(s) con número de WhatsApp encontradas`, 'info');
 
       if (res.created > 0) addLog(`${res.created} registro(s) nuevo(s) creado(s)`, 'success');
       if (res.updated > 0) addLog(`${res.updated} registro(s) actualizado(s)`, 'success');
@@ -169,10 +185,7 @@ export function ExternalDataImportClient({ userId }: Props) {
       if (res.errors === 0) {
         toast.success(`Importación exitosa — ${total} registros procesados`, { id: toastId });
       } else {
-        toast.warning(
-          `Importación con advertencias — ${res.errors} error(es)`,
-          { id: toastId },
-        );
+        toast.warning(`Importación con advertencias — ${res.errors} error(es)`, { id: toastId });
       }
     } catch (err: any) {
       const msg = err?.message ?? 'Error inesperado durante la importación';
@@ -184,6 +197,7 @@ export function ExternalDataImportClient({ userId }: Props) {
   };
 
   const hasLogs = logs.length > 0;
+  const canImport = !!selectedUserId && !!url.trim() && !isLoading;
 
   return (
     <div className="space-y-4 max-w-2xl">
@@ -196,12 +210,45 @@ export function ExternalDataImportClient({ userId }: Props) {
           </div>
           <CardDescription>
             Sincroniza información de clientes (cédula, correo, servicio, monto, etc.)
-            desde una hoja de Google Sheets. La hoja debe ser pública o accesible con
-            el enlace.
+            desde Google Sheets. Los datos se guardan bajo el cliente seleccionado y
+            el agente IA los usará automáticamente en cada conversación.
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
+          {/* Selector de cliente */}
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1.5">
+              <User className="h-3.5 w-3.5" />
+              Cliente destino
+            </Label>
+            <Select
+              value={selectedUserId}
+              onValueChange={setSelectedUserId}
+              disabled={isLoading}
+            >
+              <SelectTrigger className={!selectedUserId ? 'border-amber-500/50' : ''}>
+                <SelectValue placeholder="Selecciona el cliente al que pertenecen los datos..." />
+              </SelectTrigger>
+              <SelectContent>
+                {clients.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    <span className="font-medium">{c.label}</span>
+                    <span className="ml-2 text-muted-foreground text-xs">{c.email}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedUserId && (
+              <p className="text-xs text-muted-foreground">
+                Los datos se guardarán bajo el userId:{' '}
+                <code className="bg-muted px-1 rounded text-[10px]">{selectedUserId}</code>
+              </p>
+            )}
+          </div>
+
+          <Separator />
+
           {/* URL */}
           <div className="space-y-1.5">
             <Label htmlFor="sheet-url">URL de Google Sheets</Label>
@@ -264,11 +311,7 @@ export function ExternalDataImportClient({ userId }: Props) {
 
           {/* Acciones */}
           <div className="flex items-center gap-2">
-            <Button
-              onClick={handleImport}
-              disabled={isLoading || !url.trim()}
-              className="gap-2"
-            >
+            <Button onClick={handleImport} disabled={!canImport} className="gap-2">
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -278,7 +321,12 @@ export function ExternalDataImportClient({ userId }: Props) {
             </Button>
 
             {(hasLogs || url) && !isLoading && (
-              <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1.5 text-muted-foreground">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleReset}
+                className="gap-1.5 text-muted-foreground"
+              >
                 <RotateCcw className="h-3.5 w-3.5" />
                 Limpiar
               </Button>
@@ -320,6 +368,11 @@ export function ExternalDataImportClient({ userId }: Props) {
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-500" />
               <CardTitle className="text-sm font-medium">Resumen de importación</CardTitle>
+              {selectedClient && (
+                <Badge variant="outline" className="ml-auto text-xs">
+                  {selectedClient.label}
+                </Badge>
+              )}
             </div>
           </CardHeader>
           <CardContent>
