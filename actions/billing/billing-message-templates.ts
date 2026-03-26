@@ -45,7 +45,7 @@ export function buildBillingMessage(args: {
     if (type === "STATUS_ACTIVE") {
         return [
             `✅ *Estado de su servicio actualizado*`,
-            `${clientName || "Cliente"}, su servicio se encuentra activo.`,
+            // `${clientName || "Cliente"}, su servicio se encuentra activo.`,
             `--------•--------•--------•--------`,
             dueDateLine,
             daysRemainingLine,
@@ -63,7 +63,7 @@ export function buildBillingMessage(args: {
     if (type === "STATUS_PENDING") {
         return [
             `🟡 *Estado de su servicio actualizado*`,
-            `${clientName || "Cliente"}, su servicio sigue activo pero el billing figura pendiente.`,
+            // `${clientName || "Cliente"}, su servicio sigue activo pero el pago figura pendiente.`,
             `--------•--------•--------•--------`,
             dueDateLine,
             daysRemainingLine,
@@ -82,7 +82,7 @@ export function buildBillingMessage(args: {
     if (type === "STATUS_SUSPENDED") {
         return [
             `🚫 *Estado de su servicio actualizado*`,
-            `${clientName || "Cliente"}, su servicio fue suspendido por vencimiento fuera de los dias de gracia.`,
+            // `${clientName || "Cliente"}, su servicio fue suspendido por vencimiento fuera de los dias de gracia.`,
             `--------•--------•--------•--------`,
             dueDateLine,
             daysRemainingLine,

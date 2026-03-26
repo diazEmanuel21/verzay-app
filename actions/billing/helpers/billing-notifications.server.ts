@@ -108,7 +108,7 @@ function buildBillingMessageInput(
         dueDate,
         daysRemaining,
         planLabel: billing.serviceName ? `Plan ${billing.serviceName}` : "Plan Agente IA",
-        licenseLabel: "Licencia 30 dias",
+        licenseLabel: "*Licencia 30 dias*",
         price: billing.price,
         currencyCode: billing.currencyCode || "COP",
         currencyFlag: billing.currencyCode === "USD" ? "US" : null,
