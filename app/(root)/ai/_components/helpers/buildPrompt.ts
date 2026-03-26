@@ -1,6 +1,5 @@
 import { BusinessValues } from "@/types/agentAi";
 import { addPromptItem as add } from "./";
-import { STARTING_INSTRUCTION } from "./prompt-fragments";
 
 export const buildPrompt = (v: BusinessValues): string => {
     const lines: string[] = [];
@@ -23,9 +22,9 @@ export const buildPrompt = (v: BusinessValues): string => {
     add(lines, "* **Instagram:**", v.instagram);
     add(lines, "* **TikTok:**", v.tiktok);
     add(lines, "* **YouTube:**", v.youtube);
-    lines.push(`\n---\n`);
-    lines.push(`${STARTING_INSTRUCTION}`);
-    lines.push(`\n---\n`);
+    // lines.push(`\n---\n`);
+    // lines.push(`${STARTING_INSTRUCTION}`);
+    // lines.push(`\n---\n`);
     if (v.notas?.trim()) {
         lines.push("### NOTAS ADICIONALES");
         lines.push(v.notas.trim());
