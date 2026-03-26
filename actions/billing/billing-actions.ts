@@ -19,6 +19,7 @@ import {
     assertBillingScope,
     normalizeCurrencyCode,
     normalizeGraceDays,
+    normalizeLicenseDays,
     normalizeOptionalText,
     toDecimal,
 } from "./helpers/billing-helpers.server";
@@ -139,6 +140,7 @@ export async function upsertUserBillingConfig(
         }
 
         const graceDays = normalizeGraceDays(input.graceDays);
+        const licenseDays = normalizeLicenseDays(input.licenseDays);
         const currencyCode = isProvided(input.currencyCode)
             ? normalizeCurrencyCode(input.currencyCode)
             : undefined;
@@ -149,6 +151,7 @@ export async function upsertUserBillingConfig(
             paymentMethodLabel: normalizeOptionalText(input.paymentMethodLabel, 120),
             paymentNotes: normalizeOptionalText(input.paymentNotes, 1000),
             graceDays,
+            licenseDays,
             serviceName: normalizeOptionalText(input.serviceName, 120),
             notifyRemoteJid: normalizeOptionalText(input.notifyRemoteJid, 80),
             serviceStartAt: serviceStartAt ?? undefined,
@@ -164,6 +167,7 @@ export async function upsertUserBillingConfig(
                 paymentMethodLabel: (data.paymentMethodLabel as any) ?? null,
                 paymentNotes: (data.paymentNotes as any) ?? null,
                 graceDays: (data.graceDays as any) ?? 0,
+                licenseDays: (data.licenseDays as any) ?? 30,
                 serviceName: (data.serviceName as any) ?? null,
                 notifyRemoteJid: (data.notifyRemoteJid as any) ?? null,
                 serviceStartAt: (data.serviceStartAt as any) ?? null,

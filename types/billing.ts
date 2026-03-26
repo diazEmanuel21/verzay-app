@@ -39,6 +39,7 @@ export type BillingUpsertInput = {
     billingStatus?: "PAID" | "UNPAID";
     accessStatus?: "ACTIVE" | "SUSPENDED";
     graceDays?: number | null;
+    licenseDays?: number | null;
     suspendedReason?: string | null;
 
     serviceName?: string | null;        // Servicio
@@ -63,6 +64,7 @@ export type UserBilling = {
     lastReminderAt: string | Date | null;
     lastReminderDueDate: string | Date | null;
     graceDays: number;
+    licenseDays: number;
 
     serviceName?: string | null;
     notifyRemoteJid?: string | null;
@@ -91,6 +93,7 @@ export type BillingEditForm = {
     paymentMethodLabel: string;
     paymentNotes: string;
     graceDays: string;
+    licenseDays: string;
     serviceName: string;
     notifyRemoteJid: string;
     serviceStartAt: string;
@@ -118,6 +121,7 @@ export const emptyDialog: EditDialogState = {
     paymentMethodLabel: "",
     paymentNotes: "",
     graceDays: "0",
+    licenseDays: "30",
     serviceName: "",
     notifyRemoteJid: "",
     serviceStartAt: "",

@@ -43,6 +43,17 @@ export function normalizeGraceDays(value?: number | null): number | undefined {
   return value;
 }
 
+export function normalizeLicenseDays(value?: number | null): number | undefined {
+  if (value === null || value === undefined) return undefined;
+  if (!Number.isInteger(value)) {
+    throw new Error("licenseDays debe ser un entero.");
+  }
+  if (value < 1 || value > 365) {
+    throw new Error("licenseDays debe estar entre 1 y 365.");
+  }
+  return value;
+}
+
 export function normalizeOptionalText(value?: string | null, maxLength = 500): string | null | undefined {
   if (value === undefined) return undefined;
   if (value === null) return null;

@@ -4,7 +4,8 @@
       "Bash(ls -la \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)\")",
       "Bash(ls \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)/chats\")",
       "Bash(npx prisma:*)",
-      "Bash(grep -r \"\\\\.flujos\\\\|session\\\\.flujos\" /e/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app --include=*.ts --include=*.tsx --include=*.js --include=*.jsx)"
+      "Bash(grep -r \"\\\\.flujos\\\\|session\\\\.flujos\" /e/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app --include=*.ts --include=*.tsx --include=*.js --include=*.jsx)",
+      "Bash(PRISMA_MIGRATE_SKIP_GENERATE=true npx prisma db push)"
     ]
   }
 }

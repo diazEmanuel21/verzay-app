@@ -529,6 +529,7 @@ model UserBilling {
   lastReminderAt         DateTime?
   lastReminderDueDate    DateTime?
   graceDays              Int                 @default(0)
+  licenseDays            Int                 @default(30)
   createdAt              DateTime            @default(now())
   updatedAt              DateTime            @updatedAt
   notifyRemoteJid        String?
