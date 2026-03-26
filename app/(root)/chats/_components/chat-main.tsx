@@ -1646,9 +1646,8 @@ export const ChatMain: React.FC<ChatMainProps> = ({
 
           {/* Sección Central: Badges + Tags */}
           {session && (
-            <div className="flex items-center gap-2 flex-wrap flex-shrink-0 max-w-sm">
-              <div className="flex items-center gap-2 flex-wrap">
-                {/* <LeadStatusBadge status={session.leadStatus ?? null} /> */}
+            <div className="flex flex-1 overflow-hidden gap-1">
+              <div className="flex flex-1 justify-end gap-1">
                 <CrmFollowUpSummaryBadge
                   summary={session.crmFollowUpSummary}
                   userId={session.userId}
@@ -1657,7 +1656,6 @@ export const ChatMain: React.FC<ChatMainProps> = ({
                   onUpdated={refreshSessionStatus}
                 />
               </div>
-
               <SessionTagsCombobox
                 userId={session.userId}
                 sessionId={session.id}

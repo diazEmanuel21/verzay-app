@@ -466,12 +466,12 @@ export function ChatSidebar({
 
                         {/* Row 2: lead status badge */}
                         <div className="mt-0.5 flex gap-1">
-                          {contact.chatSession && (
+                          <LeadStatusBadge status={contact.chatSession?.leadStatus ?? null} />
+                              {contact.chatSession && (
                             <FlowListOrder raw={contact.chatSession.flujos ?? ""} />
                           )}
-                          <LeadStatusBadge status={contact.chatSession?.leadStatus ?? null} />
                           {contact.chatSession && contact.chatSession.tags.length > 0 && (
-                            <SessionTagsTooltip tags={contact.chatSession.tags} maxVisible={2} />
+                            <SessionTagsTooltip tags={contact.chatSession.tags} maxVisible={5} />
                           )}
                         </div>
 

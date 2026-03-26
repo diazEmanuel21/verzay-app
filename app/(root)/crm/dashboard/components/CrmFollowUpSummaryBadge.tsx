@@ -99,7 +99,7 @@ export function CrmFollowUpSummaryBadge({
   const canRetry = canManage && summary.failed > 0;
 
   const renderBadges = () => (
-    <div className="flex max-w-[220px] flex-wrap gap-1">
+    <div className="flex gap-1 flex-wrap">
       <Badge variant="outline" className={getStatusClassName(summary.latestStatus)}>
         {latestLabel}
       </Badge>

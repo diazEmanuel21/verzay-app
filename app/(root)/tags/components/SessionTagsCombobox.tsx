@@ -104,7 +104,7 @@ export function SessionTagsCombobox({
             );
         }
 
-        const maxVisible = 4;
+        const maxVisible = 5;
         const visible = selectedTags.slice(0, maxVisible);
         const remaining = selectedTags.length - visible.length;
 

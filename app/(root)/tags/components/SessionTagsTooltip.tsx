@@ -13,7 +13,7 @@ interface SessionTagsTooltipProps {
 
 export function SessionTagsTooltip({
   tags = [],
-  maxVisible = 4,
+  maxVisible = 5,
   className,
 }: SessionTagsTooltipProps) {
   const visibleTags = tags.slice(0, maxVisible);
@@ -63,11 +63,11 @@ export function SessionTagsTooltip({
         <TooltipContent align="start" className="max-w-64 space-y-2">
           <div className="space-y-1">
             <p className="text-xs font-semibold">Etiquetas</p>
-            <p className="text-[11px] text-muted-foreground">
+            {/* <p className="text-[11px] text-muted-foreground">
               {hasTags
                 ? `${tags.length} etiqueta(s) asociada(s) a este chat.`
                 : "Este chat no tiene etiquetas asociadas."}
-            </p>
+            </p> */}
           </div>
 
           {hasTags && (
