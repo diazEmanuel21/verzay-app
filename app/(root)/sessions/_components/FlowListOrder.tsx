@@ -6,26 +6,36 @@ import {
 } from "@/components/ui/tooltip";
 import React from "react";
 
-export const FlowListOrder = ({ raw }: { raw: string }) => {
-    const parseFlows = (value: unknown): string[] => {
-        if (!value || value === "-") return [];
+type FlowEntry = { id: string; name: string };
 
-        const str = String(value).trim();
-        if (!str) return [];
+function parseFlujos(raw: string): FlowEntry[] {
+    const str = (raw ?? "").trim();
+    if (!str || str === "-") return [];
 
-        // separa por: comas, espacios (1+), saltos de línea, pipes
-        // ejemplo: "A B,C   D" -> ["A","B","C","D"]
-        return str
-            .replace(/\s+/g, " ") // normaliza espacios múltiples
-            .split(/[,\s|\n]+/g)  // <- AQUÍ: comas o espacios (y también | o \n)
-            .map((s) => s.trim())
-            .filter(Boolean);
-    };
+    // New format: JSON array
+    try {
+        const parsed = JSON.parse(str);
+        if (Array.isArray(parsed)) {
+            return parsed
+                .filter((f): f is FlowEntry => !!f?.name)
+                .map((f) => ({ id: String(f.id ?? f.name), name: String(f.name) }));
+        }
+    } catch {
+        // fall through to legacy
+    }
 
-    const flowsArr = parseFlows(raw)
-        .map((f) => f.trim())
+    // Legacy format: comma-separated names (use name as id fallback)
+    return str
+        .split(",")
+        .map((s) => s.trim())
         .filter(Boolean)
-        .sort((a, b) => a.localeCompare(b, "es"));
+        .map((name) => ({ id: name, name }));
+}
+
+export const FlowListOrder = ({ raw }: { raw: string }) => {
+    const flowsArr = parseFlujos(raw).sort((a, b) =>
+        a.name.localeCompare(b.name, "es")
+    );
 
     const count = flowsArr.length;
 
@@ -52,9 +62,9 @@ export const FlowListOrder = ({ raw }: { raw: string }) => {
                         <div className="space-y-1">
                             <div className="text-xs font-medium">Flujos ({count})</div>
                             <ul className="list-disc pl-4 text-xs space-y-0.5">
-                                {flowsArr.map((f, i) => (
-                                    <li key={`${f}-${i}`} className="break-words">
-                                        {f}
+                                {flowsArr.map((f) => (
+                                    <li key={f.id} className="break-words">
+                                        {f.name}
                                     </li>
                                 ))}
                             </ul>
@@ -64,5 +74,4 @@ export const FlowListOrder = ({ raw }: { raw: string }) => {
             </Tooltip>
         </TooltipProvider>
     );
-
 };
