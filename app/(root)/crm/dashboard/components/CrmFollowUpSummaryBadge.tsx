@@ -13,6 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   SessionCrmFollowUpHistoryItem,
   SessionCrmFollowUpSummary,
@@ -181,8 +182,9 @@ export function CrmFollowUpSummaryBadge({
           {renderBadges()}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[380px] p-3">
-        <div className="space-y-3">
+      <PopoverContent align="start" className="w-[380px] p-0">
+        <ScrollArea className="h-[420px]">
+        <div className="space-y-3 p-3">
           <div className="space-y-1">
             <p className="text-sm font-medium">Follow-up IA</p>
             <p className="text-xs text-muted-foreground">
@@ -294,6 +296,7 @@ export function CrmFollowUpSummaryBadge({
             </div>
           )}
         </div>
+        </ScrollArea>
       </PopoverContent>
 
       <CrmConfirmActionDialog
