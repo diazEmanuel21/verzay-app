@@ -260,6 +260,7 @@ export function BillingCrmClient({
             paymentMethodLabel: b?.paymentMethodLabel ?? "",
             paymentNotes: b?.paymentNotes ?? "",
             graceDays: String(b?.graceDays ?? 0),
+            licenseDays: String(b?.licenseDays ?? 30),
             serviceName: b?.serviceName ?? "",
             notifyRemoteJid: b?.notifyRemoteJid ?? "",
             serviceStartAt: b?.serviceStartAt ? fmtDateShort(b.serviceStartAt) : "",

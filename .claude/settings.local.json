@@ -5,7 +5,20 @@
       "Bash(ls \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)/chats\")",
       "Bash(npx prisma:*)",
       "Bash(grep -r \"\\\\.flujos\\\\|session\\\\.flujos\" /e/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app --include=*.ts --include=*.tsx --include=*.js --include=*.jsx)",
-      "Bash(PRISMA_MIGRATE_SKIP_GENERATE=true npx prisma db push)"
+      "Bash(PRISMA_MIGRATE_SKIP_GENERATE=true npx prisma db push)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -r \"^export.*type.*Session\\\\|^export.*interface.*Session\" e:EMANUEL-DEVVerzayVERZAYverzay-app-mainverzay-app --include=*.ts --include=*.tsx)",
+      "Bash(find e:EMANUEL-DEVVerzayVERZAYverzay-app-mainverzay-app/app -type d -name *session* -o -type d -name *contact* -o -type d -name *client*)",
+      "Bash(ls -la \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)/sessions\")",
+      "Bash(ls -la \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)/clientes\")",
+      "Bash(find e:EMANUEL-DEVVerzayVERZAYverzay-app-mainverzay-app \\\\\\(-path */node_modules -o -path */.next \\\\\\) -prune -o -type f -name *service* -o -name *repository* -print)",
+      "Bash(ls -la \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)/sessions/_components\")",
+      "Bash(grep -r \"ClientInterface\\\\|UserClientData\\\\|ClientData\" e:EMANUEL-DEVVerzayVERZAYverzay-app-mainverzay-app --include=*.ts --include=*.tsx -l)",
+      "Bash(wc -l \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/actions\"/*.ts)",
+      "Bash(find e:/EMANUEL-DEV/Verzay/VERZAY/backend-api/api-webhook/src -type f \\\\\\(-name *.ts -o -name *.json \\\\\\))",
+      "Bash(find \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)/\\(protected\\)/admin\" -type f -name \"*.tsx\" -o -name \"*.ts\")",
+      "Bash(find \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)/\\(protected\\)/admin\" -type d)",
+      "Bash(find \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)/\\(protected\\)/admin\" -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" -o -name \"*.jsx\" -o -name \"*.js\" \\\\\\))"
     ]
   }
 }
