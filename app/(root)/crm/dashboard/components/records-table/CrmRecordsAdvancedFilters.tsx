@@ -19,6 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
     Tooltip,
     TooltipContent,
@@ -76,8 +77,9 @@ export function CrmRecordsAdvancedFilters({
                 <TooltipContent side="bottom">Filtros avanzados</TooltipContent>
             </Tooltip>
 
-            <PopoverContent align="end" className="w-[min(92vw,360px)] p-4">
-                <div className="space-y-4">
+            <PopoverContent align="end" className="w-[min(92vw,360px)] p-0">
+                <ScrollArea className="h-[480px]">
+                <div className="space-y-4 p-4">
                     <div>
                         <p className="text-sm font-medium">Filtros del CRM</p>
                         <p className="text-xs text-muted-foreground">
@@ -240,6 +242,7 @@ export function CrmRecordsAdvancedFilters({
                         </Button>
                     </div>
                 </div>
+                </ScrollArea>
             </PopoverContent>
         </Popover>
     );
