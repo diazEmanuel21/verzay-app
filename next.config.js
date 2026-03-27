@@ -9,7 +9,12 @@ const nextConfig = {
     },
   },
   images: {
-    domains: ["medias3.verzay.co"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "medias3.verzay.co",
+      },
+    ],
   },
 
   async headers() {

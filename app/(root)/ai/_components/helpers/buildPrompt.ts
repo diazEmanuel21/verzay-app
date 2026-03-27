@@ -24,9 +24,9 @@ export const buildPrompt = (v: BusinessValues): string => {
     add(lines, "* **YouTube:**", v.youtube);
     // lines.push(`\n---\n`);
     // lines.push(`${STARTING_INSTRUCTION}`);
-    // lines.push(`\n---\n`);
+    lines.push(`\n---\n`);
     if (v.notas?.trim()) {
-        lines.push("### NOTAS ADICIONALES");
+        lines.push("### NOTAS ADICIONALES\n");
         lines.push(v.notas.trim());
         lines.push(`\n---\n`);
     }
@@ -41,17 +41,17 @@ export const buildPrompt = (v: BusinessValues): string => {
     }
 
     if (v.products?.trim()) {
-        lines.push("\n## CATÁLOGO / PRODUCTOS\n");
+        lines.push("\n---\n\n## CATÁLOGO / PRODUCTOS\n");
         lines.push(v.products.trim());
     }
 
     if (v.more?.trim()) {
-        lines.push("\n## EXTRAS\n");
+        lines.push("\n---\n\n## EXTRAS\n");
         lines.push(v.more.trim());
     }
 
     if (v.management?.trim()) {
-        lines.push("\n## GESTIÓN\n");
+        lines.push("\n---\n\n## GESTIÓN\n");
         lines.push(v.management.trim());
     }
 

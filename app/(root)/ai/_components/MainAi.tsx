@@ -144,7 +144,6 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
     const prompt = useMemo(() => buildPrompt(values), [values]);
 
     return (
-
         <>
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabKey)} className="w-full">
                 {/* header de tabs (idéntico al tuyo) */}
