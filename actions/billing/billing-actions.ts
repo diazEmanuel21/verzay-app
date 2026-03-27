@@ -38,6 +38,17 @@ async function deleteInstanceOnSuspension(userId: string) {
     return deleteResult;
 }
 
+async function createInstanceOnReactivation(userId: string, instanceName: string) {
+    const createResult = await createInstanceInternal(userId, instanceName);
+    if (createResult.success) {
+        await db.userBilling.update({
+            where: { userId },
+            data: { lastInstanceName: null },
+        });
+    }
+    return createResult;
+}
+
 async function runManualStatusSideEffects(args: {
     userId: string;
     previousBillingStatus?: string | null;
@@ -214,8 +225,12 @@ export async function upsertUserBillingConfig(
             source: "billing-config-update",
         });
 
-        if ((syncResult.billing ?? billing).accessStatus === "SUSPENDED") {
-            await deleteInstanceOnSuspension(scopedUserId);
+        if (syncResult.stateChanged) {
+            if (syncResult.billing?.accessStatus === "SUSPENDED") {
+                await deleteInstanceOnSuspension(scopedUserId);
+            } else if (billing.accessStatus === "SUSPENDED" && syncResult.billing?.accessStatus === "ACTIVE" && syncResult.billing.lastInstanceName) {
+                await createInstanceOnReactivation(scopedUserId, syncResult.billing.lastInstanceName);
+            }
         }
 
         const suffix = syncResult.stateChanged
@@ -270,8 +285,12 @@ export async function setUserBillingDueDate(
             source: "billing-due-date-update",
         });
 
-        if (syncResult.billing?.accessStatus === "SUSPENDED") {
-            await deleteInstanceOnSuspension(scopedUserId);
+        if (syncResult.stateChanged) {
+            if (syncResult.billing?.accessStatus === "SUSPENDED") {
+                await deleteInstanceOnSuspension(scopedUserId);
+            } else if (billing.accessStatus === "SUSPENDED" && syncResult.billing?.accessStatus === "ACTIVE" && syncResult.billing.lastInstanceName) {
+                await createInstanceOnReactivation(scopedUserId, syncResult.billing.lastInstanceName);
+            }
         }
 
         if (parsed && syncResult.stateChanged) {
