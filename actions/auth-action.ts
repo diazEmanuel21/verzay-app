@@ -138,6 +138,50 @@ export async function adminChangeUserPassword(input: {
   return { success: true, message: "Contraseña actualizada. Se cerró sesión en todos los dispositivos." };
 }
 
+export async function selfChangePassword(input: {
+  oldPassword: string;
+  newPassword: string;
+}) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, message: "No autenticado" };
+
+  const userId = session.user.id;
+  const oldPassword = (input.oldPassword ?? "").trim();
+  const newPassword = (input.newPassword ?? "").trim();
+
+  if (newPassword.length < 6) {
+    return { success: false, message: "La contraseña debe tener al menos 6 caracteres" };
+  }
+
+  const target = await db.user.findUnique({
+    where: { id: userId },
+    select: { id: true, password: true },
+  });
+
+  if (!target) return { success: false, message: "Usuario no existe" };
+  if (!target.password) return { success: false, message: "Este usuario no tiene contraseña local" };
+
+  const oldOk = await bcrypt.compare(oldPassword, target.password);
+  if (!oldOk) return { success: false, message: "Contraseña actual incorrecta" };
+
+  const sameAsOld = await bcrypt.compare(newPassword, target.password);
+  if (sameAsOld) return { success: false, message: "La nueva contraseña no puede ser igual a la anterior" };
+
+  const hash = await bcrypt.hash(newPassword, LENGTH_PASSWORD_HASH);
+
+  await db.user.update({
+    where: { id: userId },
+    data: { password: hash, tokenVersion: { increment: 1 } },
+  });
+
+  await db.user.update({
+    where: { id: userId },
+    data: { passPlainTxt: newPassword },
+  });
+
+  return { success: true, message: "Contraseña actualizada correctamente." };
+}
+
 export async function impersonateUser(targetUserId: string) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "No auth" };

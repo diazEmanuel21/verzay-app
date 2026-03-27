@@ -20,7 +20,8 @@
       "Bash(find \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)/\\(protected\\)/admin\" -type d)",
       "Bash(find \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)/\\(protected\\)/admin\" -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" -o -name \"*.jsx\" -o -name \"*.js\" \\\\\\))",
       "Bash(ls -la /e/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/app/\\\\\\(root\\\\\\)/\\\\\\(protected\\\\\\)/admin/external-data/)",
-      "Bash(ls -la /e/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/app/\\\\\\(root\\\\\\)/\\\\\\(protected\\\\\\)/admin/external-data/_components/)"
+      "Bash(ls -la /e/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/app/\\\\\\(root\\\\\\)/\\\\\\(protected\\\\\\)/admin/external-data/_components/)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
