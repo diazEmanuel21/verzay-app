@@ -2,7 +2,7 @@
 
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { isAdminOrReseller } from "@/lib/rbac";
+import { isAdmin, isAdminOrReseller } from "@/lib/rbac";
 import { buildBillingServiceAccessState } from "./service-access";
 
 export async function assertCanAccessTargetUser(targetUserId: string) {
@@ -33,7 +33,7 @@ export async function assertUserCanUseApp(targetUserId: string) {
   const actor = await assertCanAccessTargetUser(targetUserId);
 
   // Admin y reseller pueden gestionar clientes bloqueados desde backoffice.
-  if (isAdminOrReseller(actor.role) && actor.id !== targetUserId) {
+  if (isAdmin(actor.role) && actor.id !== targetUserId) {
     return actor;
   }
 

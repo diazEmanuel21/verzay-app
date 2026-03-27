@@ -4,7 +4,7 @@ import { requireAuth } from "@/lib/require-auth";
 import { currentUser } from "@/lib/auth";
 import { getResellerProfileForUser } from "@/actions/reseller-action";
 import { getAllModules } from "@/actions/module-actions";
-import { isAdminOrReseller } from "@/lib/rbac";
+import { isAdmin, isAdminOrReseller } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { buildBillingServiceAccessState } from "@/actions/billing/helpers/service-access";
 
@@ -32,7 +32,7 @@ export default async function RootGroupLayout({
     const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
     const privilegedUser = isAdminOrReseller(user?.role);
 
-    if (user && !privilegedUser) {
+    if (user && !isAdmin(user?.role)) {
         const billing = await db.userBilling.findUnique({
             where: { userId: user.id },
         });

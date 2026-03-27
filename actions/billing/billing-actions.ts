@@ -5,7 +5,7 @@ import { Prisma } from "@prisma/client";
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { BillingUpsertInput, ResponseFormat } from "@/types/billing";
-import { createInstanceInternal } from "@/actions/api-action";
+import { createInstanceInternal, deleteInstanceInternal } from "@/actions/api-action";
 
 import {
     loadBillingDispatcherConfig,
@@ -26,6 +26,17 @@ import {
 
 const isProvided = (value: unknown) =>
     value !== null && value !== undefined && String(value).trim() !== "";
+
+async function deleteInstanceOnSuspension(userId: string) {
+    const deleteResult = await deleteInstanceInternal(userId);
+    if (deleteResult.success && deleteResult.instanceName) {
+        await db.userBilling.update({
+            where: { userId },
+            data: { lastInstanceName: deleteResult.instanceName },
+        });
+    }
+    return deleteResult;
+}
 
 async function runManualStatusSideEffects(args: {
     userId: string;
@@ -75,6 +86,28 @@ async function runManualStatusSideEffects(args: {
 
     if (!notificationResult.success) {
         console.warn("[billing-actions:notification]", notificationResult);
+    }
+
+    const wasJustSuspended =
+        args.previousAccessStatus !== "SUSPENDED" &&
+        updated.accessStatus === "SUSPENDED";
+
+    if (wasJustSuspended) {
+        await deleteInstanceOnSuspension(updated.userId);
+    }
+
+    const wasReactivated =
+        args.previousAccessStatus === "SUSPENDED" &&
+        updated.accessStatus === "ACTIVE";
+
+    if (wasReactivated && updated.lastInstanceName) {
+        const createResult = await createInstanceInternal(updated.userId, updated.lastInstanceName);
+        if (createResult.success) {
+            await db.userBilling.update({
+                where: { userId: updated.userId },
+                data: { lastInstanceName: null },
+            });
+        }
     }
 
     return {
@@ -181,6 +214,10 @@ export async function upsertUserBillingConfig(
             source: "billing-config-update",
         });
 
+        if ((syncResult.billing ?? billing).accessStatus === "SUSPENDED") {
+            await deleteInstanceOnSuspension(scopedUserId);
+        }
+
         const suffix = syncResult.stateChanged
             ? " Estados sincronizados con dueDate y graceDays."
             : "";
@@ -232,6 +269,10 @@ export async function setUserBillingDueDate(
             userId: scopedUserId,
             source: "billing-due-date-update",
         });
+
+        if (syncResult.billing?.accessStatus === "SUSPENDED") {
+            await deleteInstanceOnSuspension(scopedUserId);
+        }
 
         if (parsed && syncResult.stateChanged) {
             return {
@@ -438,16 +479,6 @@ export async function activateUserService(
             previousAccessStatus: existing?.accessStatus ?? null,
             source: "billing-activate-service",
         });
-
-        if (existing?.lastInstanceName) {
-            const createResult = await createInstanceInternal(scopedUserId, existing.lastInstanceName);
-            if (createResult.success) {
-                await db.userBilling.update({
-                    where: { userId: scopedUserId },
-                    data: { lastInstanceName: null },
-                });
-            }
-        }
 
         return {
             success: true,

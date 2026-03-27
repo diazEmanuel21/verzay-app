@@ -479,14 +479,10 @@ export async function deleteInstanceInternal(
 
       const { key: apiKey, url: serverUrl } = user.apiKey;
 
-      const logoutResponse = await fetch(`https://${serverUrl}/instance/logout/${instanceName}`, {
+      await fetch(`https://${serverUrl}/instance/logout/${instanceName}`, {
         method: 'DELETE',
         headers: { apikey: apiKey, 'Content-Type': 'application/json' },
-      });
-      const logoutResult = await logoutResponse.json().catch(() => ({} as any));
-      if (!logoutResponse.ok) {
-        return { success: false, message: logoutResult?.message || 'Error al hacer logout de la instancia.', instanceName: null };
-      }
+      }).catch(() => {});
 
       const deleteResponse = await fetch(`https://${serverUrl}/instance/delete/${instanceName}`, {
         method: 'DELETE',

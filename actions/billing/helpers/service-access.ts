@@ -74,10 +74,8 @@ export function buildBillingServiceAccessState(
   const accessStatus = billing.accessStatus ?? "ACTIVE";
 
   const overdueBeyondGrace =
-    billingStatus === "UNPAID" &&
     daysRemaining !== null &&
-    daysRemaining < 0 &&
-    Math.abs(daysRemaining) > graceDays;
+    daysRemaining < -graceDays;
 
   const suspendedByStatus = accessStatus === "SUSPENDED";
   const isLocked = suspendedByStatus || overdueBeyondGrace;
