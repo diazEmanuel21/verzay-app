@@ -1038,9 +1038,9 @@ export function BillingCrmClient({
                                                                 }
                                                                 className="h-9"
                                                             />
-                                                            <p className="text-[11px] text-muted-foreground">
+                                                            {/* <p className="text-[11px] text-muted-foreground">
                                                                 {billingLifecyclePreview.summary}
-                                                            </p>
+                                                            </p> */}
                                                         </div>
                                                     </div>
                                                 </div>
