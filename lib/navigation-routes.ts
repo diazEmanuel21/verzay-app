@@ -11,6 +11,7 @@ export const navigationRoutes: NavigationRoutesInterface[] = [
     { route: '/admin/reseller' },
     { route: "/admin/templates" },
     { route: "/admin/client-billing" },
+    { route: "/admin/external-data" },
     { route: "/admin" },
     { route: "/documentation" },
     { route: "/dashboard" },
