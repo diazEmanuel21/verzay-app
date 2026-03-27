@@ -43,7 +43,7 @@ export async function previewBillingReminderMessage(
         const template = pickPreviewTemplate(daysRemaining);
 
         // Por ahora igual que el job: fijo (luego lo hacemos dinámico por plan)
-        const planLabel = billing.serviceName ? `*${billing.serviceName}*` : `Agente IA`;
+        const planLabel = billing.serviceName ? `*${billing.serviceName}*` : `*Agente IA*`;
         const licenseLabel = `🗓️ *Licencia ${billing.licenseDays ?? 30} días*`;
         const currencyFlag = billing.currencyCode === "USD" ? "🇺🇸" : null;
 

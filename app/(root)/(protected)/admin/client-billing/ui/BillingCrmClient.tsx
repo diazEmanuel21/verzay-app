@@ -284,6 +284,7 @@ export function BillingCrmClient({
             paymentMethodLabel: (f?.paymentMethodLabel ?? "").trim(),
             paymentNotes: (f?.paymentNotes ?? "").trim(),
             graceDays: String(f?.graceDays ?? "0").trim(),
+            licenseDays: String(f?.licenseDays ?? "30").trim(),
             serviceName: (f?.serviceName ?? "").trim(),
             notifyRemoteJid: (f?.notifyRemoteJid ?? "").trim(),
             serviceStartAt: (f?.serviceStartAt ?? "").trim(),
@@ -324,6 +325,7 @@ export function BillingCrmClient({
                 curr.paymentMethodLabel !== prev.paymentMethodLabel ||
                 curr.paymentNotes !== prev.paymentNotes ||
                 curr.graceDays !== prev.graceDays ||
+                curr.licenseDays !== prev.licenseDays ||
                 curr.serviceName !== prev.serviceName ||
                 curr.notifyRemoteJid !== prev.notifyRemoteJid ||
                 curr.serviceStartAt !== prev.serviceStartAt ||
@@ -339,6 +341,7 @@ export function BillingCrmClient({
                     paymentMethodLabel: curr.paymentMethodLabel || null,
                     paymentNotes: curr.paymentNotes || null,
                     graceDays: Number(curr.graceDays || 0),
+                    licenseDays: Number(curr.licenseDays || 30),
                     serviceName: curr.serviceName || null,
                     notifyRemoteJid: curr.notifyRemoteJid || null,
                     serviceStartAt: curr.serviceStartAt || null,
@@ -531,6 +534,19 @@ export function BillingCrmClient({
                     return (
                         <div className="py-2 truncate max-w-[180px]">
                             {b?.paymentMethodLabel ?? "—"}
+                        </div>
+                    );
+                },
+            },
+            {
+                id: "licenseDays",
+                header: sortableHeader("Licencia"),
+                accessorFn: (row) => row.billing?.licenseDays ?? "",
+                cell: ({ row }) => {
+                    const b = row.original.billing ?? null;
+                    return (
+                        <div className="py-2 truncate">
+                            {b?.licenseDays ?? "—"}
                         </div>
                     );
                 },
@@ -922,19 +938,36 @@ export function BillingCrmClient({
                                                     />
                                                 </div>
 
-                                                <div className="grid gap-1">
-                                                    <label className="text-muted-foreground">Días de gracia</label>
-                                                    <Input
-                                                        value={dialog.form.graceDays}
-                                                        onChange={(e) =>
-                                                            setDialog((s) => ({
-                                                                ...s,
-                                                                form: { ...s.form, graceDays: e.target.value },
-                                                            }))
-                                                        }
-                                                        placeholder="0"
-                                                        className="h-9"
-                                                    />
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="grid gap-1">
+                                                        <label className="text-muted-foreground">Días de licencia</label>
+                                                        <Input
+                                                            value={dialog.form.licenseDays}
+                                                            onChange={(e) =>
+                                                                setDialog((s) => ({
+                                                                    ...s,
+                                                                    form: { ...s.form, licenseDays: e.target.value },
+                                                                }))
+                                                            }
+                                                            placeholder="30"
+                                                            className="h-9"
+                                                        />
+                                                    </div>
+
+                                                    <div className="grid gap-1">
+                                                        <label className="text-muted-foreground">Días de gracia</label>
+                                                        <Input
+                                                            value={dialog.form.graceDays}
+                                                            onChange={(e) =>
+                                                                setDialog((s) => ({
+                                                                    ...s,
+                                                                    form: { ...s.form, graceDays: e.target.value },
+                                                                }))
+                                                            }
+                                                            placeholder="0"
+                                                            className="h-9"
+                                                        />
+                                                    </div>
                                                 </div>
 
                                                 <div className="mt-2 grid gap-3">
