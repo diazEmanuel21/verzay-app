@@ -1,6 +1,6 @@
 import { QuickReply, User, Workflow } from "@prisma/client";
 import Header from '@/components/shared/header';
-import { AutoRepliesCard, CreateAutoReplies } from "./";
+import { CreateAutoReplies, SortableAutoRepliesList } from "./";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, InboxIcon } from "lucide-react";
 
@@ -57,9 +57,7 @@ export const MainAutoReplies = ({ user, Workflows, autoReplies = [] }: Props) =>
               />
             </div>
           ) : (
-            autoReplies.map((autoReplie) => (
-              <AutoRepliesCard key={autoReplie.id} autoReplie={autoReplie} workflows={Workflows} />
-            ))
+            <SortableAutoRepliesList autoReplies={autoReplies} workflows={Workflows} />
           )}
         </div>
       </div>

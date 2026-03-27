@@ -13,7 +13,7 @@ export async function getAllRRs(userId: string): Promise<RROperationResponse> {
     try {
         const list = await db.quickReply.findMany({
             where: { userId },
-            orderBy: { createdAt: 'desc' },
+            orderBy: { order: 'asc' },
         });
         return {
             success: true,
@@ -100,6 +100,25 @@ export async function deleteRR(id: number): Promise<RROperationResponse> {
         return {
             success: false,
             message: 'Error al eliminar el registro.',
+        };
+    }
+}
+
+export async function updateRROrder(id: number, order: number): Promise<RROperationResponse> {
+    try {
+        await db.quickReply.update({
+            where: { id },
+            data: { order },
+        });
+        return {
+            success: true,
+            message: 'Orden actualizado correctamente.',
+        };
+    } catch (error) {
+        console.error('Error al actualizar orden rr:', error);
+        return {
+            success: false,
+            message: 'Error al actualizar el orden.',
         };
     }
 }

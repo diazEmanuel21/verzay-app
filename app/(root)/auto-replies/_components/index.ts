@@ -5,3 +5,4 @@ export * from './CreateAutoReplies';
 export * from './AutoRepliesCard';
 export * from './CardCreateRr';
 export * from './AutoRepliesActions';
+export * from './SortableAutoRepliesList';

@@ -852,6 +852,7 @@ model QuickReply {
   id         Int      @id @default(autoincrement())
   workflowId String
   mensaje    String?
+  order      Int      @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   userId     String
