@@ -56,7 +56,7 @@ export function buildBillingMessage(args: {
             // `📌 *Billing:* ${billingStatus ?? "PAID"}`,
             // `📌 *Acceso:* ${accessStatus ?? "ACTIVE"}`,
             `--------•--------•--------•--------`,
-            `Si ya pagaste, puedes ignorar este mensaje.`,
+            `Gracias por su pago, ${companyName}, su servicio se encuentra activo.`,
         ].join("\n");
     }
 
@@ -95,6 +95,7 @@ export function buildBillingMessage(args: {
             `--------•--------•--------•--------`,
             `💱 *Medios de pago:*`,
             `${paymentLinkOrText}`,
+            `--------•--------•--------•--------`,
             `Regulariza el pago para reactivar el servicio.`,
         ].join("\n");
     }

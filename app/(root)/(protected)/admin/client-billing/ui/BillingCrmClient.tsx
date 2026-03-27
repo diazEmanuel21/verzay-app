@@ -988,7 +988,7 @@ export function BillingCrmClient({
 
                                                     <div className="grid gap-1">
                                                         <label className="text-muted-foreground">
-                                                            Número notificación (remoteJid destino)
+                                                            Número notificación
                                                         </label>
                                                         <Input
                                                             value={dialog.form.notifyRemoteJid}
@@ -998,13 +998,9 @@ export function BillingCrmClient({
                                                                     form: { ...s.form, notifyRemoteJid: e.target.value },
                                                                 }))
                                                             }
-                                                            placeholder="Ej: 573001112233 o 573001112233@s.whatsapp.net"
+                                                            placeholder="Si queda vacío, se usará el número del usuario."
                                                             className="h-9"
                                                         />
-                                                        <p className="text-[11px] text-muted-foreground">
-                                                            Si queda vacío, se usará el <b>notificationNumber</b> del
-                                                            usuario.
-                                                        </p>
                                                     </div>
 
                                                     <div className="grid grid-cols-2 gap-3">
