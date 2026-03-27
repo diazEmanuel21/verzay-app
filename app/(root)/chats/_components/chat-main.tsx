@@ -72,7 +72,6 @@ import { SessionTagsCombobox } from '../../tags/components';
 import { ChatQuickReplyOption, ChatToolActionResult, ChatWorkflowOption } from '@/types/chat';
 import { Session, SimpleTag, SingleSessionResponse } from '@/types/session';
 import { CrmFollowUpSummaryBadge } from '../../crm/dashboard/components/CrmFollowUpSummaryBadge';
-import { LeadStatusBadge } from '../../crm/dashboard/components/records-table/LeadStatusBadge';
 import { getDisplayWhatsappFromSession } from '../../crm/dashboard/helpers';
 
 type ChatMainProps = {
@@ -529,7 +528,7 @@ const MediaRenderer: React.FC<{ media: MediaData | undefined }> = React.memo(({ 
                 onMouseLeave={handleMouseUp}
                 onDoubleClick={handleDoubleClick}
               >
-                <img
+                <SafeImage
                   src={url}
                   alt={caption || 'Imagen'}
                   className="max-w-full max-h-[75vh] object-contain rounded pointer-events-none"

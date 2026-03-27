@@ -183,6 +183,55 @@ export async function getEnrichedClients(filter?: FilterOptions): Promise<Client
 }
 
 // ==============================
+// GET CLIENTS FOR SELECTOR (lightweight — no API calls, no credits, no reseller)
+// ==============================
+
+export interface ClientSelectorItem {
+  id: string;
+  label: string;
+  email: string;
+}
+
+export async function getClientsForSelector(
+  filter?: FilterOptions,
+): Promise<ClientResponse<ClientSelectorItem[]>> {
+  try {
+    await ensureAdminOrResellerUser();
+
+    let userIds: string[] | undefined;
+
+    if (filter?.resellerId) {
+      const assignments = await db.reseller.findMany({
+        where: { resellerid: filter.resellerId },
+        select: { userId: true },
+      });
+      userIds = assignments.map((a) => a.userId).filter(Boolean) as string[];
+
+      if (!userIds.length) {
+        return { success: true, message: 'No hay usuarios asignados.', data: [] };
+      }
+    }
+
+    const users = await db.user.findMany({
+      where: userIds ? { id: { in: userIds } } : undefined,
+      select: { id: true, name: true, email: true, company: true },
+      orderBy: { name: 'asc' },
+    });
+
+    const data: ClientSelectorItem[] = users.map((u) => ({
+      id: u.id,
+      label: u.company ?? u.name ?? u.email ?? u.id,
+      email: u.email ?? '',
+    }));
+
+    return { success: true, message: 'Clientes cargados.', data };
+  } catch (error) {
+    console.error('Error obteniendo clientes para selector:', error);
+    return { success: false, message: 'Error al obtener clientes.' };
+  }
+}
+
+// ==============================
 // GET CLIENT DATA BY USER ID
 // ==============================
 export const getClientDataByUserId = async (userId: string): Promise<ClientResponse<UserWithPausar>> => {

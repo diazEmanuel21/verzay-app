@@ -1,9 +1,12 @@
 import AccessDenied from '@/app/AccessDenied';
 import Header from '@/components/shared/header';
-import { getEnrichedClients } from '@/actions/userClientDataActions';
+import { getClientsForSelector } from '@/actions/userClientDataActions';
 import { currentUser } from '@/lib/auth';
 import { isAdminLike, isAdminOrReseller } from '@/lib/rbac';
+import { Database, FileSpreadsheet } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ExternalDataImportClient } from './_components/ExternalDataImportClient';
+import { ExternalClientDataManagement } from './_components/ExternalClientDataManagement';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,21 +18,34 @@ export default async function ExternalDataPage() {
   }
 
   const resClients = isAdminOrReseller(user.role)
-    ? await getEnrichedClients(user.role === 'reseller' ? { resellerId: user.id } : undefined)
+    ? await getClientsForSelector(user.role === 'reseller' ? { resellerId: user.id } : undefined)
     : { data: [] };
 
-  const clients = (resClients?.data ?? []).map((c) => ({
-    id: c.id,
-    label: `${c.company ?? c.name ?? c.email}`,
-    email: c.email,
-  }));
+  const clients = resClients?.data ?? [];
 
   return (
     <>
       <Header title="Datos Externos de Clientes" />
-      <div className="p-4 md:p-6">
-        <ExternalDataImportClient clients={clients} />
-      </div>
+        <Tabs defaultValue="management">
+          <TabsList className="mb-4">
+            <TabsTrigger value="management" className="gap-2">
+              <Database className="h-4 w-4" />
+              Gestión
+            </TabsTrigger>
+            <TabsTrigger value="import" className="gap-2">
+              <FileSpreadsheet className="h-4 w-4" />
+              Importar
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="management">
+            <ExternalClientDataManagement clients={clients} />
+          </TabsContent>
+
+          <TabsContent value="import">
+            <ExternalDataImportClient clients={clients} />
+          </TabsContent>
+        </Tabs>
     </>
   );
 }
