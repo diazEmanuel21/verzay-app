@@ -13,7 +13,7 @@ export function buildBillingMessage(args: {
     currencyCode: string;
     currencyFlag?: string | null;
     paymentLinkOrText: string;
-    clientName?: string | null;
+    companyName?: string | null;
     billingStatus?: BillingStatus | null;
     accessStatus?: AccessStatus | null;
 }) {
@@ -27,7 +27,7 @@ export function buildBillingMessage(args: {
         currencyCode,
         currencyFlag,
         paymentLinkOrText,
-        clientName,
+        companyName,
         billingStatus,
         accessStatus,
     } = args;
@@ -45,7 +45,7 @@ export function buildBillingMessage(args: {
     if (type === "STATUS_ACTIVE") {
         return [
             `✅ *Estado de su servicio actualizado*`,
-            // `${clientName || "Cliente"}, su servicio se encuentra activo.`,
+            // `${companyName || "Cliente"}, su servicio se encuentra activo.`,
             `--------•--------•--------•--------`,
             dueDateLine,
             daysRemainingLine,
@@ -63,7 +63,7 @@ export function buildBillingMessage(args: {
     if (type === "STATUS_PENDING") {
         return [
             `🟡 *Estado de su servicio actualizado*`,
-            // `${clientName || "Cliente"}, su servicio sigue activo pero el pago figura pendiente.`,
+            // `${companyName || "Cliente"}, su servicio sigue activo pero el pago figura pendiente.`,
             `--------•--------•--------•--------`,
             dueDateLine,
             daysRemainingLine,
@@ -75,14 +75,14 @@ export function buildBillingMessage(args: {
             `📌 *Acceso:* ${accessStatus ?? "ACTIVE"}`,
             `--------•--------•--------•--------`,
             `💱 *Medios de pago:*`,
-            `👉 ${paymentLinkOrText}`,
+            `${paymentLinkOrText}`,
         ].join("\n");
     }
 
     if (type === "STATUS_SUSPENDED") {
         return [
             `🚫 *Estado de su servicio actualizado*`,
-            // `${clientName || "Cliente"}, su servicio fue suspendido por vencimiento fuera de los dias de gracia.`,
+            // `${companyName || "Cliente"}, su servicio fue suspendido por vencimiento fuera de los dias de gracia.`,
             `--------•--------•--------•--------`,
             dueDateLine,
             daysRemainingLine,
@@ -94,7 +94,7 @@ export function buildBillingMessage(args: {
             `📌 *Acceso:* ${accessStatus ?? "SUSPENDED"}`,
             `--------•--------•--------•--------`,
             `💱 *Medios de pago:*`,
-            `👉 ${paymentLinkOrText}`,
+            `${paymentLinkOrText}`,
             `Regulariza el pago para reactivar el servicio.`,
         ].join("\n");
     }
@@ -104,7 +104,7 @@ export function buildBillingMessage(args: {
         : null;
 
     const header = type === "REMINDER_3D"
-        ? `👨🏻‍💼 ${clientName || "Cliente"}:`
+        ? `🏢 ${companyName || "Cliente"}:`
         : type === "DUE_TODAY"
             ? `🔔 *Hoy vence su servicio:*`
             : `🚫 *Su servicio esta vencido desde hace ${overdueDays ?? 0} ${overdueDays === 1 ? "dia" : "dias"}:*`;
@@ -121,7 +121,7 @@ export function buildBillingMessage(args: {
         `💵 ${fmtPriceLine({ price, currencyCode, currencyFlag })}`,
         `--------•--------•--------•--------`,
         `💱 *Medios de pago:*`,
-        `👉${paymentLinkOrText}`,
+        `${paymentLinkOrText}`,
         `--------•--------•--------•--------`,
         `Una vez realizado, enviar el soporte a este chat`,
     ]

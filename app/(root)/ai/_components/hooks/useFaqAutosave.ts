@@ -65,7 +65,6 @@ export function useFaqAutosave(opts: {
         [onStatusChange]
     );
 
-    // 👉 Guardado REAL (sin debounce)
     const saveFn = useCallback(
         async (payload: { items: QaItem[] }) => {
             if (!promptId) return;
@@ -106,7 +105,6 @@ export function useFaqAutosave(opts: {
         [promptId, onVersionChange, notifyStatus]
     );
 
-    // 👉 Versión con debounce, usada solo en modo "auto"
     const runSave = useMemo(() => createDebounced(saveFn, 700), [saveFn]);
 
     // Autosave solo si mode === "auto"
@@ -124,7 +122,6 @@ export function useFaqAutosave(opts: {
         };
     }, [itemsHash, items, mode, promptId, runSave]);
 
-    // 👉 Guardado forzado para el botón Guardar
     const forceSave = useCallback(async () => {
         if (!promptId) return;
         lastHashRef.current = itemsHash;

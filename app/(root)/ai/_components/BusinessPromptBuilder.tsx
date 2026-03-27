@@ -165,7 +165,6 @@ export const BusinessPromptBuilder = ({
                                                     onChange={field.onChange}
                                                     onBlur={(e) => {
                                                         field.onBlur();
-                                                        // 👉 handleChange recibe el evento completo
                                                         handleChange?.("nombre")(e);
                                                     }}
                                                 />

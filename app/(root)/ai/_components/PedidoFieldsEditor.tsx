@@ -133,7 +133,7 @@ export const PedidoFieldsEditor = ({
                 </>
             }
 
-            {/* 👉 Solo para subtype "citas": mostramos la URL del appointment en un input readonly */}
+            {/* Solo para subtype "citas": mostramos la URL del appointment en un input readonly */}
             {isAppointment && (
                 <div className="mt-3 space-y-2 rounded-md border-border bg-muted/40 p-3">
                     <div className="flex items-center justify-between gap-2">

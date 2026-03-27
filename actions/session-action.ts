@@ -28,7 +28,7 @@ import {
   pickPreferredWhatsAppRemoteJid,
 } from '@/lib/whatsapp-jid';
 
-// 👉 schema para agregar varios tags a una sesión
+// schema para agregar varios tags a una sesión
 const addTagsToSessionSchema = z.object({
   userId: z.string().min(1),
   sessionId: z.number().int().positive(),
@@ -833,7 +833,7 @@ export async function getSessionByRemoteJid(
   }
 }
 
-// 👉 Action: agregar uno o varios tags a una Session (sin borrar los actuales)
+// Action: agregar uno o varios tags a una Session (sin borrar los actuales)
 export async function addTagsToSessionAction(
   input: z.infer<typeof addTagsToSessionSchema>,
 ): Promise<ActionResponse<null>> {
