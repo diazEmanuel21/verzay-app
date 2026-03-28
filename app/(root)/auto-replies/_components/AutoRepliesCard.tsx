@@ -57,7 +57,7 @@ export const AutoRepliesCard = ({ autoReplie, workflows }: autoReplies) => {
         <Card className="transition-all duration-300 hover:shadow-lg border-border">
             <CardContent className="p-4 flex items-center justify-between h-[100px]">
                 <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-accent">
+                    <div className="w-10 h-10 rounded-sm flex items-center justify-center bg-blue-500 cursor-pointer">
                         <MessageCircleMoreIcon />
                     </div>
                     <div className="flex flex-col">
@@ -115,7 +115,7 @@ export const AutoRepliesCard = ({ autoReplie, workflows }: autoReplies) => {
                                         }
                                     } catch (err) {
                                         toast.error("Error al actualizar el flujo", { id: toastId });
-                                    }finally {
+                                    } finally {
                                         router.refresh();
                                     }
                                 }}
