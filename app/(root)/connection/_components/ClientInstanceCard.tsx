@@ -97,7 +97,7 @@ export const ClientInstanceCard = ({
 
   return (
     <>
-      <Card className="border-border w-full">
+      <Card className="border-border flex-1">
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>{intanceName}</CardTitle>

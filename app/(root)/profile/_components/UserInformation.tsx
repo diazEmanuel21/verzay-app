@@ -380,7 +380,7 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                             /> */}
 
                                 {/* Estado del agente */}
-                                <Card className="border-border flex flex-col">
+                                <Card className="border-border flex flex-1 flex-col">
                                     <CardContent className="pt-4 flex flex-col flex-1 gap-4">
                                         <CardLabel icon={isMuted ? BotOff : Bot}>Estado del agente</CardLabel>
                                         <div className="flex-1 flex flex-col justify-between gap-3">
@@ -442,10 +442,9 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                     {/* ── Tab: Preferencias ────────────────────── */}
                     <TabsContent value="preferencias" className="absolute inset-0 mt-0 data-[state=inactive]:pointer-events-none">
                         <TabPanel>
-                            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-
+                            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2">
                                 {/* Empresa */}
-                                <Card className="border-border flex flex-col">
+                                <Card className="border-border flex flex-1 flex-col">
                                     <CardContent className="pt-4 flex flex-col flex-1 gap-4">
                                         <CardLabel icon={Building2}>Empresa</CardLabel>
                                         <FieldGroup
@@ -466,7 +465,7 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                 </Card>
 
                                 {/* Zona horaria */}
-                                <Card className="border-border flex flex-col">
+                                <Card className="border-border flex flex-1 flex-col">
                                     <CardContent className="pt-4 flex flex-col flex-1 gap-4">
                                         <CardLabel icon={Globe}>Zona horaria</CardLabel>
                                         <FieldGroup

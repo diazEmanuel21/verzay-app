@@ -111,7 +111,7 @@ export const ConnectionCard = ({
     if (isFacebookOrInstagram && !isChannelEnabled) {
         return (
             // <Card className="border-border max-w-60 text-center shadow-lg">
-            <Card className="border-border w-full">
+            <Card className="border-border flex-1">
                 <CardHeader className="flex flex-col items-start justify-center p-6 space-y-3">
                     <div className="flex items-center gap-2">
                         <SocialIconSelector instanceType={instanceType} />
