@@ -31,7 +31,6 @@ import { ApiKeyConfigurator, ChangePasswordCard } from "./";
 import { UserInformationProps } from "../page";
 import { ConnectionMain } from "../../connection/_components";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -363,21 +362,46 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                     <TabsContent value="conexion" className="absolute inset-0 mt-0 data-[state=inactive]:pointer-events-none">
                         <TabPanel>
                             <SectionTitle>Canal de comunicación</SectionTitle>
-                            <ConnectionMain
-                                user={user}
-                                instance={instancesData["Whatsapp"].instance}
-                                instanceInfo={instancesData["Whatsapp"].info}
-                                instanceType={"Whatsapp"}
-                                prompts={instancesData["Whatsapp"].prompts}
-                            />
-                            {/* Instagram no está en uso actualmente */}
-                            {/* <ConnectionMain
+                            <div className="flex flex-col lg:flex-row gap-2">
+                                <ConnectionMain
+                                    user={user}
+                                    instance={instancesData["Whatsapp"].instance}
+                                    instanceInfo={instancesData["Whatsapp"].info}
+                                    instanceType={"Whatsapp"}
+                                    prompts={instancesData["Whatsapp"].prompts}
+                                />
+                                {/* Instagram no está en uso actualmente */}
+                                {/* <ConnectionMain
                                 user={user}
                                 instance={instancesData["Instagram"].instance}
                                 instanceInfo={instancesData["Instagram"].info}
                                 instanceType={"Instagram"}
                                 prompts={instancesData["Instagram"].prompts}
                             /> */}
+
+                                {/* Estado del agente */}
+                                <Card className="border-border flex flex-col">
+                                    <CardContent className="pt-4 flex flex-col flex-1 gap-4">
+                                        <CardLabel icon={isMuted ? BotOff : Bot}>Estado del agente</CardLabel>
+                                        <div className="flex-1 flex flex-col justify-between gap-3">
+                                            <p className="text-xs text-muted-foreground">
+                                                {isMuted
+                                                    ? "El bot no enviará respuestas automáticas a tus contactos."
+                                                    : "El bot responde automáticamente a tus contactos."}
+                                            </p>
+                                            <div className="flex items-center justify-between">
+                                                <Badge
+                                                    variant={isMuted ? "destructive" : "outline"}
+                                                    className={`text-xs ${!isMuted ? "text-green-600 border-green-600 dark:text-green-400 dark:border-green-400" : ""}`}
+                                                >
+                                                    {isMuted ? "Silenciado" : "Activo"}
+                                                </Badge>
+                                                <Switch checked={!isMuted} onCheckedChange={(v) => handleMuteToggle(!v)} />
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
                         </TabPanel>
                     </TabsContent>
 
@@ -388,7 +412,7 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                 <Card className="border-border flex flex-col">
                                     <CardContent className="pt-4 flex flex-col flex-1 gap-4">
                                         <CardLabel icon={Zap}>Proveedor de IA</CardLabel>
-                                        <ApiKeyConfigurator userId={userId} onSaved={() => {}} />
+                                        <ApiKeyConfigurator userId={userId} onSaved={() => { }} />
                                     </CardContent>
                                 </Card>
 
@@ -397,7 +421,6 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                         <CardLabel icon={Bell}>Notificaciones</CardLabel>
                                         <FieldGroup
                                             label="Número de notificación"
-                                            hint="WhatsApp al que se enviarán las alertas del asistente"
                                             loading={loadingField === "notificationNumber"}
                                         >
                                             <Input
@@ -448,35 +471,12 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                         <CardLabel icon={Globe}>Zona horaria</CardLabel>
                                         <FieldGroup
                                             label="Región"
-                                            hint="Usada para recordatorios y mensajes programados"
                                         >
                                             <TimezoneCombobox value={timezone} onChange={handleTimezoneChange} />
                                         </FieldGroup>
                                     </CardContent>
                                 </Card>
 
-                                {/* Silenciar agente */}
-                                <Card className="border-border flex flex-col">
-                                    <CardContent className="pt-4 flex flex-col flex-1 gap-4">
-                                        <CardLabel icon={isMuted ? BotOff : Bot}>Estado del agente</CardLabel>
-                                        <div className="flex-1 flex flex-col justify-between gap-3">
-                                            <p className="text-xs text-muted-foreground">
-                                                {isMuted
-                                                    ? "El bot no enviará respuestas automáticas a tus contactos."
-                                                    : "El bot responde automáticamente a tus contactos."}
-                                            </p>
-                                            <div className="flex items-center justify-between">
-                                                <Badge
-                                                    variant={isMuted ? "destructive" : "outline"}
-                                                    className={`text-xs ${!isMuted ? "text-green-600 border-green-600 dark:text-green-400 dark:border-green-400" : ""}`}
-                                                >
-                                                    {isMuted ? "Silenciado" : "Activo"}
-                                                </Badge>
-                                                <Switch checked={isMuted} onCheckedChange={handleMuteToggle} />
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
 
                             </div>
                         </TabPanel>
@@ -529,45 +529,49 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                             </Card>
 
                             <SectionTitle>Frases automáticas</SectionTitle>
-                            <Card className="border-border">
-                                <CardContent className="pt-4 space-y-4">
-                                    <FieldGroup
-                                        label="Frase de reactivación"
-                                        hint="Mensaje enviado al reactivar una conversación"
-                                        icon={MessageSquare}
-                                        loading={loadingField === "openMsg"}
-                                    >
-                                        <Input
-                                            id="openMsg"
-                                            name="openMsg"
-                                            placeholder="Fue un gusto ayudarle."
-                                            value={(user.openMsg as string) ?? ""}
-                                            disabled={loadingField === "openMsg"}
-                                            onChange={(e) => handleChange("openMsg", e.target.value)}
-                                            onBlur={() => handleBlur("openMsg")}
-                                        />
-                                    </FieldGroup>
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <Card className="border-border">
+                                    <CardContent className="pt-4">
+                                        <FieldGroup
+                                            label="Frase de reactivación"
+                                            hint="Mensaje enviado al reactivar una conversación"
+                                            icon={MessageSquare}
+                                            loading={loadingField === "openMsg"}
+                                        >
+                                            <Input
+                                                id="openMsg"
+                                                name="openMsg"
+                                                placeholder="Fue un gusto ayudarle."
+                                                value={(user.openMsg as string) ?? ""}
+                                                disabled={loadingField === "openMsg"}
+                                                onChange={(e) => handleChange("openMsg", e.target.value)}
+                                                onBlur={() => handleBlur("openMsg")}
+                                            />
+                                        </FieldGroup>
+                                    </CardContent>
+                                </Card>
 
-                                    <Separator />
-
-                                    <FieldGroup
-                                        label="Frase de cierre"
-                                        hint="Mensaje enviado al finalizar el seguimiento"
-                                        icon={MessageSquare}
-                                        loading={loadingField === "delSeguimiento"}
-                                    >
-                                        <Input
-                                            id="delSeguimiento"
-                                            name="delSeguimiento"
-                                            placeholder="Fue un gusto ayudarle."
-                                            value={(user.delSeguimiento as string) ?? ""}
-                                            disabled={loadingField === "delSeguimiento"}
-                                            onChange={(e) => handleChange("delSeguimiento", e.target.value)}
-                                            onBlur={() => handleBlur("delSeguimiento")}
-                                        />
-                                    </FieldGroup>
-                                </CardContent>
-                            </Card>
+                                <Card className="border-border">
+                                    <CardContent className="pt-4">
+                                        <FieldGroup
+                                            label="Frase de desactivación"
+                                            hint="Mensaje enviado al finalizar el seguimiento"
+                                            icon={MessageSquare}
+                                            loading={loadingField === "delSeguimiento"}
+                                        >
+                                            <Input
+                                                id="delSeguimiento"
+                                                name="delSeguimiento"
+                                                placeholder="Fue un gusto ayudarle."
+                                                value={(user.delSeguimiento as string) ?? ""}
+                                                disabled={loadingField === "delSeguimiento"}
+                                                onChange={(e) => handleChange("delSeguimiento", e.target.value)}
+                                                onBlur={() => handleBlur("delSeguimiento")}
+                                            />
+                                        </FieldGroup>
+                                    </CardContent>
+                                </Card>
+                            </div>
                         </TabPanel>
                     </TabsContent>
 
