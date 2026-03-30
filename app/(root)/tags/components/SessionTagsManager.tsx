@@ -116,6 +116,7 @@ export const SessionTagsManager = ({
                 name: res.data.name,
                 slug: (res.data as any).slug,
                 color: (res.data as any).color ?? null,
+                order: (res.data as any).order ?? 0,
             };
 
             setTags((prev) => [...prev, newTag]);

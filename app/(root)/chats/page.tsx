@@ -172,6 +172,7 @@ export default async function ChatsPage({
       name: tag.name,
       slug: tag.slug,
       color: tag.color,
+      order: tag.order ?? 0,
       sessionCount: tag._count?.sessionTags ?? 0,
     })) ?? [];
 

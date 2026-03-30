@@ -20,6 +20,7 @@ export default async function SessionsPage() {
       name: t.name,
       slug: t.slug,
       color: t.color,
+      order: t.order ?? 0,
       sessionCount: t._count?.sessionTags ?? 0,
 
     })) ?? [];
