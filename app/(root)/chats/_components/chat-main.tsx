@@ -147,6 +147,7 @@ type UIBubble = {
   ts?: number;
   media?: MediaData;
   status?: MessageDeliveryState;
+  kind?: 'sticker' | 'reaction';
 };
 
 // Estado de previsualización de audio
@@ -292,6 +293,7 @@ function toUIMessages(
     const ts = m.messageTimestamp;
     let content = '';
     let media: MediaData | null = null;
+    let kind: UIBubble['kind'];
     const messageData = (m.message || {}) as any;
 
     switch (m.messageType) {
@@ -317,6 +319,17 @@ function toUIMessages(
         media = extractMediaInfo(messageData, 'document');
         content = media?.caption || '';
         break;
+      case 'stickerMessage': {
+        const s = messageData.stickerMessage || {};
+        const url = messageData.mediaUrl || s.mediaUrl || s.url || s.directPath;
+        if (url) media = { type: 'image', url, mimeType: s.mimetype || 'image/webp' };
+        kind = 'sticker';
+        break;
+      }
+      case 'reactionMessage':
+        content = messageData.reactionMessage?.text || '';
+        kind = 'reaction';
+        break;
       default:
         content = `[Mensaje ${m.messageType || 'desconocido'}]`;
     }
@@ -336,6 +349,7 @@ function toUIMessages(
       ts: ts ? ts * 1000 : undefined,
       media: media || undefined,
       status: isUser ? normalizeDeliveryState(resolveEvolutionMessageStatus(m)) : undefined,
+      kind,
     };
   });
 }
@@ -663,12 +677,96 @@ const MessageBubble: React.FC<{
   timestamp?: number;
   media?: MediaData;
   status?: MessageDeliveryState;
-}> = ({ message, isUserMessage, avatarSrc, timestamp, media, status }) => {
+  kind?: UIBubble['kind'];
+}> = ({ message, isUserMessage, avatarSrc, timestamp, media, status, kind }) => {
+  const showAvatar = !isUserMessage;
+
+  const timeAndStatus = (
+    <div className="flex items-center gap-1">
+      {timestamp && (
+        <span
+          className={cn(
+            'text-[0.6rem] mt-1 block',
+            isUserMessage ? 'text-gray-300' : 'text-gray-500 dark:text-gray-400/80',
+          )}
+          aria-label="Hora del mensaje"
+        >
+          {CHAT_TIME_FORMATTER.format(new Date(timestamp))}
+        </span>
+      )}
+      {isUserMessage && (
+        <span className="text-[0.6rem] mt-1 block">
+          <MessageStatusIndicator status={status} />
+        </span>
+      )}
+    </div>
+  );
+
+  // — Sticker: sin burbuja, solo la imagen webp transparente
+  if (kind === 'sticker') {
+    return (
+      <div className={cn('flex items-end gap-1 my-1', isUserMessage ? 'justify-end' : 'justify-start')}>
+        {showAvatar && (
+          <div className="mr-1">
+            <Avatar className="w-7 h-7">
+              <AvatarImage src={avatarSrc || '/default-avatar.png'} />
+              <AvatarFallback>{initialFromName()}</AvatarFallback>
+            </Avatar>
+          </div>
+        )}
+        <div className="flex flex-col gap-0.5">
+          <div className="w-24 h-24">
+            {media ? (
+              <MediaRenderer media={media} />
+            ) : (
+              <div className="w-24 h-24 flex items-center justify-center rounded-xl bg-muted text-2xl">🏷️</div>
+            )}
+          </div>
+          <div className={cn('flex', isUserMessage ? 'justify-end' : 'justify-start')}>
+            {timeAndStatus}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // — Reaction: emoji grande centrado con fondo mínimo
+  if (kind === 'reaction') {
+    return (
+      <div className={cn('flex items-end gap-1 my-1', isUserMessage ? 'justify-end' : 'justify-start')}>
+        {showAvatar && (
+          <div className="mr-1">
+            <Avatar className="w-7 h-7">
+              <AvatarImage src={avatarSrc || '/default-avatar.png'} />
+              <AvatarFallback>{initialFromName()}</AvatarFallback>
+            </Avatar>
+          </div>
+        )}
+        <div className="flex flex-col gap-0.5">
+          <div
+            className={cn(
+              'flex flex-col items-center rounded-2xl border bg-muted/40 px-3 py-2',
+              isUserMessage ? 'items-end' : 'items-start',
+            )}
+          >
+            <span className="text-3xl leading-none" role="img" aria-label="Reaccion">
+              {message || '👍'}
+            </span>
+            <span className="mt-1 text-[0.6rem] text-muted-foreground">Reaccionó a un mensaje</span>
+          </div>
+          <div className={cn('flex', isUserMessage ? 'justify-end' : 'justify-start')}>
+            {timeAndStatus}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // — Default: burbuja normal
   const bubbleClass = isUserMessage
     ? 'bg-primary text-white rounded-xl rounded-br-sm self-end'
     : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl rounded-tl-sm self-start';
   const contentClass = isUserMessage ? 'text-white' : 'text-gray-800 dark:text-gray-100';
-  const showAvatar = !isUserMessage;
 
   return (
     <div className={cn('flex items-end gap-1 my-1 ', isUserMessage ? 'justify-end' : 'justify-start')}>
@@ -688,22 +786,7 @@ const MessageBubble: React.FC<{
           </div>
         )}
         <div className={cn('right-2 bottom-1 flex items-center gap-1')}>
-          {timestamp && (
-            <span
-              className={cn(
-                'text-[0.6rem] mt-1 block',
-                isUserMessage ? 'text-gray-300' : 'text-gray-500 dark:text-gray-400/80'
-              )}
-              aria-label="Hora del mensaje"
-            >
-              {CHAT_TIME_FORMATTER.format(new Date(timestamp))}
-            </span>
-          )}
-          {isUserMessage && (
-            <span className="text-[0.6rem] mt-1 block">
-              <MessageStatusIndicator status={status} />
-            </span>
-          )}
+          {timeAndStatus}
         </div>
       </div>
     </div>
@@ -1032,6 +1115,7 @@ const ChatMessageList: React.FC<{
             timestamp={item.message.ts}
             media={item.message.media}
             status={item.message.status}
+            kind={item.message.kind}
           />
         )
       )}
@@ -1116,11 +1200,11 @@ export const ChatMain: React.FC<ChatMainProps> = ({
   // Detectores memoizados
   const isMediaMsg = useCallback((m: EvolutionMessage) => {
     const body = (m.message || {}) as any;
-    return !!(body.imageMessage || body.videoMessage || body.audioMessage || body.documentMessage);
+    return !!(body.imageMessage || body.videoMessage || body.audioMessage || body.documentMessage || body.stickerMessage);
   }, []);
   const hasRemoteOnly = useCallback((m: EvolutionMessage) => {
     const body = (m.message || {}) as any;
-    const media = body.imageMessage || body.videoMessage || body.audioMessage || body.documentMessage || {};
+    const media = body.imageMessage || body.videoMessage || body.audioMessage || body.documentMessage || body.stickerMessage || {};
     const url = body.mediaUrl || media.mediaUrl || media.url || media.directPath;
     return !!url && typeof url === 'string' && !/^data:[^;]+;base64,/.test(url);
   }, []);

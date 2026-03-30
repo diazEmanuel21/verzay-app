@@ -472,6 +472,12 @@ export type MessageContent = {
   documentMessage?: MediaMessagePayload;
   videoMessage?: MediaMessagePayload;
   audioMessage?: MediaMessagePayload;
+  stickerMessage?: MediaMessagePayload & { isAnimated?: boolean };
+  reactionMessage?: {
+    text: string;
+    key?: { id?: string; fromMe?: boolean; remoteJid?: string };
+    senderTimestampMs?: number;
+  };
   mediaUrl?: string;
   messageContextInfo?: Record<string, unknown>;
 };

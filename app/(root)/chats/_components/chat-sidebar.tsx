@@ -123,6 +123,8 @@ function getIconForMessageType(type?: string): LucideIcon | null {
     case "documentMessage":
     case "fileMessage":
       return FileText;
+    case "stickerMessage":
+      return ImageIcon;
     default:
       return null;
   }
@@ -162,6 +164,14 @@ function lastTextFrom(chat: ChatData): {
       case "locationMessage":
         text = "Ubicacion";
         break;
+      case "stickerMessage":
+        text = "Sticker";
+        break;
+      case "reactionMessage": {
+        const emoji = (msg as any)?.reactionMessage?.text;
+        text = emoji ? `Reaccionó: ${emoji}` : "Reaccion";
+        break;
+      }
       default:
         text = `[${type || "Mensaje desconocido"}]`;
         break;
@@ -261,6 +271,16 @@ export function ChatSidebar({
         return b.ts - a.ts;
       });
   }, [chatPreferences, chatSessions, isMessageSeen, result, selectedJid]);
+
+  const tabCounts = useMemo(() => {
+    const active = contacts.filter((c) => !c.isDeleted && !c.isArchived);
+    return {
+      all: active.length,
+      groups: active.filter((c) => c.isGroup).length,
+      archived: contacts.filter((c) => !c.isDeleted && c.isArchived).length,
+      deleted: contacts.filter((c) => c.isDeleted).length,
+    };
+  }, [contacts]);
 
   const deletedContacts = useMemo(() => {
     let list = contacts.filter((contact) => contact.isDeleted);
@@ -375,74 +395,45 @@ export function ChatSidebar({
             )}
           </div>
 
-          <div className="grid grid-cols-5 gap-1">
-            <button
-              type="button"
-              onClick={() => setTab("all")}
-              className={cn(
-                "inline-flex items-center justify-center gap-1 rounded-xl border px-1 py-1 text-xs transition",
-                tab === "all"
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "hover:bg-muted",
-              )}
-            >
-              <Inbox className="h-3.5 w-3.5" /> Todos
-            </button>
-            {/* <button
-              type="button"
-              onClick={() => setTab("dm")}
-              className={cn(
-                "inline-flex items-center justify-center gap-1 rounded-xl border px-1 py-1 text-xs transition",
-                tab === "dm"
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "hover:bg-muted",
-              )}
-            >
-              Priv.
-            </button> */}
-            <button
-              type="button"
-              onClick={() => setTab("groups")}
-              className={cn(
-                "inline-flex items-center justify-center gap-1 rounded-xl border px-1 py-1 text-xs transition",
-                tab === "groups"
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "hover:bg-muted",
-              )}
-            >
-              <Users className="h-3.5 w-3.5" /> Grup.
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab("archived")}
-              className={cn(
-                "inline-flex items-center justify-center gap-1 rounded-xl border px-1 py-1 text-xs transition",
-                tab === "archived"
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "hover:bg-muted",
-              )}
-            >
-              <Archive className="h-3.5 w-3.5" /> Arch.
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab("deleted")}
-              className={cn(
-                "relative inline-flex items-center justify-center gap-1 rounded-xl border px-1 py-1 text-xs transition",
-                tab === "deleted"
-                  ? "border-destructive bg-destructive text-destructive-foreground"
-                  : "hover:bg-muted",
-              )}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Elim.
-              {deletedContacts.length > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
-                  {deletedContacts.length > 9 ? "9+" : deletedContacts.length}
-                </span>
-              )}
-            </button>
-          </div>
+          {(() => {
+            const TAB_CONFIG = [
+              { key: "all" as const,      label: "Todos", Icon: Inbox,    color: "#007BFF", count: tabCounts.all },
+              { key: "groups" as const,   label: "Grup.", Icon: Users,    color: "#28A745", count: tabCounts.groups },
+              { key: "archived" as const, label: "Arch.", Icon: Archive,  color: "#6C757D", count: tabCounts.archived },
+              { key: "deleted" as const,  label: "Elim.", Icon: Trash2,   color: "#DC3545", count: tabCounts.deleted },
+            ];
+            return (
+              <div className="grid grid-cols-4 gap-1">
+                {TAB_CONFIG.map(({ key, label, Icon, color, count }) => {
+                  const isActive = tab === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setTab(key)}
+                      className="relative inline-flex flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-1.5 text-[11px] font-medium transition-all"
+                      style={
+                        isActive
+                          ? { background: color, borderColor: color, color: "#fff" }
+                          : { borderColor: `${color}55`, color, background: `${color}12` }
+                      }
+                    >
+                      <Icon className="h-3.5 w-3.5 shrink-0" />
+                      <span>{label}</span>
+                      {count > 0 && (
+                        <span
+                          className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[9px] font-bold text-white"
+                          style={{ background: color }}
+                        >
+                          {count > 99 ? "99+" : count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
 
         <div role="list" className="flex-1 space-y-1 overflow-y-auto p-1">
