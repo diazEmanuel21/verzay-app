@@ -276,6 +276,7 @@ export function ChatSidebar({
     const active = contacts.filter((c) => !c.isDeleted && !c.isArchived);
     return {
       all: active.length,
+      dm: active.filter((c) => !c.isGroup).length,
       groups: active.filter((c) => c.isGroup).length,
       archived: contacts.filter((c) => !c.isDeleted && c.isArchived).length,
       deleted: contacts.filter((c) => c.isDeleted).length,
@@ -368,42 +369,49 @@ export function ChatSidebar({
   return (
     <>
       <aside className="flex h-full w-full max-w-[700px] flex-col border-r bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/50 xs:min-w-[200px]">
-        <div className="sticky top-0 z-10 space-y-3 border-b bg-background/70 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/50">
-          <div className="flex items-center justify-between">
-            <h1 className="text-lg font-semibold tracking-tight">Chats</h1>
-            <Inbox className="h-5 w-5 text-muted-foreground" aria-hidden />
+        <div className="sticky top-0 z-10 space-y-2 border-b bg-background/80 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          {/* Fila 1: título + buscador */}
+          <div className="flex items-center gap-2">
+            <span className="shrink-0 text-sm font-bold tracking-tight text-foreground">Chats</span>
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={q}
+                onChange={(event) => setQ(event.target.value)}
+                placeholder="Buscar..."
+                className="h-8 rounded-full pl-7 pr-7 text-xs"
+                aria-label="Buscar chats"
+              />
+              {q && (
+                <button
+                  type="button"
+                  aria-label="Limpiar busqueda"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setQ("")}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="relative">
-            <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={q}
-              onChange={(event) => setQ(event.target.value)}
-              placeholder="Buscar por nombre, mensaje o etiqueta..."
-              className="pl-8 pr-8"
-              aria-label="Buscar chats"
-            />
-            {q && (
-              <button
-                type="button"
-                aria-label="Limpiar busqueda"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
-                onClick={() => setQ("")}
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-
+          {/* Fila 2: tabs */}
           {(() => {
-            const TAB_CONFIG = [
-              { key: "all" as const,      label: "Todos", Icon: Inbox,    color: "#007BFF", count: tabCounts.all },
-              { key: "groups" as const,   label: "Grup.", Icon: Users,    color: "#28A745", count: tabCounts.groups },
-              { key: "archived" as const, label: "Arch.", Icon: Archive,  color: "#6C757D", count: tabCounts.archived },
-              { key: "deleted" as const,  label: "Elim.", Icon: Trash2,   color: "#DC3545", count: tabCounts.deleted },
+            const TAB_CONFIG: {
+              key: "all" | "dm" | "groups" | "archived" | "deleted";
+              label: string;
+              Icon: LucideIcon | null;
+              color: string;
+              count: number;
+            }[] = [
+              { key: "all",      label: "Todos",  Icon: Inbox,   color: "#007BFF", count: tabCounts.all },
+              // { key: "dm",       label: "Priv.",  Icon: null,    color: "#6366F1", count: tabCounts.dm },
+              { key: "groups",   label: "Grupos", Icon: Users,   color: "#28A745", count: tabCounts.groups },
+              { key: "archived", label: "Arch.",  Icon: Archive, color: "#6C757D", count: tabCounts.archived },
+              { key: "deleted",  label: "Elim.",  Icon: Trash2,  color: "#DC3545", count: tabCounts.deleted },
             ];
             return (
-              <div className="grid grid-cols-4 gap-1">
+              <div className="flex flex-row gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {TAB_CONFIG.map(({ key, label, Icon, color, count }) => {
                   const isActive = tab === key;
                   return (
@@ -411,19 +419,19 @@ export function ChatSidebar({
                       key={key}
                       type="button"
                       onClick={() => setTab(key)}
-                      className="relative inline-flex flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-1.5 text-[11px] font-medium transition-all"
+                      className="inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap transition-all"
                       style={
                         isActive
                           ? { background: color, borderColor: color, color: "#fff" }
-                          : { borderColor: `${color}55`, color, background: `${color}12` }
+                          : { borderColor: `${color}50`, color, background: `${color}10` }
                       }
                     >
-                      <Icon className="h-3.5 w-3.5 shrink-0" />
+                      {Icon && <Icon className="h-3 w-3 shrink-0" />}
                       <span>{label}</span>
                       {count > 0 && (
                         <span
-                          className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[9px] font-bold text-white"
-                          style={{ background: color }}
+                          className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full px-0.5 text-[9px] font-bold leading-none text-white"
+                          style={{ background: isActive ? "rgba(255,255,255,0.3)" : color }}
                         >
                           {count > 99 ? "99+" : count}
                         </span>
