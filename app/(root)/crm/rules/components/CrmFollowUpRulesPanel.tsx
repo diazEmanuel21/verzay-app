@@ -307,7 +307,7 @@ export function CrmFollowUpRulesPanel({
 
       <TabsContent
         value="followUps"
-        className="mt-0 flex-1 min-h-0 overflow-hidden"
+        className="mt-0 flex-1 min-h-0 min-w-0 overflow-hidden"
       >
         <CrmFollowUpWizard
           rules={rules}
@@ -326,7 +326,7 @@ export function CrmFollowUpRulesPanel({
 
       <TabsContent
         value="leadStatus"
-        className="mt-0 flex-1 min-h-0 overflow-hidden"
+        className="mt-0 flex-1 min-h-0 min-w-0 overflow-hidden"
       >
         {promptsLoading && !promptRecords?.leadStatus ? (
           <LoadingState label="Cargando wizard de clasificacion..." />
@@ -352,7 +352,7 @@ export function CrmFollowUpRulesPanel({
 
       <TabsContent
         value="leadFunnel"
-        className="mt-0 flex-1 min-h-0 overflow-hidden"
+        className="mt-0 flex-1 min-h-0 min-w-0 overflow-hidden"
       >
         {promptsLoading && !promptRecords?.leadFunnel ? (
           <LoadingState label="Cargando wizard del sintetizador..." />

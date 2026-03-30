@@ -36,7 +36,11 @@
       "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")",
       "Bash(grep -r \"ChatContactSessionMap\\\\|ChatContactDescriptor\\\\|ChatContactSession\" e:EMANUEL-DEVVerzayVERZAYverzay-app-mainverzay-app/types --include=*.ts)",
       "Bash(find e:EMANUEL-DEVVerzayVERZAYverzay-app-mainverzay-app -type f -name *.ts -o -name *.tsx)",
-      "Bash(grep -r \"softDelete\\\\|isDeleted\\\\|status.*deleted\" e:EMANUEL-DEVVerzayVERZAYverzay-app-mainverzay-app --include=*.ts --include=*.tsx)"
+      "Bash(grep -r \"softDelete\\\\|isDeleted\\\\|status.*deleted\" e:EMANUEL-DEVVerzayVERZAYverzay-app-mainverzay-app --include=*.ts --include=*.tsx)",
+      "Bash(ls -la \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)/\\(protected\\)\")",
+      "Bash(find \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)/\\(protected\\)\" -maxdepth 1 -type d)",
+      "Bash(find \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)/\\(protected\\)\" -maxdepth 2 -name \"page.tsx\")",
+      "Bash(wc -l /e/EMANUEL-DEV/Verzay/VERZAY/backend-api/api-webhook/src/**/*.ts)"
     ]
   }
 }

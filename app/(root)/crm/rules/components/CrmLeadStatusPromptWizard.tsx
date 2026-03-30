@@ -155,8 +155,8 @@ export function CrmLeadStatusPromptWizard({
 
   if (currentStep === "base") {
     content = (
-      <div className="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
-        <Card className="border-border/70">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] [&>*]:min-w-0">
+        <Card className="min-w-0 border-border/70">
           <CardHeader>
             <CardTitle className="text-base">Identidad y salida</CardTitle>
           </CardHeader>
@@ -194,7 +194,7 @@ export function CrmLeadStatusPromptWizard({
           </CardContent>
         </Card>
 
-        <Card className="border-border/70">
+        <Card className="min-w-0 border-border/70">
           <CardHeader>
             <CardTitle className="text-base">Guardrails</CardTitle>
           </CardHeader>
@@ -237,7 +237,7 @@ export function CrmLeadStatusPromptWizard({
 
   if (currentStep === "definitions") {
     content = (
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid min-w-0 gap-4 xl:grid-cols-2 [&>*]:min-w-0">
         {CRM_PROMPT_LEAD_STATUS_ORDER.map((status) => (
           <Card key={status} className="border-border/70">
             <CardHeader className="pb-3">
@@ -273,7 +273,7 @@ export function CrmLeadStatusPromptWizard({
     ] as const;
 
     content = (
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid min-w-0 gap-4 xl:grid-cols-2 [&>*]:min-w-0">
         {criteriaFields.map((field) => (
           <Card key={field.key} className="border-border/70">
             <CardHeader className="pb-3">
@@ -296,8 +296,8 @@ export function CrmLeadStatusPromptWizard({
 
   if (currentStep === "preview") {
     content = (
-      <div className="grid gap-6 xl:grid-cols-[0.85fr,1.15fr]">
-        <Card className="border-border/70">
+      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] [&>*]:min-w-0">
+        <Card className="min-w-0 border-border/70">
           <CardHeader>
             <CardTitle className="text-base">Resumen publicado</CardTitle>
           </CardHeader>
@@ -331,7 +331,7 @@ export function CrmLeadStatusPromptWizard({
           </CardContent>
         </Card>
 
-        <Card className="border-border/70">
+        <Card className="min-w-0 border-border/70">
           <CardHeader>
             <CardTitle className="text-base">Prompt generado</CardTitle>
           </CardHeader>
@@ -349,8 +349,8 @@ export function CrmLeadStatusPromptWizard({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
-      <div className="shrink-0 space-y-4">
+    <div className="flex h-full min-h-0 min-w-0 flex-col gap-4 overflow-hidden">
+      <div className="min-w-0 shrink-0 space-y-4">
         <div className="flex flex-row items-center gap-2 text-sm">
           <Tooltip delayDuration={120}>
             <TooltipTrigger asChild>
@@ -386,9 +386,9 @@ export function CrmLeadStatusPromptWizard({
         />
       </div>
 
-      <div className="min-h-0 flex-1">
-        <ScrollArea className="h-full pr-4">
-          <div className="space-y-4">
+      <div className="min-h-0 min-w-0 flex-1">
+        <ScrollArea className="h-full min-w-0 pr-4">
+          <div className="min-w-0 space-y-4">
             {content}
           </div>
         </ScrollArea>

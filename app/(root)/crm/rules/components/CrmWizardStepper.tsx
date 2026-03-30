@@ -1,10 +1,11 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Check } from "lucide-react";
+
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { Check, CircleHelp } from "lucide-react";
 
 export type CrmWizardStep = {
   id: string;
@@ -29,90 +30,45 @@ export function CrmWizardStepper({
   );
 
   return (
-    <TooltipProvider delayDuration={120}>
-      <ScrollArea className="w-full whitespace-nowrap rounded-2xl">
-        <div className="flex w-max gap-2 px-1 pb-3">
-            {steps.map((step, index) => {
-              const isActive = step.id === currentStep;
-              const isCompleted = index < currentIndex;
+    <Tabs value={currentStep} onValueChange={onStepChange} className="w-full">
+      <ScrollArea>
+        <TabsList className="h-auto gap-1.5 rounded-none bg-transparent px-0 py-0.5">
+          {steps.map((step, index) => {
+            const isCompleted = index < currentIndex;
 
-              return (
-                <Tooltip key={step.id}>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      aria-current={isActive ? "step" : undefined}
-                      aria-label={`${step.title}. ${step.description}`}
-                      className={cn(
-                        "h-auto min-w-[172px] items-start justify-start rounded-2xl border px-3 py-3 text-left whitespace-normal transition-colors sm:min-w-[188px]",
-                        isActive &&
-                          "border-primary/25 bg-primary/5 text-foreground shadow-sm",
-                        isCompleted &&
-                          !isActive &&
-                          "border-primary/15 bg-muted/45 text-foreground",
-                        !isActive &&
-                          !isCompleted &&
-                          "border-border/70 bg-background/80 text-muted-foreground hover:border-border hover:bg-accent/40 hover:text-foreground"
-                      )}
-                      onClick={() => onStepChange(step.id)}
-                    >
-                      <div className="flex w-full items-center gap-3">
-                        <div
-                          className={cn(
-                            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
-                            isActive &&
-                              "border-primary bg-primary text-primary-foreground",
-                            isCompleted &&
-                              !isActive &&
-                              "border-primary/20 bg-primary/10 text-primary",
-                            !isActive &&
-                              !isCompleted &&
-                              "border-border/70 bg-muted/60 text-muted-foreground"
-                          )}
-                        >
-                          {isCompleted ? (
-                            <Check className="h-3.5 w-3.5" />
-                          ) : (
-                            String(index + 1).padStart(2, "0")
-                          )}
-                        </div>
-
-                        <div className="min-w-0 flex-1 space-y-1">
-                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                            Paso {index + 1}
-                          </div>
-                          <div
-                            className={cn(
-                              "line-clamp-2 text-sm font-medium leading-tight",
-                              isActive ? "text-foreground" : "text-inherit"
-                            )}
-                          >
-                            {step.title}
-                          </div>
-                        </div>
-
-                        <CircleHelp
-                          className={cn(
-                            "mt-0.5 h-4 w-4 shrink-0",
-                            isActive ? "text-primary" : "text-muted-foreground/70"
-                          )}
-                        />
-                      </div>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-64">
-                    <p className="font-medium">{step.title}</p>
-                    <p className="mt-1 text-muted-foreground">
-                      {step.description}
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              );
-            })}
-        </div>
+            return (
+              <TabsTrigger
+                key={step.id}
+                value={step.id}
+                title={step.description}
+                className={cn(
+                  "h-8 gap-2 rounded-full px-3 text-sm font-medium transition-colors",
+                  "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none",
+                  "data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground"
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold leading-none transition-colors",
+                    isCompleted
+                      ? "bg-primary/15 text-primary"
+                      : "bg-muted text-muted-foreground",
+                    "in-data-[state=active]:bg-white/20 in-data-[state=active]:text-primary-foreground"
+                  )}
+                >
+                  {isCompleted ? (
+                    <Check className="h-2.5 w-2.5" />
+                  ) : (
+                    index + 1
+                  )}
+                </span>
+                {step.title}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
-    </TooltipProvider>
+    </Tabs>
   );
 }
