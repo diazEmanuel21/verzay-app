@@ -62,7 +62,7 @@ export async function listTagsAction(
 
         const tags = await db.tag.findMany({
             where: { userId: parsed },
-            orderBy: { name: "asc" },
+            orderBy: [{ order: "asc" }, { id: "asc" }],
             include: {
                 _count: {
                     select: {
@@ -106,12 +106,20 @@ export async function createTagAction(
             };
         }
 
+        const lastTag = await db.tag.findFirst({
+            where: { userId },
+            orderBy: { order: "desc" },
+            select: { order: true },
+        });
+        const nextOrder = (lastTag?.order ?? -1) + 1;
+
         const tag = await db.tag.create({
             data: {
                 userId,
                 name,
                 slug,
                 color: color ?? null,
+                order: nextOrder,
             },
         });
 
@@ -180,6 +188,23 @@ export async function updateTagAction(
     }
 }
 
+// Actualizar el orden de un tag
+export async function updateTagOrderAction(
+    tagId: number,
+    order: number,
+): Promise<ActionResponse<null>> {
+    try {
+        await db.tag.update({
+            where: { id: tagId },
+            data: { order },
+        });
+        return { success: true, message: 'Orden actualizado.', data: null };
+    } catch (error) {
+        console.error('updateTagOrderAction error:', error);
+        return { success: false, message: 'Error actualizando el orden.' };
+    }
+}
+
 // Eliminar un tag (se borran SessionTag por onDelete: Cascade)
 export async function deleteTagAction(
     input: z.infer<typeof tagIdSchema>,
@@ -240,9 +265,8 @@ export async function getSessionTagsAction(
             where: { id: parsedSessionId },
             include: {
                 sessionTags: {
-                    include: {
-                        tag: true,
-                    },
+                    include: { tag: true },
+                    orderBy: { tag: { order: "asc" } },
                 },
             },
         });
@@ -259,6 +283,7 @@ export async function getSessionTagsAction(
             name: st.tag.name,
             slug: st.tag.slug,
             color: st.tag.color,
+            order: st.tag.order,
         }));
 
         return {

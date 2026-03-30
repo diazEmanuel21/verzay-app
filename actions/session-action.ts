@@ -111,6 +111,7 @@ function mapSessionRecord(session: SessionWithTagsRecord): AppSession {
       name: item.tag.name,
       slug: item.tag.slug,
       color: item.tag.color,
+      order: (item.tag as any).order ?? 0,
     })),
   };
 }
@@ -286,6 +287,7 @@ export async function getSessionsByUserId(
         name: st.tag.name,
         slug: st.tag.slug,
         color: st.tag.color,
+        order: (st.tag as any).order ?? 0,
       })),
     }));
 
@@ -581,6 +583,7 @@ export async function searchSessionsByUserId(
         name: st.tag.name,
         slug: st.tag.slug,
         color: st.tag.color,
+        order: (st.tag as any).order ?? 0,
       })),
     }));
 
@@ -938,6 +941,7 @@ export async function getSessionsByUserIdToCRM(
         name: st.tag.name,
         slug: st.tag.slug,
         color: st.tag.color,
+        order: (st.tag as any).order ?? 0,
       })),
     }));
 

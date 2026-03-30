@@ -357,6 +357,7 @@ model Tag {
   name        String
   slug        String
   color       String?
+  order       Int          @default(0)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   sessionTags SessionTag[]
@@ -364,6 +365,7 @@ model Tag {
 
   @@unique([userId, slug])
   @@index([userId])
+  @@index([userId, order])
 }
 
 model Tool {

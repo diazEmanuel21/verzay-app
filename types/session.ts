@@ -18,6 +18,7 @@ export type SimpleTag = {
   name: string;
   slug: string;             // obligatorio para ser consistente
   color?: string | null;
+  order: number;
 };
 
 export type LeadStatus = PrismaLeadStatus;

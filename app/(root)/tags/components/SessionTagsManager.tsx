@@ -13,7 +13,7 @@ import {
     updateTagAction,
 } from "@/actions/tag-actions";
 import { SimpleTag } from "@/types/session";
-import { Trash2, Pencil, Tag as TagIcon } from "lucide-react";
+import { Tag as TagIcon } from "lucide-react";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -25,6 +25,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { SortableTagList } from "./SortableTagList";
 
 interface SessionTagsManagerProps {
     userId: string;
@@ -315,125 +316,27 @@ export const SessionTagsManager = ({
                     <p className="font-medium text-muted-foreground">
                         Catálogo de etiquetas
                     </p>
-                    <div className="flex flex-col gap-1.5">
-                        {tags.length === 0 ? (
-                            <span className="text-muted-foreground">
-                                Aún no hay etiquetas creadas.
-                            </span>
-                        ) : (
-                            tags.map((tag) => {
-                                const active = isSelected(tag.id);
-                                const isEditing = editingTagId === tag.id;
-
-                                if (isEditing) {
-                                    return (
-                                        <div
-                                            key={tag.id}
-                                            className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/40 px-3 py-2"
-                                        >
-                                            <div className="flex flex-1 min-w-[160px] items-center gap-2">
-                                                {renderColorDot(editColor)}
-                                                <Input
-                                                    value={editName}
-                                                    onChange={(e) => setEditName(e.target.value)}
-                                                    className="h-9"
-                                                />
-                                            </div>
-                                            <div className="flex items-center gap-1.5">
-                                                {COLOR_PRESETS.map((color) => (
-                                                    <button
-                                                        key={color}
-                                                        type="button"
-                                                        onClick={() =>
-                                                            setEditColor((current) =>
-                                                                current === color ? null : color
-                                                            )
-                                                        }
-                                                        className={cn(
-                                                            "h-5 w-5 rounded-full border border-border/60",
-                                                            editColor === color && "ring-2 ring-primary"
-                                                        )}
-                                                        style={{ backgroundColor: color }}
-                                                    />
-                                                ))}
-                                                <Input
-                                                    type="color"
-                                                    value={editColor ?? "#3B82F6"}
-                                                    onChange={(e) => setEditColor(e.target.value)}
-                                                    className="h-9 w-12 cursor-pointer p-1"
-                                                />
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="h-8 px-3"
-                                                    onClick={handleSaveEditTag}
-                                                    disabled={isPending || !editName.trim()}
-                                                >
-                                                    Guardar
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-8 px-3"
-                                                    onClick={() => setEditingTagId(null)}
-                                                >
-                                                    Cancelar
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    );
-                                }
-
-                                return (
-                                    <div
-                                        key={tag.id}
-                                        className="flex items-center justify-between gap-2 rounded-md border px-3 py-2"
-                                    >
-                                        {/* Clic en el chip asigna / desasigna a la sesión */}
-                                        <button
-                                            type="button"
-                                            // onClick={() => handleToggleTag(tag.id)}
-                                            className={cn(
-                                                "inline-flex min-w-[120px] flex-1 items-center gap-2 rounded-full px-3 py-1 text-left transition",
-                                                // active
-                                                //     ? "bg-primary text-primary-foreground"
-                                                //     : "bg-background text-foreground hover:bg-muted"
-                                            )}
-                                        >
-                                            {renderColorDot(tag.color)}
-                                            <span className="truncate">{tag.name}</span>
-                                        </button>
-
-                                        {/* Acciones: editar / eliminar */}
-                                        <div className="flex items-center gap-1">
-                                            <Button
-                                                type="button"
-                                                size="icon"
-                                                variant="ghost"
-                                                className="h-8 w-8"
-                                                onClick={() => startEditTag(tag)}
-                                                title="Editar etiqueta"
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                size="icon"
-                                                variant="ghost"
-                                                className="h-8 w-8 text-destructive hover:text-destructive"
-                                                onClick={() => openDeleteDialog(tag)}
-                                                title="Eliminar etiqueta"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                );
-                            })
-                        )}
-                    </div>
+                    {tags.length === 0 ? (
+                        <span className="text-muted-foreground">
+                            Aún no hay etiquetas creadas.
+                        </span>
+                    ) : (
+                        <SortableTagList
+                            tags={tags}
+                            onReorder={setTags}
+                            editingTagId={editingTagId}
+                            editName={editName}
+                            editColor={editColor}
+                            isPending={isPending}
+                            onEditName={setEditName}
+                            onEditColor={setEditColor}
+                            onSaveEdit={handleSaveEditTag}
+                            onCancelEdit={() => setEditingTagId(null)}
+                            onStartEdit={startEditTag}
+                            onDelete={openDeleteDialog}
+                            renderColorDot={renderColorDot}
+                        />
+                    )}
                 </div>
             </div>
 
