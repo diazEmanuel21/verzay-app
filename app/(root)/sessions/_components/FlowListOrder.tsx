@@ -60,7 +60,7 @@ export const FlowListOrder = ({ raw }: { raw: string }) => {
                 {count > 0 && (
                     <TooltipContent side="top" sideOffset={6} className="z-[9999] max-w-[420px]">
                         <div className="space-y-1">
-                            <div className="text-xs font-medium">Flujos ({count})</div>
+                            <div className="text-xs font-bold">Flujos</div>
                             <ul className="list-disc pl-4 text-xs space-y-0.5">
                                 {flowsArr.map((f) => (
                                     <li key={f.id} className="break-words">

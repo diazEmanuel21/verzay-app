@@ -1,11 +1,12 @@
 'use client';
 
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 
 export function WorkflowNodesSidebarTrigger() {
-    const { toggleSidebar } = useSidebar();
+    const { toggleSidebar, open, openMobile, isMobile } = useSidebar();
+    const isOpen = isMobile ? openMobile : open;
 
     return (
         <Button
@@ -13,7 +14,7 @@ export function WorkflowNodesSidebarTrigger() {
             onClick={toggleSidebar}
             title="Agregar nodo"
         >
-            <Plus className="h-4 w-4" />
+            {isOpen ? <X /> : <Plus />}
         </Button>
     );
 }
