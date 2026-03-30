@@ -217,3 +217,28 @@ export async function deleteChatConversationAction(
     };
   }
 }
+
+export async function restoreChatConversationAction(
+  input: z.infer<typeof baseSchema>,
+): Promise<ChatPreferenceResponse<ChatConversationPreference>> {
+  try {
+    const parsed = baseSchema.parse(input);
+    await assertAuthorized(parsed.userId);
+
+    const data = await upsertPreference(parsed.userId, parsed.remoteJid, {
+      deletedAt: null,
+    });
+
+    return {
+      success: true,
+      message: "Chat restaurado correctamente.",
+      data,
+    };
+  } catch (error) {
+    console.error("[restoreChatConversationAction]", error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "No se pudo restaurar el chat.",
+    };
+  }
+}

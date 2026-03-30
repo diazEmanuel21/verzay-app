@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner";
 import {
   deleteChatConversationAction,
+  restoreChatConversationAction,
   setChatArchivedAction,
   toggleChatPinAction,
 } from "@/actions/chat-conversation-actions";
@@ -588,6 +589,24 @@ export function ChatsClient({
     [applyChatPreference, selectedJid, userId],
   );
 
+  const handleRestoreChat = useCallback(
+    async (remoteJid: string) => {
+      const result = await restoreChatConversationAction({
+        userId,
+        remoteJid,
+      });
+
+      if (!result.success || !result.data) {
+        toast.error(result.message || "No se pudo restaurar el chat.");
+        return;
+      }
+
+      applyChatPreference(result.data);
+      toast.success(result.message);
+    },
+    [applyChatPreference, userId],
+  );
+
   useEffect(() => {
     let stopped = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -692,6 +711,7 @@ export function ChatsClient({
           chatSessions={chatSessions}
           onArchiveChat={handleArchiveChat}
           onDeleteChat={handleDeleteChat}
+          onRestoreChat={handleRestoreChat}
           onSelectRemoteJid={handleSelectFromSidebar}
           onTogglePin={handleToggleChatPin}
           result={currentChatsResult}

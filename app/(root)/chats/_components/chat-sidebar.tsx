@@ -9,11 +9,12 @@ import {
   Mic,
   MoreVertical,
   Pin,
+  RotateCcw,
   Search,
   Trash2,
-  Users,
   Video,
   X,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -51,6 +52,7 @@ type ChatSidebarProps = {
   chatSessions: ChatContactSessionMap;
   onArchiveChat?: (remoteJid: string, archived: boolean) => void | Promise<void>;
   onDeleteChat?: (remoteJid: string) => void | Promise<void>;
+  onRestoreChat?: (remoteJid: string) => void | Promise<void>;
   onSelectRemoteJid?: (remoteJid: string) => void | Promise<void>;
   onTogglePin?: (remoteJid: string, isPinned: boolean) => void | Promise<void>;
   result: FetchChatsResult;
@@ -182,13 +184,14 @@ export function ChatSidebar({
   chatSessions,
   onArchiveChat,
   onDeleteChat,
+  onRestoreChat,
   onSelectRemoteJid,
   onTogglePin,
   result,
   selectedJid,
 }: ChatSidebarProps) {
   const [q, setQ] = useState("");
-  const [tab, setTab] = useState<"all" | "dm" | "groups" | "archived">("all");
+  const [tab, setTab] = useState<"all" | "dm" | "groups" | "archived" | "deleted">("all");
   const [deleteTarget, setDeleteTarget] = useState<SidebarContact | null>(null);
   const [seenMessages, setSeenMessages] = useLocalStorageObjectArray(
     "seenMessages",
@@ -259,7 +262,25 @@ export function ChatSidebar({
       });
   }, [chatPreferences, chatSessions, isMessageSeen, result, selectedJid]);
 
+  const deletedContacts = useMemo(() => {
+    let list = contacts.filter((contact) => contact.isDeleted);
+
+    if (q.trim()) {
+      const term = q.trim().toLowerCase();
+      list = list.filter(
+        (contact) =>
+          contact.name.toLowerCase().includes(term) ||
+          contact.id.toLowerCase().includes(term) ||
+          contact.lastMessage.toLowerCase().includes(term),
+      );
+    }
+
+    return list.slice().sort((a, b) => b.ts - a.ts);
+  }, [contacts, q]);
+
   const filtered = useMemo(() => {
+    if (tab === "deleted") return [];
+
     let list = contacts.filter((contact) => !contact.isDeleted);
 
     if (tab === "archived") {
@@ -320,7 +341,9 @@ export function ChatSidebar({
   const emptyMessage =
     tab === "archived"
       ? "No hay chats archivados que coincidan con el filtro."
-      : "No hay chats que coincidan con el filtro.";
+      : tab === "deleted"
+        ? "No hay chats eliminados."
+        : "No hay chats que coincidan con el filtro.";
 
   return (
     <>
@@ -352,12 +375,12 @@ export function ChatSidebar({
             )}
           </div>
 
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-5 gap-1">
             <button
               type="button"
               onClick={() => setTab("all")}
               className={cn(
-                "inline-flex items-center justify-center gap-2 rounded-xl border px-2 text-xs transition",
+                "inline-flex items-center justify-center gap-1 rounded-xl border px-1 py-1 text-xs transition",
                 tab === "all"
                   ? "border-primary bg-primary text-primary-foreground"
                   : "hover:bg-muted",
@@ -365,35 +388,35 @@ export function ChatSidebar({
             >
               <Inbox className="h-3.5 w-3.5" /> Todos
             </button>
-            <button
+            {/* <button
               type="button"
               onClick={() => setTab("dm")}
               className={cn(
-                "inline-flex items-center justify-center gap-2 rounded-xl border px-2 text-xs transition",
+                "inline-flex items-center justify-center gap-1 rounded-xl border px-1 py-1 text-xs transition",
                 tab === "dm"
                   ? "border-primary bg-primary text-primary-foreground"
                   : "hover:bg-muted",
               )}
             >
               Priv.
-            </button>
+            </button> */}
             <button
               type="button"
               onClick={() => setTab("groups")}
               className={cn(
-                "inline-flex items-center justify-center gap-2 rounded-xl border px-2 text-xs transition",
+                "inline-flex items-center justify-center gap-1 rounded-xl border px-1 py-1 text-xs transition",
                 tab === "groups"
                   ? "border-primary bg-primary text-primary-foreground"
                   : "hover:bg-muted",
               )}
             >
-              Grupos
+              <Users className="h-3.5 w-3.5" /> Grup.
             </button>
             <button
               type="button"
               onClick={() => setTab("archived")}
               className={cn(
-                "inline-flex items-center justify-center gap-2 rounded-xl border px-2 text-xs transition",
+                "inline-flex items-center justify-center gap-1 rounded-xl border px-1 py-1 text-xs transition",
                 tab === "archived"
                   ? "border-primary bg-primary text-primary-foreground"
                   : "hover:bg-muted",
@@ -401,11 +424,96 @@ export function ChatSidebar({
             >
               <Archive className="h-3.5 w-3.5" /> Arch.
             </button>
+            <button
+              type="button"
+              onClick={() => setTab("deleted")}
+              className={cn(
+                "relative inline-flex items-center justify-center gap-1 rounded-xl border px-1 py-1 text-xs transition",
+                tab === "deleted"
+                  ? "border-destructive bg-destructive text-destructive-foreground"
+                  : "hover:bg-muted",
+              )}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Elim.
+              {deletedContacts.length > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+                  {deletedContacts.length > 9 ? "9+" : deletedContacts.length}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
         <div role="list" className="flex-1 space-y-1 overflow-y-auto p-1">
-          {result.success && filtered.length > 0 ? (
+          {tab === "deleted" ? (
+            deletedContacts.length > 0 ? (
+              <>
+                <p className="px-2 py-1 text-xs text-muted-foreground">
+                  {deletedContacts.length} chat{deletedContacts.length !== 1 ? "s" : ""} eliminado{deletedContacts.length !== 1 ? "s" : ""}
+                </p>
+                {deletedContacts.map((contact) => {
+                  const IconComponent = getIconForMessageType(contact.messageType);
+                  return (
+                    <div
+                      key={contact.id}
+                      role="listitem"
+                      className="group rounded-xl border border-transparent p-2 transition hover:bg-accent hover:text-accent-foreground"
+                    >
+                      <div className="flex items-start gap-2">
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          <Avatar className="h-10 w-10 opacity-60 ring-2 ring-background group-hover:ring-accent">
+                            <AvatarImage src={contact.avatarSrc} alt={contact.name || "Contacto"} />
+                            <AvatarFallback>
+                              {contact.name?.charAt(0)?.toUpperCase() || "?"}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="shrink-0 text-sm font-bold text-muted-foreground">
+                                {contact.name || "Sin nombre"}
+                              </span>
+                              <span className="shrink-0 text-xs text-muted-foreground">
+                                {contact.timestamp}
+                              </span>
+                            </div>
+                            <div className="mt-0.5 flex items-center gap-1 truncate text-sm text-muted-foreground">
+                              {IconComponent && (
+                                <IconComponent className="h-4 w-4 shrink-0 opacity-70" />
+                              )}
+                              <span>{contact.lastMessage || "-"}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          title="Restaurar chat"
+                          className="h-8 w-8 shrink-0 rounded-full text-green-600 hover:bg-green-50 hover:text-green-700"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void onRestoreChat?.(contact.id);
+                          }}
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-muted-foreground">
+                <div className="rounded-2xl border p-6 opacity-70">
+                  <Trash2 className="h-8 w-8" />
+                </div>
+                <p className="text-sm">{emptyMessage}</p>
+              </div>
+            )
+          ) : result.success && filtered.length > 0 ? (
             filtered.map((contact) => {
               const IconComponent = getIconForMessageType(contact.messageType);
               const isUnread = contact.isUnreadLocal;

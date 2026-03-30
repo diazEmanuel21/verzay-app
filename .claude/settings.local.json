@@ -26,7 +26,17 @@
       "Bash(ls -la \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app\\\\app\\\\\\(root\\)\\\\profile\")",
       "Bash(ls -la \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app\\\\app\\\\\\(root\\)\\\\profile\\\\_components\")",
       "Bash(find \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app\\\\app\\\\\\(root\\)\\\\connection\" -type f -name \"*.tsx\")",
-      "Bash(find e:EMANUEL-DEVVerzayVERZAYverzay-app-mainverzay-app -name TimezoneCombobox* -type f)"
+      "Bash(find e:EMANUEL-DEVVerzayVERZAYverzay-app-mainverzay-app -name TimezoneCombobox* -type f)",
+      "Bash(find e:EMANUEL-DEVVerzayVERZAYverzay-app-mainverzay-app -type f -name *chat*)",
+      "Bash(find \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)/chats\" -type f)",
+      "Bash(find e:EMANUEL-DEVVerzayVERZAYverzay-app-mainverzay-app -type f \\\\\\(-name *store* -o -name *zustand* -o -name *context* \\\\\\))",
+      "Bash(find e:EMANUEL-DEVVerzayVERZAYverzay-app-mainverzay-app -type f \\\\\\(-name *trash* -o -name *delete* -o -name *archive* \\\\\\))",
+      "Bash(find \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)/ai-chat\" -type f)",
+      "Bash(find e:EMANUEL-DEVVerzayVERZAYverzay-app-mainverzay-app -type f \\\\\\(-name *store* -o -name *provider* -o -name *context* \\\\\\))",
+      "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")",
+      "Bash(grep -r \"ChatContactSessionMap\\\\|ChatContactDescriptor\\\\|ChatContactSession\" e:EMANUEL-DEVVerzayVERZAYverzay-app-mainverzay-app/types --include=*.ts)",
+      "Bash(find e:EMANUEL-DEVVerzayVERZAYverzay-app-mainverzay-app -type f -name *.ts -o -name *.tsx)",
+      "Bash(grep -r \"softDelete\\\\|isDeleted\\\\|status.*deleted\" e:EMANUEL-DEVVerzayVERZAYverzay-app-mainverzay-app --include=*.ts --include=*.tsx)"
     ]
   }
 }
