@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
+import { useRef, useState } from 'react';
 
 import { canAccessRoute } from '@/utils/access';
 import { PremiumModule } from './shared/PremiumModule';
@@ -14,6 +15,7 @@ import {
     SidebarMenuSub,
     SidebarMenuSubButton,
     SidebarMenuSubItem,
+    useSidebar,
 } from '@/components/ui/sidebar';
 
 import {
@@ -21,6 +23,14 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
+
+import { Separator } from '@/components/ui/separator';
 
 import Link from 'next/link';
 import { User } from '@prisma/client';
@@ -32,6 +42,23 @@ export function NavMain({ user }: { user: User }) {
     const { modules, setLabelModule, labelModule } = useModuleStore();
     const pathname = usePathname();
     const router = useRouter();
+    const { state } = useSidebar();
+
+    const [openPopover, setOpenPopover] = useState<string | null>(null);
+    const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const openWithDelay = (key: string) => {
+        if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+        setOpenPopover(key);
+    };
+
+    const closeWithDelay = () => {
+        hoverTimeout.current = setTimeout(() => setOpenPopover(null), 120);
+    };
+
+    const cancelClose = () => {
+        if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+    };
 
     /* Se ocupa de ocultar/mostrar basado en los permisos del modulo */
     const navItems = modules
@@ -107,7 +134,76 @@ export function NavMain({ user }: { user: User }) {
                         );
                     }
 
-                    // Si hay subitems, renderizar como Collapsible
+                    // Modo icon (collapsed): popover flotante hacia la derecha
+                    if (state === 'collapsed') {
+                        return (
+                            <SidebarMenuItem
+                                key={route}
+                                onMouseEnter={() => openWithDelay(route)}
+                                onMouseLeave={closeWithDelay}
+                            >
+                                <Popover
+                                    open={openPopover === route}
+                                    onOpenChange={(open) => setOpenPopover(open ? route : null)}
+                                >
+                                    <PopoverTrigger asChild>
+                                        <SidebarMenuButton className={linkClasses}>
+                                            {Icon && <Icon className={iconClasses} />}
+                                            <span>{label}</span>
+                                        </SidebarMenuButton>
+                                    </PopoverTrigger>
+
+                                    <PopoverContent
+                                        side="right"
+                                        align="start"
+                                        sideOffset={10}
+                                        className="w-52 p-1.5 shadow-lg"
+                                        onMouseEnter={cancelClose}
+                                        onMouseLeave={closeWithDelay}
+                                    >
+                                        {/* Header del módulo */}
+                                        <div className="flex items-center gap-2 px-2 py-1.5 mb-1">
+                                            {Icon && (
+                                                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-blue-500 to-blue-700">
+                                                    <Icon className="h-3.5 w-3.5 text-white" />
+                                                </div>
+                                            )}
+                                            <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+                                                {label}
+                                            </span>
+                                            {requiresPremium && <PremiumModule />}
+                                        </div>
+
+                                        <Separator className="mb-1" />
+
+                                        {/* Sub-items */}
+                                        <div className="flex flex-col gap-0.5">
+                                            {moduleItems.map((subItem) => {
+                                                const isSubActive = pathname === subItem.url;
+                                                return (
+                                                    <Link
+                                                        key={subItem.url}
+                                                        href={subItem.url}
+                                                        onClick={() => setOpenPopover(null)}
+                                                        className={clsx(
+                                                            'flex items-center rounded-md px-2 py-1.5 text-sm font-medium transition-colors',
+                                                            isSubActive
+                                                                ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white'
+                                                                : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                                        )}
+                                                    >
+                                                        {subItem.title}
+                                                    </Link>
+                                                );
+                                            })}
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+                            </SidebarMenuItem>
+                        );
+                    }
+
+                    // Modo expanded: acordeón inline normal
                     return (
                         <Collapsible
                             key={route}
@@ -145,7 +241,6 @@ export function NavMain({ user }: { user: User }) {
                                                         dark:text-zinc-300
                                                         hover:bg-zinc-100
                                                         dark:hover:bg-zinc-800'
-                                                    // className=" hover:text-foreground "
                                                     >
                                                         {subItem.title}
                                                     </Link>
