@@ -3,36 +3,50 @@
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
-    DropdownMenuCheckboxItem,
     DropdownMenuContent,
+    DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Settings } from "lucide-react"
+import { Settings, Pencil, Trash2, Bot } from "lucide-react"
 
 interface ConnectionActionsInterface {
-    handleDelete: (state: boolean) => void,
-    handlePrompt: (state: boolean) => void
-};
+    handleDelete: () => void;
+    handleRename: () => void;
+    handlePrompt?: () => void;
+}
 
-export const ConnectionActions = ({ handleDelete, handlePrompt }: ConnectionActionsInterface) => {
+export const ConnectionActions = ({ handleDelete, handleRename, handlePrompt }: ConnectionActionsInterface) => {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size={'icon'} onClick={() => handlePrompt(true)}>
-                    <Settings className="h-4 w-4 text-muted-foreground cursor-pointer" />
+                <Button variant="ghost" size="icon">
+                    <Settings className="h-4 w-4 text-muted-foreground" />
                 </Button>
             </DropdownMenuTrigger>
-            {/* <DropdownMenuContent className="w-56">
+            <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuCheckboxItem
-                    onClick={() => handleDelete(true)}
+                <DropdownMenuItem onClick={handleRename}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Editar nombre
+                </DropdownMenuItem>
+                {handlePrompt && (
+                    <DropdownMenuItem onClick={handlePrompt}>
+                        <Bot className="h-4 w-4 mr-2" />
+                        Editar Agente IA
+                    </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                    onClick={handleDelete}
+                    className="text-destructive focus:text-destructive"
                 >
-                    Eliminar
-                </DropdownMenuCheckboxItem>
-            </DropdownMenuContent> */}
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Eliminar instancia
+                </DropdownMenuItem>
+            </DropdownMenuContent>
         </DropdownMenu>
     )
 }

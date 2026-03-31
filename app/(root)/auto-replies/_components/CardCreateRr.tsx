@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
     SelectContent,
@@ -84,12 +85,13 @@ export const CardCreateRr = ({ user, Workflows, onSuccessClose }: AutoReplies) =
                     <Label htmlFor="phrase" className="flex gap-1 items-center">
                         Mensaje <p className="text-xs text-primary">(Obligatorio)</p>
                     </Label>
-                    <Input
+                    <Textarea
                         id="phrase"
                         placeholder="Ej: Fue un gusto atenderte."
                         value={phrase}
                         onChange={(e) => setPhrase(e.target.value)}
                         disabled={loading}
+                        rows={4}
                     />
                 </div>
                 <div className="flex flex-col space-y-1.5">

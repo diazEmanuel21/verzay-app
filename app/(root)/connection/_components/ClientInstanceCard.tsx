@@ -12,6 +12,7 @@ import { ConnectionActions } from './';
 import { deleteInstance } from '@/actions/api-action';
 import { ClientInstanceCardProps } from '@/schema/connection';
 import { PromptInstanceDialog } from './PromptInstanceDialog';
+import { RenameInstanceDialog } from './RenameInstanceDialog';
 
 interface SocialIconSelectorProps {
   instanceType?: string;
@@ -65,7 +66,8 @@ export const ClientInstanceCard = ({
 }: ClientInstanceCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showPromptDialog, setShowPromptDialog] = useState(false);
-  const [clickCount, setClickCount] = useState(0);
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [_clickCount, setClickCount] = useState(0);
 
   const handleSecretClick = useCallback(() => {
     setClickCount((prev) => {
@@ -78,11 +80,6 @@ export const ClientInstanceCard = ({
     });
   }, []);
 
-  const handleCogClick = useCallback(() => {
-    setShowPromptDialog(true);
-  }, []);
-
-  //  Memorizar setOpen para no recrearlo en cada render
   const handlePromptDialogOpen = useCallback((open: boolean) => {
     setShowPromptDialog(open);
   }, []);
@@ -94,19 +91,17 @@ export const ClientInstanceCard = ({
   const userInitial = intanceName.charAt(0).toUpperCase() ?? '?';
   const isActive = instanceType == 'Facebook' ? user.onFacebook : user.onInstagram
 
-
   return (
     <>
       <Card className="border-border flex-1">
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>{intanceName}</CardTitle>
-            {instanceType != 'Whatsapp' &&
-              <ConnectionActions
-                handleDelete={() => setShowDeleteDialog(true)}
-                handlePrompt={handleCogClick}
-              />
-            }
+            <ConnectionActions
+              handleDelete={() => setShowDeleteDialog(true)}
+              handleRename={() => setShowRenameDialog(true)}
+              handlePrompt={instanceType !== 'Whatsapp' ? () => setShowPromptDialog(true) : undefined}
+            />
           </div>
         </CardHeader>
 
@@ -151,7 +146,6 @@ export const ClientInstanceCard = ({
                   />
                 </>
               )}
-
             </div>
           </div>
         </CardContent>
@@ -163,13 +157,20 @@ export const ClientInstanceCard = ({
         </CardFooter>
       </Card>
 
-      {/*  Modal siempre montado, solo se controla la visibilidad */}
       <PromptInstanceDialog
         platform={instanceType as any}
         open={showPromptDialog}
         setOpen={handlePromptDialogOpen}
         userId={user.id}
         prompts={prompts}
+      />
+
+      <RenameInstanceDialog
+        open={showRenameDialog}
+        setOpen={setShowRenameDialog}
+        userId={user.id}
+        instanceType={instanceType}
+        currentName={intanceName}
       />
 
       <GenericDeleteDialog
@@ -180,7 +181,6 @@ export const ClientInstanceCard = ({
         mutationFn={async (_id) => deleteInstance(user.id, instanceType)}
         entityLabel="Agente IA"
       />
-
     </>
   );
 };

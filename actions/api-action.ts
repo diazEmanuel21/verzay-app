@@ -454,6 +454,45 @@ export async function deleteInstance(userId: string, instanceType: string = 'Wha
   }
 }
 
+export async function renameInstance(userId: string, instanceType: string, newName: string) {
+  try {
+    await assertUserCanUseApp(userId);
+
+    const instanciaActiva = await checkActiveInstance(userId, instanceType);
+    if (!instanciaActiva) {
+      return { success: false, message: "El usuario no tiene ninguna instancia activa." };
+    }
+
+    const oldName = instanciaActiva.instanceName;
+
+    if (isWhatsappLike(instanceType)) {
+      const user = await db.user.findUnique({
+        where: { id: userId },
+        include: { apiKey: true },
+      });
+
+      if (user?.apiKey) {
+        const { key: apiKey, url: serverUrl } = user.apiKey;
+        await fetch(`https://${serverUrl}/instance/rename/${oldName}`, {
+          method: 'PUT',
+          headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ instanceName: newName }),
+        }).catch(() => {});
+      }
+    }
+
+    await db.instancia.update({
+      where: { id: instanciaActiva.id },
+      data: { instanceName: newName },
+    });
+
+    revalidatePath('/connection');
+    return { success: true, message: "Nombre actualizado correctamente." };
+  } catch (error: any) {
+    return { success: false, message: error?.message || "Error al renombrar la instancia." };
+  }
+}
+
 // Versión interna sin assertUserCanUseApp — para uso exclusivo del sistema (billing cron, activación de servicio)
 export async function deleteInstanceInternal(
   userId: string,
