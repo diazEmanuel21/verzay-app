@@ -25,6 +25,7 @@ interface AutoRepliesActionsProps {
     autoReplieId: number;
     workflowId: string;
     workflowIsPro?: boolean;
+    hasWorkflow: boolean;
 }
 
 export const AutoRepliesActions = ({
@@ -32,6 +33,7 @@ export const AutoRepliesActions = ({
     autoReplieId,
     workflowId,
     workflowIsPro = false,
+    hasWorkflow = false,
 }: AutoRepliesActionsProps) => {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const editorPath = getWorkflowEditorPath(workflowId, workflowIsPro);
@@ -47,16 +49,18 @@ export const AutoRepliesActions = ({
                 entityLabel="respuesta rápida"
             />
 
-            <Link href={editorPath} className={cn(
-                buttonVariants({
-                    variant: "outline",
-                    size: "sm"
-                }),
-                "flex items-center gap-2"
-            )}>
-                <ShuffleIcon size={16} />
-                Editar
-            </Link>
+            {hasWorkflow &&
+                <Link href={editorPath} className={cn(
+                    buttonVariants({
+                        variant: "outline",
+                        size: "sm"
+                    }),
+                    "flex items-center gap-2"
+                )}>
+                    <ShuffleIcon size={16} />
+                    Editar
+                </Link>
+            }
 
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>

@@ -21,9 +21,39 @@ export const AutoRepliesCard = ({ autoReplie, workflows }: autoReplies) => {
     const router = useRouter();
     const [editing, setEditing] = useState(false);
     const [mensaje, setMensaje] = useState(autoReplie.mensaje ?? "");
+    const [editingName, setEditingName] = useState(false);
+    const [name, setName] = useState(autoReplie.name ?? "");
     const [loading, setLoading] = useState(false);
 
     const relatedWorkflow = workflows.find((wf) => wf.id === autoReplie.workflowId);
+
+    const handleSaveName = async () => {
+        if (name === (autoReplie.name ?? "")) {
+            setEditingName(false);
+            return;
+        }
+
+        setLoading(true);
+        const toastId = `rr-name-${autoReplie.id}`;
+
+        try {
+            const res = await updateRR(autoReplie.id, { name: name || undefined });
+
+            if (!res.success) {
+                toast.error(res.message, { id: toastId });
+                setName(autoReplie.name ?? "");
+            } else {
+                toast.success("Atajo actualizado", { id: toastId });
+                router.refresh();
+            }
+        } catch (error) {
+            toast.error("Error al actualizar", { id: toastId });
+            setName(autoReplie.name ?? "");
+        } finally {
+            setLoading(false);
+            setEditingName(false);
+        }
+    };
 
     const handleSave = async () => {
         if (mensaje === autoReplie.mensaje) {
@@ -62,10 +92,33 @@ export const AutoRepliesCard = ({ autoReplie, workflows }: autoReplies) => {
                     <div className="flex flex-col gap-1">
                         {/* Atajo / name */}
                         {autoReplie.name && (
-                            <Badge variant="secondary" className="w-fit text-xs gap-1 px-1.5 py-0">
-                                <Hash size={10} />
-                                {autoReplie.name}
-                            </Badge>
+                            editingName ? (
+                                <Input
+                                    autoFocus
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    onBlur={handleSaveName}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") handleSaveName();
+                                        if (e.key === "Escape") {
+                                            setName(autoReplie.name ?? "");
+                                            setEditingName(false);
+                                        }
+                                    }}
+                                    disabled={loading}
+                                    className="h-5 text-xs px-1.5 w-32"
+                                />
+                            ) : (
+                                <Badge
+                                    variant="secondary"
+                                    className="w-fit text-xs gap-1 px-1.5 py-0 cursor-pointer hover:bg-muted"
+                                    onClick={() => setEditingName(true)}
+                                >
+                                    <Hash size={10} />
+                                    {name}
+                                    <PencilLine size={10} className="text-blue-500 ml-0.5" />
+                                </Badge>
+                            )
                         )}
 
                         {/* Edición inline del mensaje */}
@@ -98,49 +151,51 @@ export const AutoRepliesCard = ({ autoReplie, workflows }: autoReplies) => {
                         )}
 
                         {/* Selector de workflow (solo si hay workflows disponibles) */}
-                        <div className="flex items-center gap-2">
-                            <Select
-                                value={autoReplie.workflowId ?? ""}
-                                onValueChange={async (newWorkflowId) => {
-                                    if (newWorkflowId === (autoReplie.workflowId ?? "")) return;
+                        {!autoReplie.name &&
+                            <div className="flex items-center gap-2">
+                                <Select
+                                    value={autoReplie.workflowId ?? ""}
+                                    onValueChange={async (newWorkflowId) => {
+                                        if (newWorkflowId === (autoReplie.workflowId ?? "")) return;
 
-                                    const toastId = `workflow-update-${autoReplie.id}`;
-                                    toast.loading("Actualizando flujo...", { id: toastId });
+                                        const toastId = `workflow-update-${autoReplie.id}`;
+                                        toast.loading("Actualizando flujo...", { id: toastId });
 
-                                    try {
-                                        const res = await updateRR(autoReplie.id, {
-                                            workflowId: newWorkflowId || undefined,
-                                        });
-                                        if (res.success) {
-                                            toast.success("Flujo actualizado correctamente", { id: toastId });
-                                        } else {
-                                            toast.error(res.message, { id: toastId });
+                                        try {
+                                            const res = await updateRR(autoReplie.id, {
+                                                workflowId: newWorkflowId || undefined,
+                                            });
+                                            if (res.success) {
+                                                toast.success("Flujo actualizado correctamente", { id: toastId });
+                                            } else {
+                                                toast.error(res.message, { id: toastId });
+                                            }
+                                        } catch (err) {
+                                            toast.error("Error al actualizar el flujo", { id: toastId });
+                                        } finally {
+                                            router.refresh();
                                         }
-                                    } catch (err) {
-                                        toast.error("Error al actualizar el flujo", { id: toastId });
-                                    } finally {
-                                        router.refresh();
-                                    }
-                                }}
-                            >
-                                <SelectTrigger className="h-7 rounded-md px-2 py-0 text-xs border-muted">
-                                    <SelectValue placeholder="Sin flujo" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {workflows.map((wf) => (
-                                        <SelectItem key={wf.id} value={wf.id} className="text-xs">
-                                            {wf.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                                    }}
+                                >
+                                    <SelectTrigger className="h-7 rounded-md px-2 py-0 text-xs border-muted">
+                                        <SelectValue placeholder="Sin flujo" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {workflows.map((wf) => (
+                                            <SelectItem key={wf.id} value={wf.id} className="text-xs">
+                                                {wf.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>}
                     </div>
                 </div>
 
                 {/* Acciones */}
                 <div className="flex items-center space-x-2">
                     <AutoRepliesActions
+                        hasWorkflow={!!autoReplie.workflowId}
                         mensaje={autoReplie.mensaje ?? ""}
                         autoReplieId={autoReplie.id}
                         workflowId={relatedWorkflow?.id ?? "404"}

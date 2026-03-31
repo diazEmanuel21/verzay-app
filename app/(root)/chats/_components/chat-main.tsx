@@ -1026,7 +1026,7 @@ const ChatAutomationPicker: React.FC<{
               <CommandList>
                 <CommandEmpty className="text-xs">No hay respuestas rapidas disponibles.</CommandEmpty>
                 <CommandGroup className="max-h-64 overflow-auto">
-                  {quickReplies.map((quickReply) => (
+                  {quickReplies.filter((qr) => qr.name !== null).map((quickReply) => (
                     <CommandItem
                       key={quickReply.id}
                       value={`${quickReply.name ?? ''} ${quickReply.message} ${quickReply.workflowName ?? ''}`}
@@ -1043,11 +1043,6 @@ const ChatAutomationPicker: React.FC<{
                           )}
                           <p className="line-clamp-2 text-sm font-medium">{quickReply.message}</p>
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          {quickReply.workflowName
-                            ? `Relacionado a ${quickReply.workflowName}`
-                            : 'Solo texto'}
-                        </p>
                       </div>
                       <MessageCircleMore className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                     </CommandItem>
@@ -1714,13 +1709,12 @@ export const ChatMain: React.FC<ChatMainProps> = ({
         {/* Desktop Header: Expandido */}
         <div className="hidden md:flex items-center justify-between p-4 gap-4">
           {/* Sección Izquierda: Avatar + Info */}
-          <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex items-center gap-3 min-w-0">
             <Avatar className="w-14 h-14 ring-2 ring-border flex-shrink-0">
               <AvatarImage src={header.avatarSrc || '/default-avatar.png'} />
               <AvatarFallback className="text-lg font-bold">{initialFromName(displayedContactName)}</AvatarFallback>
             </Avatar>
 
-            <div className="min-w-0 flex-1 space-y-1">
               {/* Nombre + Pin + Edit */}
               <div className="flex items-center gap-2 min-w-0">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -1744,22 +1738,6 @@ export const ChatMain: React.FC<ChatMainProps> = ({
                   )}
                 </div>
               </div>
-
-              {/* Número + Status */}
-              {/* <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span className="font-medium text-foreground/80">
-                  {displayedWhatsapp}
-                </span>
-                {session && (
-                  <>
-                    <span className="text-border">•</span>
-                    <Badge variant="outline" className={`${sessionStatusTone} text-xs py-0`}>
-                      {session.status ? 'Activa' : 'Pausada'}
-                    </Badge>
-                  </>
-                )}
-              </div> */}
-            </div>
           </div>
 
           {/* Sección Central: Badges + Tags */}
