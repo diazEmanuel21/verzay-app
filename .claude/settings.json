@@ -7,7 +7,8 @@
       "Bash(grep -r \"interface.*[Tt]ag\\\\|type.*[Tt]ag\\\\|class.*[Tt]ag\" /e/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app --include=*.ts --include=*.tsx --exclude-dir=node_modules --exclude-dir=.next)",
       "Bash(find /e/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app -name schema.prisma -o -name *.prisma)",
       "Read(//e/EMANUEL-DEV/Verzay/VERZAY/**)",
-      "Bash(grep -r \"dnd-kit\\\\|sortable\\\\|draggable\" /e/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/app --include=*.tsx --include=*.ts -l)"
+      "Bash(grep -r \"dnd-kit\\\\|sortable\\\\|draggable\" /e/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/app --include=*.tsx --include=*.ts -l)",
+      "Read(//e/MANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/actions/**)"
     ]
   }
 }

@@ -20,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Loader2, Lock } from "lucide-react"
 import { SubmitHandler, useForm } from "react-hook-form"
-import { FormInstanceConnectionValues, FormInstanceConnectionSchema } from '@/schema/connection'
+import { FormInstanceConnectionValues, FormInstanceConnectionSchema, sanitizeInstanceName } from '@/schema/connection'
 import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa"
 import { useMemo, useCallback } from "react"
 
@@ -166,7 +166,11 @@ export const ConnectionCard = ({
                                 <FormItem>
                                     <FormLabel>Nombre de la Instancia</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Company S.A" {...field} />
+                                        <Input
+                                            placeholder="COMPANY_SA"
+                                            {...field}
+                                            onChange={e => field.onChange(sanitizeInstanceName(e.target.value))}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

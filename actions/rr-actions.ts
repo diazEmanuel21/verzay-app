@@ -30,7 +30,8 @@ export async function getAllRRs(userId: string): Promise<RROperationResponse> {
 }
 
 export async function createRR(data: {
-    workflowId: string;
+    workflowId?: string;
+    name?: string;
     mensaje?: string;
     userId: string;
 }): Promise<RROperationResponse> {

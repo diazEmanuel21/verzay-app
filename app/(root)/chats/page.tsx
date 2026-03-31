@@ -139,8 +139,9 @@ export default async function ChatsPage({
 
       return {
         id: quickReply.id,
+        name: quickReply.name ?? null,
         message,
-        workflowId: quickReply.workflowId,
+        workflowId: quickReply.workflowId ?? null,
         workflowName: workflow?.name ?? null,
       };
     })

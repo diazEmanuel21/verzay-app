@@ -1029,17 +1029,24 @@ const ChatAutomationPicker: React.FC<{
                   {quickReplies.map((quickReply) => (
                     <CommandItem
                       key={quickReply.id}
-                      value={`${quickReply.message} ${quickReply.workflowName ?? ''}`}
+                      value={`${quickReply.name ?? ''} ${quickReply.message} ${quickReply.workflowName ?? ''}`}
                       className="items-start justify-between gap-3 py-3"
                       disabled={isSubmitting}
                       onSelect={() => void handleQuickReplySend(quickReply.id)}
                     >
                       <div className="min-w-0">
-                        <p className="line-clamp-2 text-sm font-medium">{quickReply.message}</p>
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          {quickReply.name && (
+                            <span className="text-xs font-mono text-primary font-medium">
+                              /{quickReply.name}
+                            </span>
+                          )}
+                          <p className="line-clamp-2 text-sm font-medium">{quickReply.message}</p>
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           {quickReply.workflowName
                             ? `Relacionado a ${quickReply.workflowName}`
-                            : 'Sin workflow relacionado'}
+                            : 'Solo texto'}
                         </p>
                       </div>
                       <MessageCircleMore className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
@@ -1142,6 +1149,8 @@ export const ChatMain: React.FC<ChatMainProps> = ({
   onSessionTagsChange,
 }) => {
   const [input, setInput] = useState('');
+  const [slashOpen, setSlashOpen] = useState(false);
+  const [slashQuery, setSlashQuery] = useState('');
   const [composeMedia, setComposeMedia] = useState<ComposeMedia | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [tempMessage, setTempMessage] = useState<UIBubble | null>(null);
@@ -1475,13 +1484,44 @@ export const ChatMain: React.FC<ChatMainProps> = ({
 
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (slashOpen && e.key === 'Escape') {
+        setSlashOpen(false);
+        return;
+      }
       if (!isRecording && !recordedAudio && e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         void sendNow();
       }
     },
-    [sendNow, isRecording, recordedAudio]
+    [sendNow, isRecording, recordedAudio, slashOpen]
   );
+
+  const slashSuggestions = useMemo(() => {
+    if (!slashOpen) return [];
+    return quickReplies.filter(
+      (qr) => qr.name && qr.name.toLowerCase().startsWith(slashQuery)
+    );
+  }, [slashOpen, slashQuery, quickReplies]);
+
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const value = e.target.value;
+      setInput(value);
+      if (value.startsWith('/') && value.length > 1) {
+        setSlashQuery(value.slice(1).toLowerCase());
+        setSlashOpen(true);
+      } else {
+        setSlashOpen(false);
+      }
+    },
+    []
+  );
+
+  const applySlashSuggestion = useCallback((message: string) => {
+    setInput(message);
+    setSlashOpen(false);
+    textareaRef.current?.focus();
+  }, []);
 
   /* Grabación de Audio */
   const stopRecordingAndPreview = useCallback(() => {
@@ -1921,11 +1961,30 @@ export const ChatMain: React.FC<ChatMainProps> = ({
             )}
           </div>
 
+          {slashOpen && slashSuggestions.length > 0 && (
+            <div className="absolute bottom-full left-0 right-0 mb-1 z-20 bg-popover border border-border rounded-lg shadow-lg overflow-hidden">
+              {slashSuggestions.map((qr) => (
+                <button
+                  key={qr.id}
+                  type="button"
+                  className="w-full flex items-start gap-3 px-3 py-2 text-left text-sm hover:bg-accent transition-colors"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    applySlashSuggestion(qr.message);
+                  }}
+                >
+                  <span className="text-primary font-mono font-medium shrink-0">/{qr.name}</span>
+                  <span className="text-muted-foreground truncate">{qr.message}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
           <Textarea
             ref={textareaRef}
-            placeholder={composeMedia ? 'Añade un texto o pie de foto (opcional)...' : 'Escribe un mensaje...'}
+            placeholder={composeMedia ? 'Añade un texto o pie de foto (opcional)...' : 'Escribe un mensaje... (/ para atajos)'}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={handleInputChange}
             onKeyDown={handleKeyPress}
             disabled={!isInputActive}
             rows={1}

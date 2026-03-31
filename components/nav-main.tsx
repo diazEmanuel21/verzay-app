@@ -95,13 +95,12 @@ export function NavMain({ user }: { user: User }) {
         setLabelModule(label)
         router.push(targetRoute)
     }
-
     return (
         <SidebarGroup>
             {/* <SidebarGroupLabel>Módulos</SidebarGroupLabel> */}
             <SidebarMenu>
                 {navItems.map((item) => {
-                    const { route, icon, label, requiresPremium, isActive, moduleItems } = item;
+                    const { id, route, icon, label, requiresPremium, isActive, moduleItems } = item;
                     const Icon = iconMap[icon as keyof typeof iconMap];
                     const linkClasses = clsx(
                         'flex items-center justify-between py-2 rounded-md text-sm font-medium transition',
@@ -119,9 +118,9 @@ export function NavMain({ user }: { user: User }) {
                     const targetRoute = validateRouteAndRole ? '/admin/clientes' : route;
 
                     // Si NO hay subitems, renderizar directamente como link
-                    if (!moduleItems || moduleItems.length === 0 || validateRouteAndRole) {
+                    if (!moduleItems || moduleItems.length === 0) {
                         return (
-                            <SidebarMenuItem key={route}>
+                            <SidebarMenuItem key={id}>
                                 <SidebarMenuButton className={linkClasses} tooltip={label} onClick={() => handleRoute(label, targetRoute)}>
                                     {Icon && <Icon className={iconClasses} />}
                                     <span>{label}</span>
@@ -138,13 +137,13 @@ export function NavMain({ user }: { user: User }) {
                     if (state === 'collapsed') {
                         return (
                             <SidebarMenuItem
-                                key={route}
-                                onMouseEnter={() => openWithDelay(route)}
+                                key={id}
+                                onMouseEnter={() => openWithDelay(id)}
                                 onMouseLeave={closeWithDelay}
                             >
                                 <Popover
-                                    open={openPopover === route}
-                                    onOpenChange={(open) => setOpenPopover(open ? route : null)}
+                                    open={openPopover === id}
+                                    onOpenChange={(open) => setOpenPopover(open ? id : null)}
                                 >
                                     <PopoverTrigger asChild>
                                         <SidebarMenuButton className={linkClasses}>
@@ -206,7 +205,7 @@ export function NavMain({ user }: { user: User }) {
                     // Modo expanded: acordeón inline normal
                     return (
                         <Collapsible
-                            key={route}
+                            key={id}
                             asChild
                             defaultOpen={isActive}
                             className="group/collapsible"

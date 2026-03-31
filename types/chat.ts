@@ -18,8 +18,9 @@ export type ChatWorkflowOption = {
 
 export type ChatQuickReplyOption = {
   id: number;
+  name: string | null;
   message: string;
-  workflowId: string;
+  workflowId: string | null;
   workflowName: string | null;
 };
 
