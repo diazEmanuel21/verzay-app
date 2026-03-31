@@ -181,6 +181,7 @@ export function ChatsClient({
   const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inFlightRef = useRef(false);
   const backoffRef = useRef(0);
+  const messagesRef = useRef<EvolutionMessage[]>(initialMessages || []);
   const BASE_INTERVAL = 2000;
   const MAX_BACKOFF = 30000;
 
@@ -257,6 +258,10 @@ export function ChatsClient({
     setMessages([]);
     setInfo(undefined);
   }, [chatPreferences, selectedJid]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   const toggleSidebarVisibility = useCallback(() => {
     setIsSidebarVisible((previous) => !previous);
@@ -353,20 +358,19 @@ export function ChatsClient({
 
         if (result?.success) {
           const nextMessages = result.data || [];
-          setMessages((previousMessages) => {
-            if (areListsDifferent(previousMessages, nextMessages)) {
-              setInfo({
-                ...result,
-                instanceName,
-                remoteJid,
-                remoteJidAliases,
-                apiKeyData,
-              });
-              return nextMessages;
-            }
-
-            return previousMessages;
-          });
+          if (areListsDifferent(messagesRef.current, nextMessages)) {
+            setMessages(nextMessages);
+            setInfo({
+              total: result.total,
+              pages: result.pages,
+              currentPage: result.currentPage,
+              nextPage: result.nextPage,
+              instanceName,
+              remoteJid,
+              remoteJidAliases,
+              apiKeyData,
+            });
+          }
           backoffRef.current = 0;
         } else {
           backoffRef.current = Math.min(
@@ -416,7 +420,10 @@ export function ChatsClient({
         if (result?.success) {
           setMessages(result.data || []);
           setInfo({
-            ...result,
+            total: result.total,
+            pages: result.pages,
+            currentPage: result.currentPage,
+            nextPage: result.nextPage,
             instanceName,
             remoteJid,
             remoteJidAliases,
@@ -648,7 +655,7 @@ export function ChatsClient({
       if (stopped) return;
 
       if (selectedJid) {
-        if (messages.length === 0 && !loading) {
+        if (messagesRef.current.length === 0 && !loading) {
           await handleSelectFromSidebar(selectedJid);
         } else {
           await pollAndCompareMessages(selectedJid, currentContact?.aliases);
@@ -690,7 +697,6 @@ export function ChatsClient({
     currentContact,
     handleSelectFromSidebar,
     loading,
-    messages.length,
     pollAndCompareMessages,
     selectedJid,
   ]);

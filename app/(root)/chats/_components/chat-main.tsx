@@ -1271,7 +1271,6 @@ export const ChatMain: React.FC<ChatMainProps> = ({
     _updater?: (prevData: any) => any,
     _shouldRevalidate?: boolean,
   ) => {
-    // Utilizamos userId y info?.remoteJid directamente en el cuerpo del useCallback
     if (!userId || !info?.remoteJid) {
       setSession(null);
       if (info?.remoteJid) {
@@ -1284,14 +1283,11 @@ export const ChatMain: React.FC<ChatMainProps> = ({
       const remoteJidCandidates = Array.from(
         new Set([info.remoteJid, ...(info.remoteJidAliases ?? [])].filter(Boolean))
       );
-
       let resolvedSession: SingleSessionResponse | null = null;
       for (const candidate of remoteJidCandidates) {
         const result: SingleSessionResponse = await getSessionByRemoteJid(userId, candidate, {
-          instanceId: info.instanceName,
           aliases: remoteJidCandidates,
         });
-
         if (result.success && result.data) {
           resolvedSession = result;
           break;
@@ -1374,7 +1370,6 @@ export const ChatMain: React.FC<ChatMainProps> = ({
         sessionId: session.id,
         pushName: normalizedName,
       });
-
       if (!result.success) {
         toast.error(result.message || 'No se pudo actualizar el contacto.');
         return;
