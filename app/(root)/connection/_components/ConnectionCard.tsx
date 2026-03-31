@@ -20,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Loader2, Lock } from "lucide-react"
 import { SubmitHandler, useForm } from "react-hook-form"
-import { FormInstanceConnectionValues, FormInstanceConnectionSchema, sanitizeInstanceName } from '@/schema/connection'
+import { FormInstanceConnectionValues, FormInstanceConnectionSchema, sanitizeInstanceNameInput } from '@/schema/connection'
 import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa"
 import { useMemo, useCallback } from "react"
 
@@ -149,7 +149,7 @@ export const ConnectionCard = ({
 
     // Renderizado Condicional: Tarjeta de Formulario
     return (
-        <Card className="border-border w-full">
+        <Card className="border-border flex-1">
             <CardHeader className="flex flex-row items-center justify-center p-6">
                 <CardTitle className="text-center text-2xl font-bold flex items-center gap-2">
                     <SocialIconSelector instanceType={instanceType} />
@@ -169,7 +169,7 @@ export const ConnectionCard = ({
                                         <Input
                                             placeholder="COMPANY_SA"
                                             {...field}
-                                            onChange={e => field.onChange(sanitizeInstanceName(e.target.value))}
+                                            onChange={e => field.onChange(sanitizeInstanceNameInput(e.target.value))}
                                         />
                                     </FormControl>
                                     <FormMessage />
