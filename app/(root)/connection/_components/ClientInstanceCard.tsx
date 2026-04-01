@@ -150,11 +150,11 @@ export const ClientInstanceCard = ({
           </div>
         </CardContent>
 
-        <CardFooter className="flex flex-row justify-start items-center">
+        {/* <CardFooter className="flex flex-row justify-start items-center">
           <div className="flex flex-1 flex-row items-center gap-1">
             <SocialIconSelector instanceType={instanceType} callback={handleSecretClick} />
           </div>
-        </CardFooter>
+        </CardFooter> */}
       </Card>
 
       <PromptInstanceDialog

@@ -402,7 +402,7 @@ model User {
   delSeguimiento                     String?                      @default("Estamos para servirle.") @map("del_seguimiento")
   plan                               Plan                         @default(basico)
   autoReactivate                     String?
-  webhookUrl                         String?                      @default("https://n8npro.verzay.co/webhook")
+  webhookUrl                         String?                      @default("https://backend.ia-app.com/webhook")
   theme                              ThemeApp?                    @default(Default)
   muteAgentResponses                 Boolean                      @default(false)
   timezone                           String?

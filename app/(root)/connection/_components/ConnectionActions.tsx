@@ -28,10 +28,10 @@ export const ConnectionActions = ({ handleDelete, handleRename, handlePrompt }: 
             <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleRename}>
+                {/* <DropdownMenuItem onClick={handleRename}>
                     <Pencil className="h-4 w-4 mr-2" />
                     Editar nombre
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
                 {handlePrompt && (
                     <DropdownMenuItem onClick={handlePrompt}>
                         <Bot className="h-4 w-4 mr-2" />

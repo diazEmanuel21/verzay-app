@@ -14,7 +14,12 @@
       "Bash(do wc:*)",
       "Bash(done)",
       "Bash(tail -20 \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)/chats/_components/chat-main.tsx\")",
-      "Bash(ls \"e:/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/app/\\(root\\)/chats/_components/\")"
+      "Bash(ls \"e:/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/app/\\(root\\)/chats/_components/\")",
+      "Skill(update-config)",
+      "Skill(update-config:*)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\home\\.claude"
     ]
   }
 }
