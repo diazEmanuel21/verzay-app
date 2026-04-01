@@ -11,6 +11,7 @@ import type { ChatHeader as ChatHeaderData } from './chat-message-types';
 import type { Session, SimpleTag } from '@/types/session';
 import { SessionTagsCombobox } from '../../tags/components';
 import { CrmFollowUpSummaryBadge } from '../../crm/dashboard/components/CrmFollowUpSummaryBadge';
+import { SwitchStatus } from '../../sessions/_components';
 
 interface ChatHeaderProps {
   header: ChatHeaderData;
@@ -135,6 +136,14 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
               {crmBadge}
             </div>
             {tagsCombobox}
+            {session && (
+              <SwitchStatus
+                key={`${session.id}-${session.status ? 'on' : 'off'}`}
+                checked={session.status ?? false}
+                sessionId={session.id ?? -1}
+                mutateSessions={onSessionMutate}
+              />
+            )}
             {sessionActions}
           </div>
         ) : (

@@ -4,6 +4,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import {
   Archive,
   FileText,
+  Filter,
   Image as ImageIcon,
   Inbox,
   Mic,
@@ -45,9 +46,10 @@ import { cn } from "@/lib/utils";
 import type { FetchChatsResult, ChatData } from "@/actions/chat-actions";
 import { useLocalStorageObjectArray, MessageRecord } from "@/hooks/chats/useSeenMessages";
 import type { ChatConversationPreferenceMap } from "@/types/chat";
-import type { ChatContactSessionMap } from "@/types/session";
+import type { ChatContactSessionMap, SimpleTag } from "@/types/session";
 
 type ChatSidebarProps = {
+  allTags?: SimpleTag[];
   chatPreferences: ChatConversationPreferenceMap;
   chatSessions: ChatContactSessionMap;
   onArchiveChat?: (remoteJid: string, archived: boolean) => void | Promise<void>;
@@ -190,6 +192,7 @@ function isGroupJid(jid: string) {
 }
 
 export function ChatSidebar({
+  allTags = [],
   chatPreferences,
   chatSessions,
   onArchiveChat,
@@ -203,6 +206,8 @@ export function ChatSidebar({
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<"all" | "dm" | "groups" | "archived" | "deleted">("all");
   const [deleteTarget, setDeleteTarget] = useState<SidebarContact | null>(null);
+  const [tagFilterOpen, setTagFilterOpen] = useState(false);
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<number>>(new Set());
   const [seenMessages, setSeenMessages] = useLocalStorageObjectArray(
     "seenMessages",
     [] as MessageRecord[],
@@ -331,12 +336,18 @@ export function ChatSidebar({
       );
     }
 
+    if (selectedTagIds.size > 0) {
+      list = list.filter((contact) =>
+        (contact.chatSession?.tags ?? []).some((tag) => selectedTagIds.has(tag.id)),
+      );
+    }
+
     return list.slice().sort((a, b) => {
       if (a.isPinned !== b.isPinned) return Number(b.isPinned) - Number(a.isPinned);
       if (a.pinnedAtMs !== b.pinnedAtMs) return b.pinnedAtMs - a.pinnedAtMs;
       return b.ts - a.ts;
     });
-  }, [contacts, q, tab]);
+  }, [contacts, q, selectedTagIds, tab]);
 
   // Scroll to selected chat when selectedJid changes
   React.useEffect(() => {
@@ -347,6 +358,22 @@ export function ChatSidebar({
       }
     }
   }, [selectedJid]);
+
+  const toggleTagFilter = useCallback((tagId: number) => {
+    setSelectedTagIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(tagId)) {
+        next.delete(tagId);
+      } else {
+        next.add(tagId);
+      }
+      return next;
+    });
+  }, []);
+
+  const clearTagFilter = useCallback(() => {
+    setSelectedTagIds(new Set());
+  }, []);
 
   const handleSelectJid = useCallback(
     (jid: string, lastMessageId: string) => {
@@ -393,9 +420,89 @@ export function ChatSidebar({
                 </button>
               )}
             </div>
+            {allTags.length > 0 && (
+              <button
+                type="button"
+                aria-label="Filtrar por etiquetas"
+                title="Filtrar por etiquetas"
+                onClick={() => setTagFilterOpen((v) => !v)}
+                className={cn(
+                  "relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors",
+                  tagFilterOpen || selectedTagIds.size > 0
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
+                )}
+              >
+                <Filter className="h-3.5 w-3.5" />
+                {selectedTagIds.size > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground">
+                    {selectedTagIds.size}
+                  </span>
+                )}
+              </button>
+            )}
           </div>
 
-          {/* Fila 2: tabs */}
+          {/* Fila 2: tag filter (collapsible) */}
+          {tagFilterOpen && allTags.length > 0 && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Etiquetas
+                </span>
+                {selectedTagIds.size > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearTagFilter}
+                    className="flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                    Limpiar
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {allTags
+                  .slice()
+                  .sort((a, b) => a.order - b.order)
+                  .map((tag) => {
+                    const isActive = selectedTagIds.has(tag.id);
+                    const color = tag.color ?? "#6366F1";
+                    return (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        onClick={() => toggleTagFilter(tag.id)}
+                        className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium transition-all"
+                        style={
+                          isActive
+                            ? { background: color, borderColor: color, color: "#fff" }
+                            : {
+                                borderColor: `${color}60`,
+                                color,
+                                background: `${color}15`,
+                              }
+                        }
+                      >
+                        <span
+                          className="h-1.5 w-1.5 shrink-0 rounded-full"
+                          style={{ background: isActive ? "rgba(255,255,255,0.7)" : color }}
+                        />
+                        {tag.name}
+                      </button>
+                    );
+                  })}
+              </div>
+              {selectedTagIds.size > 0 && (
+                <p className="text-[10px] text-muted-foreground">
+                  Mostrando contactos con{" "}
+                  <span className="font-semibold">cualquiera</span> de las etiquetas seleccionadas.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Fila 3: tabs */}
           {(() => {
             const TAB_CONFIG: {
               key: "all" | "dm" | "groups" | "archived" | "deleted";

@@ -8,6 +8,7 @@ import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 import { z } from "zod";
+import { sanitizeInstanceName } from "@/schema/connection";
 
 /* ─────────────────────────────────────────
    Constants
@@ -56,17 +57,6 @@ function slugify(name: string): string {
     .trim()
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "");
-}
-
-function sanitizeInstanceName(input: string): string {
-  return input
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "")
-    .slice(0, 40) || "instancia";
 }
 
 function formatTrialDate(date: Date): string {
@@ -203,9 +193,11 @@ export async function fullRegisterAction(
           apiUrl: DEFAULT_API_URL,
           timezone: resolvedTimezone,
           status: true,
-          enabledSynthesizer: false,
-          enabledLeadStatusClassifier: false,
-          enabledCrmFollowUps: false,
+          enabledSynthesizer: true,
+          enabledLeadStatusClassifier: true,
+          enabledCrmFollowUps: true,
+          autoReactivate: "30",
+          delayTimeGpt: "30",
         },
       });
 
@@ -214,11 +206,10 @@ export async function fullRegisterAction(
         data: {
           serviceName: "Agente IA",
           userId: created.id,
-          price: 49.0,
+          price: 0,
           currencyCode: "USD",
-          paymentMethodLabel: "Binance",
-          paymentNotes:
-            "📧 Binance: 👉 oscarmanrique_contreras@hotmail.com",
+          paymentMethodLabel: "Link de pago",
+          paymentNotes: "👉 https://verzay.com/agente-ia",
           notifyRemoteJid: notificationNumber,
           billingStatus: "PAID",
           accessStatus: "ACTIVE",

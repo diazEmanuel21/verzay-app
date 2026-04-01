@@ -173,7 +173,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
       {/* Input + botones */}
       <div className="relative flex flex-nowrap">
         <div className="relative flex flex-nowrap z-10 items-center justify-center">
-          <div className="flex pr-2">
+          <div className="pr-2 md:block hidden">
             {session && (
               <SwitchStatus
                 key={`${session.id}-${session.status ? 'on' : 'off'}`}
@@ -183,7 +183,6 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
               />
             )}
           </div>
-
           <ChatAutomationPicker
             quickReplies={quickReplies}
             workflows={workflows}

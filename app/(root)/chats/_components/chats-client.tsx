@@ -713,6 +713,7 @@ export function ChatsClient({
         }`}
       >
         <ChatSidebar
+          allTags={allTags}
           chatPreferences={chatPreferences}
           chatSessions={chatSessions}
           onArchiveChat={handleArchiveChat}
