@@ -73,6 +73,7 @@ export const iconMap = {
 export const ItemModuleSchema = z.object({
     url: z.string().min(1),
     title: z.string().min(1),
+    customUrl: z.string().optional(),
 })
 
 export const FormModuleSchema = z.object({

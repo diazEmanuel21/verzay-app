@@ -58,6 +58,7 @@ export async function createModule(formData: FormModuleValues): Promise<ModuleRe
                     create: items.map(item => ({
                         title: item.title,
                         url: item.url,
+                        customUrl: item.customUrl,
                     })),
                 } : undefined,
             },
@@ -111,6 +112,7 @@ export async function updateModule(moduleId: string, formData: FormModuleValues)
                         create: items.map(item => ({
                             title: item.title,
                             url: item.url,
+                            customUrl: item.customUrl,
                         })),
                     }
                     : undefined,

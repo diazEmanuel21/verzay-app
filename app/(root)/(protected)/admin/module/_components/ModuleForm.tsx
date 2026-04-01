@@ -48,6 +48,7 @@ export const ModuleForm = ({
     const [openPlans, setOpenPlans] = useState(false);
 
     const selectedRoute = form.watch("route");
+    const watchedItems = form.watch("items");
 
     return (
         <Form {...form}>
@@ -245,6 +246,14 @@ export const ModuleForm = ({
                                             ))}
                                     </SelectContent>
                                 </Select>
+                                {/* Ruta personalizada cuando la URL es /canva */}
+                                {watchedItems?.[index]?.url === "/canva" && (
+                                    <Input
+                                        placeholder="https://bot.verzay.co/es/typebots"
+                                        {...form.register(`items.${index}.customUrl`)}
+                                        className="w-full"
+                                    />
+                                )}
                                 {/* INPUT para título */}
                                 <Input
                                     placeholder="Título"

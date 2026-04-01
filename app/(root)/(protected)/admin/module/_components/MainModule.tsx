@@ -37,7 +37,11 @@ export const MainModule = () => {
         requiresPremium: moduleComponent.requiresPremium,
         showInSidebar: moduleComponent.showInSidebar ?? true,
         allowedPlans: moduleComponent.allowedPlans,
-        items: moduleComponent.moduleItems
+        items: moduleComponent.moduleItems.map(item => ({
+            url: item.url,
+            title: item.title,
+            customUrl: item.customUrl ?? undefined,
+        }))
     });
 
     useEffect(() => {

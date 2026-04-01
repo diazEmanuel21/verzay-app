@@ -160,6 +160,7 @@ model ModuleItem {
   id        String   @id @default(uuid())
   title     String
   url       String
+  customUrl String?
   moduleId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
