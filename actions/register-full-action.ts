@@ -14,7 +14,7 @@ import { z } from "zod";
 ───────────────────────────────────────── */
 const DEFAULT_API_KEY_ID = "a001648e-6c51-4edf-a3d1-f1138af418fa";
 const DEFAULT_WEBHOOK_URL = "https://backend.ia-app.com/webhook";
-const DEFAULT_API_URL = "process.env.SECRET_API_KEY";
+const DEFAULT_API_URL = process.env.SECRET_API_KEY;
 const DEFAULT_DEL_SEGUIMIENTO = "Estamos para servirle.";
 const DEFAULT_IA_CREDITS = 1000;
 const TRIAL_DAYS = 3;
