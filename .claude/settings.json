@@ -16,7 +16,11 @@
       "Bash(tail -20 \"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\verzay-app-main\\\\verzay-app/app/\\(root\\)/chats/_components/chat-main.tsx\")",
       "Bash(ls \"e:/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/app/\\(root\\)/chats/_components/\")",
       "Skill(update-config)",
-      "Skill(update-config:*)"
+      "Skill(update-config:*)",
+      "Bash(grep -r \"UserBilling\\\\|createUserWithPausar\" /e/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/actions --include=\"*.ts\" ! -path \"*/node_modules/*\")",
+      "Bash(grep -r \"registerAction\\\\|UserBilling\" /e/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app --include=\"*.ts\" --include=\"*.tsx\" ! -path \"*/node_modules/*\" ! -path \"*/.next/*\")",
+      "Bash(grep -r \"\"\"sonner\"\"\" package.json)",
+      "Bash(ls app/\\\\\\(auth\\\\\\)/)"
     ],
     "additionalDirectories": [
       "C:\\Users\\home\\.claude"
