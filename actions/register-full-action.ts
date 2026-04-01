@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { fullRegisterSchema } from "@/lib/zod";
 import { LENGTH_PASSWORD_HASH } from "@/types/generic";
 import { AuthError } from "next-auth";
+import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 import { z } from "zod";
@@ -13,7 +14,7 @@ import { sanitizeInstanceName } from "@/schema/connection";
 /* ─────────────────────────────────────────
    Constants
 ───────────────────────────────────────── */
-const DEFAULT_API_KEY_ID = "aefe05313f924d7876e748f8e5d9b731";
+const DEFAULT_API_KEY_ID = "0c3a9266-4eb1-4a19-824e-844dcfe7a485";
 const DEFAULT_WEBHOOK_URL = "https://backend.ia-app.com/webhook";
 const DEFAULT_API_URL = process.env.SECRET_API_KEY;
 const DEFAULT_DEL_SEGUIMIENTO = "Estamos para servirle.";
@@ -170,6 +171,13 @@ export async function fullRegisterAction(
 
   const passwordHash = await bcrypt.hash(password, LENGTH_PASSWORD_HASH);
 
+  /* ── Validate DEFAULT_API_KEY_ID exists to avoid FK constraint error ── */
+  const apiKeyExists = await db.apiKey
+    .findUnique({ where: { id: DEFAULT_API_KEY_ID }, select: { id: true } })
+    .catch(() => null);
+
+  const resolvedApiKeyId = apiKeyExists ? DEFAULT_API_KEY_ID : null;
+
   const completedSteps: RegisterCompletedStep[] = [];
   let userId: string | null = null;
 
@@ -187,7 +195,7 @@ export async function fullRegisterAction(
           notificationNumber,
           role: "user",
           plan: "avanzado",
-          apiKeyId: DEFAULT_API_KEY_ID,
+          apiKeyId: resolvedApiKeyId,
           delSeguimiento: DEFAULT_DEL_SEGUIMIENTO,
           webhookUrl: DEFAULT_WEBHOOK_URL,
           apiUrl: DEFAULT_API_URL,
@@ -232,15 +240,27 @@ export async function fullRegisterAction(
         },
       });
 
-      // 5. Pausar (closing message)
+      // 4. Pausar (opening message)
       await tx.pausar.create({
         data: {
           userId: created.id,
           tipo: "abrir",
+          mensaje: DEFAULT_DEL_SEGUIMIENTO,
+          baseurl: "https://conexion.verzay.co",
+          instanciaId: "default-instancia-id",
+          apikeyId: resolvedApiKeyId ?? DEFAULT_API_KEY_ID,
+        },
+      });
+
+      // 5. Pausar (closing message)
+      await tx.pausar.create({
+        data: {
+          userId: created.id,
+          tipo: "cerrar",
           mensaje: "Fue un gusto ayudarle.",
           baseurl: "https://conexion.verzay.co",
           instanciaId: "default-instancia-id",
-          apikeyId: DEFAULT_API_KEY_ID,
+          apikeyId: resolvedApiKeyId ?? DEFAULT_API_KEY_ID,
         },
       });
 
@@ -296,11 +316,21 @@ export async function fullRegisterAction(
     }
 
     if (error instanceof AuthError) {
-      return { success: false, error: error.cause?.err?.message ?? "Error al iniciar sesión automáticamente." };
+      console.error("[FULL_REGISTER_ERROR] AuthError:", error);
+      return { success: false, error: "No fue posible iniciar sesión automáticamente. Por favor intenta acceder manualmente." };
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error("[FULL_REGISTER_ERROR] Prisma:", error.code, error.message, error.meta);
+      return { success: false, error: "Ocurrió un problema al guardar tu información. Por favor intenta de nuevo." };
+    }
+
+    if (error instanceof Prisma.PrismaClientUnknownRequestError || error instanceof Prisma.PrismaClientRustPanicError) {
+      console.error("[FULL_REGISTER_ERROR] Prisma (unknown/panic):", error);
+      return { success: false, error: "Ocurrió un problema con la base de datos. Por favor intenta de nuevo más tarde." };
     }
 
     console.error("[FULL_REGISTER_ERROR]", error);
-    const msg = error instanceof Error ? error.message : "Error inesperado al crear la cuenta.";
-    return { success: false, error: msg };
+    return { success: false, error: "Ocurrió un error inesperado. Por favor intenta de nuevo." };
   }
 }

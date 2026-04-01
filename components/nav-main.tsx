@@ -39,7 +39,7 @@ import { iconMap } from '@/schema/module';
 import { useModuleStore } from '@/stores/modules/useModuleStore';
 
 export function NavMain({ user }: { user: User }) {
-    const { modules, setLabelModule, labelModule } = useModuleStore();
+    const { modules, setLabelModule, labelModule, setCanvaUrl } = useModuleStore();
     const pathname = usePathname();
     const router = useRouter();
     const { state } = useSidebar();
@@ -91,8 +91,9 @@ export function NavMain({ user }: { user: User }) {
             return { ...link, isActive };
         });
 
-    const handleRoute = (label: string, targetRoute: string) => {
+    const handleRoute = (label: string, targetRoute: string, customUrl?: string | null) => {
         setLabelModule(label)
+        if (targetRoute === '/canva' && customUrl) setCanvaUrl(customUrl)
         router.push(targetRoute)
     }
     return (
@@ -121,7 +122,7 @@ export function NavMain({ user }: { user: User }) {
                     if (!moduleItems || moduleItems.length === 0) {
                         return (
                             <SidebarMenuItem key={id}>
-                                <SidebarMenuButton className={linkClasses} tooltip={label} onClick={() => handleRoute(label, targetRoute)}>
+                                <SidebarMenuButton className={linkClasses} tooltip={label} onClick={() => handleRoute(label, targetRoute, item.customUrl)}>
                                     {Icon && <Icon className={iconClasses} />}
                                     <span>{label}</span>
                                     <ChevronRight className="invisible ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -183,7 +184,10 @@ export function NavMain({ user }: { user: User }) {
                                                     <Link
                                                         key={subItem.url}
                                                         href={subItem.url}
-                                                        onClick={() => setOpenPopover(null)}
+                                                        onClick={() => {
+                                                            if (subItem.url === '/canva' && subItem.customUrl) setCanvaUrl(subItem.customUrl)
+                                                            setOpenPopover(null)
+                                                        }}
                                                         className={clsx(
                                                             'flex items-center rounded-md px-2 py-1.5 text-sm font-medium transition-colors',
                                                             isSubActive
@@ -227,6 +231,9 @@ export function NavMain({ user }: { user: User }) {
                                                 <SidebarMenuSubButton asChild>
                                                     <Link
                                                         href={subItem.url}
+                                                        onClick={() => {
+                                                            if (subItem.url === '/canva' && subItem.customUrl) setCanvaUrl(subItem.customUrl)
+                                                        }}
                                                         className='text-sm
                                                         text-muted-foreground
                                                         flex
