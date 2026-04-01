@@ -13,7 +13,7 @@ import { sanitizeInstanceName } from "@/schema/connection";
 /* ─────────────────────────────────────────
    Constants
 ───────────────────────────────────────── */
-const DEFAULT_API_KEY_ID = "a001648e-6c51-4edf-a3d1-f1138af418fa";
+const DEFAULT_API_KEY_ID = "aefe05313f924d7876e748f8e5d9b731";
 const DEFAULT_WEBHOOK_URL = "https://backend.ia-app.com/webhook";
 const DEFAULT_API_URL = process.env.SECRET_API_KEY;
 const DEFAULT_DEL_SEGUIMIENTO = "Estamos para servirle.";
@@ -198,6 +198,7 @@ export async function fullRegisterAction(
           enabledCrmFollowUps: true,
           autoReactivate: "30",
           delayTimeGpt: "30",
+          image: "https://drive.google.com/file/d/1tJX8VLvI7642wGJvxrD-g9qoTc18Dc5C/view?usp=sharing"
         },
       });
 
@@ -231,19 +232,19 @@ export async function fullRegisterAction(
         },
       });
 
-      // 4. Pausar (opening message)
+      // 5. Pausar (closing message)
       await tx.pausar.create({
         data: {
           userId: created.id,
           tipo: "abrir",
-          mensaje: DEFAULT_DEL_SEGUIMIENTO,
+          mensaje: "Fue un gusto ayudarle.",
           baseurl: "https://conexion.verzay.co",
           instanciaId: "default-instancia-id",
           apikeyId: DEFAULT_API_KEY_ID,
         },
       });
 
-      // 5. Default tags
+      // 6. Default tags
       await tx.tag.createMany({
         data: DEFAULT_TAGS.map((tag, index) => ({
           userId: created.id,

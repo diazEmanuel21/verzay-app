@@ -38,6 +38,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { optimizeFile } from "../../workflow/[workflowId]/helpers";
 import { SafeImage } from "@/components/custom/SafeImage";
 import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox";
+import { Button } from "@/components/ui/button";
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 const clientSchema = z.object({
@@ -390,12 +391,18 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                                     : "El bot responde automáticamente a tus contactos."}
                                             </p>
                                             <div className="flex items-center justify-between">
-                                                <Badge
+                                                <Button
+                                                variant={"outline"}
+                                                    className={`text-xs ${!isMuted ? "text-green-600 border-green-600 dark:text-green-400 dark:border-green-400" : ""}`}
+                                                >
+                                                    {isMuted ? "Silenciado" : "Activo"}
+                                                </Button>
+                                                {/* <Badge
                                                     variant={isMuted ? "destructive" : "outline"}
                                                     className={`text-xs ${!isMuted ? "text-green-600 border-green-600 dark:text-green-400 dark:border-green-400" : ""}`}
                                                 >
                                                     {isMuted ? "Silenciado" : "Activo"}
-                                                </Badge>
+                                                </Badge> */}
                                                 <Switch checked={!isMuted} onCheckedChange={(v) => handleMuteToggle(!v)} />
                                             </div>
                                         </div>
@@ -443,6 +450,18 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                     <TabsContent value="preferencias" className="absolute inset-0 mt-0 data-[state=inactive]:pointer-events-none">
                         <TabPanel>
                             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2">
+                                {/* Zona horaria */}
+                                <Card className="border-border flex flex-1 flex-col">
+                                    <CardContent className="pt-4 flex flex-col flex-1 gap-4">
+                                        <CardLabel icon={Globe}>Zona horaria</CardLabel>
+                                        <FieldGroup
+                                            label="Región"
+                                        >
+                                            <TimezoneCombobox value={timezone} onChange={handleTimezoneChange} />
+                                        </FieldGroup>
+                                    </CardContent>
+                                </Card>
+
                                 {/* Empresa */}
                                 <Card className="border-border flex flex-1 flex-col">
                                     <CardContent className="pt-4 flex flex-col flex-1 gap-4">
@@ -463,20 +482,6 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                         </FieldGroup>
                                     </CardContent>
                                 </Card>
-
-                                {/* Zona horaria */}
-                                <Card className="border-border flex flex-1 flex-col">
-                                    <CardContent className="pt-4 flex flex-col flex-1 gap-4">
-                                        <CardLabel icon={Globe}>Zona horaria</CardLabel>
-                                        <FieldGroup
-                                            label="Región"
-                                        >
-                                            <TimezoneCombobox value={timezone} onChange={handleTimezoneChange} />
-                                        </FieldGroup>
-                                    </CardContent>
-                                </Card>
-
-
                             </div>
                         </TabPanel>
                     </TabsContent>
@@ -485,9 +490,9 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                     <TabsContent value="comportamiento" className="absolute inset-0 mt-0 data-[state=inactive]:pointer-events-none">
                         <TabPanel>
                             <SectionTitle>Tiempos de respuesta</SectionTitle>
-                            <Card className="border-border">
-                                <CardContent className="pt-4">
-                                    <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <Card className="border-border">
+                                    <CardContent className="pt-4">
                                         <FieldGroup
                                             label="Reactivación automática"
                                             hint="Tiempo sin mensajes antes de reactivar"
@@ -505,7 +510,11 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                                 onBlur={() => handleBlur("autoReactivate")}
                                             />
                                         </FieldGroup>
+                                    </CardContent>
+                                </Card>
 
+                                <Card className="border-border">
+                                    <CardContent className="pt-4">
                                         <FieldGroup
                                             label="Retraso de respuesta IA"
                                             hint="Espera antes de enviar cada respuesta"
@@ -523,9 +532,9 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                                                 onBlur={() => handleBlur("delayTimeGpt")}
                                             />
                                         </FieldGroup>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                                    </CardContent>
+                                </Card>
+                            </div>
 
                             <SectionTitle>Frases automáticas</SectionTitle>
                             <div className="grid gap-4 sm:grid-cols-2">
