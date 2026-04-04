@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import {
   GripVertical,
   MessageSquareIcon,
+  Phone,
   UploadIcon,
 } from "lucide-react";
 import { TimeInput } from "@/components/shared/TimeInput";
@@ -35,6 +36,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { CSS } from '@dnd-kit/utilities'
 import { SafeImage } from "@/components/custom/SafeImage";
+import { Badge } from "@/components/ui/badge";
 
 interface Props {
   workflowId: string;
@@ -359,12 +361,16 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
       );
     }
 
-    if (isNotifyNode) {
-      return (
-        <></>
-      )
-    }
-
+    if (isNotifyNode) return (
+      <div className="flex flex-1 justify-center">
+        <Badge variant="secondary">
+          <Phone className="w-3.5 h-3.5 mr-1.5" />
+          <p className="text-muted-foreground text-sm">
+            {user.notificationNumber}
+          </p>
+        </Badge>
+      </div>
+    );
     if (baseType === 'text') {
       return (
         <GenericTextarea
