@@ -16,6 +16,8 @@ import { Label } from "@/components/ui/label";
 import { User, Workflow } from "@prisma/client";
 import { createRR } from "@/actions/rr-actions";
 import { toast } from "sonner";
+import { ReplyTypeSelector, ReplyType } from "./ReplyTypeSelector";
+import { Separator } from "@/components/ui/separator";
 
 interface AutoReplies {
     user: User;
@@ -25,23 +27,38 @@ interface AutoReplies {
 
 export const CardCreateRr = ({ user, Workflows, onSuccessClose }: AutoReplies) => {
     const router = useRouter();
+    const [replyType, setReplyType] = useState<ReplyType>('text');
     const [phrase, setPhrase] = useState("");
     const [name, setName] = useState("");
     const [workflowId, setWorkflowId] = useState("");
     const [loading, setLoading] = useState(false);
 
+    const isTextMode = replyType === 'text';
+
+    const handleTypeChange = (type: ReplyType) => {
+        setReplyType(type);
+        setPhrase("");
+        setWorkflowId("");
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!phrase) return toast.warning("El mensaje es obligatorio.");
+
+        if (isTextMode && !phrase.trim()) {
+            return toast.warning("El mensaje es obligatorio para respuestas de texto.");
+        }
+        if (!isTextMode && !workflowId) {
+            return toast.warning("Debes seleccionar un flujo.");
+        }
 
         setLoading(true);
         const toastId = "respuesta-rapida";
 
         try {
             const res = await createRR({
-                workflowId: workflowId || undefined,
+                workflowId: !isTextMode ? workflowId : undefined,
                 name: name.trim() || undefined,
-                mensaje: phrase,
+                mensaje: isTextMode ? phrase : undefined,
                 userId: user.id,
             });
 
@@ -61,11 +78,25 @@ export const CardCreateRr = ({ user, Workflows, onSuccessClose }: AutoReplies) =
 
     return (
         <form onSubmit={handleSubmit}>
-            <div className="grid w-full items-center gap-4">
+            <div className="grid w-full items-center gap-5">
+
+                {/* Selector de tipo */}
+                <div className="flex flex-col space-y-2">
+                    <Label className="text-sm font-medium">Tipo de respuesta</Label>
+                    <ReplyTypeSelector
+                        value={replyType}
+                        onChange={handleTypeChange}
+                        disabled={loading}
+                    />
+                </div>
+
+                <Separator />
+
+                {/* Nombre / atajo (siempre visible) */}
                 <div className="flex flex-col space-y-1.5">
                     <Label htmlFor="name" className="flex gap-1 items-center">
                         Nombre / atajo{" "}
-                        <p className="text-xs text-muted-foreground">(Opcional — ej: bienvenida)</p>
+                        <span className="text-xs text-muted-foreground">(Opcional — ej: bienvenida)</span>
                     </Label>
                     <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm select-none">
@@ -81,44 +112,64 @@ export const CardCreateRr = ({ user, Workflows, onSuccessClose }: AutoReplies) =
                         />
                     </div>
                 </div>
-                <div className="flex flex-col space-y-1.5">
-                    <Label htmlFor="phrase" className="flex gap-1 items-center">
-                        Mensaje <p className="text-xs text-primary">(Obligatorio)</p>
-                    </Label>
-                    <Textarea
-                        id="phrase"
-                        placeholder="Ej: Fue un gusto atenderte."
-                        value={phrase}
-                        onChange={(e) => setPhrase(e.target.value)}
-                        disabled={loading}
-                        rows={4}
-                    />
-                </div>
-                <div className="flex flex-col space-y-1.5">
-                    <Label htmlFor="workflow" className="flex gap-1 items-center">
-                        Selecciona el flujo{" "}
-                        <p className="text-xs text-muted-foreground">(Opcional)</p>
-                    </Label>
-                    <Select
-                        onValueChange={(val) => setWorkflowId(val)}
-                        disabled={loading}
-                    >
-                        <SelectTrigger id="workflow">
-                            <SelectValue placeholder="Sin flujo asociado" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {Workflows.map((wf) => (
-                                <SelectItem key={wf.id} value={wf.id}>
-                                    {wf.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+
+                {/* Campo de mensaje — solo modo texto */}
+                {isTextMode && (
+                    <div className="flex flex-col space-y-1.5">
+                        <Label htmlFor="phrase" className="flex gap-1 items-center">
+                            Mensaje{" "}
+                            <span className="text-xs text-primary">(Obligatorio)</span>
+                        </Label>
+                        <Textarea
+                            id="phrase"
+                            placeholder="Ej: Fue un gusto atenderte."
+                            value={phrase}
+                            onChange={(e) => setPhrase(e.target.value)}
+                            disabled={loading}
+                            rows={4}
+                        />
+                    </div>
+                )}
+
+                {/* Selector de flujo — solo modo flujo */}
+                {!isTextMode && (
+                    <div className="flex flex-col space-y-1.5">
+                        <Label htmlFor="workflow" className="flex gap-1 items-center">
+                            Flujo a ejecutar{" "}
+                            <span className="text-xs text-primary">(Obligatorio)</span>
+                        </Label>
+                        <Select
+                            value={workflowId}
+                            onValueChange={setWorkflowId}
+                            disabled={loading}
+                        >
+                            <SelectTrigger id="workflow">
+                                <SelectValue placeholder="Selecciona un flujo..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {Workflows.map((wf) => (
+                                    <SelectItem key={wf.id} value={wf.id}>
+                                        {wf.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        {Workflows.length === 0 && (
+                            <p className="text-xs text-destructive">
+                                No tienes flujos disponibles. Crea uno primero.
+                            </p>
+                        )}
+                    </div>
+                )}
             </div>
-            <div className="flex mt-4 gap-2">
-                <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Guardando..." : "Crear"}
+
+            <div className="flex mt-5 gap-2">
+                <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={loading || (!isTextMode && Workflows.length === 0)}
+                >
+                    {loading ? "Guardando..." : "Crear respuesta rápida"}
                 </Button>
             </div>
         </form>

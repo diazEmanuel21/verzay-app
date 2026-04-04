@@ -6,3 +6,4 @@ export * from './AutoRepliesCard';
 export * from './CardCreateRr';
 export * from './AutoRepliesActions';
 export * from './SortableAutoRepliesList';
+export * from './ReplyTypeSelector';
