@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -20,11 +22,12 @@ import {
   SelectValue
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { VolumeX, Volume2 } from 'lucide-react'
+import { VolumeX, Volume2, BrainCircuit } from 'lucide-react'
 import { PLAN_LABELS, PLANS } from "@/types/plans"
 import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox"
 import { useEffect, useState } from "react"
 import { Switch } from "@/components/ui/switch"
+import { ApiKeyConfigurator } from "@/app/(root)/profile/_components/ApiKeyConfigurator"
 
 interface Props {
   openEditDialog: boolean
@@ -114,7 +117,6 @@ export const EditDialog = ({
     { id: "passPlainTxt", label: "Contraseña", defaultValue: user.passPlainTxt, readOnly: true },
     { id: "role", label: "Rol", defaultValue: user.role, readOnly: false },
     { id: "plan", label: "Plan", defaultValue: user.plan, readOnly: false },
-    { id: "apiUrl", label: "Apikey OpenIA", defaultValue: user.aiConfigs[0]?.apiKey ?? '', readOnly: true },
     { id: "webhookUrl", label: "Webhook URL", defaultValue: user.webhookUrl, readOnly: false },
     { id: "company", label: "Empresa", defaultValue: user.company, readOnly: false },
     // { id: "notificationNumber", label: "Teléfono Notificación", defaultValue: user.notificationNumber, readOnly: false },
@@ -128,7 +130,7 @@ export const EditDialog = ({
 
   /* Ocultar/mostrar fields para reseller */
   if (currentUserRol === 'reseller') {
-    const idsToRemove = ["apiKeyId", "webhookUrl", "apiUrl"]
+    const idsToRemove = ["apiKeyId", "webhookUrl"]
     fields = fields.filter(field => !idsToRemove.includes(field.id))
 
     const idsReadOnly = ["name", "email", "role", "plan"]
@@ -326,9 +328,11 @@ export const EditDialog = ({
     }
   }
 
+  const showAiConfig = currentUserRol !== 'reseller';
+
   return (
     <Dialog open={openEditDialog} onOpenChange={setOpenEditDialog}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Editar cliente</DialogTitle>
           <DialogDescription>
@@ -336,8 +340,19 @@ export const EditDialog = ({
           </DialogDescription>
         </DialogHeader>
 
+        {/* Sección API Key IA — gestiona su propio guardado */}
+        {showAiConfig && (
+          <div className="rounded-lg border bg-muted/30 px-4 py-3 flex flex-col gap-2">
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <BrainCircuit className="h-4 w-4 text-primary" />
+              Configuración IA
+            </div>
+            <ApiKeyConfigurator userId={user.id} label="" />
+          </div>
+        )}
+
         <form action={(formData) => handleEdit(user.id, formData)}>
-          <div className="overflow-auto max-h-96 pr-2">
+          <div className="overflow-auto max-h-80 pr-2">
             <div className="grid gap-4 py-4">
               {fields.map(({ id, label, defaultValue, readOnly }) => (
                 <div className="grid grid-cols-4 items-center gap-4" key={id}>
@@ -348,7 +363,7 @@ export const EditDialog = ({
             </div>
           </div>
 
-          <DialogFooter className="pt-6">
+          <DialogFooter className="pt-4">
             <Button type="submit">Guardar</Button>
           </DialogFooter>
         </form>

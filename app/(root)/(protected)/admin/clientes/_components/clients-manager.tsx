@@ -12,6 +12,7 @@ import {
     updateAbrirPhrase,
     updateClientData
 } from '@/actions/userClientDataActions';
+import { autoConfigureUserAi } from '@/actions/userAiconfig-actions';
 import { CreateDialog, DeleteDialog, ToolsDialog, EditDialog, ClientStatusPanel, StatusKey } from './';
 import { ApiKey } from '@prisma/client';
 import { UserFormValues } from '@/schema/user';
@@ -101,6 +102,9 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
         });
 
         if (result.success) {
+            if (result.data?.id && apiUrl) {
+                await autoConfigureUserAi(result.data.id, apiUrl);
+            }
             toast.success('Cliente creado', { id: toastId });
             router.refresh();
         } else {

@@ -176,6 +176,14 @@ export async function fullRegisterAction(
     .findUnique({ where: { id: DEFAULT_API_KEY_ID }, select: { id: true } })
     .catch(() => null);
 
+  /* ── Fetch OpenAI provider for AI auto-config ── */
+  const openaiProvider = await db.aiProvider
+    .findFirst({
+      where: { name: 'openai' },
+      include: { models: { orderBy: { name: 'asc' }, take: 1 } },
+    })
+    .catch(() => null);
+
   const resolvedApiKeyId = apiKeyExists ? DEFAULT_API_KEY_ID : null;
 
   const completedSteps: RegisterCompletedStep[] = [];
@@ -262,6 +270,25 @@ export async function fullRegisterAction(
           order: index,
         })),
       });
+
+      // 6. AI config — auto-configure OpenAI with the default secret key
+      if (openaiProvider && process.env.SECRET_API_KEY) {
+        await tx.userAiConfig.create({
+          data: {
+            userId: created.id,
+            providerId: openaiProvider.id,
+            apiKey: process.env.SECRET_API_KEY,
+            isActive: true,
+          },
+        });
+        await tx.user.update({
+          where: { id: created.id },
+          data: {
+            defaultProviderId: openaiProvider.id,
+            defaultAiModelId: openaiProvider.models[0]?.id ?? null,
+          },
+        });
+      }
 
       return created;
     });
