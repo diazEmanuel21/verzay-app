@@ -18,7 +18,7 @@ const TAB_CONFIG: Omit<TabConfig, "count">[] = [
 
 export function ChatTabBar({ onTabChange, tab, tabCounts }: ChatTabBarProps) {
   return (
-    <div className="flex flex-row gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="flex flex-row gap-1 justify-between overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {TAB_CONFIG.map(({ key, label, Icon, color }) => {
         const count = tabCounts[key];
         const isActive = tab === key;

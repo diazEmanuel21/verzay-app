@@ -52,7 +52,6 @@ export function ChatSidebar({
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<TabKey>("all");
   const [deleteTarget, setDeleteTarget] = useState<SidebarContact | null>(null);
-  const [tagFilterOpen, setTagFilterOpen] = useState(false);
   const [selectedTagIds, setSelectedTagIds] = useState<Set<number>>(new Set());
   const [seenMessages, setSeenMessages] = useLocalStorageObjectArray(
     "seenMessages",
@@ -192,9 +191,8 @@ export function ChatSidebar({
 
   const toggleTagFilter = useCallback((tagId: number) => {
     setSelectedTagIds((prev) => {
-      const next = new Set(prev);
-      next.has(tagId) ? next.delete(tagId) : next.add(tagId);
-      return next;
+      if (prev.has(tagId)) return new Set();
+      return new Set([tagId]);
     });
   }, []);
 
@@ -217,24 +215,21 @@ export function ChatSidebar({
     <>
       <aside className="flex h-full w-full max-w-[700px] flex-col border-r bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/50 xs:min-w-[200px]">
         <div className="sticky top-0 z-10 space-y-2 border-b bg-background/80 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <ChatSearchBar
-            value={q}
-            onChange={setQ}
-            onClear={() => setQ("")}
-            showFilter={allTags.length > 0}
-            filterActive={tagFilterOpen}
-            filterCount={selectedTagIds.size}
-            onToggleFilter={() => setTagFilterOpen((v) => !v)}
-          />
-
-          {tagFilterOpen && allTags.length > 0 && (
-            <TagFilterPanel
-              tags={allTags}
-              selectedTagIds={selectedTagIds}
-              onToggleTag={toggleTagFilter}
-              onClearFilter={() => setSelectedTagIds(new Set())}
+          <div className="flex items-center gap-2">
+            <ChatSearchBar
+              value={q}
+              onChange={setQ}
+              onClear={() => setQ("")}
             />
-          )}
+            {allTags.length > 0 && (
+              <TagFilterPanel
+                tags={allTags}
+                selectedTagIds={selectedTagIds}
+                onToggleTag={toggleTagFilter}
+                onClearFilter={() => setSelectedTagIds(new Set())}
+              />
+            )}
+          </div>
 
           <ChatTabBar tab={tab} onTabChange={setTab} tabCounts={tabCounts} />
         </div>

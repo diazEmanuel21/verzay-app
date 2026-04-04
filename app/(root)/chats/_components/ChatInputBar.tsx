@@ -171,8 +171,8 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
       )}
 
       {/* Input + botones */}
-      <div className="relative flex flex-nowrap">
-        <div className="relative flex flex-nowrap z-10 items-center justify-center">
+      <div className="relative flex flex-nowrap gap-2">
+        <div className="relative flex flex-nowrap z-10 items-center justify-center flex-col sm:flex-row">
           <div className="pr-2 md:block hidden">
             {session && (
               <SwitchStatus
@@ -227,7 +227,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
           rows={1}
           aria-label="Escribe tu mensaje"
           className={cn(
-            'min-h-[44px] max-h-40 h-auto bg-white dark:bg-gray-800 dark:text-white rounded-lg border-none w-full',
+            'h-auto bg-white dark:bg-gray-800 dark:text-white rounded-lg border-none w-full',
             'pl-4 pr-24 resize-none overflow-y-auto text-sm md:text-base',
           )}
         />
