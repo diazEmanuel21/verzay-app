@@ -205,7 +205,7 @@ export async function fullRegisterAction(
           enabledLeadStatusClassifier: true,
           enabledCrmFollowUps: true,
           autoReactivate: "30",
-          delayTimeGpt: "30",
+          delayTimeGpt: "10",
           image: "https://drive.google.com/file/d/1tJX8VLvI7642wGJvxrD-g9qoTc18Dc5C/view?usp=sharing"
         },
       });
@@ -245,18 +245,6 @@ export async function fullRegisterAction(
         data: {
           userId: created.id,
           tipo: "abrir",
-          mensaje: DEFAULT_DEL_SEGUIMIENTO,
-          baseurl: "https://conexion.verzay.co",
-          instanciaId: "default-instancia-id",
-          apikeyId: resolvedApiKeyId ?? DEFAULT_API_KEY_ID,
-        },
-      });
-
-      // 5. Pausar (closing message)
-      await tx.pausar.create({
-        data: {
-          userId: created.id,
-          tipo: "cerrar",
           mensaje: "Fue un gusto ayudarle.",
           baseurl: "https://conexion.verzay.co",
           instanciaId: "default-instancia-id",
@@ -264,7 +252,7 @@ export async function fullRegisterAction(
         },
       });
 
-      // 6. Default tags
+      // 5. Default tags
       await tx.tag.createMany({
         data: DEFAULT_TAGS.map((tag, index) => ({
           userId: created.id,

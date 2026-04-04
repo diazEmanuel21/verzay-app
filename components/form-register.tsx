@@ -23,6 +23,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { CountryCodeSelect, type Country } from "@/components/custom/CountryCodeSelect";
+import { normalizeToE164 } from "@/app/schedule/helpers/normalizeToE164";
 import {
   Building2,
   CheckCircle2,
@@ -209,7 +212,17 @@ function Step1Fields({ form }: { form: ReturnType<typeof useForm<FormValues>> })
 }
 
 /* Step 2: Business info */
-function Step2Fields({ form }: { form: ReturnType<typeof useForm<FormValues>> }) {
+function Step2Fields({
+  form,
+  countries,
+  areaCode,
+  setAreaCode,
+}: {
+  form: ReturnType<typeof useForm<FormValues>>;
+  countries: Country[];
+  areaCode: string;
+  setAreaCode: (v: string) => void;
+}) {
   return (
     <div className="space-y-5">
       <FormField
@@ -234,6 +247,15 @@ function Step2Fields({ form }: { form: ReturnType<typeof useForm<FormValues>> })
         )}
       />
 
+      <div className="space-y-2">
+        <Label>País</Label>
+        <CountryCodeSelect
+          countries={countries}
+          defaultValue={areaCode}
+          onChange={setAreaCode}
+        />
+      </div>
+
       <FormField
         control={form.control}
         name="notificationNumber"
@@ -245,8 +267,8 @@ function Step2Fields({ form }: { form: ReturnType<typeof useForm<FormValues>> })
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   {...field}
-                  type="tel"
-                  placeholder="+57 300 000 0000"
+                  inputMode="tel"
+                  placeholder="Número local"
                   className="pl-9"
                   autoComplete="tel"
                 />
@@ -266,8 +288,9 @@ function Step2Fields({ form }: { form: ReturnType<typeof useForm<FormValues>> })
 /* ─────────────────────────────────────────
    Main Component
 ───────────────────────────────────────── */
-const FormRegister = () => {
+const FormRegister = ({ countries }: { countries: Country[] }) => {
   const [step, setStep] = useState(1);
+  const [areaCode, setAreaCode] = useState("");
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -294,10 +317,16 @@ const FormRegister = () => {
   const onSubmit = (values: FormValues) => {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+    const e164 = normalizeToE164(areaCode, values.notificationNumber);
+    if (!e164) {
+      toast.error("Número de WhatsApp inválido. Verifica el país y el número.");
+      return;
+    }
+
     startTransition(async () => {
       const toastId = toast.loading("Iniciando configuración de tu cuenta...");
 
-      const result = await fullRegisterAction({ ...values, timezone });
+      const result = await fullRegisterAction({ ...values, notificationNumber: e164, timezone });
 
       if (!result.success) {
         toast.error(result.error, { id: toastId });
@@ -353,7 +382,12 @@ const FormRegister = () => {
             <Step1Fields form={form} />
           </div>
           <div className={cn(step === 2 ? "block" : "hidden")}>
-            <Step2Fields form={form} />
+            <Step2Fields
+              form={form}
+              countries={countries}
+              areaCode={areaCode}
+              setAreaCode={setAreaCode}
+            />
           </div>
 
           {/* Navigation */}
