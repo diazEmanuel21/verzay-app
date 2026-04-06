@@ -20,7 +20,9 @@
       "Bash(grep -r \"UserBilling\\\\|createUserWithPausar\" /e/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/actions --include=\"*.ts\" ! -path \"*/node_modules/*\")",
       "Bash(grep -r \"registerAction\\\\|UserBilling\" /e/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app --include=\"*.ts\" --include=\"*.tsx\" ! -path \"*/node_modules/*\" ! -path \"*/.next/*\")",
       "Bash(grep -r \"\"\"sonner\"\"\" package.json)",
-      "Bash(ls app/\\\\\\(auth\\\\\\)/)"
+      "Bash(ls app/\\\\\\(auth\\\\\\)/)",
+      "Bash(mkdir -p \"e:/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/app/\\(root\\)/ai-image/_components/hooks\")",
+      "Bash(mkdir -p \"e:/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/app/\\(root\\)/ai-image/_components/steps\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\home\\.claude"
