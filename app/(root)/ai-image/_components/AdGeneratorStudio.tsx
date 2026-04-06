@@ -99,11 +99,11 @@ const STUDIO_STEPS: Array<{
   helper: string
   icon: LucideIcon
 }> = [
-  { id: 'images', label: 'Producto', helper: 'Sube las referencias base.', icon: Upload },
-  { id: 'campaign', label: 'Campana', helper: 'Define estructura y mensaje.', icon: LayoutTemplate },
-  { id: 'style', label: 'Estilo', helper: 'Elige la direccion visual.', icon: Palette },
-  { id: 'engine', label: 'Motor', helper: 'Selecciona el modelo IA.', icon: Cpu },
-]
+    { id: 'images', label: 'Producto', helper: 'Sube las referencias base.', icon: Upload },
+    { id: 'campaign', label: 'imagen', helper: 'Define estructura y mensaje.', icon: LayoutTemplate },
+    { id: 'style', label: 'Estilo', helper: 'Elige la direccion visual.', icon: Palette },
+    { id: 'engine', label: 'Motor', helper: 'Selecciona el modelo IA.', icon: Cpu },
+  ]
 
 export const AdGeneratorStudio = () => {
   const [activeStep, setActiveStep] = useState<StudioStepId>('images')
@@ -181,9 +181,6 @@ export const AdGeneratorStudio = () => {
       setSourceImages((prev) => [...prev, ...base64Images])
       setError(null)
 
-      if (activeStep === 'images') {
-        setActiveStep('campaign')
-      }
     } catch {
       setError('No se pudieron leer una o mas imagenes.')
     }
@@ -345,20 +342,11 @@ export const AdGeneratorStudio = () => {
     <div className="grid min-h-full content-start gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)] lg:items-start">
       <Card className="flex min-h-0 flex-col overflow-hidden rounded-[28px] border-border shadow-sm">
         <CardHeader className="space-y-3 border-b bg-gradient-to-b from-muted/40 to-background p-4 lg:p-5">
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="rounded-full">
-              Studio IA
-            </Badge>
-            <Badge variant="outline" className="rounded-full">
-              Anuncios
-            </Badge>
-          </div>
-
           <div className="space-y-0">
             <CardTitle className="text-2xl leading-tight lg:text-3xl">Generador de imagenes</CardTitle>
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-3">
+          {/* <div className="grid gap-2 sm:grid-cols-3">
             <div className="rounded-2xl border border-border/70 bg-background/90 p-3">
               <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Activos</p>
               <p className="mt-1 text-lg font-semibold">{sourceImages.length}</p>
@@ -373,10 +361,10 @@ export const AdGeneratorStudio = () => {
 
             <div className="rounded-2xl border border-border/70 bg-background/90 p-3">
               <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Modo</p>
-              <p className="mt-1 text-sm font-semibold">{isLandingKitMode ? 'Kit Landing' : 'Campana Multi-formato'}</p>
+              <p className="mt-1 text-sm font-semibold">{isLandingKitMode ? 'Kit Landing' : 'imagen Multi-formato'}</p>
               <p className="text-xs text-muted-foreground">{selectedModelMeta.name}</p>
             </div>
-          </div>
+          </div> */}
         </CardHeader>
 
         <CardContent className="flex min-h-0 flex-1 flex-col p-0">
@@ -393,25 +381,22 @@ export const AdGeneratorStudio = () => {
                       key={step.id}
                       type="button"
                       onClick={() => setActiveStep(step.id)}
-                      className={`h-auto rounded-2xl border px-3 py-3 text-left transition ${
-                        isActive
-                          ? 'border-primary bg-primary/5 text-foreground'
-                          : 'border-border/70 bg-muted/20 hover:border-primary/40'
-                      }`}
+                      className={`h-auto rounded-2xl border px-3 py-3 text-left transition ${isActive
+                        ? 'border-primary bg-primary/5 text-foreground'
+                        : 'border-border/70 bg-muted/20 hover:border-primary/40'
+                        }`}
                     >
                       <div className="flex w-full items-start gap-3">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border bg-background">
                           <span className="text-xs font-semibold">{index + 1}</span>
                         </div>
 
-                        <div className="min-w-0 text-left">
-                          <div className="flex items-center gap-2">
-                            <StepIcon className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-semibold">{step.label}</span>
-                            {isCompleted && <CheckCircle2 className="h-4 w-4 text-primary" />}
-                          </div>
-                          <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{step.helper}</p>
+                        <div className="flex gap-2 h-9 flex-1 items-center">
+                          <StepIcon className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-semibold">{step.label}</span>
+                          {isCompleted && <CheckCircle2 className="h-4 w-4 text-primary" />}
                         </div>
+                        {/* <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{step.helper}</p> */}
                       </div>
                     </button>
                   )
@@ -419,7 +404,7 @@ export const AdGeneratorStudio = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 border-b px-4 py-3">
+            {/* <div className="grid grid-cols-3 gap-2 border-b px-4 py-3">
               <div className="rounded-2xl border border-border/70 bg-muted/20 p-3">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Plantilla</p>
                 <p className="mt-1 text-sm font-semibold">{isLandingKitMode ? '10 etapas landing' : selectedTemplateMeta.name}</p>
@@ -434,7 +419,7 @@ export const AdGeneratorStudio = () => {
                 <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Motor</p>
                 <p className="mt-1 line-clamp-2 text-sm font-semibold">{selectedModelMeta.name}</p>
               </div>
-            </div>
+            </div> */}
             <div className="min-h-0 flex-1 px-4 py-3">
               <TabsContent value="images" className="mt-0 h-full data-[state=inactive]:hidden">
                 <ScrollArea className="h-full pr-2">
@@ -448,17 +433,7 @@ export const AdGeneratorStudio = () => {
                       className="hidden"
                     />
 
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="flex min-h-[108px] w-full flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-muted/30 px-6 py-5 text-center transition hover:bg-muted/50"
-                    >
-                      <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl border bg-background">
-                        <Upload className="h-5 w-5" />
-                      </div>
-                      <p className="text-sm font-medium">Haz clic para subir imagenes</p>
-                      <p className="text-xs text-muted-foreground">Idealmente 1 a 4 angulos del producto</p>
-                    </button>
+
 
                     <div className="relative min-h-[180px] overflow-hidden rounded-3xl border border-border/70 bg-muted/20 sm:min-h-[200px]">
                       {currentSourceImage ? (
@@ -494,6 +469,18 @@ export const AdGeneratorStudio = () => {
                       )}
                     </div>
 
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex min-h-[108px] w-full flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-muted/30 px-6 py-5 text-center transition hover:bg-muted/50"
+                    >
+                      <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl border bg-background">
+                        <Upload className="h-5 w-5" />
+                      </div>
+                      <p className="text-sm font-medium">Haz clic para subir imagenes</p>
+                      <p className="text-xs text-muted-foreground">{`${STUDIO_STEPS[0].helper} Idealmente 1 a 4 angulos del producto`}</p>
+                    </button>
+
                     {sourceImages.length > 0 ? (
                       <ScrollArea className="w-full whitespace-nowrap">
                         <div className="flex gap-3 pb-2">
@@ -501,11 +488,10 @@ export const AdGeneratorStudio = () => {
                             <div
                               key={idx}
                               onClick={() => setActiveImageIndex(idx)}
-                              className={`relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-2xl border transition ${
-                                activeImageIndex === idx
-                                  ? 'border-primary ring-2 ring-primary/20'
-                                  : 'border-border hover:border-primary/40'
-                              }`}
+                              className={`relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-2xl border transition ${activeImageIndex === idx
+                                ? 'border-primary ring-2 ring-primary/20'
+                                : 'border-border hover:border-primary/40'
+                                }`}
                             >
                               <SafeImage
                                 src={img}
@@ -538,7 +524,7 @@ export const AdGeneratorStudio = () => {
                         <AlertTitle>Recomendacion</AlertTitle>
                         <AlertDescription>
                           Sube una imagen limpia del producto primero. Luego puedes anadir mas angulos para generar la
-                          misma campana en lote.
+                          misma imagen en lote.
                         </AlertDescription>
                       </Alert>
                     )}
@@ -555,7 +541,7 @@ export const AdGeneratorStudio = () => {
                           <div className="space-y-1">
                             <Label className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Texto</Label>
                             <p className="text-sm font-medium">Incluir copy en la imagen</p>
-                            <p className="text-xs text-muted-foreground">La IA intentara integrar titulares o mensajes.</p>
+                            {/* <p className="text-xs text-muted-foreground">La IA intentara integrar titulares o mensajes.</p> */}
                           </div>
                           <Switch checked={includeText} onCheckedChange={setIncludeText} />
                         </div>
@@ -565,8 +551,8 @@ export const AdGeneratorStudio = () => {
                         <div className="flex items-center justify-between gap-3">
                           <div className="space-y-1">
                             <Label className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Modo</Label>
-                            <p className="text-sm font-medium">Kit landing</p>
-                            <p className="text-xs text-muted-foreground">Genera las 10 etapas en formato 1:1.</p>
+                            <p className="text-sm font-medium">Genera las 10 etapas</p>
+                            {/* <p className="text-xs text-muted-foreground">Genera las 10 etapas en formato 1:1.</p> */}
                           </div>
                           <Switch checked={isLandingKitMode} onCheckedChange={setIsLandingKitMode} />
                         </div>
@@ -609,12 +595,9 @@ export const AdGeneratorStudio = () => {
                           id="visual-dna"
                           value={visualDNA}
                           onChange={(e) => setVisualDNA(e.target.value)}
-                          placeholder="Ej: Cocina moderna minimalista, tonos arena y madera clara..."
+                          placeholder="Define fondo, ambiente, iluminacion y sensacion general de la imagen."
                           className="rounded-xl bg-background"
                         />
-                        <p className="text-xs text-muted-foreground">
-                          Define fondo, ambiente, iluminacion y sensacion general de la campana.
-                        </p>
                       </div>
                     </div>
 
@@ -624,12 +607,10 @@ export const AdGeneratorStudio = () => {
                         id="custom-prompt"
                         value={customPrompt}
                         onChange={(e) => setCustomPrompt(e.target.value)}
-                        placeholder="Ej: Un reloj de lujo sobre una mesa de marmol negro con iluminacion dramatica..."
+                        placeholder="Describe la escena final, la intencion comercial o cualquier detalle que no deba improvisar la IA.
+                        Ej: Un reloj de lujo sobre una mesa de marmol negro con iluminacion dramatica..."
                         className="mt-2 min-h-[180px] rounded-xl resize-none bg-background"
                       />
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        Describe la escena final, la intencion comercial o cualquier detalle que no deba improvisar la IA.
-                      </p>
                     </div>
                   </div>
                 </ScrollArea>
@@ -641,7 +622,7 @@ export const AdGeneratorStudio = () => {
                     <div className="space-y-1">
                       <p className="text-sm font-semibold">Biblioteca visual</p>
                       <p className="text-xs text-muted-foreground">
-                        Elige un look & feel existente o crea un estilo propio para esta campana.
+                        Elige un look & feel existente o crea un estilo propio para esta imagen.
                       </p>
                     </div>
 
@@ -714,11 +695,10 @@ export const AdGeneratorStudio = () => {
                             key={style.id}
                             type="button"
                             onClick={() => setSelectedStyleId(style.id)}
-                            className={`relative rounded-2xl border p-4 text-left transition ${
-                              selected
-                                ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                                : 'border-border/70 bg-muted/20 hover:border-primary/40'
-                            }`}
+                            className={`relative rounded-2xl border p-4 text-left transition ${selected
+                              ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                              : 'border-border/70 bg-muted/20 hover:border-primary/40'
+                              }`}
                             title={style.description}
                           >
                             {selected && <CheckCircle2 className="absolute right-3 top-3 h-4 w-4 text-primary" />}
@@ -744,11 +724,10 @@ export const AdGeneratorStudio = () => {
                             key={model.id}
                             type="button"
                             onClick={() => setSelectedModel(model.id)}
-                            className={`relative w-full rounded-2xl border p-4 text-left transition ${
-                              selected
-                                ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                                : 'border-border/70 bg-muted/20 hover:border-primary/40'
-                            }`}
+                            className={`relative w-full rounded-2xl border p-4 text-left transition ${selected
+                              ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                              : 'border-border/70 bg-muted/20 hover:border-primary/40'
+                              }`}
                           >
                             {selected && <CheckCircle2 className="absolute right-3 top-3 h-4 w-4 text-primary" />}
 
@@ -819,8 +798,10 @@ export const AdGeneratorStudio = () => {
                   <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                     Paso {currentStepIndex + 1} de {STUDIO_STEPS.length}
                   </p>
-                  <p className="truncate text-sm font-semibold">{currentStepMeta.label}</p>
-                  <p className="truncate text-xs text-muted-foreground">{currentStepMeta.helper}</p>
+                  <div className="flex flex-row justify-center gap-1 items-center">
+                    <p className="truncate text-sm font-semibold">{currentStepMeta.label}</p>
+                    <p className="truncate text-xs text-muted-foreground">{currentStepMeta.helper}</p>
+                  </div>
                 </div>
 
                 <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
@@ -850,7 +831,7 @@ export const AdGeneratorStudio = () => {
                       ) : (
                         <>
                           <Sparkles className="mr-2 h-4 w-4" />
-                          {isLandingKitMode ? 'Generar kit' : 'Generar campana'}
+                          {isLandingKitMode ? 'Generar kit' : 'Generar imagen'}
                         </>
                       )}
                     </Button>
@@ -875,7 +856,7 @@ export const AdGeneratorStudio = () => {
       <Card className="flex min-h-0 flex-col overflow-hidden rounded-[28px] border-border shadow-sm">
         <CardHeader className="flex flex-col gap-3 border-b bg-background/95 p-4 lg:flex-row lg:items-start lg:justify-between lg:p-5">
           <div className="space-y-1">
-            <CardTitle className="text-xl">Vista previa de campana</CardTitle>
+            <CardTitle className="text-xl">Vista previa de imagenes</CardTitle>
             <CardDescription>
               Producto {sourceImages.length ? activeImageIndex + 1 : 0} de {sourceImages.length}
             </CardDescription>
@@ -917,8 +898,6 @@ export const AdGeneratorStudio = () => {
             </ScrollArea>
           )}
 
-          <Separator />
-
           {isLandingKitMode ? (
             <ScrollArea className="w-full whitespace-nowrap">
               <div className="flex gap-2 pb-2">
@@ -939,34 +918,32 @@ export const AdGeneratorStudio = () => {
             </ScrollArea>
           ) : (
             <div className="grid h-18 w-full grid-cols-3 gap-2">
-                {AD_FORMATS.map((format) => (
-                  <button
-                    key={format.id}
-                    type="button"
-                    onClick={() => setActiveFormat(format.id)}
-                    className={`rounded-2xl border px-3 py-2 text-center transition ${
-                      activeFormat === format.id
-                        ? 'border-primary bg-primary/5 text-foreground'
-                        : 'border-border/70 bg-muted/20 hover:border-primary/40'
+              {AD_FORMATS.map((format) => (
+                <button
+                  key={format.id}
+                  type="button"
+                  onClick={() => setActiveFormat(format.id)}
+                  className={`rounded-2xl border px-3 py-2 text-center transition ${activeFormat === format.id
+                    ? 'border-primary bg-primary/5 text-foreground'
+                    : 'border-border/70 bg-muted/20 hover:border-primary/40'
                     }`}
-                  >
-                    <div className="flex flex-col">
-                      <span>{format.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{format.sub}</span>
-                    </div>
-                  </button>
-                ))}
+                >
+                  <div className="flex flex-col">
+                    <span>{format.name}</span>
+                    <span className="text-[10px] text-muted-foreground">{format.sub}</span>
+                  </div>
+                </button>
+              ))}
             </div>
           )}
 
           <div
-            className={`relative flex min-h-[180px] flex-1 items-center justify-center overflow-hidden rounded-[28px] border border-border/70 bg-muted/20 transition-all sm:min-h-[220px] ${
-              previewFormat === '9:16'
-                ? 'mx-auto aspect-[9/16] max-h-[620px]'
-                : previewFormat === '16:9'
-                  ? 'aspect-[16/9]'
-                  : 'aspect-square'
-            }`}
+            className={`relative flex min-h-[180px] flex-1 items-center justify-center overflow-hidden rounded-[28px] border border-border/70 bg-muted/20 transition-all sm:min-h-[220px] ${previewFormat === '9:16'
+              ? 'mx-auto aspect-[9/16] max-h-[620px]'
+              : previewFormat === '16:9'
+                ? 'aspect-[16/9]'
+                : 'aspect-square'
+              }`}
           >
             <AnimatePresence mode="wait">
               {currentPreview ? (
@@ -1009,7 +986,7 @@ export const AdGeneratorStudio = () => {
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {sourceImages.length === 0
-                        ? 'Sube el producto en el paso 1 y luego ajusta la campana.'
+                        ? 'Sube el producto en el paso 1 y luego ajusta la imagen.'
                         : 'Configura el flujo y genera para ver el resultado aqui.'}
                     </p>
                   </div>
@@ -1018,7 +995,7 @@ export const AdGeneratorStudio = () => {
             </AnimatePresence>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          {/* <div className="grid gap-3 sm:grid-cols-2">
             <Card className="rounded-2xl border-primary/10 bg-primary/5">
               <CardContent className="p-3">
                 <p className="text-2xl font-bold text-primary">{isLandingKitMode ? '10x' : `${AD_FORMATS.length}x`}</p>
@@ -1032,7 +1009,7 @@ export const AdGeneratorStudio = () => {
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Direccion visual activa</p>
               </CardContent>
             </Card>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
     </div>
