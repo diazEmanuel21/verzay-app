@@ -16,7 +16,7 @@ const REPLY_TYPE_OPTIONS: ReplyTypeOption[] = [
     {
         value: 'text',
         label: 'Texto simple',
-        description: 'Responde con un mensaje de texto',
+        description: 'Mensaje de texto',
         icon: MessageSquareText,
     },
     {

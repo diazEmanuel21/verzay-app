@@ -53,16 +53,16 @@ const SortableAutoRepliesItem = ({ autoReplie, workflows }: SortableItemProps) =
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-2"
+      className="flex items-start gap-2"
     >
       <div
-        className="cursor-grab p-2 text-muted-foreground hover:bg-slate-100 rounded"
+        className="cursor-grab rounded p-2 text-muted-foreground hover:bg-slate-100"
         {...attributes}
         {...listeners}
       >
         <GripVertical className="w-5 h-5" />
       </div>
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <AutoRepliesCard autoReplie={autoReplie} workflows={workflows} />
       </div>
     </div>
