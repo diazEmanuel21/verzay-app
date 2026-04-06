@@ -1,7 +1,7 @@
 import { Download, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { AD_FORMATS, MARKETING_TEMPLATES } from './ad-generator.constants'
 import type { AdFormat } from './ad-generator.types'
@@ -13,10 +13,14 @@ interface AdPreviewPanelProps {
   isLandingKitMode: boolean
   activeTemplate: string
   onSelectTemplate: (id: string) => void
+  selectedFormats: AdFormat[]
   activeFormat: AdFormat
   onSelectFormat: (format: AdFormat) => void
   previewFormat: AdFormat
   currentPreview: string | undefined
+  currentVariants: string[]
+  activeVariant: number
+  onSelectVariant: (index: number) => void
   isGenerating: boolean
   selectedTemplate: string
   onDownload: (imageIndex: number, templateId: string, formatId: AdFormat) => void
@@ -29,17 +33,29 @@ export const AdPreviewPanel = ({
   isLandingKitMode,
   activeTemplate,
   onSelectTemplate,
+  selectedFormats,
   activeFormat,
   onSelectFormat,
   previewFormat,
   currentPreview,
+  currentVariants,
+  activeVariant,
+  onSelectVariant,
   isGenerating,
   selectedTemplate,
   onDownload,
 }: AdPreviewPanelProps) => (
   <Card className="flex min-h-0 flex-col overflow-hidden rounded-[28px] border-border shadow-sm">
     <CardHeader className="flex flex-col gap-3 border-b bg-background/95 p-4 lg:flex-row lg:items-start lg:justify-between lg:p-5">
+      <div className="space-y-0.5">
       <CardTitle className="text-2xl leading-tight lg:text-3xl">Vista previa de imagenes</CardTitle>
+        {currentVariants.length > 1 && (
+          <p className="text-xs text-muted-foreground">
+            Variante {activeVariant + 1} de {currentVariants.length}
+          </p>
+        )}
+      </div>
+
       {currentPreview && (
         <Button
           type="button"
@@ -60,6 +76,7 @@ export const AdPreviewPanel = ({
     </CardHeader>
 
     <CardContent className="flex min-h-0 flex-1 flex-col gap-3 p-4 pt-4 lg:p-5">
+      {/* Product selector */}
       {sourceImagesCount > 1 && (
         <ScrollArea className="w-full whitespace-nowrap">
           <div className="flex gap-2 pb-2">
@@ -80,6 +97,7 @@ export const AdPreviewPanel = ({
         </ScrollArea>
       )}
 
+      {/* Template / Format selector */}
       {isLandingKitMode ? (
         <ScrollArea className="w-full whitespace-nowrap">
           <div className="flex gap-2 pb-2">
@@ -99,16 +117,17 @@ export const AdPreviewPanel = ({
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
       ) : (
-        <div className="grid h-18 w-full grid-cols-3 gap-2">
-          {AD_FORMATS.map((format) => (
+        <div className="grid h-18 w-full gap-2" style={{ gridTemplateColumns: `repeat(${selectedFormats.length}, minmax(0, 1fr))` }}>
+          {AD_FORMATS.filter((f) => selectedFormats.includes(f.id)).map((format) => (
             <button
               key={format.id}
               type="button"
               onClick={() => onSelectFormat(format.id)}
-              className={`rounded-2xl border px-3 py-2 text-center transition ${activeFormat === format.id
-                ? 'border-primary bg-primary/5 text-foreground'
-                : 'border-border/70 bg-muted/20 hover:border-primary/40'
-                }`}
+              className={`rounded-2xl border px-3 py-2 text-center transition ${
+                activeFormat === format.id
+                  ? 'border-primary bg-primary/5 text-foreground'
+                  : 'border-border/70 bg-muted/20 hover:border-primary/40'
+              }`}
             >
               <div className="flex flex-col">
                 <span>{format.name}</span>
@@ -119,18 +138,43 @@ export const AdPreviewPanel = ({
         </div>
       )}
 
+      {/* Variant selector */}
+      {currentVariants.length > 1 && (
+        <div className="flex items-center gap-2">
+          <p className="shrink-0 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Variante</p>
+          <div className="flex gap-1.5">
+            {currentVariants.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => onSelectVariant(idx)}
+                className={`h-7 w-7 rounded-full border text-xs font-semibold transition ${
+                  activeVariant === idx
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border/70 bg-muted/20 hover:border-primary/40'
+                }`}
+              >
+                {idx + 1}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Preview image */}
       <div
-        className={`relative flex min-h-[180px] flex-1 items-center justify-center overflow-hidden rounded-[28px] border border-border/70 bg-muted/20 transition-all sm:min-h-[220px] ${previewFormat === '9:16'
-          ? 'mx-auto aspect-[9/16] max-h-[620px]'
-          : previewFormat === '16:9'
-            ? 'aspect-[16/9]'
-            : 'aspect-square'
-          }`}
+        className={`relative flex min-h-[180px] flex-1 items-center justify-center overflow-hidden rounded-[28px] border border-border/70 bg-muted/20 transition-all sm:min-h-[220px] ${
+          previewFormat === '9:16'
+            ? 'mx-auto aspect-[9/16] max-h-[620px]'
+            : previewFormat === '16:9'
+              ? 'aspect-[16/9]'
+              : 'aspect-square'
+        }`}
       >
         <AnimatePresence mode="wait">
           {currentPreview ? (
             <motion.img
-              key={`gen-${activeImageIndex}-${isLandingKitMode ? activeTemplate : selectedTemplate}-${previewFormat}`}
+              key={`gen-${activeImageIndex}-${isLandingKitMode ? activeTemplate : selectedTemplate}-${previewFormat}-${activeVariant}`}
               initial={{ opacity: 0, scale: 1.03 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}

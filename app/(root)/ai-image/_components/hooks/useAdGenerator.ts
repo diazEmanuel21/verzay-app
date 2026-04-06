@@ -6,15 +6,19 @@ import {
   AD_FORMATS,
   DEFAULT_STYLES,
   GENERATION_MODELS,
+  IMAGE_QUALITY_OPTIONS,
   MARKETING_TEMPLATES,
   STUDIO_STEPS,
 } from '../ad-generator.constants'
 import type { AdFormat, CustomStyle, StudioStepId } from '../ad-generator.types'
 
+// Record<imageIndex, Record<"templateId_formatId", string[]>>
+type GeneratedImages = Record<number, Record<string, string[]>>
+
 export const useAdGenerator = () => {
   const [activeStep, setActiveStep] = useState<StudioStepId>('images')
   const [sourceImages, setSourceImages] = useState<string[]>([])
-  const [generatedImages, setGeneratedImages] = useState<Record<number, Record<string, string>>>({})
+  const [generatedImages, setGeneratedImages] = useState<GeneratedImages>({})
   const [isGenerating, setIsGenerating] = useState(false)
   const [isLandingKitMode, setIsLandingKitMode] = useState(false)
   const [includeText, setIncludeText] = useState(false)
@@ -22,11 +26,15 @@ export const useAdGenerator = () => {
   const [selectedStyleId, setSelectedStyleId] = useState(DEFAULT_STYLES[0].id)
   const [selectedTemplate, setSelectedTemplate] = useState(MARKETING_TEMPLATES[0].id)
   const [selectedModel, setSelectedModel] = useState(GENERATION_MODELS[0].id)
+  const [imageCount, setImageCount] = useState<number>(1)
+  const [imageQuality, setImageQuality] = useState(IMAGE_QUALITY_OPTIONS[1].id)
   const [customPrompt, setCustomPrompt] = useState('')
   const [visualDNA, setVisualDNA] = useState('')
+  const [selectedFormats, setSelectedFormats] = useState<AdFormat[]>(['1:1', '9:16', '16:9'])
   const [activeFormat, setActiveFormat] = useState<AdFormat>('1:1')
   const [activeTemplate, setActiveTemplate] = useState<string>(MARKETING_TEMPLATES[0].id)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
+  const [activeVariant, setActiveVariant] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [isAddingStyle, setIsAddingStyle] = useState(false)
   const [newStyleName, setNewStyleName] = useState('')
@@ -51,8 +59,8 @@ export const useAdGenerator = () => {
     [selectedModel]
   )
 
-  const outputsPerImage = isLandingKitMode ? MARKETING_TEMPLATES.length : AD_FORMATS.length
-  const totalOutputs = sourceImages.length * outputsPerImage
+  const outputsPerImage = isLandingKitMode ? MARKETING_TEMPLATES.length : selectedFormats.length
+  const totalOutputs = sourceImages.length * outputsPerImage * imageCount
   const currentStepIndex = STUDIO_STEPS.findIndex((s) => s.id === activeStep)
   const currentStepMeta = STUDIO_STEPS[currentStepIndex] ?? STUDIO_STEPS[0]
   const isLastStep = currentStepIndex === STUDIO_STEPS.length - 1
@@ -72,7 +80,9 @@ export const useAdGenerator = () => {
 
   const previewFormat: AdFormat = isLandingKitMode ? '1:1' : activeFormat
   const currentKey = `${isLandingKitMode ? activeTemplate : selectedTemplate}_${previewFormat}`
-  const currentPreview = generatedImages[activeImageIndex]?.[currentKey]
+  const currentVariants = generatedImages[activeImageIndex]?.[currentKey] ?? []
+  const safeVariant = Math.min(activeVariant, Math.max(0, currentVariants.length - 1))
+  const currentPreview = currentVariants[safeVariant]
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -112,7 +122,7 @@ export const useAdGenerator = () => {
     })
 
     setGeneratedImages((prev) => {
-      const next: Record<number, Record<string, string>> = {}
+      const next: GeneratedImages = {}
       Object.entries(prev).forEach(([key, value]) => {
         const imageIndex = Number(key)
         if (imageIndex < index) { next[imageIndex] = value; return }
@@ -140,60 +150,68 @@ export const useAdGenerator = () => {
     if (sourceImages.length === 0) return
     setIsGenerating(true)
     setError(null)
+    setActiveVariant(0)
 
     const styleDesc = customStyles.find((s) => s.id === selectedStyleId)?.description ?? ''
     const batchSeed = Math.floor(Math.random() * 1000000)
 
     try {
-      const newGenerated = { ...generatedImages }
+      const newGenerated: GeneratedImages = { ...generatedImages }
 
       for (let i = 0; i < sourceImages.length; i++) {
         if (!newGenerated[i]) newGenerated[i] = {}
 
         const templatesToGen = isLandingKitMode ? MARKETING_TEMPLATES.map((t) => t.id) : [selectedTemplate]
-        const formatsToGen = isLandingKitMode ? ['1:1'] : AD_FORMATS.map((f) => f.id)
+        const formatsToGen = isLandingKitMode ? ['1:1'] : selectedFormats
 
         for (const templateId of templatesToGen) {
           for (const formatId of formatsToGen as AdFormat[]) {
             const key = `${templateId}_${formatId}`
-            await new Promise((resolve) => setTimeout(resolve, 1500))
+            newGenerated[i][key] = []
 
-            try {
-              const result = await generateAdImage(
-                sourceImages[i],
-                styleDesc,
-                customPrompt,
-                templateId,
-                formatId,
-                batchSeed,
-                visualDNA,
-                includeText,
-                selectedModel
-              )
-              newGenerated[i][key] = result
-              setGeneratedImages({ ...newGenerated })
-            } catch (err: unknown) {
-              console.error(`Error generating image ${i} key ${key}:`, err)
-              const message = String((err as Error)?.message ?? '').toLowerCase()
+            for (let v = 0; v < imageCount; v++) {
+              await new Promise((resolve) => setTimeout(resolve, 1500))
 
-              if (message.includes('falta la api key de gemini')) {
-                setError('Falta configurar la API key de Gemini en el servidor (.env).')
-                setIsGenerating(false)
-                return
-              }
-              if (
-                message.includes('permission_denied') ||
-                message.includes('unregistered callers') ||
-                message.includes('api key should be set')
-              ) {
-                setError('Gemini rechazo la solicitud por autenticacion. Revisa la API key del servidor.')
-                setIsGenerating(false)
-                return
-              }
-              if (message.includes('429') || message.includes('quota')) {
-                setError('Limite de cuota alcanzado. Se generaron algunas imagenes.')
-                setIsGenerating(false)
-                return
+              const variantSeed = batchSeed + v * 137
+
+              try {
+                const result = await generateAdImage(
+                  sourceImages[i],
+                  styleDesc,
+                  customPrompt,
+                  templateId,
+                  formatId,
+                  variantSeed,
+                  visualDNA,
+                  includeText,
+                  selectedModel,
+                  imageQuality
+                )
+                newGenerated[i][key] = [...newGenerated[i][key], result]
+                setGeneratedImages({ ...newGenerated })
+              } catch (err: unknown) {
+                console.error(`Error generating image ${i} key ${key} variant ${v}:`, err)
+                const message = String((err as Error)?.message ?? '').toLowerCase()
+
+                if (message.includes('falta la api key de gemini')) {
+                  setError('Falta configurar la API key de Gemini en el servidor (.env).')
+                  setIsGenerating(false)
+                  return
+                }
+                if (
+                  message.includes('permission_denied') ||
+                  message.includes('unregistered callers') ||
+                  message.includes('api key should be set')
+                ) {
+                  setError('Gemini rechazo la solicitud por autenticacion. Revisa la API key del servidor.')
+                  setIsGenerating(false)
+                  return
+                }
+                if (message.includes('429') || message.includes('quota')) {
+                  setError('Limite de cuota alcanzado. Se generaron algunas imagenes.')
+                  setIsGenerating(false)
+                  return
+                }
               }
             }
           }
@@ -207,14 +225,27 @@ export const useAdGenerator = () => {
     }
   }
 
-  const downloadImage = (imageIndex: number, templateId: string, formatId: AdFormat) => {
+  const downloadImage = (imageIndex: number, templateId: string, formatId: AdFormat, variantIndex?: number) => {
     const key = `${templateId}_${formatId}`
-    const img = generatedImages[imageIndex]?.[key]
+    const variants = generatedImages[imageIndex]?.[key]
+    const img = variants?.[variantIndex ?? safeVariant]
     if (!img) return
     const link = document.createElement('a')
     link.href = img
-    link.download = `ad-${imageIndex}-${templateId}-${formatId.replace(':', 'x')}.png`
+    link.download = `ad-${imageIndex}-${templateId}-${formatId.replace(':', 'x')}-v${(variantIndex ?? safeVariant) + 1}.png`
     link.click()
+  }
+
+  const toggleFormat = (format: AdFormat) => {
+    setSelectedFormats((prev) => {
+      if (prev.includes(format)) {
+        if (prev.length === 1) return prev // must keep at least 1
+        const next = prev.filter((f) => f !== format)
+        if (activeFormat === format) setActiveFormat(next[0])
+        return next
+      }
+      return [...prev, format]
+    })
   }
 
   const goToPreviousStep = () => {
@@ -239,11 +270,15 @@ export const useAdGenerator = () => {
     selectedStyleId, setSelectedStyleId,
     selectedTemplate, setSelectedTemplate,
     selectedModel, setSelectedModel,
+    imageCount, setImageCount,
+    imageQuality, setImageQuality,
+    selectedFormats, toggleFormat,
     customPrompt, setCustomPrompt,
     visualDNA, setVisualDNA,
     activeFormat, setActiveFormat,
     activeTemplate, setActiveTemplate,
     activeImageIndex, setActiveImageIndex,
+    activeVariant, setActiveVariant,
     error,
     isAddingStyle, setIsAddingStyle,
     newStyleName, setNewStyleName,
@@ -264,6 +299,8 @@ export const useAdGenerator = () => {
     canGenerate,
     previewFormat,
     currentPreview,
+    currentVariants,
+    safeVariant,
     // Handlers
     handleImageUpload,
     removeImage,

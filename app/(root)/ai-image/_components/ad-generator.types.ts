@@ -34,3 +34,10 @@ export interface GenerationModel {
   name: string
   desc: string
 }
+
+export interface ImageQualityOption {
+  id: string
+  name: string
+  desc: string
+  promptHint: string
+}

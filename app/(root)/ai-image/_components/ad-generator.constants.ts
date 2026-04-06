@@ -1,5 +1,5 @@
 import { Upload, LayoutTemplate, Palette, Cpu } from 'lucide-react'
-import type { AdFormatOption, CustomStyle, GenerationModel, MarketingTemplate, StudioStep } from './ad-generator.types'
+import type { AdFormatOption, CustomStyle, GenerationModel, ImageQualityOption, MarketingTemplate, StudioStep } from './ad-generator.types'
 
 export const DEFAULT_STYLES: CustomStyle[] = [
   { id: 'minimalist', name: 'Minimalista', description: 'Fondos limpios y enfoque total en el producto.' },
@@ -42,6 +42,27 @@ export const GENERATION_MODELS: GenerationModel[] = [
     id: 'imagen-4.0-generate-001',
     name: 'Imagen 4 (Fotorrealismo)',
     desc: 'Especializado en texturas y realismo de estudio.',
+  },
+]
+
+export const IMAGE_QUALITY_OPTIONS: ImageQualityOption[] = [
+  {
+    id: 'standard',
+    name: 'Estándar',
+    desc: 'HD optimizado. Rápido y eficiente para redes sociales.',
+    promptHint: 'High Definition, clean and professional quality, web-optimized.',
+  },
+  {
+    id: 'high',
+    name: 'Alta calidad',
+    desc: '4K detallado. Ideal para impresión y presentaciones.',
+    promptHint: 'Ultra detailed 4K, professional studio quality, sharp textures.',
+  },
+  {
+    id: 'ultra',
+    name: 'Ultra HD',
+    desc: '8K cinematográfico. Máxima fidelidad y detalle.',
+    promptHint: 'Cinematic 8K ultra-photorealistic, maximum fidelity, hyper-detailed textures, professional studio lighting.',
   },
 ]
 

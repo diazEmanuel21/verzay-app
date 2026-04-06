@@ -18,7 +18,8 @@ export async function generateAdImage(
   seed?: number,
   globalContext?: string,
   includeText?: boolean,
-  model: string = "gemini-2.5-flash-image"
+  model: string = "gemini-2.5-flash-image",
+  quality: string = "high"
 ) {
   const apiKey = getGeminiApiKey();
 
@@ -78,6 +79,13 @@ export async function generateAdImage(
         "Composición publicitaria estándar, equilibrada y profesional.";
   }
 
+  const qualityInstruction =
+    quality === "ultra"
+      ? "Cinematic 8K ultra-photorealistic, maximum fidelity, hyper-detailed textures, professional studio lighting."
+      : quality === "standard"
+        ? "High Definition, clean and professional quality, web-optimized."
+        : "Ultra detailed 4K, professional studio quality, sharp textures, calidad fotográfica 8K, estilo cinematográfico, iluminación de estudio."
+
   const textRule = includeText
     ? "INCLUYE TEXTOS PROFESIONALES: Agrega títulos, subtítulos, precios en COP y botones de CTA de nivel profesional en español, siguiendo la estructura de marketing solicitada. Usa tipografías modernas y legibles."
     : "NO incluyas ningún tipo de texto, letras, números o logotipos. La imagen debe estar limpia para edición posterior.";
@@ -100,7 +108,7 @@ export async function generateAdImage(
     - MANTENER LA FIDELIDAD DEL PRODUCTO ORIGINAL.
     - ${textRule}
     - Consistencia total en paleta de colores e iluminación con el ADN visual.
-    - Calidad fotográfica 8k, estilo cinematográfico, iluminación de estudio.
+    - ${qualityInstruction}
     - DEBES DEVOLVER UNA IMAGEN COMO RESULTADO.
   `;
 

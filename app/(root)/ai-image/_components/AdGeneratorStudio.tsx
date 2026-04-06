@@ -48,6 +48,8 @@ export const AdGeneratorStudio = () => {
                   onIncludeTextChange={studio.setIncludeText}
                   isLandingKitMode={studio.isLandingKitMode}
                   onLandingKitModeChange={studio.setIsLandingKitMode}
+                  selectedFormats={studio.selectedFormats}
+                  onToggleFormat={studio.toggleFormat}
                   selectedTemplate={studio.selectedTemplate}
                   onTemplateChange={studio.setSelectedTemplate}
                   selectedTemplateMeta={studio.selectedTemplateMeta}
@@ -78,6 +80,10 @@ export const AdGeneratorStudio = () => {
                 <StepEngine
                   selectedModel={studio.selectedModel}
                   onSelectModel={studio.setSelectedModel}
+                  imageCount={studio.imageCount}
+                  onImageCountChange={studio.setImageCount}
+                  imageQuality={studio.imageQuality}
+                  onImageQualityChange={studio.setImageQuality}
                   sourceImagesCount={studio.sourceImages.length}
                   outputsPerImage={studio.outputsPerImage}
                   totalOutputs={studio.totalOutputs}
@@ -113,10 +119,14 @@ export const AdGeneratorStudio = () => {
         isLandingKitMode={studio.isLandingKitMode}
         activeTemplate={studio.activeTemplate}
         onSelectTemplate={studio.setActiveTemplate}
+        selectedFormats={studio.selectedFormats}
         activeFormat={studio.activeFormat}
         onSelectFormat={studio.setActiveFormat}
         previewFormat={studio.previewFormat}
         currentPreview={studio.currentPreview}
+        currentVariants={studio.currentVariants}
+        activeVariant={studio.safeVariant}
+        onSelectVariant={studio.setActiveVariant}
         isGenerating={studio.isGenerating}
         selectedTemplate={studio.selectedTemplate}
         onDownload={studio.downloadImage}
