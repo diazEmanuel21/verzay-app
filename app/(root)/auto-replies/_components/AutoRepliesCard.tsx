@@ -146,8 +146,8 @@ export const AutoRepliesCard = ({ autoReplie, workflows }: autoReplies) => {
                                 className="flex min-w-0 items-start gap-2 cursor-pointer group"
                                 onClick={() => setEditing(true)}
                             >
-                                <h3 className="min-w-0 flex-1 break-words text-sm font-bold leading-5 text-muted-foreground [overflow-wrap:anywhere] group-hover:underline sm:text-base">
-                                    {mensaje}
+                                <h3 className="truncate text-sm font-bold leading-5 text-muted-foreground group-hover:underline sm:text-base">
+                                    {mensaje.length > 80 ? `${mensaje.slice(0, 80)}…` : mensaje}
                                 </h3>
                                 <PencilLine size={16} className="mt-0.5 shrink-0 text-blue-500" />
                             </div>

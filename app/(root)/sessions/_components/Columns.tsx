@@ -195,10 +195,11 @@ export const ActionsCell = ({ session, onDeleteSuccess }: { session: Session, on
 }
 
 // --- Columns corregido ---
-export const columns = ({ onDeleteSuccess, mutateSessions, allTags }: {
+export const columns = ({ onDeleteSuccess, mutateSessions, allTags, onNavigateToChat }: {
   onDeleteSuccess: (deletedId: number) => void,
   mutateSessions: () => void,
   allTags: SimpleTag[];
+  onNavigateToChat: (remoteJid: string) => void;
 }): ColumnDef<Session>[] => [
     {
       accessorKey: "remoteJid",
@@ -206,7 +207,17 @@ export const columns = ({ onDeleteSuccess, mutateSessions, allTags }: {
       cell: ({ row }) => {
         const remoteJid = row.getValue("remoteJid") as string;
         const phone = remoteJid.split('@')[0];
-        return <div className="capitalize">{phone}</div>;
+        return (
+          <button
+            onClick={() => onNavigateToChat(remoteJid)}
+            className="min-w-[80px] cursor-pointer text-blue-600 hover:text-blue-800 transition-colors"
+          >
+            <p className="font-medium">{phone}</p>
+            {/* <p className="text-xs text-muted-foreground">
+              {row.original.instanceId}
+            </p> */}
+          </button>
+        );
       },
     },
     {
@@ -278,7 +289,7 @@ export const columns = ({ onDeleteSuccess, mutateSessions, allTags }: {
       header: "Flujos",
       cell: ({ row }) => {
         const flows = row.getValue("flujos") || "-";
-  
+
         return <FlowListOrder raw={flows.toString()} />
       },
     },

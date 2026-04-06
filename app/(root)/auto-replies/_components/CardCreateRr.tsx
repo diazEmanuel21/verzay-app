@@ -39,6 +39,7 @@ export const CardCreateRr = ({ user, Workflows, onSuccessClose }: AutoReplies) =
         setReplyType(type);
         setPhrase("");
         setWorkflowId("");
+        setName("");
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -95,22 +96,34 @@ export const CardCreateRr = ({ user, Workflows, onSuccessClose }: AutoReplies) =
                 {/* Nombre / atajo (siempre visible) */}
                 <div className="flex flex-col space-y-1.5">
                     <Label htmlFor="name" className="flex gap-1 items-center">
-                        Nombre / atajo{" "}
-                        <span className="text-xs text-muted-foreground">(Opcional — ej: bienvenida)</span>
-                    </Label>
-                    <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm select-none">
-                            /
+                        {isTextMode ? "Atajo" : "Nombre"}{" "}
+                        <span className="text-xs text-muted-foreground">
+                            {isTextMode ? "(Opcional — ej: /bienvenida)" : "(Opcional — ej: Bienvenida al cliente)"}
                         </span>
+                    </Label>
+                    {isTextMode ? (
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm select-none">
+                                /
+                            </span>
+                            <Input
+                                id="name"
+                                placeholder="bienvenida"
+                                value={name}
+                                onChange={(e) => setName(e.target.value.replace(/\s/g, "").toLowerCase())}
+                                disabled={loading}
+                                className="pl-6"
+                            />
+                        </div>
+                    ) : (
                         <Input
                             id="name"
-                            placeholder="bienvenida"
+                            placeholder="Bienvenida al cliente"
                             value={name}
-                            onChange={(e) => setName(e.target.value.replace(/\s/g, "").toLowerCase())}
+                            onChange={(e) => setName(e.target.value)}
                             disabled={loading}
-                            className="pl-6"
                         />
-                    </div>
+                    )}
                 </div>
 
                 {/* Campo de mensaje — solo modo texto */}

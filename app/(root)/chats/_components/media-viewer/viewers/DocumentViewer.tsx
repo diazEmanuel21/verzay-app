@@ -33,7 +33,7 @@ export const DocumentViewer: React.FC<ViewerProps> = ({ url, mimeType, caption }
 
   if (isPdf(mimeType)) {
     return (
-      <div className="w-full flex flex-col" style={{ minHeight: '60vh' }}>
+      <div className="w-full flex flex-col" style={{ minHeight: '100vh' }}>
         <iframe
           src={url}
           title={caption || 'Documento PDF'}

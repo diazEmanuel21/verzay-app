@@ -47,7 +47,7 @@ export const ReplyTypeSelector = ({ value, onChange, disabled }: ReplyTypeSelect
                         disabled={disabled}
                         onClick={() => onChange(option.value)}
                         className={cn(
-                            'flex flex-col items-start gap-1.5 rounded-lg border-2 p-3 text-left transition-all duration-200',
+                            'flex flex-row items-center justify-start gap-1.5 rounded-lg border-2 p-3 text-left transition-all duration-200',
                             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                             'disabled:cursor-not-allowed disabled:opacity-50',
                             isSelected
@@ -67,9 +67,6 @@ export const ReplyTypeSelector = ({ value, onChange, disabled }: ReplyTypeSelect
                                 isSelected ? 'text-primary' : 'text-foreground'
                             )}>
                                 {option.label}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1 leading-tight">
-                                {option.description}
                             </p>
                         </div>
                     </button>

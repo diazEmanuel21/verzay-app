@@ -45,27 +45,29 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({ media, open, onClose }
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent
-        className="max-w-[95vw] sm:max-w-[90vw] w-full max-h-[95vh] p-0 border-none bg-black/95 flex flex-col overflow-hidden"
+        className="max-w-[95vw] sm:max-w-[90vw] max-h-[95vh] p-0 border-none flex flex-col overflow-hidden"
       >
-        <DialogTitle className="sr-only">
+        <DialogTitle className="sr-only text-muted ">
           {caption || TYPE_LABELS[type] || 'Visor multimedia'}
         </DialogTitle>
 
-        {/* Top bar — pr-10 leaves room for the auto-injected DialogClose X button */}
-        <div className="flex items-center gap-3 pl-4 pr-12 py-2.5 bg-black/80 border-b border-white/10 shrink-0">
-          {caption ? (
-            <span className="text-white/70 text-sm truncate">{caption}</span>
-          ) : (
-            <span className="text-white/30 text-xs uppercase tracking-widest">
-              {TYPE_LABELS[type] ?? type}
-            </span>
-          )}
+        {/* Top bar — pr-12 deja espacio para el botón X de DialogClose */}
+        <div className="flex items-center gap-3 pl-4 pr-12 py-2.5 border-b border-border">
+          <div className="flex-1 min-w-0">
+            {caption ? (
+              <span className="text-sm text-foreground truncate block">{caption}</span>
+            ) : (
+              <span className="text-xs text-muted-foreground uppercase tracking-widest">
+                {TYPE_LABELS[type] ?? type}
+              </span>
+            )}
+          </div>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 ml-auto shrink-0"
             onClick={handleDownload}
             aria-label="Descargar archivo"
+            className="shrink-0 text-muted-foreground hover:text-foreground"
           >
             <Download className="h-4 w-4" />
           </Button>
