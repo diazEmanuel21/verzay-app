@@ -39,6 +39,7 @@ import { optimizeFile } from "../../workflow/[workflowId]/helpers";
 import { SafeImage } from "@/components/custom/SafeImage";
 import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox";
 import { Button } from "@/components/ui/button";
+import { UserBackupManager } from "@/components/backup/UserBackupManager";
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 const clientSchema = z.object({
@@ -586,9 +587,13 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                     {/* ── Tab: Seguridad ───────────────────────── */}
                     <TabsContent value="seguridad" className="absolute inset-0 mt-0 data-[state=inactive]:pointer-events-none">
                         <TabPanel>
-                            <div className="max-w-md mx-auto space-y-2">
+                            <div className="mx-auto max-w-4xl space-y-4">
                                 <SectionTitle>Cambio de contraseña</SectionTitle>
                                 <ChangePasswordCard />
+                                <UserBackupManager
+                                    targetUserId={userId}
+                                    subjectLabel={user.company ?? user.name ?? "tu cuenta"}
+                                />
                             </div>
                         </TabPanel>
                     </TabsContent>

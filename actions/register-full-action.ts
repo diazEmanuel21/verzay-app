@@ -214,7 +214,7 @@ export async function fullRegisterAction(
           enabledCrmFollowUps: true,
           autoReactivate: "30",
           delayTimeGpt: "10",
-          image: "https://drive.google.com/file/d/1tJX8VLvI7642wGJvxrD-g9qoTc18Dc5C/view?usp=sharing"
+          image: "https://medias3.verzay.co/verzay-media/VERZAY-ROBOT-PROFILE.png"
         },
       });
 
