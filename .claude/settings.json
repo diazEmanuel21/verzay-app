@@ -22,10 +22,13 @@
       "Bash(grep -r \"\"\"sonner\"\"\" package.json)",
       "Bash(ls app/\\\\\\(auth\\\\\\)/)",
       "Bash(mkdir -p \"e:/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/app/\\(root\\)/ai-image/_components/hooks\")",
-      "Bash(mkdir -p \"e:/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/app/\\(root\\)/ai-image/_components/steps\")"
+      "Bash(mkdir -p \"e:/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/app/\\(root\\)/ai-image/_components/steps\")",
+      "Bash(grep -r 'prisma.$transaction\\\\|\\\\.transaction\\\\|await callback' src/modules/webhook/services/message-buffer/ '--include=*.ts')",
+      "Bash(cmd /c \"dir /b \\\\\"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\backend-api\\\\api-webhook\\\\src\\\\modules\\\\webhook\\\\services\\\\orchestator\\\\\"\")"
     ],
     "additionalDirectories": [
-      "C:\\Users\\home\\.claude"
+      "C:\\Users\\home\\.claude",
+      "e:\\EMANUEL-DEV\\Verzay\\VERZAY\\backend-api\\api-webhook\\src\\modules\\webhook\\services\\orchestator"
     ]
   }
 }

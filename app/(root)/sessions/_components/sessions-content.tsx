@@ -31,13 +31,13 @@ export function SessionsContent({ userId, allTags }: SessionsContentProps) {
 
   const getKey = (pageIndex: number, previousPageData: Session[] | null) => {
     if (previousPageData && previousPageData.length < PAGE_SIZE) return null;
-    return `${userId}-${pageIndex}-${filter}`;
+    return JSON.stringify({ userId, pageIndex, filter });
   };
 
   const { data, size, setSize, mutate, isLoading, isValidating, error } = useSWRInfinite<Session[]>(
     getKey,
     async (key: string) => {
-      const [userId, pageIndex, filter] = key.split("-");
+      const { userId, pageIndex, filter } = JSON.parse(key);
       const page = parseInt(pageIndex, 10);
       const sessionStatus =
         filter === "activeSession" ? true :
@@ -56,6 +56,7 @@ export function SessionsContent({ userId, allTags }: SessionsContentProps) {
         sessionStatus,
         agentDisabled
       );
+
       if (!response.success) throw new Error(response.message);
       return response.data || [];
     },
