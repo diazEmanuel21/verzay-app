@@ -25,11 +25,16 @@
       "Bash(mkdir -p \"e:/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/app/\\(root\\)/ai-image/_components/steps\")",
       "Bash(grep -r 'prisma.$transaction\\\\|\\\\.transaction\\\\|await callback' src/modules/webhook/services/message-buffer/ '--include=*.ts')",
       "Bash(cmd /c \"dir /b \\\\\"e:\\\\EMANUEL-DEV\\\\Verzay\\\\VERZAY\\\\backend-api\\\\api-webhook\\\\src\\\\modules\\\\webhook\\\\services\\\\orchestator\\\\\"\")",
-      "Bash(claude logout:*)"
+      "Bash(claude logout:*)",
+      "Bash(npx nest:*)",
+      "Bash(node --max-old-space-size=4096 node_modules/.bin/nest build)",
+      "Bash(node --max-old-space-size=4096 node_modules/@nestjs/cli/bin/nest.js build)",
+      "Bash(node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit --project tsconfig.json --diagnostics)"
     ],
     "additionalDirectories": [
       "C:\\Users\\home\\.claude",
-      "e:\\EMANUEL-DEV\\Verzay\\VERZAY\\backend-api\\api-webhook\\src\\modules\\webhook\\services\\orchestator"
+      "e:\\EMANUEL-DEV\\Verzay\\VERZAY\\backend-api\\api-webhook\\src\\modules\\webhook\\services\\orchestator",
+      "e:\\EMANUEL-DEV\\Verzay\\VERZAY\\backend-api\\api-webhook"
     ]
   }
 }
