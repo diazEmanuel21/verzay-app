@@ -1,3 +1,5 @@
+'use server'
+
 import { db } from "@/lib/db";
 import { z } from "zod";
 import { Instancia } from "@prisma/client";
@@ -11,6 +13,19 @@ export interface InstanceResponse<T> {
   success: boolean;
   message: string;
   data: T;
+}
+
+export async function checkInstanceNameExists(instanceName: string): Promise<boolean> {
+  if (!instanceName || instanceName.trim().length === 0) return false;
+  try {
+    const existing = await db.instancia.findFirst({
+      where: { instanceName: { equals: instanceName.trim(), mode: 'insensitive' } },
+      select: { id: true },
+    });
+    return !!existing;
+  } catch {
+    return false;
+  }
 }
 
 export async function getInstancesByUserId(userId: string): Promise<InstanceResponse<Instancia[]>> {

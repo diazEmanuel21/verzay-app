@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { createInstance } from '@/actions/api-action';
 import { toast } from 'sonner';
 import { ClientInstanceCard, ConnectionCard } from './';
 import { ConnectionMainInterface, FormInstanceConnectionValues } from '@/schema/connection';
 import { PromptInstance } from '@prisma/client';
+import { checkInstanceNameExists } from '@/actions/instances-actions';
 
 export const ConnectionMain = ({
   user,
@@ -59,6 +60,11 @@ export const ConnectionMain = ({
     }
   };
 
+  const checkNameAvailable = useCallback(
+    (name: string) => checkInstanceNameExists(name),
+    []
+  )
+
   return instance ? (
     <ClientInstanceCard
       intanceName={instanceName}
@@ -74,6 +80,7 @@ export const ConnectionMain = ({
       loading={loading}
       defaultValues={{ instanceName, instanceType: instanceType }}
       instanceType={instanceType}
+      checkNameAvailable={checkNameAvailable}
     />
   );
 };
