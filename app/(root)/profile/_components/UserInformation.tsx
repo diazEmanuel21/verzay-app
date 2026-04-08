@@ -28,6 +28,7 @@ import { BrandSelector } from "../../../../components/custom";
 import { useResellerStore } from "@/stores/resellers/resellerStore";
 import { Role } from "@prisma/client";
 import { ApiKeyConfigurator, ChangePasswordCard } from "./";
+import { NotificationContactsManager } from "./NotificationContactsManager";
 import { UserInformationProps } from "../page";
 import { ConnectionMain } from "../../connection/_components";
 import { Card, CardContent } from "@/components/ui/card";
@@ -426,21 +427,10 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
 
                                 <Card className="border-border flex flex-col">
                                     <CardContent className="pt-4 flex flex-col flex-1 gap-4">
-                                        <CardLabel icon={Bell}>Notificaciones</CardLabel>
-                                        <FieldGroup
-                                            label="Número de notificación"
-                                            loading={loadingField === "notificationNumber"}
-                                        >
-                                            <Input
-                                                id="notificationNumber"
-                                                name="notificationNumber"
-                                                placeholder="573233246305"
-                                                value={(user.notificationNumber as string) ?? ""}
-                                                disabled={loadingField === "notificationNumber"}
-                                                onChange={(e) => handleChange("notificationNumber", e.target.value)}
-                                                onBlur={() => handleBlur("notificationNumber")}
-                                            />
-                                        </FieldGroup>
+                                        <NotificationContactsManager
+                                            userId={userId}
+                                            primaryNumber={(user.notificationNumber as string) ?? ""}
+                                        />
                                     </CardContent>
                                 </Card>
                             </div>

@@ -21,6 +21,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { createAppointment } from "@/actions/appointments-actions";
 import { sendMessageWithHistoryAction } from "@/actions/chat-history/send-message-with-history-action";
 import { getAvailableSlots } from "@/actions/getAvailableSlots-actions";
+import { getNotificationContacts } from "@/actions/notification-contacts-actions";
 import { createSeguimiento } from "@/actions/seguimientos-actions";
 import { registerSession } from "@/actions/session-action";
 import { ScheduleInterface } from "@/schema/schema";
@@ -177,49 +178,65 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
                 mutationSeguimiento.mutate(dataSeguimiento);
             });
 
-            if (user.apiKey && primaryInstance && user.notificationNumber) {
+            if (user.apiKey && primaryInstance) {
                 const urlevo = user.apiKey.url;
                 const apikey = primaryInstance.instanceId;
                 const url = `https://${urlevo}/message/sendText/${instanceName}`;
-                const ownerJid = user.notificationNumber.includes("@s.whatsapp.net")
-                    ? user.notificationNumber
-                    : `${user.notificationNumber}@s.whatsapp.net`;
-                const startLocal = toZonedTime(new Date(startTime), SERVER_TIME_ZONE);
-                const dateLabel = format(selectedDate!, "d 'de' MMMM 'de' yyyy", { locale: es });
-                const hourLabel = format(startLocal, "hh:mm a");
-                const serviceName = user.services.find((s) => s.id === selectedService)?.name ?? "Asesor\u00eda";
-                const displayPhone = e164;
 
-                const ownerText = `*Tienes Nueva Cita*:
+                // Collect all notification numbers (primary + additional contacts)
+                const allPhones: string[] = [];
+                if (user.notificationNumber) allPhones.push(user.notificationNumber);
+                try {
+                    const contactsResult = await getNotificationContacts(user.id);
+                    if (contactsResult.success) {
+                        for (const c of contactsResult.data ?? []) {
+                            if (!allPhones.includes(c.phone)) allPhones.push(c.phone);
+                        }
+                    }
+                } catch { /* non-critical, proceed with primary only */ }
+
+                if (allPhones.length > 0) {
+                    const startLocal = toZonedTime(new Date(startTime), SERVER_TIME_ZONE);
+                    const dateLabel = format(selectedDate!, "d 'de' MMMM 'de' yyyy", { locale: es });
+                    const hourLabel = format(startLocal, "hh:mm a");
+                    const serviceName = user.services.find((s) => s.id === selectedService)?.name ?? "Asesor\u00eda";
+
+                    const ownerText = `*Tienes Nueva Cita*:
 
 Nombre: ${normalizedClientName}
 Descripci\u00f3n ${serviceName}: Para el d\u00eda ${dateLabel} a las ${hourLabel}.
 
 WhatsApp del usuario:
 
-${displayPhone}`;
+${e164}`;
 
-                try {
-                    const ownerRes = await sendMessageWithHistoryAction({
-                        instanceName,
-                        url,
-                        apikey,
-                        remoteJid: ownerJid,
-                        message: ownerText,
-                        historyType: "notification",
-                        additionalKwargs: {
-                            source: "SchedulePageClient",
-                            recipient: "owner",
-                            appointmentUserId: user.id,
-                        },
-                    });
-
-                    if (!ownerRes.success) {
-                        toast.warning(`No se pudo notificar al due\u00f1o: ${ownerRes.message}`);
-                    }
-                } catch (e) {
-                    console.error("Error notificando al owner:", e);
-                    toast.warning("No se pudo enviar la notificaci\u00f3n al due\u00f1o.");
+                    await Promise.allSettled(
+                        allPhones.map(async (phone) => {
+                            const ownerJid = phone.includes("@s.whatsapp.net")
+                                ? phone
+                                : `${phone}@s.whatsapp.net`;
+                            try {
+                                const ownerRes = await sendMessageWithHistoryAction({
+                                    instanceName,
+                                    url,
+                                    apikey,
+                                    remoteJid: ownerJid,
+                                    message: ownerText,
+                                    historyType: "notification",
+                                    additionalKwargs: {
+                                        source: "SchedulePageClient",
+                                        recipient: "owner",
+                                        appointmentUserId: user.id,
+                                    },
+                                });
+                                if (!ownerRes.success) {
+                                    toast.warning(`No se pudo notificar a ${phone}: ${ownerRes.message}`);
+                                }
+                            } catch (e) {
+                                console.error(`Error notificando a ${phone}:`, e);
+                            }
+                        }),
+                    );
                 }
             }
 

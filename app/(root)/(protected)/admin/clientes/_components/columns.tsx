@@ -78,19 +78,19 @@ export const getColumns = (openDialogGetUserId: (userId: string, dialog: DialogT
       </Button>
     ),
   },
-  // {
-  //   accessorKey: 'company',
-  //   header: ({ column }) => (
-  //     <Button
-  //       variant="ghost"
-  //       onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-  //       className="text-sm"
-  //     >
-  //       Empresa
-  //       <ArrowUpDown className="ml-2 h-4 w-4" />
-  //     </Button>
-  //   ),
-  // },
+  {
+    accessorKey: 'company',
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        className="text-sm"
+      >
+        Empresa
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+  },
   {
     accessorKey: 'reseller',
     header: ({ column }) => (

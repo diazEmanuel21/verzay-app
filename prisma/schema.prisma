@@ -464,6 +464,19 @@ model User {
   reseller_reseller_reselleridToUser Reseller[]                   @relation("reseller_reselleridToUser")
   reseller_reseller_userIdToUser     Reseller[]                   @relation("reseller_userIdToUser")
   aiConfigs                          UserAiConfig[]
+  notificationContacts               UserNotificationContact[]
+}
+
+model UserNotificationContact {
+  id        String   @id @default(uuid())
+  userId    String
+  phone     String
+  label     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model CrmFollowUp {
