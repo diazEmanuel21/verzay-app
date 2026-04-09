@@ -264,7 +264,7 @@ export function TrainingBuilder({
           openPicker: false,
         },
       ]);
-      setExpandedSteps((prev) => new Set([...prev, newId]));
+      setExpandedSteps((prev) => new Set(Array.from(prev).concat(newId)));
       return;
     }
 
@@ -272,7 +272,7 @@ export function TrainingBuilder({
       ...prev,
       { id: newId, title: ``, mainMessage: "", elements: [], openPicker: false },
     ]);
-    setExpandedSteps((prev) => new Set([...prev, newId]));
+    setExpandedSteps((prev) => new Set(Array.from(prev).concat(newId)));
   };
 
   const removeStep = (stepId: string) => {
