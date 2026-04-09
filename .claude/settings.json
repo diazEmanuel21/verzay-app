@@ -30,7 +30,8 @@
       "Bash(node --max-old-space-size=4096 node_modules/.bin/nest build)",
       "Bash(node --max-old-space-size=4096 node_modules/@nestjs/cli/bin/nest.js build)",
       "Bash(node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit --project tsconfig.json --diagnostics)",
-      "Read(//e/MANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/app/\\(root\\)/crm/dashboard/components/records-table/**)"
+      "Read(//e/MANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/app/\\(root\\)/crm/dashboard/components/records-table/**)",
+      "Bash(find /e/EMANUEL-DEV/Verzay/VERZAY/verzay-app-main/verzay-app/lib -name \"zod.ts\" -exec cat {} \\\\;)"
     ],
     "additionalDirectories": [
       "C:\\Users\\home\\.claude",
