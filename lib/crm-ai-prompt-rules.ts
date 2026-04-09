@@ -98,70 +98,82 @@ export type CrmPromptRecord<TConfig> = {
 export const CRM_LEAD_STATUS_PROMPT_DEFAULTS: CrmLeadStatusPromptConfig = {
   role: "Eres un clasificador de estado comercial del lead.",
   responseFormatRule:
-    "Debes responder SOLO con JSON valido, sin markdown, sin texto adicional.",
+    "Responde SOLO con JSON válido, sin markdown y sin texto adicional.",
   useOnlySummary: true,
   definitions: {
-    FRIO: "interes bajo o exploratorio, sin urgencia ni siguiente paso claro.",
+    FRIO: `Interés bajo o exploratorio, sin urgencia ni siguiente paso claro.
+El Usuario envia el siguiente mensaje. > Hola, me interesa el *Agente IA* para mejorar la atención y ventas de mi negocio`,
     TIBIO:
-      "interes real, pero aun faltan dudas, comparacion, presupuesto o decision.",
+      "Interés real, pero aún faltan dudas, comparación, presupuesto o decisión.",
     CALIENTE:
-      "intencion clara de compra o avance cercano. Hay senales de cierre, pago o agendamiento.",
-    FINALIZADO: "ya se cerro el objetivo comercial o el proceso ya termino.",
+      "Intención clara de compra o avance cercano. Hay señales de cierre, pago o agendamiento.",
+    FINALIZADO: "El objetivo comercial se cerró o el proceso ya terminó.",
     DESCARTADO:
-      "no hay interes, se cayo la oportunidad o no conviene insistir.",
+      "No hay interés, se cayó la oportunidad o no conviene insistir.",
   },
   discardedRule:
-    "Si la sintesis muestra rechazo claro o ausencia de interes, usa DESCARTADO.",
+    "Si la síntesis muestra rechazo claro, ausencia de interés o falta de respuesta tras varios intentos, usa DESCARTADO.",
   finalizedRule:
-    "Si la sintesis indica compra cerrada, implementacion terminada o proceso completado, usa FINALIZADO.",
+    "Si la síntesis indica compra cerrada, pago confirmado con comprobante, implementación terminada o proceso completado, usa FINALIZADO.",
   hotRule:
-    "Si la sintesis muestra intencion clara de avanzar pronto, usa CALIENTE.",
+    "Si la síntesis muestra que el lead preguntó cómo comprar, cómo pagar, cómo agendar, dijo 'sí' o 'me interesa' a una propuesta concreta del agente, o aceptó una reunión o cita, usa CALIENTE.",
   warmRule:
-    "Si la sintesis muestra interes pero todavia con dudas o sin definicion, usa TIBIO.",
-  coldRule: "Si la sintesis es debil, exploratoria o temprana, usa FRIO.",
+    "Si la síntesis muestra interés real pero todavía con dudas, comparaciones o sin decisión, usa TIBIO.",
+  coldRule: "Si la síntesis es débil, exploratoria o temprana, y no hay ninguna señal de intención concreta, usa FRÍO.",
   reasonRule:
     'El campo "reason" debe ser una frase corta, concreta y util para auditoria.',
-  extraInstructions: "",
+  extraInstructions: `Si el lead pregunta cómo comprar o cómo pagar, clasifica como CALIENTE
+Si el lead dice "sí" o "me interesa" a una propuesta concreta, clasifica como CALIENTE
+Si el lead agenda o acepta una reunión, clasifica como CALIENTE
+Si el lead envía un comprobante de pago o imagen de transferencia, clasifica como FINALIZADO
+Si el lead dice que no le interesa o pide no ser contactado, clasifica como DESCARTADO
+No uses FRÍO si hay una señal de intención clara en el mensaje más reciente
+Reclasifica siempre basándote en el mensaje más reciente, no en el historial completo`,
 };
 
 export const CRM_LEAD_FUNNEL_PROMPT_DEFAULTS: CrmLeadFunnelPromptConfig = {
-  role: "Eres un CLASIFICADOR para un embudo de clientes en WhatsApp.",
+  role: "Eres un CLASIFICADOR de conversaciones para un embudo comercial en WhatsApp. Decides si cada mensaje es un evento que debe registrarse o solo una interacción conversacional, y generas una síntesis estructurada.",
   reportTask:
-    'Si es solo conversacion/charla y NO representa un evento que deba registrarse => kind="REPORTE" y devuelves una sintesis corta.',
+    'Si el mensaje es conversación, saludo, respuesta genérica y NO representa un evento comercial concreto que deba registrarse => kind="REPORTE" → devuelve solo una síntesis corta.',
   recordTask:
-    'Si es un evento que debe guardarse como registro => kind="REGISTRO" y devuelves tipo/estado/resumen/detalles/meta.',
+    'Si el mensaje representa un evento que debe guardarse como registro (solicitud, pedido, pago, reclamo, reserva o avance comercial concreto) => kind="REGISTRO" → devuelve tipo, estado, resumen, detalles y meta.',
   mandatoryRules: [
-    "Debes responder SOLO con JSON valido, sin markdown, sin texto adicional.",
+    "Debes responder SOLO con JSON valido, sin markdown y sin texto adicional.",
     'Si kind="REGISTRO": "tipo" solo puede ser uno de: SOLICITUD, PEDIDO, RECLAMO, RESERVA, PAGO.',
-    'Si kind="REGISTRO": "estado" debe ser uno de los estados validos para ese tipo (ver lista abajo).',
-    "Si hay intencion de compra, cotizacion, informacion, soporte, agendar, pagar, reclamo => normalmente es REGISTRO.",
+    'Si kind="REGISTRO": "estado" debe ser uno de los estados válidos para ese tipo (ver lista abajo).',
+    "Si hay intencion de compra, cotizacion, informacion, soporte, agendar, pagar, reclamo => REGISTRO.",
     "Si es saludo, charla, mensajes sueltos sin intencion clara o sin requerir accion => REPORTE.",
   ].join("\n"),
-  priorityOrder: "PAGO > RECLAMO > RESERVA > PEDIDO > SOLICITUD",
+  priorityOrder: "SOLICITUD > PEDIDO > RECLAMO > RESERVA > PAGO",
   typeInstructions: {
     PAGO:
-      "el cliente envia comprobante/soporte de pago, confirma que pago, pregunta si se recibio el pago, envia referencia/transferencia/deposito o captura de pantalla de pago.",
+      "El lead envía comprobante/soporte de pago, confirma que pagó, pregunta si se recibió el pago, envía referencia/transferencia/depósito o captura de pantalla de pago.",
     RECLAMO:
-      'queja, inconformidad, dano, no llego, llego mal, pide devolucion, garantia, "me estafaron", "no me responden".',
+      'Queja, inconformidad, daño, "no llegó", "llegó mal", pide devolución, garantía, "me estafaron", "no me responden".',
     RESERVA:
-      "agenda/cita/reservar/confirmar fecha y hora, apartar cupo, apartar producto/servicio para una fecha.",
+      "Agenda, cita, reservar, confirmar fecha y hora, apartar cupo o apartar producto/servicio para una fecha específica.",
     PEDIDO:
-      'confirma compra, solicita cantidad/talla/modelo, direccion/envio, "lo quiero", "quiero pedir", "hazme el pedido", "orden", "compra".',
+      'Confirma compra, solicita cantidad/talla/modelo, dirección o envío. Usa frases como: "lo quiero", "quiero pedir", "hazme el pedido", "orden", "compra".',
     SOLICITUD:
-      "pide informacion/precio/cotizacion/catalogo, disponibilidad, horarios, ubicacion, metodos de pago (pero SIN comprobante), preguntas para decidir.",
+      "Pide información, precio, cotización, catálogo, disponibilidad, horarios, ubicación o métodos de pago (pero SIN comprobante). Preguntas para decidir.",
   },
   paymentStateRule:
-    'Estado al crear SIEMPRE debe ser "Pendiente" (aunque el cliente diga que ya pago).',
+    'El estado al crear SIEMPRE debe ser "Pendiente" (aunque el cliente diga que ya pagó).',
   reportOutputInstruction:
-    "Sintesis actualizada de la conversacion (2-4 lineas). Si ya hay contexto, integra el nuevo mensaje sin repetir.",
+    "Actualiza la síntesis de la conversación (2-4 líneas). Si ya existe contexto previo, integra el nuevo mensaje sin repetir información anterior.",
   recordSummaryInstruction: "1 linea (que paso)",
-  recordDetailsInstruction: "2-5 lineas (que quiere / que problema / que pidio)",
+  recordDetailsInstruction: "2-5 lineas (que quiere / que problema tiene / que pidió)",
   importantRules: [
     'NUNCA uses tipo="REPORTE" cuando kind="REGISTRO".',
-    'Si es conversacion general o resumen del chat => kind="REPORTE".',
+    'Si es conversación general o resumen del chat => kind="REPORTE".',
     "Solo puedes usar estos tipos (si kind=\"REGISTRO\"): SOLICITUD, PEDIDO, RECLAMO, RESERVA, PAGO.",
   ].join("\n"),
-  extraInstructions: "",
+  extraInstructions: `Si el lead envía una imagen o foto, clasifica siempre como kind="REGISTRO" tipo PAGO
+Si el lead menciona un número de referencia o transacción, es REGISTRO tipo PAGO
+Si el lead agenda o confirma una fecha, es REGISTRO tipo RESERVA
+Si el lead dice "quiero", "me interesa", "cómo compro", es REGISTRO tipo SOLICITUD
+Si el lead expresa queja, inconformidad o pide devolución, es REGISTRO tipo RECLAMO
+No clasifiques como REPORTE si hay una intención comercial implícita en el mensaje`,
 };
 
 function normalizeMultilineText(value: string | null | undefined) {

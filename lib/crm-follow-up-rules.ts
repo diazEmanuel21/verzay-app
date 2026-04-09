@@ -64,11 +64,11 @@ export const CRM_FOLLOW_UP_RULE_DEFAULTS: Record<
     enabled: true,
     delayMinutes: 24 * 60,
     maxAttempts: 1,
-    goal: "Reactivar la conversacion sin presionar y detectar si sigue habiendo interes real.",
+    goal: "Reactivar la conversación de forma natural y detectar si sigue habiendo interés real. El foco es reconectar, no vender.",
     prompt:
-      "Escribe breve, cordial y sin insistencia. Menciona valor util, evita sonar automatizado y termina con una pregunta simple.",
+      "Escribe entre 1 y 3 mensajes cortos (máximo 3 líneas cada uno), cordial y sin insistencia. Llama al lead por su *nombre* y usa *negrita* solo para reforzar algo clave. Menciona algo de valor sin sonar automatizado, usa máximo 1 emoji si aplica, y cierra con una pregunta simple y abierta con dos saltos de línea antes.",
     fallbackMessage:
-      "Hola, te escribo para saber si aun te interesa retomar esta conversacion.",
+      "Hola, *[Nombre]* 👋Te escribo para saber si aún te interesa retomar esta conversación.  ¿Sigue siendo algo en lo que puedo ayudarte?.",
     allowedWeekdays: [1, 2, 3, 4, 5],
     sendStartTime: "09:00",
     sendEndTime: "18:00",
@@ -77,7 +77,7 @@ export const CRM_FOLLOW_UP_RULE_DEFAULTS: Record<
     enabled: true,
     delayMinutes: 6 * 60,
     maxAttempts: 2,
-    goal: "Mover al lead al siguiente paso comercial con claridad y una llamada a la accion concreta.",
+    goal: "Avanzar al lead hacia una decisión concreta. Si ya mostró interés previo, hacer una llamada a la acción clara y directa hacia el siguiente paso comercial.",
     prompt:
       "Usa un tono consultivo. Resume el punto mas util del contexto y cierra con una pregunta concreta para avanzar.",
     fallbackMessage:
