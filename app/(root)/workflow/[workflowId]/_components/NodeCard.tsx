@@ -19,6 +19,7 @@ import { Action, ACTIONS, CARD_ACTIONS, MAX_MESSAGE_LENGTH, PropsNodeCard } from
 import { EmbeddingNode } from '.';
 import { SafeImage } from "@/components/custom/SafeImage";
 import { Badge } from "@/components/ui/badge";
+import { NodeDocumentViewer } from "@/components/shared/NodeDocumentViewer";
 
 export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCard) => {
   const router = useRouter();
@@ -319,11 +320,12 @@ export const NodeCard = ({ nodes, workflowId, user, targetHandle }: PropsNodeCar
           {baseType === 'video' && <video src={nodes.url!} controls className="rounded-md w-full h-auto" />}
           {baseType === 'audio' && <audio src={nodes.url!} controls className="w-full" />}
           {baseType === 'document' && (
-            <div className="flex items-center gap-2 p-2 bg-background rounded">
-              <a href={nodes.url!} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
-                Ver documento
-              </a>
-            </div>
+            <NodeDocumentViewer
+              url={nodes.url!}
+              filename={nodes.nameFile}
+              caption={nodes.nameFile ?? nodes.message}
+              className="nodrag"
+            />
           )}
         </div>
       );

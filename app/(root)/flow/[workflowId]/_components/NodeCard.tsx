@@ -37,6 +37,7 @@ import { Label } from "@/components/ui/label";
 import { CSS } from '@dnd-kit/utilities'
 import { SafeImage } from "@/components/custom/SafeImage";
 import { Badge } from "@/components/ui/badge";
+import { NodeDocumentViewer } from "@/components/shared/NodeDocumentViewer";
 
 interface Props {
   workflowId: string;
@@ -399,16 +400,11 @@ export const NodeCard = ({ nodes, workflowId, user }: Props) => {
             <audio src={nodes.url!} controls className="w-full" />
           )}
           {baseType === 'document' && (
-            <div className="flex items-center gap-2 p-2 bg-background rounded">
-              <a
-                href={nodes.url!}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-primary hover:underline"
-              >
-                Ver documento
-              </a>
-            </div>
+            <NodeDocumentViewer
+              url={nodes.url!}
+              filename={nodes.nameFile}
+              caption={nodes.nameFile ?? nodes.message}
+            />
           )}
         </div>
       );
