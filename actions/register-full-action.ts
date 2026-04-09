@@ -10,6 +10,7 @@ import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { sanitizeInstanceName } from "@/schema/connection";
+import { decodeApiKeyRef } from "@/lib/register-link";
 
 /* ─────────────────────────────────────────
    Constants
@@ -134,7 +135,8 @@ async function createInstanceForUser(
    Main server action
 ───────────────────────────────────────── */
 export async function fullRegisterAction(
-  values: z.infer<typeof fullRegisterSchema>
+  values: z.infer<typeof fullRegisterSchema>,
+  apiKeyRef?: string
 ): Promise<FullRegisterResult> {
   const parsed = fullRegisterSchema.safeParse(values);
   if (!parsed.success) {
@@ -171,9 +173,12 @@ export async function fullRegisterAction(
 
   const passwordHash = await bcrypt.hash(password, LENGTH_PASSWORD_HASH);
 
-  /* ── Validate DEFAULT_API_KEY_ID exists to avoid FK constraint error ── */
+  /* ── Resolve which ApiKey to assign — prefer the ref from the URL ── */
+  const requestedApiKeyId = apiKeyRef ? decodeApiKeyRef(apiKeyRef) : null;
+  const targetApiKeyId = requestedApiKeyId ?? DEFAULT_API_KEY_ID;
+
   const apiKeyExists = await db.apiKey
-    .findUnique({ where: { id: DEFAULT_API_KEY_ID }, select: { id: true } })
+    .findUnique({ where: { id: targetApiKeyId }, select: { id: true } })
     .catch(() => null);
 
   /* ── Fetch OpenAI provider for AI auto-config ── */
@@ -184,7 +189,7 @@ export async function fullRegisterAction(
     })
     .catch(() => null);
 
-  const resolvedApiKeyId = apiKeyExists ? DEFAULT_API_KEY_ID : null;
+  const resolvedApiKeyId = apiKeyExists ? targetApiKeyId : null;
 
   const completedSteps: RegisterCompletedStep[] = [];
   let userId: string | null = null;

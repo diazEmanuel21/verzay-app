@@ -66,7 +66,7 @@ const CELL_EXTRACTORS: Record<ExportColumnId, CellExtractor> = {
                   timeStyle: "short",
               })
             : "",
-    detalle: (r) => r.detalle ?? "",
+    detalle: (r) => r.detalles ?? "",
     leadStatus: (r) => r.session.leadStatus ?? "Sin clasificar",
     crmFollowUp: (r) =>
         r.session.crmFollowUpSummary?.latestStatus ?? "Sin follow-up",

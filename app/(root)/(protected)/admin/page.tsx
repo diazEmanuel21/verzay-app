@@ -1,10 +1,10 @@
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Header from '@/components/shared/header'
 import { currentUser } from '@/lib/auth'
 import { isAdminLike } from '@/lib/rbac'
 import Link from 'next/link'
-import { FileText, Handshake, LayoutGrid, PlugZap, UserCog, Wallet } from 'lucide-react'
+import { FileText, Handshake, LayoutGrid, Link2, PlugZap, UserCog, Wallet } from 'lucide-react'
 import AccessDenied from '@/app/AccessDenied'
 
 const AdminPage = async () => {
@@ -70,6 +70,13 @@ const AdminPage = async () => {
       icon: <Wallet className="text-indigo-600" />,
       href: "/admin/client-billing",
       buttonLabel: "Ir a Finanzas",
+    },
+    {
+      title: "Links de Registro",
+      description: "Genera y copia los links de registro asociados a cada servidor de Evolution.",
+      icon: <Link2 className="text-cyan-600" />,
+      href: "/admin/register-links",
+      buttonLabel: "Ver Links",
     },
   ];
 

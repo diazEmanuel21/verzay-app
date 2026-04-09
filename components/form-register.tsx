@@ -288,7 +288,7 @@ function Step2Fields({
 /* ─────────────────────────────────────────
    Main Component
 ───────────────────────────────────────── */
-const FormRegister = ({ countries }: { countries: Country[] }) => {
+const FormRegister = ({ countries, apiKeyRef }: { countries: Country[]; apiKeyRef?: string }) => {
   const [step, setStep] = useState(1);
   const [areaCode, setAreaCode] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -326,7 +326,7 @@ const FormRegister = ({ countries }: { countries: Country[] }) => {
     startTransition(async () => {
       const toastId = toast.loading("Iniciando configuración de tu cuenta...");
 
-      const result = await fullRegisterAction({ ...values, notificationNumber: e164, timezone });
+      const result = await fullRegisterAction({ ...values, notificationNumber: e164, timezone }, apiKeyRef);
 
       if (!result.success) {
         toast.error(result.error, { id: toastId });
