@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ArrowRight, Mic, Send, Trash2, X } from 'lucide-react';
+import { ArrowRight, Mic, Send, SendIcon, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { SafeImage } from '@/components/custom/SafeImage';
@@ -227,18 +227,20 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
           rows={1}
           aria-label="Escribe tu mensaje"
           className={cn(
-            'h-auto bg-white dark:bg-gray-800 dark:text-white rounded-lg border-none w-full',
-            'pl-4 pr-24 resize-none overflow-y-auto text-sm md:text-base',
+            'min-h-10 bg-white dark:bg-gray-800 dark:text-white rounded-xl border border-gray-200 dark:border-gray-700 w-full shadow-sm',
+            'pl-4 pr-24 py-2 resize-none overflow-y-auto text-sm leading-relaxed',
+            'transition-[height] duration-100 ease-out',
+            'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
           )}
         />
 
-        <div className="absolute right-1 flex items-center gap-1 bottom-1 flex-col sm:flex-row">
+        <div className="absolute right-1.5 flex items-center gap-1 bottom-1.5 flex-col sm:flex-row">
           {!isPreviewingAudio && (
             <Button
               onClick={() => (isRecording ? onStopRecordingAndPreview() : onStartRecording())}
               size="icon"
               className={cn(
-                'rounded-full',
+                'h-7 w-7 rounded-full shrink-0',
                 isRecording
                   ? 'bg-red-500 hover:bg-red-600'
                   : 'bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600',
@@ -247,19 +249,19 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
               title={isRecording ? 'Detener y previsualizar' : 'Grabar nota de voz'}
               type="button"
             >
-              <Mic className={cn('w-5 h-5', isRecording ? 'text-white' : 'text-black dark:text-white')} />
+              <Mic className={cn('w-3.5 h-3.5', isRecording ? 'text-white' : 'text-black dark:text-white')} />
             </Button>
           )}
           <Button
             onClick={onSend}
             size="icon"
-            className="rounded-full bg-blue-500 hover:bg-blue-600"
+            className="h-7 w-7 rounded-full bg-blue-500 hover:bg-blue-600 shrink-0"
             aria-label="Enviar"
             title="Enviar"
             disabled={!isPreviewingAudio && !isSendButtonVisible}
             type="button"
           >
-            <ArrowRight className="w-5 h-5 text-white" />
+            <SendIcon className="w-3.5 h-3.5 text-white" />
           </Button>
         </div>
       </div>
