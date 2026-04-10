@@ -875,13 +875,9 @@ function DataQueryDialog({
                   setErrors((err) => ({ ...err, searchField: null }));
                 }}
                 placeholder="ej: CEDULA-RIF"
-                disabled={isEditing}
               />
               <FieldError message={errors.searchField ?? null} />
-              <FieldHint message="Debe coincidir exactamente con el nombre de la columna en tus datos externos (sensible a mayúsculas). Ejemplo: si importaste la columna 'CEDULA-RIF', escribe exactamente eso." />
-              {isEditing && (
-                <FieldHint message="El campo de búsqueda no se puede cambiar en una herramienta existente." />
-              )}
+              <FieldHint message="Debe coincidir exactamente con el nombre de la columna en tus datos externos (sensible a mayúsculas). Ejemplo: si el cliente importó la columna 'CEDULA-RIF', escribe exactamente eso." />
             </div>
           )}
 
