@@ -865,10 +865,17 @@ model ExternalDataToolConfig {
   toolKey         String
   displayName     String
   toolDescription String
+  /// 'builtin' = implementación fija en NestJS (solo nombre/descripción/enabled editable)
+  /// 'data_query' = totalmente dinámico desde config
+  toolCategory    String   @default("data_query")
+  /// builtin: notificacion_asesor | ejecutar_flujos | listar_workflows | consultar_datos_cliente | buscar_cliente_por_dato
+  /// data_query: auto_inject | search_by_field
   toolType        String   @default("search_by_field")
   searchField     String?
   promptTemplate  String?
   isEnabled       Boolean  @default(true)
+  /// true = sembrado por el sistema como configuración por defecto
+  isDefault       Boolean  @default(false)
   sortOrder       Int      @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
