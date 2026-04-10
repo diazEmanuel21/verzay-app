@@ -33,3 +33,33 @@ export interface ExternalClientDataListResult {
   items: ExternalClientData[];
   total: number;
 }
+
+// ─── Tool Configs ─────────────────────────────────────────────────────────────
+
+export type ExternalDataToolType = 'auto_inject' | 'search_by_field';
+
+export interface ExternalDataToolConfig {
+  id: string;
+  userId: string;
+  toolKey: string;
+  displayName: string;
+  toolDescription: string;
+  toolType: ExternalDataToolType;
+  searchField: string | null;
+  promptTemplate: string | null;
+  isEnabled: boolean;
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ExternalDataToolConfigInput {
+  toolKey: string;
+  displayName: string;
+  toolDescription: string;
+  toolType: ExternalDataToolType;
+  searchField?: string | null;
+  promptTemplate?: string | null;
+  isEnabled?: boolean;
+  sortOrder?: number;
+}
