@@ -1,83 +1,12 @@
 'use server';
 
 import { db } from '@/lib/db';
+import { BUILTIN_TOOL_CATALOG } from '@/lib/external-data-tool-catalog';
 import type {
   ExternalDataBuiltinToolType,
   ExternalDataToolConfig,
   ExternalDataToolConfigInput,
 } from '@/types/external-client-data';
-
-// ─── Catálogo builtin (fuente de verdad compartida con el backend) ─────────────
-
-/**
- * Define el catálogo completo de herramientas del sistema.
- * Cada entrada tiene implementación real en NestJS (dispatcher en ai-agent.service.ts).
- * NO agregar entradas aquí sin antes implementar el toolType en el backend.
- */
-export const BUILTIN_TOOL_CATALOG: {
-  toolType: ExternalDataBuiltinToolType;
-  defaultKey: string;
-  defaultDisplayName: string;
-  defaultDescription: string;
-  isCritical: boolean;
-  helpText: string;
-  sortOrder: number;
-}[] = [
-  {
-    toolType: 'notificacion_asesor',
-    defaultKey: 'Notificacion_Asesor',
-    defaultDisplayName: 'Notificación al asesor',
-    defaultDescription:
-      'Utiliza esta herramienta cuando un usuario necesite la ayuda directa de un asesor humano (reclamos, solicitudes complejas, dudas de pago o agendamiento).',
-    isCritical: true,
-    helpText:
-      'Envía una notificación interna al equipo de soporte cuando el cliente lo necesita. Recomendado tener siempre habilitada.',
-    sortOrder: 0,
-  },
-  {
-    toolType: 'ejecutar_flujos',
-    defaultKey: 'Ejecutar_Flujos',
-    defaultDisplayName: 'Ejecutar flujos automatizados',
-    defaultDescription:
-      'Siempre consulta y ejecuta si existen flujos disponibles en la base de datos que correspondan a la solicitud del usuario. Si se encuentra un flujo, se ejecuta. Si no hay flujos, la IA continúa la conversación normalmente.',
-    isCritical: true,
-    helpText:
-      'Permite al agente disparar flujos automatizados configurados en el sistema. Es crítica para el funcionamiento de la automatización.',
-    sortOrder: 1,
-  },
-  {
-    toolType: 'listar_workflows',
-    defaultKey: 'listar_workflows',
-    defaultDisplayName: 'Listar flujos disponibles',
-    defaultDescription: 'Devuelve todos los flujos disponibles para este usuario.',
-    isCritical: false,
-    helpText:
-      'Permite al agente conocer qué flujos automáticos están disponibles antes de ejecutarlos.',
-    sortOrder: 2,
-  },
-  {
-    toolType: 'consultar_datos_cliente',
-    defaultKey: 'consultar_datos_cliente',
-    defaultDisplayName: 'Consultar datos del cliente',
-    defaultDescription:
-      'Consulta el perfil externo del cliente actual: cédula, correo, servicio contratado, monto, sector, convenio u otros campos configurados. Úsala cuando el cliente pregunte por su información de cuenta, servicio o datos personales registrados.',
-    isCritical: false,
-    helpText:
-      'Busca en datos externos el registro asociado al número de WhatsApp del cliente que está escribiendo. Requiere que el cliente tenga datos cargados.',
-    sortOrder: 3,
-  },
-  {
-    toolType: 'buscar_cliente_por_dato',
-    defaultKey: 'buscar_cliente_por_dato',
-    defaultDisplayName: 'Buscar cliente por dato',
-    defaultDescription:
-      'Busca la información de un cliente a partir de un dato conocido (cédula, RIF, correo, etc.). Solo consulta datos del usuario actual, nunca información de otros clientes.',
-    isCritical: false,
-    helpText:
-      'Permite al agente buscar por cualquier campo del registro externo. Útil cuando el cliente pregunta por datos de un tercero proporcionando su cédula u otro identificador.',
-    sortOrder: 4,
-  },
-];
 
 // Conjunto de toolTypes válidos para validación en servidor
 const VALID_BUILTIN_TOOL_TYPES = new Set(BUILTIN_TOOL_CATALOG.map((c) => c.toolType));
@@ -100,36 +29,29 @@ export async function listToolConfigs(userId: string): Promise<ExternalDataToolC
 
 /**
  * Agrega una herramienta builtin al usuario desde el catálogo del sistema.
- * Validaciones de servidor:
- *  - toolType debe existir en BUILTIN_TOOL_CATALOG
- *  - No puede existir ya un registro con el mismo toolType para ese userId
- *  - El toolKey personalizado no puede colisionar con otro toolKey existente
- *  - displayName y toolDescription requeridos
+ * El toolKey siempre viene del catálogo (no editable por el usuario).
+ * Solo se personalizan displayName y toolDescription.
  */
 export async function addBuiltinTool(
   userId: string,
   toolType: ExternalDataBuiltinToolType,
-  overrides: { toolKey?: string; displayName?: string; toolDescription?: string },
+  overrides: { displayName?: string; toolDescription?: string },
 ): Promise<{ success: boolean; error?: string }> {
   if (!userId) return { success: false, error: 'userId requerido' };
 
-  // Validar que el toolType existe en el catálogo
   if (!VALID_BUILTIN_TOOL_TYPES.has(toolType)) {
     return { success: false, error: `toolType "${toolType}" no existe en el catálogo del sistema` };
   }
 
   const catalogEntry = BUILTIN_TOOL_CATALOG.find((c) => c.toolType === toolType)!;
 
-  const finalKey = (overrides.toolKey?.trim() || catalogEntry.defaultKey).trim();
-  const finalDisplayName = (overrides.displayName?.trim() || catalogEntry.defaultDisplayName).trim();
-  const finalDescription = (overrides.toolDescription?.trim() || catalogEntry.defaultDescription).trim();
+  const finalDisplayName = overrides.displayName?.trim() || catalogEntry.defaultDisplayName;
+  const finalDescription = overrides.toolDescription?.trim() || catalogEntry.defaultDescription;
 
   if (!finalDisplayName) return { success: false, error: 'El nombre visible es requerido' };
   if (!finalDescription) return { success: false, error: 'La descripción para el agente es requerida' };
-  if (!finalKey) return { success: false, error: 'El nombre del tool es requerido' };
 
   try {
-    // Verificar que el toolType no esté ya agregado (1 instancia por toolType por usuario)
     const existingByType = await db.externalDataToolConfig.findFirst({
       where: { userId, toolType },
     });
@@ -140,21 +62,10 @@ export async function addBuiltinTool(
       };
     }
 
-    // Verificar que el toolKey no colisione con otra herramienta existente
-    const existingByKey = await db.externalDataToolConfig.findFirst({
-      where: { userId, toolKey: finalKey },
-    });
-    if (existingByKey) {
-      return {
-        success: false,
-        error: `El nombre "${finalKey}" ya está en uso por otra herramienta. Elige un nombre diferente.`,
-      };
-    }
-
     await db.externalDataToolConfig.create({
       data: {
         userId,
-        toolKey: finalKey,
+        toolKey: catalogEntry.defaultKey,
         displayName: finalDisplayName,
         toolDescription: finalDescription,
         toolCategory: 'builtin',
@@ -173,48 +84,29 @@ export async function addBuiltinTool(
   }
 }
 
-// ─── Update builtin tool (solo nombre/descripción/toolKey) ───────────────────
+// ─── Update builtin tool (solo displayName y toolDescription) ────────────────
 
 /**
- * Actualiza los campos editables de una herramienta builtin.
- * toolCategory y toolType son inmutables.
+ * Actualiza solo displayName y toolDescription de una herramienta builtin.
+ * toolKey, toolCategory y toolType son inmutables.
  */
 export async function updateBuiltinTool(
   userId: string,
-  currentToolKey: string,
-  updates: { toolKey: string; displayName: string; toolDescription: string },
+  toolKey: string,
+  updates: { displayName: string; toolDescription: string },
 ): Promise<{ success: boolean; error?: string }> {
-  if (!userId || !currentToolKey) return { success: false, error: 'Parámetros inválidos' };
+  if (!userId || !toolKey) return { success: false, error: 'Parámetros inválidos' };
 
-  const newKey = updates.toolKey.trim();
   const newDisplayName = updates.displayName.trim();
   const newDescription = updates.toolDescription.trim();
 
-  if (!newKey) return { success: false, error: 'El nombre del tool es requerido' };
   if (!newDisplayName) return { success: false, error: 'El nombre visible es requerido' };
   if (!newDescription) return { success: false, error: 'La descripción para el agente es requerida' };
 
   try {
-    // Si cambió el toolKey, verificar que no colisione con otro
-    if (newKey !== currentToolKey) {
-      const collision = await db.externalDataToolConfig.findFirst({
-        where: { userId, toolKey: newKey },
-      });
-      if (collision) {
-        return {
-          success: false,
-          error: `El nombre "${newKey}" ya está en uso por otra herramienta.`,
-        };
-      }
-    }
-
     await db.externalDataToolConfig.update({
-      where: { userId_toolKey: { userId, toolKey: currentToolKey } },
-      data: {
-        toolKey: newKey,
-        displayName: newDisplayName,
-        toolDescription: newDescription,
-      },
+      where: { userId_toolKey: { userId, toolKey } },
+      data: { displayName: newDisplayName, toolDescription: newDescription },
     });
 
     return { success: true };
@@ -223,38 +115,43 @@ export async function updateBuiltinTool(
   }
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Genera un toolKey válido a partir del displayName.
+ * Ejemplo: "Buscar por Cédula y RIF" → "buscar_por_cedula_y_rif"
+ */
+function slugifyToolKey(displayName: string): string {
+  return displayName
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // eliminar acentos
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 60);
+}
+
 // ─── Upsert data_query tool ───────────────────────────────────────────────────
 
 /**
  * Crea o actualiza una herramienta de tipo data_query (search_by_field / auto_inject).
- * Validaciones de servidor:
- *  - toolCategory debe ser 'data_query'
- *  - toolType debe ser 'search_by_field' o 'auto_inject'
- *  - search_by_field: searchField requerido
- *  - auto_inject: promptTemplate recomendado (se avisa pero no bloquea)
- *  - toolKey único por usuario (en update: solo si cambió)
+ * El toolKey se genera automáticamente del displayName — el usuario no lo edita.
+ * En edición el toolKey no cambia (el identificador es inmutable).
  */
 export async function upsertDataQueryTool(
   userId: string,
   input: ExternalDataToolConfigInput,
-  editingKey?: string, // toolKey actual cuando se está editando
+  editingKey?: string,
 ): Promise<{ success: boolean; error?: string; warning?: string }> {
   if (!userId) return { success: false, error: 'userId requerido' };
 
-  // Validar categoría
   if (input.toolCategory !== 'data_query') {
     return { success: false, error: 'Solo se pueden gestionar herramientas de tipo data_query desde este formulario' };
   }
 
-  // Validar toolType
   if (!VALID_DATA_QUERY_TOOL_TYPES.has(input.toolType)) {
     return { success: false, error: `toolType "${input.toolType}" no es válido para herramientas dinámicas` };
   }
-
-  // Normalizar toolKey
-  const rawKey = input.toolKey?.trim() ?? '';
-  if (!rawKey) return { success: false, error: 'El nombre del tool es requerido' };
-  const safeKey = rawKey.toLowerCase().replace(/[^a-z0-9_]/g, '_');
 
   const displayName = input.displayName?.trim() ?? '';
   if (!displayName) return { success: false, error: 'El nombre visible es requerido' };
@@ -262,26 +159,30 @@ export async function upsertDataQueryTool(
   const toolDescription = input.toolDescription?.trim() ?? '';
   if (!toolDescription) return { success: false, error: 'La descripción para el agente es requerida' };
 
-  // search_by_field: searchField obligatorio
   if (input.toolType === 'search_by_field') {
     const sf = input.searchField?.trim() ?? '';
-    if (!sf) return { success: false, error: 'El campo de búsqueda es requerido para herramientas de tipo "Búsqueda por campo"' };
+    if (!sf) return { success: false, error: 'El campo de búsqueda es requerido' };
   }
 
   let warning: string | undefined;
 
   try {
     const isEditing = !!editingKey;
-    const keyChanged = isEditing && safeKey !== editingKey;
 
-    // Verificar colisión de toolKey
-    if (!isEditing || keyChanged) {
-      const collision = await db.externalDataToolConfig.findFirst({
-        where: { userId, toolKey: safeKey },
-      });
-      if (collision) {
-        return { success: false, error: `El nombre "${safeKey}" ya está en uso por otra herramienta.` };
+    // En creación: generar toolKey desde displayName y resolver colisiones
+    // En edición: el toolKey es inmutable (no cambia)
+    let finalKey: string;
+    if (isEditing) {
+      finalKey = editingKey;
+    } else {
+      const baseKey = slugifyToolKey(displayName);
+      // Resolver colisión añadiendo sufijo numérico si es necesario
+      let candidate = baseKey;
+      let suffix = 2;
+      while (await db.externalDataToolConfig.findFirst({ where: { userId, toolKey: candidate } })) {
+        candidate = `${baseKey}_${suffix++}`;
       }
+      finalKey = candidate;
     }
 
     // Advertir si ya existe un auto_inject (no bloqueante)
@@ -296,9 +197,8 @@ export async function upsertDataQueryTool(
 
     if (isEditing) {
       await db.externalDataToolConfig.update({
-        where: { userId_toolKey: { userId, toolKey: editingKey } },
+        where: { userId_toolKey: { userId, toolKey: finalKey } },
         data: {
-          toolKey: safeKey,
           displayName,
           toolDescription,
           searchField: input.searchField?.trim() || null,
@@ -310,7 +210,7 @@ export async function upsertDataQueryTool(
       await db.externalDataToolConfig.create({
         data: {
           userId,
-          toolKey: safeKey,
+          toolKey: finalKey,
           displayName,
           toolDescription,
           toolCategory: 'data_query',

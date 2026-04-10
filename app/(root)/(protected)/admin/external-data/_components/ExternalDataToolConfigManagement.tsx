@@ -60,8 +60,8 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { BUILTIN_TOOL_CATALOG } from '@/lib/external-data-tool-catalog';
 import {
-  BUILTIN_TOOL_CATALOG,
   listToolConfigs,
   addBuiltinTool,
   updateBuiltinTool,
@@ -98,13 +98,6 @@ const DEFAULT_AUTO_INJECT_TEMPLATE = `## PERFIL DEL CLIENTE (datos registrados e
 Usa estos datos para personalizar tus respuestas. No los repitas todos de golpe; solo menciona los relevantes según el contexto. No inventes ni modifiques ninguno de estos valores.`;
 
 // ─── Validation helpers ───────────────────────────────────────────────────────
-
-function validateToolKey(key: string): string | null {
-  if (!key.trim()) return 'El nombre es requerido';
-  if (key.trim().length < 3) return 'Mínimo 3 caracteres';
-  if (key.trim().length > 60) return 'Máximo 60 caracteres';
-  return null;
-}
 
 function validateDisplayName(name: string): string | null {
   if (!name.trim()) return 'El nombre visible es requerido';
@@ -331,19 +324,19 @@ function AddBuiltinDialog({
   existingToolTypes: Set<string>;
   onAdd: (
     toolType: ExternalDataBuiltinToolType,
-    overrides: { toolKey: string; displayName: string; toolDescription: string },
+    overrides: { displayName: string; toolDescription: string },
   ) => Promise<void>;
 }) {
   const [step, setStep] = useState<'catalog' | 'configure'>('catalog');
   const [selected, setSelected] = useState<(typeof BUILTIN_TOOL_CATALOG)[number] | null>(null);
-  const [form, setForm] = useState({ toolKey: '', displayName: '', toolDescription: '' });
+  const [form, setForm] = useState({ displayName: '', toolDescription: '' });
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [isSaving, setIsSaving] = useState(false);
 
   const resetAndClose = () => {
     setStep('catalog');
     setSelected(null);
-    setForm({ toolKey: '', displayName: '', toolDescription: '' });
+    setForm({ displayName: '', toolDescription: '' });
     setErrors({});
     onClose();
   };
@@ -351,7 +344,6 @@ function AddBuiltinDialog({
   const handleSelect = (entry: (typeof BUILTIN_TOOL_CATALOG)[number]) => {
     setSelected(entry);
     setForm({
-      toolKey: entry.defaultKey,
       displayName: entry.defaultDisplayName,
       toolDescription: entry.defaultDescription,
     });
@@ -361,7 +353,6 @@ function AddBuiltinDialog({
 
   const validate = () => {
     const e: Record<string, string | null> = {
-      toolKey: validateToolKey(form.toolKey),
       displayName: validateDisplayName(form.displayName),
       toolDescription: validateDescription(form.toolDescription),
     };
@@ -489,22 +480,13 @@ function AddBuiltinDialog({
                   </AlertDescription>
                 </Alert>
 
-                {/* Tool key */}
-                <div className="space-y-1.5">
-                  <Label>
-                    Nombre del tool{' '}
-                    <span className="text-muted-foreground font-normal text-xs">(toolKey)</span>
-                  </Label>
-                  <Input
-                    value={form.toolKey}
-                    onChange={(e) => {
-                      setForm((f) => ({ ...f, toolKey: e.target.value }));
-                      setErrors((e2) => ({ ...e2, toolKey: null }));
-                    }}
-                    placeholder={selected.defaultKey}
-                  />
-                  <FieldError message={errors.toolKey ?? null} />
-                  <FieldHint message="Es el identificador que el agente usa internamente al invocar la herramienta. Puedes personalizarlo para que se adapte al contexto del cliente (ej: 'Contactar_Soporte' en vez de 'Notificacion_Asesor')." />
+                {/* Tool key — read-only, fixed from catalog */}
+                <div className="rounded-md bg-muted/50 border px-3 py-2 text-xs flex items-center gap-2 text-muted-foreground">
+                  <Lock className="h-3 w-3 shrink-0" />
+                  Identificador técnico:{' '}
+                  <code className="font-mono bg-background border px-1.5 rounded">
+                    {selected.defaultKey}
+                  </code>
                 </div>
 
                 {/* Display name */}
@@ -569,11 +551,11 @@ function EditBuiltinDialog({
   onClose: () => void;
   onSave: (
     currentKey: string,
-    updates: { toolKey: string; displayName: string; toolDescription: string },
+    updates: { displayName: string; toolDescription: string },
   ) => Promise<void>;
   onRestore: (toolKey: string) => Promise<void>;
 }) {
-  const [form, setForm] = useState({ toolKey: '', displayName: '', toolDescription: '' });
+  const [form, setForm] = useState({ displayName: '', toolDescription: '' });
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
@@ -581,7 +563,6 @@ function EditBuiltinDialog({
   useEffect(() => {
     if (cfg) {
       setForm({
-        toolKey: cfg.toolKey,
         displayName: cfg.displayName,
         toolDescription: cfg.toolDescription,
       });
@@ -591,7 +572,6 @@ function EditBuiltinDialog({
 
   const validate = () => {
     const e = {
-      toolKey: validateToolKey(form.toolKey),
       displayName: validateDisplayName(form.displayName),
       toolDescription: validateDescription(form.toolDescription),
     };
@@ -637,20 +617,20 @@ function EditBuiltinDialog({
           </DialogTitle>
           <DialogDescription>
             La implementación técnica de esta herramienta es fija. Puedes personalizar
-            su nombre (toolKey), nombre visible y descripción para el agente.
+            el nombre visible y la descripción que el agente usa para decidir cuándo invocarla.
           </DialogDescription>
         </DialogHeader>
 
         {cfg && catalogEntry && (
           <div className="space-y-4 py-2">
-            <div className="rounded-md bg-muted/50 border px-3 py-2 text-xs flex items-center gap-2 text-muted-foreground">
+            {/* <div className="rounded-md bg-muted/50 border px-3 py-2 text-xs flex items-center gap-2 text-muted-foreground">
               <Lock className="h-3 w-3 shrink-0" />
               Tipo interno:{' '}
               <code className="bg-background border px-1.5 py-0.5 rounded font-mono">
                 {cfg.toolType}
               </code>
               — {BUILTIN_TYPE_LABELS[cfg.toolType as ExternalDataBuiltinToolType] ?? cfg.toolType}
-            </div>
+            </div> */}
 
             {catalogEntry.isCritical && (
               <Alert className="border-amber-500/40 bg-amber-500/5">
@@ -662,20 +642,13 @@ function EditBuiltinDialog({
               </Alert>
             )}
 
-            <div className="space-y-1.5">
-              <Label>
-                Nombre del tool{' '}
-                <span className="text-muted-foreground font-normal text-xs">(toolKey)</span>
-              </Label>
-              <Input
-                value={form.toolKey}
-                onChange={(e) => {
-                  setForm((f) => ({ ...f, toolKey: e.target.value }));
-                  setErrors((e2) => ({ ...e2, toolKey: null }));
-                }}
-              />
-              <FieldError message={errors.toolKey ?? null} />
-              <FieldHint message="El agente invoca la herramienta usando este nombre. Cámbialo si quieres adaptarlo al contexto del cliente." />
+            {/* Tool key — read-only, immutable after creation */}
+            <div className="rounded-md bg-muted/50 border px-3 py-2 text-xs flex items-center gap-2 text-muted-foreground">
+              <Lock className="h-3 w-3 shrink-0" />
+              Identificador técnico:{' '}
+              <code className="font-mono bg-background border px-1.5 rounded">
+                {cfg.toolKey}
+              </code>
             </div>
 
             <div className="space-y-1.5">
@@ -750,8 +723,7 @@ function DataQueryDialog({
 }) {
   const isEditing = !!editingConfig;
 
-  const [form, setForm] = useState<ExternalDataToolConfigInput>({
-    toolKey: '',
+  const [form, setForm] = useState<Omit<ExternalDataToolConfigInput, 'toolKey'>>({
     displayName: '',
     toolDescription: '',
     toolCategory: 'data_query',
@@ -766,7 +738,6 @@ function DataQueryDialog({
   useEffect(() => {
     if (editingConfig) {
       setForm({
-        toolKey: editingConfig.toolKey,
         displayName: editingConfig.displayName,
         toolDescription: editingConfig.toolDescription,
         toolCategory: 'data_query',
@@ -777,7 +748,6 @@ function DataQueryDialog({
       });
     } else {
       setForm({
-        toolKey: '',
         displayName: '',
         toolDescription: '',
         toolCategory: 'data_query',
@@ -790,26 +760,19 @@ function DataQueryDialog({
     setErrors({});
   }, [editingConfig, open]);
 
-  // Auto-generate toolKey from searchField for search_by_field
-  const handleSearchFieldChange = (value: string) => {
-    setForm((f) => {
-      const newForm = { ...f, searchField: value };
-      // Only auto-fill toolKey if it's empty or was auto-generated
-      if (!isEditing && (!f.toolKey || f.toolKey === autoKeyFromField(f.searchField ?? ''))) {
-        newForm.toolKey = autoKeyFromField(value);
-      }
-      return newForm;
-    });
-    setErrors((e) => ({ ...e, searchField: null, toolKey: null }));
-  };
-
-  function autoKeyFromField(field: string): string {
-    return `buscar_por_${field.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+  /** Client-side preview of the server-side slugify logic */
+  function previewToolKey(displayName: string): string {
+    return displayName
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 60) || '…';
   }
 
   const validate = (): boolean => {
     const e: Record<string, string | null> = {
-      toolKey: validateToolKey(form.toolKey),
       displayName: validateDisplayName(form.displayName),
       toolDescription: validateDescription(form.toolDescription),
       searchField:
@@ -825,7 +788,9 @@ function DataQueryDialog({
     if (!validate()) return;
     setIsSaving(true);
     try {
-      await onSave(form, editingConfig?.toolKey);
+      // toolKey is auto-generated server-side from displayName; pass a placeholder
+      // so the type is satisfied — server action ignores it on create and uses editingKey on edit
+      await onSave({ ...form, toolKey: '' }, editingConfig?.toolKey);
       onClose();
     } finally {
       setIsSaving(false);
@@ -905,7 +870,10 @@ function DataQueryDialog({
               </Label>
               <Input
                 value={form.searchField ?? ''}
-                onChange={(e) => handleSearchFieldChange(e.target.value)}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, searchField: e.target.value }));
+                  setErrors((err) => ({ ...err, searchField: null }));
+                }}
                 placeholder="ej: CEDULA-RIF"
                 disabled={isEditing}
               />
@@ -916,32 +884,6 @@ function DataQueryDialog({
               )}
             </div>
           )}
-
-          {/* Tool key */}
-          <div className="space-y-1.5">
-            <Label>
-              Nombre del tool{' '}
-              <span className="text-muted-foreground font-normal text-xs">(toolKey)</span>
-              <span className="text-destructive"> *</span>
-            </Label>
-            <Input
-              value={form.toolKey}
-              onChange={(e) => {
-                setForm((f) => ({ ...f, toolKey: e.target.value }));
-                setErrors((e2) => ({ ...e2, toolKey: null }));
-              }}
-              placeholder="ej: buscar_por_cedula"
-              disabled={isEditing}
-            />
-            <FieldError message={errors.toolKey ?? null} />
-            <FieldHint
-              message={
-                isEditing
-                  ? 'El nombre del tool no se puede cambiar una vez creado.'
-                  : 'Identificador único. Solo letras minúsculas, números y guiones bajos. Se normaliza automáticamente.'
-              }
-            />
-          </div>
 
           {/* Display name */}
           <div className="space-y-1.5">
@@ -958,6 +900,26 @@ function DataQueryDialog({
               placeholder="ej: Buscar por cédula"
             />
             <FieldError message={errors.displayName ?? null} />
+          </div>
+
+          {/* Tool key — auto-generated (preview) or fixed (editing) */}
+          <div className="rounded-md bg-muted/50 border px-3 py-2 text-xs flex items-center gap-2 text-muted-foreground">
+            <Lock className="h-3 w-3 shrink-0" />
+            {isEditing ? (
+              <>
+                Identificador técnico:{' '}
+                <code className="font-mono bg-background border px-1.5 rounded">
+                  {editingConfig?.toolKey}
+                </code>
+              </>
+            ) : (
+              <>
+                Se generará como:{' '}
+                <code className="font-mono bg-background border px-1.5 rounded">
+                  {previewToolKey(form.displayName)}
+                </code>
+              </>
+            )}
           </div>
 
           {/* Description */}
@@ -1158,7 +1120,7 @@ export function ExternalDataToolConfigManagement({ clients }: Props) {
   // ── Add builtin ───────────────────────────────────────────────────────────────
   const handleAddBuiltin = async (
     toolType: ExternalDataBuiltinToolType,
-    overrides: { toolKey: string; displayName: string; toolDescription: string },
+    overrides: { displayName: string; toolDescription: string },
   ) => {
     const result = await addBuiltinTool(selectedUserId, toolType, overrides);
     if (result.success) {
@@ -1173,7 +1135,7 @@ export function ExternalDataToolConfigManagement({ clients }: Props) {
   // ── Edit builtin ──────────────────────────────────────────────────────────────
   const handleEditBuiltin = async (
     currentKey: string,
-    updates: { toolKey: string; displayName: string; toolDescription: string },
+    updates: { displayName: string; toolDescription: string },
   ) => {
     const result = await updateBuiltinTool(selectedUserId, currentKey, updates);
     if (result.success) {
@@ -1356,7 +1318,7 @@ export function ExternalDataToolConfigManagement({ clients }: Props) {
                 El agente usa exactamente estas herramientas — sin hardcoding adicional.
               </div>
               <div className="flex items-center gap-2">
-                <Button
+                {/* <Button
                   variant="outline"
                   size="sm"
                   onClick={handleApplyDefaults}
@@ -1370,7 +1332,7 @@ export function ExternalDataToolConfigManagement({ clients }: Props) {
                     <Sparkles className="h-3.5 w-3.5" />
                   )}
                   Agregar faltantes del sistema
-                </Button>
+                </Button> */}
                 <Button
                   variant="outline"
                   size="sm"
