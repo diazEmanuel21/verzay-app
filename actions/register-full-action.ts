@@ -10,6 +10,7 @@ import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { sanitizeInstanceName } from "@/schema/connection";
+import { decodeApiKeyRef } from "@/lib/register-link";
 
 /* ─────────────────────────────────────────
    Constants
@@ -134,7 +135,8 @@ async function createInstanceForUser(
    Main server action
 ───────────────────────────────────────── */
 export async function fullRegisterAction(
-  values: z.infer<typeof fullRegisterSchema>
+  values: z.infer<typeof fullRegisterSchema>,
+  apiKeyRef?: string
 ): Promise<FullRegisterResult> {
   const parsed = fullRegisterSchema.safeParse(values);
   if (!parsed.success) {
@@ -171,12 +173,23 @@ export async function fullRegisterAction(
 
   const passwordHash = await bcrypt.hash(password, LENGTH_PASSWORD_HASH);
 
-  /* ── Validate DEFAULT_API_KEY_ID exists to avoid FK constraint error ── */
+  /* ── Resolve which ApiKey to assign — prefer the ref from the URL ── */
+  const requestedApiKeyId = apiKeyRef ? decodeApiKeyRef(apiKeyRef) : null;
+  const targetApiKeyId = requestedApiKeyId ?? DEFAULT_API_KEY_ID;
+
   const apiKeyExists = await db.apiKey
-    .findUnique({ where: { id: DEFAULT_API_KEY_ID }, select: { id: true } })
+    .findUnique({ where: { id: targetApiKeyId }, select: { id: true } })
     .catch(() => null);
 
-  const resolvedApiKeyId = apiKeyExists ? DEFAULT_API_KEY_ID : null;
+  /* ── Fetch OpenAI provider for AI auto-config ── */
+  const openaiProvider = await db.aiProvider
+    .findFirst({
+      where: { name: 'openai' },
+      include: { models: { orderBy: { name: 'asc' }, take: 1 } },
+    })
+    .catch(() => null);
+
+  const resolvedApiKeyId = apiKeyExists ? targetApiKeyId : null;
 
   const completedSteps: RegisterCompletedStep[] = [];
   let userId: string | null = null;
@@ -205,8 +218,8 @@ export async function fullRegisterAction(
           enabledLeadStatusClassifier: true,
           enabledCrmFollowUps: true,
           autoReactivate: "30",
-          delayTimeGpt: "30",
-          image: "https://drive.google.com/file/d/1tJX8VLvI7642wGJvxrD-g9qoTc18Dc5C/view?usp=sharing"
+          delayTimeGpt: "10",
+          image: "https://medias3.verzay.co/verzay-media/VERZAY-ROBOT-PROFILE.png"
         },
       });
 
@@ -245,18 +258,6 @@ export async function fullRegisterAction(
         data: {
           userId: created.id,
           tipo: "abrir",
-          mensaje: DEFAULT_DEL_SEGUIMIENTO,
-          baseurl: "https://conexion.verzay.co",
-          instanciaId: "default-instancia-id",
-          apikeyId: resolvedApiKeyId ?? DEFAULT_API_KEY_ID,
-        },
-      });
-
-      // 5. Pausar (closing message)
-      await tx.pausar.create({
-        data: {
-          userId: created.id,
-          tipo: "cerrar",
           mensaje: "Fue un gusto ayudarle.",
           baseurl: "https://conexion.verzay.co",
           instanciaId: "default-instancia-id",
@@ -264,7 +265,7 @@ export async function fullRegisterAction(
         },
       });
 
-      // 6. Default tags
+      // 5. Default tags
       await tx.tag.createMany({
         data: DEFAULT_TAGS.map((tag, index) => ({
           userId: created.id,
@@ -274,6 +275,25 @@ export async function fullRegisterAction(
           order: index,
         })),
       });
+
+      // 6. AI config — auto-configure OpenAI with the default secret key
+      if (openaiProvider && process.env.SECRET_API_KEY) {
+        await tx.userAiConfig.create({
+          data: {
+            userId: created.id,
+            providerId: openaiProvider.id,
+            apiKey: process.env.SECRET_API_KEY,
+            isActive: true,
+          },
+        });
+        await tx.user.update({
+          where: { id: created.id },
+          data: {
+            defaultProviderId: openaiProvider.id,
+            defaultAiModelId: openaiProvider.models[0]?.id ?? null,
+          },
+        });
+      }
 
       return created;
     });

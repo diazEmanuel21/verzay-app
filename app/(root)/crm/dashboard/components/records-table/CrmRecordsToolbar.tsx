@@ -1,7 +1,7 @@
 "use client";
 
 import type { Table } from "@tanstack/react-table";
-import { Columns3, Search, X } from "lucide-react";
+import { Columns3, Download, Search, X } from "lucide-react";
 
 import type { RegistrosFilters } from "@/actions/registro-action";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +35,7 @@ export function CrmRecordsToolbar({
     onSearchChange,
     onPatchFilters,
     onResetFilters,
+    onExportClick,
 }: {
     table: Table<RegistroWithSession>;
     activeTab: CrmDashboardTab;
@@ -46,6 +47,7 @@ export function CrmRecordsToolbar({
     onSearchChange: (value: string) => void;
     onPatchFilters: (patch: Partial<RegistrosFilters>) => void;
     onResetFilters: () => void;
+    onExportClick: () => void;
 }) {
     return (
         <div className="space-y-3">
@@ -121,6 +123,21 @@ export function CrmRecordsToolbar({
                                 })}
                         </DropdownMenuContent>
                     </DropdownMenu>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9 gap-2 max-sm:w-9 max-sm:px-0"
+                                onClick={onExportClick}
+                            >
+                                <Download className="h-4 w-4 shrink-0" />
+                                <span className="hidden sm:inline">Exportar</span>
+                                <span className="sr-only sm:hidden">Exportar</span>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">Exportar a Excel</TooltipContent>
+                    </Tooltip>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">

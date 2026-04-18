@@ -14,18 +14,9 @@ import {
 } from "@/actions/tag-actions";
 import { SimpleTag } from "@/types/session";
 import { Tag as TagIcon } from "lucide-react";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { SortableTagList } from "./SortableTagList";
+import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog";
 
 interface SessionTagsManagerProps {
     userId: string;
@@ -65,7 +56,6 @@ export const SessionTagsManager = ({
     // Eliminación con confirmación
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [tagToDelete, setTagToDelete] = useState<SimpleTag | null>(null);
-    const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
     const isSelected = (id: number) => selectedIds.includes(id);
 
@@ -177,38 +167,20 @@ export const SessionTagsManager = ({
 
     const openDeleteDialog = (tag: SimpleTag) => {
         setTagToDelete(tag);
-        setDeleteConfirmText("");
         setDeleteDialogOpen(true);
     };
 
-    const handleDeleteTag = () => {
-        if (!tagToDelete) return;
+    const deleteTagMutationFn = async (id: string) => {
+        const tagId = parseInt(id);
+        const res = await deleteTagAction({ id: tagId, userId });
 
-        const tag = tagToDelete;
-
-        startTransition(async () => {
-            const res = await deleteTagAction({
-                id: tag.id,
-                userId,
-            });
-
-            if (!res.success) {
-                toast.error(res.message || "No se pudo eliminar la etiqueta.");
-                return;
-            }
-
-            // Quitar de lista
-            setTags((prev) => prev.filter((t) => t.id !== tag.id));
-            // Quitar de seleccionados
-            setSelectedIds((prev) => prev.filter((id) => id !== tag.id));
-
-            setDeleteDialogOpen(false);
+        if (res.success) {
+            setTags((prev) => prev.filter((t) => t.id !== tagId));
+            setSelectedIds((prev) => prev.filter((sid) => sid !== tagId));
             setTagToDelete(null);
+        }
 
-            toast.success("Etiqueta eliminada", {
-                description: `"${tag.name}" se eliminó correctamente.`,
-            });
-        });
+        return { success: res.success, message: res.message || "" };
     };
 
     const renderColorDot = (color?: string | null) => (
@@ -341,58 +313,17 @@ export const SessionTagsManager = ({
                 </div>
             </div>
 
-            {/* Dialog de confirmación para eliminar */}
-            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Eliminar etiqueta</AlertDialogTitle>
-                        <AlertDialogDescription className="space-y-2">
-                            <p>
-                                Esta acción eliminará la etiqueta de todo tu CRM y se
-                                desasignará de todas las sesiones.
-                            </p>
-                            {tagToDelete && (
-                                <>
-                                    <p>
-                                        Para confirmar, escribe{" "}
-                                        <span className="font-semibold">
-                                            {tagToDelete.name}
-                                        </span>{" "}
-                                        en el campo de abajo.
-                                    </p>
-                                    <Input
-                                        autoFocus
-                                        placeholder={tagToDelete.name}
-                                        value={deleteConfirmText}
-                                        onChange={(e) => setDeleteConfirmText(e.target.value)}
-                                        className="mt-1 h-9"
-                                    />
-                                </>
-                            )}
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel
-                            onClick={() => {
-                                setDeleteConfirmText("");
-                                setTagToDelete(null);
-                            }}
-                        >
-                            Cancelar
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                            className="bg-red-600 hover:bg-red-700"
-                            disabled={
-                                !tagToDelete ||
-                                deleteConfirmText.trim() !== tagToDelete.name.trim()
-                            }
-                            onClick={handleDeleteTag}
-                        >
-                            Eliminar etiqueta
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <GenericDeleteDialog
+                open={deleteDialogOpen}
+                setOpen={(open) => {
+                    setDeleteDialogOpen(open);
+                    if (!open) setTagToDelete(null);
+                }}
+                itemName={tagToDelete?.name}
+                itemId={tagToDelete?.id ?? 0}
+                mutationFn={deleteTagMutationFn}
+                entityLabel="etiqueta"
+            />
         </>
     );
 };

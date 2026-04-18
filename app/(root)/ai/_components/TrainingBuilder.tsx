@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2, GripVertical } from "lucide-react";
+import { Plus, Trash2, GripVertical, ChevronDown } from "lucide-react";
 
 import {
   DataSubtype,
@@ -89,9 +89,11 @@ function SortableStepCard({
   });
 
   const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
+    transform: transform ? CSS.Transform.toString({ ...transform, x: 0 }) : undefined,
     transition,
-    opacity: isDragging ? 0.85 : 1,
+    opacity: isDragging ? 0.5 : 1,
+    position: "relative",
+    zIndex: isDragging ? 999 : undefined,
   };
 
   return (
@@ -126,9 +128,11 @@ function SortableElementRow({
   });
 
   const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
+    transform: transform ? CSS.Transform.toString({ ...transform, x: 0 }) : undefined,
     transition,
-    opacity: isDragging ? 0.85 : 1,
+    opacity: isDragging ? 0.5 : 1,
+    position: "relative",
+    zIndex: isDragging ? 999 : undefined,
   };
 
   return (
@@ -162,6 +166,26 @@ export function TrainingBuilder({
 
   // estado de autosave
   const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>("idle");
+
+  // acordeón: IDs de pasos expandidos (por defecto todos)
+  const [expandedSteps, setExpandedSteps] = useState<Set<string>>(
+    () => new Set((Array.isArray(initialSteps) ? initialSteps : []).map((s: any) => s.id))
+  );
+
+  const toggleStep = useCallback((id: string) => {
+    setExpandedSteps((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const collapseAll = useCallback(() => setExpandedSteps(new Set()), []);
+  const expandAll = useCallback(
+    () => setExpandedSteps(new Set(steps.map((s) => s.id))),
+    [steps]
+  );
 
   const handleConflict = useCallback(
     (serverState: any) => {
@@ -228,37 +252,27 @@ export function TrainingBuilder({
 
   /* -------------------- Acciones por PASO -------------------- */
   const addStep = () => {
+    const newId = nanoid();
     if (steps.length === 0) {
       setSteps((prev) => [
         ...prev,
         {
-          id: nanoid(),
+          id: newId,
           title: WELCOME_TITLE,
           mainMessage: `Al iniciar un chat, la *Prioridad:* es analizar si el *chat es nuevo* para seguir el *orden exacto* definido, *sin omitir ninguna*. en WhatsApp para recopilar información clave antes de atender otras consultas.\n\nCuando un *Usuario:* inicie la conversación con frases como:\n> Hola / Buenos días / Buenas tardes / Buenas noches / Información / Precio / Me interesa / Etc.\n* *Enviar mensaje de Bienvenida:*\nTu único mensaje de bienvenida es:`,
-          // mainMessage: `Cuando un **Usuario:** inicie la conversación con frases como:\n\n\> Hola / Buenos días / Buenas tardes / Buenas noches/Información / Precio / Me interesa / Etc. (Que no tenga un contexto claro)\n\n***Enviar mensaje de Bienvenida:**\n\nTu único mensaje de bienvenida es:`,
-          elements: [
-            {
-              id: nanoid(),
-              kind: "text",
-              text: "",
-            },
-          ],
+          elements: [{ id: nanoid(), kind: "text", text: "" }],
           openPicker: false,
         },
       ]);
+      setExpandedSteps((prev) => new Set(Array.from(prev).concat(newId)));
       return;
     }
 
     setSteps((prev) => [
       ...prev,
-      {
-        id: nanoid(),
-        title: ``,
-        mainMessage: "",
-        elements: [],
-        openPicker: false,
-      },
+      { id: newId, title: ``, mainMessage: "", elements: [], openPicker: false },
     ]);
+    setExpandedSteps((prev) => new Set(Array.from(prev).concat(newId)));
   };
 
   const removeStep = (stepId: string) => {
@@ -368,7 +382,7 @@ export function TrainingBuilder({
   /** -------------------- dnd-kit config -------------------- */
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 6 },
+      activationConstraint: { distance: 8 },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -447,12 +461,24 @@ export function TrainingBuilder({
           )}
         </div>
 
-        {steps.length < 1 && (
-          <Button size="sm" onClick={addStep} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Agregar paso
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {steps.length > 1 && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs text-muted-foreground"
+              onClick={expandedSteps.size === 0 ? expandAll : collapseAll}
+            >
+              {expandedSteps.size === 0 ? "Expandir todo" : "Colapsar todo"}
+            </Button>
+          )}
+          {steps.length < 1 && (
+            <Button size="sm" onClick={addStep} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Agregar paso
+            </Button>
+          )}
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -477,46 +503,86 @@ export function TrainingBuilder({
                       id={step.id}
                       disabled={lockWelcome}
                     >
-                      {({ dragHandleProps }) => (
-                        <Card className="bg-muted/10 border-muted/60">
-                          <CardHeader className="py-3">
-                            <div className="flex items-start gap-2">
-                              {/* Drag handle del paso */}
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="mt-6 h-8 w-8 cursor-grab active:cursor-grabbing"
+                      {({ dragHandleProps, isDragging }) => {
+                        const isExpanded = expandedSteps.has(step.id) && !isDragging;
+
+                        return (
+                          <Card className="bg-muted/10 border-muted/60 overflow-hidden">
+                            {/* ---- Header siempre visible ---- */}
+                            <div className="flex items-center gap-1 px-3 py-2">
+                              {/* Drag handle */}
+                              <div
+                                className={[
+                                  "h-8 w-6 flex items-center justify-center rounded text-muted-foreground shrink-0",
+                                  lockWelcome
+                                    ? "opacity-30 cursor-not-allowed"
+                                    : "cursor-grab active:cursor-grabbing hover:text-foreground hover:bg-muted/50",
+                                ].join(" ")}
                                 title={lockWelcome ? "Paso fijo" : "Arrastrar paso"}
-                                disabled={lockWelcome}
-                                {...dragHandleProps}
+                                {...(!lockWelcome ? dragHandleProps : {})}
                               >
                                 <GripVertical className="h-4 w-4" />
-                              </Button>
+                              </div>
 
-                              <div className="grid w-full max-w-sm items-center gap-3">
-                                <Label htmlFor={step.id}>{`Paso ${idx + 1}`}</Label>
+                              {/* Número */}
+                              <span className="text-xs font-semibold text-muted-foreground w-12 shrink-0">
+                                Paso {idx + 1}
+                              </span>
+
+                              {/* Título (input solo cuando expandido, texto cuando colapsado) */}
+                              {isExpanded ? (
                                 <Input
                                   id={step.id}
                                   value={step.title}
                                   onChange={(e) => updateStepTitle(step.id, e.target.value)}
-                                  className="h-8"
+                                  className="h-7 text-sm flex-1"
                                   placeholder="Título del paso"
+                                  onClick={(e) => e.stopPropagation()}
                                 />
-                              </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="flex-1 text-left text-sm font-medium truncate hover:text-foreground transition-colors"
+                                  onClick={() => toggleStep(step.id)}
+                                >
+                                  {step.title || (
+                                    <span className="text-muted-foreground italic">Sin título</span>
+                                  )}
+                                </button>
+                              )}
 
+                              {/* Resumen colapsado: badges de elementos */}
+                              {!isExpanded && step.elements.length > 0 && (
+                                <Badge variant="secondary" className="shrink-0 text-xs">
+                                  {step.elements.length} {step.elements.length === 1 ? "elemento" : "elementos"}
+                                </Badge>
+                              )}
+
+                              {/* Chevron toggle */}
+                              <button
+                                type="button"
+                                className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors shrink-0"
+                                onClick={() => toggleStep(step.id)}
+                                title={isExpanded ? "Colapsar" : "Expandir"}
+                              >
+                                <ChevronDown
+                                  className="h-4 w-4 transition-transform duration-200"
+                                  style={{ transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)" }}
+                                />
+                              </button>
+
+                              {/* Eliminar */}
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    title="Eliminar Pregunta"
-                                    className="ml-auto"
+                                  <button
+                                    type="button"
+                                    className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
+                                    title="Eliminar paso"
+                                    onClick={(e) => e.stopPropagation()}
                                   >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
                                 </AlertDialogTrigger>
-
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>Eliminar entrenamiento</AlertDialogTitle>
@@ -525,7 +591,6 @@ export function TrainingBuilder({
                                       acción no se puede deshacer.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
-
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                     <AlertDialogAction
@@ -538,89 +603,98 @@ export function TrainingBuilder({
                                 </AlertDialogContent>
                               </AlertDialog>
                             </div>
-                          </CardHeader>
 
-                          <CardContent className="space-y-3">
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">{`Objetivo principal del paso ${idx + 1
-                                }`}</label>
-                              <Textarea
-                                value={step.mainMessage}
-                                onChange={(e) => updateStepMainMessage(step.id, e.target.value)}
-                                placeholder="Escribe el mensaje inicial para este paso…"
-                                className="min-h-[32px]"
-                                disabled={step.title === WELCOME_TITLE}
-                              />
-                            </div>
+                            {/* ---- Contenido colapsable (animado con grid trick) ---- */}
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateRows: isExpanded ? "1fr" : "0fr",
+                                transition: "grid-template-rows 200ms ease",
+                              }}
+                            >
+                              <div className="overflow-hidden">
+                                <CardContent className="space-y-3 pt-0 pb-3">
+                                  <Separator className="mb-3" />
 
-                            <Separator />
-
-                            <div className="rounded-lg border border-dashed border-muted/60 p-1">
-                              {step.elements.length === 0 ? (
-                                <div className="text-center text-sm text-muted-foreground">
-                                  No hay elementos en este paso. Agrega funciones o textos
-                                  usando los botones de arriba.
-                                </div>
-                              ) : (
-                                <SortableContext
-                                  items={step.elements.map((e) => e.id)}
-                                  strategy={verticalListSortingStrategy}
-                                >
-                                  <div className="space-y-3">
-                                    {step.elements.map((el) => (
-                                      <SortableElementRow key={el.id} id={el.id} stepId={step.id}>
-                                        {({ dragHandleProps }) => (
-                                          <div className="flex items-start gap-2">
-                                            {/* Drag handle del elemento */}
-                                            <Button
-                                              type="button"
-                                              variant="ghost"
-                                              size="icon"
-                                              className="h-8 w-8 mt-2 cursor-grab active:cursor-grabbing"
-                                              title="Arrastrar elemento"
-                                              {...dragHandleProps}
-                                            >
-                                              <GripVertical className="h-4 w-4" />
-                                            </Button>
-
-                                            <div className="flex-1">
-                                              <ElementRenderer
-                                                stepId={step.id}
-                                                el={el}
-                                                flows={flows}
-                                                removeElement={removeElement}
-                                                updateText={updateText}
-                                                setFlowOnElement={setFlowOnElement}
-                                                addPedidoField={addPedidoField}
-                                                removePedidoField={removePedidoField}
-                                                onSubtypeChange={onSubtypeChange}
-                                              />
-                                            </div>
-                                          </div>
-                                        )}
-                                      </SortableElementRow>
-                                    ))}
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium">
+                                      {`Objetivo principal del paso ${idx + 1}`}
+                                    </label>
+                                    <Textarea
+                                      value={step.mainMessage}
+                                      onChange={(e) => updateStepMainMessage(step.id, e.target.value)}
+                                      placeholder="Escribe el mensaje inicial para este paso…"
+                                      className="min-h-[32px]"
+                                      disabled={step.title === WELCOME_TITLE}
+                                    />
                                   </div>
-                                </SortableContext>
-                              )}
-                            </div>
 
-                            <div className="flex items-center justify-between flex-wrap gap-2">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium">Elementos del paso</span>
-                                <Badge variant="secondary">{idx + 1}</Badge>
-                              </div>
-                              <div className="flex gap-2">
-                                <FunctionSelector
-                                  step={step}
-                                  setSteps={setSteps}
-                                  notificationNumber={notificationNumber ?? ""}
-                                />
+                                  <Separator />
+
+                                  <div className="rounded-lg border border-dashed border-muted/60 p-1">
+                                    {step.elements.length === 0 ? (
+                                      <div className="text-center text-sm text-muted-foreground py-2">
+                                        No hay elementos en este paso. Agrega funciones o textos
+                                        usando los botones de abajo.
+                                      </div>
+                                    ) : (
+                                      <SortableContext
+                                        items={step.elements.map((e) => e.id)}
+                                        strategy={verticalListSortingStrategy}
+                                      >
+                                        <div className="space-y-3">
+                                          {step.elements.map((el) => (
+                                            <SortableElementRow key={el.id} id={el.id} stepId={step.id}>
+                                              {({ dragHandleProps: elDragHandleProps }) => (
+                                                <div className="flex items-start gap-2">
+                                                  <div
+                                                    className="h-8 w-8 mt-2 flex items-center justify-center rounded text-muted-foreground shrink-0 cursor-grab active:cursor-grabbing hover:text-foreground hover:bg-muted/50"
+                                                    title="Arrastrar elemento"
+                                                    {...elDragHandleProps}
+                                                  >
+                                                    <GripVertical className="h-4 w-4" />
+                                                  </div>
+                                                  <div className="flex-1">
+                                                    <ElementRenderer
+                                                      stepId={step.id}
+                                                      el={el}
+                                                      flows={flows}
+                                                      removeElement={removeElement}
+                                                      updateText={updateText}
+                                                      setFlowOnElement={setFlowOnElement}
+                                                      addPedidoField={addPedidoField}
+                                                      removePedidoField={removePedidoField}
+                                                      onSubtypeChange={onSubtypeChange}
+                                                    />
+                                                  </div>
+                                                </div>
+                                              )}
+                                            </SortableElementRow>
+                                          ))}
+                                        </div>
+                                      </SortableContext>
+                                    )}
+                                  </div>
+
+                                  <div className="flex items-center justify-between flex-wrap gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm font-medium">Elementos del paso</span>
+                                      <Badge variant="secondary">{idx + 1}</Badge>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <FunctionSelector
+                                        step={step}
+                                        setSteps={setSteps}
+                                        notificationNumber={notificationNumber ?? ""}
+                                      />
+                                    </div>
+                                  </div>
+                                </CardContent>
                               </div>
                             </div>
-                          </CardContent>
-                        </Card>
-                      )}
+                          </Card>
+                        );
+                      }}
                     </SortableStepCard>
                   );
                 })}

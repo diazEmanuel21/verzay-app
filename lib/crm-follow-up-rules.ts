@@ -63,41 +63,40 @@ export const CRM_FOLLOW_UP_RULE_DEFAULTS: Record<
   FRIO: {
     enabled: true,
     delayMinutes: 24 * 60,
-    maxAttempts: 1,
-    goal: "Reactivar la conversacion sin presionar y detectar si sigue habiendo interes real.",
+    maxAttempts: 3,
+    goal: "Reactivar la conversación de forma natural y detectar si sigue habiendo interés real. El foco es reconectar, no vender.",
     prompt:
-      "Escribe breve, cordial y sin insistencia. Menciona valor util, evita sonar automatizado y termina con una pregunta simple.",
+      "Escribe entre 1 y 3 mensajes cortos (máximo 3 líneas cada uno), cordial y sin insistencia. Llama al lead por su *nombre* y usa *negrita* solo para reforzar algo clave. Menciona algo de valor sin sonar automatizado, usa máximo 1 emoji si aplica, y cierra con una pregunta simple y abierta con dos saltos de línea antes.",
     fallbackMessage:
-      "Hola, te escribo para saber si aun te interesa retomar esta conversacion.",
+      "Hola, *[Nombre]* 👋\n\nTe escribo para saber si aún te interesa retomar esta conversación.\n\n¿Sigue siendo algo en lo que puedo ayudarte?.",
     allowedWeekdays: [1, 2, 3, 4, 5],
     sendStartTime: "09:00",
-    sendEndTime: "18:00",
+    sendEndTime: "17:00",
   },
   TIBIO: {
     enabled: true,
-    delayMinutes: 6 * 60,
-    maxAttempts: 2,
-    goal: "Mover al lead al siguiente paso comercial con claridad y una llamada a la accion concreta.",
+    delayMinutes: 24 * 120,
+    maxAttempts: 4,
+    goal: "Avanzar al lead hacia una decisión concreta. Si ya mostró interés previo, hacer una llamada a la acción clara y directa hacia el siguiente paso comercial.",
     prompt:
-      "Usa un tono consultivo. Resume el punto mas util del contexto y cierra con una pregunta concreta para avanzar.",
+      "Escribe entre 1 y 3 mensajes cortos (máximo 3 líneas cada uno), con tono consultivo y orientado a resultados. Llama al lead por su *nombre* y usa *negrita* solo para reforzar algo clave. Incluye un micro-valor concreto del contexto (dato, recurso o respuesta pendiente) sin sonar automatizado. No repitas mensajes anteriores ni suenes como recordatorio genérico. Usa máximo 1 emoji si aplica y cierra con una pregunta concreta para avanzar, con dos saltos de línea antes de la pregunta.",
     fallbackMessage:
-      "Hola, sigo atento para ayudarte a avanzar con la informacion que necesitas.",
+      "Hola, *[Nombre]* 👋\n\nQuería saber si tu interés sigue vigente y si hay algo específico en lo que pueda ayudarte para avanzar con esto.\n\n¿Qué te parece si coordinamos una llamada para resolver tus dudas?",
     allowedWeekdays: [1, 2, 3, 4, 5],
     sendStartTime: "09:00",
-    sendEndTime: "18:00",
+    sendEndTime: "17:00",
   },
   CALIENTE: {
     enabled: true,
-    delayMinutes: 60,
-    maxAttempts: 2,
-    goal: "Cerrar el siguiente paso comercial cuanto antes con urgencia medida y claridad.",
+    delayMinutes: 24 * 180,
+    maxAttempts: 5,
+    goal: "Cerrar el siguiente paso comercial de forma directa y con urgencia medida. Este lead ya mostró interés real, por lo que el foco es convertir: agendar una llamada, confirmar la compra o avanzar al cierre.",
     prompt:
-      "Se directo, humano y comercial. Prioriza cierre o agendamiento. No des demasiadas opciones.",
-    fallbackMessage:
-      "Hola, si quieres lo dejamos listo ahora mismo. Dime y avanzamos con el siguiente paso.",
+      "Escribe entre 1 y 3 mensajes cortos (máximo 3 líneas cada uno), con tono humano y comercial, siendo directo hacia el cierre o agendamiento. Ofrece una sola opción concreta de acción. Llama al lead por su *nombre* y usa *negrita* solo para reforzar algo clave, sin sonar automatizado. Cada mensaje debe ser fresco respecto al contexto previo. Usa máximo 1 emoji si aplica y cierra con una pregunta concreta para avanzar, con dos saltos de línea antes de la pregunta.",
+    fallbackMessage: `Hola, *[Nombre]* 👋\n\nSi quieres lo dejamos listo ahora mismo.\n\n¿Te parece si avanzamos con el siguiente paso?`,
     allowedWeekdays: [1, 2, 3, 4, 5],
     sendStartTime: "09:00",
-    sendEndTime: "18:00",
+    sendEndTime: "17:00",
   },
   FINALIZADO: {
     enabled: false,
@@ -108,7 +107,7 @@ export const CRM_FOLLOW_UP_RULE_DEFAULTS: Record<
     fallbackMessage: "",
     allowedWeekdays: [1, 2, 3, 4, 5],
     sendStartTime: "09:00",
-    sendEndTime: "18:00",
+    sendEndTime: "17:00",
   },
   DESCARTADO: {
     enabled: false,
@@ -119,7 +118,7 @@ export const CRM_FOLLOW_UP_RULE_DEFAULTS: Record<
     fallbackMessage: "",
     allowedWeekdays: [1, 2, 3, 4, 5],
     sendStartTime: "09:00",
-    sendEndTime: "18:00",
+    sendEndTime: "17:00",
   },
 };
 

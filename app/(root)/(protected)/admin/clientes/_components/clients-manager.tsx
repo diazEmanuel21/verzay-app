@@ -12,7 +12,8 @@ import {
     updateAbrirPhrase,
     updateClientData
 } from '@/actions/userClientDataActions';
-import { CreateDialog, DeleteDialog, ToolsDialog, EditDialog, ClientStatusPanel, StatusKey } from './';
+import { autoConfigureUserAi } from '@/actions/userAiconfig-actions';
+import { CreateDialog, DeleteDialog, ToolsDialog, EditDialog, ClientStatusPanel, StatusKey, UserBackupDialog } from './';
 import { ApiKey } from '@prisma/client';
 import { UserFormValues } from '@/schema/user';
 import { Country } from '@/components/custom/CountryCodeSelect';
@@ -20,7 +21,7 @@ import bcrypt from "bcryptjs";
 import { LENGTH_PASSWORD_HASH } from '@/types/generic';
 
 
-export type DialogType = 'editar' | 'tools' | 'delete'
+export type DialogType = 'editar' | 'tools' | 'delete' | 'backup'
 
 interface Props {
     users: ClientInterface[],
@@ -36,6 +37,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
     const [openCreateDialog, setOpenCreateDialog] = useState(false);
     const [openToolsDialog, setOpenToolsDialog] = useState(false);
     const [openEditDialog, setOpenEditDialog] = useState(false);
+    const [openBackupDialog, setOpenBackupDialog] = useState(false);
     const [user, setCurrentUser] = useState<ClientInterface>();
     const [statusFilter, setStatusFilter] = useState<StatusKey | null>(null);
 
@@ -101,6 +103,9 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
         });
 
         if (result.success) {
+            if (result.data?.id && apiUrl) {
+                await autoConfigureUserAi(result.data.id, apiUrl);
+            }
             toast.success('Cliente creado', { id: toastId });
             router.refresh();
         } else {
@@ -164,6 +169,7 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
         if (dialog === 'tools') return setOpenToolsDialog(state);
         if (dialog === 'delete') return setOpenDeleteDialog(state);
         if (dialog === 'editar') return setOpenEditDialog(state);
+        if (dialog === 'backup') return setOpenBackupDialog(state);
     };
 
     const openCreateDialogUser = () => {
@@ -231,6 +237,13 @@ export const ClientsManager = ({ users, apikeys, availableApikeys, currentUserRo
                 <ToolsDialog
                     openToolsDialog={openToolsDialog}
                     setOpenToolsDialog={setOpenToolsDialog}
+                    user={user}
+                />
+            )}
+            {user && (
+                <UserBackupDialog
+                    openBackupDialog={openBackupDialog}
+                    setOpenBackupDialog={setOpenBackupDialog}
                     user={user}
                 />
             )}

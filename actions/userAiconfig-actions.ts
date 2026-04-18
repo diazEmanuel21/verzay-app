@@ -545,6 +545,46 @@ export async function setUserDefaults(input: {
   }
 }
 
+/**
+ * Configura automáticamente la API key de OpenAI para un usuario recién creado.
+ * Busca el provider "openai", hace upsert de UserAiConfig y establece defaults.
+ */
+export async function autoConfigureUserAi(
+  userId: string,
+  apiKey: string
+): Promise<ActionResult> {
+  if (!apiKey) return { success: false, message: 'api_key_required' };
+
+  try {
+    await ensureUser(userId);
+
+    const openaiProvider = await db.aiProvider.findFirst({
+      where: { name: 'openai' },
+      include: { models: { orderBy: { name: 'asc' }, take: 1 } },
+    });
+
+    if (!openaiProvider) return { success: false, message: 'openai_provider_not_found' };
+
+    await db.userAiConfig.upsert({
+      where: { userId_providerId: { userId, providerId: openaiProvider.id } },
+      update: { apiKey, isActive: true },
+      create: { userId, providerId: openaiProvider.id, apiKey, isActive: true },
+    });
+
+    await db.user.update({
+      where: { id: userId },
+      data: {
+        defaultProviderId: openaiProvider.id,
+        defaultAiModelId: openaiProvider.models[0]?.id ?? null,
+      },
+    });
+
+    return { success: true, message: 'ai_configured' };
+  } catch {
+    return { success: false, message: 'ai_configure_error' };
+  }
+}
+
 export async function resolveUserAiClient(userId: string): Promise<ActionResult<ResolvedAiClientDTO>> {
   noStore();
   try {

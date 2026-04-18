@@ -29,12 +29,15 @@ interface MinimalUser {
     onInstagram?: boolean
 }
 
+const MAX_INSTANCE_NAME_LENGTH = 30
+
 interface ConnectionCardProps {
     user: MinimalUser
     loading: boolean
     defaultValues: FormInstanceConnectionValues
     instanceType: string // Facebook | Instagram | Whatsapp | ...
     handleSubmit: SubmitHandler<FormInstanceConnectionValues>
+    checkNameAvailable?: (name: string) => Promise<boolean>
 }
 
 interface SocialIconSelectorProps {
@@ -78,7 +81,8 @@ export const ConnectionCard = ({
     handleSubmit,
     loading,
     defaultValues,
-    instanceType
+    instanceType,
+    checkNameAvailable,
 }: ConnectionCardProps) => {
     // Hooks y Lógica
     const form = useForm<FormInstanceConnectionValues>({
@@ -90,11 +94,23 @@ export const ConnectionCard = ({
         mode: 'onSubmit',
     })
 
+    const instanceNameValue = form.watch('instanceName') ?? ''
+
     const onSubmit = useCallback<SubmitHandler<FormInstanceConnectionValues>>(
-        (values, ev) => {
+        async (values, ev) => {
+            if (checkNameAvailable) {
+                const exists = await checkNameAvailable(values.instanceName)
+                if (exists) {
+                    form.setError('instanceName', {
+                        type: 'manual',
+                        message: 'Este nombre ya está en uso. Elige otro.',
+                    })
+                    return
+                }
+            }
             handleSubmit(values, ev)
         },
-        [handleSubmit]
+        [handleSubmit, checkNameAvailable, form]
     )
 
     const type = (instanceType || '').trim().toLowerCase()
@@ -164,10 +180,16 @@ export const ConnectionCard = ({
                             name="instanceName"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Nombre de la Instancia</FormLabel>
+                                    <div className="flex items-center justify-between">
+                                        <FormLabel>Nombre de la Instancia</FormLabel>
+                                        <span className={`text-xs tabular-nums ${instanceNameValue.length >= MAX_INSTANCE_NAME_LENGTH ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                                            {instanceNameValue.length}/{MAX_INSTANCE_NAME_LENGTH}
+                                        </span>
+                                    </div>
                                     <FormControl>
                                         <Input
                                             placeholder="COMPANY_SA"
+                                            maxLength={MAX_INSTANCE_NAME_LENGTH}
                                             {...field}
                                             onChange={e => field.onChange(sanitizeInstanceNameInput(e.target.value))}
                                         />

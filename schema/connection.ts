@@ -31,7 +31,7 @@ export const FormInstanceConnectionSchema = z.object({
         .min(1, "El nombre es requerido")
         .transform(sanitizeInstanceName)
         .refine(val => val.length >= 2, "El nombre debe tener al menos 2 caracteres válidos")
-        .refine(val => val.length <= 60, "El nombre no puede superar los 60 caracteres"),
+        .refine(val => val.length <= 30, "El nombre no puede superar los 30 caracteres"),
     instanceType: z.string().min(2, "Campo requerido"),
 })
 

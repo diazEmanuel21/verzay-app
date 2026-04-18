@@ -73,6 +73,11 @@ export const UserActionsMenu = ({ user, openDialogGetUserId, currentUserRol }: p
                             Herramientas
                         </DropdownMenuItem>
                     }
+                    <DropdownMenuItem
+                        onClick={() => openDialogGetUserId(user.id, 'backup', true)}
+                    >
+                        Backup
+                    </DropdownMenuItem>
 
                     <DropdownMenuItem
                         onClick={() => router.push(`/admin/credits?userId=${user.id}`)}

@@ -21,7 +21,7 @@ interface UseChatSessionReturn {
   fetchSessionStatus: () => Promise<void>;
   refreshSessionStatus: () => Promise<void>;
   mutateSessionStatus: () => void;
-  handleSaveContactName: () => Promise<void>;
+  handleSaveContactName: () => Promise<boolean>;
 }
 
 export function useChatSession({
@@ -90,13 +90,13 @@ export function useChatSession({
     void fetchSessionStatus();
   }, [fetchSessionStatus]);
 
-  const handleSaveContactName = useCallback(async () => {
-    if (!session) return;
+  const handleSaveContactName = useCallback(async (): Promise<boolean> => {
+    if (!session) return false;
 
     const normalizedName = contactNameDraft.trim();
     if (!normalizedName) {
       toast.error('El nombre del contacto es obligatorio.');
-      return;
+      return false;
     }
 
     try {
@@ -107,10 +107,11 @@ export function useChatSession({
       });
       if (!result.success) {
         toast.error(result.message || 'No se pudo actualizar el contacto.');
-        return;
+        return false;
       }
       toast.success('Nombre del contacto actualizado.');
       await fetchSessionStatus();
+      return true;
     } finally {
       setIsContactUpdatePending(false);
     }

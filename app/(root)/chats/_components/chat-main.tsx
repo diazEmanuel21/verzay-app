@@ -284,7 +284,10 @@ export const ChatMain: React.FC<ChatMainProps> = ({
         phoneLabel={displayedWhatsapp}
         draft={contactNameDraft}
         onDraftChange={setContactNameDraft}
-        onSave={handleSaveContactName}
+        onSave={async () => {
+          const ok = await handleSaveContactName();
+          if (ok) setIsContactEditorOpen(false);
+        }}
         isPending={isContactUpdatePending}
       />
 

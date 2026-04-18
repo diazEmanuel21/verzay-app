@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { CrmExportDialog } from "../CrmExportDialog";
 import { useRouter } from "next/navigation";
 
 import {
@@ -96,6 +97,7 @@ export function CrmRecordsSection({
     const [hasLoadedPersistedColumnVisibility, setHasLoadedPersistedColumnVisibility] =
         useState(false);
     const [searchValue, setSearchValue] = useState(filters.query ?? "");
+    const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
     const handleNavigateToChat = useCallback((remoteJid: string) => {
         router.push(`/chats?jid=${remoteJid}`);
@@ -331,6 +333,7 @@ export function CrmRecordsSection({
 
 
     return (
+        <>
         <Card className="min-w-0 border-border/70">
             <CardHeader className="space-y-4">
                 <Tabs
@@ -386,6 +389,7 @@ export function CrmRecordsSection({
                     onSearchChange={setSearchValue}
                     onPatchFilters={patchFilters}
                     onResetFilters={resetFilters}
+                    onExportClick={() => setIsExportDialogOpen(true)}
                 />
 
                 {activeFilterBadges.length > 0 ? (
@@ -432,5 +436,12 @@ export function CrmRecordsSection({
                 />
             </CardContent>
         </Card>
+
+        <CrmExportDialog
+            open={isExportDialogOpen}
+            onOpenChange={setIsExportDialogOpen}
+            registros={registros}
+        />
+        </>
     );
 }

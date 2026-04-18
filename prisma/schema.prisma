@@ -50,6 +50,18 @@ model AgentPrompt {
   @@index([userId])
 }
 
+model AntifloodBlock {
+  id           Int      @id @default(autoincrement())
+  remoteJid    String
+  instanceName String
+  blockedUntil DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([remoteJid, instanceName])
+  @@index([blockedUntil])
+}
+
 model AgentPromptRevision {
   id                 String      @id @default(uuid()) @db.Uuid
   promptId           String      @db.Uuid
@@ -160,10 +172,10 @@ model ModuleItem {
   id        String   @id @default(uuid())
   title     String
   url       String
-  customUrl String?
   moduleId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  customUrl String?
   module    Module   @relation(fields: [moduleId], references: [id])
 }
 
@@ -358,9 +370,9 @@ model Tag {
   name        String
   slug        String
   color       String?
-  order       Int          @default(0)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+  order       Int          @default(0)
   sessionTags SessionTag[]
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -419,13 +431,14 @@ model User {
   tokenVersion                       Int                          @default(0)
   passPlainTxt                       String?                      @default("IA@verzay.1234")
   enabledSynthesizer                 Boolean                      @default(false)
-  enabledLeadStatusClassifier        Boolean                      @default(false)
-  enabledCrmFollowUps                Boolean                      @default(false)
   status                             Boolean                      @default(true)
+  enabledCrmFollowUps                Boolean                      @default(false)
+  enabledLeadStatusClassifier        Boolean                      @default(false)
   accounts                           Account[]
   agentPrompts                       AgentPrompt[]
   publishedAgentPromptRevisions      AgentPromptRevision[]
   appointments                       Appointment[]
+  chatConversationPreferences        ChatConversationPreference[]
   instancias                         Instancia[]
   pausar                             Pausar[]
   products                           Product[]
@@ -442,7 +455,8 @@ model User {
   userModules                        UserModule[]
   crmFollowUpRules                   CrmFollowUpRule[]
   crmFollowUps                       CrmFollowUp[]
-  chatConversationPreferences        ChatConversationPreference[]
+  externalClientData                 ExternalClientData[]
+  externalDataToolConfigs            ExternalDataToolConfig[]
   financeAccounts                    FinanceAccount[]
   financeAttachments                 FinanceAttachment[]
   financeCategories                  FinanceCategory[]
@@ -451,7 +465,19 @@ model User {
   reseller_reseller_reselleridToUser Reseller[]                   @relation("reseller_reselleridToUser")
   reseller_reseller_userIdToUser     Reseller[]                   @relation("reseller_userIdToUser")
   aiConfigs                          UserAiConfig[]
-  externalClientData                 ExternalClientData[]
+  notificationContacts               UserNotificationContact[]
+}
+
+model UserNotificationContact {
+  id        String   @id @default(uuid())
+  userId    String
+  phone     String
+  label     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model CrmFollowUp {
@@ -533,7 +559,6 @@ model UserBilling {
   lastReminderAt         DateTime?
   lastReminderDueDate    DateTime?
   graceDays              Int                 @default(0)
-  licenseDays            Int                 @default(30)
   createdAt              DateTime            @default(now())
   updatedAt              DateTime            @updatedAt
   notifyRemoteJid        String?
@@ -543,6 +568,7 @@ model UserBilling {
   serviceName            String?
   serviceStartAt         DateTime?
   lastInstanceName       String?
+  licenseDays            Int                 @default(30)
   user                   User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([dueDate])
@@ -572,7 +598,6 @@ model Workflow {
   id            String                 @id @default(cuid())
   userId        String
   name          String
-  order         Int                    @default(0)
   description   String?
   definition    String
   status        String
@@ -580,6 +605,7 @@ model Workflow {
   updatedAt     DateTime               @updatedAt @map("updateAt")
   umbral        Float                  @default(0.5)
   isPro         Boolean                @default(false)
+  order         Int                    @default(0)
   sessionStates SessionWorkflowState[]
   workflowEdges WorkflowEdge[]
   nodes         WorkflowNode[]
@@ -657,12 +683,12 @@ model WorkflowNode {
   miniPrompt            String?
   noMatchMessage        String?
   threshold             Float?
-  aiEnabled             Boolean                @default(false)
   followUpCancelOnReply Boolean                @default(true)
   followUpGoal          String?
   followUpMaxAttempts   Int                    @default(3)
   followUpMode          String                 @default("static")
   followUpPrompt        String?
+  aiEnabled             Boolean                @default(false)
   sessionWorkflowStates SessionWorkflowState[]
   outgoingEdges         WorkflowEdge[]         @relation("EdgeSource")
   incomingEdges         WorkflowEdge[]         @relation("EdgeTarget")
@@ -767,31 +793,33 @@ model FinanceCurrency {
 }
 
 model FinanceTransaction {
-  id           String              @id @default(uuid())
-  userId       String
-  type         FinanceTxType
-  status       FinanceTxStatus     @default(ACTIVE)
-  occurredAt   DateTime
-  amount       Decimal             @db.Decimal(18, 2)
-  currencyCode String
-  accountId    String
-  categoryId   String?
-  title        String?
-  description  String?
-  counterparty String?
-  reference    String?
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
-  deletedAt    DateTime?
-  discount     Decimal             @default(0)
-  extra        Decimal             @default(0)
-  sessionId    Int?
-  attachments  FinanceAttachment[]
-  account      FinanceAccount      @relation(fields: [accountId], references: [id])
-  category     FinanceCategory?    @relation(fields: [categoryId], references: [id])
-  currency     FinanceCurrency     @relation(fields: [currencyCode], references: [code])
-  session      Session?            @relation(fields: [sessionId], references: [id])
-  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String              @id @default(uuid())
+  userId            String
+  type              FinanceTxType
+  status            FinanceTxStatus     @default(ACTIVE)
+  occurredAt        DateTime
+  amount            Decimal             @db.Decimal(18, 2)
+  currencyCode      String
+  accountId         String
+  categoryId        String?
+  title             String?
+  description       String?
+  counterparty      String?
+  reference         String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  deletedAt         DateTime?
+  discount          Decimal             @default(0)
+  extra             Decimal             @default(0)
+  sessionId         Int?
+  paymentSource     PaymentSource?
+  externalReference String?             @unique
+  attachments       FinanceAttachment[]
+  account           FinanceAccount      @relation(fields: [accountId], references: [id])
+  category          FinanceCategory?    @relation(fields: [categoryId], references: [id])
+  currency          FinanceCurrency     @relation(fields: [currencyCode], references: [code])
+  session           Session?            @relation(fields: [sessionId], references: [id])
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, accountId, occurredAt])
   @@index([userId, categoryId, occurredAt])
@@ -799,6 +827,7 @@ model FinanceTransaction {
   @@index([userId, occurredAt])
   @@index([userId, type, status])
   @@index([userId, sessionId, occurredAt])
+  @@index([paymentSource])
   @@map("finance_transactions")
 }
 
@@ -830,6 +859,34 @@ model ExternalClientData {
   @@map("external_client_data")
 }
 
+model ExternalDataToolConfig {
+  id              String   @id @default(uuid())
+  userId          String
+  toolKey         String
+  displayName     String
+  toolDescription String
+  /// 'builtin' = implementación fija en NestJS (solo nombre/descripción/enabled editable)
+  /// 'data_query' = totalmente dinámico desde config
+  toolCategory    String   @default("data_query")
+  /// builtin: notificacion_asesor | ejecutar_flujos | listar_workflows | consultar_datos_cliente | buscar_cliente_por_dato
+  /// data_query: auto_inject | search_by_field
+  toolType        String   @default("search_by_field")
+  searchField     String?
+  promptTemplate  String?
+  isEnabled       Boolean  @default(true)
+  /// true = sembrado por el sistema como configuración por defecto
+  isDefault       Boolean  @default(false)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, toolKey])
+  @@index([userId])
+  @@index([isEnabled])
+  @@map("external_data_tool_configs")
+}
+
 model N8nChatHistory {
   id        Int    @id @default(autoincrement())
   sessionId String @map("session_id") @db.VarChar(255)
@@ -854,12 +911,12 @@ model Reseller {
 model QuickReply {
   id         Int      @id @default(autoincrement())
   workflowId String?
-  name       String?
   mensaje    String?
-  order      Int      @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   userId     String
+  order      Int      @default(0)
+  name       String?
 
   @@map("rr")
 }
@@ -1072,4 +1129,10 @@ enum BillingStatus {
 enum ServiceAccessStatus {
   ACTIVE
   SUSPENDED
+}
+
+enum PaymentSource {
+  WHATSAPP_RECEIPT
+  WOMPI_WEBHOOK
+  MANUAL
 }

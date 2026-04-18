@@ -31,13 +31,13 @@ export function SessionsContent({ userId, allTags }: SessionsContentProps) {
 
   const getKey = (pageIndex: number, previousPageData: Session[] | null) => {
     if (previousPageData && previousPageData.length < PAGE_SIZE) return null;
-    return `${userId}-${pageIndex}-${filter}`;
+    return JSON.stringify({ userId, pageIndex, filter });
   };
 
   const { data, size, setSize, mutate, isLoading, isValidating, error } = useSWRInfinite<Session[]>(
     getKey,
     async (key: string) => {
-      const [userId, pageIndex, filter] = key.split("-");
+      const { userId, pageIndex, filter } = JSON.parse(key);
       const page = parseInt(pageIndex, 10);
       const sessionStatus =
         filter === "activeSession" ? true :
@@ -56,6 +56,7 @@ export function SessionsContent({ userId, allTags }: SessionsContentProps) {
         sessionStatus,
         agentDisabled
       );
+
       if (!response.success) throw new Error(response.message);
       return response.data || [];
     },
@@ -209,7 +210,7 @@ export function SessionsContent({ userId, allTags }: SessionsContentProps) {
       <div className="flex-1 overflow-y-auto p-2">
         <div className="grid grid-cols-1 gap-4">
           <Card className="border-border">
-            <DataTable columns={columns({ onDeleteSuccess: handleDeleteFromTable, mutateSessions: mutate, allTags })} data={sessions} />
+            <DataTable columns={columns({ onDeleteSuccess: handleDeleteFromTable, mutateSessions: mutate, allTags, onNavigateToChat: (remoteJid) => router.push(`/chats?jid=${remoteJid}`) })} data={sessions} />
           </Card>
 
           {isValidating && !search && (

@@ -28,6 +28,7 @@ import { BrandSelector } from "../../../../components/custom";
 import { useResellerStore } from "@/stores/resellers/resellerStore";
 import { Role } from "@prisma/client";
 import { ApiKeyConfigurator, ChangePasswordCard } from "./";
+import { NotificationContactsManager } from "./NotificationContactsManager";
 import { UserInformationProps } from "../page";
 import { ConnectionMain } from "../../connection/_components";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,6 +40,7 @@ import { optimizeFile } from "../../workflow/[workflowId]/helpers";
 import { SafeImage } from "@/components/custom/SafeImage";
 import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox";
 import { Button } from "@/components/ui/button";
+import { UserBackupManager } from "@/components/backup/UserBackupManager";
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 const clientSchema = z.object({
@@ -425,21 +427,10 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
 
                                 <Card className="border-border flex flex-col">
                                     <CardContent className="pt-4 flex flex-col flex-1 gap-4">
-                                        <CardLabel icon={Bell}>Notificaciones</CardLabel>
-                                        <FieldGroup
-                                            label="Número de notificación"
-                                            loading={loadingField === "notificationNumber"}
-                                        >
-                                            <Input
-                                                id="notificationNumber"
-                                                name="notificationNumber"
-                                                placeholder="573233246305"
-                                                value={(user.notificationNumber as string) ?? ""}
-                                                disabled={loadingField === "notificationNumber"}
-                                                onChange={(e) => handleChange("notificationNumber", e.target.value)}
-                                                onBlur={() => handleBlur("notificationNumber")}
-                                            />
-                                        </FieldGroup>
+                                        <NotificationContactsManager
+                                            userId={userId}
+                                            primaryNumber={(user.notificationNumber as string) ?? ""}
+                                        />
                                     </CardContent>
                                 </Card>
                             </div>
@@ -586,9 +577,13 @@ export const UserInformation = ({ userId, countries, instancesData }: UserInform
                     {/* ── Tab: Seguridad ───────────────────────── */}
                     <TabsContent value="seguridad" className="absolute inset-0 mt-0 data-[state=inactive]:pointer-events-none">
                         <TabPanel>
-                            <div className="max-w-md mx-auto space-y-2">
+                            <div className="mx-auto max-w-4xl space-y-4">
                                 <SectionTitle>Cambio de contraseña</SectionTitle>
                                 <ChangePasswordCard />
+                                <UserBackupManager
+                                    targetUserId={userId}
+                                    subjectLabel={user.company ?? user.name ?? "tu cuenta"}
+                                />
                             </div>
                         </TabPanel>
                     </TabsContent>

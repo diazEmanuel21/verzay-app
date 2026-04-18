@@ -31,4 +31,3 @@ const ConnectionPage = async ({ searchParams }: Props) => {
 };
 
 export default ConnectionPage;
-
