@@ -113,7 +113,7 @@ function buildBillingMessageInput(
         currencyCode: billing.currencyCode || "COP",
         currencyFlag: billing.currencyCode === "USD" ? "US" : null,
         paymentLinkOrText: paymentText,
-        clientName: billing.user?.name || billing.user?.company || "Cliente",
+        companyName: billing.user?.company || billing.user?.name || "Cliente",
         billingStatus: billing.billingStatus,
         accessStatus: billing.accessStatus,
     };
