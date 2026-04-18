@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PromptToolbar } from "./PromptToolbar";
+import { PaymentReceiptPromptBuilder } from "./PaymentReceiptPromptBuilder";
 import {
     buildExtrasMarkdown,
     buildFaqMarkdown,
@@ -37,6 +38,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog";
 import { deleteAgentPromptsByUserId } from "@/actions/prompt-actions";
+import { AGENT_PROMPT_IDS } from "@/lib/agent-prompt-ids";
 
 export const TYPE_AI_LABELS = {
     business: "Perfil",
@@ -44,12 +46,13 @@ export const TYPE_AI_LABELS = {
     faq: "Preguntas",
     products: "Productos",
     more: "Extras",
-    management: "Gestión",
+    management: "Gestion",
+    paymentReceipt: "Comprobantes",
 } as const;
 
 type TabKey = keyof typeof TYPE_AI_LABELS;
 
-export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
+export const MainAi = ({ flows, user, promptMeta, sections, paymentReceiptPrompt }: MainAiProps) => {
     const [showAlertDialog, setShowAlertDialog] = useState(false);
 
     const trainingMd = sections?.training
@@ -124,6 +127,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
     };
 
     const prompt = useMemo(() => buildPrompt(values), [values]);
+    const isPaymentReceiptTab = activeTab === "paymentReceipt";
 
     return (
         <>
@@ -135,7 +139,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                             size="icon"
                             onClick={() => scroll("left")}
                             className="sm:hidden"
-                            aria-label="Desplazar pestañas a la izquierda"
+                            aria-label="Desplazar pestanas a la izquierda"
                         >
                             <ArrowLeft />
                         </Button>
@@ -162,73 +166,75 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                     {TYPE_AI_LABELS[key]}
                                 </button>
                             ))}
-                            <PromptToolbar
-                                promptId={promptMeta.id}
-                                version={promptVersion}
-                                userId={user.id}
-                                onVersionChange={setPromptVersion}
-                                onConflict={(serverState) => {
-                                    const serverSections = serverState?.sections;
-                                    if (!serverSections) {
-                                        if (serverState?.version) setPromptVersion(serverState.version);
-                                        return;
-                                    }
+                            {!isPaymentReceiptTab && (
+                                <PromptToolbar
+                                    promptId={promptMeta.id}
+                                    version={promptVersion}
+                                    userId={user.id}
+                                    onVersionChange={setPromptVersion}
+                                    onConflict={(serverState) => {
+                                        const serverSections = serverState?.sections;
+                                        if (!serverSections) {
+                                            if (serverState?.version) setPromptVersion(serverState.version);
+                                            return;
+                                        }
 
-                                    const nextTrainingMd = serverSections.training
-                                        ? buildTrainingMarkdown(
-                                            TrainingDraftSchema.parse(serverSections.training)
-                                        )
-                                        : "";
-                                    const nextFaqMd = serverSections.faq
-                                        ? buildFaqMarkdown(FaqDraftSchema.parse(serverSections.faq))
-                                        : "";
-                                    const nextProductsMd = serverSections.products
-                                        ? buildProductsMarkdown(
-                                            ProductsDraftSchema.parse(serverSections.products)
-                                        )
-                                        : "";
-                                    const nextExtrasMd = serverSections.extras
-                                        ? buildExtrasMarkdown(
-                                            ExtrasDraftSchema.parse(serverSections.extras)
-                                        )
-                                        : "";
-                                    const nextManagementMd = serverSections.management
-                                        ? buildManagementMarkdown(
-                                            ManagementDraftSchema.parse(serverSections.management)
-                                        )
-                                        : "";
+                                        const nextTrainingMd = serverSections.training
+                                            ? buildTrainingMarkdown(
+                                                TrainingDraftSchema.parse(serverSections.training)
+                                            )
+                                            : "";
+                                        const nextFaqMd = serverSections.faq
+                                            ? buildFaqMarkdown(FaqDraftSchema.parse(serverSections.faq))
+                                            : "";
+                                        const nextProductsMd = serverSections.products
+                                            ? buildProductsMarkdown(
+                                                ProductsDraftSchema.parse(serverSections.products)
+                                            )
+                                            : "";
+                                        const nextExtrasMd = serverSections.extras
+                                            ? buildExtrasMarkdown(
+                                                ExtrasDraftSchema.parse(serverSections.extras)
+                                            )
+                                            : "";
+                                        const nextManagementMd = serverSections.management
+                                            ? buildManagementMarkdown(
+                                                ManagementDraftSchema.parse(serverSections.management)
+                                            )
+                                            : "";
 
-                                    setValues((prev) => ({
-                                        ...prev,
-                                        nombre: serverSections.business?.nombre ?? prev.nombre,
-                                        sector: serverSections.business?.sector ?? prev.sector,
-                                        ubicacion: serverSections.business?.ubicacion ?? prev.ubicacion,
-                                        horarios: serverSections.business?.horarios ?? prev.horarios,
-                                        maps: serverSections.business?.maps ?? prev.maps,
-                                        telefono: serverSections.business?.telefono ?? prev.telefono,
-                                        email: serverSections.business?.email ?? prev.email,
-                                        sitio: serverSections.business?.sitio ?? prev.sitio,
-                                        facebook: serverSections.business?.facebook ?? prev.facebook,
-                                        instagram:
-                                            serverSections.business?.instagram ?? prev.instagram,
-                                        tiktok: serverSections.business?.tiktok ?? prev.tiktok,
-                                        youtube: serverSections.business?.youtube ?? prev.youtube,
-                                        notas: serverSections.business?.notas ?? prev.notas,
-                                        training: nextTrainingMd,
-                                        faq: nextFaqMd,
-                                        products: nextProductsMd,
-                                        more: nextExtrasMd,
-                                        management: nextManagementMd,
-                                    }));
+                                        setValues((prev) => ({
+                                            ...prev,
+                                            nombre: serverSections.business?.nombre ?? prev.nombre,
+                                            sector: serverSections.business?.sector ?? prev.sector,
+                                            ubicacion: serverSections.business?.ubicacion ?? prev.ubicacion,
+                                            horarios: serverSections.business?.horarios ?? prev.horarios,
+                                            maps: serverSections.business?.maps ?? prev.maps,
+                                            telefono: serverSections.business?.telefono ?? prev.telefono,
+                                            email: serverSections.business?.email ?? prev.email,
+                                            sitio: serverSections.business?.sitio ?? prev.sitio,
+                                            facebook: serverSections.business?.facebook ?? prev.facebook,
+                                            instagram:
+                                                serverSections.business?.instagram ?? prev.instagram,
+                                            tiktok: serverSections.business?.tiktok ?? prev.tiktok,
+                                            youtube: serverSections.business?.youtube ?? prev.youtube,
+                                            notas: serverSections.business?.notas ?? prev.notas,
+                                            training: nextTrainingMd,
+                                            faq: nextFaqMd,
+                                            products: nextProductsMd,
+                                            more: nextExtrasMd,
+                                            management: nextManagementMd,
+                                        }));
 
-                                    if (serverState?.version) {
-                                        setPromptVersion(serverState.version);
-                                    }
-                                }}
-                                revalidatePath="/ia"
-                                revisions={[]}
-                                onManualSave={handleManualSaveCurrent}
-                            />
+                                        if (serverState?.version) {
+                                            setPromptVersion(serverState.version);
+                                        }
+                                    }}
+                                    revalidatePath="/ia"
+                                    revisions={[]}
+                                    onManualSave={handleManualSaveCurrent}
+                                />
+                            )}
 
                             <DropdownMenu modal={false}>
                                 <DropdownMenuTrigger asChild>
@@ -250,7 +256,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                             size="icon"
                             onClick={() => scroll("right")}
                             className="sm:hidden"
-                            aria-label="Desplazar pestañas a la derecha"
+                            aria-label="Desplazar pestanas a la derecha"
                         >
                             <ArrowRight />
                         </Button>
@@ -379,12 +385,27 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                 registerSaveHandler={(fn) => registerSaveHandler("management", fn)}
                             />
                         </TabsContent>
+
+                        <TabsContent value="paymentReceipt" className="m-0">
+                            <PaymentReceiptPromptBuilder
+                                userId={user.id}
+                                agentId={AGENT_PROMPT_IDS.paymentReceiptAnalyzer}
+                                title="Analizador de comprobantes"
+                                description="Administra el prompt especializado para analizar comprobantes de pago."
+                                initialPromptText={paymentReceiptPrompt?.promptText ?? ""}
+                                initialExists={!!paymentReceiptPrompt}
+                                showInlineSaveButton
+                                registerSaveHandler={(fn) => registerSaveHandler("paymentReceipt", fn)}
+                            />
+                        </TabsContent>
                         <div className="h-6" />
                     </div>
 
-                    <aside className="hidden lg:block lg:w-[420px]">
-                        <PromptPreview prompt={prompt} />
-                    </aside>
+                    {!isPaymentReceiptTab && (
+                        <aside className="hidden lg:block lg:w-[420px]">
+                            <PromptPreview prompt={prompt} />
+                        </aside>
+                    )}
                 </div>
             </Tabs>
 
