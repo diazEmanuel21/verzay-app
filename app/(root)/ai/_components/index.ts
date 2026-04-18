@@ -5,5 +5,6 @@ export * from './PromptPreview';
 export * from './FqaBuilder';
 export * from './ProductBuilder';
 export * from './ExtraInfoBuilder';
+export * from './PaymentReceiptPromptBuilder';
 export * from './PedidoFieldsEditor';
 export * from './FunctionSelector';

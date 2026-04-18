@@ -25,6 +25,11 @@ import { normalizeAsDraft, normalizeAsStrict } from '@/app/(root)/ai/_components
 type Ok<T> = { ok: true; data: T };
 type Conflict<T = any> = { ok: false; conflict: true; data: T };
 type Fail = { ok: false; error: string };
+const FreeformAgentPromptSchema = z.object({
+    userId: z.string().min(1, "userId requerido"),
+    agentId: z.string().min(1, "agentId requerido"),
+    promptText: z.string(),
+});
 
 /* =========================
    Actions públicas
@@ -186,6 +191,76 @@ export async function getOrCreatePrompt(opts: { userId: string; agentId: string 
     }
 
     return prompt;
+}
+
+export async function getAgentPromptByUserAndAgentId(opts: {
+    userId: string;
+    agentId: string;
+}) {
+    const { userId, agentId } = FreeformAgentPromptSchema.pick({
+        userId: true,
+        agentId: true,
+    }).parse(opts);
+
+    return db.agentPrompt.findFirst({
+        where: { userId, agentId },
+        orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+    });
+}
+
+export async function upsertAgentPromptText(input: {
+    userId: string;
+    agentId: string;
+    promptText: string;
+}) {
+    try {
+        const { userId, agentId, promptText } = FreeformAgentPromptSchema.parse(input);
+        const normalizedPromptText = promptText.trim();
+        const existing = await db.agentPrompt.findFirst({
+            where: { userId, agentId },
+            orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+        });
+
+        if (!normalizedPromptText) {
+            if (!existing) {
+                return { ok: true as const, data: { mode: "noop" as const, prompt: null } };
+            }
+
+            await db.agentPrompt.delete({
+                where: { id: existing.id },
+            });
+
+            return { ok: true as const, data: { mode: "deleted" as const, prompt: null } };
+        }
+
+        const prompt = existing
+            ? await db.agentPrompt.update({
+                where: { id: existing.id },
+                data: {
+                    promptText: normalizedPromptText,
+                    version: { increment: 1 },
+                },
+            })
+            : await db.agentPrompt.create({
+                data: {
+                    userId,
+                    agentId,
+                    status: "draft",
+                    sections: {},
+                    promptText: normalizedPromptText,
+                },
+            });
+
+        return {
+            ok: true as const,
+            data: {
+                mode: existing ? ("updated" as const) : ("created" as const),
+                prompt,
+            },
+        };
+    } catch (e: any) {
+        return { ok: false as const, error: e?.message ?? "Error al guardar el prompt." };
+    }
 }
 
 /** Obtiene el prompt por id (rehidratación de UI). */

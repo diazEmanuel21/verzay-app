@@ -420,6 +420,11 @@ export interface MainAiInterface {
     flows: Workflow[];
     user: UserWithApiKeys;
     promptMeta: { id: string; version: number };
+    paymentReceiptPrompt?: {
+        id: string;
+        version: number;
+        promptText: string;
+    } | null;
 }
 export type MainAiProps = MainAiInterface & {
     sections: SectionsPromptSystem;
@@ -499,6 +504,16 @@ export interface TrainingBuilderProps {
     onVersionChange: (v: number) => void;
     onConflict?: (serverState: any) => void;
     initialSteps?: Array<any>; // steps desde BD (sections.training.steps)
+    registerSaveHandler?: (fn: () => Promise<void>) => void;
+}
+
+export interface FreeformAgentPromptBuilderProps {
+    userId: string;
+    agentId: string;
+    title: string;
+    description?: string;
+    initialPromptText?: string;
+    initialExists?: boolean;
     registerSaveHandler?: (fn: () => Promise<void>) => void;
 }
 

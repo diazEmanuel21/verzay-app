@@ -3,28 +3,48 @@
 
 import { ChangeEvent, useCallback, useMemo, useRef, useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { BusinessPromptBuilder, ExtraInfoBuilder, FqaBuilder, PromptPreview, TrainingBuilder } from "./";
+import {
+    BusinessPromptBuilder,
+    ExtraInfoBuilder,
+    FqaBuilder,
+    PaymentReceiptPromptBuilder,
+    PromptPreview,
+    TrainingBuilder,
+} from "./";
 import { buildPrompt } from "./helpers";
-import { BusinessValues, ExtrasDraftSchema, FaqDraftSchema, initialValues, MainAiProps, ManagementDraftSchema, ProductsDraftSchema, TrainingDraftSchema } from "@/types/agentAi";
+import {
+    BusinessValues,
+    ExtrasDraftSchema,
+    FaqDraftSchema,
+    initialValues,
+    MainAiProps,
+    ManagementDraftSchema,
+    ProductsDraftSchema,
+    TrainingDraftSchema,
+} from "@/types/agentAi";
 import { ProductBuilder } from "./ProductBuilder";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, MoreVertical } from 'lucide-react';
+import { ArrowLeft, ArrowRight, MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PromptToolbar } from "./PromptToolbar";
-
-import { buildExtrasMarkdown, buildFaqMarkdown, buildProductsMarkdown, buildTrainingMarkdown, buildManagementMarkdown } from "./helpers/actionsBuilders";
+import {
+    buildExtrasMarkdown,
+    buildFaqMarkdown,
+    buildManagementMarkdown,
+    buildProductsMarkdown,
+    buildTrainingMarkdown,
+} from "./helpers/actionsBuilders";
 import { ManagementBuilder } from "./ManagementBuilder";
-
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog";
 import { deleteAgentPromptsByUserId } from "@/actions/prompt-actions";
-
+import { AGENT_PROMPT_IDS } from "@/lib/agent-prompt-ids";
 
 export const TYPE_AI_LABELS = {
     business: "Perfil",
@@ -33,11 +53,19 @@ export const TYPE_AI_LABELS = {
     products: "Productos",
     more: "Extras",
     management: "Gestión",
+    receipts: "Analizador",
 } as const;
+
 type TabKey = keyof typeof TYPE_AI_LABELS;
 
-export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
-    const [showAlertDialog, setShowAlertDialog] = useState(false)
+export const MainAi = ({
+    flows,
+    user,
+    promptMeta,
+    sections,
+    paymentReceiptPrompt,
+}: MainAiProps) => {
+    const [showAlertDialog, setShowAlertDialog] = useState(false);
 
     const trainingMd = sections?.training
         ? buildTrainingMarkdown(TrainingDraftSchema.parse(sections.training))
@@ -58,9 +86,8 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
     const managementMd = sections?.management
         ? buildManagementMarkdown(ManagementDraftSchema.parse(sections.management))
         : "";
-    // 1) Hidrata estado local con lo que viene de BD (business)
+
     const hydrated: BusinessValues = {
-        // Business
         nombre: sections?.business?.nombre ?? "",
         sector: sections?.business?.sector ?? "",
         ubicacion: sections?.business?.ubicacion ?? "",
@@ -74,8 +101,6 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
         tiktok: sections?.business?.tiktok ?? "",
         youtube: sections?.business?.youtube ?? "",
         notas: sections?.business?.notas ?? "",
-
-        //  Hidrata con el markdown real en vez de "[Contenido cargado]"
         training: trainingMd,
         faq: faqMd,
         products: productsMd,
@@ -85,24 +110,19 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
 
     const [values, setValues] = useState<BusinessValues>({ ...initialValues, ...hydrated });
     const [activeTab, setActiveTab] = useState<TabKey>("business");
-    const [promptVersion, setPromptVersion] = useState<number>(promptMeta.version); // ← versión viva
+    const [promptVersion, setPromptVersion] = useState<number>(promptMeta.version);
     const scrollRef = useRef<HTMLDivElement>(null);
     const saveHandlersRef = useRef<Record<string, () => Promise<void>>>({});
 
-    const registerSaveHandler = useCallback(
-        (key: string, handler: () => Promise<void>) => {
-            saveHandlersRef.current[key] = handler;
-        },
-        []
-    );
+    const registerSaveHandler = useCallback((key: string, handler: () => Promise<void>) => {
+        saveHandlersRef.current[key] = handler;
+    }, []);
 
     const handleManualSaveCurrent = useCallback(async () => {
         const handler = saveHandlersRef.current[activeTab];
         if (!handler) return;
-
-        await handler(); // solo guarda la sección activa (Extras, Products, etc.)
+        await handler();
     }, [activeTab]);
-
 
     const handleChange = useCallback(
         (key: keyof BusinessValues) =>
@@ -116,45 +136,38 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
 
     const scroll = (direction: "left" | "right") => {
         if (!scrollRef.current) return;
-        scrollRef.current.scrollBy({ left: direction === "left" ? -150 : 150, behavior: "smooth" });
-    };
-
-    const reset = () =>
-        setValues({
-            nombre: "",
-            sector: "",
-            ubicacion: "",
-            horarios: "",
-            maps: "",
-            telefono: "",
-            email: "",
-            sitio: "",
-            facebook: "",
-            instagram: "",
-            tiktok: "",
-            youtube: "",
-            notas: "",
-            training: "",
-            faq: "",
-            products: "",
-            more: "",
-            management: "",
+        scrollRef.current.scrollBy({
+            left: direction === "left" ? -150 : 150,
+            behavior: "smooth",
         });
+    };
 
     const prompt = useMemo(() => buildPrompt(values), [values]);
 
     return (
         <>
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabKey)} className="w-full">
-                {/* header de tabs (idéntico al tuyo) */}
+            <Tabs
+                value={activeTab}
+                onValueChange={(value) => setActiveTab(value as TabKey)}
+                className="w-full"
+            >
                 <div className="sticky w-full top-0 z-10 -mx-4 lg:mx-0 bg-slate-100 dark:bg-black">
                     <div className="flex items-center justify-between gap-2 px-2 py-2">
-                        <Button variant="ghost" size="icon" onClick={() => scroll("left")} className="sm:hidden" aria-label="Desplazar pestañas a la izquierda">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => scroll("left")}
+                            className="sm:hidden"
+                            aria-label="Desplazar pestañas a la izquierda"
+                        >
                             <ArrowLeft />
                         </Button>
                         <div
                             ref={scrollRef}
-                            className={cn("flex overflow-x-auto gap-2 pb-1 scrollbar-none", "sm:overflow-visible sm:justify-start sm:flex-wrap")}
+                            className={cn(
+                                "flex overflow-x-auto gap-2 pb-1 scrollbar-none",
+                                "sm:overflow-visible sm:justify-start sm:flex-wrap"
+                            )}
                         >
                             {(Object.keys(TYPE_AI_LABELS) as TabKey[]).map((key) => (
                                 <button
@@ -162,7 +175,9 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                     onClick={() => handleTabClick(key)}
                                     className={cn(
                                         "px-4 py-2 rounded-t-md font-medium text-sm border-b-2 transition-colors duration-150 whitespace-nowrap",
-                                        activeTab === key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+                                        activeTab === key
+                                            ? "border-primary text-primary"
+                                            : "border-transparent text-muted-foreground hover:text-foreground"
                                     )}
                                     aria-pressed={activeTab === key}
                                     aria-label={`Cambiar a ${TYPE_AI_LABELS[key]}`}
@@ -176,71 +191,75 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                 userId={user.id}
                                 onVersionChange={setPromptVersion}
                                 onConflict={(serverState) => {
-                                    // Si el servidor no trae sections, no hacemos nada raro
-                                    const s = serverState?.sections;
-                                    if (!s) {
+                                    const serverSections = serverState?.sections;
+                                    if (!serverSections) {
                                         if (serverState?.version) setPromptVersion(serverState.version);
                                         return;
                                     }
 
-                                    // 🔁 Reconstruimos los markdowns igual que al inicio
-                                    const trainingMdServer = s.training
-                                        ? buildTrainingMarkdown(TrainingDraftSchema.parse(s.training))
+                                    const nextTrainingMd = serverSections.training
+                                        ? buildTrainingMarkdown(
+                                            TrainingDraftSchema.parse(serverSections.training)
+                                        )
+                                        : "";
+                                    const nextFaqMd = serverSections.faq
+                                        ? buildFaqMarkdown(FaqDraftSchema.parse(serverSections.faq))
+                                        : "";
+                                    const nextProductsMd = serverSections.products
+                                        ? buildProductsMarkdown(
+                                            ProductsDraftSchema.parse(serverSections.products)
+                                        )
+                                        : "";
+                                    const nextExtrasMd = serverSections.extras
+                                        ? buildExtrasMarkdown(
+                                            ExtrasDraftSchema.parse(serverSections.extras)
+                                        )
+                                        : "";
+                                    const nextManagementMd = serverSections.management
+                                        ? buildManagementMarkdown(
+                                            ManagementDraftSchema.parse(serverSections.management)
+                                        )
                                         : "";
 
-                                    const faqMdServer = s.faq
-                                        ? buildFaqMarkdown(FaqDraftSchema.parse(s.faq))
-                                        : "";
-
-                                    const productsMdServer = s.products
-                                        ? buildProductsMarkdown(ProductsDraftSchema.parse(s.products))
-                                        : "";
-
-                                    const extrasMdServer = s.extras
-                                        ? buildExtrasMarkdown(ExtrasDraftSchema.parse(s.extras))
-                                        : "";
-
-                                    const managementMdServer = s.management
-                                        ? buildManagementMarkdown(ManagementDraftSchema.parse(s.management))
-                                        : "";
-
-                                    // 🧠 Rehidratamos todos los valores desde lo que dice el servidor
                                     setValues((prev) => ({
                                         ...prev,
-                                        // Business
-                                        nombre: s.business?.nombre ?? prev.nombre,
-                                        sector: s.business?.sector ?? prev.sector,
-                                        ubicacion: s.business?.ubicacion ?? prev.ubicacion,
-                                        horarios: s.business?.horarios ?? prev.horarios,
-                                        maps: s.business?.maps ?? prev.maps,
-                                        telefono: s.business?.telefono ?? prev.telefono,
-                                        email: s.business?.email ?? prev.email,
-                                        sitio: s.business?.sitio ?? prev.sitio,
-                                        facebook: s.business?.facebook ?? prev.facebook,
-                                        instagram: s.business?.instagram ?? prev.instagram,
-                                        tiktok: s.business?.tiktok ?? prev.tiktok,
-                                        youtube: s.business?.youtube ?? prev.youtube,
-                                        notas: s.business?.notas ?? prev.notas,
-
-                                        // Resto de secciones (markdown ya armado)
-                                        training: trainingMdServer,
-                                        faq: faqMdServer,
-                                        products: productsMdServer,
-                                        more: extrasMdServer,
-                                        management: managementMdServer,
+                                        nombre: serverSections.business?.nombre ?? prev.nombre,
+                                        sector: serverSections.business?.sector ?? prev.sector,
+                                        ubicacion:
+                                            serverSections.business?.ubicacion ?? prev.ubicacion,
+                                        horarios: serverSections.business?.horarios ?? prev.horarios,
+                                        maps: serverSections.business?.maps ?? prev.maps,
+                                        telefono:
+                                            serverSections.business?.telefono ?? prev.telefono,
+                                        email: serverSections.business?.email ?? prev.email,
+                                        sitio: serverSections.business?.sitio ?? prev.sitio,
+                                        facebook:
+                                            serverSections.business?.facebook ?? prev.facebook,
+                                        instagram:
+                                            serverSections.business?.instagram ?? prev.instagram,
+                                        tiktok: serverSections.business?.tiktok ?? prev.tiktok,
+                                        youtube: serverSections.business?.youtube ?? prev.youtube,
+                                        notas: serverSections.business?.notas ?? prev.notas,
+                                        training: nextTrainingMd,
+                                        faq: nextFaqMd,
+                                        products: nextProductsMd,
+                                        more: nextExtrasMd,
+                                        management: nextManagementMd,
                                     }));
 
-                                    // 🔀 Sincronizamos versión local con la del servidor
                                     if (serverState?.version) {
                                         setPromptVersion(serverState.version);
                                     }
-
-                                    // (Opcional) Si quieres, aquí podrías lanzar un toast:
-                                    // toast.warning("Se detectaron cambios en otra sesión. Se cargó la última versión del servidor.");
                                 }}
-                                revalidatePath={"/ia"}
+                                revalidatePath="/ia"
                                 revisions={[]}
                                 onManualSave={handleManualSaveCurrent}
+                                manualOnly={activeTab === "receipts"}
+                                successMessage={
+                                    activeTab === "receipts"
+                                        ? "Prompt de comprobantes guardado"
+                                        : "Guardado correctamente"
+                                }
                             />
 
                             <DropdownMenu modal={false}>
@@ -250,26 +269,30 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-40" align="end">
-                                    {/* <DropdownMenuLabel>Acciones</DropdownMenuLabel> */}
                                     <DropdownMenuGroup>
-                                        <DropdownMenuItem onSelect={() => setShowAlertDialog(true)}>
+                                        <DropdownMenuItem
+                                            onSelect={() => setShowAlertDialog(true)}
+                                        >
                                             Eliminar todo
                                         </DropdownMenuItem>
                                     </DropdownMenuGroup>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => scroll("right")} className="sm:hidden" aria-label="Desplazar pestañas a la derecha">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => scroll("right")}
+                            className="sm:hidden"
+                            aria-label="Desplazar pestañas a la derecha"
+                        >
                             <ArrowRight />
                         </Button>
-
                     </div>
                 </div>
 
-                {/* layout */}
                 <div className="flex flex-row w-full gap-2 max-h-[78vh]">
-                    <div className="flex flex-1 flex-col min-h-0 overflow-y-auto pr-1 ">
+                    <div className="flex flex-1 flex-col min-h-0 overflow-y-auto pr-1">
                         <TabsContent value="business" className="m-0">
                             <BusinessPromptBuilder
                                 user={user}
@@ -279,24 +302,22 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                 version={promptVersion}
                                 onVersionChange={setPromptVersion}
                                 onConflict={(serverState) => {
-                                    // Opcional: estrategia ante conflicto (otro guardó antes)
-                                    // Por simpleza: rehidrata solo Business y toma version server
-                                    const s = serverState?.sections?.business ?? {};
+                                    const business = serverState?.sections?.business ?? {};
                                     setValues((prev) => ({
                                         ...prev,
-                                        nombre: s.nombre ?? prev.nombre,
-                                        sector: s?.sector ?? prev.sector,
-                                        ubicacion: s?.ubicacion ?? prev.ubicacion,
-                                        horarios: s?.horarios ?? prev.horarios,
-                                        maps: s?.maps ?? prev.maps,
-                                        telefono: s?.telefono ?? prev.telefono,
-                                        email: s?.email ?? prev.email,
-                                        sitio: s?.sitio ?? prev.sitio,
-                                        facebook: s?.facebook ?? prev.facebook,
-                                        instagram: s?.instagram ?? prev.instagram,
-                                        tiktok: s?.tiktok ?? prev.tiktok,
-                                        youtube: s?.youtube ?? prev.youtube,
-                                        notas: s?.notas ?? prev.notas,
+                                        nombre: business.nombre ?? prev.nombre,
+                                        sector: business.sector ?? prev.sector,
+                                        ubicacion: business.ubicacion ?? prev.ubicacion,
+                                        horarios: business.horarios ?? prev.horarios,
+                                        maps: business.maps ?? prev.maps,
+                                        telefono: business.telefono ?? prev.telefono,
+                                        email: business.email ?? prev.email,
+                                        sitio: business.sitio ?? prev.sitio,
+                                        facebook: business.facebook ?? prev.facebook,
+                                        instagram: business.instagram ?? prev.instagram,
+                                        tiktok: business.tiktok ?? prev.tiktok,
+                                        youtube: business.youtube ?? prev.youtube,
+                                        notas: business.notas ?? prev.notas,
                                     }));
                                     if (serverState?.version) setPromptVersion(serverState.version);
                                 }}
@@ -304,7 +325,6 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                             />
                         </TabsContent>
 
-                        {/* Los otros tabs siguen igual por ahora */}
                         <TabsContent value="training" className="m-0">
                             <TrainingBuilder
                                 flows={flows}
@@ -314,7 +334,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                 promptId={promptMeta.id}
                                 version={promptVersion}
                                 onVersionChange={setPromptVersion}
-                                onConflict={(serverState) => {
+                                onConflict={() => {
                                     setValues((prev) => ({ ...prev, training: prev.training }));
                                 }}
                                 initialSteps={sections?.training?.steps ?? []}
@@ -331,7 +351,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                 promptId={promptMeta.id}
                                 version={promptVersion}
                                 onVersionChange={setPromptVersion}
-                                onConflict={(serverState) => {
+                                onConflict={() => {
                                     setValues((prev) => ({ ...prev, faq: prev.faq }));
                                 }}
                                 initialItems={sections?.faq?.steps ?? []}
@@ -348,7 +368,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                 promptId={promptMeta.id}
                                 version={promptVersion}
                                 onVersionChange={setPromptVersion}
-                                onConflict={(serverState) => {
+                                onConflict={() => {
                                     setValues((prev) => ({ ...prev, products: prev.products }));
                                 }}
                                 initialItems={sections?.products?.steps ?? []}
@@ -365,7 +385,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                 promptId={promptMeta.id}
                                 version={promptVersion}
                                 onVersionChange={setPromptVersion}
-                                onConflict={(serverState) => {
+                                onConflict={() => {
                                     setValues((prev) => ({ ...prev, more: prev.more }));
                                 }}
                                 initialExtras={{
@@ -387,17 +407,28 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                                 promptId={promptMeta.id}
                                 version={promptVersion}
                                 onVersionChange={setPromptVersion}
-                                onConflict={(serverState) => {
-                                    // rehidrata items del server en conflicto
-                                    const serverItems = serverState?.sections?.management?.items ?? [];
-                                    // si guardas un state global `sections`, actualízalo allí;
-                                    // si solo mantienes `values`, basta con dejar el values.management tal cual,
-                                    // autosave ya volverá a lanzar con la nueva versión.
+                                onConflict={() => {
+                                    // Se mantiene el flujo actual del builder.
                                 }}
                                 initialItems={sections?.management?.steps ?? []}
-                                registerSaveHandler={(fn) => registerSaveHandler("management", fn)}
+                                registerSaveHandler={(fn) =>
+                                    registerSaveHandler("management", fn)
+                                }
                             />
                         </TabsContent>
+
+                        <TabsContent value="receipts" className="m-0">
+                            <PaymentReceiptPromptBuilder
+                                userId={user.id}
+                                agentId={AGENT_PROMPT_IDS.paymentReceiptAnalyzer}
+                                title="Analizador de comprobantes"
+                                description="Edita el prompt especializado que usa la IA para analizar comprobantes de pago."
+                                initialPromptText={paymentReceiptPrompt?.promptText ?? ""}
+                                initialExists={!!paymentReceiptPrompt}
+                                registerSaveHandler={(fn) => registerSaveHandler("receipts", fn)}
+                            />
+                        </TabsContent>
+
                         <div className="h-6" />
                     </div>
 
@@ -406,6 +437,7 @@ export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
                     </aside>
                 </div>
             </Tabs>
+
             <GenericDeleteDialog
                 open={showAlertDialog}
                 setOpen={setShowAlertDialog}

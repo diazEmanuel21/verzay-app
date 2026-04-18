@@ -203,12 +203,12 @@ export const SchedulePageClient = ({ user, reminders, countries }: ScheduleInter
 
                     const ownerText = `📅 *Tienes Nueva Cita*:
 
-👤Nombre: ${normalizedClientName}
-📝Descripci\u00f3n ${serviceName}: Para el d\u00eda ${dateLabel} a las ${hourLabel}.
+👤 *Nombre:* ${normalizedClientName}
+📝 *Descripci\u00f3n ${serviceName}:* Para el d\u00eda ${dateLabel} a las ${hourLabel}.
 
-📱WhatsApp del usuario:
+📱 *WhatsApp del usuario:*
 
-👉${e164}`;
+👉 ${e164}`;
 
                     await Promise.allSettled(
                         allPhones.map(async (phone) => {

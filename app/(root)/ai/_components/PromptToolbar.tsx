@@ -1,7 +1,7 @@
 // app/(root)/ai/_components/PromptToolbar.tsx
 "use client";
 
-import { useEffect, useCallback, useTransition } from "react"; // 👈 useTransition
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,8 +23,20 @@ export function PromptToolbar(props: {
     revalidatePath?: string;
     revisions?: Array<{ revisionNumber: number; label?: string }>;
     onManualSave?: () => Promise<void>;
+    manualOnly?: boolean;
+    successMessage?: string;
 }) {
-    const { promptId, version, userId, onVersionChange, onConflict, revalidatePath, onManualSave } = props;
+    const {
+        promptId,
+        version,
+        userId,
+        onVersionChange,
+        onConflict,
+        revalidatePath,
+        onManualSave,
+        manualOnly = false,
+        successMessage = "Guardado correctamente",
+    } = props;
 
     const router = useRouter();
 
@@ -37,31 +49,37 @@ export function PromptToolbar(props: {
         revalidatePath,
     });
 
-    // 👇 trackeamos el estado del router.refresh()
     const [isPending, startTransition] = useTransition();
+    const [isManualSaving, setIsManualSaving] = useState(false);
 
-    const isSaving = !!loading || isPending;
+    const isSaving = manualOnly ? isManualSaving : !!loading || isPending;
 
     const handlePublish = useCallback(async () => {
         try {
-            // 1) Guardar todas las secciones (manual)
             if (onManualSave) {
+                setIsManualSaving(true);
                 await onManualSave();
+                setIsManualSaving(false);
             }
 
-            // 2) Ejecutar lógica actual de publish
+            if (manualOnly) {
+                toast.success(successMessage);
+                return;
+            }
+
             await publish();
 
             startTransition(() => {
                 router.refresh();
             });
 
-            toast.success("Guardado correctamente");
+            toast.success(successMessage);
         } catch (e: any) {
             toast.error(e?.message ?? "No se pudo guardar");
+        } finally {
+            setIsManualSaving(false);
         }
-    }, [publish, router, startTransition, onManualSave]);
-
+    }, [manualOnly, onManualSave, publish, router, startTransition, successMessage]);
 
     useEffect(() => {
         if (error) toast.error(error);
@@ -70,7 +88,7 @@ export function PromptToolbar(props: {
     return (
         <>
             <div aria-live="polite" aria-atomic="true" className="sr-only">
-                {isSaving ? "Guardando…" : "Listo para guardar"}
+                {isSaving ? "Guardando..." : "Listo para guardar"}
             </div>
 
             <TooltipProvider>
@@ -82,17 +100,17 @@ export function PromptToolbar(props: {
                             aria-busy={isSaving}
                             aria-label="Guardar"
                             className="
-                gap-0 sm:gap-2 px-2 sm:px-3 h-9
-                bg-emerald-600 text-white
-                hover:bg-emerald-700
-                focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2
-                disabled:bg-emerald-600/60 disabled:text-white/80
-              "
+                                gap-0 sm:gap-2 px-2 sm:px-3 h-9
+                                bg-emerald-600 text-white
+                                hover:bg-emerald-700
+                                focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2
+                                disabled:bg-emerald-600/60 disabled:text-white/80
+                            "
                         >
                             {isSaving ? (
                                 <>
                                     <Loader2 className="h-4 w-4 animate-spin" />
-                                    <span className="hidden sm:inline">Guardando…</span>
+                                    <span className="hidden sm:inline">Guardando...</span>
                                 </>
                             ) : (
                                 <>
@@ -106,7 +124,7 @@ export function PromptToolbar(props: {
                 </Tooltip>
             </TooltipProvider>
 
-            {error && <span className="text-xs text-destructive">{error}</span>}
+            {error && !manualOnly && <span className="text-xs text-destructive">{error}</span>}
         </>
     );
 }
