@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { TypePromptAi, SystemMessage } from "@prisma/client";
+import { SystemMessage } from "@prisma/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
@@ -18,7 +18,7 @@ interface CustomTabsProps {
     setDeleteDialogOpen: (state: boolean) => void;
     setDataDelete: (data: PromptAiFormValues) => void;
     debouncedSearchTerm: string;
-    activeTab: TypePromptAi
+    activeTab: string
 }
 
 export function MessageTabs({

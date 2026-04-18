@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { FormPromptAiProps, PromptAiFormValues, TYPE_AI_LABELS } from '@/schema/ai';
-import { SystemMessage, TypePromptAi } from '@prisma/client';
-import { useDebounce } from '@/hooks/useDebounce';
-import Header from '@/components/shared/header';
-import { Input } from '@/components/ui/input';
+import { FormPromptAiProps, PromptAiFormValues } from "@/schema/ai";
+import { SystemMessage, TypePromptAi } from "@prisma/client";
+import { useDebounce } from "@/hooks/useDebounce";
+import Header from "@/components/shared/header";
+import { Input } from "@/components/ui/input";
 import { AiTabs, MessageTabs, PromptDialog } from "./";
 import { PaymentReceiptPromptBuilder } from "../PaymentReceiptPromptBuilder";
 import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog";
@@ -17,10 +17,12 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Ellipsis } from "lucide-react";
 import { AGENT_PROMPT_IDS } from "@/lib/agent-prompt-ids";
+
+const PAYMENT_RECEIPT_TAB = "ANALYZER";
 
 export function formatPromptByType(promptAi: any[], type: string) {
     const filtered = (promptAi ?? []).filter((m) => m.typePrompt === type);
@@ -28,24 +30,18 @@ export function formatPromptByType(promptAi: any[], type: string) {
 }
 
 export function formatPromptArray(data: any): string {
-    // Verificamos que sea un array válido
     if (!Array.isArray(data)) {
-        throw new Error('El parámetro recibido no es un array válido.');
+        throw new Error("El parametro recibido no es un array valido.");
     }
 
-    // Creamos el resultado acumulado
-    let result = '';
+    let result = "";
 
-    // Iteramos por cada elemento del array
     data.forEach((item) => {
-        const title = typeof item.title === 'string' ? item.title.trim() : 'Sin título';
-        const message = typeof item.message === 'string' ? item.message.trim() : '';
-
-        // Concatenamos con saltos de línea
+        const title = typeof item.title === "string" ? item.title.trim() : "Sin titulo";
+        const message = typeof item.message === "string" ? item.message.trim() : "";
         result += `${title}\n${message}\n\n`;
     });
 
-    // Retornamos el texto limpio sin espacios al final
     return result.trim();
 }
 
@@ -56,19 +52,22 @@ export const MainAi = ({ promptAi, userId, paymentReceiptPrompt }: FormPromptAiP
     const [delTraining, setDelTraining] = useState<boolean>(false);
     const [editingData, setEditingData] = useState<PromptAiFormValues | null>(null);
     const [dataDelete, setDataDelete] = useState<PromptAiFormValues | null>(null);
-    const [activeTab, setActiveTab] = useState<TypePromptAi>(TypePromptAi.TRAINING);
+    const [activeTab, setActiveTab] = useState<string>(TypePromptAi.TRAINING);
 
     const trainingPromptFormatted = formatPromptByType(promptAi ?? [], "TRAINING");
     const faqsPromptFormatted = formatPromptByType(promptAi ?? [], "FAQs");
+    const paymentReceiptPromptFormatted = paymentReceiptPrompt?.promptText?.trim() ?? "";
 
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
     const openCreateDialog = () => {
+        if (activeTab === PAYMENT_RECEIPT_TAB) return;
+
         setEditingData({
-            title: '',
-            message: '',
+            title: "",
+            message: "",
             userId,
-            typePrompt: 'TRAINING'
+            typePrompt: "TRAINING",
         });
         setDialogOpen(true);
     };
@@ -78,8 +77,8 @@ export const MainAi = ({ promptAi, userId, paymentReceiptPrompt }: FormPromptAiP
             id: msg.id,
             message: msg.message,
             title: msg.title,
-            typePrompt: msg.typePrompt ?? 'TRAINING',
-            userId: msg.userId
+            typePrompt: msg.typePrompt ?? "TRAINING",
+            userId: msg.userId,
         });
         setDialogOpen(true);
     };
@@ -94,10 +93,12 @@ export const MainAi = ({ promptAi, userId, paymentReceiptPrompt }: FormPromptAiP
 
     const highlightMatch = (text: string, query: string) => {
         if (!query) return text;
-        const parts = text.split(new RegExp(`(${query})`, 'gi'));
+        const parts = text.split(new RegExp(`(${query})`, "gi"));
         return parts.map((part, i) =>
             part.toLowerCase() === query.toLowerCase() ? (
-                <span key={i} className="bg-yellow-200 font-semibold">{part}</span>
+                <span key={i} className="bg-yellow-200 font-semibold">
+                    {part}
+                </span>
             ) : (
                 part
             )
@@ -106,66 +107,68 @@ export const MainAi = ({ promptAi, userId, paymentReceiptPrompt }: FormPromptAiP
 
     const truncateMessage = (text: string, maxLength: number) => {
         if (text.length <= maxLength) return text;
-        return text.slice(0, maxLength) + "… Ver más";
+        return text.slice(0, maxLength) + "... Ver mas";
     };
 
     const onTabChange = (tab: string) => {
-        setActiveTab(tab as TypePromptAi)
+        setActiveTab(tab);
     };
 
     return (
         <div className="flex flex-col h-full">
-            {/* Header */}
             <div className="sticky top-0 z-1 mb-4">
                 <div className="flex justify-between items-center pb-2">
-                    <Header title={'Entrena tu IA'} />
+                    <Header title={"Entrena tu IA"} />
 
                     <button
                         onClick={openCreateDialog}
-                        className="bg-primary text-white px-4 py-2 rounded-md"
+                        disabled={activeTab === PAYMENT_RECEIPT_TAB}
+                        className="bg-primary text-white px-4 py-2 rounded-md disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                         Crear
                     </button>
                 </div>
-                {/* SEARCH */}
-                <Input
-                    placeholder="Buscar mensaje por título..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="max-w-sm mb-2"
-                />
-                {/* TABS */}
+
+                {activeTab !== PAYMENT_RECEIPT_TAB && (
+                    <Input
+                        placeholder="Buscar mensaje por titulo..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="max-w-sm mb-2"
+                    />
+                )}
+
                 <div className="flex flex-1 ">
                     <AiTabs
                         onTabChange={onTabChange}
                         promptsByTab={{
                             TRAINING: trainingPromptFormatted,
                             FAQs: faqsPromptFormatted,
+                            ANALYZER: paymentReceiptPromptFormatted,
                         }}
                     />
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost">
-                                <Ellipsis />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                onClick={() => setDelTraining(true)}
-                            >
-                                Eliminar entrenamiento
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    {activeTab !== PAYMENT_RECEIPT_TAB && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost">
+                                    <Ellipsis />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => setDelTraining(true)}>
+                                    Eliminar entrenamiento
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
                 </div>
             </div>
 
-            {/* Scroll interno para el content */}
             <div className="flex-1 overflow-y-auto">
-                <div className="mb-4">
+                {activeTab === PAYMENT_RECEIPT_TAB ? (
                     <PaymentReceiptPromptBuilder
                         userId={userId}
                         agentId={AGENT_PROMPT_IDS.paymentReceiptAnalyzer}
@@ -175,37 +178,37 @@ export const MainAi = ({ promptAi, userId, paymentReceiptPrompt }: FormPromptAiP
                         initialExists={!!paymentReceiptPrompt}
                         showInlineSaveButton
                     />
-                </div>
-                <MessageTabs
-                    messages={filteredMessages}
-                    debouncedSearchTerm={debouncedSearchTerm}
-                    highlightMatch={highlightMatch}
-                    truncateMessage={truncateMessage}
-                    openEditDialog={openEditDialog}
-                    activeTab={activeTab}
-                    setDeleteDialogOpen={setDeleteDialogOpen}
-                    setDataDelete={setDataDelete}
-                />
+                ) : (
+                    <MessageTabs
+                        messages={filteredMessages}
+                        debouncedSearchTerm={debouncedSearchTerm}
+                        highlightMatch={highlightMatch}
+                        truncateMessage={truncateMessage}
+                        openEditDialog={openEditDialog}
+                        activeTab={activeTab}
+                        setDeleteDialogOpen={setDeleteDialogOpen}
+                        setDataDelete={setDataDelete}
+                    />
+                )}
             </div>
-            {/* Modal reutilizable */}
+
             <PromptDialog
                 open={dialogOpen}
                 setOpen={setDialogOpen}
                 defaultValues={editingData}
                 userId={userId}
             />
-            {
-                dataDelete &&
+
+            {dataDelete && (
                 <GenericDeleteDialog
                     open={deleteDialogOpen}
                     setOpen={setDeleteDialogOpen}
-                    itemId={dataDelete.id ?? ''}
-                    mutationFn={() => deletePromptAi(dataDelete.id ?? '')}
+                    itemId={dataDelete.id ?? ""}
+                    mutationFn={() => deletePromptAi(dataDelete.id ?? "")}
                     entityLabel={dataDelete.title}
                 />
-            }
+            )}
 
-            {/* Dialog to delete all trainig */}
             <GenericDeleteDialog
                 open={delTraining}
                 setOpen={setDelTraining}
@@ -217,5 +220,3 @@ export const MainAi = ({ promptAi, userId, paymentReceiptPrompt }: FormPromptAiP
         </div>
     );
 };
-
-

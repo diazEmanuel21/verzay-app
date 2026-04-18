@@ -8,7 +8,11 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { TYPE_AI_LABELS } from '@/schema/ai'
 
-export const allowed = ["TRAINING", "FAQs"] as const
+const EXTRA_TAB_LABELS = {
+    ANALYZER: "Analizador",
+} as const
+
+export const allowed = ["TRAINING", "FAQs", "ANALYZER"] as const
 type AllowedTab = typeof allowed[number]
 
 type PromptByTab = Partial<Record<string, string>>
@@ -20,11 +24,12 @@ export const AiTabs = ({
     onTabChange?: (tab: string) => void
     promptsByTab: PromptByTab
 }) => {
-    const firstAllowed = Object.entries(TYPE_AI_LABELS).find(([key]) => allowed.includes(key as AllowedTab))?.[0] ?? allowed[0]
+    const tabLabels = { ...TYPE_AI_LABELS, ...EXTRA_TAB_LABELS }
+    const firstAllowed = Object.entries(tabLabels).find(([key]) => allowed.includes(key as AllowedTab))?.[0] ?? allowed[0]
     const [activeTab, setActiveTab] = useState<string>(firstAllowed)
     const scrollRef = useRef<HTMLDivElement>(null)
 
-    const activeTabs = Object.entries(TYPE_AI_LABELS).filter(([key]) => allowed.includes(key as AllowedTab))
+    const activeTabs = Object.entries(tabLabels).filter(([key]) => allowed.includes(key as AllowedTab))
 
     const handleTabClick = (key: string) => {
         setActiveTab(key)
@@ -73,7 +78,7 @@ export const AiTabs = ({
 
                     <PromptPreviewDialog
                         activeTab={activeTab}
-                        activeLabel={TYPE_AI_LABELS[activeTab as keyof typeof TYPE_AI_LABELS] ?? activeTab}
+                        activeLabel={tabLabels[activeTab as keyof typeof tabLabels] ?? activeTab}
                         promptFormatted={activePrompt}
                     />
                 </div>
