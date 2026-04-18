@@ -3,14 +3,7 @@
 
 import { ChangeEvent, useCallback, useMemo, useRef, useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import {
-    BusinessPromptBuilder,
-    ExtraInfoBuilder,
-    FqaBuilder,
-    PaymentReceiptPromptBuilder,
-    PromptPreview,
-    TrainingBuilder,
-} from "./";
+import { BusinessPromptBuilder, ExtraInfoBuilder, FqaBuilder, PromptPreview, TrainingBuilder } from "./";
 import { buildPrompt } from "./helpers";
 import {
     BusinessValues,
@@ -44,7 +37,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog";
 import { deleteAgentPromptsByUserId } from "@/actions/prompt-actions";
-import { AGENT_PROMPT_IDS } from "@/lib/agent-prompt-ids";
 
 export const TYPE_AI_LABELS = {
     business: "Perfil",
@@ -53,36 +45,25 @@ export const TYPE_AI_LABELS = {
     products: "Productos",
     more: "Extras",
     management: "Gestión",
-    receipts: "Analizador",
 } as const;
 
 type TabKey = keyof typeof TYPE_AI_LABELS;
 
-export const MainAi = ({
-    flows,
-    user,
-    promptMeta,
-    sections,
-    paymentReceiptPrompt,
-}: MainAiProps) => {
+export const MainAi = ({ flows, user, promptMeta, sections }: MainAiProps) => {
     const [showAlertDialog, setShowAlertDialog] = useState(false);
 
     const trainingMd = sections?.training
         ? buildTrainingMarkdown(TrainingDraftSchema.parse(sections.training))
         : "";
-
     const faqMd = sections?.faq
         ? buildFaqMarkdown(FaqDraftSchema.parse(sections.faq))
         : "";
-
     const productsMd = sections?.products
         ? buildProductsMarkdown(ProductsDraftSchema.parse(sections.products))
         : "";
-
     const extrasMd = sections?.extras
         ? buildExtrasMarkdown(ExtrasDraftSchema.parse(sections.extras))
         : "";
-
     const managementMd = sections?.management
         ? buildManagementMarkdown(ManagementDraftSchema.parse(sections.management))
         : "";
@@ -146,11 +127,7 @@ export const MainAi = ({
 
     return (
         <>
-            <Tabs
-                value={activeTab}
-                onValueChange={(value) => setActiveTab(value as TabKey)}
-                className="w-full"
-            >
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabKey)} className="w-full">
                 <div className="sticky w-full top-0 z-10 -mx-4 lg:mx-0 bg-slate-100 dark:bg-black">
                     <div className="flex items-center justify-between gap-2 px-2 py-2">
                         <Button
@@ -225,16 +202,13 @@ export const MainAi = ({
                                         ...prev,
                                         nombre: serverSections.business?.nombre ?? prev.nombre,
                                         sector: serverSections.business?.sector ?? prev.sector,
-                                        ubicacion:
-                                            serverSections.business?.ubicacion ?? prev.ubicacion,
+                                        ubicacion: serverSections.business?.ubicacion ?? prev.ubicacion,
                                         horarios: serverSections.business?.horarios ?? prev.horarios,
                                         maps: serverSections.business?.maps ?? prev.maps,
-                                        telefono:
-                                            serverSections.business?.telefono ?? prev.telefono,
+                                        telefono: serverSections.business?.telefono ?? prev.telefono,
                                         email: serverSections.business?.email ?? prev.email,
                                         sitio: serverSections.business?.sitio ?? prev.sitio,
-                                        facebook:
-                                            serverSections.business?.facebook ?? prev.facebook,
+                                        facebook: serverSections.business?.facebook ?? prev.facebook,
                                         instagram:
                                             serverSections.business?.instagram ?? prev.instagram,
                                         tiktok: serverSections.business?.tiktok ?? prev.tiktok,
@@ -254,12 +228,6 @@ export const MainAi = ({
                                 revalidatePath="/ia"
                                 revisions={[]}
                                 onManualSave={handleManualSaveCurrent}
-                                manualOnly={activeTab === "receipts"}
-                                successMessage={
-                                    activeTab === "receipts"
-                                        ? "Prompt de comprobantes guardado"
-                                        : "Guardado correctamente"
-                                }
                             />
 
                             <DropdownMenu modal={false}>
@@ -270,9 +238,7 @@ export const MainAi = ({
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-40" align="end">
                                     <DropdownMenuGroup>
-                                        <DropdownMenuItem
-                                            onSelect={() => setShowAlertDialog(true)}
-                                        >
+                                        <DropdownMenuItem onSelect={() => setShowAlertDialog(true)}>
                                             Eliminar todo
                                         </DropdownMenuItem>
                                     </DropdownMenuGroup>
@@ -408,27 +374,11 @@ export const MainAi = ({
                                 version={promptVersion}
                                 onVersionChange={setPromptVersion}
                                 onConflict={() => {
-                                    // Se mantiene el flujo actual del builder.
                                 }}
                                 initialItems={sections?.management?.steps ?? []}
-                                registerSaveHandler={(fn) =>
-                                    registerSaveHandler("management", fn)
-                                }
+                                registerSaveHandler={(fn) => registerSaveHandler("management", fn)}
                             />
                         </TabsContent>
-
-                        <TabsContent value="receipts" className="m-0">
-                            <PaymentReceiptPromptBuilder
-                                userId={user.id}
-                                agentId={AGENT_PROMPT_IDS.paymentReceiptAnalyzer}
-                                title="Analizador de comprobantes"
-                                description="Edita el prompt especializado que usa la IA para analizar comprobantes de pago."
-                                initialPromptText={paymentReceiptPrompt?.promptText ?? ""}
-                                initialExists={!!paymentReceiptPrompt}
-                                registerSaveHandler={(fn) => registerSaveHandler("receipts", fn)}
-                            />
-                        </TabsContent>
-
                         <div className="h-6" />
                     </div>
 

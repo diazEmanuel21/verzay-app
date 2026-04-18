@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { upsertAgentPromptText } from "@/actions/system-prompt-actions";
 import { FreeformAgentPromptBuilderProps } from "@/types/agentAi";
 
@@ -17,6 +18,7 @@ export function PaymentReceiptPromptBuilder({
     initialPromptText = "",
     initialExists = false,
     registerSaveHandler,
+    showInlineSaveButton = false,
 }: FreeformAgentPromptBuilderProps) {
     const [promptText, setPromptText] = useState(initialPromptText);
     const [hasCustomPrompt, setHasCustomPrompt] = useState(initialExists);
@@ -87,18 +89,31 @@ export function PaymentReceiptPromptBuilder({
             <CardContent className="space-y-3">
                 <p className="text-sm text-muted-foreground">
                     {description ??
-                        "Configura de forma independiente cómo la IA interpreta comprobantes de pago."}
+                        "Configura de forma independiente como la IA interpreta comprobantes de pago."}
                 </p>
                 <Textarea
                     value={promptText}
                     onChange={(event) => setPromptText(event.target.value)}
-                    placeholder="Escribe aquí el prompt del analizador de comprobantes..."
+                    placeholder="Escribe aqui el prompt del analizador de comprobantes..."
                     className="min-h-[340px] resize-y"
                 />
                 <p className="text-xs text-muted-foreground">
-                    Si lo dejas vacío y guardas, se eliminará la personalización y el backend volverá
+                    Si lo dejas vacio y guardas, se elimina la personalizacion y el backend vuelve
                     a usar su fallback por defecto.
                 </p>
+                {showInlineSaveButton && (
+                    <div className="flex justify-end">
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                void handleSave().catch(() => undefined);
+                            }}
+                            disabled={saveStatus === "saving"}
+                        >
+                            {saveStatus === "saving" ? "Guardando..." : "Guardar prompt"}
+                        </Button>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );

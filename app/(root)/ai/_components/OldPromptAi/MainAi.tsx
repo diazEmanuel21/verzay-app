@@ -7,6 +7,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import Header from '@/components/shared/header';
 import { Input } from '@/components/ui/input';
 import { AiTabs, MessageTabs, PromptDialog } from "./";
+import { PaymentReceiptPromptBuilder } from "../PaymentReceiptPromptBuilder";
 import { GenericDeleteDialog } from "@/components/shared/GenericDeleteDialog";
 import { deletePromptAi, deletePromptAiByUserId } from "@/actions/ai-actions";
 import {
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Button } from "@/components/ui/button";
 import { Ellipsis } from "lucide-react";
+import { AGENT_PROMPT_IDS } from "@/lib/agent-prompt-ids";
 
 export function formatPromptByType(promptAi: any[], type: string) {
     const filtered = (promptAi ?? []).filter((m) => m.typePrompt === type);
@@ -47,7 +49,7 @@ export function formatPromptArray(data: any): string {
     return result.trim();
 }
 
-export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
+export const MainAi = ({ promptAi, userId, paymentReceiptPrompt }: FormPromptAiProps) => {
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [dialogOpen, setDialogOpen] = useState<boolean>(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
@@ -163,6 +165,17 @@ export const MainAi = ({ promptAi, userId }: FormPromptAiProps) => {
 
             {/* Scroll interno para el content */}
             <div className="flex-1 overflow-y-auto">
+                <div className="mb-4">
+                    <PaymentReceiptPromptBuilder
+                        userId={userId}
+                        agentId={AGENT_PROMPT_IDS.paymentReceiptAnalyzer}
+                        title="Analizador de comprobantes"
+                        description="Administra el prompt especializado para analizar comprobantes de pago."
+                        initialPromptText={paymentReceiptPrompt?.promptText ?? ""}
+                        initialExists={!!paymentReceiptPrompt}
+                        showInlineSaveButton
+                    />
+                </div>
                 <MessageTabs
                     messages={filteredMessages}
                     debouncedSearchTerm={debouncedSearchTerm}

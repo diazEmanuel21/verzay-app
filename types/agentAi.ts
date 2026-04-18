@@ -420,11 +420,6 @@ export interface MainAiInterface {
     flows: Workflow[];
     user: UserWithApiKeys;
     promptMeta: { id: string; version: number };
-    paymentReceiptPrompt?: {
-        id: string;
-        version: number;
-        promptText: string;
-    } | null;
 }
 export type MainAiProps = MainAiInterface & {
     sections: SectionsPromptSystem;
@@ -515,6 +510,7 @@ export interface FreeformAgentPromptBuilderProps {
     initialPromptText?: string;
     initialExists?: boolean;
     registerSaveHandler?: (fn: () => Promise<void>) => void;
+    showInlineSaveButton?: boolean;
 }
 
 /* -------------------- Tipos locales para PASOS -------------------- */

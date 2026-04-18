@@ -20,6 +20,11 @@ export const PromptAiSchema = z.object({
 export interface FormPromptAiProps {
     promptAi: SystemMessage[] | null
     userId: string
+    paymentReceiptPrompt?: {
+        id: string;
+        version: number;
+        promptText: string;
+    } | null
 };
 export interface AiCreatePromptProps {
     userId: string

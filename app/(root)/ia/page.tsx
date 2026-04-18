@@ -4,7 +4,7 @@ import { currentUser } from '@/lib/auth';
 import { MainAi } from '../ai/_components/MainAi';
 import { Workflow } from '@prisma/client';
 import { getWorkFlowByUser } from '@/actions/workflow-actions';
-import { getAgentPromptByUserAndAgentId, getOrCreatePrompt } from '@/actions/system-prompt-actions';
+import { getOrCreatePrompt } from '@/actions/system-prompt-actions';
 import { AGENT_PROMPT_IDS } from '@/lib/agent-prompt-ids';
 
 function hasWorkflow(result: { data?: Workflow[] }): result is { data: Workflow[] } {
@@ -18,13 +18,10 @@ const ProfilePage = async () => {
     const resWorkflow = await getWorkFlowByUser(user.id);
     const workflows = hasWorkflow(resWorkflow) ? resWorkflow.data : [];
 
-    const [prompt, paymentReceiptPrompt] = await Promise.all([
-        getOrCreatePrompt({ userId: user.id, agentId: AGENT_PROMPT_IDS.systemPromptAI }),
-        getAgentPromptByUserAndAgentId({
-            userId: user.id,
-            agentId: AGENT_PROMPT_IDS.paymentReceiptAnalyzer,
-        }),
-    ]);
+    const prompt = await getOrCreatePrompt({
+        userId: user.id,
+        agentId: AGENT_PROMPT_IDS.systemPromptAI,
+    });
 
     // // 2) Secciones completas para hidratar tabs (especialmente Business)
     const sections = prompt?.sections ?? {};
@@ -35,13 +32,6 @@ const ProfilePage = async () => {
             flows={workflows}
             user={user}
             promptMeta={{ id: prompt.id, version: prompt.version }}
-            paymentReceiptPrompt={paymentReceiptPrompt
-                ? {
-                    id: paymentReceiptPrompt.id,
-                    version: paymentReceiptPrompt.version,
-                    promptText: paymentReceiptPrompt.promptText,
-                }
-                : null}
             sections={sections as any}
         />
     );
